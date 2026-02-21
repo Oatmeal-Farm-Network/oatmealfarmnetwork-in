@@ -48,7 +48,7 @@ export default function App() {
       <section className="py-6 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-4xl font-bold mt-3 mb-4 text-gray-900">
-            Connect, Grow, Thrive: The Oatmeal Farm Network!
+            Connect, Grow, Thrive: The Oatmeal Farm Network
           </h1>
           <p className="mt-3 text-gray-800 text-lg leading-relaxed">
             We're your comprehensive resource connecting the entire food system. 
@@ -56,7 +56,7 @@ export default function App() {
             leveraging Saige's AI insights for farm management, exploring our 4,000+ 
             food plant varieties and 3,000+ livestock breeds in our specialized databases, 
             or buying and selling livestock in our Livestock Marketplace (Coming soon!), 
-            we help you thrive from ground to gourmet. [cite: 17]
+            we help you thrive from ground to gourmet.
           </p>
         </div>
       </section>

@@ -23,17 +23,28 @@ const Header = () => {
             <li>
               <Link to="/" className="!text-white hover:text-[#EFAE15] transition-colors">Home</Link>
             </li>
-            <li>
-              <Link to="/about" className="!text-white hover:text-[#EFAE15] transition-colors">About Us</Link>
-            </li>
-            <li>
+             <li>
               <Link to="/directory" className="!text-white hover:text-[#EFAE15] transition-colors">Directory</Link>
             </li>
             <li>
+              <Link to="/knowledgebases" className="!text-white hover:text-[#EFAE15] transition-colors">Knowledgebases</Link>
+            </li>
+             <li>
+              <Link to="/marketplaces" className="!text-white hover:text-[#EFAE15] transition-colors">Marketplaces</Link>
+            </li>
+             <li>
               <Link to="/saige" className="!text-white hover:text-[#EFAE15] transition-colors">Saige</Link>
             </li>
             <li>
+              <Link to="/about" className="!text-white hover:text-[#EFAE15] transition-colors">About Us</Link>
+            </li>
+           
+           
+            <li>
               <Link to="/login" className="!text-white hover:text-[#EFAE15] transition-colors">Login</Link>
+            </li>
+             <li>
+              <Link to="/signup" className="!text-white hover:text-[#EFAE15] transition-colors">Signup</Link>
             </li>
           </ul>
         </div>
@@ -55,10 +66,14 @@ const Header = () => {
         <div className="lg:hidden bg-[#A3301E] absolute top-full left-0 w-full border-t border-white/10 shadow-xl z-50">
           <ul className="flex flex-col p-6 space-y-4 text-base font-normal text-center">
             <li><Link to="/" onClick={() => setIsOpen(false)} className="!text-white block">Home</Link></li>
-            <li><Link to="/about" onClick={() => setIsOpen(false)} className="!text-white block">About Us</Link></li>
-            <li><Link to="/directory" onClick={() => setIsOpen(false)} className="!text-white block">Directory</Link></li>
+             <li><Link to="/directory" onClick={() => setIsOpen(false)} className="!text-white block">Directory</Link></li>
+              <li><Link to="/Knowledgebases" onClick={() => setIsOpen(false)} className="!text-white block">Knowledgebases</Link></li>
+             <li><Link to="/marketplace" onClick={() => setIsOpen(false)} className="!text-white block">Marketplaces</Link></li>
             <li><Link to="/saige" onClick={() => setIsOpen(false)} className="!text-white block">Saige</Link></li>
+            <li><Link to="/about" onClick={() => setIsOpen(false)} className="!text-white block">About Us</Link></li>
             <li><Link to="/login" onClick={() => setIsOpen(false)} className="!text-white block">Login</Link></li>
+            <li><Link to="/signup" onClick={() => setIsOpen(false)} className="!text-white block">Sign Up</Link></li>
+
           </ul>
         </div>
       )}

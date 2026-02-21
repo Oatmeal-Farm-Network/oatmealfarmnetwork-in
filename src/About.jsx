@@ -23,7 +23,7 @@ const About = () => {
             </div>
             
             <p className="text-xl italic mb-8">
-              We empower farmers and ranchers with the tools to make smarter decisions, reach new markets, and build the future of agriculture.31]
+              We empower farmers and ranchers with the tools to make smarter decisions, reach new markets, and build the future of agriculture.
             </p>
           </div>
 
