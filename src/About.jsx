@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
+import Footer from './Footer';
 
 const About = () => {
   return (
@@ -79,7 +80,9 @@ const About = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
+
   );
 };
 

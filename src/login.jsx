@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
+import Footer from './Footer';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -123,11 +124,7 @@ export default function Login() {
         </div>
       </section>
 
-      <footer className="bg-[#1a1a1a] text-white py-12 mt-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-gray-500 text-xs uppercase tracking-[0.2em]">© 2026 Oatmeal Farm Network. All rights reserved.</p>
-        </div>
-      </footer>
+ <Footer />
     </div>
   );
 }

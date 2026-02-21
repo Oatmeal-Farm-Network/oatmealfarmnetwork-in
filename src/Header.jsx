@@ -40,21 +40,21 @@ const Header = () => {
         {/* Desktop Navigation */}
         <div className="hidden lg:flex flex-grow justify-center">
           <ul className="flex space-x-10 text-sm font-normal">
-            <li><Link to="/" className="!text-white hover:text-[#EFAE15] transition-colors">Home</Link></li>
-            <li><Link to="/directory" className="!text-white hover:text-[#EFAE15] transition-colors">Directory</Link></li>
-            <li><Link to="/knowledgebases" className="!text-white hover:text-[#EFAE15] transition-colors">Knowledgebases</Link></li>
-            <li><Link to="/marketplaces" className="!text-white hover:text-[#EFAE15] transition-colors">Marketplaces</Link></li>
-            <li><Link to="/saige" className="!text-white hover:text-[#EFAE15] transition-colors">Saige</Link></li>
-            <li><Link to="/about" className="!text-white hover:text-[#EFAE15] transition-colors">About Us</Link></li>
+            <li><Link to="/" className="nav-link">Home</Link></li>
+            <li><Link to="/directory" className="nav-link">Directory</Link></li>
+            <li><Link to="/knowledgebases" className="nav-link">Knowledgebases</Link></li>
+            <li><Link to="/marketplaces" className="nav-link">Marketplaces</Link></li>
+            <li><Link to="/saige" className="nav-link">Saige</Link></li>
+            <li><Link to="/about" className="nav-link">About Us</Link></li>
             {!user ? (
               <>
-                <li><Link to="/login" className="!text-white hover:text-[#EFAE15] transition-colors">Login</Link></li>
-                <li><Link to="/signup" className="!text-white hover:text-[#EFAE15] transition-colors">Signup</Link></li>
+                <li><Link to="/login" className="nav-link">Login</Link></li>
+                <li><Link to="/signup" className="nav-link">Signup</Link></li>
               </>
             ) : (
               <>
                 <li>
-                  <button onClick={handleLogout} className="!text-white hover:text-[#EFAE15] transition-colors">
+                  <button onClick={handleLogout} className="nav-link">
                     Log Out
                   </button>
                 </li>
