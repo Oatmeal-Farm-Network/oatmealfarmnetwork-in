@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 
+
+
 // Mirroring the 'feature-box' and 'btn-learn' styles from your ASP code [cite: 10, 13, 16]
 const FeatureBox = ({ title, description, imgSrc, link }) => (
   <div className="flex flex-col bg-[#819360] rounded-[20px] p-[10px] shadow-[0_4px_8px_rgba(0,0,0,0.1)] min-h-[250px] text-center w-full mb-4 lg:mb-0 border border-[#4d734d]/20">

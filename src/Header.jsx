@@ -1,57 +1,71 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const firstName = localStorage.getItem('first_name');
+    const token = localStorage.getItem('access_token');
+    if (token && firstName) {
+      setUser({ firstName });
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('people_id');
+    localStorage.removeItem('first_name');
+    localStorage.removeItem('last_name');
+    localStorage.removeItem('access_level');
+    setUser(null);
+    navigate('/login');
+  };
 
   return (
     <nav className="bg-[#A3301E] py-3 px-4 shadow-2xl sticky top-0 z-50 font-montserrat">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        
-        {/* Logo (Left side) */}
+
+        {/* Logo */}
         <Link to="/" className="flex items-center shrink-0">
-          <img 
-            src="/images/Oatmeal-Farm-Network-logo-horizontal-white.webp" 
-            className="h-10 md:h-12" 
-            alt="Oatmeal Farm Network" 
+          <img
+            src="/images/Oatmeal-Farm-Network-logo-horizontal-white.webp"
+            className="h-10 md:h-12"
+            alt="Oatmeal Farm Network"
           />
         </Link>
 
-        {/* Desktop Navigation - Centered, Normal Weight, No Uppercase */}
+        {/* Desktop Navigation */}
         <div className="hidden lg:flex flex-grow justify-center">
           <ul className="flex space-x-10 text-sm font-normal">
-            <li>
-              <Link to="/" className="!text-white hover:text-[#EFAE15] transition-colors">Home</Link>
-            </li>
-             <li>
-              <Link to="/directory" className="!text-white hover:text-[#EFAE15] transition-colors">Directory</Link>
-            </li>
-            <li>
-              <Link to="/knowledgebases" className="!text-white hover:text-[#EFAE15] transition-colors">Knowledgebases</Link>
-            </li>
-             <li>
-              <Link to="/marketplaces" className="!text-white hover:text-[#EFAE15] transition-colors">Marketplaces</Link>
-            </li>
-             <li>
-              <Link to="/saige" className="!text-white hover:text-[#EFAE15] transition-colors">Saige</Link>
-            </li>
-            <li>
-              <Link to="/about" className="!text-white hover:text-[#EFAE15] transition-colors">About Us</Link>
-            </li>
-           
-           
-            <li>
-              <Link to="/login" className="!text-white hover:text-[#EFAE15] transition-colors">Login</Link>
-            </li>
-             <li>
-              <Link to="/signup" className="!text-white hover:text-[#EFAE15] transition-colors">Signup</Link>
-            </li>
+            <li><Link to="/" className="!text-white hover:text-[#EFAE15] transition-colors">Home</Link></li>
+            <li><Link to="/directory" className="!text-white hover:text-[#EFAE15] transition-colors">Directory</Link></li>
+            <li><Link to="/knowledgebases" className="!text-white hover:text-[#EFAE15] transition-colors">Knowledgebases</Link></li>
+            <li><Link to="/marketplaces" className="!text-white hover:text-[#EFAE15] transition-colors">Marketplaces</Link></li>
+            <li><Link to="/saige" className="!text-white hover:text-[#EFAE15] transition-colors">Saige</Link></li>
+            <li><Link to="/about" className="!text-white hover:text-[#EFAE15] transition-colors">About Us</Link></li>
+            {!user ? (
+              <>
+                <li><Link to="/login" className="!text-white hover:text-[#EFAE15] transition-colors">Login</Link></li>
+                <li><Link to="/signup" className="!text-white hover:text-[#EFAE15] transition-colors">Signup</Link></li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <button onClick={handleLogout} className="!text-white hover:text-[#EFAE15] transition-colors">
+                    Log Out
+                  </button>
+                </li>
+              </>
+            )}
           </ul>
         </div>
 
-        {/* Placeholder for symmetry on desktop, Hamburger on mobile */}
-        <div className="lg:w-[180px] flex justify-end"> {/* Matches logo width roughly to keep center perfectly centered */}
-          <button 
+        {/* Hamburger */}
+        <div className="lg:w-[180px] flex justify-end">
+          <button
             onClick={() => setIsOpen(!isOpen)}
             className="lg:hidden text-white text-3xl focus:outline-none"
             type="button"
@@ -61,19 +75,26 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu */}
       {isOpen && (
         <div className="lg:hidden bg-[#A3301E] absolute top-full left-0 w-full border-t border-white/10 shadow-xl z-50">
           <ul className="flex flex-col p-6 space-y-4 text-base font-normal text-center">
             <li><Link to="/" onClick={() => setIsOpen(false)} className="!text-white block">Home</Link></li>
-             <li><Link to="/directory" onClick={() => setIsOpen(false)} className="!text-white block">Directory</Link></li>
-              <li><Link to="/Knowledgebases" onClick={() => setIsOpen(false)} className="!text-white block">Knowledgebases</Link></li>
-             <li><Link to="/marketplace" onClick={() => setIsOpen(false)} className="!text-white block">Marketplaces</Link></li>
+            <li><Link to="/directory" onClick={() => setIsOpen(false)} className="!text-white block">Directory</Link></li>
+            <li><Link to="/knowledgebases" onClick={() => setIsOpen(false)} className="!text-white block">Knowledgebases</Link></li>
+            <li><Link to="/marketplace" onClick={() => setIsOpen(false)} className="!text-white block">Marketplaces</Link></li>
             <li><Link to="/saige" onClick={() => setIsOpen(false)} className="!text-white block">Saige</Link></li>
             <li><Link to="/about" onClick={() => setIsOpen(false)} className="!text-white block">About Us</Link></li>
-            <li><Link to="/login" onClick={() => setIsOpen(false)} className="!text-white block">Login</Link></li>
-            <li><Link to="/signup" onClick={() => setIsOpen(false)} className="!text-white block">Sign Up</Link></li>
-
+            {!user ? (
+              <>
+                <li><Link to="/login" onClick={() => setIsOpen(false)} className="!text-white block">Login</Link></li>
+                <li><Link to="/signup" onClick={() => setIsOpen(false)} className="!text-white block">Sign Up</Link></li>
+              </>
+            ) : (
+              <>
+                <li><button onClick={handleLogout} className="!text-white">Log Out</button></li>
+              </>
+            )}
           </ul>
         </div>
       )}
