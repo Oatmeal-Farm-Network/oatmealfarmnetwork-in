@@ -7,22 +7,22 @@ const Header = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const firstName = localStorage.getItem('first_name');
-    const token = localStorage.getItem('access_token');
-    if (token && firstName) {
+ const FirstName = localStorage.getItem('PeopleFirstName');
+const AccessToken = localStorage.getItem('AccessToken');
+    if (AccessToken && firstName) {
       setUser({ firstName });
     }
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('people_id');
-    localStorage.removeItem('first_name');
-    localStorage.removeItem('last_name');
-    localStorage.removeItem('access_level');
-    setUser(null);
-    navigate('/login');
-  };
+const handleLogout = () => {
+  localStorage.removeItem('AccessToken');
+  localStorage.removeItem('PeopleID');
+  localStorage.removeItem('PeopleFirstName');
+  localStorage.removeItem('PeopleLastName');
+  localStorage.removeItem('AccessLevel');
+  setUser(null);
+  navigate('/login');
+};
 
   return (
     <nav className="bg-[#A3301E] py-3 px-4 shadow-2xl sticky top-0 z-50 font-montserrat">

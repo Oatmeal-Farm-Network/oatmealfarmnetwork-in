@@ -5,39 +5,39 @@ import Footer from './Footer';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [Email, setEmail] = useState('');
+  const [Password, setPassword] = useState('');
+  const [Error, setError] = useState('');
+  const [Loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const HandleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/auth/login', {
+      const Response = await fetch('http://127.0.0.1:8000/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ Email, Password }),
       });
 
-      const data = await response.json();
+      const Data = await Response.json();
 
-      if (!response.ok) {
-        setError(data.detail || 'Login failed. Please try again.');
+      if (!Response.ok) {
+        setError(Data.detail || 'Login failed. Please try again.');
         return;
       }
 
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('people_id', data.people_id);
-      localStorage.setItem('first_name', data.first_name);
-      localStorage.setItem('last_name', data.last_name);
-      localStorage.setItem('access_level', data.access_level);
+      localStorage.setItem('AccessToken', Data.AccessToken);
+      localStorage.setItem('PeopleID', Data.PeopleID);
+      localStorage.setItem('PeopleFirstName', Data.PeopleFirstName);
+      localStorage.setItem('PeopleLastName', Data.PeopleLastName);
+      localStorage.setItem('AccessLevel', Data.AccessLevel);
 
       navigate('/dashboard');
 
-    } catch (err) {
+    } catch (Err) {
       setError('Unable to connect to server. Please try again.');
     } finally {
       setLoading(false);
@@ -63,20 +63,20 @@ export default function Login() {
             </div>
 
             <div className="px-8 py-8">
-              {error && (
+              {Error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-6 text-sm">
-                  {error}
+                  {Error}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={HandleSubmit} className="space-y-5">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                     Email Address
                   </label>
                   <input
                     type="email"
-                    value={email}
+                    value={Email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="you@example.com"
@@ -90,7 +90,7 @@ export default function Login() {
                   </label>
                   <input
                     type="password"
-                    value={password}
+                    value={Password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="Password"
@@ -106,10 +106,10 @@ export default function Login() {
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={Loading}
                   className="w-full bg-[#A3301E] hover:bg-[#8a2718] text-white font-bold py-3 px-6 rounded-xl transition-colors duration-200 text-sm uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Signing In...' : 'Sign In'}
+                  {Loading ? 'Signing In...' : 'Sign In'}
                 </button>
               </form>
 
@@ -124,7 +124,7 @@ export default function Login() {
         </div>
       </section>
 
- <Footer />
+      <Footer />
     </div>
   );
 }
