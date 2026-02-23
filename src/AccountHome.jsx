@@ -11,7 +11,7 @@ export default function AccountHome() {
   const [Error, setError] = useState(false);
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:8000/auth/account-home?BusinessID=${BusinessID}`)
+fetch(`${import.meta.env.VITE_API_URL}/auth/my-businesses?PeopleID=${PeopleID}`)
       .then(Res => Res.json())
       .then(Data => setBusiness(Data))
       .catch(Err => {

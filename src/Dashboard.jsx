@@ -19,7 +19,7 @@ export default function Dashboard() {
     const PeopleID = localStorage.getItem('PeopleID');
 
     // Fetch businesses
-    fetch(`http://127.0.0.1:8000/auth/my-businesses?PeopleID=${PeopleID}`)
+fetch(`${import.meta.env.VITE_API_URL}/auth/my-businesses?PeopleID=${PeopleID}`)
       .then(Res => Res.json())
       .then(Data => setBusinesses(Data))
       .catch(Err => console.error('Error fetching businesses:', Err));
