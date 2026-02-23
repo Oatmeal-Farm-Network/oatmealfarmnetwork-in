@@ -47,7 +47,6 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-white font-sans">
       <Header />
-
       <section className="py-16 px-4">
         <div className="max-w-md mx-auto">
           <div className="bg-white rounded-[20px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden">
