@@ -14,25 +14,40 @@ import PrecisionAgAnalyses from './PrecisionAgAnalyses.jsx';
 import CropRotation from './CropRotation.jsx';
 import OatSenseNotes from './OatSenseNotes.jsx';
 import SaigePage from './SaigePage.jsx';
-
+import AnimalsHome from './AnimalsHome.jsx';
+import AccountChangeType from './AccountChangeType.jsx';
+import { AccountProvider } from './AccountContext';
+import AnimalAddWizard from "./AnimalAddWizard";
+import "./AnimalAddWizard.css";
+import DirectoryList from './Directory/pages/DirectoryList';
+import DirectoryDetail from './Directory/pages/DirectoryDetail';
+import BusinessProfile from './Directory/pages/BusinessProfile';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route path="/saige" element={<SaigePage />} />
-        <Route path="/oatsense/crop-rotation" element={<CropRotation />} />
-        <Route path="/oatsense/notes" element={<OatSenseNotes />} />
-        <Route path="/precision-ag/fields" element={<PrecisionAgFields />} />
-        <Route path="/precision-ag/add" element={<PrecisionAgAdd />} />
-        <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />
-        <Route path="/oatsense" element={<OatSense />} />
-        <Route path="/account" element={<AccountHome />} />
-        <Route path="/" element={<App />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
+      <AccountProvider>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/account" element={<AccountHome />} />
+          <Route path="/account/change-type" element={<AccountChangeType />} />
+          <Route path="/animals" element={<AnimalsHome />} />
+          <Route path="/animals/add" element={<AnimalAddWizard />} />
+          <Route path="/saige" element={<SaigePage />} />
+          <Route path="/oatsense" element={<OatSense />} />
+          <Route path="/oatsense/crop-rotation" element={<CropRotation />} />
+          <Route path="/oatsense/notes" element={<OatSenseNotes />} />
+          <Route path="/precision-ag/fields" element={<PrecisionAgFields />} />
+          <Route path="/precision-ag/add" element={<PrecisionAgAdd />} />
+          <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />
+          <Route path="/directory" element={<DirectoryList />} />
+          <Route path="/directory/:directoryType" element={<DirectoryDetail />} />
+          <Route path="/profile" element={<BusinessProfile />} />
+        </Routes>
+      </AccountProvider>
     </BrowserRouter>
   </React.StrictMode>,
 )

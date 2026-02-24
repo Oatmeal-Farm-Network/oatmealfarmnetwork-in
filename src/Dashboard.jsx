@@ -1,181 +1,117 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import HeaderGated from './HeaderGated';
-import Footer from './Footer';
+import Header from './Header';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [Businesses, setBusinesses] = useState([]);
-  const [Weather, setWeather] = useState(null);
-  const [WeatherError, setWeatherError] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const AccessToken = localStorage.getItem('AccessToken');
-    if (!AccessToken) {
+    // Check if user is logged in
+    const token = localStorage.getItem('access_token');
+    if (!token) {
       navigate('/login');
       return;
     }
 
-    const PeopleID = localStorage.getItem('PeopleID');
-
-    // Fetch businesses
-fetch(`${import.meta.env.VITE_API_URL}/auth/my-businesses?PeopleID=${PeopleID}`)
-      .then(Res => Res.json())
-      .then(Data => setBusinesses(Data))
-      .catch(Err => console.error('Error fetching businesses:', Err));
-
-    // Fetch weather
-    const ApiKey = '8cc8baea4a6f46b68d0213631252908';
-    fetch(`https://api.weatherapi.com/v1/forecast.json?key=${ApiKey}&q=auto:ip&days=7&aqi=no&alerts=no`)
-      .then(Res => Res.json())
-      .then(Data => setWeather(Data))
-      .catch(Err => {
-        console.error('Weather error:', Err);
-        setWeatherError(true);
-      });
-
+    setUser({
+      firstName: localStorage.getItem('first_name'),
+      lastName: localStorage.getItem('last_name'),
+      peopleId: localStorage.getItem('people_id'),
+      accessLevel: parseInt(localStorage.getItem('access_level') || '0'),
+    });
   }, [navigate]);
 
-  const GetDayName = (DateStr) => {
-    const Days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return Days[new Date(DateStr).getDay()];
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('people_id');
+    localStorage.removeItem('first_name');
+    localStorage.removeItem('last_name');
+    localStorage.removeItem('access_level');
+    navigate('/login');
   };
 
-  const FormatHour = (TimeStr) => {
-    const Hour = new Date(TimeStr).getHours();
-    if (Hour === 0) return '12a';
-    if (Hour === 12) return 'Noon';
-    if (Hour > 12) return `${Hour - 12}pm`;
-    return `${Hour}am`;
-  };
+  if (!user) return null;
 
-  const GetHourlyItems = () => {
-    if (!Weather) return [];
-    const CurrentHour = new Date(Weather.current.last_updated).getHours();
-    const Hours = Weather.forecast.forecastday[0].hour;
-    const Items = [];
-    for (let I = 0; I < 8; I++) {
-      const HourIndex = (CurrentHour + I * 3) % 24;
-      Items.push(Hours[HourIndex]);
-    }
-    return Items;
-  };
+  const quickLinks = [
+    { title: 'Food-System Directory', link: '/directory', img: '/images/DirectoryHome.webp', desc: 'Browse local food connections' },
+    { title: 'Saige AI', link: '/saige', img: '/images/CharlieHome.png', desc: 'AI-powered farm insights' },
+    { title: 'Livestock Marketplace', link: '/marketplace', img: '/images/HomepageLivestockMarketplace.webp', desc: 'Buy and sell livestock' },
+    { title: 'Plant Knowledgebase', link: '/plants', img: '/images/PlantDBHome.webp', desc: 'Explore 4,000+ plant varieties' },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
-      <HeaderGated />
+    <div className="min-h-screen bg-[#f8f9f6] font-sans">
+      <Header />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="max-w-7xl mx-auto px-4 py-10">
 
-          {/* LEFT: My Accounts */}
-          <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-green-700 mb-4 border-b-2 border-green-300 pb-3">
-              My Accounts
-            </h2>
-
-            <div className="flex flex-col gap-3 mb-4">
-              <Link
-                to={`/accounts/new?PeopleID=${localStorage.getItem('PeopleID')}`}
-                className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100 shadow-sm hover:bg-gray-200 transition-all text-[#3D6B34] font-medium text-sm"
-              >
-                Add a New Account
-              </Link>
-              <Link
-                to={`/accounts/delete?PeopleID=${localStorage.getItem('PeopleID')}`}
-                className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100 shadow-sm hover:bg-gray-200 transition-all text-[#3D6B34] font-medium text-sm"
-              >
-                Delete an Account
-              </Link>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              {Businesses.length === 0 && (
-                <p className="text-gray-500 text-sm">No accounts found.</p>
-              )}
-              {Businesses.map(B => (
-                <div key={B.BusinessID} className="p-3 bg-gray-50 rounded-lg border border-gray-100 shadow-sm">
-                  <Link
-                    to={`/account?PeopleID=${localStorage.getItem('PeopleID')}&BusinessID=${B.BusinessID}`}
-                    className="font-bold text-[#3D6B34] hover:underline text-sm"
-                  >
-                    {B.BusinessName}
-                  </Link>
-                </div>
-              ))}
-            </div>
+        {/* Welcome Banner */}
+        <div className="bg-[#819360] rounded-[20px] px-8 py-8 mb-8 flex flex-col md:flex-row md:items-center md:justify-between shadow-md">
+          <div>
+            <h1 className="text-white text-3xl font-bold m-0">
+              Welcome back, {user.firstName}!
+            </h1>
+            <p className="text-white/80 mt-1 text-sm">
+              {user.firstName} {user.lastName} &nbsp;·&nbsp; Account #{user.peopleId} &nbsp;·&nbsp; Access Level {user.accessLevel}
+            </p>
           </div>
-
-          {/* RIGHT: Weather */}
-          <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
-            {WeatherError && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md">
-                Unable to load weather data. Please check the API key.
-              </div>
-            )}
-
-            {!Weather && !WeatherError && (
-              <p className="text-gray-500 text-sm">Loading weather...</p>
-            )}
-
-            {Weather && (
-              <div>
-                <h2 className="text-xl font-bold text-center text-gray-700 mb-3">
-                  Weather for {Weather.location.name}, {Weather.location.region}
-                </h2>
-
-                {/* Current Weather */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-4xl font-bold">{Math.round(Weather.current.temp_f)}°F</span>
-                    <img src={`https:${Weather.current.condition.icon}`} alt="weather" className="w-12 h-12" />
-                    <div className="text-sm text-gray-600">
-                      <p>{Weather.current.condition.text}</p>
-                      <p>H: {Math.round(Weather.forecast.forecastday[0].day.maxtemp_f)}°F | L: {Math.round(Weather.forecast.forecastday[0].day.mintemp_f)}°F</p>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-600 text-right">
-                    <p>Feels like: {Math.round(Weather.current.feelslike_f)}°F</p>
-                    <p>Wind: {Math.round(Weather.current.wind_mph)} mph</p>
-                    <p>Humidity: {Weather.current.humidity}%</p>
-                  </div>
-                </div>
-
-                <hr className="my-2" />
-
-                {/* Hourly Forecast */}
-                <div className="flex overflow-x-auto gap-2 py-2">
-                  {GetHourlyItems().map((Hour, I) => (
-                    <div key={I} className="flex flex-col items-center min-w-[50px] text-xs text-gray-600">
-                      <span>{FormatHour(Hour.time)}</span>
-                      <img src={`https:${Hour.condition.icon}`} alt="weather" className="w-8 h-8" />
-                      <span>{Math.round(Hour.temp_f)}°F</span>
-                    </div>
-                  ))}
-                </div>
-
-                <hr className="my-2" />
-
-                {/* 7-Day Forecast */}
-                <div className="flex overflow-x-auto gap-2 py-2">
-                  {Weather.forecast.forecastday.map((Day, I) => (
-                    <div key={I} className="flex flex-col items-center min-w-[50px] text-xs text-gray-600">
-                      <span>{GetDayName(Day.date)}</span>
-                      <img src={`https:${Day.day.condition.icon}`} alt="weather" className="w-8 h-8" />
-                      <span>H: {Math.round(Day.day.maxtemp_f)}°F</span>
-                      <span>L: {Math.round(Day.day.mintemp_f)}°F</span>
-                    </div>
-                  ))}
-                </div>
-
-              </div>
-            )}
-          </div>
-
+          <button
+            onClick={handleLogout}
+            className="mt-4 md:mt-0 bg-white text-[#A3301E] font-bold py-2 px-6 rounded-xl text-sm hover:bg-[#A3301E] hover:text-white transition-colors duration-200 uppercase tracking-wider"
+          >
+            Log Out
+          </button>
         </div>
+
+        {/* Quick Links */}
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Quick Access</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+          {quickLinks.map((item, i) => (
+            <Link
+              key={i}
+              to={item.link}
+              className="bg-white rounded-[20px] shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200 group"
+            >
+              <img
+                src={item.img}
+                alt={item.title}
+                className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="p-4">
+                <h3 className="text-[#4d734d] font-bold text-sm mb-1">{item.title}</h3>
+                <p className="text-gray-500 text-xs">{item.desc}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* Account Info Card */}
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Your Account</h2>
+        <div className="bg-white rounded-[20px] shadow-sm border border-gray-100 p-6 max-w-md">
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between border-b border-gray-100 pb-3">
+              <span className="text-gray-500 font-medium">Name</span>
+              <span className="text-gray-800 font-semibold">{user.firstName} {user.lastName}</span>
+            </div>
+            <div className="flex justify-between border-b border-gray-100 pb-3">
+              <span className="text-gray-500 font-medium">Account ID</span>
+              <span className="text-gray-800 font-semibold">#{user.peopleId}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500 font-medium">Access Level</span>
+              <span className="bg-[#819360] text-white text-xs font-bold px-3 py-1 rounded-full">Level {user.accessLevel}</span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <Footer />
+      <footer className="bg-[#1a1a1a] text-white py-12 mt-12">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-gray-500 text-xs uppercase tracking-[0.2em]">© 2026 Oatmeal Farm Network. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 }

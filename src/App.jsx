@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
-
+import DirectoryList from './Directory/pages/DirectoryList';
 
 // Mirroring the 'feature-box' and 'btn-learn' styles from your ASP code [cite: 10, 13, 16]
 const FeatureBox = ({ title, description, imgSrc, link }) => (

@@ -6,13 +6,13 @@ const Header = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
- const FirstName = localStorage.getItem('PeopleFirstName');
-const AccessToken = localStorage.getItem('AccessToken');
-    if (AccessToken && firstName) {
-      setUser({ firstName });
-    }
-  }, []);
+useEffect(() => {
+  const firstName = localStorage.getItem('PeopleFirstName');
+  const AccessToken = localStorage.getItem('AccessToken');
+  if (AccessToken && firstName) {
+    setUser({ firstName });
+  }
+}, []);
 
 const handleLogout = () => {
   localStorage.removeItem('AccessToken');
