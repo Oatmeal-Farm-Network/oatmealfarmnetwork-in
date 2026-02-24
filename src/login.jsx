@@ -15,30 +15,38 @@ export default function Login() {
     setLoading(true);
 
     try {
+      const body = JSON.stringify({ Email: email, Password: password });
+      console.log('Sending:', body);
+
       const response = await fetch('http://127.0.0.1:8000/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: body,
       });
 
       const data = await response.json();
+      console.log('Response:', JSON.stringify(data));
 
       if (!response.ok) {
-        setError(data.detail || 'Login failed. Please try again.');
+        const detail = data.detail;
+        if (Array.isArray(detail)) {
+          setError(detail.map(function(d) { return d.msg; }).join(', '));
+        } else {
+          setError(detail || 'Login failed. Please try again.');
+        }
         return;
       }
 
-      // Store token and user info in localStorage
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('people_id', data.people_id);
-      localStorage.setItem('first_name', data.first_name);
-      localStorage.setItem('last_name', data.last_name);
-      localStorage.setItem('access_level', data.access_level);
+      localStorage.setItem('access_token', data.AccessToken);
+      localStorage.setItem('people_id', data.PeopleID);
+      localStorage.setItem('first_name', data.PeopleFirstName);
+      localStorage.setItem('last_name', data.PeopleLastName);
+      localStorage.setItem('access_level', data.AccessLevel);
 
-      // Redirect to dashboard
       navigate('/dashboard');
 
     } catch (err) {
+      console.error('Login error:', err);
       setError('Unable to connect to server. Please try again.');
     } finally {
       setLoading(false);
@@ -52,10 +60,8 @@ export default function Login() {
       <section className="py-16 px-4">
         <div className="max-w-md mx-auto">
 
-          {/* Card */}
           <div className="bg-white rounded-[20px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden">
 
-            {/* Card Header */}
             <div className="bg-[#819360] px-8 py-8 text-center">
               <img
                 src="/images/Oatmeal-Farm-Network-logo-horizontal-white.webp"
@@ -66,7 +72,6 @@ export default function Login() {
               <p className="text-white/80 text-sm mt-1">Sign in to your account</p>
             </div>
 
-            {/* Form */}
             <div className="px-8 py-8">
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-6 text-sm">

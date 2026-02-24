@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Header from './Header';
+import Header from './HeaderGated';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Check if user is logged in
     const token = localStorage.getItem('access_token');
     if (!token) {
       navigate('/login');

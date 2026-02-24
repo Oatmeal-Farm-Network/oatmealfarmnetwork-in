@@ -22,12 +22,16 @@ import "./AnimalAddWizard.css";
 import DirectoryList from './Directory/pages/DirectoryList';
 import DirectoryDetail from './Directory/pages/DirectoryDetail';
 import BusinessProfile from './Directory/pages/BusinessProfile';
+import Accounts from './Accounts.jsx';
+
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <AccountProvider>
         <Routes>
+          <Route path="/accounts" element={<Accounts />} />
           <Route path="/" element={<App />} />
           <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
