@@ -82,7 +82,7 @@ const handleLogout = () => {
             <li><Link to="/" onClick={() => setIsOpen(false)} className="!text-white block">Home</Link></li>
             <li><Link to="/directory" onClick={() => setIsOpen(false)} className="!text-white block">Directory</Link></li>
             <li><Link to="/knowledgebases" onClick={() => setIsOpen(false)} className="!text-white block">Knowledgebases</Link></li>
-            <li><Link to="/marketplace" onClick={() => setIsOpen(false)} className="!text-white block">Marketplaces</Link></li>
+            <li><Link to="/marketplaces" onClick={() => setIsOpen(false)} className="!text-white block">Marketplaces</Link></li>
             <li><Link to="/saige" onClick={() => setIsOpen(false)} className="!text-white block">Saige</Link></li>
             <li><Link to="/about" onClick={() => setIsOpen(false)} className="!text-white block">About Us</Link></li>
             {!user ? (
