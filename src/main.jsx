@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App.jsx'
 import About from './About.jsx'
 import Login from './login.jsx'
+import Signup from './Signup.jsx'
 import Dashboard from './Dashboard.jsx'
 import './index.css'
 import AccountHome from './AccountHome.jsx';
@@ -23,6 +24,8 @@ import DirectoryList from './Directory/pages/DirectoryList';
 import DirectoryDetail from './Directory/pages/DirectoryDetail';
 import BusinessProfile from './Directory/pages/BusinessProfile';
 import Accounts from './Accounts.jsx';
+import Knowledgebases from './Knowledgebases.jsx';
+import Marketplaces from './Marketplaces.jsx';
 
 
 
@@ -35,6 +38,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/" element={<App />} />
           <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/account" element={<AccountHome />} />
           <Route path="/account/change-type" element={<AccountChangeType />} />
@@ -47,6 +51,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/fields" element={<PrecisionAgFields />} />
           <Route path="/precision-ag/add" element={<PrecisionAgAdd />} />
           <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />
+          <Route path="/knowledgebases" element={<Knowledgebases />} />
+          <Route path="/marketplaces" element={<Marketplaces />} />
           <Route path="/directory" element={<DirectoryList />} />
           <Route path="/directory/:directoryType" element={<DirectoryDetail />} />
           <Route path="/profile" element={<BusinessProfile />} />
