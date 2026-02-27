@@ -26,6 +26,8 @@ import BusinessProfile from './Directory/pages/BusinessProfile';
 import Accounts from './Accounts.jsx';
 import Knowledgebases from './Knowledgebases.jsx';
 import Marketplaces from './Marketplaces.jsx';
+import ContactUs from './ContactUs.jsx';
+import ContactUsConfirm from './ContactUsConfirm.jsx';
 
 
 
@@ -53,6 +55,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />
           <Route path="/knowledgebases" element={<Knowledgebases />} />
           <Route path="/marketplaces" element={<Marketplaces />} />
+          <Route path="/contact-us" element={<ContactUs />} />
+          <Route path="/contact-us/confirm" element={<ContactUsConfirm />} />
           <Route path="/directory" element={<DirectoryList />} />
           <Route path="/directory/:directoryType" element={<DirectoryDetail />} />
           <Route path="/profile" element={<BusinessProfile />} />
