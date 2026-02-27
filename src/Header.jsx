@@ -46,6 +46,7 @@ const handleLogout = () => {
             <li><Link to="/marketplaces" className="nav-link">Marketplaces</Link></li>
             <li><Link to="/saige" className="nav-link">Saige</Link></li>
             <li><Link to="/about" className="nav-link">About Us</Link></li>
+            <li><Link to="/contact-us" className="nav-link">Contact Us</Link></li>
             {!user ? (
               <>
                 <li><Link to="/login" className="nav-link">Login</Link></li>
@@ -85,6 +86,7 @@ const handleLogout = () => {
             <li><Link to="/marketplaces" onClick={() => setIsOpen(false)} className="!text-white block">Marketplaces</Link></li>
             <li><Link to="/saige" onClick={() => setIsOpen(false)} className="!text-white block">Saige</Link></li>
             <li><Link to="/about" onClick={() => setIsOpen(false)} className="!text-white block">About Us</Link></li>
+            <li><Link to="/contact-us" onClick={() => setIsOpen(false)} className="!text-white block">Contact Us</Link></li>
             {!user ? (
               <>
                 <li><Link to="/login" onClick={() => setIsOpen(false)} className="!text-white block">Login</Link></li>
