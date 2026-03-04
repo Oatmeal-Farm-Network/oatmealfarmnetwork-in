@@ -1,12 +1,26 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import HeaderGated from './HeaderGated';
 import Footer from './Footer';
 import { useAccount } from './AccountContext';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
 export default function AccountLayout({ children, Business, BusinessID, PeopleID }) {
   const { Expanded, setExpanded, OpenSections, setOpenSections } = useAccount();
   const BT = Business?.BusinessTypeID;
+  const [fields, setFields] = useState([]);
+  const location = useLocation();
+
+  // Reload fields whenever the URL changes (catches deletions/additions)
+  useEffect(() => {
+    if (BT === 8 && BusinessID) {
+      fetch(`${API_URL}/api/fields?business_id=${BusinessID}`)
+        .then(r => r.ok ? r.json() : [])
+        .then(data => setFields(Array.isArray(data) ? data : []))
+        .catch(() => setFields([]));
+    }
+  }, [BT, BusinessID, location.pathname, location.search]);
 
   const ToggleSection = (Label) => {
     setOpenSections(Prev => ({ ...Prev, [Label]: !Prev[Label] }));
@@ -104,7 +118,21 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               <NavSection Icon="/icons/PrecisionAg.svg" Label="Precision Ag">
                 <NavChild To={`/oatsense?BusinessID=${BusinessID}`} Label="Dashboard" />
                 <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}`} Label="Fields" />
-                <NavChild To={`/precision-ag/add?BusinessID=${BusinessID}`} Label="Add Field" />
+                <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`} Label="Add Field" />
+                {fields.length > 0 && (
+                  <>
+                    <div className="ml-4 mt-1 mb-0.5 text-[10px] text-gray-400 uppercase tracking-wide px-3">
+                      {Expanded ? 'Your Fields' : ''}
+                    </div>
+                    {fields.map(f => (
+                      <NavChild
+                        key={f.fieldid || f.id}
+                        To={`/precision-ag/analyses?BusinessID=${BusinessID}&FieldID=${f.fieldid || f.id}`}
+                        Label={`🌾 ${f.name}`}
+                      />
+                    ))}
+                  </>
+                )}
                 <NavChild To={`/precision-ag/analyses?BusinessID=${BusinessID}`} Label="Analyses" />
                 <NavChild To={`/oatsense/crop-rotation?BusinessID=${BusinessID}`} Label="Crop Rotation" />
                 <NavChild To={`/oatsense/notes?BusinessID=${BusinessID}`} Label="Notes" />

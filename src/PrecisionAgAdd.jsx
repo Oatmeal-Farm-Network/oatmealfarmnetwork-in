@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
+import PrecisionAgFields from './PrecisionAgFields';
 
 export default function PrecisionAgAdd() {
   const [SearchParams] = useSearchParams();
@@ -15,7 +16,7 @@ export default function PrecisionAgAdd() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
-      <h1 className="text-3xl font-bold text-gray-900">Add Field</h1>
+      <PrecisionAgFields businessId={BusinessID} />
     </AccountLayout>
   );
 }
