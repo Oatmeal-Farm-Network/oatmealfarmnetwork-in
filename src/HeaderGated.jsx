@@ -49,6 +49,8 @@ const Header = () => {
           <ul className="flex space-x-10 text-sm font-normal">
             <li><Link to="/dashboard" className="nav-link">Dashboard</Link></li>
             <li><Link to="/saige" className="nav-link">Saige</Link></li>
+            <li><Link to="/directory" className="nav-link">Directory</Link></li>
+     
 
             <li className="relative group">
               <button className="nav-link flex items-center gap-1">
@@ -82,7 +84,7 @@ const Header = () => {
                 )}
               </ul>
             </li>
-
+       <li><Link to="/contact-us" className="nav-link">Contact Us</Link></li>
             <li><button onClick={handleLogout} className="nav-link">Log Out</button></li>
           </ul>
         </div>
@@ -105,6 +107,7 @@ const Header = () => {
           <ul className="flex flex-col p-6 space-y-4 text-base font-normal text-center">
             <li><Link to="/dashboard" onClick={() => setIsOpen(false)} className="nav-link block">Dashboard</Link></li>
             <li><Link to="/saige" onClick={() => setIsOpen(false)} className="nav-link block">Saige</Link></li>
+            <li><Link to="/contact-us" onClick={() => setIsOpen(false)} className="nav-link block">Contact Us</Link></li>
             <li>
               <p className="text-[#EFAE15] font-semibold text-sm mb-1">Accounts</p>
               <ul className="space-y-2">

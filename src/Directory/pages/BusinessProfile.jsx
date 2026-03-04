@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
-import agriAssociaLogo from '../images/agri_associa.png';
-import agricultureAssociationLogo from '../images/Agriculture Association.jpeg';
 import photoNotAvailable from '../images/photo not available .jpg';
 import { DIRECTORY_TYPE_TO_IMAGE, DIRECTORY_TYPE_TO_BUSINESS_TYPE } from './directoryMappings';
 import { FaFacebookF, FaPinterestP, FaXTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaGlobe } from 'react-icons/fa6';
-
+import Header from '../../Header';
+import HeaderGated from '../../HeaderGated';
+import Footer from '../../Footer';
 
 const BusinessProfile = () => {
     const location = useLocation();
@@ -17,29 +17,19 @@ const BusinessProfile = () => {
     const selectedState = location.state?.selectedState;
     const nameFilter = location.state?.nameFilter;
     const [business, setBusiness] = useState(initialBusiness);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-   useEffect(() => {
-    setBusiness(initialBusiness);
+    useEffect(() => {
+        setBusiness(initialBusiness);
     }, [initialBusiness]);
 
-
-
-
-    // Contact form state
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        comments: ''
+        firstName: '', lastName: '', email: '', phone: '', comments: ''
     });
-
-    // Math question state
     const [mathQuestion, setMathQuestion] = useState({ num1: 0, num2: 0, answer: '' });
     const [userMathAnswer, setUserMathAnswer] = useState('');
     const [formSubmitted, setFormSubmitted] = useState(false);
 
-    // Generate random math question
     const generateMathQuestion = () => {
         const num1 = Math.floor(Math.random() * 10) + 1;
         const num2 = Math.floor(Math.random() * 10) + 1;
@@ -47,392 +37,260 @@ const BusinessProfile = () => {
         setUserMathAnswer('');
     };
 
-    // Initialize math question on component mount
+    useEffect(() => { generateMathQuestion(); }, []);
+
     useEffect(() => {
-        generateMathQuestion();
+        const token = localStorage.getItem('access_token');
+        setIsLoggedIn(Boolean(token));
     }, []);
 
-    // Handle form input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
-        
-        // Validate math answer
         if (parseInt(userMathAnswer) !== mathQuestion.answer) {
             alert('Please answer the math question correctly.');
             return;
         }
-
-        // Validate required fields
         if (!formData.firstName || !formData.lastName || !formData.email) {
             alert('Please fill in all required fields.');
             return;
         }
-
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email)) {
             alert('Please enter a valid email address.');
             return;
         }
-
-        // Process form submission (you can add API call here)
         console.log('Form submitted:', formData);
         alert('Thank you for your message! We will get back to you soon.');
-        
-        // Reset form
-        setFormData({
-            firstName: '',
-            lastName: '',
-            email: '',
-            phone: '',
-            comments: ''
-        });
+        setFormData({ firstName: '', lastName: '', email: '', phone: '', comments: '' });
         setUserMathAnswer('');
         generateMathQuestion();
         setFormSubmitted(true);
     };
 
+    const backToListings = () => navigate(`/directory/${directoryType || 'agricultural-associations'}`, {
+        state: { selectedCountry, selectedState, nameFilter }
+    });
+
+    const socialLinks = [
+        { key: 'Facebook',  label: 'Facebook',  icon: <FaFacebookF />,  base: 'https://facebook.com/',  color: 'bg-[#1877F2]' },
+        { key: 'Pinterest', label: 'Pinterest', icon: <FaPinterestP />, base: 'https://pinterest.com/', color: 'bg-[#E60023]' },
+        { key: 'Twitter',   label: 'Twitter',   icon: <FaXTwitter />,   base: 'https://twitter.com/',   color: 'bg-black' },
+        { key: 'Instagram', label: 'Instagram', icon: <FaInstagram />,  base: 'https://instagram.com/', color: 'bg-[#E1306C]' },
+        { key: 'LinkedIn',  label: 'LinkedIn',  icon: <FaLinkedinIn />, base: 'https://linkedin.com/company/', color: 'bg-[#0A66C2]' },
+        { key: 'YouTube',   label: 'YouTube',   icon: <FaYoutube />,    base: 'https://youtube.com/',   color: 'bg-[#FF0000]' },
+        { key: 'Website',   label: 'Website',   icon: <FaGlobe />,      base: '',                       color: 'bg-[#4d734d]' },
+    ];
+
     if (!business) {
         return (
-            <div>
-                <header className="header">
-                    <div className="logo-container">
-                        <img src={DIRECTORY_TYPE_TO_IMAGE[directoryType] || photoNotAvailable} className="logo-image" />
-                        <span className="logo-text">{DIRECTORY_TYPE_TO_BUSINESS_TYPE[directoryType] || 'Business'}</span>
-                    </div>
-                </header>
-                <div className="profile-page-container">
-                    <p>No business information available.</p>
-                    <button 
-                        onClick={() => navigate(`/directory/${directoryType || 'agricultural-associations'}`, {
-                            state: {
-                                selectedCountry,
-                                selectedState,
-                                nameFilter
-                            }
-                        })} 
-                        className="back-button"
-                    >
+            <div className="min-h-screen bg-gray-100 font-sans">
+                {isLoggedIn ? <HeaderGated /> : <Header />}
+                <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+                    <p className="text-gray-600 mb-4">No business information available.</p>
+                    <button onClick={backToListings} className="bg-[#4d734d] text-white px-5 py-2 rounded-lg hover:bg-[#3d5e3d] transition-colors">
                         ← Back to Listings
                     </button>
                 </div>
+                <Footer />
             </div>
         );
     }
 
-    return (
-        <div>
-            {/* Header */}
-            <header className="header">
-                <div className="logo-container">
-                    <img src={DIRECTORY_TYPE_TO_IMAGE[directoryType] || photoNotAvailable} className="logo-image" />
-                    <span className="logo-text">{DIRECTORY_TYPE_TO_BUSINESS_TYPE[directoryType] || 'Business'}</span>
-                </div>
-            </header>
+    const fullAddress = [business.Address, business.City, business.State, business.ZipCode, business.Country].filter(Boolean).join(', ');
 
-            {/* Profile Page Content */}
-            <div className="profile-page-container">
-                <div className="profile-page-header">
-                    <button 
-                        onClick={() => navigate(`/directory/${directoryType || 'agricultural-associations'}`, {
-                            state: {
-                                selectedCountry,
-                                selectedState,
-                                nameFilter
-                            }
-                        })} 
-                        className="back-button"
-                    >
+    return (
+        <div className="min-h-screen bg-gray-100 font-sans">
+            {isLoggedIn ? <HeaderGated /> : <Header />}
+
+            <div className="max-w-6xl mx-auto px-4 py-8">
+
+                {/* Back button + Business name */}
+                <div className="mb-6">
+                    <button onClick={backToListings} className="text-[#4d734d] font-semibold hover:underline mb-3 inline-flex items-center gap-1">
                         ← Back to Listings
                     </button>
-                    <h1 className="profile-business-name">{business.BusinessName}</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">{business.BusinessName}</h1>
                 </div>
 
-                <div className="profile-page-content-with-form">
-                    {/* Left Side - Business Information */}
-                    <div className="profile-left-section">
-                        {/* Profile Image and Contact Section */}
-                        <div className="profile-top-section">
-                            <div className="profile-image-section">
-                                {business.ProfileImage ? (
-                                    <img src={business.ProfileImage} alt={`${business.BusinessName} Profile`} className="profile-image-large" />
-                                ) : (
-                                    <img src={photoNotAvailable} alt="Photo Not Available" className="profile-image-large" />
-                                )}
-                            </div>
-                            
-                            <div className="profile-contact-section">
+                <div className="flex flex-col lg:flex-row gap-6">
+
+                    {/* ── LEFT COLUMN ── */}
+                    <div className="flex-1 space-y-6">
+
+                        {/* Profile image + contact info side by side */}
+                        <div className="bg-white rounded-2xl shadow-sm p-6 flex flex-col sm:flex-row gap-6">
+                            <img
+                                src={business.ProfileImage || photoNotAvailable}
+                                alt={business.BusinessName}
+                                className="w-40 h-40 object-cover rounded-xl border border-gray-200 flex-shrink-0"
+                            />
+                            <div className="flex-1 space-y-3">
                                 {(business.Phone || business.Website) && (
-                                    <div className="profile-section">
-                                        <h2>Contact Information</h2>
-                                        <div className="contact-info">
-                                            {business.Phone && (
-                                                <div className="contact-item">
-                                                    <strong>Phone:</strong>
-                                                    <a href={`tel:${business.Phone}`} className="contact-link">{business.Phone}</a>
-                                                </div>
-                                            )}
-                                            {business.Website && (
-                                                <div className="contact-item">
-                                                    <strong>Website:</strong>
-                                                    <a href={business.Website} target="_blank" rel="noopener noreferrer" className="contact-link">
-                                                        {business.Website}
-                                                    </a>
-                                                </div>
-                                            )}
-                                        </div>
+                                    <div>
+                                        <h2 className="text-lg font-bold text-[#4d734d] mb-2">Contact Information</h2>
+                                        {business.Phone && (
+                                            <p className="text-sm text-gray-700">
+                                                <span className="font-semibold">Phone: </span>
+                                                <a href={`tel:${business.Phone}`} className="text-[#4d734d] hover:underline">{business.Phone}</a>
+                                            </p>
+                                        )}
+                                        {business.Website && (
+                                            <p className="text-sm text-gray-700 mt-1">
+                                                <span className="font-semibold">Website: </span>
+                                                <a href={business.Website} target="_blank" rel="noopener noreferrer" className="text-[#4d734d] hover:underline break-all">{business.Website}</a>
+                                            </p>
+                                        )}
                                     </div>
                                 )}
 
-                                <div className="profile-section">
-                                    <h2>Connect With Us</h2>
-                                    <div className="social-section">
-                                        <div className="social-icons-large">
-                                            {business.Facebook ? (
-                                                <a 
-                                                    href={business.Facebook.startsWith('http') ? business.Facebook : `https://facebook.com/${business.Facebook}`} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer" 
-                                                    className="social-icon-large facebook-icon"
-                                                >
-                                                    <span>f</span>
-                                                    <span>Facebook</span>
+                                {/* Social icons */}
+                                <div>
+                                    <h2 className="text-lg font-bold text-[#4d734d] mb-2">Connect With Us</h2>
+                                    <div className="flex flex-wrap gap-2">
+                                        {socialLinks.map(({ key, label, icon, base, color }) => {
+                                            const val = business[key];
+                                            const href = val ? (val.startsWith('http') ? val : `${base}${val}`) : null;
+                                            return href ? (
+                                                <a key={key} href={href} target="_blank" rel="noopener noreferrer"
+                                                    className={`flex items-center gap-1.5 ${color} text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-80 transition-opacity`}>
+                                                    {icon} {label}
                                                 </a>
                                             ) : (
-                                                <div className="social-icon-large facebook-icon">
-                                                    <span>f</span>
-                                                    <span>Facebook</span>
-                                                </div>
-                                            )}
-                                            
-                                            {business.Pinterest ? (
-                                                <a 
-                                                    href={business.Pinterest.startsWith('http') ? business.Pinterest : `https://pinterest.com/${business.Pinterest}`} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer" 
-                                                    className="social-icon-large pinterest-icon"
-                                                >
-                                                    <span>P</span>
-                                                    <span>Pinterest</span>
-                                                </a>
-                                            ) : (
-                                                <div className="social-icon-large pinterest-icon">
-                                                    <span>P</span>
-                                                    <span>Pinterest</span>
-                                                </div>
-                                            )}
-                                            
-                                            {business.Twitter ? (
-                                                <a 
-                                                    href={business.Twitter.startsWith('http') ? business.Twitter : `https://twitter.com/${business.Twitter}`} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer" 
-                                                    className="social-icon-large twitter-icon"
-                                                >
-                                                    <span>𝕏</span>
-                                                    <span>Twitter</span>
-                                                </a>
-                                            ) : (
-                                                <div className="social-icon-large twitter-icon">
-                                                    <span>𝕏</span>
-                                                    <span>Twitter</span>
-                                                </div>
-                                            )}
-                                            
-                                            {business.Instagram ? (
-                                                <a 
-                                                    href={business.Instagram.startsWith('http') ? business.Instagram : `https://instagram.com/${business.Instagram}`} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer" 
-                                                    className="social-icon-large instagram-icon"
-                                                >
-                                                    <span>📷</span>
-                                                    <span>Instagram</span>
-                                                </a>
-                                            ) : (
-                                                <div className="social-icon-large instagram-icon">
-                                                    <span>📷</span>
-                                                    <span>Instagram</span>
-                                                </div>
-                                            )}
-                                        </div>
+                                                <span key={key}
+                                                    className="flex items-center gap-1.5 bg-gray-200 text-gray-400 text-xs font-semibold px-3 py-1.5 rounded-full cursor-not-allowed">
+                                                    {icon} {label}
+                                                </span>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="profile-main-info">
-                            <div className="profile-section">
-                                <h2>Business Information</h2>
-                                <div className="profile-grid">
-                                    <div className="profile-item">
-                                        <strong>Business Name:</strong>
-                                        <span>{business.BusinessName}</span>
+                        {/* Business Information */}
+                        <div className="bg-white rounded-2xl shadow-sm p-6">
+                            <h2 className="text-lg font-bold text-[#4d734d] mb-4">Business Information</h2>
+                            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm text-gray-700">
+                                {[
+                                    ['Business Name', business.BusinessName],
+                                    ['Business Type', DIRECTORY_TYPE_TO_BUSINESS_TYPE[directoryType] || 'Business'],
+                                    ['Address', business.Address],
+                                    ['City', business.City],
+                                    ['State', business.State],
+                                    ['Zip Code', business.ZipCode],
+                                    ['Country', business.Country],
+                                ].filter(([, val]) => val).map(([label, val]) => (
+                                    <div key={label} className="flex flex-col">
+                                        <dt className="font-semibold text-gray-500 text-xs uppercase tracking-wide">{label}</dt>
+                                        <dd className="mt-0.5">{val}</dd>
                                     </div>
-                                    {business.Address && (
-                                        <div className="profile-item">
-                                            <strong>Address:</strong>
-                                            <span>{business.Address}</span>
-                                        </div>
-                                    )}
-                                    {business.City && (
-                                        <div className="profile-item">
-                                            <strong>City:</strong>
-                                            <span>{business.City}</span>
-                                        </div>
-                                    )}
-                                    {business.State && (
-                                        <div className="profile-item">
-                                            <strong>State:</strong>
-                                            <span>{business.State}</span>
-                                        </div>
-                                    )}
-                                    {business.ZipCode && (
-                                        <div className="profile-item">
-                                            <strong>Zip Code:</strong>
-                                            <span>{business.ZipCode}</span>
-                                        </div>
-                                    )}
-                                    {business.Country && (
-                                        <div className="profile-item">
-                                            <strong>Country:</strong>
-                                            <span>{business.Country}</span>
-                                        </div>
-                                    )}
-                                    <div className="profile-item">
-                                        <strong>Business Type:</strong>
-                                        <span>Agriculture Association</span>
-                                    </div>
-                                </div>
-                            </div>
+                                ))}
+                            </dl>
+                        </div>
 
-                            <div className="profile-section">
-                                <h2>Location</h2>
-                                <div className="location-info">
-                                    <p>{[business.Address, business.City, business.State, business.ZipCode, business.Country].filter(Boolean).join(', ')}</p>
-                                </div>
+                        {/* Location */}
+                        {fullAddress && (
+                            <div className="bg-white rounded-2xl shadow-sm p-6">
+                                <h2 className="text-lg font-bold text-[#4d734d] mb-2">Location</h2>
+                                <p className="text-sm text-gray-700">{fullAddress}</p>
                             </div>
-                            {/* Business Description */}
-                            <div className="profile-section">
-                                <h2>Description</h2>
-                                <h3>{business.Heading}</h3>
+                        )}
+
+                        {/* Description */}
+                        {(business.Heading || business.Description || business.About || business.Summary || business.Services || business.Details || business.Description2) && (
+                            <div className="bg-white rounded-2xl shadow-sm p-6">
+                                <h2 className="text-lg font-bold text-[#4d734d] mb-2">Description</h2>
+                                {business.Heading && <h3 className="text-base font-semibold text-gray-800 mb-2">{business.Heading}</h3>}
                                 {(business.Description || business.About || business.Summary || business.Services || business.Details) && (
-                                <div className="business-description">
-                                    {business.Description || business.About || business.Summary || business.Services || business.Details}
-                                </div>
-                               )}
-                               {business.Description2}
+                                    <p className="text-sm text-gray-700 leading-relaxed">
+                                        {business.Description || business.About || business.Summary || business.Services || business.Details}
+                                    </p>
+                                )}
+                                {business.Description2 && (
+                                    <p className="text-sm text-gray-700 leading-relaxed mt-3">{business.Description2}</p>
+                                )}
                             </div>
-                            
-                        </div>
+                        )}
                     </div>
 
-                    {/* Right Side - Contact Form */}
-                    <div className="contact-form-section">
-                        <div className="contact-form-header">
-                            <h2>Contact</h2>
-                        </div>
-                        
-                        <form onSubmit={handleSubmit} className="contact-form">
-                            <div className="form-group">
-                                <label htmlFor="firstName">First Name</label>
-                                <input
-                                    type="text"
-                                    id="firstName"
-                                    name="firstName"
-                                    value={formData.firstName}
-                                    onChange={handleInputChange}
-                                    required
-                                    className="form-input"
-                                />
-                            </div>
+                    {/* ── RIGHT COLUMN — Contact Form ── */}
+                    <div className="w-full lg:w-80 flex-shrink-0">
+                        <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-6">
+                            <h2 className="text-lg font-bold text-[#4d734d] mb-4">Contact {business.BusinessName}</h2>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                {[
+                                    { id: 'firstName', label: 'First Name', type: 'text', required: true },
+                                    { id: 'lastName',  label: 'Last Name',  type: 'text', required: true },
+                                    { id: 'email',     label: 'Email',      type: 'email', required: true },
+                                    { id: 'phone',     label: 'Phone',      type: 'tel',  required: false, optional: true },
+                                ].map(({ id, label, type, required, optional }) => (
+                                    <div key={id}>
+                                        <label htmlFor={id} className="block text-sm font-semibold text-gray-700 mb-1">
+                                            {label} {optional && <span className="text-gray-400 font-normal">(Optional)</span>}
+                                            {required && <span className="text-red-500"> *</span>}
+                                        </label>
+                                        <input
+                                            type={type}
+                                            id={id}
+                                            name={id}
+                                            value={formData[id]}
+                                            onChange={handleInputChange}
+                                            required={required}
+                                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#4d734d] focus:outline-none focus:ring-2 focus:ring-[#4d734d]/20"
+                                        />
+                                    </div>
+                                ))}
 
-                            <div className="form-group">
-                                <label htmlFor="lastName">Last Name</label>
-                                <input
-                                    type="text"
-                                    id="lastName"
-                                    name="lastName"
-                                    value={formData.lastName}
-                                    onChange={handleInputChange}
-                                    required
-                                    className="form-input"
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="email">Email</label>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                    required
-                                    className="form-input"
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="phone">Phone <span className="optional">(Optional)</span></label>
-                                <input
-                                    type="tel"
-                                    id="phone"
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleInputChange}
-                                    className="form-input"
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="comments">Comments / Questions <span className="optional">(Optional)</span></label>
-                                <textarea
-                                    id="comments"
-                                    name="comments"
-                                    value={formData.comments}
-                                    onChange={handleInputChange}
-                                    rows="5"
-                                    className="form-textarea"
-                                ></textarea>
-                            </div>
-
-                            <div className="form-group math-question">
-                                <label>Math Question</label>
-                                <p>Please answer the simple question below so we know that you are a human.</p>
-                                <div className="math-question-container">
-                                    <span className="math-expression">
-                                        {mathQuestion.num1} + {mathQuestion.num2} =
-                                    </span>
-                                    <input
-                                        type="number"
-                                        value={userMathAnswer}
-                                        onChange={(e) => setUserMathAnswer(e.target.value)}
-                                        required
-                                        className="math-input"
-                                        placeholder="?"
+                                <div>
+                                    <label htmlFor="comments" className="block text-sm font-semibold text-gray-700 mb-1">
+                                        Comments / Questions <span className="text-gray-400 font-normal">(Optional)</span>
+                                    </label>
+                                    <textarea
+                                        id="comments"
+                                        name="comments"
+                                        value={formData.comments}
+                                        onChange={handleInputChange}
+                                        rows={4}
+                                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#4d734d] focus:outline-none focus:ring-2 focus:ring-[#4d734d]/20"
                                     />
                                 </div>
-                            </div>
 
-                            <button type="submit" className="submit-button">
-                                Submit
-                            </button>
-                        </form>
+                                {/* Math captcha */}
+                                <div className="bg-gray-50 rounded-xl p-4">
+                                    <p className="text-sm font-semibold text-gray-700 mb-1">Human Verification</p>
+                                    <p className="text-xs text-gray-500 mb-2">Answer the simple math question below.</p>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-bold text-gray-800">{mathQuestion.num1} + {mathQuestion.num2} =</span>
+                                        <input
+                                            type="number"
+                                            value={userMathAnswer}
+                                            onChange={(e) => setUserMathAnswer(e.target.value)}
+                                            required
+                                            placeholder="?"
+                                            className="w-16 rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-[#4d734d] focus:outline-none focus:ring-2 focus:ring-[#4d734d]/20"
+                                        />
+                                    </div>
+                                </div>
+
+                                <button type="submit"
+                                    className="w-full bg-[#4d734d] text-white font-semibold py-2.5 rounded-lg hover:bg-[#3d5e3d] transition-colors text-sm">
+                                    Send Message
+                                </button>
+                            </form>
+                        </div>
                     </div>
+
                 </div>
             </div>
+
+            <Footer />
         </div>
     );
 };
 
-export default BusinessProfile; 
+export default BusinessProfile;

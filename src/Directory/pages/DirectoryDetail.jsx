@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../config';
 import { DIRECTORY_TYPE_TO_IMAGE, DIRECTORY_TYPE_TO_BUSINESS_TYPE } from './directoryMappings';
 import photoNotAvailable from '../images/photo not available .jpg';
 import Header from '../../Header';
+import HeaderGated from '../../HeaderGated';
 import Footer from '../../Footer';
 
 const DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID = {
@@ -167,6 +168,7 @@ const DirectoryDetail = function() {
     var location = useLocation();
     var backState = location.state;
 
+    var [isLoggedIn, setIsLoggedIn] = useState(false);
     var [countries, setCountries] = useState([]);
     var [states, setStates] = useState([]);
     var [businesses, setBusinesses] = useState([]);
@@ -180,6 +182,11 @@ const DirectoryDetail = function() {
     var [error, setError] = useState(null);
     var [currentPage, setCurrentPage] = useState(1);
     var itemsPerPage = 10;
+
+    useEffect(function() {
+        const token = localStorage.getItem('access_token');
+        setIsLoggedIn(Boolean(token));
+    }, []);
 
     var businessType = DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID[directoryType] || directoryType;
     var pageTitle = directoryType
@@ -276,7 +283,7 @@ const DirectoryDetail = function() {
 
     return (
         <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-            <Header />
+            {isLoggedIn ? <HeaderGated /> : <Header />}
 
             {/* Page Header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #e0e0e0' }}>

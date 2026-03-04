@@ -4,11 +4,10 @@ import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { useNavigate } from "react-router-dom";
 
-
 export default function AnimalsHome() {
   const navigate = useNavigate();
-  const [SearchParams] = useSearchParams();
-  const BusinessID = SearchParams.get('BusinessID');
+  const [searchParams] = useSearchParams();
+  const BusinessID = searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('PeopleID');
   const { Business, LoadBusiness } = useAccount();
   const [Animals, setAnimals] = useState([]);
@@ -16,20 +15,30 @@ export default function AnimalsHome() {
   const [Error, setError] = useState(false);
 
   useEffect(() => {
-    LoadBusiness(BusinessID);
+  LoadBusiness(BusinessID);
 
-    fetch(`${import.meta.env.VITE_API_URL}/auth/animals?BusinessID=${BusinessID}`)
-      .then(Res => Res.json())
-      .then(Data => {
-        setAnimals(Data);
-        setLoading(false);
-      })
-      .catch(Err => {
-        console.error('Error fetching animals:', Err);
-        setError(true);
-        setLoading(false);
-      });
-  }, [BusinessID]);
+  const token = localStorage.getItem('access_token');
+  const url = `/auth/animals?BusinessID=${BusinessID}`;
+
+  fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();  // <-- parse JSON directly
+    })
+    .then(data => {
+      console.log("Animals data:", data);
+      setAnimals(data);   // <-- populate state
+      setLoading(false);  // <-- stop loading spinner
+    })
+    .catch(err => {
+      console.error("Error fetching animals:", err);
+      setError(true);
+      setLoading(false);
+    });
+
+}, [BusinessID, LoadBusiness]);
 
   const FormatCurrency = (Amount) => {
     if (!Amount || Amount === 0) return '';
