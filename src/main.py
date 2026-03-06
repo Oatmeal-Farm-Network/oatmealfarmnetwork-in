@@ -6,7 +6,9 @@ from database import get_db, SessionLocal
 import os
 from dotenv import load_dotenv
 from routers import businesses
-from routers import precision_ag  
+from routers import precision_ag
+from routers import plant_knowledgebase
+from routers import ingredient-knowledgebase
 
 load_dotenv()
 print("SECRET_KEY loaded:", os.getenv("SECRET_KEY"))
@@ -29,7 +31,10 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(businesses.router)
 app.include_router(precision_ag.router)
+app.include_router(plant_knowledgebase.router)
+app.include_router(ingredient-knowledgebase.router)
 print("PRECISION AG ROUTER REGISTERED")
+print("PLANT KNOWLEDGEBASE ROUTER REGISTERED")
 
 
 # ─── Precision Ag routes ──────────────────────────────────────────────────────

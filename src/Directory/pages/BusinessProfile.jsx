@@ -5,7 +5,6 @@ import photoNotAvailable from '../images/photo not available .jpg';
 import { DIRECTORY_TYPE_TO_IMAGE, DIRECTORY_TYPE_TO_BUSINESS_TYPE } from './directoryMappings';
 import { FaFacebookF, FaPinterestP, FaXTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaGlobe } from 'react-icons/fa6';
 import Header from '../../Header';
-import HeaderGated from '../../HeaderGated';
 import Footer from '../../Footer';
 
 const BusinessProfile = () => {
@@ -89,7 +88,7 @@ const BusinessProfile = () => {
     if (!business) {
         return (
             <div className="min-h-screen bg-gray-100 font-sans">
-                {isLoggedIn ? <HeaderGated /> : <Header />}
+                <Header />
                 <div className="max-w-4xl mx-auto px-4 py-12 text-center">
                     <p className="text-gray-600 mb-4">No business information available.</p>
                     <button onClick={backToListings} className="bg-[#4d734d] text-white px-5 py-2 rounded-lg hover:bg-[#3d5e3d] transition-colors">

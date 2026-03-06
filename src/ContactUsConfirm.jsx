@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Header from './Header';
-import HeaderGated from './HeaderGated';
 import Footer from './Footer';
 
 export default function ContactUsConfirm() {
@@ -16,7 +15,7 @@ export default function ContactUsConfirm() {
 
   return (
     <div className="min-h-screen bg-[#FBF9F4]">
-      {isLoggedIn ? <HeaderGated /> : <Header />}
+      <Header />
       <main className="max-w-2xl mx-auto px-4 py-12">
         <section className="bg-white rounded-2xl p-8 md:p-10 shadow-[0_10px_25px_rgba(74,92,67,0.08)] text-center">
           <h1 className="text-3xl font-bold text-[#4A5C43] mb-4">Thank You</h1>

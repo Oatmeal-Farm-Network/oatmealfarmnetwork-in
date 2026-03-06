@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
-import HeaderGated from './HeaderGated';
 import Footer from './Footer';
 
 export default function SaigePage() {
@@ -15,7 +14,7 @@ export default function SaigePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
-      {isLoggedIn ? <HeaderGated /> : <Header />}
+     <Header />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold text-gray-900">Saige</h1>

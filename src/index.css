@@ -37,6 +37,10 @@ a:hover {
   color: #333333;
 }
 
+p.body:last-child {
+    margin-bottom: 0;
+}
+
 .nav-link {
   font-family: 'Montserrat', sans-serif;
   color: white;

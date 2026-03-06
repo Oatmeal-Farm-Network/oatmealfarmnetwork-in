@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
-import HeaderGated from './HeaderGated';
 import Footer from './Footer';
 
 const CONTACT_RECIPIENT_EMAIL =
@@ -108,7 +107,7 @@ export default function ContactUs() {
 
   return (
     <div className="min-h-screen bg-[#FBF9F4]">
-      {isLoggedIn ? <HeaderGated /> : <Header />}
+       <Header />
       <main className="max-w-3xl mx-auto px-4 py-8 md:py-12">
         <section className="bg-white p-6 md:p-10 rounded-2xl shadow-[0_10px_25px_rgba(74,92,67,0.08)]">
           <header className="mb-6">

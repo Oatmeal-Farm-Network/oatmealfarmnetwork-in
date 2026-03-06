@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import Header from './HeaderGated';
+import Header from './Header';
 
 export default function Accounts() {
   const navigate = useNavigate();

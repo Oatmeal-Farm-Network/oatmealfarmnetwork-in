@@ -4,7 +4,6 @@ import { API_ENDPOINTS } from '../config';
 import { DIRECTORY_TYPE_TO_IMAGE, DIRECTORY_TYPE_TO_BUSINESS_TYPE } from './directoryMappings';
 import photoNotAvailable from '../images/photo not available .jpg';
 import Header from '../../Header';
-import HeaderGated from '../../HeaderGated';
 import Footer from '../../Footer';
 
 const DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID = {
@@ -283,7 +282,7 @@ const DirectoryDetail = function() {
 
     return (
         <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-            {isLoggedIn ? <HeaderGated /> : <Header />}
+           <Header />
 
             {/* Page Header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #e0e0e0' }}>

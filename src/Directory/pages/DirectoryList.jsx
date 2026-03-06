@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../../Header';
-import HeaderGated from '../../HeaderGated';
 import Footer from '../../Footer';
 
 import agriAssociaImg from '../Icons/Agricultural Associations.jpg';
@@ -67,7 +66,7 @@ const DirectoryList = () => {
     }, []);
     return (
         <div className="min-h-screen bg-gray-100 font-sans">
-            {isLoggedIn ? <HeaderGated /> : <Header />}
+            <Header />
 
             {/* Video Hero Banner */}
             <div className="w-full overflow-hidden bg-black" style={{ maxHeight: '400px' }}>

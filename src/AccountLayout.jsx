@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import HeaderGated from './HeaderGated';
+import Header from './Header';
 import Footer from './Footer';
 import { useAccount } from './AccountContext';
 
@@ -72,7 +72,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
-      <HeaderGated />
+      <Header />
 
       <div className="flex flex-grow">
 

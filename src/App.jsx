@@ -25,7 +25,7 @@ const FeatureBox = ({ title, description, imgSrc, link }) => (
       to={link}
       className="regsubmit2"
     >
-      Learn More
+      Explore
     </Link>
   </div>
 );
@@ -82,7 +82,7 @@ export default function App() {
               title="Livestock Marketplace"
               description="Buy and sell livestock online with our marketplace filled with 28 species of Livestock."
               imgSrc="/images/HomepageLivestockMarketplace.webp"
-              link="/marketplace"
+              link="/marketplaces"
             />
           </div>
 
@@ -92,7 +92,7 @@ export default function App() {
               title="Plant Knowledgebase"
               description="Explore detailed profiles for over 4,000 food plant varieties, from grains to culinary herbs and spices."
               imgSrc="/images/PlantDBHome.webp"
-              link="/plants"
+              link="/plant-knowledgebase"
             />
             <FeatureBox
               title="Livestock Database"
@@ -104,7 +104,7 @@ export default function App() {
               title="Ingredient Knowledgebase"
               description="A comprehensive look at over 1,400 Ingredients with over 14,000 varieties."
               imgSrc="/images/Homepagefoodsystemdirectory.webp"
-              link="/ingredients"
+              link="/ingredient-knowledgebase"
             />
           </div>
 
