@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAccount } from './AccountContext';
 
 const Header = () => {
+  const { businesses } = useAccount();
   const [isOpen, setIsOpen] = useState(false);
   const [kbOpen, setKbOpen] = useState(false);
   const [kbMobileOpen, setKbMobileOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
-  const [businesses, setBusinesses] = useState([]);
   const [acctOpen, setAcctOpen] = useState(false);
   const navigate = useNavigate();
   const kbRef = useRef(null);
   const acctRef = useRef(null);
 
   useEffect(() => {
-    // Check both token formats
     const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
     const firstName = localStorage.getItem('first_name') || localStorage.getItem('PeopleFirstName');
     const peopleId = localStorage.getItem('people_id') || localStorage.getItem('PeopleID');
@@ -22,14 +22,6 @@ const Header = () => {
     if (token && firstName) {
       setIsLoggedIn(true);
       setUser({ firstName, peopleId });
-
-      // Only fetch businesses if using the gated token format
-      if (localStorage.getItem('access_token') && peopleId) {
-        fetch(`${import.meta.env.VITE_API_URL}/auth/my-businesses?PeopleID=${peopleId}`)
-          .then(res => res.json())
-          .then(data => setBusinesses(data))
-          .catch(err => console.error('Error fetching businesses:', err));
-      }
     }
   }, []);
 
@@ -44,16 +36,9 @@ const Header = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('people_id');
-    localStorage.removeItem('first_name');
-    localStorage.removeItem('last_name');
-    localStorage.removeItem('access_level');
-    localStorage.removeItem('AccessToken');
-    localStorage.removeItem('PeopleID');
-    localStorage.removeItem('PeopleFirstName');
-    localStorage.removeItem('PeopleLastName');
-    localStorage.removeItem('AccessLevel');
+    ['access_token','people_id','first_name','last_name','access_level',
+     'AccessToken','PeopleID','PeopleFirstName','PeopleLastName','AccessLevel']
+      .forEach(k => localStorage.removeItem(k));
     setIsLoggedIn(false);
     setUser(null);
     navigate('/login');
@@ -69,9 +54,9 @@ const Header = () => {
 
   const KbMobileLinks = () => (
     <ul className="mt-2 space-y-2 text-sm">
-      <li><Link to="/plant-knowledgebase" onClick={() => setIsOpen(false)} className="!text-white/80 block"> Plants</Link></li>
-      <li><Link to="/livestock" onClick={() => setIsOpen(false)} className="!text-white/80 block"> Livestock Breeds</Link></li>
-      <li><Link to="/ingredient-knowledgebase" onClick={() => setIsOpen(false)} className="!text-white/80 block"> Ingredients</Link></li>
+      <li><Link to="/plant-knowledgebase" onClick={() => setIsOpen(false)} className="!text-white/80 block">Plants</Link></li>
+      <li><Link to="/livestock" onClick={() => setIsOpen(false)} className="!text-white/80 block">Livestock Breeds</Link></li>
+      <li><Link to="/ingredient-knowledgebase" onClick={() => setIsOpen(false)} className="!text-white/80 block">Ingredients</Link></li>
     </ul>
   );
 
@@ -86,7 +71,7 @@ const Header = () => {
       <div className="max-w-7xl mx-auto flex justify-between items-center">
 
         {/* Logo */}
-       <Link to={isLoggedIn ? "/dashboard" : "/"} className="flex items-center shrink-0">
+        <Link to={isLoggedIn ? "/dashboard" : "/"} className="flex items-center shrink-0">
           <img
             src="/images/Oatmeal-Farm-Network-logo-horizontal-white.webp"
             className="h-10 md:h-12"

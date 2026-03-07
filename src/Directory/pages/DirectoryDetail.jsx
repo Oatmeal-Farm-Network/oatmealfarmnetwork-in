@@ -318,7 +318,7 @@ const DirectoryDetail = function() {
                                 style={{ padding: '8px 10px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '0.9rem' }}
                             >
                                 <option value="">Any</option>
-                                {states.map(function(s) { return <option key={s} value={s}>{s}</option>; })}
+                                {states.map(function(s) { return <option key={s.StateIndex} value={s.name}>{s.name}</option>; })}
                             </select>
                         </div>
 

@@ -40,6 +40,7 @@ useEffect(() => {
               <img
                 src={`/images/${label.replace(/ /g,'')}.webp`}
                 alt={label}
+                loading="lazy"  
                 style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
                 onError={e => { e.target.style.display = 'none'; }}
               />
@@ -53,6 +54,7 @@ useEffect(() => {
                   <img
                     src={breed.image.startsWith('http') ? breed.image : `/images/${breed.image.replace(/^.*[\\/]/, '')}`}
                     alt={breed.breed}
+                    loading="lazy"  
                     className="w-full rounded shadow"
                     onError={e => { e.target.style.display = 'none'; }}
                   />

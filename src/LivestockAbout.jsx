@@ -44,6 +44,7 @@ export default function LivestockAbout() {
                 <img
                   src={`/images/${label.replace(/ /g,'')}.webp`}
                   alt={label}
+                  loading="lazy"  
                   style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
                   onError={e => { e.target.style.display = 'none'; }}
                 />
@@ -62,6 +63,7 @@ export default function LivestockAbout() {
                   <img
                     src={info.main_image.startsWith('http') ? info.main_image : `/images/${info.main_image}`}
                     alt={label}
+                    loading="lazy"  
                     className="w-full"
                     onError={e => { e.target.style.display = 'none'; }}
                   />
@@ -84,6 +86,7 @@ export default function LivestockAbout() {
                         src={section.image.startsWith('http') ? section.image : `/images/${section.image}`}
                         alt={section.title}
                         className="w-full"
+                        loading="lazy"  
                         onError={e => { e.target.style.display = 'none'; }}
                       />
                     </div>

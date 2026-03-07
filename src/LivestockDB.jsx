@@ -82,6 +82,7 @@ export default function LivestockDB() {
                   src={`/images/${s.img}`}
                   alt={s.label}
                   className="object-cover rounded"
+                  loading="lazy"  
                   style={{ width: '150px', height: '150px' }}
                   onError={e => { e.target.src = '/images/HomepageLivestockDB.webp'; }}
                 />

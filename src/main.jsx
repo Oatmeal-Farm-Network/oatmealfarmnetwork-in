@@ -40,6 +40,8 @@ const PlantVarietalDetail = lazy(() => import('./PlantVarietalDetail.jsx'))
 const Marketplaces = lazy(() => import('./Marketplaces.jsx'))
 const ContactUs = lazy(() => import('./ContactUs.jsx'))
 const ContactUsConfirm = lazy(() => import('./ContactUsConfirm.jsx'))
+const AccountNew = lazy(() => import('./AccountNew.jsx'))
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
@@ -81,6 +83,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/directory" element={<DirectoryList />} />
           <Route path="/directory/:directoryType" element={<DirectoryDetail />} />
           <Route path="/profile" element={<BusinessProfile />} />
+          <Route path="/accounts/new" element={<AccountNew />} />
         </Routes>
       </Suspense>
     </AccountProvider>

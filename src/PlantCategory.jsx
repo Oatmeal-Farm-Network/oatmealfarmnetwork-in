@@ -35,7 +35,6 @@ function plantImgSrc(plant) {
     if (plant.plant_image.startsWith("/") || plant.plant_image.startsWith("http")) return plant.plant_image;
     return "/images/" + plant.plant_image;
   }
-  // Fall back to plant name as filename
   return "/images/" + plant.plant_name.replace(/ /g, "") + ".webp";
 }
 
@@ -47,6 +46,8 @@ export default function PlantCategory() {
   const cat = CATEGORY_MAP[category];
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+    setPlants(null);
     const token = localStorage.getItem('access_token');
     setIsLoggedIn(Boolean(token));
     if (!cat) { setPlants([]); return; }
@@ -56,7 +57,7 @@ export default function PlantCategory() {
       .then(r => r.json())
       .then(data => setPlants(Array.isArray(data) ? data : []))
       .catch(() => setPlants([]));
-  }, [category]);
+  }, [category, cat?.dbType]);
 
   if (!cat) return (
     <div className="min-h-screen bg-white font-sans">
@@ -95,6 +96,7 @@ export default function PlantCategory() {
                     src={plantImgSrc(plant)}
                     alt={plant.plant_name}
                     className="object-cover rounded mb-2"
+                    loading="lazy"   // ← add this
                     style={{ width: '150px', height: '150px' }}
                     onError={e => { e.target.src = '/images/PlantDBHome.webp'; }}
                   />

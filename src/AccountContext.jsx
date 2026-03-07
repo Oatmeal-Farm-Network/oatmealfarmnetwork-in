@@ -7,6 +7,19 @@ export function AccountProvider({ children }) {
   const [BusinessID, setBusinessID] = useState(null);
   const [OpenSections, setOpenSections] = useState({});
   const [Expanded, setExpanded] = useState(true);
+  const [businesses, setBusinesses] = useState([]);
+
+  // Fetch user's businesses once on app load
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    const peopleId = localStorage.getItem('people_id');
+    if (token && peopleId) {
+      fetch(`${import.meta.env.VITE_API_URL}/auth/my-businesses?PeopleID=${peopleId}`)
+        .then(r => r.json())
+        .then(data => setBusinesses(Array.isArray(data) ? data : []))
+        .catch(() => {});
+    }
+  }, []);
 
   const LoadBusiness = (ID, Force = false) => {
     if (ID === BusinessID && Business && !Force) return;
@@ -25,7 +38,9 @@ export function AccountProvider({ children }) {
       OpenSections,
       setOpenSections,
       Expanded,
-      setExpanded
+      setExpanded,
+      businesses,
+      setBusinesses,
     }}>
       {children}
     </AccountContext.Provider>

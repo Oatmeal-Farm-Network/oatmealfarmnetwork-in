@@ -102,6 +102,7 @@ export default function PlantKnowledgebase() {
                         alt={cat.label}
                         width="150"
                         height="150"
+                        loading="lazy"
                         className="object-cover"
                         style={{ width: '150px', height: '150px' }}
                       />
