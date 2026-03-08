@@ -17,7 +17,8 @@ export default function AnimalsHome() {
     LoadBusiness(BusinessID);
 
     const token = localStorage.getItem('access_token');
-    const url = `/auth/animals?BusinessID=${BusinessID}`;
+    const apiBase = import.meta.env.VITE_API_URL || '';
+   const url = `${apiBase}/auth/animals?BusinessID=${BusinessID}`;
 
     fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
