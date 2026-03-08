@@ -6,6 +6,8 @@ import agricultureAssociationLogo from '../images/Agriculture Association.jpeg';
 import photoNotAvailable from '../images/photo not available .jpg';
 import { DIRECTORY_TYPE_TO_IMAGE, DIRECTORY_TYPE_TO_BUSINESS_TYPE } from './directoryMappings';
 import { FaFacebookF, FaPinterestP, FaXTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaGlobe } from 'react-icons/fa6';
+import Header from '../../Header';
+import Footer from '../../Footer';
 
 
 const BusinessProfile = () => {
@@ -103,7 +105,8 @@ const BusinessProfile = () => {
 
     if (!business) {
         return (
-            <div>
+            <div className="min-h-screen bg-white font-sans">
+                <Header />
                 <header className="header">
                     <div className="logo-container">
                         <img src={DIRECTORY_TYPE_TO_IMAGE[directoryType] || photoNotAvailable} className="logo-image" />
@@ -125,13 +128,15 @@ const BusinessProfile = () => {
                         ← Back to Listings
                     </button>
                 </div>
+                <Footer />
             </div>
         );
     }
 
     return (
-        <div>
-            {/* Header */}
+        <div className="min-h-screen bg-white font-sans">
+            <Header />
+            {/* Directory context header */}
             <header className="header">
                 <div className="logo-container">
                     <img src={DIRECTORY_TYPE_TO_IMAGE[directoryType] || photoNotAvailable} className="logo-image" />
@@ -431,6 +436,7 @@ const BusinessProfile = () => {
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 };

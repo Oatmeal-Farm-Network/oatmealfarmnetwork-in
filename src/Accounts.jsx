@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import Header from './HeaderGated';
+import Footer from './Footer';
 
 export default function Accounts() {
   const navigate = useNavigate();
@@ -60,11 +61,7 @@ export default function Accounts() {
         )}
       </div>
 
-      <footer className="bg-[#1a1a1a] text-white py-12 mt-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-gray-500 text-xs uppercase tracking-[0.2em]">© 2026 Oatmeal Farm Network. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
