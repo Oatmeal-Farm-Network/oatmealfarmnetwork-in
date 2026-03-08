@@ -19,6 +19,9 @@ export default function AnimalsHome() {
     const token = localStorage.getItem('access_token');
     const apiBase = import.meta.env.VITE_API_URL || '';
    const url = `${apiBase}/auth/animals?BusinessID=${BusinessID}`;
+console.log("Fetching animals from:", url);
+
+
 
     fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
