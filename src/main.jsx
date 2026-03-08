@@ -41,7 +41,10 @@ const Marketplaces = lazy(() => import('./Marketplaces.jsx'))
 const ContactUs = lazy(() => import('./ContactUs.jsx'))
 const ContactUsConfirm = lazy(() => import('./ContactUsConfirm.jsx'))
 const AccountNew = lazy(() => import('./AccountNew.jsx'))
-
+const AccountProfile = lazy(() => import('./AccountProfile.jsx'))
+const AccountDelete = lazy(() => import('./AccountDelete.jsx'))
+const ProduceInventory = lazy(() => import('./ProduceInventory.jsx'))
+const ProcessedFoodInventory = lazy(() => import('./ProcessedFoodInventory.jsx'))
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
@@ -84,6 +87,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/directory/:directoryType" element={<DirectoryDetail />} />
           <Route path="/profile" element={<BusinessProfile />} />
           <Route path="/accounts/new" element={<AccountNew />} />
+          <Route path="/account/profile" element={<AccountProfile />} />
+          <Route path="/account/delete" element={<AccountDelete />} />
+          <Route path="/produce/inventory" element={<ProduceInventory />} />
+          <Route path="/produce/processed-food" element={<ProcessedFoodInventory />} />
+
         </Routes>
       </Suspense>
     </AccountProvider>

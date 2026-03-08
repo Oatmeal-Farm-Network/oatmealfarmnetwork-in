@@ -123,7 +123,7 @@ export default function AccountHome() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-full mx-auto space-y-6">
 
         {/* Account Info Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">

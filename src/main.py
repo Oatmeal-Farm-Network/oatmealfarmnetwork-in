@@ -9,6 +9,7 @@ from routers import businesses
 from routers import precision_ag
 from routers import plant_knowledgebase
 from routers import ingredient-knowledgebase
+from routers import produce 
 
 load_dotenv()
 print("SECRET_KEY loaded:", os.getenv("SECRET_KEY"))
@@ -33,6 +34,7 @@ app.include_router(businesses.router)
 app.include_router(precision_ag.router)
 app.include_router(plant_knowledgebase.router)
 app.include_router(ingredient-knowledgebase.router)
+app.include_router(produce.router)
 print("PRECISION AG ROUTER REGISTERED")
 print("PLANT KNOWLEDGEBASE ROUTER REGISTERED")
 

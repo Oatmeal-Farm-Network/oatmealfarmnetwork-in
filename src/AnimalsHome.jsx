@@ -56,8 +56,7 @@ export default function AnimalsHome() {
           <h2 className="text-2xl font-bold text-green-700">My Animals</h2>
           <Link
             to={`/animals/add?BusinessID=${BusinessID}&PeopleID=${PeopleID}`}
-            className="bg-[#819360] hover:bg-[#4d734d] text-white font-bold py-2 px-4 rounded-xl text-sm transition-colors"
-          >
+            className="regsubmit2" >
             Add Animal
           </Link>
         </div>

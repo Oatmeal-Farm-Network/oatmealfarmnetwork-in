@@ -3,8 +3,8 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
-const API_URL = 'http://127.0.0.1:8000';        // main backend
-const CROP_API_URL = 'http://127.0.0.1:8001';  // crop monitoring backend
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const CROP_API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 // ─── Safe API fetch (never throws, returns null on error) ─────────────────────
 async function safeFetch(url) {
