@@ -146,30 +146,32 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
   </NavSection>
 )}
 
-            {BT === 8 && (
-              <NavSection Icon="/icons/PrecisionAg.svg" Label="Precision Ag">
-                <NavChild To={`/oatsense?BusinessID=${BusinessID}`} Label="Dashboard" />
-                <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}`} Label="Fields" />
-                <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`} Label="Add Field" />
-                {fields.length > 0 && (
-                  <>
-                    <div className="ml-4 mt-1 mb-0.5 text-[10px] text-gray-400 uppercase tracking-wide px-3">
-                      {Expanded ? 'Your Fields' : ''}
-                    </div>
-                    {fields.map(f => (
-                      <NavChild
-                        key={f.fieldid || f.id}
-                        To={`/precision-ag/analyses?BusinessID=${BusinessID}&FieldID=${f.fieldid || f.id}`}
-                        Label={`${f.name}`}
-                      />
-                    ))}
-                  </>
-                )}
-                <NavChild To={`/precision-ag/analyses?BusinessID=${BusinessID}`} Label="Analyses" />
-                <NavChild To={`/oatsense/crop-rotation?BusinessID=${BusinessID}`} Label="Crop Rotation" />
-                <NavChild To={`/oatsense/notes?BusinessID=${BusinessID}`} Label="Notes" />
-              </NavSection>
+           {BT === 8 && (
+          <NavSection Icon="/icons/PrecisionAg.svg" Label="Precision Ag">
+            <NavChild To={`/oatsense?BusinessID=${BusinessID}`} Label="Dashboard" />
+            <NavChild To={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} Label="Crop Detection" />  {/* ← add this */}
+            <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}`} Label="Fields" />
+            <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`} Label="Add Field" />
+            {fields.length > 0 && (
+              <>
+                <div className="ml-4 mt-1 mb-0.5 text-[10px] text-gray-400 uppercase tracking-wide px-3">
+                  {Expanded ? 'Your Fields' : ''}
+                </div>
+                {fields.map(f => (
+                  <NavChild
+                    key={f.fieldid || f.id}
+                    To={`/precision-ag/analyses?BusinessID=${BusinessID}&FieldID=${f.fieldid || f.id}`}
+                    Label={`${f.name}`}
+                  />
+                ))}
+              </>
             )}
+            <NavChild To={`/precision-ag/analyses?BusinessID=${BusinessID}`} Label="Analyses" />
+          
+            <NavChild To={`/oatsense/crop-rotation?BusinessID=${BusinessID}`} Label="Crop Rotation" />
+            <NavChild To={`/oatsense/notes?BusinessID=${BusinessID}`} Label="Notes" />
+          </NavSection>
+        )}
 
             {BT === 8 && (
               <NavSection Icon="/icons/Livestock.svg" Label="Livestock">

@@ -46,6 +46,8 @@ const AccountProfile = lazy(() => import('./AccountProfile.jsx'))
 const AccountDelete = lazy(() => import('./AccountDelete.jsx'))
 const ProduceInventory = lazy(() => import('./ProduceInventory.jsx'))
 const ProcessedFoodInventory = lazy(() => import('./ProcessedFoodInventory.jsx'))
+const CropDetection = lazy(() => import('./CropDetection.jsx'))
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
@@ -93,6 +95,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/produce/inventory" element={<ProduceInventory />} />
           <Route path="/produce/processed-food" element={<ProcessedFoodInventory />} />
           <Route path="/animals/edit" element={<AnimalEdit />} />
+          <Route path="/precision-ag/crop-detection" element={<CropDetection />} />
+
         </Routes>
       </Suspense>
     </AccountProvider>
