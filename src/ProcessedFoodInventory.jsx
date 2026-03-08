@@ -118,7 +118,7 @@ export default function ProcessedFoodInventory() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-full mx-auto space-y-6">
 
         {/* ── ADD FORM ── */}
         <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">

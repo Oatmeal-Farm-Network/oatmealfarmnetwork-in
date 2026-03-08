@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import DirectoryList from './Directory/pages/DirectoryList';
 
+
 const FeatureBox = ({ title, description, imgSrc, link }) => (
   <div className="flex flex-col bg-white rounded-[20px] p-[10px] shadow-[0_4px_8px_rgba(0,0,0,0.1)] min-h-[250px] text-center w-full mb-4 lg:mb-0 border border-[#4d734d]/20">
     <Link to={link} className="block mb-[10px] overflow-hidden rounded-[20px]">

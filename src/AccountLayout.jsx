@@ -138,15 +138,13 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               )}
             </div>
 
-            {Expanded && <div className="my-1 border-t border-gray-300/50" />}
-
             {[8, 10, 14, 26, 29, 31].includes(BT) && (
-              <NavItem
-                To={`/produce/inventory?BusinessID=${BusinessID}`}
-                Icon="/icons/produce.webp"
-                Label="Produce"
-              />
-            )}
+  <NavSection Icon="/icons/produce.webp" Label="Consumables">
+    <NavChild To={`/produce/inventory?BusinessID=${BusinessID}`} Label="Produce" />
+    <NavChild To={`/produce/processed-food?BusinessID=${BusinessID}`} Label="Processed Foods" />
+    <NavChild To={`/produce/meat?BusinessID=${BusinessID}`} Label="Meat" />
+  </NavSection>
+)}
 
             {BT === 8 && (
               <NavSection Icon="/icons/PrecisionAg.svg" Label="Precision Ag">
@@ -162,7 +160,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
                       <NavChild
                         key={f.fieldid || f.id}
                         To={`/precision-ag/analyses?BusinessID=${BusinessID}&FieldID=${f.fieldid || f.id}`}
-                        Label={`🌾 ${f.name}`}
+                        Label={`${f.name}`}
                       />
                     ))}
                   </>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useAccount } from "./AccountContext";
 import { useSearchParams } from "react-router-dom";
 import AccountLayout from "./AccountLayout";
 import "./AnimalAddWizard.css";
@@ -85,8 +86,8 @@ const INITIAL_FORM_DATA = {
 };
 
 function getVisibleSteps(formData) {
-  const sid        = Number(formData.speciesID);
-  const isSingle   = Number(formData.numberOfAnimals) <= 1;
+  const sid      = Number(formData.speciesID);
+  const isSingle = Number(formData.numberOfAnimals) <= 1;
   return STEPS.filter((s) => {
     if (s.id === 3) return isSingle && !NO_ANCESTRY_IDS.includes(sid);
     if (s.id === 4) return HAS_FIBER.includes(sid);
@@ -308,41 +309,70 @@ function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registr
 }
 
 // ── Step 3 ────────────────────────────────────────────────────────────────────
-function Step3Ancestry({ formData, onChange }) {
+function AncestorBox({ label, value, onChange, isMale, isAlpaca, colors }) {
+  const bg     = isMale ? '#EBF3FF' : '#FFF0F3';
+  const border = isMale ? '#93C5FD' : '#FBCFE8';
+  const inp = { border: '1px solid #D1D5DB', borderRadius: '4px', padding: '3px 6px', fontSize: '12px', width: '100%', boxSizing: 'border-box' };
+  return (
+    <div style={{ backgroundColor: bg, border: `1px solid ${border}`, borderRadius: '6px', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, width: '100%' }}>
+      <div style={{ fontSize: '10px', fontWeight: 600, color: '#6B7280', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+      <input type="text" placeholder="Name" value={value?.name||''} onChange={e=>onChange('name',e.target.value)} style={inp} />
+      {colors && colors.length > 0 ? (
+        <select value={value?.color||''} onChange={e=>onChange('color',e.target.value)} style={inp}>
+          <option value="">-- Color --</option>
+          {colors.map((c,i) => <option key={i} value={c}>{c}</option>)}
+        </select>
+      ) : (
+        <input type="text" placeholder="Color" value={value?.color||''} onChange={e=>onChange('color',e.target.value)} style={inp} />
+      )}
+      {isAlpaca && <>
+        <input type="text" placeholder="ARI #"  value={value?.ari||''}  onChange={e=>onChange('ari',e.target.value)}  style={inp} />
+        <input type="text" placeholder="CLAA #" value={value?.claa||''} onChange={e=>onChange('claa',e.target.value)} style={inp} />
+      </>}
+    </div>
+  );
+}
+
+function Step3Ancestry({ formData, onChange, colors }) {
   const isAlpaca = Number(formData.speciesID) === 2;
-  const ancestors = [
-    {key:"sire",label:"Sire"},{key:"dam",label:"Dam"},
-    {key:"sireSire",label:"Sire's Sire (Paternal Grandsire)"},{key:"sireDam",label:"Sire's Dam (Paternal Granddam)"},
-    {key:"damSire",label:"Dam's Sire (Maternal Grandsire)"},{key:"damDam",label:"Dam's Dam (Maternal Granddam)"},
-    {key:"sireSireSire",label:"Sire's Sire's Sire"},{key:"sireSireDam",label:"Sire's Sire's Dam"},
-    {key:"sireDamSire",label:"Sire's Dam's Sire"},{key:"sireDamDam",label:"Sire's Dam's Dam"},
-    {key:"damSireSire",label:"Dam's Sire's Sire"},{key:"damSireDam",label:"Dam's Sire's Dam"},
-    {key:"damDamSire",label:"Dam's Dam's Sire"},{key:"damDamDam",label:"Dam's Dam's Dam"},
-  ];
-  const getDepth = (key) => key==="sire"||key==="dam" ? 1 : ["sireSire","sireDam","damSire","damDam"].includes(key) ? 2 : 3;
-  const upd = (ak,field,val) => onChange("ancestry",{...(formData.ancestry||{}),[ak]:{...((formData.ancestry||{})[ak]||{}),[field]:val}});
+  const anc = formData.ancestry || {};
+  const upd = (key, field, val) => onChange('ancestry', { ...anc, [key]: { ...(anc[key]||{}), [field]: val } });
+  const box = (key, label, isMale) => (
+    <AncestorBox label={label} value={anc[key]} onChange={(f,v)=>upd(key,f,v)} isMale={isMale} isAlpaca={isAlpaca} colors={colors} />
+  );
 
   return (
     <div className="step-content">
       <StepHeader title="Ancestry / Pedigree" subtitle="Enter up to 3 generations of lineage" />
-      <div className="pedigree-tree">
-        {ancestors.map(({key,label}) => {
-          const val=formData.ancestry?.[key]||{};
-          return (
-            <div key={key} className={`ancestor-card depth-${getDepth(key)}`}>
-              <div className="ancestor-label">{label}</div>
-              <div className="ancestor-fields">
-                <input className="form-input" type="text" placeholder="Name"  value={val.name||""}  onChange={(e)=>upd(key,"name",e.target.value)} />
-                <input className="form-input" type="text" placeholder="Color" value={val.color||""} onChange={(e)=>upd(key,"color",e.target.value)} />
-                {isAlpaca && <>
-                  <input className="form-input" type="text" placeholder="ARI #"  value={val.ari||""}  onChange={(e)=>upd(key,"ari",e.target.value)} />
-                  <input className="form-input" type="text" placeholder="CLAA #" value={val.claa||""} onChange={(e)=>upd(key,"claa",e.target.value)} />
-                </>}
-              </div>
-            </div>
-          );
-        })}
+
+      <div style={{ overflowX: 'auto', paddingBottom: '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: 'repeat(8, auto)', gap: '8px 20px', minWidth: '680px', alignItems: 'stretch' }}>
+          <div style={{ gridColumn: 1, gridRow: '1 / 5', display: 'flex', alignItems: 'center' }}>{box('sire', 'Sire', true)}</div>
+          <div style={{ gridColumn: 1, gridRow: '5 / 9', display: 'flex', alignItems: 'center' }}>{box('dam', 'Dam', false)}</div>
+          <div style={{ gridColumn: 2, gridRow: '1 / 3', display: 'flex', alignItems: 'center' }}>{box('sireSire', "Sire's Sire", true)}</div>
+          <div style={{ gridColumn: 2, gridRow: '3 / 5', display: 'flex', alignItems: 'center' }}>{box('sireDam',  "Sire's Dam",  false)}</div>
+          <div style={{ gridColumn: 2, gridRow: '5 / 7', display: 'flex', alignItems: 'center' }}>{box('damSire',  "Dam's Sire",  true)}</div>
+          <div style={{ gridColumn: 2, gridRow: '7 / 9', display: 'flex', alignItems: 'center' }}>{box('damDam',   "Dam's Dam",   false)}</div>
+          <div style={{ gridColumn: 3, gridRow: 1 }}>{box('sireSireSire', "Sire's Sire's Sire", true)}</div>
+          <div style={{ gridColumn: 3, gridRow: 2 }}>{box('sireSireDam',  "Sire's Sire's Dam",  false)}</div>
+          <div style={{ gridColumn: 3, gridRow: 3 }}>{box('sireDamSire',  "Sire's Dam's Sire",  true)}</div>
+          <div style={{ gridColumn: 3, gridRow: 4 }}>{box('sireDamDam',   "Sire's Dam's Dam",   false)}</div>
+          <div style={{ gridColumn: 3, gridRow: 5 }}>{box('damSireSire',  "Dam's Sire's Sire",  true)}</div>
+          <div style={{ gridColumn: 3, gridRow: 6 }}>{box('damSireDam',   "Dam's Sire's Dam",   false)}</div>
+          <div style={{ gridColumn: 3, gridRow: 7 }}>{box('damDamSire',   "Dam's Dam's Sire",   true)}</div>
+          <div style={{ gridColumn: 3, gridRow: 8 }}>{box('damDamDam',    "Dam's Dam's Dam",    false)}</div>
+        </div>
       </div>
+
+      <div style={{ display: 'flex', gap: '16px', marginTop: '10px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#6B7280' }}>
+          <div style={{ width: '14px', height: '14px', borderRadius: '3px', backgroundColor: '#EBF3FF', border: '1px solid #93C5FD' }} /> Male
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#6B7280' }}>
+          <div style={{ width: '14px', height: '14px', borderRadius: '3px', backgroundColor: '#FFF0F3', border: '1px solid #FBCFE8' }} /> Female
+        </div>
+      </div>
+
       <FormField label="Ancestry Description / Percentages">
         <textarea className="form-textarea" rows={4} value={formData.ancestryDescription||""} onChange={(e)=>onChange("ancestryDescription",e.target.value)} placeholder="Describe bloodline percentages or additional details..." />
       </FormField>
@@ -569,9 +599,10 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
 export default function AnimalAddWizard() {
   const [searchParams]    = useSearchParams();
   const businessID        = searchParams.get("BusinessID");
-  const token             = localStorage.getItem("AccessToken");
   const subscriptionLevel = Number(localStorage.getItem("SubscriptionLevel")||0);
   const apiBase           = import.meta.env.VITE_API_URL;
+  const { Business, LoadBusiness } = useAccount();
+  const PeopleID = localStorage.getItem('people_id');
 
   const [formData,          setFormData]          = useState(INITIAL_FORM_DATA);
   const [currentStepId,     setCurrentStepId]     = useState(1);
@@ -589,11 +620,15 @@ export default function AnimalAddWizard() {
 
   useEffect(()=>{
     if (!formData.speciesID) { setBreeds([]); setColors([]); setRegistrationTypes([]); return; }
-    const sid=formData.speciesID, h={Authorization:`Bearer ${token}`};
-    fetch(`${apiBase}/auth/species/${sid}/breeds`,             {headers:h}).then(r=>r.json()).then(setBreeds).catch(()=>setBreeds([]));
-    fetch(`${apiBase}/auth/species/${sid}/colors`,             {headers:h}).then(r=>r.json()).then(setColors).catch(()=>setColors([]));
-    fetch(`${apiBase}/auth/species/${sid}/registration-types`, {headers:h}).then(r=>r.json()).then(setRegistrationTypes).catch(()=>setRegistrationTypes([]));
+    const sid = formData.speciesID;
+    const h   = { Authorization: `Bearer ${localStorage.getItem("access_token")}` };
+    fetch(`${apiBase}/auth/species/${sid}/breeds`,          {headers:h}).then(r=>r.json()).then(setBreeds).catch(()=>setBreeds([]));
+    fetch(`${apiBase}/api/livestock/species-colors/${sid}`, {headers:h}).then(r=>r.json()).then(setColors).catch(()=>setColors([]));
   },[formData.speciesID]);
+
+  useEffect(() => {
+    LoadBusiness(businessID);
+  }, [businessID]);
 
   const handleChange = useCallback((field,value)=>{
     setFormData(p=>({...p,[field]:value}));
@@ -629,42 +664,85 @@ export default function AnimalAddWizard() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const p=new FormData();
-      const a=(k,v)=>p.append(k,v??'');
-      a("BusinessID",businessID); a("Name",formData.name); a("SpeciesID",formData.speciesID);
-      a("NumberOfAnimals",formData.numberOfAnimals); a("Category",formData.category); a("DOB",formData.dob);
-      a("BreedID",formData.breedID); a("BreedID2",formData.breedID2); a("BreedID3",formData.breedID3); a("BreedID4",formData.breedID4);
-      a("Color1",formData.color1); a("Color2",formData.color2); a("Color3",formData.color3); a("Color4",formData.color4);
-      a("Height",formData.height); a("Weight",formData.weight); a("Gaited",formData.gaited);
-      a("Warmblood",formData.warmblood); a("Horns",formData.horns); a("Temperament",formData.temperament);
-      a("Description",formData.description); a("Registrations",JSON.stringify(formData.registrations));
-      a("Ancestry",JSON.stringify(formData.ancestry)); a("AncestryDescription",formData.ancestryDescription);
-      a("FiberSamples",JSON.stringify(formData.fiberSamples)); a("Awards",JSON.stringify(formData.awards));
-      a("PercentPeruvian",formData.percentPeruvian); a("PercentChilean",formData.percentChilean);
-      a("PercentBolivian",formData.percentBolivian); a("PercentUnknownOther",formData.percentUnknownOther); a("PercentAccoyo",formData.percentAccoyo);
-      a("ForSale",formData.forSale); a("Free",formData.free); a("Price",formData.price);
-      a("Price2",formData.price2); a("Price3",formData.price3); a("Price4",formData.price4);
-      a("MinOrder1",formData.minOrder1); a("MinOrder2",formData.minOrder2); a("MinOrder3",formData.minOrder3); a("MinOrder4",formData.minOrder4);
-      a("MaxOrder1",formData.maxOrder1); a("MaxOrder2",formData.maxOrder2); a("MaxOrder3",formData.maxOrder3); a("MaxOrder4",formData.maxOrder4);
-      a("OBO",formData.obo); a("Discount",formData.discount); a("Foundation",formData.foundation);
-      a("StudFee",formData.studFee); a("PayWhatYouCan",formData.payWhatYouCan); a("DonorMale",formData.donorMale);
-      a("SemenPrice",formData.semenPrice); a("DonorFemale",formData.donorFemale); a("EmbryoPrice",formData.embryoPrice);
-      a("PriceComments",formData.priceComments);
-      a("CoOwnerBusiness1",formData.coOwnerBusiness1); a("CoOwnerName1",formData.coOwnerName1); a("CoOwnerLink1",formData.coOwnerLink1);
-      a("CoOwnerBusiness2",formData.coOwnerBusiness2); a("CoOwnerName2",formData.coOwnerName2); a("CoOwnerLink2",formData.coOwnerLink2);
-      a("CoOwnerBusiness3",formData.coOwnerBusiness3); a("CoOwnerName3",formData.coOwnerName3); a("CoOwnerLink3",formData.coOwnerLink3);
-      a("VideoEmbed",formData.videoEmbed);
-      formData.photos.forEach((ph,i)=>{ if(ph?.file) p.append(`Photo${i+1}`,ph.file); if(ph?.caption) p.append(`Caption${i+1}`,ph.caption); });
-      if(formData.ariDoc)       p.append("AriDoc",formData.ariDoc);
-      if(formData.histogramDoc) p.append("HistogramDoc",formData.histogramDoc);
-      if(formData.fiberDoc)     p.append("FiberDoc",formData.fiberDoc);
+      const p   = new FormData();
+      const a   = (k,v) => p.append(k, v ?? '');
+      const tok = localStorage.getItem("access_token");
 
-      const res=await fetch(`${apiBase}/auth/animals/add`,{method:"POST",headers:{Authorization:`Bearer ${token}`},body:p});
-      if(!res.ok){ const err=await res.json().catch(()=>({})); throw new Error(err.detail||"Failed to save animal"); }
+      // Split DOB (YYYY-MM-DD) into separate fields for the DB
+      const dobParts = formData.dob ? formData.dob.split("-") : [];
+      a("DOBYear",  dobParts[0] || "");
+      a("DOBMonth", dobParts[1] || "");
+      a("DOBDay",   dobParts[2] || "");
+
+      a("BusinessID",          businessID);
+      a("Name",                formData.name);
+      a("SpeciesID",           formData.speciesID);
+      a("NumberOfAnimals",     formData.numberOfAnimals);
+      a("Category",            formData.category);
+      a("BreedID",             formData.breedID);
+      a("BreedID2",            formData.breedID2);
+      a("BreedID3",            formData.breedID3);
+      a("BreedID4",            formData.breedID4);
+      a("Height",              formData.height);
+      a("Weight",              formData.weight);
+      a("Gaited",              formData.gaited);
+      a("Warmblood",           formData.warmblood);
+      a("Horns",               formData.horns);
+      a("Temperament",         formData.temperament);
+      a("Description",         formData.description);
+      a("AncestryDescription", formData.ancestryDescription);
+      a("PercentPeruvian",     formData.percentPeruvian);
+      a("PercentChilean",      formData.percentChilean);
+      a("PercentBolivian",     formData.percentBolivian);
+      a("PercentUnknownOther", formData.percentUnknownOther);
+      a("PercentAccoyo",       formData.percentAccoyo);
+      a("ForSale",             formData.forSale);
+      a("Free",                formData.free);
+      a("Price",               formData.price);
+      a("OBO",                 formData.obo);
+      a("Discount",            formData.discount);
+      a("Foundation",          formData.foundation);
+      a("StudFee",             formData.studFee);
+      a("PayWhatYouCan",       formData.payWhatYouCan);
+      a("DonorMale",           formData.donorMale);
+      a("SemenPrice",          formData.semenPrice);
+      a("DonorFemale",         formData.donorFemale);
+      a("EmbryoPrice",         formData.embryoPrice);
+      a("PriceComments",       formData.priceComments);
+      a("CoOwnerBusiness1",    formData.coOwnerBusiness1);
+      a("CoOwnerName1",        formData.coOwnerName1);
+      a("CoOwnerLink1",        formData.coOwnerLink1);
+      a("CoOwnerBusiness2",    formData.coOwnerBusiness2);
+      a("CoOwnerName2",        formData.coOwnerName2);
+      a("CoOwnerLink2",        formData.coOwnerLink2);
+      a("CoOwnerBusiness3",    formData.coOwnerBusiness3);
+      a("CoOwnerName3",        formData.coOwnerName3);
+      a("CoOwnerLink3",        formData.coOwnerLink3);
+      a("VideoEmbed",          formData.videoEmbed);
+
+      formData.photos.forEach((ph,i)=>{
+        if (ph?.file)    p.append(`Photo${i+1}`,   ph.file);
+        if (ph?.caption) p.append(`Caption${i+1}`, ph.caption);
+      });
+      if (formData.ariDoc)       p.append("AriDoc",       formData.ariDoc);
+      if (formData.histogramDoc) p.append("HistogramDoc", formData.histogramDoc);
+      if (formData.fiberDoc)     p.append("FiberDoc",     formData.fiberDoc);
+
+      const res = await fetch(`${apiBase}/auth/animals/add`, {
+        method:  "POST",
+        headers: { Authorization: `Bearer ${tok}` },
+        body:    p,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({}));
+        throw new Error(err.detail || "Failed to save animal");
+      }
+
       setSubmitSuccess(true);
-      setTimeout(()=>{ window.location.href=`/animals?BusinessID=${businessID}`; },1500);
+      setTimeout(()=>{ window.location.href = `/animals?BusinessID=${businessID}`; }, 1500);
     } catch(err) {
-      setErrors({submit:err.message});
+      setErrors({ submit: err.message });
     } finally {
       setIsSubmitting(false);
     }
@@ -672,9 +750,9 @@ export default function AnimalAddWizard() {
 
   if (submitSuccess) {
     return (
-      <AccountLayout>
+      <AccountLayout Business={Business} BusinessID={businessID} PeopleID={PeopleID}>
         <div className="wizard-success">
-          <div className="success-icon">🎉</div>
+          <div className="success-icon"></div>
           <h2>Animal Added Successfully!</h2>
           <p>Redirecting to your animals...</p>
         </div>
@@ -685,15 +763,15 @@ export default function AnimalAddWizard() {
   const step = visibleSteps[currentStepIndex];
 
   return (
-    <AccountLayout>
+    <AccountLayout Business={Business} BusinessID={businessID} PeopleID={PeopleID}>
       <div className="animal-wizard">
         <div className="wizard-progress">
           <div className="progress-steps">
             {visibleSteps.map((s,i)=>{
-              const status=i<currentStepIndex?"completed":i===currentStepIndex?"active":"upcoming";
+              const status = i<currentStepIndex ? "completed" : i===currentStepIndex ? "active" : "upcoming";
               return (
                 <div key={s.id} className={`progress-step ${status}`}>
-                  <div className="step-dot">{status==="completed"?<span>✓</span>:<span>{s.icon}</span>}</div>
+                  <div className="step-dot">{status==="completed" ? <span>✓</span> : <span>{s.icon}</span>}</div>
                   <span className="step-dot-label">{s.label}</span>
                   {i<visibleSteps.length-1 && <div className={`step-connector ${status==="completed"?"filled":""}`} />}
                 </div>
@@ -706,23 +784,23 @@ export default function AnimalAddWizard() {
         </div>
 
         <div className="wizard-body">
-          {step?.id===1 && <Step1Basics        formData={formData} onChange={handleChange} errors={errors} subscriptionLevel={subscriptionLevel} />}
-          {step?.id===2 && <Step2GeneralFacts  formData={formData} onChange={handleChange} errors={errors} breeds={breeds} colors={colors} registrationTypes={registrationTypes} />}
-          {step?.id===3 && <Step3Ancestry      formData={formData} onChange={handleChange} />}
-          {step?.id===4 && <Step4FiberFacts    formData={formData} onChange={handleChange} />}
-          {step?.id===5 && <Step5Description   formData={formData} onChange={handleChange} />}
-          {step?.id===6 && <Step6Awards        formData={formData} onChange={handleChange} />}
-          {step?.id===7 && <Step7Pricing       formData={formData} onChange={handleChange} errors={errors} />}
-          {step?.id===8 && <Step8Photos        formData={formData} onChange={handleChange} subscriptionLevel={subscriptionLevel} />}
+          {step?.id===1 && <Step1Basics       formData={formData} onChange={handleChange} errors={errors} subscriptionLevel={subscriptionLevel} />}
+          {step?.id===2 && <Step2GeneralFacts formData={formData} onChange={handleChange} errors={errors} breeds={breeds} colors={colors} registrationTypes={registrationTypes} />}
+          {step?.id===3 && <Step3Ancestry     formData={formData} onChange={handleChange} colors={colors} />}
+          {step?.id===4 && <Step4FiberFacts   formData={formData} onChange={handleChange} />}
+          {step?.id===5 && <Step5Description  formData={formData} onChange={handleChange} />}
+          {step?.id===6 && <Step6Awards       formData={formData} onChange={handleChange} />}
+          {step?.id===7 && <Step7Pricing      formData={formData} onChange={handleChange} errors={errors} />}
+          {step?.id===8 && <Step8Photos       formData={formData} onChange={handleChange} subscriptionLevel={subscriptionLevel} />}
           {errors.submit && <div className="submit-error">⚠️ {errors.submit}</div>}
         </div>
 
         <div className="wizard-nav">
-          <button className="nav-btn back-btn" onClick={handleBack} disabled={isFirstStep}>← Back</button>
+          <button className="nav-btn back-btn"   onClick={handleBack}   disabled={isFirstStep}>← Back</button>
           <span className="step-counter">Step {currentStepIndex+1} of {visibleSteps.length}</span>
           {isLastStep
-            ? <button className="nav-btn submit-btn" onClick={handleSubmit} disabled={isSubmitting}>{isSubmitting?"Saving...":"Save Animal ✓"}</button>
-            : <button className="nav-btn next-btn" onClick={handleNext}>Next →</button>}
+            ? <button className="nav-btn submit-btn" onClick={handleSubmit} disabled={isSubmitting}>{isSubmitting ? "Saving..." : "Save Animal ✓"}</button>
+            : <button className="nav-btn next-btn"   onClick={handleNext}>Next →</button>}
         </div>
       </div>
     </AccountLayout>

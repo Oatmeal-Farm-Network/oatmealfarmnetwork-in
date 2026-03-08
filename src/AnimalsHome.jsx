@@ -1,44 +1,42 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
-import { useNavigate } from "react-router-dom";
 
 export default function AnimalsHome() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
-  const PeopleID = localStorage.getItem('PeopleID');
+  const PeopleID = localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();
   const [Animals, setAnimals] = useState([]);
   const [Loading, setLoading] = useState(true);
   const [Error, setError] = useState(false);
 
   useEffect(() => {
-  LoadBusiness(BusinessID);
+    LoadBusiness(BusinessID);
 
-  const token = localStorage.getItem('access_token');
-  const url = `/auth/animals?BusinessID=${BusinessID}`;
+    const token = localStorage.getItem('access_token');
+    const url = `/auth/animals?BusinessID=${BusinessID}`;
 
-  fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-    .then(res => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();  // <-- parse JSON directly
+    fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
     })
-    .then(data => {
-      console.log("Animals data:", data);
-      setAnimals(data);   // <-- populate state
-      setLoading(false);  // <-- stop loading spinner
-    })
-    .catch(err => {
-      console.error("Error fetching animals:", err);
-      setError(true);
-      setLoading(false);
-    });
-
-}, [BusinessID, LoadBusiness]);
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        console.log("Animals data:", data);
+        setAnimals(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching animals:", err);
+        setError(true);
+        setLoading(false);
+      });
+  }, [BusinessID]);
 
   const FormatCurrency = (Amount) => {
     if (!Amount || Amount === 0) return '';
@@ -56,7 +54,7 @@ export default function AnimalsHome() {
           <h2 className="text-2xl font-bold text-green-700">My Animals</h2>
           <Link
             to={`/animals/add?BusinessID=${BusinessID}&PeopleID=${PeopleID}`}
-            className="regsubmit2" >
+            className="regsubmit2">
             Add Animal
           </Link>
         </div>
@@ -85,12 +83,12 @@ export default function AnimalsHome() {
                   <React.Fragment key={Animal.AnimalID}>
                     <tr className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-2">
-                        <Link
-                          to={`/animals/edit?BusinessID=${BusinessID}&AnimalID=${Animal.AnimalID}`}
-                          className="text-[#3D6B34] hover:underline font-medium"
+                        <span
+                          onClick={() => navigate(`/animals/edit?BusinessID=${BusinessID}&AnimalID=${Animal.AnimalID}`)}
+                          className="cursor-pointer text-[#5a3e2b] underline hover:text-[#3a2010]"
                         >
-                          {Animal.FullName} (edit)
-                        </Link>
+                          {Animal.FullName}
+                        </span>
                       </td>
                       <td className="py-3 px-2 hidden md:table-cell text-gray-600">
                         {Animal.SpeciesName}
@@ -105,8 +103,13 @@ export default function AnimalsHome() {
                         {Animal.StudFee > 0 ? FormatCurrency(Animal.StudFee) : 'N/A'}
                       </td>
                       <td className="py-3 px-2 text-center hidden md:table-cell">
-                        <div className="flex justify-center gap-3">
-                          <Link to={`/animals/edit?BusinessID=${BusinessID}&AnimalID=${Animal.AnimalID}`} className="text-[#3D6B34] hover:underline text-xs">Edit</Link>
+                        <div className="flex justify-center gap-3 items-center">
+                          <button
+                            onClick={() => navigate(`/animals/edit?BusinessID=${BusinessID}&AnimalID=${Animal.AnimalID}`)}
+                            className="text-[#5a3e2b] hover:underline text-xs font-medium"
+                          >
+                            Edit
+                          </button>
                           <span className="text-gray-300">|</span>
                           <Link to={`/animals/photos?BusinessID=${BusinessID}&AnimalID=${Animal.AnimalID}`} className="text-[#3D6B34] hover:underline text-xs">Photos</Link>
                           <span className="text-gray-300">|</span>

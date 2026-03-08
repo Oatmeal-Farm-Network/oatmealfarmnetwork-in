@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import { AccountProvider } from './AccountContext';
 import "./AnimalAddWizard.css";
+import AnimalEdit from "./AnimalEdit";
 
 const App = lazy(() => import('./App.jsx'))
 const About = lazy(() => import('./About.jsx'))
@@ -91,7 +92,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/account/delete" element={<AccountDelete />} />
           <Route path="/produce/inventory" element={<ProduceInventory />} />
           <Route path="/produce/processed-food" element={<ProcessedFoodInventory />} />
-
+          <Route path="/animals/edit" element={<AnimalEdit />} />
         </Routes>
       </Suspense>
     </AccountProvider>
