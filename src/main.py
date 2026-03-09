@@ -12,7 +12,7 @@ from routers import ingredient-knowledgebase
 from routers import produce 
 from routers import animals
 from routers import livestock, processed_food
-
+from routers import services
 
 
 load_dotenv()
@@ -40,6 +40,7 @@ app.include_router(plant_knowledgebase.router)
 app.include_router(ingredient-knowledgebase.router)
 app.include_router(produce.router)
 app.include_router(animals.router)
+app.include_router(services.router)
 print("PRECISION AG ROUTER REGISTERED")
 print("PLANT KNOWLEDGEBASE ROUTER REGISTERED")
 

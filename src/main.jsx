@@ -47,7 +47,10 @@ const AccountDelete = lazy(() => import('./AccountDelete.jsx'))
 const ProduceInventory = lazy(() => import('./ProduceInventory.jsx'))
 const ProcessedFoodInventory = lazy(() => import('./ProcessedFoodInventory.jsx'))
 const CropDetection = lazy(() => import('./CropDetection.jsx'))
-
+const ServicesHome = lazy(() => import('./ServicesHome.jsx'))
+const ServicesAdd = lazy(() => import('./ServicesAdd.jsx'))
+const ServicesSuggestCategory = lazy(() => import('./ServicesSuggestCategory.jsx'))
+const ServicesEdit = lazy(() => import('./ServicesEdit.jsx'))
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
@@ -64,6 +67,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/account/change-type" element={<AccountChangeType />} />
           <Route path="/animals" element={<AnimalsHome />} />
           <Route path="/animals/add" element={<AnimalAddWizard />} />
+          <Route path="/animals/edit" element={<AnimalEdit />} />
           <Route path="/saige" element={<SaigePage />} />
           <Route path="/oatsense" element={<OatSense />} />
           <Route path="/oatsense/crop-rotation" element={<CropRotation />} />
@@ -71,6 +75,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/fields" element={<PrecisionAgFields />} />
           <Route path="/precision-ag/add" element={<PrecisionAgAdd />} />
           <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />
+          <Route path="/precision-ag/crop-detection" element={<CropDetection />} />
           <Route path="/knowledgebases" element={<Knowledgebases />} />
           <Route path="/plant-knowledgebase" element={<PlantKnowledgebase />} />
           <Route path="/plant-knowledgebase/varietals/:plantId" element={<PlantVarietals />} />
@@ -94,9 +99,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/account/delete" element={<AccountDelete />} />
           <Route path="/produce/inventory" element={<ProduceInventory />} />
           <Route path="/produce/processed-food" element={<ProcessedFoodInventory />} />
-          <Route path="/animals/edit" element={<AnimalEdit />} />
-          <Route path="/precision-ag/crop-detection" element={<CropDetection />} />
-
+          <Route path="/services" element={<ServicesHome />} />
+          <Route path="/services/add" element={<ServicesAdd />} />
+          <Route path="/services/suggest-category" element={<ServicesSuggestCategory />} />
+          <Route path="/services/edit" element={<ServicesEdit />} />
         </Routes>
       </Suspense>
     </AccountProvider>
