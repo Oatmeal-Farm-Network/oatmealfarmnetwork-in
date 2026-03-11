@@ -543,6 +543,7 @@ export default function SaigePage() {
               )}
             </div>
 
+
             {!quiz && !isThinking && (
               <div style={{ padding: '12px 20px 16px', borderTop: '1px solid #1e293b', background: '#0f172a' }}>
                 <div style={{ display: 'flex', gap: 10, maxWidth: 800, margin: '0 auto' }}>
