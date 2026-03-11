@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import { useAccount } from './AccountContext';
@@ -11,6 +12,14 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
   const BT = Business?.BusinessTypeID;
   const [fields, setFields] = useState([]);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      navigate('/login');
+    }
+  }, []);
 
   useEffect(() => {
     if (BT === 8 && BusinessID) {

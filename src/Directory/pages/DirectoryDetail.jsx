@@ -125,6 +125,7 @@ function BusinessCard(props) {
         <div style={{ backgroundColor: '#fff', border: '1px solid #e0e0e0', borderRadius: '6px', padding: '16px', marginBottom: '12px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
             <div style={{ flexShrink: 0 }}>
                 <img
+                    loading="lazy" 
                     src={business.ProfileImage || photoNotAvailable}
                     alt={business.BusinessName + ' logo'}
                     style={{ width: '90px', height: '90px', objectFit: 'contain', borderRadius: '4px', border: '1px solid #eee' }}

@@ -4,7 +4,9 @@ import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
-const CROP_API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const CROP_API_URL = window.location.hostname === 'localhost'
+  ? 'http://127.0.0.1:8001'
+  : 'https://crop-detection-802455386518.us-central1.run.app';
 
 // ─── Safe API fetch (never throws, returns null on error) ─────────────────────
 async function safeFetch(url) {
@@ -399,7 +401,7 @@ export default function PrecisionAgAnalyses() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-full mx-auto">
         {field ? (
           <FieldDetail
             field={field}

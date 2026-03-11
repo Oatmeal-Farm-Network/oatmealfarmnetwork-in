@@ -76,6 +76,7 @@ export default function PlantCategory() {
         <img
           src={cat.header}
           alt={cat.label}
+          loading="lazy" 
           className="w-full object-cover mb-5"
           style={{ height: '200px', objectPosition: 'center', display: 'block' }}
           onError={e => { e.target.style.display = 'none'; }}
@@ -96,7 +97,7 @@ export default function PlantCategory() {
                     src={plantImgSrc(plant)}
                     alt={plant.plant_name}
                     className="object-cover rounded mb-2"
-                    loading="lazy"   // ← add this
+                    loading="lazy"  
                     style={{ width: '150px', height: '150px' }}
                     onError={e => { e.target.src = '/images/PlantDBHome.webp'; }}
                   />
