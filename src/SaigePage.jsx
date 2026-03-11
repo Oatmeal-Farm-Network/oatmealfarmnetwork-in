@@ -228,12 +228,9 @@ function ChatSidebar({ threads, activeThreadId, isCollapsed, isLoading, onToggle
       background: '#0f172a', borderRight: '1px solid #1e293b',
       display: 'flex', flexDirection: 'column', position: 'relative', flexShrink: 0,
     }}>
-      {/* Header */}
       <div style={{ padding: '16px 14px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1e293b' }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1 }}>History</span>
       </div>
-
-      {/* New Chat */}
       <div style={{ padding: '10px 10px 6px' }}>
         <button onClick={onNewChat} style={{
           width: '100%', padding: '9px 12px', borderRadius: 8, border: 'none',
@@ -244,8 +241,6 @@ function ChatSidebar({ threads, activeThreadId, isCollapsed, isLoading, onToggle
           <span style={{ fontSize: 16 }}>+</span> New Chat
         </button>
       </div>
-
-      {/* Thread list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 8px' }}>
         {isLoading && threads.length === 0 && (
           <p style={{ textAlign: 'center', color: '#475569', fontSize: 12, padding: '20px 0' }}>Loading...</p>
@@ -281,7 +276,6 @@ function ChatSidebar({ threads, activeThreadId, isCollapsed, isLoading, onToggle
                 )}
                 <span style={{ fontSize: 11, color: '#475569', marginLeft: 'auto' }}>{formatRelativeTime(t.updated_at)}</span>
               </div>
-              {/* Delete btn */}
               <button onClick={e => { e.stopPropagation(); onDelete(t.thread_id); }}
                 style={{
                   position: 'absolute', top: 8, right: 6, padding: '3px', borderRadius: 4,
@@ -311,7 +305,6 @@ export default function SaigePage() {
 
   useEffect(() => { if (BusinessID) LoadBusiness(BusinessID); }, [BusinessID]);
 
-  // ── Chat state ──
   const [activeThreadId, setActiveThreadId] = useState('');
   const [activeChat, setActiveChat]         = useState([WELCOME_MESSAGE]);
   const [quiz, setQuiz]                     = useState(null);
@@ -320,8 +313,6 @@ export default function SaigePage() {
   const [isThinking, setIsThinking]         = useState(false);
   const [input, setInput]                   = useState('');
   const [processingStage, setProcessingStage] = useState('default');
-
-  // ── Sidebar state ──
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [threads, setThreads]                   = useState([]);
   const [threadsLoading, setThreadsLoading]     = useState(false);
@@ -329,43 +320,33 @@ export default function SaigePage() {
   const advisoryTypeRef = useRef(null);
   const switchingRef    = useRef(false);
   const abortRef        = useRef(null);
-  const messagesEndRef  = useRef(null);
   const inputRef        = useRef(null);
 
-  // Generate thread ID on mount
   useEffect(() => {
     if (!activeThreadId) setActiveThreadId(generateThreadId());
   }, [activeThreadId]);
 
-  // Collapse sidebar on narrow screens
   useEffect(() => {
     if (window.innerWidth < 900) setSidebarCollapsed(true);
   }, []);
 
-  // Auto-scroll to bottom
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeChat, isThinking, quiz]);
 
-  // Save chat to localStorage
   useEffect(() => {
     if (activeThreadId && activeChat.length > 0) {
       saveThread(activeThreadId, activeChat, 'active', advisoryTypeRef.current);
     }
   }, [activeThreadId, activeChat]);
 
-  // Persist quiz state
   useEffect(() => {
     if (activeThreadId) saveQuiz(activeThreadId, quiz);
   }, [activeThreadId, quiz]);
 
-  // ── Fetch thread list ──
   const fetchThreads = useCallback(async () => {
     setThreadsLoading(true);
     const localThreads = getLocalThreads();
     let apiThreads = [];
     try {
-      const res = await fetch(`${SAIGE_API}/api/threads?user_id=anonymous`);
+      const res = await fetch(`${SAIGE_API}/threads?user_id=anonymous`);
       if (res.ok) { const d = await res.json(); apiThreads = d.threads || []; }
     } catch { /* backend unavailable */ }
     setThreads(mergeThreads(apiThreads, localThreads));
@@ -374,14 +355,12 @@ export default function SaigePage() {
 
   useEffect(() => { fetchThreads(); }, [fetchThreads]);
 
-  // ── Thread management ──
   async function handleSelectThread(threadId) {
     if (threadId === activeThreadId || switchingRef.current) return;
     switchingRef.current = true;
     if (abortRef.current) abortRef.current.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
-
     try {
       let messages = [];
       const cached = _msgCache.get(threadId);
@@ -389,7 +368,7 @@ export default function SaigePage() {
         messages = cached.messages;
       } else {
         try {
-          const res = await fetch(`${SAIGE_API}/api/threads/${threadId}/messages?user_id=anonymous`, { signal: ctrl.signal });
+          const res = await fetch(`${SAIGE_API}/threads/${threadId}/messages?user_id=anonymous`, { signal: ctrl.signal });
           if (res.ok) {
             const d = await res.json();
             messages = (d.messages || []).map(m => ({ role: m.role, content: m.content }));
@@ -414,7 +393,7 @@ export default function SaigePage() {
 
   async function handleDeleteThread(threadId) {
     deleteLocalThread(threadId);
-    try { await fetch(`${SAIGE_API}/api/threads/${threadId}?user_id=anonymous`, { method: 'DELETE' }); } catch { /* ok */ }
+    try { await fetch(`${SAIGE_API}/threads/${threadId}?user_id=anonymous`, { method: 'DELETE' }); } catch { /* ok */ }
     if (activeThreadId === threadId) {
       setActiveThreadId(generateThreadId());
       setActiveChat([WELCOME_MESSAGE]);
@@ -432,15 +411,12 @@ export default function SaigePage() {
     fetchThreads();
   }
 
-  // ── Send message ──
   async function sendMessage(val, options = {}) {
     if (!activeThreadId || !val?.trim()) return;
     const showBubble = options.showUserBubble ?? true;
     if (showBubble) setActiveChat(prev => [...prev, { role: 'user', content: val }]);
-
     setInput('');
 
-    // Early stage detection for better UX
     const lower = val.toLowerCase();
     let earlyStage = 'default';
     if (['weather','temperature','forecast','rain','climate'].some(w => lower.includes(w))) earlyStage = 'weather';
@@ -452,7 +428,7 @@ export default function SaigePage() {
     setQuiz(null);
 
     try {
-      const res = await fetch(`${SAIGE_API}/api/chat`, {
+      const res = await fetch(`${SAIGE_API}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_input: val, thread_id: activeThreadId }),
@@ -519,12 +495,10 @@ export default function SaigePage() {
     sendMessage(answer, { showUserBubble: false });
   }
 
-  // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
       <div style={{ margin: '-24px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
 
-        {/* Title bar */}
         <div style={{
           padding: '10px 20px', background: 'white', borderBottom: '1px solid #e8e0d5',
           display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
@@ -541,10 +515,7 @@ export default function SaigePage() {
           </div>
         </div>
 
-        {/* Main body */}
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: '#0f172a' }}>
-
-          {/* Sidebar */}
           <ChatSidebar
             threads={threads}
             activeThreadId={activeThreadId}
@@ -556,10 +527,7 @@ export default function SaigePage() {
             onNewChat={handleNewChat}
           />
 
-          {/* Chat area */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
-            {/* Messages */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 8px' }}>
               {activeChat.map((msg, i) => <ChatBubble key={i} message={msg} />)}
               {isThinking && <ThinkingDots stage={processingStage} />}
@@ -573,10 +541,8 @@ export default function SaigePage() {
                   onSubmit={handleSubmitQuiz}
                 />
               )}
-              <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
             {!quiz && !isThinking && (
               <div style={{ padding: '12px 20px 16px', borderTop: '1px solid #1e293b', background: '#0f172a' }}>
                 <div style={{ display: 'flex', gap: 10, maxWidth: 800, margin: '0 auto' }}>
