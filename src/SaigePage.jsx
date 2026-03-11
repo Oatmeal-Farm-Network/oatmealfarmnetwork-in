@@ -4,7 +4,7 @@ import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const SAIGE_API = 'https://oatmealfarmnewtorkbackend-802455386518.us-central1.run.app';
+const SAIGE_API = 'https://saige-backend-802455386518.us-central1.run.app';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 // Message:      { role: 'user' | 'assistant', content: string }
