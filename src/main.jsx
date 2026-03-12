@@ -1,40 +1,61 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import App from './App.jsx'
-import About from './About.jsx'
-import Login from './login.jsx'
-import Signup from './Signup.jsx'
-import Dashboard from './Dashboard.jsx'
 import './index.css'
-import AccountHome from './AccountHome.jsx';
-import OatSense from './OatSense.jsx';
-import PrecisionAgFields from './PrecisionAgFields.jsx';
-import PrecisionAgAdd from './PrecisionAgAdd.jsx';
-import PrecisionAgAnalyses from './PrecisionAgAnalyses.jsx';
-import CropRotation from './CropRotation.jsx';
-import OatSenseNotes from './OatSenseNotes.jsx';
-import SaigePage from './SaigePage.jsx';
-import AnimalsHome from './AnimalsHome.jsx';
-import AccountChangeType from './AccountChangeType.jsx';
 import { AccountProvider } from './AccountContext';
-import AnimalAddWizard from "./AnimalAddWizard";
 import "./AnimalAddWizard.css";
-import DirectoryList from './Directory/pages/DirectoryList';
-import DirectoryDetail from './Directory/pages/DirectoryDetail';
-import BusinessProfile from './Directory/pages/BusinessProfile';
-import Accounts from './Accounts.jsx';
-import Knowledgebases from './Knowledgebases.jsx';
-import Marketplaces from './Marketplaces.jsx';
-import ContactUs from './ContactUs.jsx';
-import ContactUsConfirm from './ContactUsConfirm.jsx';
+import AnimalEdit from "./AnimalEdit";
 
-
+const App = lazy(() => import('./App.jsx'))
+const About = lazy(() => import('./About.jsx'))
+const Login = lazy(() => import('./login.jsx'))
+const Signup = lazy(() => import('./Signup.jsx'))
+const Dashboard = lazy(() => import('./Dashboard.jsx'))
+const AccountHome = lazy(() => import('./AccountHome.jsx'))
+const OatSense = lazy(() => import('./OatSense.jsx'))
+const PrecisionAgFields = lazy(() => import('./PrecisionAgFields.jsx'))
+const PrecisionAgAdd = lazy(() => import('./PrecisionAgAdd.jsx'))
+const PrecisionAgAnalyses = lazy(() => import('./PrecisionAgAnalyses.jsx'))
+const CropRotation = lazy(() => import('./CropRotation.jsx'))
+const OatSenseNotes = lazy(() => import('./OatSenseNotes.jsx'))
+const SaigePage = lazy(() => import('./SaigePage.jsx'))
+const AnimalsHome = lazy(() => import('./AnimalsHome.jsx'))
+const AccountChangeType = lazy(() => import('./AccountChangeType.jsx'))
+const AnimalAddWizard = lazy(() => import('./AnimalAddWizard'))
+const DirectoryList = lazy(() => import('./Directory/pages/DirectoryList'))
+const DirectoryDetail = lazy(() => import('./Directory/pages/DirectoryDetail'))
+const BusinessProfile = lazy(() => import('./Directory/pages/BusinessProfile'))
+const Accounts = lazy(() => import('./Accounts.jsx'))
+const Knowledgebases = lazy(() => import('./Knowledgebases.jsx'))
+const IngredientKnowledgebase = lazy(() => import('./IngredientKnowledgebase.jsx'))
+const IngredientCategory = lazy(() => import('./IngredientCategory.jsx'))
+const IngredientVarieties = lazy(() => import('./IngredientVarieties.jsx'))
+const LivestockDB = lazy(() => import('./LivestockDB.jsx'))
+const LivestockSpecies = lazy(() => import('./LivestockSpecies.jsx'))
+const LivestockBreed = lazy(() => import('./LivestockBreed.jsx'))
+const LivestockAbout = lazy(() => import('./LivestockAbout.jsx'))
+const PlantKnowledgebase = lazy(() => import('./PlantKnowledgebase.jsx'))
+const PlantCategory = lazy(() => import('./PlantCategory.jsx'))
+const PlantVarietals = lazy(() => import('./PlantVarietals.jsx'))
+const PlantVarietalDetail = lazy(() => import('./PlantVarietalDetail.jsx'))
+const Marketplaces = lazy(() => import('./Marketplaces.jsx'))
+const ContactUs = lazy(() => import('./ContactUs.jsx'))
+const ContactUsConfirm = lazy(() => import('./ContactUsConfirm.jsx'))
+const AccountNew = lazy(() => import('./AccountNew.jsx'))
+const AccountProfile = lazy(() => import('./AccountProfile.jsx'))
+const AccountDelete = lazy(() => import('./AccountDelete.jsx'))
+const ProduceInventory = lazy(() => import('./ProduceInventory.jsx'))
+const ProcessedFoodInventory = lazy(() => import('./ProcessedFoodInventory.jsx'))
+const CropDetection = lazy(() => import('./CropDetection.jsx'))
+const ServicesHome = lazy(() => import('./ServicesHome.jsx'))
+const ServicesAdd = lazy(() => import('./ServicesAdd.jsx'))
+const ServicesSuggestCategory = lazy(() => import('./ServicesSuggestCategory.jsx'))
+const ServicesEdit = lazy(() => import('./ServicesEdit.jsx'))
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <AccountProvider>
+  <BrowserRouter>
+    <AccountProvider>
+      <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>}>
         <Routes>
           <Route path="/accounts" element={<Accounts />} />
           <Route path="/" element={<App />} />
@@ -46,6 +67,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/account/change-type" element={<AccountChangeType />} />
           <Route path="/animals" element={<AnimalsHome />} />
           <Route path="/animals/add" element={<AnimalAddWizard />} />
+          <Route path="/animals/edit" element={<AnimalEdit />} />
           <Route path="/saige" element={<SaigePage />} />
           <Route path="/oatsense" element={<OatSense />} />
           <Route path="/oatsense/crop-rotation" element={<CropRotation />} />
@@ -53,15 +75,36 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/fields" element={<PrecisionAgFields />} />
           <Route path="/precision-ag/add" element={<PrecisionAgAdd />} />
           <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />
+          <Route path="/precision-ag/crop-detection" element={<CropDetection />} />
           <Route path="/knowledgebases" element={<Knowledgebases />} />
+          <Route path="/plant-knowledgebase" element={<PlantKnowledgebase />} />
+          <Route path="/plant-knowledgebase/varietals/:plantId" element={<PlantVarietals />} />
+          <Route path="/plant-knowledgebase/varietal-detail/:varietyId" element={<PlantVarietalDetail />} />
+          <Route path="/plant-knowledgebase/:category" element={<PlantCategory />} />
+          <Route path="/livestock" element={<LivestockDB />} />
+          <Route path="/livestock/:species/about" element={<LivestockAbout />} />
+          <Route path="/livestock/:species/breed/:breedId" element={<LivestockBreed />} />
+          <Route path="/livestock/:species" element={<LivestockSpecies />} />
+          <Route path="/ingredient-knowledgebase" element={<IngredientKnowledgebase />} />
+          <Route path="/ingredient-knowledgebase/:category/varieties/:ingredientId" element={<IngredientVarieties />} />
+          <Route path="/ingredient-knowledgebase/:category" element={<IngredientCategory />} />
           <Route path="/marketplaces" element={<Marketplaces />} />
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/contact-us/confirm" element={<ContactUsConfirm />} />
           <Route path="/directory" element={<DirectoryList />} />
           <Route path="/directory/:directoryType" element={<DirectoryDetail />} />
           <Route path="/profile" element={<BusinessProfile />} />
+          <Route path="/accounts/new" element={<AccountNew />} />
+          <Route path="/account/profile" element={<AccountProfile />} />
+          <Route path="/account/delete" element={<AccountDelete />} />
+          <Route path="/produce/inventory" element={<ProduceInventory />} />
+          <Route path="/produce/processed-food" element={<ProcessedFoodInventory />} />
+          <Route path="/services" element={<ServicesHome />} />
+          <Route path="/services/add" element={<ServicesAdd />} />
+          <Route path="/services/suggest-category" element={<ServicesSuggestCategory />} />
+          <Route path="/services/edit" element={<ServicesEdit />} />
         </Routes>
-      </AccountProvider>
-    </BrowserRouter>
-  </React.StrictMode>,
+      </Suspense>
+    </AccountProvider>
+  </BrowserRouter>
 )

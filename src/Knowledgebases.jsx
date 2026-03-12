@@ -4,7 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 
 const FeatureBox = ({ title, description, imgSrc, link }) => (
-  <div className="flex flex-col bg-[#819360] rounded-[20px] p-[10px] shadow-[0_4px_8px_rgba(0,0,0,0.1)] min-h-[250px] text-center w-full mb-4 lg:mb-0 border border-[#4d734d]/20">
+  <div className="flex flex-col bg-[white] rounded-[20px] p-[10px] shadow-[0_4px_8px_rgba(0,0,0,0.1)] min-h-[250px] text-center w-full mb-4 lg:mb-0 border border-[#4d734d]/20">
     <Link to={link} className="block mb-[10px] overflow-hidden rounded-[20px]">
       <img
         src={imgSrc}
@@ -12,27 +12,26 @@ const FeatureBox = ({ title, description, imgSrc, link }) => (
         className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
       />
     </Link>
-    <h3 className="text-[#e5af17] font-bold text-xl mb-2">
-      <Link to={link} className="no-underline hover:underline transition-all duration-300 text-white">
+    <h3>
+      <Link to={link} className="body">
         {title}
       </Link>
     </h3>
-    <p className="text-white flex-grow text-sm mb-4 leading-relaxed font-medium">
+    <p className="body">
       {description}
     </p>
-    <Link
-      to={link}
-      className="bg-[#4d734d] text-white rounded-[20px] py-[10px] px-[25px] font-bold inline-block self-center hover:bg-white hover:text-[#4d734d] transition-colors mt-auto text-sm uppercase tracking-wider"
-    >
+    <Link to={link} className="regsubmit2">
       Learn More
     </Link>
   </div>
 );
 
 export default function Knowledgebases() {
+  const isLoggedIn = useIsLoggedIn();
+
   return (
     <div className="min-h-screen bg-white font-sans">
-      <Header />
+       <Header />
 
       <section className="py-6 bg-white text-center">
         <div className="max-w-7xl mx-auto px-4">
@@ -54,19 +53,19 @@ export default function Knowledgebases() {
               title="Plant Knowledgebase"
               description="Explore detailed profiles for over 4,000 food plant varieties, from grains to culinary herbs and spices."
               imgSrc="/images/PlantDBHome.webp"
-              link="/plants"
+              link="/plant-knowledgebase"
             />
             <FeatureBox
               title="Livestock Database"
               description="Delve into detailed profiles for over 2,000 livestock breeds, covering morphology, origin, and use."
               imgSrc="/images/HomepageLivestockDB.webp"
-              link="/livestock"
+              link="/Livestock"
             />
             <FeatureBox
               title="Ingredient Knowledgebase"
               description="A comprehensive look at over 1,400 Ingredients with over 14,000 varieties."
               imgSrc="/images/Homepagefoodsystemdirectory.webp"
-              link="/ingredients"
+              link="/ingredient-knowledgebase"
             />
           </div>
         </div>

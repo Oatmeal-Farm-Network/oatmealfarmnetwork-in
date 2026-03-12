@@ -125,6 +125,7 @@ function BusinessCard(props) {
         <div style={{ backgroundColor: '#fff', border: '1px solid #e0e0e0', borderRadius: '6px', padding: '16px', marginBottom: '12px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
             <div style={{ flexShrink: 0 }}>
                 <img
+                    loading="lazy" 
                     src={business.ProfileImage || photoNotAvailable}
                     alt={business.BusinessName + ' logo'}
                     style={{ width: '90px', height: '90px', objectFit: 'contain', borderRadius: '4px', border: '1px solid #eee' }}
@@ -167,6 +168,7 @@ const DirectoryDetail = function() {
     var location = useLocation();
     var backState = location.state;
 
+    var [isLoggedIn, setIsLoggedIn] = useState(false);
     var [countries, setCountries] = useState([]);
     var [states, setStates] = useState([]);
     var [businesses, setBusinesses] = useState([]);
@@ -180,6 +182,11 @@ const DirectoryDetail = function() {
     var [error, setError] = useState(null);
     var [currentPage, setCurrentPage] = useState(1);
     var itemsPerPage = 10;
+
+    useEffect(function() {
+        const token = localStorage.getItem('access_token');
+        setIsLoggedIn(Boolean(token));
+    }, []);
 
     var businessType = DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID[directoryType] || directoryType;
     var pageTitle = directoryType
@@ -276,7 +283,7 @@ const DirectoryDetail = function() {
 
     return (
         <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-            <Header />
+           <Header />
 
             {/* Page Header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #e0e0e0' }}>
@@ -312,7 +319,7 @@ const DirectoryDetail = function() {
                                 style={{ padding: '8px 10px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '0.9rem' }}
                             >
                                 <option value="">Any</option>
-                                {states.map(function(s) { return <option key={s} value={s}>{s}</option>; })}
+                                {states.map(function(s) { return <option key={s.StateIndex} value={s.name}>{s.name}</option>; })}
                             </select>
                         </div>
 

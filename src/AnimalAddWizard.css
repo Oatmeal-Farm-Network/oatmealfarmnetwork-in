@@ -4,7 +4,7 @@
 
 /* ── Wizard Shell ── */
 .animal-wizard {
-  max-width: 780px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0 0 80px;
 }

@@ -46,7 +46,7 @@ export default function AccountChangeType() {
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
 
-      <div className="bg-white rounded-2xl shadow border border-gray-200 p-6 max-w-2xl">
+      <div className="bg-white rounded-2xl shadow border border-gray-200 p-6 mx-w-full" >
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Change Account Type</h1>
 
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
@@ -80,7 +80,7 @@ export default function AccountChangeType() {
             </select>
             <button
               type="submit"
-              className="bg-[#A3301E] hover:bg-[#8a2718] text-white font-bold py-3 px-6 rounded-xl text-sm transition-colors"
+              className="regsubmit2"
             >
               Change
             </button>

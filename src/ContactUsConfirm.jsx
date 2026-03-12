@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
@@ -6,6 +6,12 @@ import Footer from './Footer';
 export default function ContactUsConfirm() {
   const location = useLocation();
   const payload = location.state?.payload;
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    setIsLoggedIn(Boolean(token));
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FBF9F4]">
@@ -31,11 +37,8 @@ export default function ContactUsConfirm() {
             </div>
           )}
 
-          <Link
-            to="/"
-            className="inline-block rounded-lg bg-[#4A5C43] text-white font-semibold px-6 py-3 hover:bg-[#3e4d37] transition-colors"
-          >
-            Return To Home
+          <Link to={isLoggedIn ? '/dashboard' : '/'} className="regsubmit2">
+            {isLoggedIn ? 'Return To Dashboard' : 'Return To Home'}
           </Link>
         </section>
       </main>
