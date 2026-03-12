@@ -7,6 +7,7 @@ import { FaFacebookF, FaPinterestP, FaXTwitter, FaInstagram, FaLinkedinIn, FaYou
 import Header from '../../Header';
 import Footer from '../../Footer';
 
+
 const BusinessProfile = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -87,11 +88,26 @@ const BusinessProfile = () => {
 
     if (!business) {
         return (
-            <div className="min-h-screen bg-gray-100 font-sans">
+            <div className="min-h-screen bg-white font-sans">
                 <Header />
-                <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-                    <p className="text-gray-600 mb-4">No business information available.</p>
-                    <button onClick={backToListings} className="bg-[#4d734d] text-white px-5 py-2 rounded-lg hover:bg-[#3d5e3d] transition-colors">
+                <header className="header">
+                    <div className="logo-container">
+                        <img src={DIRECTORY_TYPE_TO_IMAGE[directoryType] || photoNotAvailable} className="logo-image" />
+                        <span className="logo-text">{DIRECTORY_TYPE_TO_BUSINESS_TYPE[directoryType] || 'Business'}</span>
+                    </div>
+                </header>
+                <div className="profile-page-container">
+                    <p>No business information available.</p>
+                    <button 
+                        onClick={() => navigate(`/directory/${directoryType || 'agricultural-associations'}`, {
+                            state: {
+                                selectedCountry,
+                                selectedState,
+                                nameFilter
+                            }
+                        })} 
+                        className="back-button"
+                    >
                         ← Back to Listings
                     </button>
                 </div>
@@ -103,10 +119,15 @@ const BusinessProfile = () => {
     const fullAddress = [business.Address, business.City, business.State, business.ZipCode, business.Country].filter(Boolean).join(', ');
 
     return (
-        <div className="min-h-screen bg-gray-100 font-sans">
-            {isLoggedIn ? <HeaderGated /> : <Header />}
-
-            <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="min-h-screen bg-white font-sans">
+            <Header />
+            {/* Directory context header */}
+            <header className="header">
+                <div className="logo-container">
+                    <img src={DIRECTORY_TYPE_TO_IMAGE[directoryType] || photoNotAvailable} className="logo-image" />
+                    <span className="logo-text">{DIRECTORY_TYPE_TO_BUSINESS_TYPE[directoryType] || 'Business'}</span>
+                </div>
+            </header>
 
                 {/* Back button + Business name */}
                 <div className="mb-6">
@@ -286,7 +307,6 @@ const BusinessProfile = () => {
 
                 </div>
             </div>
-
             <Footer />
         </div>
     );

@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Header from './Header';
+import Header from './HeaderGated';
 import Footer from './Footer';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -215,9 +213,6 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-
-        </div>
-      </div>
 
       <Footer />
     </div>

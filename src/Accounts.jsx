@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import Header from './Header';
+import Header from './HeaderGated';
 import Footer from './Footer';
-
-const FARM_RANCH_TYPE_ID = 8;
 
 export default function Accounts() {
   const navigate = useNavigate();

@@ -134,7 +134,8 @@ export default function Login() {
           </div>
         </div>
       </section>
-      <footer />
+
+      <Footer />
     </div>
   );
 }
