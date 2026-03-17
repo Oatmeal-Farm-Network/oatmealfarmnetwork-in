@@ -81,7 +81,7 @@ export default function PlantCategory() {
           src={cat.header}
           alt={cat.label}
           loading="eager"
-          fetchpriority="high"
+          fetchPriority="high"
           className="w-full object-cover mb-5"
           style={{ height: '200px', objectPosition: 'center', display: 'block' }}
           onError={e => { e.target.style.display = 'none'; }}

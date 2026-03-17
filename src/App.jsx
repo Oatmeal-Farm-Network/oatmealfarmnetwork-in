@@ -11,7 +11,7 @@ const FeatureBox = ({ title, description, imgSrc, link, eager }) => (
         alt={title}
         loading={eager ? 'eager' : 'lazy'}
         decoding={eager ? 'sync' : 'async'}
-        fetchpriority={eager ? 'high' : 'auto'}
+        fetchPriority={eager ? 'high' : 'auto'}
         className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
       />
     </Link>

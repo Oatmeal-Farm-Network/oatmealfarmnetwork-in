@@ -60,7 +60,7 @@ export default function LivestockBreed() {
                 src={`/images/${label.replace(/ /g, '')}.webp`}
                 alt={label}
                 loading="eager"
-                fetchpriority="high"
+                fetchPriority="high"
                 style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
                 onError={e => { e.target.style.display = 'none'; }}
               />
@@ -75,7 +75,7 @@ export default function LivestockBreed() {
                     src={breed.image.startsWith('http') ? breed.image : `/images/${breed.image.replace(/^.*[\\/]/, '')}`}
                     alt={breed.breed}
                     loading="eager"
-                    fetchpriority="high"
+                    fetchPriority="high"
                     className="w-full rounded shadow"
                     onError={e => { e.target.style.display = 'none'; }}
                   />
