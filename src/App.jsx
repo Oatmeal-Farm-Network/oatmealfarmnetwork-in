@@ -67,7 +67,7 @@ export default function App() {
             <FeatureBox
               title="Saige"
               description="Boost your farm's success with Saige's AI-powered insights for weather, soil, pests, and livestock."
-              imgSrc="/images/CharlieHome.png"
+              imgSrc="/images/CharlieHome.webp"
               link="/saige"
               eager={true}
             />
