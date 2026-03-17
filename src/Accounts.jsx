@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import Header from './HeaderGated';
-import Footer from './Footer';
+import Header from './AccountLayout';
 
 export default function Accounts() {
   const navigate = useNavigate();
@@ -24,7 +23,7 @@ export default function Accounts() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
-      <Header />
+      <AccountLayout />
 
       <div className="container mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
@@ -114,7 +113,7 @@ export default function Accounts() {
         )}
       </div>
 
-      <Footer />
+      <AccountLayout />
     </div>
   );
 }
