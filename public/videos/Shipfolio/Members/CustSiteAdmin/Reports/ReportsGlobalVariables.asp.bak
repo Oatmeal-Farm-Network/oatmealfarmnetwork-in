@@ -1,0 +1,57 @@
+<% 'Global Variables
+Dim DatabasePath
+Dim AdministrationPath
+Dim WebSiteName
+Dim Slogan
+Dim PhysicalPath
+Dim BorderColor
+
+
+BorderColor = "#ebebeb"
+
+BackgroundColor = "white"
+
+WebLink= "www.Andresenacres.com"
+LongWeblink = "http://www.Andresenacres.com"
+DatabasePath = "../../../DB/Andresenacres.mdb"
+AdministrationPath = "/Administration"
+WebSiteName = "Andresen Acres Alpacas"
+PhysicalPath = "E:\\Inetpub\\wwwroot\\starter\\alpacas2\\Andresenacres.com\\www"
+UploadPath = "E:\\Inetpub\\wwwroot\\starter\\alpacas2\\Andresenacres.com\\www\\Uploads\\"
+WebLink= "www.Andresenacres.com"
+
+custid = "66"
+ReportHighlightColor = "#CBB085"
+'**************************************************************
+ ' Define Conn Object
+'**************************************************************
+	conn = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
+						"Data Source=" & server.mappath(DatabasePath) & ";" & _
+						"User Id=;Password=;" '& _ 
+			Set rs = Server.CreateObject("ADODB.Recordset")
+
+
+'**************************************************************
+ ' Open RecordSet For Page Info
+'**************************************************************
+sql = "select * from sfcustomers where custID = " & custID & ";"
+'response.write(sql)
+rs.Open sql, conn, 3, 3
+If Not rs.eof then
+Logo = rs("Logo")
+	WebSiteName = rs("custCompany")
+	CustName = rs("custFirstname")
+    City = rs("custCity")
+    State = rs("custState")
+	Phone = rs("custPhone")			
+    Fax = rs("custFax")
+    Email = rs("custEmail")
+	Zip= rs("custZip")
+	Street= rs("custAddr1")
+	Street2= rs("custAddr2")
+	Cell= rs("custphone2")
+End If
+rs.close
+
+%>
+

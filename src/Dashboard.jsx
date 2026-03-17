@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Header from './HeaderGated';
-import Footer from './Footer';
+import Header from './AccountLayout';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
   const [user, setUser] = useState(null);
   const [businesses, setBusinesses] = useState([]);
   const [weather, setWeather] = useState(null);
@@ -213,8 +213,15 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+          {/* END RIGHT weather card */}
 
-      <Footer />
+        </div>
+        {/* END two column grid */}
+
+      </div>
+      {/* END outer container */}
+
     </div>
+    /* END min-h-screen wrapper */
   );
 }

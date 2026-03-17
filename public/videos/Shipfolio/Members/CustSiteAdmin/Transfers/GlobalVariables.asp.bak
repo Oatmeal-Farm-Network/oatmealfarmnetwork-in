@@ -1,0 +1,24 @@
+<% 'Global Variables
+Dim DatabasePath
+Dim AdministrationPath
+Dim WebSiteName
+Dim Slogan
+Dim PhysicalPath
+Dim BorderColor
+
+
+BorderColor = "#ebebeb"
+
+BackgroundColor = "white"
+
+WebLink= "www.AlpacasontheWeb.com"
+LongWeblink = "http://www.AlpacasontheWeb.com"
+DatabasePath = "../../../DB/AlpacasAtLoneRanch.mdb"
+AdministrationPath = "/Administration"
+WebSiteName = "Alpacas on the Web"
+PhysicalPath = "E:\\Inetpub\\wwwroot\\internet-host\\richard\\alpacas@loneranch.com\\www"
+Slogan = ""
+UploadPath = "E:\\Inetpub\\wwwroot\\internet-host\\richard\\alpacas@loneranch.com\\www\\Uploads\\"
+
+%>
+

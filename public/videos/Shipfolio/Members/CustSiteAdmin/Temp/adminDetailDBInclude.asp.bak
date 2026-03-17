@@ -1,0 +1,300 @@
+<% 		ID= Request.QueryString("ID") 
+		If Len(ID) < 1 then
+			ID= Request.Form("ID") 
+		End If 
+Session("Animalid")= ID
+
+	DetailType= "Other"
+'response.write("DetailType=")
+'response.write(DetailType)
+'response.write("ID=")
+'response.write(ID)
+
+		conn = "Provider=Microsoft.Jet.OLEDB.4.0;" & _
+						"Data Source=" & server.mappath(DatabasePath) & ";" & _
+						"User Id=;Password=;" '& _ 
+			Set rs = Server.CreateObject("ADODB.Recordset")
+				
+				 sql = "select * from SFCustomers"
+				 'response.write(sql)
+				   rs.Open sql, conn, 3, 3
+				   'response.write(rs.recordcount)
+				If rs.eof  Then
+					
+					StudServicesPage = rs("StudServicesPage")
+				End if
+
+
+If Len(ID) > 0 then
+
+			
+			Set rs = Server.CreateObject("ADODB.Recordset")
+				
+				 sql = "select * from Awards where ID=" & ID
+				  'response.write(sql)
+				   rs.Open sql, conn, 3, 3
+				   'response.write(rs.recordcount)
+				If rs.eof Or rs.recordcount < 21 then
+					Set DataConnection = Server.CreateObject("ADODB.Connection")
+					DataConnection.Open "DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" & Server.MapPath(DatabasePath) & ";" 
+					counter = rs.recordcount
+					While counter < 21 
+						Query =  "INSERT INTO Awards (ID)" 
+						Query =  Query & " Values (" &  ID & ")"
+					    Counter = counter + 1
+						DataConnection.Execute(Query) 
+					wend
+					'response.write(Query)
+					
+					DataConnection.Close
+					Set DataConnection = Nothing 
+				End If 
+			rs.close
+
+
+				sql = "select Ancestors.*, Animals.*, Pricing.*, colors.*, Ancestrypercents.*, Awards.*  from Animals, Pricing, Ancestors, colors,  Ancestrypercents, Awards where animals.id = Ancestrypercents.id and animals.ID = Pricing.ID and animals.ID = Awards.ID and animals.ID = Ancestors.ID and animals.ID = colors.ID and Animals.ID=" & ID
+				'response.write(sql)
+				gender = "non-breeder"
+				rs.Open sql, conn, 3, 3
+								
+				If rs.eof Then
+				rs.close	
+				  sql = "select * from Ancestors where ID=" & ID
+				  'response.write(sql)
+				   rs.Open sql, conn, 3, 3
+				If rs.eof then
+					Set DataConnection = Server.CreateObject("ADODB.Connection")
+					DataConnection.Open "DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" & Server.MapPath(DatabasePath) & ";" 
+					Query =  "INSERT INTO Ancestors (ID)" 
+					Query =  Query & " Values (" &  ID & ")"
+					'response.write(Query)
+					DataConnection.Execute(Query) 
+					DataConnection.Close
+					Set DataConnection = Nothing 
+				End If 
+
+	
+				rs.close	
+				 sql = "select * from Pricing where ID=" & ID
+				  'response.write(sql)
+				   rs.Open sql, conn, 3, 3
+				If rs.eof then
+					Set DataConnection = Server.CreateObject("ADODB.Connection")
+					DataConnection.Open "DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" & Server.MapPath(DatabasePath) & ";" 
+					Query =  "INSERT INTO Pricing (ID)" 
+					Query =  Query & " Values (" &  ID & ")"
+					'response.write(Query)
+					DataConnection.Execute(Query) 
+					DataConnection.Close
+					Set DataConnection = Nothing 
+				End If 
+
+				rs.close	
+				 sql = "select * from colors where ID=" & ID
+				  'response.write(sql)
+				   rs.Open sql, conn, 3, 3
+				If rs.eof then
+					Set DataConnection = Server.CreateObject("ADODB.Connection")
+					DataConnection.Open "DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" & Server.MapPath(DatabasePath) & ";" 
+					Query =  "INSERT INTO colors (ID)" 
+					Query =  Query & " Values (" &  ID & ")"
+					'response.write(Query)
+					DataConnection.Execute(Query) 
+					DataConnection.Close
+					Set DataConnection = Nothing 
+				End If 
+
+				rs.close	
+				
+
+				
+				 sql = "select * from Ancestrypercents where ID=" & ID
+				  'response.write(sql)
+				   rs.Open sql, conn, 3, 3
+				If rs.eof then
+					Set DataConnection = Server.CreateObject("ADODB.Connection")
+					DataConnection.Open "DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" & Server.MapPath(DatabasePath) & ";" 
+					Query =  "INSERT INTO Ancestrypercents (ID)" 
+					Query =  Query & " Values (" &  ID & ")"
+					'response.write(Query)
+					DataConnection.Execute(Query) 
+					DataConnection.Close
+					Set DataConnection = Nothing 
+				End If 
+
+			
+
+				rs.close
+				sql = "select Ancestors.*, Animals.*, Pricing.*, colors.*,  Ancestrypercents.*, Awards.*  from Animals, Pricing, Ancestors, colors,  Ancestrypercents, Awards where animals.id = Ancestrypercents.id and animals.ID = Pricing.ID and animals.ID = Awards.ID and animals.ID = Ancestors.ID and animals.ID = colors.ID and Animals.ID=" & ID
+				'response.write(sql)
+				gender = "non-breeder"
+				rs.Open sql, conn, 3, 3
+				
+		  End If 
+	Dim Description
+Description   = rs("Description") 
+StudDescription   = rs("StudDescription") 
+CoOwner   = rs("CoOwner") 
+CoOwnerLink   = rs("CoOwnerLink") 
+StudFee 	= rs("StudFee")
+Foundation 	= rs("Foundation")
+		Price 	= rs("Price")
+		if not rs.eof then 
+				name 	= trim(rs("animals.FullName"))
+		
+			Session("AnimalName")= Name		
+		ShowOnStudPage= rs("ShowOnStudPage")
+				Price = rs("Price")
+				Discount = rs("Discount")
+				PriceComments = rs("PriceComments")
+				ForSale = rs("ForSale")
+				Sold = rs("Sold")
+			SalePending = rs("SalePending")
+		
+			DOB 	= rs("DOBMonth")
+			DOB 	= rs("DOBday")
+			DOB 	= rs("DOBYear")
+			ARI 	= rs("ARI")
+			Color1   = rs("Color1") 
+				Color2   = rs("Color2") 
+					Color3   = rs("Color3") 
+						Color4   = rs("Color4") 
+							Color5   = rs("Color5") 
+			
+			Category 	= rs("Category")
+			
+		
+			if DetailType = "Dam" then
+				DueDate	=rs("DueDate")
+				'BredTo	=rs("ServiceSire")
+				ExternalStudID	=rs("ExternalStudID")
+				ServiceSireID	=rs("ServiceSireID")
+			end if
+
+			if not(detailtype = "Other" Or detailtype = "other") then
+				CF 	= rs("CF")
+				Curve 	= rs("Curve")
+				AFDFiberDiameter 	= rs("Average")
+				StandardDeviation 	= rs("StandardDev")
+				CoefficientOfVariation 	= rs("COV")
+				FiberGreaterThan30 	= rs("GreaterThan30")
+				SampleDate = rs("SampleDate")
+			end if
+			
+			Dam 	= rs("Dam")
+			DamColor 	= rs("DamColor")
+			DamLink 	= rs("DamLink")
+			DamARI 	= rs("DamARI")
+			DamCLAA 	= rs("DamCLAA")
+
+			DamDam 	= rs("DamDam")
+			DamDamColor 	= rs("DamDamColor")
+			DamDamLink 	= rs("DamDamLink")
+			DamDamARI 	= rs("DamDamARI")
+			DamDamCLAA 	= rs("DamDamCLAA")
+
+			DamDamDam 	= rs("DamDamDam")
+			DamDamDamColor 	= rs("DamDamDamColor")
+			DamDamDamLink 	= rs("DamDamDamLink")
+			DamDamDamARI 	= rs("DamDamDamARI")
+			DamDamDamCLAA 	= rs("DamDamDamCLAA")
+
+			DamDamSire 	= rs("DamDamSire")
+			DamDamSireColor 	= rs("DamDamSireColor")
+			DamDamSireLink 	= rs("DamDamSireLink")
+			DamDamSireARI 	= rs("DamDamSireARI")
+			DamDamSireCLAA 	= rs("DamDamSireCLAA")
+
+			DamSire 	= rs("DamSire")
+			DamSireColor 	= rs("DamSireColor")
+			DamSireLink 	= rs("DamSireLink")
+			DamSireARI 	= rs("DamSireARI")
+			DamSireCLAA	= rs("DamSireCLAA")
+
+			DamSireDam 	= rs("DamSireDam")
+			DamSireDamColor 	= rs("DamSireDamColor")
+			DamSireDamLink 	= rs("DamSireDamLink")
+			DamSireDamARI 	= rs("DamSireDamARI")
+			DamSireDamCLAA 	= rs("DamSireDamCLAA")
+
+			DamSireSire 	= rs("DamSireSire")
+			DamSireSireColor 	= rs("DamSireSireColor")
+			DamSireSireLink 	= rs("DamSireSireLink")
+			DamSireSireARI 	= rs("DamSireSireARI")
+			DamSireSireCLAA 	= rs("DamSireSireCLAA")
+
+
+
+			Sire 	= rs("Sire")
+			SireColor 	= rs("SireColor")
+			SireLink 	= rs("SireLink")
+			SireARI 	= rs("SireARI")
+			SireCLAA 	= rs("SireCLAA")
+
+			SireDam 	= rs("SireDam")
+			SireDamColor 	= rs("SireDamColor")
+			SireDamLink 	= rs("SireDamLink")
+			SireDamARI 	= rs("SireDamARI")
+			SireDamCLAA 	= rs("SireDamCLAA")
+
+			SireDamDam 	= rs("SireDamDam")
+			SireDamDamColor 	= rs("SireDamDamColor")
+			SireDamDamLink 	= rs("SireDamDamLink")
+			SireDamDamARI 	= rs("SireDamDamARI")
+			SireDamDamCLAA 	= rs("SireDamDamCLAA")
+
+			SireDamSire 	= rs("SireDamSire")
+			SireDamSireColor 	= rs("SireDamSireColor")
+			SireDamSireLink 	= rs("SireDamSireLink")
+			SireDamSireARI 	= rs("SireDamSireARI")
+			SireDamSireCLAA 	= rs("SireDamSireCLAA")
+
+			SireSire 	= rs("SireSire")
+			SireSireColor 	= rs("SireSireColor")
+			SireSireLink 	= rs("SireSireLink")
+			SireSireARI 	= rs("SireSireARI")
+			SireSireCLAA 	= rs("SireSireCLAA")
+	
+
+			SireSireDam 	= rs("SireSireDam")
+			SireSireDamColor 	= rs("SireSireDamColor")
+			SireSireDamLink 	= rs("SireSireDamLink")
+			SireSireDamARI 	= rs("SireSireDamARI")
+			SireSireDamCLAA 	= rs("SireSireDamCLAA")
+
+			SireSireSire 	= rs("SireSireSire")
+			SireSireSireColor 	= rs("SireSireSireColor")
+			SireSireSireLink 	= rs("SireSireSireLink")
+			SireSireSireARI 	= rs("SireSireSireARI")
+			SireSireSireCLAA 	= rs("SireSireSireCLAA")
+
+
+			if DamLink= "0" or IsEmpty(DamLink) or len(DamLink) < 5 then
+ 				DamLinkDescription = "Not Available"
+				DamLink = "NoLink.asp"
+			else
+				DamLinkDescription = "Click Here"
+ 			end if 
+ 		
+			if DamDamLink = "0"  or IsEmpty(DamDamLink) or len(DamDamLink) < 5then
+ 				DamDamLinkDescription = "Not Available"
+				DamDamLink  = "NoLink.asp"
+			else
+				DamDamLinkDescription = "Click Here"
+ 			end if 
+
+			if DamSireLink= "0" or IsEmpty(DamSireLink) or len(DamSireLink) < 5 then
+ 				DamSireLinkDescription = "Not Available"
+				DamSireLink = "NoLink.asp"
+			else
+				DamSireLinkDescription = "Click Here"
+ 			end if 
+ 		
+ 			if SireLink= "0" or IsEmpty(SireLink) or len(SireLink) < 5 then
+ 				SireLinkDescription = "Not Available"
+				SireLink = "NoLink.asp"
+			else
+				SireLinkDescription = "Click Here"
+ 			end if 
+
+ 			if SiredamLink= "0" or IsEmpty(SiredamLink) or len(S

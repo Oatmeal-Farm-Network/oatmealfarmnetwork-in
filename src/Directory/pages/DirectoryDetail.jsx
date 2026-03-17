@@ -122,7 +122,7 @@ function BusinessCard(props) {
     var onProfileClick = props.onProfileClick;
 
     return (
-        <div style={{ backgroundColor: '#fff', border: '1px solid #e0e0e0', borderRadius: '6px', padding: '16px', marginBottom: '12px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+        <div style={{  backgroundColor: '#fff', border: '1px solid #e0e0e0', borderRadius: '6px', padding: '16px', marginBottom: '12px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
             <div style={{ flexShrink: 0 }}>
                 <img
                     loading="lazy" 
@@ -286,12 +286,15 @@ const DirectoryDetail = function() {
            <Header />
 
             {/* Page Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #e0e0e0' }}>
-                {categoryIcon ? (
-                    <img src={categoryIcon} alt={pageTitle} style={{ width: '52px', height: '52px', objectFit: 'contain' }} />
-                ) : null}
-                <h1 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#222', margin: 0 }}>{pageTitle}</h1>
-            </div>
+         {/* Page Header */}
+<div style={{ backgroundColor: '#fff', borderBottom: '1px solid #e0e0e0' }}>
+    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '16px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {categoryIcon ? (
+            <img src={categoryIcon} alt={pageTitle} style={{ width: '52px', height: '52px', objectFit: 'contain' }} />
+        ) : null}
+        <h1 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#222', margin: 0 }}>{pageTitle}</h1>
+    </div>
+</div>
 
             <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px 16px' }}>
 

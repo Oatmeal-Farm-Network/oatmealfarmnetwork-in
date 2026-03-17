@@ -1,0 +1,126 @@
+﻿body 
+{
+*/ background-image: url("http://www.livestockofamerica.com/images/LOASunrisebackground.jpg");
+*/background-size: 1900px 900px;
+	background-color : white;
+	background-repeat : no-repeat;
+	background-attachment:fixed;
+	background-position:center;
+	background-position:top;
+	}	
+
+ul 
+{
+	padding: 0px 0px 0px 10px;
+	border: 0px 0px 0px  10px;
+	margin: 0px 0px 0px  10px;
+	list-style: square;
+}
+li 
+{
+	padding: 0px 0px 0px 15px;
+	border: 0px 0px 0px  15px;
+	margin: 0px 0px 0px  15px;
+}
+
+P { padding: 0px 0px 5px 5px;
+	margin: 0;
+}
+
+A {
+	text-decoration : none;
+	color : #0000AA;
+}
+
+A:HOVER {
+	text-decoration : none;
+	color : #333333;
+}
+
+hr {
+	border: 1px solid #ddd; /* Dotted border style */
+	margin: 20px 0; /* Margin for better spacing */
+}
+
+H1{
+	font-family : times new Roman, Times New Roman, serif;
+	font-size : 34px;
+	color: #232f3a;
+	line-height : 39px;
+	font-weight : 300;
+	margin-left: 0px;
+	margin-bottom: 10px;
+	margin-top: 20px;
+	text-align: left ;
+}
+
+H2{
+	font-family : Arial, Helvetica, sans-serif;
+	font-size : 22px;
+	color : black;
+	line-height : 28px;
+	font-weight : 600;
+	margin-left: 0px;
+	margin-bottom: 0px;
+	margin-top: 10px;
+	text-decoration : none;
+	text-align: left ;
+}
+
+H3{
+	font-family : Arial, Helvetica, sans-serif;
+	font-size : 16px;
+	color : black;
+	line-height : 20px;
+	font-weight : 600;
+	margin-left: 0px;
+	margin-bottom: 0px;
+	margin-top: 20px;
+	text-decoration : none;
+}
+
+.Pageheading{
+	font-family : verdana, Arial, Helvetica, sans-serif;
+	font-size : 34px;
+	color: #232f3a;
+	line-height : 59px;
+	font-weight : 300;
+	margin-left: 0px;
+	margin-bottom: 10px;
+	margin-top: 30px;
+	text-align: left ;
+}
+
+
+
+
+p {
+    display: block;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    margin-left: 0;
+    margin-right: 0;
+} 
+
+.pressbody { font-family : Baskerville, times new Roman, Times New Roman, serif;
+	font-size : 19px;
+	line-height : 37px;
+	color : black;
+	font-weight: normal;
+	text-align: left;
+}
+
+A.pressbody { font-family : Baskerville, times new Roman, Times New Roman, serif;
+	font-size : 19px;
+	line-height : 37px;
+	color : #065906;
+	font-weight: 400;
+	text-decoration :none;
+}
+A.pressbody:Hover {
+	color : black;
+	text-decoration : none;
+}
+
+
+

@@ -68,19 +68,20 @@ const DirectoryList = () => {
         <div className="min-h-screen bg-gray-100 font-sans">
             <Header />
 
-            {/* Video Hero Banner */}
-            <div className="w-full overflow-hidden bg-black" style={{ maxHeight: '400px' }}>
-                <video
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    className="w-full object-cover block"
-                    style={{ maxHeight: '400px' }}
-                >
-                    <source src="/images/FoodSystemDirectory.mp4" type="video/mp4" />
-                </video>
-            </div>
+        {/* Video Hero Banner */}
+{/* Video Hero Banner */}
+<div className="w-full overflow-hidden bg-black" style={{ maxWidth: '1300px', margin: '0 auto' }}>
+    <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="w-full block"
+        style={{ maxHeight: '300px', objectFit: 'cover', width: '100%' }}
+    >
+        <source src="/images/FoodSystemDirectory.mp4" type="video/mp4" />
+    </video>
+</div>
 
             {/* Hero Text - below video */}
             <div className="bg-white px-6 py-6 border-b border-gray-200">
@@ -119,10 +120,9 @@ const DirectoryList = () => {
                             </div>
                         </Link>
                     ))}
-                </div>
+               </div>
             </div>
-
-            <Footer />
+            <Footer />  
         </div>
     );
 };

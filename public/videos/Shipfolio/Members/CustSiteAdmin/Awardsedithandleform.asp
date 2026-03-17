@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4+0 Transitional//EN">
+<HTML>
+<HEAD>
+ <title>Fiber Data Results Page</title>
+       <link rel="stylesheet" type="text/css" href="style.css">
+</HEAD>
+
+<BODY bgcolor = "white">
+<!--#Include virtual="/administration/Header.asp"--> 
+<%
+
+Dim TotalCount
+dim rowcount
+dim ID(300)
+dim AwardsID(300)
+dim Show(300)
+dim Placing(300)
+dim aClass(300)
+dim Judge(300)
+Dim ClassSize(300)
+
+TotalCount= Request.Form("TotalCount")
+TotalCount = CInt(TotalCount)
+rowcount = 1
+
+while (rowcount < TotalCount)
+	IDcount = "ID(" & rowcount & ")"	
+	AwardsIDcount = "AwardsID(" & rowcount & ")"	
+	Showcount = "Show(" & rowcount & ")"
+	Placingcount = "Placing(" & rowcount & ")"
+	aClasscount = "aClass(" & rowcount & ")"
+	Judgecount = "Judge(" & rowcount & ")"
+	ClassSizecount = "ClassSize(" & rowcount & ")"
+
+	ID(rowcount)=Request.Form(IDcount) 
+	AwardsID(rowcount)=Request.Form(AwardsIDcount) 
+	Show(rowcount)=Request.Form(Showcount) 
+	Placing(rowcount)=Request.Form(Placingcount )
+	aClass(rowcount)=Request.Form(aClasscount) 
+	Judge(rowcount)=Request.Form(Judgecount) 
+	ClassSize(rowcount)=Request.Form(ClassSizecount) 
+	rowcount = rowcount +1
+Wend
+
+ rowcount =1
+
+while (rowcount < TotalCount)
+
+
+	Query =  " UPDATE Awards Set Placing = '" +  Placing(rowcount) + "', " 
+	Query =  Query + " Show = '" +  Show(rowcount) + "'," 
+    Query =  Query + " Class = '" +  aClass(rowcount) + "'," 
+    Query =  Query + " Judge = '" +   Judge(rowcount) + "'," 
+	 Query =  Query + " ClassSize = '" +  ClassSize(rowcount) + "'," 
+    Query =  Query + "  ID = " + ID(rowcount) + "" 
+	Query =  Query + " where AwardsID = " + AwardsID(rowcount) + ";" 
+
+'response.write(Query)	
+
+Dim DataConnection, cmdDC, RecordSet
+Dim RecordToEdit, Updated
+Set DataConnection = Server.CreateObject("ADODB.Connection")
+
+DataConnection.Open "DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" & Server.MapPath("../../db/AlpacaDB.mdb") & ";" 
+
+
+
+DataConnection.Execute(Query) 
+
+	  rowcount= rowcount +1
+	Wend
+
+IF DataConnection.Errors.Count <> 0 then
+     Call MyErrorHandler(oDBConn, sSQL)  ' pass database connection as param
+ Else
+ %>
+<div align = "center"><H2>
+<%
+     response.write("Your changes have successfully been made.")
+  %></H2>
+</div>
+<%
+
+ End If
+
+	DataConnection.Close
+	Set DataConnection = Nothing 
+
+%>
+
+<table width = "660" align = "center">
+	<tr >
+		<td align = "right">
+			<br><a  aClass = "Links" href="Awards.asp"> Return to Awards Page</a>
+			<br>
+		</td>
+	</tr>
+</table>
+<!--#Include virtual="/administration/Footer.asp"--> </Body>
+</HTML>

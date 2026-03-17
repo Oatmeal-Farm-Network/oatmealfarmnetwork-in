@@ -1,0 +1,197 @@
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<HEAD>
+ <title>Properties</title>
+
+
+<BODY  border = "0" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0"  cellpadding=0 cellspacing=0  bgcolor = "white">
+
+<!--#Include virtual="/members/MembersGlobalVariables.asp"-->
+<%
+	PropID = Request.Form("PropID" ) 
+	PropName=Request.Form("PropName" ) 
+	PropForSale=Request.Form("PropForSale") 
+	PropSold=Request.Form("PropSold") 
+	PropStreet1=Request.Form("PropStreet1") 
+	PropStreet2=Request.Form("PropStreet2")
+	PropCity=Request.Form("PropCity") 
+	PropState=Request.Form("PropState") 
+	PropZip=Request.Form("PropZip") 
+	PropMLS=Request.Form("PropMLS" ) 
+	propPrice=Request.Form("propPrice" ) 
+	propTaxes=Request.Form( "propTaxes" ) 
+	PropSqFeet=Request.Form( "PropSqFeet" ) 
+	PropAcres=Request.Form( "PropAcres" ) 
+	PropStyle=Request.Form( "PropStyle" ) 
+	propYearBuilt=Request.Form( "propYearBuilt" ) 
+	PropBedrooms=Request.Form("PropBedrooms")
+	PropBathrooms=Request.Form("PropBathrooms")
+	PropFirePlaces=Request.Form("PropFirePlaces") 
+	PropGarage=Request.Form("PropGarage") 
+	PropRoof=Request.Form("PropRoof") 
+	PropDescription=Request.Form("PropDescription") 
+	PropOutBuildings=Request.Form("PropOutBuildings") 
+
+
+	
+str1 = propPrice
+str2 = ","
+If InStr(str1,str2) > 0 Then
+	propPrice= Replace(str1, ",", "")
+End If
+
+str1 = propTaxes
+str2 = ","
+If InStr(str1,str2) > 0 Then
+	propTaxes= Replace(str1, ",", "")
+End If
+
+If len(PropStreet1) = 0 then
+	PropStreet1 = "0"
+End If
+If len(PropStreet2) = 0 then
+	PropStreet2= "0"
+End If
+If len(PropCity) = 0 then
+	PropCity = "0"
+End If
+If len(PropState) = 0 then
+	PropState = "0"
+End If
+If len(PropZip) = 0 then
+	PropZip = "0"
+End If
+If len(PropStyle) = 0 then
+	PropStyle = "0"
+End If
+If len(PropYearBuilt) = 0 then
+	PropYearBuilt = "0"
+End If
+
+str1 = PropOutBuildings
+str2 = "'"
+If InStr(str1,str2) > 0 Then
+	PropOutBuildings= Replace(str1, "'", "''")
+End If
+
+
+str1 = PropDescription
+str2 = "'"
+If InStr(str1,str2) > 0 Then
+	PropDescription= Replace(str1, "'", "''")
+End If
+
+str1 = PropName
+str2 = "'"
+If InStr(str1,str2) > 0 Then
+	PropName= Replace(str1, "'", "''")
+End If
+
+If len(PropPrice) = 0 then
+	PropPrice = 0
+End If
+
+If len(PropMLS) = 0 then
+	PropMLS = "0"
+End If
+
+If len(propTaxes) = 0 then
+	propTaxes = "0"
+End if
+
+If len(PropSqFeet) = 0 then
+	PropSqFeet = "0"
+End If
+
+
+If len(PropAcres) = 0 then
+	PropAcres = " "
+End If
+
+
+If len(PropBedrooms) = 0 then
+	PropBedrooms = 1
+End If
+
+If len(PropBathrooms) = 0 then
+	PropBathrooms = 1
+End If
+
+If len(PropFirePlaces) = 0 then
+	PropFirePlaces = 0
+End If
+
+If len(PropGarage) = 0 then
+	PropGarage = 0
+End If
+
+If len(PropRoof) = 0 then
+	PropRoof = " "
+End If
+
+If len(PropDescription) = 0 then
+	PropDescription = " "
+End If
+
+If len(PropOutBuildings) = 0 then
+	PropOutBuildings = " "
+End If
+
+If  PropForSale = "True" then
+	 PropForSale = 1
+	else
+	PropForSale = 0
+End If
+
+
+If  PropSold = "True" then
+	 PropSold = 1
+	else
+	PropSold = 0
+End If
+	
+	Query =  " UPDATE Properties Set PropName = '" & PropName & "' ,"
+	Query =  Query & "propTaxes = '" & propTaxes & "' , "	
+'	Query =  Query & "propPrice = '" & propPrice & "' , "
+	Query =  Query & "PropForSale = " & PropForSale & ", "
+	Query =  Query & "PropSold = " & PropSold & ", "
+	Query =  Query & "PropStreet1 = '" & PropStreet1 & "', "
+	Query =  Query & "PropStreet2 = '" & PropStreet2 & "', "
+	Query =  Query & "PropCity = '" & PropCity & "', "
+	Query =  Query & "PropState = '" & PropState & "', "
+	Query =  Query & "PropZip = '" & PropZip & "', "
+	Query =  Query & "PropMLS = '" & PropMLS & "' ,"
+
+	Query =  Query & "PropSqFeet = '" & PropSqFeet & "' , "
+	Query =  Query & "PropAcres = '" & PropAcres & "' , "
+	Query =  Query & "PropStyle = '" & PropStyle & "' , "
+	Query =  Query & "PropBedrooms = '" & PropBedrooms & "' , "
+	Query =  Query & "PropBathrooms = '" & PropBathrooms & "' , "
+	Query =  Query & "PropFirePlaces = '" & PropFirePlaces & "' , "
+	Query =  Query & "PropGarage = '" & PropGarage & "' , "
+	Query =  Query & "PropRoof= '" & PropRoof & "' , "
+	Query =  Query & "PropDescription = '" & PropDescription & "' , "
+	Query =  Query & "PropOutBuildings = '" & PropOutBuildings & "' "
+    Query =  Query & " where propID = " & propID & ";" 
+
+
+
+		response.write(query)
+
+Conn.Execute(Query) 
+Conn.Close
+Set Conn = Nothing 
+
+
+ 
+ response.redirect("EditProperty0.asp?propID=" & PropID )
+ %>
+
+
+
+
+
+
+ </Body>
+</HTML>

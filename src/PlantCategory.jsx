@@ -30,12 +30,15 @@ const CATEGORY_MAP = {
   'vegetables':      { dbType: 'Vegetable',      label: 'Vegetables',      header: '/images/VegetablesHeader.webp' },
 };
 
+// Eager-load the first 4 plant images (above the fold), lazy-load the rest
+const EAGER_COUNT = 4;
+
 function plantImgSrc(plant) {
   if (plant.plant_image) {
-    if (plant.plant_image.startsWith("/") || plant.plant_image.startsWith("http")) return plant.plant_image;
-    return "/images/" + plant.plant_image;
+    if (plant.plant_image.startsWith('/') || plant.plant_image.startsWith('http')) return plant.plant_image;
+    return '/images/' + plant.plant_image;
   }
-  return "/images/" + plant.plant_name.replace(/ /g, "") + ".webp";
+  return '/images/' + plant.plant_name.replace(/ /g, '') + '.webp';
 }
 
 export default function PlantCategory() {
@@ -73,10 +76,12 @@ export default function PlantCategory() {
 
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 1rem 2rem' }}>
 
+        {/* Header image — eager since it's above the fold */}
         <img
           src={cat.header}
           alt={cat.label}
-          loading="lazy" 
+          loading="eager"
+          fetchpriority="high"
           className="w-full object-cover mb-5"
           style={{ height: '200px', objectPosition: 'center', display: 'block' }}
           onError={e => { e.target.style.display = 'none'; }}
@@ -85,31 +90,48 @@ export default function PlantCategory() {
         <h2 className="text-xl font-bold text-gray-900 mb-6">{cat.label} Plant Types</h2>
 
         {plants === null ? (
-          <div className="text-gray-400 py-12 text-center">Loading...</div>
+          /* Skeleton placeholders so the page doesn't feel empty while loading */
+          <div className="grid grid-cols-2 gap-x-8 gap-y-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex gap-3 items-start animate-pulse">
+                <div className="bg-gray-200 rounded shrink-0" style={{ width: '150px', height: '150px' }} />
+                <div className="flex-1 pt-2 space-y-2">
+                  <div className="bg-gray-200 h-4 rounded w-3/4" />
+                  <div className="bg-gray-200 h-3 rounded w-full" />
+                  <div className="bg-gray-200 h-3 rounded w-5/6" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : plants.length === 0 ? (
           <div className="text-gray-500 py-12 text-center">No plants found for {cat.dbType}</div>
         ) : (
           <div className="grid grid-cols-2 gap-x-8 gap-y-8">
-            {plants.map(plant => (
-              <div key={plant.plant_id}>
-                <Link to={'/plant-knowledgebase/varietals/' + plant.plant_id}>
+            {plants.map((plant, index) => (
+              <div key={plant.plant_id} className="flex gap-3 items-start">
+                <Link to={'/plant-knowledgebase/varietals/' + plant.plant_id} className="shrink-0">
                   <img
                     src={plantImgSrc(plant)}
                     alt={plant.plant_name}
+                    width="150"
+                    height="150"
                     className="object-cover rounded mb-2"
-                    loading="lazy"  
+                    loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
+                    decoding={index < EAGER_COUNT ? 'sync' : 'async'}
                     style={{ width: '150px', height: '150px' }}
                     onError={e => { e.target.src = '/images/PlantDBHome.webp'; }}
                   />
                 </Link>
-                <Link
-                  to={'/plant-knowledgebase/varietals/' + plant.plant_id}
-                  className="hover:underline text-sm font-medium block mb-1"
-                  style={{ color: '#3D6B34' }}
-                >
-                  {plant.plant_name} ({plant.variety_count} Varieties)
-                </Link>
-                <p className="text-sm text-gray-700 leading-relaxed">{plant.plant_description}</p>
+                <div>
+                  <Link
+                    to={'/plant-knowledgebase/varietals/' + plant.plant_id}
+                    className="hover:underline text-sm font-medium block mb-1"
+                    style={{ color: '#3D6B34' }}
+                  >
+                    {plant.plant_name} ({plant.variety_count} Varieties)
+                  </Link>
+                  <p className="text-sm text-gray-700 leading-relaxed">{plant.plant_description}</p>
+                </div>
               </div>
             ))}
           </div>

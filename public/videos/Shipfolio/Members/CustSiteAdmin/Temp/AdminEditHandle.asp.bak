@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<HTML>
+<HEAD>
+ <title>Edit Animal</title>
+            <link rel="stylesheet" type="text/css" href="/administration/style.css">
+
+
+<SCRIPT LANGUAGE="JavaScript">
+function verify() {
+var themessage = "Please fill out the following fields: \r";
+if (document.form.Name.value=="") {
+themessage = themessage + " -Name \r";
+}
+if (document.form.Breed.value=="") {
+themessage = themessage + " -Breed \r";
+}
+if (document.form.Category.value=="") {
+themessage = themessage + " -Category \r";
+}
+//alert if fields are empty and cancel form submit
+if (themessage == "Please fill out the following fields: \r") {
+document.form.submit();
+}
+else {
+alert(themessage);
+return false;
+   }
+}
+//  End -->
+</script>
+
+ 
+</HEAD>
+
+<BODY  border = "0" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0"  cellpadding=0 cellspacing=0  bgcolor = "white">
+<!--#Include file="globalvariables.asp"--> 
+ <!--#Include file="adminDetailDBInclude.asp"--> 
+ <!--#Include file="Dimensions.asp"-->
+
+<% 'GET TYPE OF DATA TO UPDATE *****************************************************
+	  FormID=Request.Form("FormID" ) 
+      If FormID = "GeneralStats" then
+%>
+	<!--#Include virtual="/administration/AdminGeneralStatsHandle.asp"--> 
+<% End If %>
+
+
+
+
+
+<% 'SHOW ANIMAL DATA*****************************************************************
+redirectpath = "EditAlpaca.asp?ID=" &  AlpacasID
+response.redirect(redirectpath)
+%>
+	 <!--#Include virtual="/administration/EditPagecontentInclude.asp"--> 
+
+</TD>
+</TR>
+</TABLE>	
+
+<br><br><br>
+
+
+
+
+
+<% 'FOOTER   ***************************************************************** %>
+
+<!--#Include virtual="/Administration/Footer.asp"--> </Body>
+</HTML>

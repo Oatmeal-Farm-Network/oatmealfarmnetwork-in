@@ -5,24 +5,43 @@ import Footer from './Footer';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+function BreedSkeleton() {
+  return (
+    <div className="animate-pulse">
+      {/* Header skeleton */}
+      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
+        <div className="bg-gray-200 rounded" style={{ width: '40px', height: '40px', flexShrink: 0 }} />
+        <div className="bg-gray-200 h-7 rounded w-64" />
+      </div>
+      {/* Floated image skeleton */}
+      <div className="float-right ml-6 mb-4 bg-gray-200 rounded" style={{ width: '300px', height: '220px' }} />
+      {/* Text skeleton */}
+      <div className="space-y-3 overflow-hidden">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="bg-gray-200 h-3 rounded" style={{ width: i % 3 === 2 ? '75%' : '100%' }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function LivestockBreed() {
   const { species, breedId } = useParams();
   const [breed, setBreed] = useState(null);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  window.scrollTo(0, 0);
-  fetch(API_URL + '/api/livestock/breed/' + breedId)
-    .then(r => r.json())
-    .then(data => {
-      setBreed(data);
-      console.log('IMAGE:', data.image);
-    })
-    .catch(() => {})
-    .finally(() => setLoading(false));
-}, [breedId]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    fetch(API_URL + '/api/livestock/breed/' + breedId)
+      .then(r => r.json())
+      .then(data => setBreed(data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [breedId]);
 
-  const label = species ? species.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '';
+  const label = species
+    ? species.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    : '';
 
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -30,7 +49,7 @@ useEffect(() => {
 
       <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
         {loading ? (
-          <div className="text-gray-400 py-12 text-center">Loading...</div>
+          <BreedSkeleton />
         ) : !breed ? (
           <div className="text-gray-500 py-12 text-center">Breed not found.</div>
         ) : (
@@ -38,9 +57,10 @@ useEffect(() => {
             {/* Header */}
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
               <img
-                src={`/images/${label.replace(/ /g,'')}.webp`}
+                src={`/images/${label.replace(/ /g, '')}.webp`}
                 alt={label}
-                loading="lazy"  
+                loading="eager"
+                fetchpriority="high"
                 style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
                 onError={e => { e.target.style.display = 'none'; }}
               />
@@ -54,13 +74,17 @@ useEffect(() => {
                   <img
                     src={breed.image.startsWith('http') ? breed.image : `/images/${breed.image.replace(/^.*[\\/]/, '')}`}
                     alt={breed.breed}
-                    loading="lazy"  
+                    loading="eager"
+                    fetchpriority="high"
                     className="w-full rounded shadow"
                     onError={e => { e.target.style.display = 'none'; }}
                   />
                   {breed.image_caption && (
-  <p className="text-xs text-gray-500 mt-1 text-center" dangerouslySetInnerHTML={{ __html: breed.image_caption }} />
-)}
+                    <p
+                      className="text-xs text-gray-500 mt-1 text-center"
+                      dangerouslySetInnerHTML={{ __html: breed.image_caption }}
+                    />
+                  )}
                 </div>
               )}
               <div

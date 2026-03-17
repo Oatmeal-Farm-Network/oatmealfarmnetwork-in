@@ -98,14 +98,10 @@ const BusinessProfile = () => {
                 </header>
                 <div className="profile-page-container">
                     <p>No business information available.</p>
-                    <button 
+                    <button
                         onClick={() => navigate(`/directory/${directoryType || 'agricultural-associations'}`, {
-                            state: {
-                                selectedCountry,
-                                selectedState,
-                                nameFilter
-                            }
-                        })} 
+                            state: { selectedCountry, selectedState, nameFilter }
+                        })}
                         className="back-button"
                     >
                         ← Back to Listings
@@ -121,25 +117,25 @@ const BusinessProfile = () => {
     return (
         <div className="min-h-screen bg-white font-sans">
             <Header />
-            {/* Directory context header */}
-            <header className="header">
-                <div className="logo-container">
-                    <img src={DIRECTORY_TYPE_TO_IMAGE[directoryType] || photoNotAvailable} className="logo-image" />
-                    <span className="logo-text">{DIRECTORY_TYPE_TO_BUSINESS_TYPE[directoryType] || 'Business'}</span>
-                </div>
-            </header>
 
-                {/* Back button + Business name */}
+            {/* Main container */}
+            <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+
+                {/* Back button */}
+                <button onClick={backToListings} className="text-[#4d734d] font-semibold hover:underline mb-3 inline-flex items-center gap-1">
+                    ← Back to Listings
+                </button>
+
+
+                {/* Business name */}
                 <div className="mb-6">
-                    <button onClick={backToListings} className="text-[#4d734d] font-semibold hover:underline mb-3 inline-flex items-center gap-1">
-                        ← Back to Listings
-                    </button>
                     <h1 className="text-3xl font-bold text-gray-900">{business.BusinessName}</h1>
                 </div>
 
+                {/* Two column layout */}
                 <div className="flex flex-col lg:flex-row gap-6">
 
-                    {/* ── LEFT COLUMN ── */}
+                    {/* LEFT COLUMN */}
                     <div className="flex-1 space-y-6">
 
                         {/* Profile image + contact info side by side */}
@@ -191,6 +187,7 @@ const BusinessProfile = () => {
                                 </div>
                             </div>
                         </div>
+                        {/* END profile image + contact */}
 
                         {/* Business Information */}
                         <div className="bg-white rounded-2xl shadow-sm p-6">
@@ -212,6 +209,7 @@ const BusinessProfile = () => {
                                 ))}
                             </dl>
                         </div>
+                        {/* END business information */}
 
                         {/* Location */}
                         {fullAddress && (
@@ -236,18 +234,20 @@ const BusinessProfile = () => {
                                 )}
                             </div>
                         )}
-                    </div>
 
-                    {/* ── RIGHT COLUMN — Contact Form ── */}
+                    </div>
+                    {/* END LEFT COLUMN */}
+
+                    {/* RIGHT COLUMN — Contact Form */}
                     <div className="w-full lg:w-80 flex-shrink-0">
                         <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-6">
                             <h2 className="text-lg font-bold text-[#4d734d] mb-4">Contact {business.BusinessName}</h2>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 {[
-                                    { id: 'firstName', label: 'First Name', type: 'text', required: true },
-                                    { id: 'lastName',  label: 'Last Name',  type: 'text', required: true },
+                                    { id: 'firstName', label: 'First Name', type: 'text',  required: true },
+                                    { id: 'lastName',  label: 'Last Name',  type: 'text',  required: true },
                                     { id: 'email',     label: 'Email',      type: 'email', required: true },
-                                    { id: 'phone',     label: 'Phone',      type: 'tel',  required: false, optional: true },
+                                    { id: 'phone',     label: 'Phone',      type: 'tel',   required: false, optional: true },
                                 ].map(({ id, label, type, required, optional }) => (
                                     <div key={id}>
                                         <label htmlFor={id} className="block text-sm font-semibold text-gray-700 mb-1">
@@ -304,11 +304,18 @@ const BusinessProfile = () => {
                             </form>
                         </div>
                     </div>
+                    {/* END RIGHT COLUMN */}
 
                 </div>
+                {/* END two column layout */}
+
             </div>
+            {/* END main container */}
+
             <Footer />
+
         </div>
+        /* END min-h-screen */
     );
 };
 

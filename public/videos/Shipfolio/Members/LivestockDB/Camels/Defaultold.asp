@@ -1,0 +1,158 @@
+﻿<!DOCTYPE html>
+<html xmlns="https://www.w3.org/1999/xhtml">
+<head>
+<% MasterDashboard= True
+PageName="Camels" 
+LSHeader = True
+currentbreed="Camels" %>
+<!--#Include virtual="/Members/MembersGlobalVariables.asp"-->
+<!--#Include virtual="/Members/BreedsOfLivestock/AnimalsVariablesInclude.asp"-->
+
+
+<% Description = "Camels are domesticated animals that provide food (milk and meat) and textiles (fiber and felt from hair) and are well-suited to desert habitats."
+Title = "About Camels & Camels Breeds"
+image = "https://www.OatmealFarmNetwork.com/Camels/CamelHeader.jpg"
+ %>
+<Title><%=Title %></Title>
+<meta name="title" content="<%=Title %>" />
+<link rel="canonical" href="<%=currenturl %>" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Language" content="en-us"/>
+<title><%= Title %></title>
+<meta name="Title" content="<%= Title %>"/>
+<meta name="description" content="<%=left(description, 160)%> " />
+<meta name="robots" content="follow"/>
+<meta name="rating" content="Safe for kids"/>
+<meta name="Googlebot" content="follow"/>
+<meta name="author" content="Global Grange"/>
+
+<meta property="og:locale" content="en_US" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="<%= Title %>" />
+<meta property="og:description" content="<%=left(description, 160)%>" />
+<meta property="og:url" content="<%=currenturl %>" />
+<meta property="og:site_name" content="Global Grange" />
+<meta property="og:image" content="<%=Image %>" />
+<meta property="og:image:width" content="512" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:description" content="<%=left(description, 160)%>[&hellip;]" />
+<meta name="twitter:title" content="<%= title %>" />
+<meta property="twitter:image" content="<%=Image %>" />
+<meta property="twitter:image:width" content="512" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": <%=Title %>,
+  "description": <%=description %>,
+  "author": {
+    "@type": "Organization",
+    "name": "Oatmeal Farm Network"
+  },
+  "image": <%=image %>  ]  }
+</script>
+</HEAD>
+<body >
+<% LSHeader = True %>
+<!--#Include virtual="/Members/MembersHeader.asp"-->
+<div class="container-fluid" id="grad1">
+    <div align = center>
+      <div class = "container" >
+      <div>
+      <div class = "body">
+       <h1><img src= "<%=BreedIcon %>" border = "0"  alt = "<%=SpeciesNamePlural  %>"  height = "40"/>&nbsp;<%=SpeciesNamePlural %></h1><br />
+      </div>
+      </div>
+    </div>
+    </div>
+ </div>
+
+
+<% If not rs.State = adStateClosed Then
+  rs.close
+End If %>
+
+<div class = "container">
+  <div>
+   <div class = "body">
+ <center><img src = "CamelHeader.jpg" width = 100% alt = "About Camels"/></center><br />
+
+Camels are domesticated animals that provide food (milk and meat) and textiles (fiber and felt from hair) and are well-suited to desert habitats. They are also used as a means of transportation. There are three species of camels, the one-humped dromedary, the two-humped Bactrian camel, and the critically-endangered Wild Bactrian camel. <br /><br />
+
+The term camel is also used informally to refer to the entire family Camelidae, which includes the true camels and the "New World" camelids, such as the llama, alpaca, guanaco, and vicuña. These animals originated in North America and migrated to Asia about 6 million years ago.
+<br /><br />
+
+The exact date and place of the domestication of camels is a matter of debate among historians and archaeologists. However, it is widely believed that the dromedary camels were first domesticated by humans in Somalia or South Arabia around the 3rd millennium BC, while the Bactrian camels were domesticated in central Asia around 2,500 BC. Some evidence suggests that the domestication of Bactrian camels might have occurred in Iran, at the site of Shar-i Sokhta (also known as the Burnt City).
+
+<br />
+<div align = "right">
+<form  name=Login method="post" action="AboutCamels.asp" >
+<input type="submit" class = "regsubmit2" value="LEARN MORE" / >
+</form>
+</div>
+<br><br>
+<a name="Breeds"></a>
+<% Set rs2 = Server.CreateObject("ADODB.Recordset")
+
+sql2 = "select * from SpeciesBreedLookupTable where SpeciesID=" & speciesID & " Order by trim(Breed)"
+rs2.Open sql2, conn, 3, 3
+if not rs2.eof then %>
+<h2>Breeds of <% = SpeciesNamePlural %></h2>
+
+There are the following breeds of <% = SpeciesNamePlural %>:
+
+<% while not(rs2.eof) 
+Breed2 = rs2("Breed") 
+BreedLookupID2 = rs2("BreedLookupID") 
+Breeddescription= rs2("Breeddescription")
+
+
+BreedImage= rs2("BreedImage")
+Breedvideo= rs2("Breedvideo")
+BreedImageOrientation = rs2("BreedImageOrientation")
+BreedImageCaption = rs2("BreedImageCaption") %>
+<table width = 100%>
+<tr><td bgcolor = '#888888' height = 1 colspan = 2></td></tr>
+<tr><td bgcolor = "#d6ceca" height = 40 colspan = 2><h3><img src = "/images/px.gif" alt ="<%=Breed2  %> - Breeds of <%=signularanimal %>" width = 3 height = 30 /><%=Breed2  %></h3></td></tr>
+<tr><td bgcolor = '#888888' height = 1 colspan = 2></td></tr>
+<tr><td class = "body" valign = top width = 200><br>
+<% if len(BreedImage) > 1 then%>
+<a href="Breeds.asp?BreedLookupID=<%= BreedLookupID2%>&SpeciesID=<%= SpeciesID%>" class = body><img src = "<%= BreedImage%>" alt = "<%=BreedImageCaption%>" width = "180" align = "left" hspace="20"/></a><br>
+<% end if %>
+</td>
+<td class = "body">
+<blockquote>
+<%=left(Breeddescription, 450) %>
+<%if len(Breeddescription) > 450 then %>
+...
+<% end if %>
+<%if len(Breeddescription) > 25 then %>
+<br />
+<div align = right>
+<form  name=Login method="post" action="Breeds.asp?BreedLookupID=<%= BreedLookupID2%>&SpeciesID=<%= SpeciesID%>" >
+<input type="submit" class = "regsubmit2" value="LEARN MORE"  >
+</form>
+</div>
+<br>
+<% end if %>
+</blockquote>
+ </td>
+</tr></table>
+<%
+ rs2.movenext
+wend %>
+
+<% end if 
+
+rs2.close
+%>
+
+<br />
+<!--#Include virtual="/Members/MarketplacelinksInclude.asp"-->
+  </div>
+  </div>
+  </div>
+<!--#Include virtual="/Members/MembersFooter.asp"-->
+</body>
+</html>

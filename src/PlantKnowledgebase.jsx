@@ -30,10 +30,14 @@ const CATEGORIES = [
   { key: 'Vegetable',      label: 'Vegetables',       img: '/images/Vegetables.webp',     path: '/plant-knowledgebase/vegetables',      desc: 'A wide variety of plants and plant parts, from crunchy carrots to tender asparagus, that are staples of savory meals around the world.' },
 ];
 
+// Only eager-load the first 4 images (above the fold), lazy-load the rest
+const EAGER_COUNT = 4;
+
 export default function PlantKnowledgebase() {
   const [counts, setCounts] = useState({});
   const [total, setTotal] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -48,29 +52,32 @@ export default function PlantKnowledgebase() {
       .catch(() => {});
   }, []);
 
-  // Pair categories into rows of 2
-  const rows = [];
-  for (let i = 0; i < CATEGORIES.length; i += 2) {
-    rows.push(CATEGORIES.slice(i, i + 2));
-  }
+  useEffect(() => {
+    // Defer video mount until after first paint so nav links are immediately clickable
+    const timer = setTimeout(() => setVideoReady(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white font-sans">
       <Header />
 
-      <div className="mx-auto px-4 py-2" style={{ maxWidth: "1300px" }}>
+      <div className="mx-auto px-4 py-2" style={{ maxWidth: '1300px' }}>
 
         {/* Page title */}
-        <h1 >Online Plant Database</h1>
+        <h1>Online Plant Database</h1>
 
-        {/* Video banner — no overlay title, just the video */}
+        {/* Video banner — deferred so nav links are clickable on first paint */}
         <div className="w-full overflow-hidden mb-3" style={{ height: '200px' }}>
-          <video
-            src="/videos/PlantDBVideo.mp4"
-            autoPlay loop muted playsInline
-            className="w-full object-cover"
-            style={{ height: '286px', marginTop: '-33px' }}
-          />
+          {videoReady && (
+            <video
+              src="/videos/PlantDBVideo.mp4"
+              autoPlay loop muted playsInline
+              preload="none"
+              className="w-full object-cover"
+              style={{ height: '286px', marginTop: '-33px' }}
+            />
+          )}
         </div>
 
         {/* Intro text */}
@@ -88,41 +95,38 @@ export default function PlantKnowledgebase() {
 
         <h2 className="text-lg font-bold text-gray-900 mb-4">Categories of Food Plants</h2>
 
-        {/* Category rows — 2 per row, image left, text right, matching production layout */}
-        <div>
-          {rows.map((row, ri) => (
-            <div key={ri} className="grid grid-cols-2 gap-x-8 mb-4">
-              {row.map(cat => {
-                const count = counts[cat.key] || 0;
-                return (
-                  <div key={cat.key} className="flex gap-3 items-start mb-4">
-                    <Link to={cat.path} className="shrink-0" style={{ marginTop: '15px' }}>
-                      <img
-                        src={cat.img}
-                        alt={cat.label}
-                        width="150"
-                        height="150"
-                        loading="lazy"
-                        className="object-cover"
-                        style={{ width: '150px', height: '150px' }}
-                      />
-                    </Link>
-                    <div className="pt-4">
-                      <Link
-                        to={cat.path}
-                        className="hover:underline text-sm"
-                        style={{ color: '#3D6B34' }}
-                      >
-                        {cat.label}{count > 0 ? ` (${count} Varieties)` : ''}
-                      </Link>
-                      <br />
-                      <span className="text-sm text-gray-700">{cat.desc}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+        {/* Category grid — pure CSS 2-column, no JS row-pairing needed */}
+        <div className="grid grid-cols-2 gap-x-8">
+          {CATEGORIES.map((cat, index) => {
+            const count = counts[cat.key] || 0;
+            return (
+              <div key={cat.key} className="flex gap-3 items-start mb-4">
+                <Link to={cat.path} className="shrink-0" style={{ marginTop: '15px' }}>
+                  <img
+                    src={cat.img}
+                    alt={cat.label}
+                    width="150"
+                    height="150"
+                    loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
+                    decoding={index < EAGER_COUNT ? 'sync' : 'async'}
+                    className="object-cover"
+                    style={{ width: '150px', height: '150px' }}
+                  />
+                </Link>
+                <div className="pt-4">
+                  <Link
+                    to={cat.path}
+                    className="hover:underline text-sm"
+                    style={{ color: '#3D6B34' }}
+                  >
+                    {cat.label}{count > 0 ? ` (${count} Varieties)` : ''}
+                  </Link>
+                  <br />
+                  <span className="text-sm text-gray-700">{cat.desc}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
       </div>

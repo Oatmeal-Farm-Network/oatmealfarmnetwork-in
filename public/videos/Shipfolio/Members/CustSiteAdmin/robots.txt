@@ -1,0 +1,9 @@
+# Bans from cgi-bin and images
+# Disallow /cgi-bin/
+
+User-agent: *
+Disallow: /cgi-bin/
+Disallow: /images/
+Disallow: /data/
+Disallow: /SEO/
+Disallow: /log/

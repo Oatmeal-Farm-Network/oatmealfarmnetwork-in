@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
 const SPECIES = [
   { slug: 'alpacas',           label: 'Alpacas',                  img: 'Alpaca.webp',           desc: 'Alpacas are soft-fleeced South American camelids raised primarily for their fiber.' },
   { slug: 'bison',             label: 'Bison',                    img: 'Bison.webp',             desc: 'Bison are large, shaggy North American bovines raised for lean, flavorful meat.' },
@@ -32,17 +34,18 @@ const SPECIES = [
   { slug: 'sheep',             label: 'Sheep',                    img: 'Sheepbreeds.webp',       desc: 'Sheep are raised for their wool, meat (lamb), and milk.' },
   { slug: 'snails',            label: 'Snails',                   img: 'Snail.webp',             desc: 'Snails have been eaten for millennia and are consumed as a delicacy in many cultures.' },
   { slug: 'turkeys',           label: 'Turkeys',                  img: 'Turkey.webp',            desc: 'Turkeys are large ground-dwelling birds raised for their meat, a staple of holiday meals.' },
-  
   { slug: 'yaks',              label: 'Yaks',                     img: 'Yak.webp',               desc: 'Yaks are large, hardy animals well-adapted to high, cold mountains of Central Asia.' },
 ];
+
+const EAGER_COUNT = 4;
 
 export default function LivestockDB() {
   const [counts, setCounts] = useState({});
   const [total, setTotal] = useState(null);
+  const [videoReady, setVideoReady] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
     fetch(API_URL + '/api/livestock/counts')
       .then(r => r.json())
       .then(data => {
@@ -52,16 +55,37 @@ export default function LivestockDB() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    // Double rAF guarantees we're past the first paint before mounting the video
+    let raf;
+    raf = requestAnimationFrame(() => {
+      raf = requestAnimationFrame(() => {
+        setVideoReady(true);
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white font-sans">
-       <Header />
+      <Header />
 
       <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1rem 1rem 3rem' }}>
         <h1 className="text-3xl font-bold text-gray-900 mb-3">Livestock Database</h1>
 
-        <video className="w-full object-cover mb-4 rounded" style={{ maxHeight: '400px' }} autoPlay muted loop playsInline>
-          <source src="/videos/LivestockHeader.mp4" type="video/mp4" />
-        </video>
+        {/* Video — deferred so nav links are clickable on first paint */}
+        <div className="w-full mb-4 rounded overflow-hidden" style={{ maxHeight: '400px' }}>
+          {videoReady && (
+            <video
+              className="w-full object-cover rounded"
+              style={{ maxHeight: '400px' }}
+              autoPlay muted loop playsInline
+              preload="none"
+            >
+              <source src="/videos/LivestockHeader.mp4" type="video/mp4" />
+            </video>
+          )}
+        </div>
 
         <p className="text-sm text-gray-700 mb-1">
           There are thousands of breeds of livestock, we have documented{' '}
@@ -75,14 +99,17 @@ export default function LivestockDB() {
         <h2 className="text-xl font-bold text-gray-900 mb-4">Breeds of Livestock</h2>
 
         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-          {SPECIES.map(s => (
+          {SPECIES.map((s, index) => (
             <div key={s.slug} className="flex gap-4 items-start">
               <Link to={`/livestock/${s.slug}`} className="shrink-0">
                 <img
                   src={`/images/${s.img}`}
                   alt={s.label}
+                  width="150"
+                  height="150"
                   className="object-cover rounded"
-                  loading="lazy"  
+                  loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
+                  decoding={index < EAGER_COUNT ? 'sync' : 'async'}
                   style={{ width: '150px', height: '150px' }}
                   onError={e => { e.target.src = '/images/HomepageLivestockDB.webp'; }}
                 />
