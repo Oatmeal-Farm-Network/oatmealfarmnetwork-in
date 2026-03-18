@@ -51,6 +51,11 @@ const ServicesHome = lazy(() => import('./ServicesHome.jsx'))
 const ServicesAdd = lazy(() => import('./ServicesAdd.jsx'))
 const ServicesSuggestCategory = lazy(() => import('./ServicesSuggestCategory.jsx'))
 const ServicesEdit = lazy(() => import('./ServicesEdit.jsx'))
+const FarmToTableMarketplace = lazy(() => import('./FarmToTableMarketplace.jsx'))
+const LivestockMarketplace = lazy(() => import('./LivestockMarketplace.jsx'))
+const LivestockForSale = lazy(() => import('./LivestockForSale.jsx'))
+const RanchList    = lazy(() => import('./RanchList.jsx'))
+const RanchProfile = lazy(() => import('./RanchProfile.jsx'))
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
@@ -103,6 +108,20 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/services/add" element={<ServicesAdd />} />
           <Route path="/services/suggest-category" element={<ServicesSuggestCategory />} />
           <Route path="/services/edit" element={<ServicesEdit />} />
+          <Route path="/marketplaces/farm-to-table" element={<FarmToTableMarketplace />} />
+          <Route path="/marketplaces/livestock/studs/:slug" element={<LivestockForSale />} />
+          <Route path="/marketplaces/livestock/:slug" element={<LivestockForSale />} />
+          <Route path="/marketplaces/livestock" element={<LivestockMarketplace />} />
+          <Route path="/marketplaces/farm-to-table" element={<FarmToTableMarketplace />} />
+          <Route path="/marketplaces" element={<LivestockMarketplace />} />
+<Route path="/marketplaces/livestock/ranch/:businessId" element={<RanchProfile />} />
+<Route path="/marketplaces/livestock/ranches/:slug" element={<RanchList />} />
+<Route path="/marketplaces/livestock/studs/:slug" element={<LivestockForSale />} />
+<Route path="/marketplaces/livestock/:slug" element={<LivestockForSale />} />
+<Route path="/marketplaces/livestock" element={<LivestockMarketplace />} />
+<Route path="/marketplaces/farm-to-table" element={<FarmToTableMarketplace />} />
+<Route path="/marketplaces" element={<LivestockMarketplace />} />
+
         </Routes>
       </Suspense>
     </AccountProvider>

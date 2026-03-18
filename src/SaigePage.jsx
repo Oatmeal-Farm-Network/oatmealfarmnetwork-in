@@ -1,15 +1,12 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
+import Header from './Header';
+import Footer from './Footer';
 import { useAccount } from './AccountContext';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SAIGE_API = 'https://saige-backend-802455386518.us-central1.run.app';
-
-// ─── TYPES ────────────────────────────────────────────────────────────────────
-// Message:      { role: 'user' | 'assistant', content: string }
-// Quiz:         { question: string, options: string[] }
-// ThreadSummary:{ thread_id, preview, status, advisory_type, updated_at }
 
 // ─── STORAGE HELPERS ─────────────────────────────────────────────────────────
 const THREADS_KEY = 'saige_threads';
@@ -293,7 +290,157 @@ function ChatSidebar({ threads, activeThreadId, isCollapsed, isLoading, onToggle
   );
 }
 
-// ─── MESSAGE CACHE ────────────────────────────────────────────────────────────
+// ─── ABOUT SAIGE (logged-out view) ───────────────────────────────────────────
+function AboutSaige() {
+  const features = [
+    { icon: '🧠', title: 'On-Demand Expertise', desc: 'Instant access to specialized AI for soil, livestock, weather, and plant nutrients.' },
+    { icon: '📈', title: 'Smart & Adaptive Learning', desc: 'Short- and long-term memory refine advice over time.' },
+    { icon: '🍽️', title: 'Farm-to-Table Enablement', desc: 'Assists with logistics, negotiations, and orders between farms and restaurants.' },
+    { icon: '🔒', title: 'Trust & Security', desc: 'Built with privacy-first principles and secure data practices.' },
+  ];
+
+  const coming = [
+    { icon: '🛒', title: 'Farm-to-Table Marketplace', desc: 'Connects farms directly to consumers and restaurants, streamlining plans and tasks based on real-time demand.' },
+    { icon: '🐄', title: 'Livestock Marketplace', desc: 'A trusted platform for buying and selling livestock.' },
+    { icon: '📊', title: 'Current Market Insights', desc: 'Provides real-time demand signals and pricing trends to help you make smarter business decisions.' },
+    { icon: '🔬', title: 'Complete Data Analysis', desc: 'Turns your farm data into actionable insights, helping you boost efficiency and profitability.' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-white font-sans">
+      <Header />
+
+      {/* Hero — full bleed image with overlay */}
+      <div className="w-full relative overflow-hidden" style={{ minHeight: '480px' }}>
+        <img
+          src="/images/SaigeBanner.webp"
+          alt="Farmer using Saige AI in the field"
+          fetchPriority="high"
+          loading="eager"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(10,20,10,0.88) 0%, rgba(10,20,10,0.65) 55%, rgba(10,20,10,0.15) 100%)' }} />
+        <div className="relative max-w-5xl mx-auto px-6 py-16 flex flex-col md:flex-row items-center gap-10" style={{ minHeight: '480px' }}>
+          <div className="flex-1 text-center md:text-left">
+            <div className="flex items-center gap-3 mb-4 justify-center md:justify-start">
+              <span className="text-5xl">🌾</span>
+              <h1 className="text-5xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>Saige</h1>
+            </div>
+            <p className="text-xl font-semibold mb-4" style={{ color: '#86efac' }}>Your AI Agricultural Partner</p>
+            <p className="text-base leading-relaxed mb-6 max-w-lg" style={{ color: '#d1fae5' }}>
+              Saige is more than a chatbot — she's an AI partner guiding farms with planning, insight, and operational know-how.{' '}
+              <Link to="/contact-us" className="underline hover:text-white" style={{ color: '#6ee7b7' }}>Contact Us</Link> to learn more.
+            </p>
+            <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm" style={{ background: 'rgba(234,179,8,0.2)', border: '2px solid #eab308', color: '#fde047' }}>
+              <span className="text-lg">🚀</span> Coming Soon — Stay Tuned!
+            </div>
+          </div>
+
+          <div className="flex-1 max-w-sm w-full">
+            <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/20" style={{ background: 'rgba(15,23,42,0.92)', backdropFilter: 'blur(8px)' }}>
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10" style={{ background: 'rgba(30,41,59,0.95)' }}>
+                <span className="text-lg">🌾</span>
+                <div>
+                  <div className="text-white font-bold text-sm" style={{ fontFamily: 'Georgia, serif' }}>Saige</div>
+                  <div className="text-gray-400 text-xs">AI Agricultural Assistant</div>
+                </div>
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="flex gap-2 items-start">
+                  <div className="w-7 h-7 rounded-full bg-green-700 flex items-center justify-center text-sm flex-shrink-0">🌾</div>
+                  <div className="rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-gray-200 max-w-xs" style={{ background: '#1e293b', border: '1px solid #334155' }}>
+                    Hello! I'm Saige. Ask me about crops, livestock, soil health, or weather impacts.
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <div className="rounded-2xl rounded-tr-sm px-3 py-2 text-xs text-white max-w-xs" style={{ background: 'linear-gradient(135deg,#1d4ed8,#1e40af)' }}>
+                    What cover crops work best for clay soil?
+                  </div>
+                </div>
+                <div className="flex gap-2 items-start">
+                  <div className="w-7 h-7 rounded-full bg-green-700 flex items-center justify-center text-sm flex-shrink-0">🌾</div>
+                  <div className="rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-gray-200 max-w-xs" style={{ background: '#1e293b', border: '1px solid #334155' }}>
+                    For clay soil, crimson clover and winter rye are excellent choices — they improve drainage and add nitrogen...
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Core features */}
+      <div className="max-w-5xl mx-auto px-6 py-14">
+        <h2 className="text-3xl font-bold text-gray-900 text-center mb-2">What Saige Can Do</h2>
+        <p className="text-gray-500 text-center mb-10">Everything you need to run a smarter, more connected farm.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {features.map(f => (
+            <div key={f.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex gap-4 items-start">
+              <span className="text-3xl flex-shrink-0">{f.icon}</span>
+              <div>
+                <h3 className="font-bold text-gray-900 text-base mb-1">{f.title}</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{f.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Future of farming banner */}
+      <div className="py-14 px-6 text-center" style={{ background: 'linear-gradient(135deg, #0f172a, #14532d)' }}>
+        <h2 className="text-3xl font-bold text-white mb-4">The Future of Farming is Integrated.</h2>
+        <p className="text-gray-300 max-w-2xl mx-auto text-base leading-relaxed">
+          Saige and The OatmealFarmNetwork.com bring the industry together, unifying every step from inventory and logistics to payments and market insights.
+        </p>
+      </div>
+
+      {/* Coming soon features */}
+      <div className="max-w-5xl mx-auto px-6 py-14">
+        <div className="text-center mb-10">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-4" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid #eab308', color: '#d97706' }}>
+            🚀 Coming Soon
+          </span>
+          <h2 className="text-3xl font-bold text-gray-900">What's Coming Next</h2>
+          <p className="text-gray-500 mt-2">We're building the most complete agricultural platform ever made.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {coming.map(f => (
+            <div key={f.title} className="bg-white rounded-2xl border border-yellow-100 shadow-sm p-6 relative overflow-hidden">
+              <div className="absolute top-3 right-3">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Coming Soon</span>
+              </div>
+              <span className="text-3xl mb-3 block">{f.icon}</span>
+              <h3 className="font-bold text-gray-900 text-base mb-2">{f.title}</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Food-System Directory — live now */}
+      <div className="max-w-5xl mx-auto px-6 pb-14">
+        <div className="rounded-2xl p-8 flex flex-col sm:flex-row items-center gap-6" style={{ background: 'linear-gradient(135deg, #14532d, #166534)' }}>
+          <span className="text-5xl flex-shrink-0">📁</span>
+          <div className="text-center sm:text-left flex-1">
+            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold mb-2" style={{ background: 'rgba(74,222,128,0.2)', color: '#4ade80' }}>
+              ✓ Live Now
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Food-System Business Directory</h3>
+            <p className="text-green-200 text-sm leading-relaxed">
+              Share your food-focused organization with thousands of interested customers.
+            </p>
+          </div>
+          <Link to="/directory" className="flex-shrink-0 bg-white text-green-800 font-bold py-2 px-6 rounded-xl text-sm hover:bg-green-50 transition-colors">
+            Explore Directory →
+          </Link>
+        </div>
+      </div>
+
+      <Footer />
+    </div>
+  );
+}
+
 const _msgCache = new Map();
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
@@ -302,17 +449,25 @@ export default function SaigePage() {
   const BusinessID = searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
+    setIsLoggedIn(Boolean(token));
+    setAuthChecked(true);
+  }, []);
 
   useEffect(() => { if (BusinessID) LoadBusiness(BusinessID); }, [BusinessID]);
 
-  const [activeThreadId, setActiveThreadId] = useState('');
-  const [activeChat, setActiveChat]         = useState([WELCOME_MESSAGE]);
-  const [quiz, setQuiz]                     = useState(null);
-  const [selectedOption, setSelectedOption] = useState('');
-  const [customAnswer, setCustomAnswer]     = useState('');
-  const [isThinking, setIsThinking]         = useState(false);
-  const [input, setInput]                   = useState('');
-  const [processingStage, setProcessingStage] = useState('default');
+  const [activeThreadId, setActiveThreadId]     = useState('');
+  const [activeChat, setActiveChat]             = useState([WELCOME_MESSAGE]);
+  const [quiz, setQuiz]                         = useState(null);
+  const [selectedOption, setSelectedOption]     = useState('');
+  const [customAnswer, setCustomAnswer]         = useState('');
+  const [isThinking, setIsThinking]             = useState(false);
+  const [input, setInput]                       = useState('');
+  const [processingStage, setProcessingStage]   = useState('default');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [threads, setThreads]                   = useState([]);
   const [threadsLoading, setThreadsLoading]     = useState(false);
@@ -329,7 +484,6 @@ export default function SaigePage() {
   useEffect(() => {
     if (window.innerWidth < 900) setSidebarCollapsed(true);
   }, []);
-
 
   useEffect(() => {
     if (activeThreadId && activeChat.length > 0) {
@@ -478,7 +632,6 @@ export default function SaigePage() {
         setActiveChat(prev => [...prev, { role: 'assistant', content: 'Thank you for using Saige!' }]);
       }
     } catch (error) {
-      console.error('Chat error:', error);
       setActiveChat(prev => [...prev, { role: 'assistant', content: 'Sorry, I could not connect to the server. Please try again.' }]);
     } finally {
       setIsThinking(false);
@@ -495,6 +648,13 @@ export default function SaigePage() {
     sendMessage(answer, { showUserBubble: false });
   }
 
+  // Wait for auth check before rendering to avoid flash
+  if (!authChecked) return null;
+
+  // Show About page for logged-out users
+  if (!isLoggedIn) return <AboutSaige />;
+
+  // Show chatbot for logged-in users
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
       <div style={{ margin: '-24px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
@@ -542,7 +702,6 @@ export default function SaigePage() {
                 />
               )}
             </div>
-
 
             {!quiz && !isThinking && (
               <div style={{ padding: '12px 20px 16px', borderTop: '1px solid #1e293b', background: '#0f172a' }}>

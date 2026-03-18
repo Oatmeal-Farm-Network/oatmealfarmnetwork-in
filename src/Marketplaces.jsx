@@ -1,63 +1,210 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 
-const FeatureBox = ({ title, description, imgSrc, link }) => (
-  <div className="flex flex-col bg-[#819360] rounded-[20px] p-[10px] shadow-[0_4px_8px_rgba(0,0,0,0.1)] min-h-[250px] text-center w-full mb-4 lg:mb-0 border border-[#4d734d]/20">
-    <Link to={link} className="block mb-[10px] overflow-hidden rounded-[20px]">
-      <img
-        src={imgSrc}
-        alt={title}
-        className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
-      />
-    </Link>
-    <h3 className="text-[#e5af17] font-bold text-xl mb-2">
-      <Link to={link} className="no-underline hover:underline transition-all duration-300 text-white">
-        {title}
-      </Link>
-    </h3>
-    <p className="text-white flex-grow text-sm mb-4 leading-relaxed font-medium">
-      {description}
-    </p>
-    <Link
-      to={link}
-      className="bg-[#4d734d] text-white rounded-[20px] py-[10px] px-[25px] font-bold inline-block self-center hover:bg-white hover:text-[#4d734d] transition-colors mt-auto text-sm uppercase tracking-wider"
-    >
-      Learn More
-    </Link>
-  </div>
-);
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
-export default function Marketplaces() {
+function AnimalCard({ animal }) {
+  const [failed, setFailed] = useState(false);
+
+  // Skip rendering this card entirely if image fails
+  if (failed) return null;
+
+  const priceDisplay = () => {
+    if (animal.sale_price && animal.price) {
+      const discounted = animal.price * ((100 - animal.sale_price) / 100);
+      return (
+        <>
+          Price: <span style={{ textDecoration: 'line-through', color: 'red' }}>${Math.round(animal.price).toLocaleString()}</span>
+          {' '}<strong>${Math.round(discounted).toLocaleString()}</strong>
+        </>
+      );
+    }
+    if (animal.price) {
+      return <>Price: <strong>${Math.round(animal.price).toLocaleString()}</strong></>;
+    }
+    return <strong>Call For Price</strong>;
+  };
+
+  const shortName = animal.full_name?.length > 28
+    ? animal.full_name.substring(0, 28) + '...'
+    : animal.full_name;
+
+  return (
+    <div
+      style={{
+        backgroundColor: '#fff',
+        border: '2px solid #abacab',
+        borderRadius: '4px',
+        padding: '10px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        transition: 'box-shadow 0.2s, transform 0.2s',
+        cursor: 'pointer',
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.boxShadow = '2px 2px 15px #a7ac20';
+        e.currentTarget.style.transform = 'scale(1.02)';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.boxShadow = 'none';
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
+    >
+      {/* Image */}
+      <div style={{ width: '200px', height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', paddingTop: '10px' }}>
+        <img
+          src={animal.photo}
+          alt={animal.full_name}
+          loading="lazy"
+          onError={() => setFailed(true)}
+          style={{ width: '100%', height: '180px', objectFit: 'contain' }}
+        />
+      </div>
+
+      {/* Details */}
+      <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '0.82rem', color: '#555', width: '100%' }}>
+        <a
+          href={`/livestockmarketplace/Animals/Details.asp?ID=${animal.animal_id}&CurrentPeopleID=${animal.people_id}`}
+          style={{ fontWeight: 600, color: '#333', textDecoration: 'none', display: 'block' }}
+        >
+          {shortName}
+        </a>
+        <div style={{ color: '#666', marginTop: '2px' }}>
+          {animal.breed} {animal.species}
+        </div>
+        <div style={{ marginTop: '4px' }}>
+          {priceDisplay()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CardGrid({ animals }) {
+  // Render cards but filter out nulls (failed images render null)
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(4, 1fr)',
+      gap: '16px',
+      maxWidth: '1100px',
+      margin: '0 auto',
+    }}>
+      {animals.map(animal => (
+        <AnimalCard key={animal.animal_id} animal={animal} />
+      ))}
+    </div>
+  );
+}
+
+export default function LivestockMarketplace() {
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/marketplace/homepage-listings`)
+      .then(r => r.json())
+      .then(data => {
+        setListings(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const featured = listings.slice(0, 4);
+  const browse = listings.slice(4, 12);
+
   return (
     <div className="min-h-screen bg-white font-sans">
       <Header />
 
-      <section className="py-6 bg-white text-center">
-        <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-4xl font-bold mt-3 mb-4 text-gray-900">
-            Marketplaces
-          </h1>
-          <p className="mt-3 text-gray-800 text-lg leading-relaxed">
-            Buy and sell through our marketplaces. Connect with farmers, ranchers, and buyers
-            nationwide to grow your business.
-          </p>
-        </div>
-      </section>
+      {/* Top banner image */}
+      <div style={{ width: '100%' }}>
+        <img
+          src="/images/LOAwebbanner1898x360.webp"
+          alt="Livestock of America"
+          loading="eager"
+          fetchPriority="high"
+          style={{ width: '100%', display: 'block', maxHeight: '200px', objectFit: 'cover' }}
+          onError={e => { e.target.style.display = 'none'; }}
+        />
+      </div>
 
-      <section className="py-8 bg-white text-center">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <FeatureBox
-              title="Livestock Marketplace"
-              description="Buy and sell livestock online with our marketplace filled with 28 species of Livestock."
-              imgSrc="/images/HomepageLivestockMarketplace.webp"
-              link="/marketplace"
-            />
-          </div>
+      {/* Intro */}
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem 1rem 1rem' }}>
+        <h1 style={{ textAlign: 'center', fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+          Connecting Ranches Across The United States
+        </h1>
+        <p style={{ fontSize: '0.9rem', color: '#333', lineHeight: 1.6, marginBottom: '0.5rem' }}>
+          Livestock of America is a one-of-a-kind livestock marketplace, helping ranches showcase their animals online.
+          We support all livestock breeders, regardless of breed or type.
+        </p>
+        <p style={{ fontSize: '0.9rem', color: '#333', lineHeight: 1.6, marginBottom: '1rem' }}>
+          From the rugged Pacific coast to the historic shores of Plymouth, Livestock of America connects the breeders
+          of animals who live off the land. These men and women keep our country fed, and we are proud to help them succeed.
+        </p>
+        <Link to="/signup" className="regsubmit2">Join Now</Link>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>Loading listings...</div>
+      ) : listings.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>
+          <p style={{ marginBottom: '1rem' }}>No listings available right now.</p>
+          <Link to="/signup" className="regsubmit2">List Your Animals</Link>
         </div>
-      </section>
+      ) : (
+        <>
+          {/* Featured Listings — gold section */}
+          {featured.length > 0 && (
+            <div style={{ backgroundColor: '#e59a24', padding: '1.5rem 1rem 2rem' }}>
+              <h2 style={{
+                textAlign: 'center', fontSize: '1.4rem', fontWeight: 'bold',
+                marginBottom: '1.25rem', color: '#222',
+              }}>
+                Featured Listings
+              </h2>
+              <CardGrid animals={featured} />
+            </div>
+          )}
+
+          {/* Browse Listings — background image section */}
+          {browse.length > 0 && (
+            <div style={{
+              backgroundImage: "url('/images/HomepageBackground.jpg')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              padding: '1.5rem 1rem 2rem',
+              minHeight: '600px',
+            }}>
+              <h2 style={{
+                textAlign: 'center', fontSize: '1.4rem', fontWeight: 'bold',
+                marginBottom: '1.25rem', color: '#222',
+              }}>
+                Browse Listings
+              </h2>
+              {/* Two rows of 4 */}
+              <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                  {browse.slice(0, 4).map(animal => (
+                    <AnimalCard key={animal.animal_id} animal={animal} />
+                  ))}
+                </div>
+                {browse.length > 4 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                    {browse.slice(4, 8).map(animal => (
+                      <AnimalCard key={animal.animal_id} animal={animal} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       <Footer />
     </div>

@@ -148,7 +148,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
             </div>
 
             {[8, 10, 14, 26, 29, 31].includes(BT) && (
-  <NavSection Icon="/icons/produce.webp" Label="Consumables">
+  <NavSection Icon="/icons/produce.webp" Label="Farm 2 Table">
     <NavChild To={`/produce/inventory?BusinessID=${BusinessID}`} Label="Produce" />
     <NavChild To={`/produce/processed-food?BusinessID=${BusinessID}`} Label="Processed Foods" />
     <NavChild To={`/produce/meat?BusinessID=${BusinessID}`} Label="Meat" />

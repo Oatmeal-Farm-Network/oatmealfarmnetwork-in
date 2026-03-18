@@ -7,12 +7,15 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [kbOpen, setKbOpen] = useState(false);
   const [kbMobileOpen, setKbMobileOpen] = useState(false);
+  const [mktOpen, setMktOpen] = useState(false);
+  const [mktMobileOpen, setMktMobileOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [acctOpen, setAcctOpen] = useState(false);
   const navigate = useNavigate();
   const kbRef = useRef(null);
   const acctRef = useRef(null);
+  const mktRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
@@ -30,6 +33,7 @@ const Header = () => {
     const handleClickOutside = (e) => {
       if (kbRef.current && !kbRef.current.contains(e.target)) setKbOpen(false);
       if (acctRef.current && !acctRef.current.contains(e.target)) setAcctOpen(false);
+      if (mktRef.current && !mktRef.current.contains(e.target)) setMktOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -52,11 +56,39 @@ const Header = () => {
     </div>
   );
 
+  const MktDropdown = () => (
+    <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded shadow-lg z-50 overflow-hidden">
+      <Link to="/marketplaces/farm-to-table" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+       Farm 2 Table Marketplace
+      </Link>
+      <Link to="/marketplaces/livestock" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        Livestock Marketplace
+      </Link>
+    </div>
+  );
+
   const KbMobileLinks = () => (
     <ul className="mt-2 space-y-2 text-sm">
       <li><Link to="/plant-knowledgebase" onClick={() => setIsOpen(false)} className="!text-white/80 block">Plants</Link></li>
       <li><Link to="/livestock" onClick={() => setIsOpen(false)} className="!text-white/80 block">Livestock Breeds</Link></li>
       <li><Link to="/ingredient-knowledgebase" onClick={() => setIsOpen(false)} className="!text-white/80 block">Ingredients</Link></li>
+    </ul>
+  );
+
+  const MktMobileLinks = () => (
+    <ul className="mt-2 space-y-2 text-sm">
+      <li>
+        <Link to="/marketplaces/farm-to-table" onClick={() => setIsOpen(false)} className="!text-white/80 block">
+          🍽️ Farm 2 Table Marketplace
+          <span className="text-yellow-400 text-xs ml-1">(Coming Soon)</span>
+        </Link>
+      </li>
+      <li>
+        <Link to="/marketplaces/livestock" onClick={() => setIsOpen(false)} className="!text-white/80 block">
+          🐄 Livestock Marketplace
+          <span className="text-yellow-400 text-xs ml-1">(Coming Soon)</span>
+        </Link>
+      </li>
     </ul>
   );
 
@@ -76,6 +108,9 @@ const Header = () => {
             src="/images/Oatmeal-Farm-Network-logo-horizontal-white.webp"
             className="h-10 md:h-12"
             alt="Oatmeal Farm Network"
+            width="160"
+            height="40"
+            fetchPriority="high"
           />
         </Link>
 
@@ -102,6 +137,14 @@ const Header = () => {
                 Knowledgebases <ChevronIcon open={kbOpen} />
               </button>
               {kbOpen && <KbDropdown />}
+            </li>
+
+            {/* Marketplaces dropdown */}
+            <li className="relative" ref={mktRef}>
+              <button onClick={() => setMktOpen(!mktOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
+                Marketplaces <ChevronIcon open={mktOpen} />
+              </button>
+              {mktOpen && <MktDropdown />}
             </li>
 
             {isLoggedIn ? (
@@ -138,12 +181,11 @@ const Header = () => {
               </>
             ) : (
               <>
-                <li><Link to="/marketplaces" className="nav-link">Marketplaces</Link></li>
                 <li><Link to="/saige" className="nav-link">Saige</Link></li>
-                <li><Link to="/about" className="nav-link">About Us</Link></li>
-                <li><Link to="/contact-us" className="nav-link">Contact Us</Link></li>
+                <li><Link to="/about" className="nav-link">About</Link></li>
+                <li><Link to="/contact-us" className="nav-link">Contact</Link></li>
                 <li><Link to="/login" className="nav-link">Login</Link></li>
-                <li><Link to="/signup" className="nav-link">Sign Up</Link></li>
+                <li><Link to="/signup" className="nav-link">Join</Link></li>
               </>
             )}
           </ul>
@@ -183,6 +225,14 @@ const Header = () => {
               {kbMobileOpen && <KbMobileLinks />}
             </li>
 
+            {/* Marketplaces mobile */}
+            <li>
+              <button onClick={() => setMktMobileOpen(!mktMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
+                Marketplaces <ChevronIcon open={mktMobileOpen} />
+              </button>
+              {mktMobileOpen && <MktMobileLinks />}
+            </li>
+
             {isLoggedIn ? (
               <>
                 <li>
@@ -209,7 +259,6 @@ const Header = () => {
               </>
             ) : (
               <>
-                <li><Link to="/marketplaces" onClick={() => setIsOpen(false)} className="!text-white block">Marketplaces</Link></li>
                 <li><Link to="/saige" onClick={() => setIsOpen(false)} className="!text-white block">Saige</Link></li>
                 <li><Link to="/about" onClick={() => setIsOpen(false)} className="!text-white block">About Us</Link></li>
                 <li><Link to="/contact-us" onClick={() => setIsOpen(false)} className="!text-white block">Contact Us</Link></li>

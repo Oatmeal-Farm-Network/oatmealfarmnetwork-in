@@ -105,8 +105,8 @@ export default function IngredientKnowledgebase() {
                   <img
                     src={imgSrc(cat)}
                     alt={cat.name}
-                    width="150"
-                    height="150"
+                    width="100"
+                    height="100"
                     className="object-cover rounded"
                     loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
                     decoding={index < EAGER_COUNT ? 'sync' : 'async'}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Header from './AccountLayout';
+import Header from './Header';
+import Footer from './Footer';
 
 export default function Dashboard() {
   const navigate = useNavigate();

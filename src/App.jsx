@@ -5,16 +5,16 @@ import Footer from './Footer';
 
 const FeatureBox = ({ title, description, imgSrc, link, eager }) => (
   <div className="flex flex-col bg-white rounded-[20px] p-[10px] shadow-[0_4px_8px_rgba(0,0,0,0.1)] min-h-[250px] text-center w-full mb-4 lg:mb-0 border border-[#4d734d]/20">
-    <Link to={link} className="block mb-[10px] overflow-hidden rounded-[20px]">
-      <img
-        src={imgSrc}
-        alt={title}
-        loading={eager ? 'eager' : 'lazy'}
-        decoding={eager ? 'sync' : 'async'}
-        fetchPriority={eager ? 'high' : 'auto'}
-        className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
-      />
-    </Link>
+   <Link to={link} className="block mb-[10px] overflow-hidden rounded-[20px] aspect-square">
+    <img
+      src={imgSrc}
+      alt={title}
+      loading={eager ? 'eager' : 'lazy'}
+      decoding={eager ? 'sync' : 'async'}
+      fetchPriority={eager ? 'high' : 'auto'}
+      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+    />
+  </Link>
     <h3 className="text-[#819360] font-bold text-xl mb-2 text-left">
       <Link to={link} className="no-underline hover:underline transition-all duration-300 text-[#819360]">
         {title}
