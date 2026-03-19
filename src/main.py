@@ -16,6 +16,7 @@ from routers import livestock, processed_food
 from routers import services
 from routers import marketplace
 from routers import ranches
+from routers import meat   
 
 load_dotenv()
 print("SECRET_KEY loaded:", os.getenv("SECRET_KEY"))
@@ -47,7 +48,7 @@ app.include_router(processed_food.router)
 app.include_router(services.router)
 app.include_router(marketplace.router)
 app.include_router(ranches.router)
-
+app.include_router(meat.router)
 
 # ─── Precision Ag routes ──────────────────────────────────────────────────────
 

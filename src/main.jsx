@@ -5,6 +5,7 @@ import './index.css'
 import { AccountProvider } from './AccountContext';
 import "./AnimalAddWizard.css";
 import AnimalEdit from "./AnimalEdit";
+import MeatInventory from './MeatInventory';
 
 const App = lazy(() => import('./App.jsx'))
 const About = lazy(() => import('./About.jsx'))
@@ -115,6 +116,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/marketplaces/livestock/:slug" element={<LivestockForSale />} />
           <Route path="/marketplaces/livestock" element={<LivestockMarketplace />} />
           <Route path="/marketplaces" element={<LivestockMarketplace />} />
+          <Route path="/produce/meat" element={<MeatInventory />} />
         </Routes>
       </Suspense>
     </AccountProvider>
