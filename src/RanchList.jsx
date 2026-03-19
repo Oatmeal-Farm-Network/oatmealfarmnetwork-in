@@ -268,6 +268,14 @@ export default function RanchList() {
     if (window.innerWidth < 768) setSidebarCollapsed(true);
   }, []);
 
+  const [singularTerm, setSingularTerm] = useState('');
+  useEffect(() => {
+    fetch(`${API_URL}/api/marketplace/species/${slug}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setSingularTerm(d.singular_term || ''))
+      .catch(() => {});
+  }, [slug]);
+
   const loadData = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams({ page, name: nameFilter });
@@ -286,7 +294,9 @@ export default function RanchList() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const handleSearch = (e) => { e.preventDefault(); setPage(1); };
-  const label = data?.label || slug;
+  const rawLabel = data?.label || slug;
+  const fallbackLabel = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
+  const label = singularTerm || fallbackLabel;
 
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -301,23 +311,16 @@ export default function RanchList() {
             </h1>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'flex-start', padding: '20px 16px', gap: '24px' }}>
-            {/* Search panel */}
-            <div style={{ width: '200px', flexShrink: 0 }}>
-              <form onSubmit={handleSearch}>
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={filterLabel}>Ranch Name</label>
-                  <input type="text" value={nameFilter} onChange={e => setNameFilter(e.target.value)}
-                    placeholder="Search by name..." style={inputStyle} />
-                </div>
-                <button type="submit" style={{ width: '100%', padding: '8px', backgroundColor: '#507033', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
-                  Search
-                </button>
-              </form>
-            </div>
+          {/* Search bar above results */}
+          <div style={{ padding: '16px 16px 0' }}>
+            <input type="text" value={nameFilter}
+              onChange={e => { setNameFilter(e.target.value); setPage(1); }}
+              placeholder="Search by ranch name..."
+              style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '0.9rem', width: '300px', maxWidth: '100%' }} />
+          </div>
 
-            {/* Results */}
-            <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ padding: '16px' }}>
+            <div style={{ minWidth: 0 }}>
               {loading ? (
                 [...Array(3)].map((_, i) => (
                   <div key={i} className="animate-pulse" style={{ marginBottom: '16px', borderRadius: '4px', overflow: 'hidden' }}>

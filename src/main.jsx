@@ -24,7 +24,6 @@ const AccountChangeType = lazy(() => import('./AccountChangeType.jsx'))
 const AnimalAddWizard = lazy(() => import('./AnimalAddWizard'))
 const DirectoryList = lazy(() => import('./Directory/pages/DirectoryList'))
 const DirectoryDetail = lazy(() => import('./Directory/pages/DirectoryDetail'))
-const BusinessProfile = lazy(() => import('./Directory/pages/BusinessProfile'))
 const Accounts = lazy(() => import('./Accounts.jsx'))
 const Knowledgebases = lazy(() => import('./Knowledgebases.jsx'))
 const IngredientKnowledgebase = lazy(() => import('./IngredientKnowledgebase.jsx'))
@@ -54,15 +53,14 @@ const ServicesEdit = lazy(() => import('./ServicesEdit.jsx'))
 const FarmToTableMarketplace = lazy(() => import('./FarmToTableMarketplace.jsx'))
 const LivestockMarketplace = lazy(() => import('./LivestockMarketplace.jsx'))
 const LivestockForSale = lazy(() => import('./LivestockForSale.jsx'))
-const RanchList    = lazy(() => import('./RanchList.jsx'))
-const RanchProfile = lazy(() => import('./RanchProfile.jsx'))
+const RanchList = lazy(() => import('./RanchList.jsx'))
+const OrgProfile = lazy(() => import('./OrgProfile.jsx'))
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <AccountProvider>
       <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>}>
         <Routes>
-          <Route path="/accounts" element={<Accounts />} />
           <Route path="/" element={<App />} />
           <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
@@ -70,6 +68,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/account" element={<AccountHome />} />
           <Route path="/account/change-type" element={<AccountChangeType />} />
+          <Route path="/account/profile" element={<AccountProfile />} />
+          <Route path="/account/delete" element={<AccountDelete />} />
+          <Route path="/accounts" element={<Accounts />} />
+          <Route path="/accounts/new" element={<AccountNew />} />
           <Route path="/animals" element={<AnimalsHome />} />
           <Route path="/animals/add" element={<AnimalAddWizard />} />
           <Route path="/animals/edit" element={<AnimalEdit />} />
@@ -93,35 +95,26 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/ingredient-knowledgebase" element={<IngredientKnowledgebase />} />
           <Route path="/ingredient-knowledgebase/:category/varieties/:ingredientId" element={<IngredientVarieties />} />
           <Route path="/ingredient-knowledgebase/:category" element={<IngredientCategory />} />
-          <Route path="/marketplaces" element={<Marketplaces />} />
-          <Route path="/contact-us" element={<ContactUs />} />
-          <Route path="/contact-us/confirm" element={<ContactUsConfirm />} />
           <Route path="/directory" element={<DirectoryList />} />
           <Route path="/directory/:directoryType" element={<DirectoryDetail />} />
-          <Route path="/profile" element={<BusinessProfile />} />
-          <Route path="/accounts/new" element={<AccountNew />} />
-          <Route path="/account/profile" element={<AccountProfile />} />
-          <Route path="/account/delete" element={<AccountDelete />} />
+          <Route path="/profile" element={<OrgProfile />} />
+          <Route path="/contact-us" element={<ContactUs />} />
+          <Route path="/contact-us/confirm" element={<ContactUsConfirm />} />
           <Route path="/produce/inventory" element={<ProduceInventory />} />
           <Route path="/produce/processed-food" element={<ProcessedFoodInventory />} />
           <Route path="/services" element={<ServicesHome />} />
           <Route path="/services/add" element={<ServicesAdd />} />
           <Route path="/services/suggest-category" element={<ServicesSuggestCategory />} />
           <Route path="/services/edit" element={<ServicesEdit />} />
+
+          {/* Marketplace routes — specific before generic */}
           <Route path="/marketplaces/farm-to-table" element={<FarmToTableMarketplace />} />
+          <Route path="/marketplaces/livestock/ranch/:businessId" element={<OrgProfile />} />
+          <Route path="/marketplaces/livestock/ranches/:slug" element={<RanchList />} />
           <Route path="/marketplaces/livestock/studs/:slug" element={<LivestockForSale />} />
           <Route path="/marketplaces/livestock/:slug" element={<LivestockForSale />} />
           <Route path="/marketplaces/livestock" element={<LivestockMarketplace />} />
-          <Route path="/marketplaces/farm-to-table" element={<FarmToTableMarketplace />} />
           <Route path="/marketplaces" element={<LivestockMarketplace />} />
-<Route path="/marketplaces/livestock/ranch/:businessId" element={<RanchProfile />} />
-<Route path="/marketplaces/livestock/ranches/:slug" element={<RanchList />} />
-<Route path="/marketplaces/livestock/studs/:slug" element={<LivestockForSale />} />
-<Route path="/marketplaces/livestock/:slug" element={<LivestockForSale />} />
-<Route path="/marketplaces/livestock" element={<LivestockMarketplace />} />
-<Route path="/marketplaces/farm-to-table" element={<FarmToTableMarketplace />} />
-<Route path="/marketplaces" element={<LivestockMarketplace />} />
-
         </Routes>
       </Suspense>
     </AccountProvider>

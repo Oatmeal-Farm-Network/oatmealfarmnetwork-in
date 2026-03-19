@@ -270,7 +270,8 @@ const btnStyle = {
 export default function LivestockForSale() {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
-  const isStuds = window.location.pathname.includes('/studs/');
+  const { pathname } = window.location;
+  const isStuds = pathname.includes('/studs/');
 
   const [data, setData] = useState(null);
   const [filters, setFilters] = useState({ breeds: [], states: [] });
@@ -290,11 +291,32 @@ export default function LivestockForSale() {
     if (window.innerWidth < 768) setSidebarCollapsed(true);
   }, []);
 
+  // Reset all filters when species changes
+  useEffect(() => {
+    setBreedId(0);
+    setStateIndex(0);
+    setMinPrice('');
+    setMaxPrice('');
+    setAncestry('Any');
+    setSortBy('lastupdated');
+    setOrderBy('desc');
+    setPage(1);
+    setData(null);
+  }, [slug]);
+
   useEffect(() => {
     fetch(`${API_URL}/api/marketplace/filters/${slug}`)
       .then(r => r.ok ? r.json() : { breeds: [], states: [] })
       .then(d => setFilters({ breeds: d.breeds || [], states: d.states || [] }))
       .catch(() => setFilters({ breeds: [], states: [] }));
+  }, [slug]);
+
+  const [singularTerm, setSingularTerm] = useState('');
+  useEffect(() => {
+    fetch(`${API_URL}/api/marketplace/species/${slug}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setSingularTerm(d.singular_term || ''))
+      .catch(() => {});
   }, [slug]);
 
   const loadData = useCallback(() => {
@@ -325,12 +347,11 @@ export default function LivestockForSale() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setPage(1);
-  };
 
-  const label = data?.label || slug;
+
+  const rawLabel = data?.label || slug;
+  const fallbackLabel = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
+  const label = singularTerm || fallbackLabel;
   const pageTitle = isStuds ? `${label} Stud Services` : `${label} For Sale`;
   const otherLink = isStuds ? `/marketplaces/livestock/${slug}` : `/marketplaces/livestock/studs/${slug}`;
   const otherLabel = isStuds ? `${label} For Sale` : `${label} Stud Services`;
@@ -364,10 +385,10 @@ export default function LivestockForSale() {
 
             {/* Search filters */}
             <div style={{ width: '200px', flexShrink: 0 }}>
-              <form onSubmit={handleSearch}>
+  <div>
                 <div style={filterBox}>
                   <label style={filterLabel}>Breed</label>
-                  <select value={breedId} onChange={e => setBreedId(Number(e.target.value))} style={selectStyle}>
+                  <select value={breedId} onChange={e => { setBreedId(Number(e.target.value)); setPage(1); }} style={selectStyle}>
                     <option value={0}>All Breeds</option>
                     {filters.breeds.map(b => (
                       <option key={b.id} value={b.id}>{b.name}</option>
@@ -378,7 +399,7 @@ export default function LivestockForSale() {
                 {filters.states.length > 0 && (
                   <div style={filterBox}>
                     <label style={filterLabel}>State</label>
-                    <select value={stateIndex} onChange={e => setStateIndex(Number(e.target.value))} style={selectStyle}>
+                    <select value={stateIndex} onChange={e => { setStateIndex(Number(e.target.value)); setPage(1); }} style={selectStyle}>
                       <option value={0}>All States</option>
                       {filters.states.map(s => (
                         <option key={s.index} value={s.index}>{s.name}</option>
@@ -399,23 +420,25 @@ export default function LivestockForSale() {
                     placeholder="Any" style={inputStyle} />
                 </div>
 
-                <div style={filterBox}>
-                  <label style={filterLabel}>Ancestry</label>
-                  <select value={ancestry} onChange={e => setAncestry(e.target.value)} style={selectStyle}>
-                    {ANCESTRY_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
+                {slug === 'alpacas' && (
+                  <div style={filterBox}>
+                    <label style={filterLabel}>Ancestry</label>
+                    <select value={ancestry} onChange={e => { setAncestry(e.target.value); setPage(1); }} style={selectStyle}>
+                      {ANCESTRY_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </div>
+                )}
 
                 {!isStuds && (
                   <div style={filterBox}>
                     <label style={filterLabel}>Sort By</label>
-                    <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={selectStyle}>
+                    <select value={sortBy} onChange={e => { setSortBy(e.target.value); setPage(1); }} style={selectStyle}>
                       <option value="lastupdated">Last Updated</option>
                       <option value="price">Price</option>
                       <option value="name">Name</option>
                       <option value="breed">Breed</option>
                     </select>
-                    <select value={orderBy} onChange={e => setOrderBy(e.target.value)}
+                    <select value={orderBy} onChange={e => { setOrderBy(e.target.value); setPage(1); }}
                       style={{ ...selectStyle, marginTop: '4px' }}>
                       <option value="desc">Descending</option>
                       <option value="asc">Ascending</option>
@@ -423,14 +446,7 @@ export default function LivestockForSale() {
                   </div>
                 )}
 
-                <button type="submit" style={{
-                  width: '100%', padding: '8px', backgroundColor: '#507033',
-                  color: '#fff', border: 'none', borderRadius: '4px',
-                  cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem',
-                }}>
-                  Search
-                </button>
-              </form>
+</div>
             </div>
 
             {/* Results */}

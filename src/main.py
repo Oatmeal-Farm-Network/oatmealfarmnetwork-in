@@ -4,16 +4,18 @@ from sqlalchemy.orm import Session
 from routers import auth
 from database import get_db, SessionLocal
 import os
+import models
 from dotenv import load_dotenv
 from routers import businesses
 from routers import precision_ag
 from routers import plant_knowledgebase
-from routers import ingredient-knowledgebase
-from routers import produce 
+from routers import ingredient_knowledgebase
+from routers import produce
 from routers import animals
 from routers import livestock, processed_food
 from routers import services
-
+from routers import marketplace
+from routers import ranches
 
 load_dotenv()
 print("SECRET_KEY loaded:", os.getenv("SECRET_KEY"))
@@ -37,12 +39,14 @@ app.include_router(auth.router)
 app.include_router(businesses.router)
 app.include_router(precision_ag.router)
 app.include_router(plant_knowledgebase.router)
-app.include_router(ingredient-knowledgebase.router)
+app.include_router(ingredient_knowledgebase.router)
 app.include_router(produce.router)
 app.include_router(animals.router)
+app.include_router(livestock.router)
+app.include_router(processed_food.router)
 app.include_router(services.router)
-print("PRECISION AG ROUTER REGISTERED")
-print("PLANT KNOWLEDGEBASE ROUTER REGISTERED")
+app.include_router(marketplace.router)
+app.include_router(ranches.router)
 
 
 # ─── Precision Ag routes ──────────────────────────────────────────────────────
@@ -75,7 +79,6 @@ def get_dashboard_summary(business_id: int, db: Session = Depends(get_db)):
 
 @app.post("/api/fields")
 def create_field_direct(field: dict, db: Session = Depends(get_db)):
-    from pydantic import BaseModel
     new_field = models.Field(
         BusinessID=        field.get("business_id"),
         Name=              field.get("name"),
