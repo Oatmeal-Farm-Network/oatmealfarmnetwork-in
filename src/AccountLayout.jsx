@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Header from './Header';
@@ -6,6 +5,55 @@ import Footer from './Footer';
 import { useAccount } from './AccountContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+function NavItem({ to, icon, label, expanded }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/50 text-gray-700 text-sm transition-all"
+    >
+      <img src={icon} alt={label} className="w-6 h-6 shrink-0" />
+      {expanded && <span className="whitespace-nowrap">{label}</span>}
+    </Link>
+  );
+}
+
+function NavChild({ to, label }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
+    >
+      {label}
+    </Link>
+  );
+}
+
+function NavSection({ icon, label, expanded, isOpen, onToggle, children }) {
+  return (
+    <div className="mb-1">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/50 text-gray-700 text-sm transition-all"
+      >
+        <img src={icon} alt={label} className="w-6 h-6 shrink-0" />
+        {expanded && (
+          <>
+            <span className="flex-grow text-left whitespace-nowrap">{label}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+              {isOpen ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
+            </svg>
+          </>
+        )}
+      </button>
+      {isOpen && expanded && (
+        <div className="flex flex-col gap-0.5 mt-0.5">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AccountLayout({ children, Business, BusinessID, PeopleID }) {
   const { Expanded, setExpanded, OpenSections, setOpenSections } = useAccount();
@@ -19,7 +67,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
     if (!token) {
       navigate('/login');
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (BT === 8 && BusinessID) {
@@ -30,71 +78,21 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
     }
   }, [BT, BusinessID, location.pathname, location.search]);
 
-  const ToggleSection = (Label) => {
-    setOpenSections(Prev => ({ ...Prev, [Label]: !Prev[Label] }));
+  const toggleSection = (label) => {
+    setOpenSections(prev => ({ ...prev, [label]: !prev[label] }));
   };
 
-  const NavItem = ({ To, Icon, Label }) => (
-    <Link
-      to={To}
-      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/50 text-gray-700 text-sm transition-all"
-    >
-      <img src={Icon} alt={Label} className="w-6 h-6 shrink-0" />
-      {Expanded && <span className="whitespace-nowrap">{Label}</span>}
-    </Link>
-  );
-
-  const NavChild = ({ To, Label }) => (
-    <Link
-      to={To}
-      className="flex items-center px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
-    >
-      {Label}
-    </Link>
-  );
-
-  const NavSection = ({ Icon, Label, children }) => {
-    const IsOpen = OpenSections[Label] || false;
-    return (
-      <div className="mb-1">
-        <button
-          onClick={() => ToggleSection(Label)}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/50 text-gray-700 text-sm transition-all"
-        >
-          <img src={Icon} alt={Label} className="w-6 h-6 shrink-0" />
-          {Expanded && (
-            <>
-              <span className="flex-grow text-left whitespace-nowrap">{Label}</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
-                {IsOpen ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
-              </svg>
-            </>
-          )}
-        </button>
-        {IsOpen && Expanded && (
-          <div className="flex flex-col gap-0.5 mt-0.5">
-            {children}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Account section uses NavSection pattern but with a fixed icon
-  const IsAccountOpen = OpenSections['Account'] || false;
+  const isAccountOpen = OpenSections.Account || false;
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
       <Header />
 
       <div className="flex flex-grow">
-
-        {/* Sidebar */}
         <div
           className={`fixed top-[72px] left-0 bottom-0 z-40 flex flex-col transition-all duration-300 ${Expanded ? 'w-52' : 'w-16'}`}
           style={{ backgroundColor: 'rgba(210, 211, 210, 0.75)', backdropFilter: 'blur(4px)' }}
         >
-          {/* Toggle Button */}
           <button
             onClick={() => setExpanded(!Expanded)}
             className="flex items-center justify-center py-2 text-gray-400 hover:text-gray-600 hover:bg-white/20 transition-all border-b border-gray-300/30"
@@ -106,7 +104,6 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
             </svg>
           </button>
 
-          {/* Business Name */}
           {Expanded && (
             <div className="px-3 py-3 border-b border-gray-300/50">
               <p className="text-gray-800 font-bold text-sm truncate">{Business?.BusinessName}</p>
@@ -114,133 +111,177 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
             </div>
           )}
 
-          {/* Nav Items */}
           <nav className="flex flex-col gap-1 p-2 flex-grow overflow-y-auto">
-
-            {/* Account Home — expandable section */}
             <div className="mb-1">
               <div className="flex items-center gap-0 rounded-lg overflow-hidden">
-                <Link
+                <NavItem
                   to={`/account?BusinessID=${BusinessID}`}
-                  className="flex items-center gap-3 px-3 py-2 flex-grow hover:bg-white/50 text-gray-700 text-sm transition-all"
-                >
-                  <img src="/icons/Website.svg" alt="Account Home" className="w-6 h-6 shrink-0" />
-                  {Expanded && <span className="whitespace-nowrap">Account Home</span>}
-                </Link>
+                  icon="/icons/Website.svg"
+                  label="Account Home"
+                  expanded={Expanded}
+                />
                 {Expanded && (
                   <button
-                    onClick={() => ToggleSection('Account')}
+                    onClick={() => toggleSection('Account')}
                     className="px-2 py-2 hover:bg-white/50 text-gray-400 transition-all"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      {IsAccountOpen ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
+                      {isAccountOpen ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
                     </svg>
                   </button>
                 )}
               </div>
-              {IsAccountOpen && Expanded && (
+              {isAccountOpen && Expanded && (
                 <div className="flex flex-col gap-0.5 mt-0.5">
-                  <NavChild To={`/account/profile?BusinessID=${BusinessID}`} Label="Edit Profile" />
-                  <NavChild To={`/account/change-type?BusinessID=${BusinessID}`} Label="Change Account Type" />
-                  <NavChild To={`/account/delete?BusinessID=${BusinessID}`} Label="Delete Account" />
+                  <NavChild to={`/account/profile?BusinessID=${BusinessID}`} label="Edit Profile" />
+                  <NavChild to={`/account/change-type?BusinessID=${BusinessID}`} label="Change Account Type" />
+                  <NavChild to={`/account/delete?BusinessID=${BusinessID}`} label="Delete Account" />
                 </div>
               )}
             </div>
 
-            <NavSection Icon="/icons/Products.svg" Label="Marketplace">
-              <NavChild To={`/seller/listings?BusinessID=${BusinessID}`} Label="My Listings" />
-              <NavChild To={`/seller/orders?BusinessID=${BusinessID}`} Label="Incoming Orders" />
-              <NavChild To={`/marketplaces/farm-to-table`} Label="Browse Marketplace" />
+            <NavSection
+              icon="/icons/Products.svg"
+              label="Marketplace"
+              expanded={Expanded}
+              isOpen={OpenSections.Marketplace || false}
+              onToggle={() => toggleSection('Marketplace')}
+            >
+              <NavChild to={`/seller/listings?BusinessID=${BusinessID}`} label="My Listings" />
+              <NavChild to={`/seller/orders?BusinessID=${BusinessID}`} label="Incoming Orders" />
+              <NavChild to="/marketplaces/farm-to-table" label="Browse Marketplace" />
             </NavSection>
 
-
-
             {[8, 10, 14, 26, 29, 31].includes(BT) && (
-  <NavSection Icon="/icons/produce.webp" Label="Farm 2 Table">
-    <NavChild To={`/produce/inventory?BusinessID=${BusinessID}`} Label="Produce" />
-    <NavChild To={`/produce/processed-food?BusinessID=${BusinessID}`} Label="Processed Foods" />
-    <NavChild To={`/produce/meat?BusinessID=${BusinessID}`} Label="Meat" />
-  </NavSection>
-)}
-
-           {BT === 8 && (
-          <NavSection Icon="/icons/PrecisionAg.svg" Label="Precision Ag">
-            <NavChild To={`/oatsense?BusinessID=${BusinessID}`} Label="Dashboard" />
-            <NavChild To={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} Label="Crop Detection" />  {/* ← add this */}
-            <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}`} Label="Fields" />
-            <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`} Label="Add Field" />
-            {fields.length > 0 && (
-              <>
-                <div className="ml-4 mt-1 mb-0.5 text-[10px] text-gray-400 uppercase tracking-wide px-3">
-                  {Expanded ? 'Your Fields' : ''}
-                </div>
-                {fields.map(f => (
-                  <NavChild
-                    key={f.fieldid || f.id}
-                    To={`/precision-ag/analyses?BusinessID=${BusinessID}&FieldID=${f.fieldid || f.id}`}
-                    Label={`${f.name}`}
-                  />
-                ))}
-              </>
-            )}
-            <NavChild To={`/precision-ag/analyses?BusinessID=${BusinessID}`} Label="Analyses" />
-          
-            <NavChild To={`/oatsense/crop-rotation?BusinessID=${BusinessID}`} Label="Crop Rotation" />
-            <NavChild To={`/oatsense/notes?BusinessID=${BusinessID}`} Label="Notes" />
-          </NavSection>
-        )}
-
-            {BT === 8 && (
-              <NavSection Icon="/icons/Livestock.svg" Label="Livestock">
-                <NavChild To={`/animals?BusinessID=${BusinessID}`} Label="List Animals" />
-                <NavChild To={`/animals/add?BusinessID=${BusinessID}`} Label="Add" />
-                <NavChild To={`/animals/delete?BusinessID=${BusinessID}`} Label="Delete" />
-                <NavChild To={`/animals/transfer?BusinessID=${BusinessID}`} Label="Transfer" />
-                <NavChild To={`/animals/stats?BusinessID=${BusinessID}`} Label="Statistics" />
+              <NavSection
+                icon="/icons/produce.webp"
+                label="Farm 2 Table"
+                expanded={Expanded}
+                isOpen={OpenSections['Farm 2 Table'] || false}
+                onToggle={() => toggleSection('Farm 2 Table')}
+              >
+                <NavChild to={`/produce/inventory?BusinessID=${BusinessID}`} label="Produce" />
+                <NavChild to={`/produce/processed-food?BusinessID=${BusinessID}`} label="Processed Foods" />
+                <NavChild to={`/produce/meat?BusinessID=${BusinessID}`} label="Meat" />
               </NavSection>
             )}
 
-            <NavSection Icon="/icons/Products.svg" Label="Products">
-              <NavChild To={`/products?BusinessID=${BusinessID}`} Label="List" />
-              <NavChild To={`/products/add?BusinessID=${BusinessID}`} Label="Add" />
-              <NavChild To={`/products/settings?BusinessID=${BusinessID}`} Label="Settings" />
+            {BT === 8 && (
+              <NavSection
+                icon="/icons/PrecisionAg.svg"
+                label="Precision Ag"
+                expanded={Expanded}
+                isOpen={OpenSections['Precision Ag'] || false}
+                onToggle={() => toggleSection('Precision Ag')}
+              >
+                <NavChild to={`/oatsense?BusinessID=${BusinessID}`} label="Dashboard" />
+                <NavChild to={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} label="Crop Detection" />
+                <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}`} label="Fields" />
+                <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`} label="Add Field" />
+                {fields.length > 0 && (
+                  <>
+                    <div className="ml-4 mt-1 mb-0.5 text-[10px] text-gray-400 uppercase tracking-wide px-3">
+                      {Expanded ? 'Your Fields' : ''}
+                    </div>
+                    {fields.map((field) => (
+                      <NavChild
+                        key={field.fieldid || field.id}
+                        to={`/precision-ag/analyses?BusinessID=${BusinessID}&FieldID=${field.fieldid || field.id}`}
+                        label={field.name}
+                      />
+                    ))}
+                  </>
+                )}
+                <NavChild to={`/precision-ag/analyses?BusinessID=${BusinessID}`} label="Analyses" />
+                <NavChild to={`/oatsense/crop-rotation?BusinessID=${BusinessID}`} label="Crop Rotation" />
+                <NavChild to={`/oatsense/notes?BusinessID=${BusinessID}`} label="Notes" />
+              </NavSection>
+            )}
+
+            {BT === 8 && (
+              <NavSection
+                icon="/icons/Livestock.svg"
+                label="Livestock"
+                expanded={Expanded}
+                isOpen={OpenSections.Livestock || false}
+                onToggle={() => toggleSection('Livestock')}
+              >
+                <NavChild to={`/animals?BusinessID=${BusinessID}`} label="List Animals" />
+                <NavChild to={`/animals/add?BusinessID=${BusinessID}`} label="Add" />
+                <NavChild to={`/animals/delete?BusinessID=${BusinessID}`} label="Delete" />
+                <NavChild to={`/animals/transfer?BusinessID=${BusinessID}`} label="Transfer" />
+                <NavChild to={`/animals/stats?BusinessID=${BusinessID}`} label="Statistics" />
+              </NavSection>
+            )}
+
+            <NavSection
+              icon="/icons/Products.svg"
+              label="Products"
+              expanded={Expanded}
+              isOpen={OpenSections.Products || false}
+              onToggle={() => toggleSection('Products')}
+            >
+              <NavChild to={`/products?BusinessID=${BusinessID}`} label="List" />
+              <NavChild to={`/products/add?BusinessID=${BusinessID}`} label="Add" />
+              <NavChild to={`/products/settings?BusinessID=${BusinessID}`} label="Settings" />
             </NavSection>
 
-            <NavSection Icon="/icons/Services.svg" Label="Services">
-              <NavChild To={`/services?BusinessID=${BusinessID}`} Label="List" />
-              <NavChild To={`/services/add?BusinessID=${BusinessID}`} Label="Add" />
-              <NavChild To={`/services/delete?BusinessID=${BusinessID}`} Label="Delete" />
-              <NavChild To={`/services/suggest-category?BusinessID=${BusinessID}`} Label="Suggest Category" />
+            <NavSection
+              icon="/icons/Services.svg"
+              label="Services"
+              expanded={Expanded}
+              isOpen={OpenSections.Services || false}
+              onToggle={() => toggleSection('Services')}
+            >
+              <NavChild to={`/services?BusinessID=${BusinessID}`} label="List" />
+              <NavChild to={`/services/add?BusinessID=${BusinessID}`} label="Add" />
+              <NavChild to={`/services/delete?BusinessID=${BusinessID}`} label="Delete" />
+              <NavChild to={`/services/suggest-category?BusinessID=${BusinessID}`} label="Suggest Category" />
             </NavSection>
 
             {[8, 30].includes(BT) && (
-              <NavSection Icon="/icons/Real-Estate.svg" Label="Properties">
-                <NavChild To={`/properties?BusinessID=${BusinessID}`} Label="List" />
-                <NavChild To={`/properties/add?BusinessID=${BusinessID}`} Label="Add" />
+              <NavSection
+                icon="/icons/Real-Estate.svg"
+                label="Properties"
+                expanded={Expanded}
+                isOpen={OpenSections.Properties || false}
+                onToggle={() => toggleSection('Properties')}
+              >
+                <NavChild to={`/properties?BusinessID=${BusinessID}`} label="List" />
+                <NavChild to={`/properties/add?BusinessID=${BusinessID}`} label="Add" />
               </NavSection>
             )}
 
             {BT === 1 && (
-              <NavSection Icon="/icons/Assoc-administration-icon.svg" Label="Associations">
-                <NavChild To={`/association/create?BusinessID=${BusinessID}`} Label="Create" />
-                <NavChild To={`/association/delete?BusinessID=${BusinessID}`} Label="Delete" />
+              <NavSection
+                icon="/icons/Assoc-administration-icon.svg"
+                label="Associations"
+                expanded={Expanded}
+                isOpen={OpenSections.Associations || false}
+                onToggle={() => toggleSection('Associations')}
+              >
+                <NavChild to={`/association/create?BusinessID=${BusinessID}`} label="Create" />
+                <NavChild to={`/association/delete?BusinessID=${BusinessID}`} label="Delete" />
               </NavSection>
             )}
 
-            <NavSection Icon="/icons/Website.svg" Label="My Website">
-              <NavChild To={`/website/design?BusinessID=${BusinessID}`} Label="Graphic Design" />
-              <NavChild To={`/website/home?BusinessID=${BusinessID}&PeopleID=${PeopleID}`} Label="Home Page" />
-              <NavChild To={`/website/about?BusinessID=${BusinessID}&PeopleID=${PeopleID}`} Label="About Us" />
+            <NavSection
+              icon="/icons/Website.svg"
+              label="My Website"
+              expanded={Expanded}
+              isOpen={OpenSections['My Website'] || false}
+              onToggle={() => toggleSection('My Website')}
+            >
+              <NavChild to={`/website/design?BusinessID=${BusinessID}`} label="Graphic Design" />
+              <NavChild to={`/website/home?BusinessID=${BusinessID}&PeopleID=${PeopleID}`} label="Home Page" />
+              <NavChild to={`/website/about?BusinessID=${BusinessID}&PeopleID=${PeopleID}`} label="About Us" />
             </NavSection>
-
           </nav>
         </div>
 
-        {/* Main Content */}
         <div className={`flex-grow p-6 transition-all duration-300 ${Expanded ? 'ml-52' : 'ml-16'}`}>
           {children}
         </div>
-
       </div>
 
       <Footer />

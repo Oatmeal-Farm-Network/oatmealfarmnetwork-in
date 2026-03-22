@@ -2,20 +2,8 @@ import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
-import { AccountProvider } from './AccountContext';
-import "./AnimalAddWizard.css";
-import AnimalEdit from "./AnimalEdit";
-import MeatInventory from './MeatInventory';
-import AccountLayout from './AccountLayout';
-import NewsFeed from "./NewsFeed";
-import ArticleDetail from "./ArticleDetail";
-import MarketplaceCatalog from './MarketplaceCatalog';
-import MarketplaceProduct from './MarketplaceProduct';
-import MarketplaceCart from './MarketplaceCart';
-import MarketplaceOrders from './MarketplaceOrders';
-import OrderDetail from './OrderDetail';
-import SellerOrders from './SellerOrders';
-import SellerListings from './SellerListings';
+import { AccountProvider } from './AccountContext'
+import './AnimalAddWizard.css'
 
 const App = lazy(() => import('./App.jsx'))
 const About = lazy(() => import('./About.jsx'))
@@ -32,7 +20,8 @@ const OatSenseNotes = lazy(() => import('./OatSenseNotes.jsx'))
 const SaigePage = lazy(() => import('./SaigePage.jsx'))
 const AnimalsHome = lazy(() => import('./AnimalsHome.jsx'))
 const AccountChangeType = lazy(() => import('./AccountChangeType.jsx'))
-const AnimalAddWizard = lazy(() => import('./AnimalAddWizard'))
+const AnimalAddWizard = lazy(() => import('./AnimalAddWizard.jsx'))
+const AnimalEdit = lazy(() => import('./AnimalEdit.jsx'))
 const DirectoryList = lazy(() => import('./Directory/pages/DirectoryList'))
 const DirectoryDetail = lazy(() => import('./Directory/pages/DirectoryDetail'))
 const Accounts = lazy(() => import('./Accounts.jsx'))
@@ -56,16 +45,26 @@ const AccountProfile = lazy(() => import('./AccountProfile.jsx'))
 const AccountDelete = lazy(() => import('./AccountDelete.jsx'))
 const ProduceInventory = lazy(() => import('./ProduceInventory.jsx'))
 const ProcessedFoodInventory = lazy(() => import('./ProcessedFoodInventory.jsx'))
+const MeatInventory = lazy(() => import('./MeatInventory.jsx'))
 const CropDetection = lazy(() => import('./CropDetection.jsx'))
 const ServicesHome = lazy(() => import('./ServicesHome.jsx'))
 const ServicesAdd = lazy(() => import('./ServicesAdd.jsx'))
 const ServicesSuggestCategory = lazy(() => import('./ServicesSuggestCategory.jsx'))
 const ServicesEdit = lazy(() => import('./ServicesEdit.jsx'))
-const FarmToTableMarketplace = lazy(() => import('./FarmToTableMarketplace.jsx'))
 const LivestockMarketplace = lazy(() => import('./LivestockMarketplace.jsx'))
 const LivestockForSale = lazy(() => import('./LivestockForSale.jsx'))
 const RanchList = lazy(() => import('./RanchList.jsx'))
 const OrgProfile = lazy(() => import('./OrgProfile.jsx'))
+const AccountLayout = lazy(() => import('./AccountLayout.jsx'))
+const NewsFeed = lazy(() => import('./NewsFeed.jsx'))
+const ArticleDetail = lazy(() => import('./ArticleDetail.jsx'))
+const MarketplaceCatalog = lazy(() => import('./MarketplaceCatalog.jsx'))
+const MarketplaceProduct = lazy(() => import('./MarketplaceProduct.jsx'))
+const MarketplaceCart = lazy(() => import('./MarketplaceCart.jsx'))
+const MarketplaceOrders = lazy(() => import('./MarketplaceOrders.jsx'))
+const OrderDetail = lazy(() => import('./OrderDetail.jsx'))
+const SellerOrders = lazy(() => import('./SellerOrders.jsx'))
+const SellerListings = lazy(() => import('./SellerListings.jsx'))
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
@@ -113,39 +112,30 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/contact-us/confirm" element={<ContactUsConfirm />} />
           <Route path="/produce/inventory" element={<ProduceInventory />} />
           <Route path="/produce/processed-food" element={<ProcessedFoodInventory />} />
+          <Route path="/produce/meat" element={<MeatInventory />} />
           <Route path="/services" element={<ServicesHome />} />
           <Route path="/services/add" element={<ServicesAdd />} />
           <Route path="/services/suggest-category" element={<ServicesSuggestCategory />} />
           <Route path="/services/edit" element={<ServicesEdit />} />
 
-          {/* Marketplace routes — specific before generic */}
-          <Route path="/marketplaces/farm-to-table" element={<FarmToTableMarketplace />} />
+          <Route path="/marketplaces/farm-to-table" element={<MarketplaceCatalog />} />
           <Route path="/marketplaces/livestock/ranch/:businessId" element={<OrgProfile />} />
           <Route path="/marketplaces/livestock/ranches/:slug" element={<RanchList />} />
           <Route path="/marketplaces/livestock/studs/:slug" element={<LivestockForSale />} />
           <Route path="/marketplaces/livestock/:slug" element={<LivestockForSale />} />
           <Route path="/marketplaces/livestock" element={<LivestockMarketplace />} />
           <Route path="/marketplaces" element={<LivestockMarketplace />} />
-          <Route path="/produce/meat" element={<MeatInventory />} />
+          <Route path="/marketplace/:id" element={<MarketplaceProduct />} />
+          <Route path="/cart" element={<MarketplaceCart />} />
+          <Route path="/orders" element={<MarketplaceOrders />} />
+          <Route path="/orders/:orderId" element={<OrderDetail />} />
+          <Route path="/seller/orders" element={<SellerOrders />} />
+          <Route path="/seller/listings" element={<SellerListings />} />
           <Route path="/app/news" element={<AccountLayout><NewsFeed /></AccountLayout>} />
           <Route path="/app/news/:id" element={<AccountLayout><ArticleDetail /></AccountLayout>} />
-
-          // Public marketplace (anyone can browse)
-           <Route path="/marketplaces/farm-to-table" element={<MarketplaceCatalog />} />
-           <Route path="/marketplace/:id" element={<MarketplaceProduct />} />
-
-          // Buyer pages (login required)
-           <Route path="/cart" element={<MarketplaceCart />} />
-           <Route path="/orders" element={<MarketplaceOrders />} />
-           <Route path="/orders/:orderId" element={<OrderDetail />} />
-
-          // Seller pages (in AccountLayout)
-           <Route path="/seller/orders" element={<SellerOrders />} />
-           <Route path="/seller/listings" element={<SellerListings />} />
-
-
+          <Route path="*" element={<App />} />
         </Routes>
       </Suspense>
     </AccountProvider>
-  </BrowserRouter>
+  </BrowserRouter>,
 )
