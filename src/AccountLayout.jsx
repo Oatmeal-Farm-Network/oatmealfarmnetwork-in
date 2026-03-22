@@ -147,6 +147,14 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               )}
             </div>
 
+            <NavSection Icon="/icons/Products.svg" Label="Marketplace">
+              <NavChild To={`/seller/listings?BusinessID=${BusinessID}`} Label="My Listings" />
+              <NavChild To={`/seller/orders?BusinessID=${BusinessID}`} Label="Incoming Orders" />
+              <NavChild To={`/marketplaces/farm-to-table`} Label="Browse Marketplace" />
+            </NavSection>
+
+
+
             {[8, 10, 14, 26, 29, 31].includes(BT) && (
   <NavSection Icon="/icons/produce.webp" Label="Farm 2 Table">
     <NavChild To={`/produce/inventory?BusinessID=${BusinessID}`} Label="Produce" />

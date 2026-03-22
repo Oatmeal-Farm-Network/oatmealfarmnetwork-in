@@ -6,6 +6,16 @@ import { AccountProvider } from './AccountContext';
 import "./AnimalAddWizard.css";
 import AnimalEdit from "./AnimalEdit";
 import MeatInventory from './MeatInventory';
+import AccountLayout from './AccountLayout';
+import NewsFeed from "./NewsFeed";
+import ArticleDetail from "./ArticleDetail";
+import MarketplaceCatalog from './MarketplaceCatalog';
+import MarketplaceProduct from './MarketplaceProduct';
+import MarketplaceCart from './MarketplaceCart';
+import MarketplaceOrders from './MarketplaceOrders';
+import OrderDetail from './OrderDetail';
+import SellerOrders from './SellerOrders';
+import SellerListings from './SellerListings';
 
 const App = lazy(() => import('./App.jsx'))
 const About = lazy(() => import('./About.jsx'))
@@ -117,6 +127,23 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/marketplaces/livestock" element={<LivestockMarketplace />} />
           <Route path="/marketplaces" element={<LivestockMarketplace />} />
           <Route path="/produce/meat" element={<MeatInventory />} />
+          <Route path="/app/news" element={<AccountLayout><NewsFeed /></AccountLayout>} />
+          <Route path="/app/news/:id" element={<AccountLayout><ArticleDetail /></AccountLayout>} />
+
+          // Public marketplace (anyone can browse)
+           <Route path="/marketplaces/farm-to-table" element={<MarketplaceCatalog />} />
+           <Route path="/marketplace/:id" element={<MarketplaceProduct />} />
+
+          // Buyer pages (login required)
+           <Route path="/cart" element={<MarketplaceCart />} />
+           <Route path="/orders" element={<MarketplaceOrders />} />
+           <Route path="/orders/:orderId" element={<OrderDetail />} />
+
+          // Seller pages (in AccountLayout)
+           <Route path="/seller/orders" element={<SellerOrders />} />
+           <Route path="/seller/listings" element={<SellerListings />} />
+
+
         </Routes>
       </Suspense>
     </AccountProvider>

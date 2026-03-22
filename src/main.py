@@ -17,6 +17,9 @@ from routers import services
 from routers import marketplace
 from routers import ranches
 from routers import meat   
+from marketplace import marketplace_router
+from marketplace_stripe import stripe_router
+from marketplace_emails import *  
 
 load_dotenv()
 print("SECRET_KEY loaded:", os.getenv("SECRET_KEY"))
@@ -49,6 +52,8 @@ app.include_router(services.router)
 app.include_router(marketplace.router)
 app.include_router(ranches.router)
 app.include_router(meat.router)
+app.include_router(marketplace_router, prefix="/api/marketplace")
+app.include_router(stripe_router, prefix="/api/marketplace/payments")
 
 # ─── Precision Ag routes ──────────────────────────────────────────────────────
 

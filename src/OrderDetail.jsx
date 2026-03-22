@@ -1,0 +1,167 @@
+// src/OrderDetail.jsx
+import React, { useEffect, useState } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+
+const API = import.meta.env.VITE_API_URL || '';
+
+const statusColors = {
+  pending: '#fbbf24', confirmed: '#22c55e', partially_confirmed: '#3b82f6',
+  rejected: '#ef4444', shipped: '#6366f1', delivered: '#059669',
+  cancelled: '#9ca3af', processing: '#f59e0b', paid: '#22c55e', failed: '#ef4444',
+};
+
+export default function OrderDetail() {
+  const { orderId } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const isNew = searchParams.get('new') === 'true';
+  const showPay = searchParams.get('pay') === 'true';
+
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API}/api/marketplace/orders/${orderId}`);
+        if (res.ok) setOrder(await res.json());
+      } catch {} finally { setLoading(false); }
+    };
+    if (orderId) load();
+  }, [orderId]);
+
+  const confirmDelivery = async (itemId) => {
+    await fetch(`${API}/api/marketplace/orders/${orderId}/deliver?order_item_id=${itemId}`, { method: 'POST' });
+    window.location.reload();
+  };
+
+  if (loading) return <div className="text-center py-20 text-gray-400">Loading order...</div>;
+  if (!order) return <div className="text-center py-20 text-gray-400">Order not found.</div>;
+
+  const Badge = ({ status }) => (
+    <span style={{ backgroundColor: statusColors[status] || '#9ca3af', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+      {status?.replace('_', ' ')}
+    </span>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-3xl mx-auto px-4 space-y-6">
+        <button onClick={() => navigate('/orders')} className="text-sm text-[#819360] font-semibold hover:underline">← All Orders</button>
+
+        {isNew && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+            <p className="text-green-700 font-bold text-lg">Order Placed Successfully! 🎉</p>
+            <p className="text-green-600 text-sm">Sellers will review and confirm your items. You'll be notified by email.</p>
+          </div>
+        )}
+
+        {/* Order header */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-xl font-bold text-gray-800">{order.OrderNumber}</h1>
+              <p className="text-sm text-gray-400">{new Date(order.CreatedAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            </div>
+            <div className="text-right">
+              <Badge status={order.OrderStatus} />
+              <p className="text-2xl font-bold text-[#819360] mt-1">${parseFloat(order.TotalAmount).toFixed(2)}</p>
+              <p className="text-xs text-gray-400">Payment: <Badge status={order.PaymentStatus} /></p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mt-4 text-sm text-gray-600">
+            <div><span className="text-gray-400">Delivery:</span> {order.DeliveryMethod === 'pickup' ? '🏪 Pickup' : order.DeliveryMethod === 'local_delivery' ? '🚛 Local Delivery' : '📦 Shipping'}</div>
+            {order.DeliveryAddress && <div><span className="text-gray-400">Address:</span> {order.DeliveryAddress}</div>}
+            {order.RequestedDeliveryDate && <div><span className="text-gray-400">Requested:</span> {new Date(order.RequestedDeliveryDate).toLocaleDateString()}</div>}
+          </div>
+        </div>
+
+        {/* Payment action */}
+        {(showPay || order.PaymentStatus === 'authorized') && order.OrderStatus !== 'cancelled' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center">
+            <p className="font-bold text-amber-800 mb-2">Payment Required</p>
+            <p className="text-sm text-amber-600 mb-4">Your order is confirmed. Complete payment to proceed.</p>
+            <button className="bg-[#819360] text-white font-bold px-8 py-3 rounded-xl hover:bg-[#6a7a4e]"
+              onClick={() => alert('Stripe payment UI will be integrated here. See marketplace_stripe.py for the backend.')}>
+              Pay ${parseFloat(order.TotalAmount).toFixed(2)}
+            </button>
+          </div>
+        )}
+
+        {/* Order items */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
+            <h2 className="font-bold text-gray-700">Order Items</h2>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {(order.items || []).map(item => (
+              <div key={item.OrderItemID} className="p-5">
+                <div className="flex items-start gap-4">
+                  <span className="text-3xl">{item.ProductType === 'meat' ? '🥩' : item.ProductType === 'processed_food' ? '🫙' : '🥬'}</span>
+                  <div className="flex-grow">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-bold text-gray-800">{item.ProductTitle}</p>
+                        <p className="text-sm text-gray-500">{item.BusinessName || item.SellerName}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">${parseFloat(item.LineTotal).toFixed(2)}</p>
+                        <p className="text-xs text-gray-400">{item.Quantity} × ${parseFloat(item.UnitPrice).toFixed(2)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 mt-2">
+                      <Badge status={item.SellerStatus} />
+                      {item.TrackingNumber && <span className="text-xs text-gray-500">Tracking: {item.TrackingNumber}</span>}
+                      {item.EstimatedDeliveryDate && <span className="text-xs text-gray-400">Est. delivery: {new Date(item.EstimatedDeliveryDate).toLocaleDateString()}</span>}
+                    </div>
+                    {item.RejectionReason && (
+                      <p className="text-sm text-red-500 mt-2 bg-red-50 px-3 py-1 rounded">Reason: {item.RejectionReason}</p>
+                    )}
+                    {item.SellerStatus === 'shipped' && (
+                      <button onClick={() => confirmDelivery(item.OrderItemID)}
+                        className="mt-2 text-sm bg-green-600 text-white px-4 py-1.5 rounded-lg font-semibold hover:bg-green-700">
+                        ✓ Confirm Delivery
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Totals */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>${parseFloat(order.Subtotal).toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Service Fee (2.5%)</span><span>${parseFloat(order.PlatformFee).toFixed(2)}</span></div>
+            <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-lg">
+              <span>Total</span><span className="text-[#819360]">${parseFloat(order.TotalAmount).toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Status history */}
+        {order.history && order.history.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <h3 className="font-bold text-gray-700 mb-3">Order Timeline</h3>
+            <div className="space-y-3">
+              {order.history.map((h, i) => (
+                <div key={h.HistoryID || i} className="flex items-start gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: statusColors[h.NewStatus] || '#9ca3af' }} />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-700 capitalize">{h.NewStatus?.replace('_', ' ')}</p>
+                    <p className="text-xs text-gray-400">{new Date(h.CreatedAt).toLocaleString()} · {h.ChangedByRole}</p>
+                    {h.Notes && <p className="text-xs text-gray-500">{h.Notes}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
