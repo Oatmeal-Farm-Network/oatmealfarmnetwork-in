@@ -441,6 +441,14 @@ function AboutSaige() {
   );
 }
 
+function getAuthHeaders() {
+  const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  };
+}
+
 const _msgCache = new Map();
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
@@ -500,7 +508,7 @@ export default function SaigePage() {
     const localThreads = getLocalThreads();
     let apiThreads = [];
     try {
-      const res = await fetch(`${SAIGE_API}/threads?user_id=anonymous`);
+      const res = await fetch(`${SAIGE_API}/threads`, { headers: getAuthHeaders() });
       if (res.ok) { const d = await res.json(); apiThreads = d.threads || []; }
     } catch { /* backend unavailable */ }
     setThreads(mergeThreads(apiThreads, localThreads));
@@ -522,7 +530,7 @@ export default function SaigePage() {
         messages = cached.messages;
       } else {
         try {
-          const res = await fetch(`${SAIGE_API}/threads/${threadId}/messages?user_id=anonymous`, { signal: ctrl.signal });
+          const res = await fetch(`${SAIGE_API}/threads/${threadId}/messages`, { signal: ctrl.signal, headers: getAuthHeaders() });
           if (res.ok) {
             const d = await res.json();
             messages = (d.messages || []).map(m => ({ role: m.role, content: m.content }));
@@ -547,7 +555,7 @@ export default function SaigePage() {
 
   async function handleDeleteThread(threadId) {
     deleteLocalThread(threadId);
-    try { await fetch(`${SAIGE_API}/threads/${threadId}?user_id=anonymous`, { method: 'DELETE' }); } catch { /* ok */ }
+    try { await fetch(`${SAIGE_API}/threads/${threadId}`, { method: 'DELETE', headers: getAuthHeaders() }); } catch { /* ok */ }
     if (activeThreadId === threadId) {
       setActiveThreadId(generateThreadId());
       setActiveChat([WELCOME_MESSAGE]);
@@ -584,7 +592,7 @@ export default function SaigePage() {
     try {
       const res = await fetch(`${SAIGE_API}/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ user_input: val, thread_id: activeThreadId }),
       });
 
