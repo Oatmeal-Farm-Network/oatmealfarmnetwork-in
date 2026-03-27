@@ -130,19 +130,17 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/app/news" element={<AccountLayout><NewsFeed /></AccountLayout>} />
           <Route path="/app/news/:id" element={<AccountLayout><ArticleDetail /></AccountLayout>} />
 
-          // Public marketplace (anyone can browse)
-           <Route path="/marketplaces/farm-to-table" element={<MarketplaceCatalog />} />
-           <Route path="/marketplace/:id" element={<MarketplaceProduct />} />
+          {/* Public marketplace (anyone can browse) */}
+          <Route path="/marketplace/:id" element={<MarketplaceProduct />} />
 
-          // Buyer pages (login required)
-           <Route path="/cart" element={<MarketplaceCart />} />
-           <Route path="/orders" element={<MarketplaceOrders />} />
-           <Route path="/orders/:orderId" element={<OrderDetail />} />
+          {/* Buyer pages (login required) */}
+          <Route path="/cart" element={<MarketplaceCart />} />
+          <Route path="/orders" element={<MarketplaceOrders />} />
+          <Route path="/orders/:orderId" element={<OrderDetail />} />
 
-          // Seller pages (in AccountLayout)
-           <Route path="/seller/orders" element={<SellerOrders />} />
-           <Route path="/seller/listings" element={<SellerListings />} />
-
+          {/* Seller pages (in AccountLayout) */}
+          <Route path="/seller/orders" element={<SellerOrders />} />
+          <Route path="/seller/listings" element={<SellerListings />} />
 
         </Routes>
       </Suspense>

@@ -21,6 +21,8 @@ from marketplace import marketplace_router
 from marketplace_stripe import stripe_router
 from marketplace_emails import *  
 
+
+
 load_dotenv()
 print("SECRET_KEY loaded:", os.getenv("SECRET_KEY"))
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Header from './Header';
@@ -147,48 +146,44 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               )}
             </div>
 
-            <NavSection Icon="/icons/Products.svg" Label="Marketplace">
-              <NavChild To={`/seller/listings?BusinessID=${BusinessID}`} Label="My Listings" />
+            {/* Farm 2 Table — combined section (replaces separate Marketplace + Farm 2 Table) */}
+            <NavSection Icon="/icons/produce.webp" Label="Farm 2 Table">
               <NavChild To={`/seller/orders?BusinessID=${BusinessID}`} Label="Incoming Orders" />
               <NavChild To={`/marketplaces/farm-to-table`} Label="Browse Marketplace" />
+              {[8, 10, 14, 26, 29, 31].includes(BT) && (
+                <>
+                  <NavChild To={`/produce/inventory?BusinessID=${BusinessID}`} Label="Produce" />
+                  <NavChild To={`/produce/processed-food?BusinessID=${BusinessID}`} Label="Processed Foods" />
+                  <NavChild To={`/produce/meat?BusinessID=${BusinessID}`} Label="Meat" />
+                </>
+              )}
             </NavSection>
 
-
-
-            {[8, 10, 14, 26, 29, 31].includes(BT) && (
-  <NavSection Icon="/icons/produce.webp" Label="Farm 2 Table">
-    <NavChild To={`/produce/inventory?BusinessID=${BusinessID}`} Label="Produce" />
-    <NavChild To={`/produce/processed-food?BusinessID=${BusinessID}`} Label="Processed Foods" />
-    <NavChild To={`/produce/meat?BusinessID=${BusinessID}`} Label="Meat" />
-  </NavSection>
-)}
-
-           {BT === 8 && (
-          <NavSection Icon="/icons/PrecisionAg.svg" Label="Precision Ag">
-            <NavChild To={`/oatsense?BusinessID=${BusinessID}`} Label="Dashboard" />
-            <NavChild To={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} Label="Crop Detection" />  {/* ← add this */}
-            <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}`} Label="Fields" />
-            <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`} Label="Add Field" />
-            {fields.length > 0 && (
-              <>
-                <div className="ml-4 mt-1 mb-0.5 text-[10px] text-gray-400 uppercase tracking-wide px-3">
-                  {Expanded ? 'Your Fields' : ''}
-                </div>
-                {fields.map(f => (
-                  <NavChild
-                    key={f.fieldid || f.id}
-                    To={`/precision-ag/analyses?BusinessID=${BusinessID}&FieldID=${f.fieldid || f.id}`}
-                    Label={`${f.name}`}
-                  />
-                ))}
-              </>
+            {BT === 8 && (
+              <NavSection Icon="/icons/PrecisionAg.svg" Label="Precision Ag">
+                <NavChild To={`/oatsense?BusinessID=${BusinessID}`} Label="Dashboard" />
+                <NavChild To={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} Label="Crop Detection" />
+                <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}`} Label="Fields" />
+                <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`} Label="Add Field" />
+                {fields.length > 0 && (
+                  <>
+                    <div className="ml-4 mt-1 mb-0.5 text-[10px] text-gray-400 uppercase tracking-wide px-3">
+                      {Expanded ? 'Your Fields' : ''}
+                    </div>
+                    {fields.map(f => (
+                      <NavChild
+                        key={f.fieldid || f.id}
+                        To={`/precision-ag/analyses?BusinessID=${BusinessID}&FieldID=${f.fieldid || f.id}`}
+                        Label={`${f.name}`}
+                      />
+                    ))}
+                  </>
+                )}
+                <NavChild To={`/precision-ag/analyses?BusinessID=${BusinessID}`} Label="Analyses" />
+                <NavChild To={`/oatsense/crop-rotation?BusinessID=${BusinessID}`} Label="Crop Rotation" />
+                <NavChild To={`/oatsense/notes?BusinessID=${BusinessID}`} Label="Notes" />
+              </NavSection>
             )}
-            <NavChild To={`/precision-ag/analyses?BusinessID=${BusinessID}`} Label="Analyses" />
-          
-            <NavChild To={`/oatsense/crop-rotation?BusinessID=${BusinessID}`} Label="Crop Rotation" />
-            <NavChild To={`/oatsense/notes?BusinessID=${BusinessID}`} Label="Notes" />
-          </NavSection>
-        )}
 
             {BT === 8 && (
               <NavSection Icon="/icons/Livestock.svg" Label="Livestock">
