@@ -112,6 +112,8 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
           )}
 
           <nav className="flex flex-col gap-1 p-2 flex-grow overflow-y-auto">
+
+            {/* Account Home */}
             <div className="mb-1">
               <div className="flex items-center gap-0 rounded-lg overflow-hidden">
                 <NavItem
@@ -140,80 +142,24 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               )}
             </div>
 
-<<<<<<< HEAD
             {/* Farm 2 Table — combined section (replaces separate Marketplace + Farm 2 Table) */}
-            <NavSection Icon="/icons/produce.webp" Label="Farm 2 Table">
-              <NavChild To={`/seller/orders?BusinessID=${BusinessID}`} Label="Incoming Orders" />
-              <NavChild To={`/marketplaces/farm-to-table`} Label="Browse Marketplace" />
+            <NavSection
+              icon="/icons/produce.webp"
+              label="Farm 2 Table"
+              expanded={Expanded}
+              isOpen={OpenSections['Farm 2 Table'] || false}
+              onToggle={() => toggleSection('Farm 2 Table')}
+            >
+              <NavChild to={`/seller/orders?BusinessID=${BusinessID}`} label="Incoming Orders" />
+              <NavChild to="/marketplaces/farm-to-table" label="Browse Marketplace" />
               {[8, 10, 14, 26, 29, 31].includes(BT) && (
                 <>
-                  <NavChild To={`/produce/inventory?BusinessID=${BusinessID}`} Label="Produce" />
-                  <NavChild To={`/produce/processed-food?BusinessID=${BusinessID}`} Label="Processed Foods" />
-                  <NavChild To={`/produce/meat?BusinessID=${BusinessID}`} Label="Meat" />
+                  <NavChild to={`/produce/inventory?BusinessID=${BusinessID}`} label="Produce" />
+                  <NavChild to={`/produce/processed-food?BusinessID=${BusinessID}`} label="Processed Foods" />
+                  <NavChild to={`/produce/meat?BusinessID=${BusinessID}`} label="Meat" />
                 </>
               )}
             </NavSection>
-
-            {BT === 8 && (
-              <NavSection Icon="/icons/PrecisionAg.svg" Label="Precision Ag">
-                <NavChild To={`/oatsense?BusinessID=${BusinessID}`} Label="Dashboard" />
-                <NavChild To={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} Label="Crop Detection" />
-                <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}`} Label="Fields" />
-                <NavChild To={`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`} Label="Add Field" />
-                {fields.length > 0 && (
-                  <>
-                    <div className="ml-4 mt-1 mb-0.5 text-[10px] text-gray-400 uppercase tracking-wide px-3">
-                      {Expanded ? 'Your Fields' : ''}
-                    </div>
-                    {fields.map(f => (
-                      <NavChild
-                        key={f.fieldid || f.id}
-                        To={`/precision-ag/analyses?BusinessID=${BusinessID}&FieldID=${f.fieldid || f.id}`}
-                        Label={`${f.name}`}
-                      />
-                    ))}
-                  </>
-                )}
-                <NavChild To={`/precision-ag/analyses?BusinessID=${BusinessID}`} Label="Analyses" />
-                <NavChild To={`/oatsense/crop-rotation?BusinessID=${BusinessID}`} Label="Crop Rotation" />
-                <NavChild To={`/oatsense/notes?BusinessID=${BusinessID}`} Label="Notes" />
-              </NavSection>
-            )}
-
-            {BT === 8 && (
-              <NavSection Icon="/icons/Livestock.svg" Label="Livestock">
-                <NavChild To={`/animals?BusinessID=${BusinessID}`} Label="List Animals" />
-                <NavChild To={`/animals/add?BusinessID=${BusinessID}`} Label="Add" />
-                <NavChild To={`/animals/delete?BusinessID=${BusinessID}`} Label="Delete" />
-                <NavChild To={`/animals/transfer?BusinessID=${BusinessID}`} Label="Transfer" />
-                <NavChild To={`/animals/stats?BusinessID=${BusinessID}`} Label="Statistics" />
-=======
-            <NavSection
-              icon="/icons/Products.svg"
-              label="Marketplace"
-              expanded={Expanded}
-              isOpen={OpenSections.Marketplace || false}
-              onToggle={() => toggleSection('Marketplace')}
-            >
-              <NavChild to={`/seller/listings?BusinessID=${BusinessID}`} label="My Listings" />
-              <NavChild to={`/seller/orders?BusinessID=${BusinessID}`} label="Incoming Orders" />
-              <NavChild to="/marketplaces/farm-to-table" label="Browse Marketplace" />
-            </NavSection>
-
-            {[8, 10, 14, 26, 29, 31].includes(BT) && (
-              <NavSection
-                icon="/icons/produce.webp"
-                label="Farm 2 Table"
-                expanded={Expanded}
-                isOpen={OpenSections['Farm 2 Table'] || false}
-                onToggle={() => toggleSection('Farm 2 Table')}
-              >
-                <NavChild to={`/produce/inventory?BusinessID=${BusinessID}`} label="Produce" />
-                <NavChild to={`/produce/processed-food?BusinessID=${BusinessID}`} label="Processed Foods" />
-                <NavChild to={`/produce/meat?BusinessID=${BusinessID}`} label="Meat" />
->>>>>>> 07af3a7b3401d500bb12db4c7ab99b4c8c45eb18
-              </NavSection>
-            )}
 
             {BT === 8 && (
               <NavSection
@@ -325,6 +271,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               <NavChild to={`/website/home?BusinessID=${BusinessID}&PeopleID=${PeopleID}`} label="Home Page" />
               <NavChild to={`/website/about?BusinessID=${BusinessID}&PeopleID=${PeopleID}`} label="About Us" />
             </NavSection>
+
           </nav>
         </div>
 
