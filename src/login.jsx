@@ -9,7 +9,8 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
+  
+console.log('API URL:', import.meta.env.VITE_API_URL);
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -19,13 +20,16 @@ export default function Login() {
       const body = JSON.stringify({ Email: email, Password: password });
       console.log('Sending:', body);
 
-     const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: body,
       });
 
-      const data = await response.json();
+      // Safely parse response — avoids crash if server returns empty body
+      const text = await response.text();
+      console.log('Raw response:', text);
+      const data = text ? JSON.parse(text) : {};
       console.log('Response:', JSON.stringify(data));
 
       if (!response.ok) {
@@ -33,7 +37,7 @@ export default function Login() {
         if (Array.isArray(detail)) {
           setError(detail.map(function(d) { return d.msg; }).join(', '));
         } else {
-          setError(detail || 'Login failed. Please try again.');
+          setError(detail || `Login failed (${response.status}). Please try again.`);
         }
         return;
       }
@@ -87,6 +91,7 @@ export default function Login() {
                   </label>
                   <input
                     type="email"
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -101,6 +106,7 @@ export default function Login() {
                   </label>
                   <input
                     type="password"
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
