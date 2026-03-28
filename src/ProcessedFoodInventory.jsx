@@ -1,807 +1,434 @@
-# routers/marketplace.py
-# Farm-to-Restaurant Marketplace API
-# Mount: app.include_router(marketplace_router, prefix="/api/marketplace")
+import React, { useState, useEffect } from 'react';
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from database import get_db
-from auth import get_current_user
-from pydantic import BaseModel
-from typing import Optional, List
-from datetime import date
+const API_URL = import.meta.env.VITE_API_URL;
 
-marketplace_router = APIRouter()
+const STATUS_COLORS = {
+  active:   { bg: 'bg-[#e8f0e0]', text: 'text-[#4a6741]', dot: 'bg-[#819360]' },
+  inactive: { bg: 'bg-gray-100',  text: 'text-gray-500',  dot: 'bg-gray-400'  },
+  low:      { bg: 'bg-amber-50',  text: 'text-amber-700', dot: 'bg-amber-400' },
+};
 
-   
-# ─────────────────────────────────────────────
-# PYDANTIC MODELS
-# ─────────────────────────────────────────────
+function getStockStatus(item) {
+  if (!item.ShowProcessedFood) return 'inactive';
+  if (item.Quantity <= 5)       return 'low';
+  return 'active';
+}
 
-class CartItem(BaseModel):
-    ListingID: int
-    Quantity:  float
+function StatusBadge({ item }) {
+  const status = getStockStatus(item);
+  const c = STATUS_COLORS[status];
+  const labels = { active: 'Active', inactive: 'Inactive', low: 'Low Stock' };
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${c.bg} ${c.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+      {labels[status]}
+    </span>
+  );
+}
 
-class PlaceOrderRequest(BaseModel):
-    BuyerPeopleID:        int
-    BuyerBusinessID:      Optional[int]  = None
-    DeliveryMethod:       str            = "pickup"
-    DeliveryAddress:      Optional[str]  = None
-    DeliveryNotes:        Optional[str]  = None
-    RequestedDeliveryDate: Optional[date] = None
-    items:                List[CartItem]
+export default function ProcessedFoodInventory() {
+  const [items, setItems]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState('');
+  const [search, setSearch]     = useState('');
+  const [sortBy, setSortBy]     = useState('newest');
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing]   = useState(null);
+  const [saving, setSaving]     = useState(false);
+  const [formError, setFormError] = useState('');
 
-class SellerActionRequest(BaseModel):
-    SellerStatus:     str
-    RejectionReason:  Optional[str]  = None
-    EstimatedDeliveryDate: Optional[date] = None
+  const businessId = localStorage.getItem('business_id');
+  const token      = localStorage.getItem('access_token');
 
-class ShipItemRequest(BaseModel):
-    TrackingNumber: Optional[str] = None
-    EstimatedDeliveryDate: Optional[date] = None
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
 
-
-# ─────────────────────────────────────────────
-# CATALOG  (public — no auth required)
-# Unions across Produce, MeatInventory, ProcessedFood
-# ListingID format: P{id}, M{id}, F{id} encoded as
-# product_type + source_id for round-tripping
-# ─────────────────────────────────────────────
-
-@marketplace_router.get("/catalog")
-def get_catalog(
-    product_type: Optional[str] = Query(None),   # produce | meat | processed_food
-    organic:      Optional[bool] = Query(None),
-    search:       Optional[str]  = Query(None),
-    sort:         str             = Query("newest"),
-    db:           Session         = Depends(get_db),
-):
-    """
-    Browse all active listings from Produce, MeatInventory, and ProcessedFood tables.
-    Returns a unified list with a synthetic ListingID: type prefix + source row ID.
-    """
-    results = []
-
-    search_val = f"%{search.strip()}%" if search and search.strip() else None
-
-    # ── PRODUCE ──────────────────────────────────────────────────────────────
-    if product_type in (None, "all", "produce"):
-        where = ["p.ShowProduce = 1", "p.Quantity > 0"]
-        params = {}
-
-        if organic:
-            where.append("p.IsOrganic = 1")
-        if search_val:
-            where.append("(i.IngredientName LIKE :search OR p.Notes LIKE :search)")
-            params["search"] = search_val
-        where.append("(p.ExpirationDate IS NULL OR p.ExpirationDate >= CAST(GETDATE() AS DATE))")
-
-        rows = db.execute(text(f"""
-            SELECT
-                p.ProduceID         AS SourceID,
-                'produce'           AS ProductType,
-                p.BusinessID,
-                i.IngredientName    AS Title,
-                p.Notes             AS Description,
-                NULL                AS CategoryName,
-                p.RetailPrice       AS UnitPrice,
-                p.WholesalePrice,
-                'unit'              AS UnitLabel,
-                p.Quantity          AS QuantityAvailable,
-                p.IsOrganic,
-                p.IsLocal,
-                p.AvailableDate,
-                p.ExpirationDate,
-                i.IngredientImage   AS ImageURL,
-                b.BusinessName      AS SellerName,
-                a.AddressCity       AS SellerCity,
-                a.AddressState      AS SellerState
-            FROM Produce p
-            JOIN Ingredients i ON p.IngredientID = i.IngredientID
-            JOIN Business b ON p.BusinessID = b.BusinessID
-            LEFT JOIN Address a ON b.AddressID = a.AddressID
-            WHERE {" AND ".join(where)}
-        """), params).fetchall()
-
-        for r in rows:
-            m = dict(r._mapping)
-            m["ListingID"]   = f"P{m['SourceID']}"
-            m["UnitPrice"]   = float(m["UnitPrice"]) if m["UnitPrice"] else 0.0
-            m["WholesalePrice"] = float(m["WholesalePrice"]) if m["WholesalePrice"] else None
-            m["QuantityAvailable"] = float(m["QuantityAvailable"]) if m["QuantityAvailable"] else 0.0
-            m["IsOrganic"]   = bool(m["IsOrganic"])
-            m["IsLocal"]     = bool(m["IsLocal"])
-            m["IsFeatured"]  = False
-            results.append(m)
-
-    # ── MEAT ─────────────────────────────────────────────────────────────────
-    if product_type in (None, "all", "meat"):
-        where = ["m.ShowMeat = 1", "m.Quantity > 0"]
-        params = {}
-
-        if search_val:
-            where.append("(i.IngredientName LIKE :search OR ic.IngredientCut LIKE :search)")
-            params["search"] = search_val
-        # Meat has no IsOrganic — skip that filter
-        # Meat has no ExpirationDate — skip that filter
-
-        rows = db.execute(text(f"""
-            SELECT
-                m.MeatInventoryID   AS SourceID,
-                'meat'              AS ProductType,
-                m.BusinessID,
-                i.IngredientName + ' - ' + ISNULL(ic.IngredientCut, '') AS Title,
-                NULL                AS Description,
-                ic.IngredientCut    AS CategoryName,
-                m.RetailPrice       AS UnitPrice,
-                m.WholesalePrice,
-                m.WeightUnit        AS UnitLabel,
-                m.Quantity          AS QuantityAvailable,
-                0                   AS IsOrganic,
-                1                   AS IsLocal,
-                m.AvailableDate,
-                NULL                AS ExpirationDate,
-                i.IngredientImage   AS ImageURL,
-                b.BusinessName      AS SellerName,
-                a.AddressCity       AS SellerCity,
-                a.AddressState      AS SellerState
-            FROM MeatInventory m
-            JOIN Ingredients i ON m.IngredientID = i.IngredientID
-            LEFT JOIN IngredientCut ic ON m.IngredientCutID = ic.IngredientCutID
-            JOIN Business b ON m.BusinessID = b.BusinessID
-            LEFT JOIN Address a ON b.AddressID = a.AddressID
-            WHERE {" AND ".join(where)}
-        """), params).fetchall()
-
-        for r in rows:
-            m = dict(r._mapping)
-            m["ListingID"]   = f"M{m['SourceID']}"
-            m["UnitPrice"]   = float(m["UnitPrice"]) if m["UnitPrice"] else 0.0
-            m["WholesalePrice"] = float(m["WholesalePrice"]) if m["WholesalePrice"] else None
-            m["QuantityAvailable"] = float(m["QuantityAvailable"]) if m["QuantityAvailable"] else 0.0
-            m["IsOrganic"]   = False
-            m["IsLocal"]     = True
-            m["IsFeatured"]  = False
-            results.append(m)
-
-    # ── PROCESSED FOOD ────────────────────────────────────────────────────────
-    if product_type in (None, "all", "processed_food"):
-        where = ["f.ShowProcessedFood = 1", "f.Quantity > 0"]
-        params = {}
-
-        if search_val:
-            where.append("(f.Name LIKE :search OR f.Description LIKE :search)")
-            params["search"] = search_val
-        # ProcessedFood has no IsOrganic or ExpirationDate
-
-        rows = db.execute(text(f"""
-            SELECT
-                f.ProcessedFoodID   AS SourceID,
-                'processed_food'    AS ProductType,
-                f.BusinessID,
-                f.Name              AS Title,
-                f.Description,
-                NULL                AS CategoryName,
-                f.RetailPrice       AS UnitPrice,
-                f.WholesalePrice,
-                'each'              AS UnitLabel,
-                f.Quantity          AS QuantityAvailable,
-                0                   AS IsOrganic,
-                1                   AS IsLocal,
-                f.AvailableDate,
-                NULL                AS ExpirationDate,
-                f.ImageURL,
-                b.BusinessName      AS SellerName,
-                a.AddressCity       AS SellerCity,
-                a.AddressState      AS SellerState
-            FROM ProcessedFood f
-            JOIN Business b ON f.BusinessID = b.BusinessID
-            LEFT JOIN Address a ON b.AddressID = a.AddressID
-            WHERE {" AND ".join(where)}
-        """), params).fetchall()
-
-        for r in rows:
-            m = dict(r._mapping)
-            m["ListingID"]   = f"F{m['SourceID']}"
-            m["UnitPrice"]   = float(m["UnitPrice"]) if m["UnitPrice"] else 0.0
-            m["WholesalePrice"] = float(m["WholesalePrice"]) if m["WholesalePrice"] else None
-            m["QuantityAvailable"] = float(m["QuantityAvailable"]) if m["QuantityAvailable"] else 0.0
-            m["IsOrganic"]   = False
-            m["IsLocal"]     = True
-            m["IsFeatured"]  = False
-            results.append(m)
-
-    # ── Sort combined results ─────────────────────────────────────────────────
-    if sort == "price_asc":
-        results.sort(key=lambda x: x["UnitPrice"])
-    elif sort == "price_desc":
-        results.sort(key=lambda x: x["UnitPrice"], reverse=True)
-    elif sort == "name_asc":
-        results.sort(key=lambda x: (x["Title"] or "").lower())
-    else:  # newest — sort by SourceID desc as proxy
-        results.sort(key=lambda x: x["SourceID"], reverse=True)
-
-    return results
-
-
-@marketplace_router.get("/catalog/{listing_id}")
-def get_listing(listing_id: str, db: Session = Depends(get_db)):
-    """
-    Single listing detail. listing_id format: P{id} | M{id} | F{id}
-    """
-    prefix = listing_id[0].upper()
-    try:
-        source_id = int(listing_id[1:])
-    except ValueError:
-        raise HTTPException(400, "Invalid listing ID format")
-
-    if prefix == "P":
-        row = db.execute(text("""
-            SELECT
-                p.ProduceID AS SourceID, 'produce' AS ProductType, p.BusinessID,
-                i.IngredientName AS Title, p.Notes AS Description,
-                p.RetailPrice AS UnitPrice, p.WholesalePrice,
-                'unit' AS UnitLabel, p.Quantity AS QuantityAvailable,
-                p.IsOrganic, p.IsLocal, p.AvailableDate, p.ExpirationDate,
-                i.IngredientImage AS ImageURL,
-                b.BusinessName AS SellerName,
-                a.AddressCity AS SellerCity, a.AddressState AS SellerState
-            FROM Produce p
-            JOIN Ingredients i ON p.IngredientID = i.IngredientID
-            JOIN Business b ON p.BusinessID = b.BusinessID
-            LEFT JOIN Address a ON b.AddressID = a.AddressID
-            WHERE p.ProduceID = :sid AND p.ShowProduce = 1
-        """), {"sid": source_id}).fetchone()
-
-    elif prefix == "M":
-        row = db.execute(text("""
-            SELECT
-                m.MeatInventoryID AS SourceID, 'meat' AS ProductType, m.BusinessID,
-                i.IngredientName + ' - ' + ISNULL(ic.IngredientCut, '') AS Title,
-                NULL AS Description,
-                m.RetailPrice AS UnitPrice, m.WholesalePrice,
-                m.WeightUnit AS UnitLabel, m.Quantity AS QuantityAvailable,
-                0 AS IsOrganic, 1 AS IsLocal, m.AvailableDate, NULL AS ExpirationDate,
-                i.IngredientImage AS ImageURL,
-                b.BusinessName AS SellerName,
-                a.AddressCity AS SellerCity, a.AddressState AS SellerState
-            FROM MeatInventory m
-            JOIN Ingredients i ON m.IngredientID = i.IngredientID
-            LEFT JOIN IngredientCut ic ON m.IngredientCutID = ic.IngredientCutID
-            JOIN Business b ON m.BusinessID = b.BusinessID
-            LEFT JOIN Address a ON b.AddressID = a.AddressID
-            WHERE m.MeatInventoryID = :sid AND m.ShowMeat = 1
-        """), {"sid": source_id}).fetchone()
-
-    elif prefix == "F":
-        row = db.execute(text("""
-            SELECT
-                f.ProcessedFoodID AS SourceID, 'processed_food' AS ProductType, f.BusinessID,
-                f.Name AS Title, f.Description,
-                f.RetailPrice AS UnitPrice, f.WholesalePrice,
-                'each' AS UnitLabel, f.Quantity AS QuantityAvailable,
-                0 AS IsOrganic, 1 AS IsLocal, f.AvailableDate, NULL AS ExpirationDate,
-                f.ImageURL,
-                b.BusinessName AS SellerName,
-                a.AddressCity AS SellerCity, a.AddressState AS SellerState
-            FROM ProcessedFood f
-            JOIN Business b ON f.BusinessID = b.BusinessID
-            LEFT JOIN Address a ON b.AddressID = a.AddressID
-            WHERE f.ProcessedFoodID = :sid AND f.ShowProcessedFood = 1
-        """), {"sid": source_id}).fetchone()
-
-    else:
-        raise HTTPException(400, "Invalid listing type prefix")
-
-    if not row:
-        raise HTTPException(404, "Listing not found")
-
-    listing = dict(row._mapping)
-    listing["ListingID"]   = listing_id
-    listing["UnitPrice"]   = float(listing["UnitPrice"]) if listing["UnitPrice"] else 0.0
-    listing["WholesalePrice"] = float(listing["WholesalePrice"]) if listing["WholesalePrice"] else None
-    listing["QuantityAvailable"] = float(listing["QuantityAvailable"]) if listing["QuantityAvailable"] else 0.0
-    listing["IsOrganic"]   = bool(listing.get("IsOrganic", False))
-    listing["IsLocal"]     = bool(listing.get("IsLocal", True))
-    listing["IsFeatured"]  = False
-    listing["reviews"]     = []
-    listing["relatedListings"] = []
-
-    return listing
-
-
-# ─────────────────────────────────────────────
-# ORDERS  (buyer)
-# ─────────────────────────────────────────────
-
-@marketplace_router.post("/orders")
-def place_order(req: PlaceOrderRequest, db: Session = Depends(get_db)):
-    if not req.items:
-        raise HTTPException(400, "No items in order")
-
-    order_items = []
-    subtotal = 0.0
-
-    for item in req.items:
-        # Parse synthetic ListingID
-        prefix = str(item.ListingID)[0].upper() if isinstance(item.ListingID, str) else None
-        source_id = int(str(item.ListingID)[1:]) if prefix else item.ListingID
-
-        if prefix == "P":
-            listing = db.execute(text("""
-                SELECT p.ProduceID AS ListingID, p.BusinessID, i.IngredientName AS Title,
-                       'produce' AS ProductType, p.RetailPrice AS UnitPrice,
-                       p.Quantity AS QuantityAvailable,
-                       b.BusinessName AS SellerName, pe.PeopleEmail AS SellerEmail
-                FROM Produce p
-                JOIN Ingredients i ON p.IngredientID = i.IngredientID
-                JOIN Business b ON p.BusinessID = b.BusinessID
-                JOIN People pe ON b.PeopleID = pe.PeopleID
-                WHERE p.ProduceID = :sid AND p.ShowProduce = 1
-            """), {"sid": source_id}).fetchone()
-        elif prefix == "M":
-            listing = db.execute(text("""
-                SELECT m.MeatInventoryID AS ListingID, m.BusinessID,
-                       i.IngredientName + ' - ' + ISNULL(ic.IngredientCut,'') AS Title,
-                       'meat' AS ProductType, m.RetailPrice AS UnitPrice,
-                       m.Quantity AS QuantityAvailable,
-                       b.BusinessName AS SellerName, pe.PeopleEmail AS SellerEmail
-                FROM MeatInventory m
-                JOIN Ingredients i ON m.IngredientID = i.IngredientID
-                LEFT JOIN IngredientCut ic ON m.IngredientCutID = ic.IngredientCutID
-                JOIN Business b ON m.BusinessID = b.BusinessID
-                JOIN People pe ON b.PeopleID = pe.PeopleID
-                WHERE m.MeatInventoryID = :sid AND m.ShowMeat = 1
-            """), {"sid": source_id}).fetchone()
-        elif prefix == "F":
-            listing = db.execute(text("""
-                SELECT f.ProcessedFoodID AS ListingID, f.BusinessID, f.Name AS Title,
-                       'processed_food' AS ProductType, f.RetailPrice AS UnitPrice,
-                       f.Quantity AS QuantityAvailable,
-                       b.BusinessName AS SellerName, pe.PeopleEmail AS SellerEmail
-                FROM ProcessedFood f
-                JOIN Business b ON f.BusinessID = b.BusinessID
-                JOIN People pe ON b.PeopleID = pe.PeopleID
-                WHERE f.ProcessedFoodID = :sid AND f.ShowProcessedFood = 1
-            """), {"sid": source_id}).fetchone()
-        else:
-            raise HTTPException(400, f"Invalid listing ID: {item.ListingID}")
-
-        if not listing:
-            raise HTTPException(404, f"Listing {item.ListingID} not found or inactive")
-
-        l = dict(listing._mapping)
-        qty = float(item.Quantity)
-
-        if qty > float(l["QuantityAvailable"]):
-            raise HTTPException(400, f"Only {l['QuantityAvailable']} available for '{l['Title']}'")
-
-        unit_price   = float(l["UnitPrice"])
-        line_total   = round(unit_price * qty, 2)
-        platform_cut = round(line_total * 0.025, 2)
-        seller_payout = round(line_total - platform_cut, 2)
-        subtotal += line_total
-
-        order_items.append({
-            "listing":        l,
-            "source_id":      source_id,
-            "prefix":         prefix,
-            "quantity":       qty,
-            "unit_price":     unit_price,
-            "line_total":     line_total,
-            "seller_payout":  seller_payout,
-        })
-
-    platform_fee = round(subtotal * 0.025, 2)
-    total_amount = round(subtotal + platform_fee, 2)
-
-    buyer = db.execute(text("""
-        SELECT PeopleFirstName + ' ' + PeopleLastName AS FullName, PeopleEmail
-        FROM People WHERE PeopleID = :pid
-    """), {"pid": req.BuyerPeopleID}).fetchone()
-    if not buyer:
-        raise HTTPException(404, "Buyer not found")
-
-    import random, string
-    order_number = "OFN-" + "".join(random.choices(string.digits, k=8))
-
-    db.execute(text("""
-        INSERT INTO MarketplaceOrders (
-            OrderNumber, BuyerPeopleID, BuyerBusinessID,
-            BuyerName, BuyerEmail,
-            DeliveryMethod, DeliveryAddress, DeliveryNotes,
-            RequestedDeliveryDate,
-            Subtotal, PlatformFee, TaxAmount, DeliveryFee, TotalAmount,
-            PaymentStatus, OrderStatus, CreatedAt, UpdatedAt
-        ) VALUES (
-            :order_number, :buyer_pid, :buyer_bid,
-            :buyer_name, :buyer_email,
-            :delivery_method, :delivery_address, :delivery_notes,
-            :requested_date,
-            :subtotal, :platform_fee, 0, 0, :total_amount,
-            'pending', 'pending', GETDATE(), GETDATE()
-        )
-    """), {
-        "order_number":     order_number,
-        "buyer_pid":        req.BuyerPeopleID,
-        "buyer_bid":        req.BuyerBusinessID,
-        "buyer_name":       buyer[0],
-        "buyer_email":      buyer[1],
-        "delivery_method":  req.DeliveryMethod,
-        "delivery_address": req.DeliveryAddress,
-        "delivery_notes":   req.DeliveryNotes,
-        "requested_date":   req.RequestedDeliveryDate,
-        "subtotal":         subtotal,
-        "platform_fee":     platform_fee,
-        "total_amount":     total_amount,
-    })
-
-    order_id = db.execute(text("SELECT SCOPE_IDENTITY()")).scalar()
-
-    for oi in order_items:
-        l = oi["listing"]
-        db.execute(text("""
-            INSERT INTO MarketplaceOrderItems (
-                OrderID, ListingID, SellerBusinessID,
-                ProductTitle, ProductType, SellerName,
-                Quantity, UnitPrice, LineTotal, SellerPayout,
-                SellerStatus, CreatedAt, UpdatedAt
-            ) VALUES (
-                :order_id, :listing_id, :seller_bid,
-                :title, :product_type, :seller_name,
-                :quantity, :unit_price, :line_total, :seller_payout,
-                'pending', GETDATE(), GETDATE()
-            )
-        """), {
-            "order_id":     order_id,
-            "listing_id":   f"{oi['prefix']}{oi['source_id']}",
-            "seller_bid":   l["BusinessID"],
-            "title":        l["Title"],
-            "product_type": l["ProductType"],
-            "seller_name":  l["SellerName"],
-            "quantity":     oi["quantity"],
-            "unit_price":   oi["unit_price"],
-            "line_total":   oi["line_total"],
-            "seller_payout": oi["seller_payout"],
-        })
-
-        # Decrement inventory in source table
-        if oi["prefix"] == "P":
-            db.execute(text("UPDATE Produce SET Quantity = Quantity - :qty WHERE ProduceID = :sid"),
-                       {"qty": oi["quantity"], "sid": oi["source_id"]})
-        elif oi["prefix"] == "M":
-            db.execute(text("UPDATE MeatInventory SET Quantity = Quantity - :qty WHERE MeatInventoryID = :sid"),
-                       {"qty": oi["quantity"], "sid": oi["source_id"]})
-        elif oi["prefix"] == "F":
-            db.execute(text("UPDATE ProcessedFood SET Quantity = Quantity - :qty WHERE ProcessedFoodID = :sid"),
-                       {"qty": oi["quantity"], "sid": oi["source_id"]})
-
-    db.commit()
-
-    try:
-        from marketplace_emails import send_order_placed_buyer, send_order_placed_seller
-        send_order_placed_buyer(order_id, db)
-    except Exception as e:
-        print(f"[marketplace] Email send failed: {e}")
-
-    return {
-        "OrderID":     order_id,
-        "OrderNumber": order_number,
-        "TotalAmount": total_amount,
-        "message":     "Order placed successfully",
+  // ── Fetch listings ────────────────────────────────────────────────────────
+  async function fetchItems() {
+    setLoading(true);
+    setError('');
+    try {
+      const res  = await fetch(`${API_URL}/api/marketplace/seller/listings?business_id=${businessId}`, { headers });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to load inventory');
+      setItems(data.filter(i => i.ProductType === 'processed_food'));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
     }
+  }
 
+  useEffect(() => { fetchItems(); }, []);
 
-@marketplace_router.get("/orders/{order_id}")
-def get_order(order_id: int, db: Session = Depends(get_db)):
-    order = db.execute(text("SELECT * FROM MarketplaceOrders WHERE OrderID = :oid"), {"oid": order_id}).fetchone()
-    if not order:
-        raise HTTPException(404, "Order not found")
-    result = dict(order._mapping)
-    for field in ["Subtotal", "PlatformFee", "TaxAmount", "DeliveryFee", "TotalAmount"]:
-        if result.get(field) is not None:
-            result[field] = float(result[field])
-    items = db.execute(text("""
-        SELECT oi.*, b.BusinessName
-        FROM MarketplaceOrderItems oi
-        LEFT JOIN Business b ON oi.SellerBusinessID = b.BusinessID
-        WHERE oi.OrderID = :oid ORDER BY oi.OrderItemID
-    """), {"oid": order_id}).fetchall()
-    result["items"] = []
-    for i in items:
-        row = dict(i._mapping)
-        for f in ["UnitPrice", "LineTotal", "SellerPayout"]:
-            if row.get(f) is not None:
-                row[f] = float(row[f])
-        result["items"].append(row)
-    result["history"] = []
-    return result
+  // ── Derived list ──────────────────────────────────────────────────────────
+  const filtered = items
+    .filter(i => !search || i.Title?.toLowerCase().includes(search.toLowerCase()) ||
+                             i.Description?.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === 'name_asc')    return (a.Title || '').localeCompare(b.Title || '');
+      if (sortBy === 'price_asc')   return a.UnitPrice - b.UnitPrice;
+      if (sortBy === 'price_desc')  return b.UnitPrice - a.UnitPrice;
+      if (sortBy === 'qty_asc')     return a.QuantityAvailable - b.QuantityAvailable;
+      return b.SourceID - a.SourceID; // newest
+    });
 
+  // ── Modal helpers ─────────────────────────────────────────────────────────
+  const emptyForm = {
+    Name: '', Description: '', RetailPrice: '', WholesalePrice: '',
+    Quantity: '', ShowProcessedFood: true, AvailableDate: '', ImageURL: '',
+  };
 
-@marketplace_router.get("/orders")
-def list_orders(buyer_people_id: int, db: Session = Depends(get_db)):
-    orders = db.execute(text("""
-        SELECT o.OrderID, o.OrderNumber, o.OrderStatus, o.PaymentStatus,
-               o.TotalAmount, o.CreatedAt, o.DeliveryMethod,
-               COUNT(oi.OrderItemID) AS ItemCount
-        FROM MarketplaceOrders o
-        LEFT JOIN MarketplaceOrderItems oi ON o.OrderID = oi.OrderID
-        WHERE o.BuyerPeopleID = :pid
-        GROUP BY o.OrderID, o.OrderNumber, o.OrderStatus, o.PaymentStatus,
-                 o.TotalAmount, o.CreatedAt, o.DeliveryMethod
-        ORDER BY o.CreatedAt DESC
-    """), {"pid": buyer_people_id}).fetchall()
-    result = []
-    for o in orders:
-        row = dict(o._mapping)
-        row["TotalAmount"] = float(row["TotalAmount"]) if row["TotalAmount"] else 0.0
-        result.append(row)
-    return result
+  function openAdd()  { setEditing(emptyForm); setFormError(''); setShowModal(true); }
+  function openEdit(item) {
+    setEditing({
+      ProcessedFoodID:  item.SourceID,
+      Name:             item.Title        || '',
+      Description:      item.Description  || '',
+      RetailPrice:      item.UnitPrice    ?? '',
+      WholesalePrice:   item.WholesalePrice ?? '',
+      Quantity:         item.QuantityAvailable ?? '',
+      ShowProcessedFood: item.IsActive ?? true,
+      AvailableDate:    item.AvailableDate ? item.AvailableDate.split('T')[0] : '',
+      ImageURL:         item.ImageURL     || '',
+    });
+    setFormError('');
+    setShowModal(true);
+  }
+  function closeModal() { setShowModal(false); setEditing(null); }
 
+  async function handleSave(e) {
+    e.preventDefault();
+    setSaving(true);
+    setFormError('');
+    try {
+      const isNew = !editing.ProcessedFoodID;
+      const payload = {
+        ...editing,
+        BusinessID:    parseInt(businessId),
+        RetailPrice:   parseFloat(editing.RetailPrice),
+        WholesalePrice: editing.WholesalePrice ? parseFloat(editing.WholesalePrice) : null,
+        Quantity:      parseFloat(editing.Quantity),
+      };
+      const url    = isNew
+        ? `${API_URL}/api/marketplace/processed-food`
+        : `${API_URL}/api/marketplace/processed-food/${editing.ProcessedFoodID}`;
+      const method = isNew ? 'POST' : 'PUT';
+      const res    = await fetch(url, { method, headers, body: JSON.stringify(payload) });
+      const data   = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Save failed');
+      closeModal();
+      fetchItems();
+    } catch (e) {
+      setFormError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
-# ─────────────────────────────────────────────
-# SELLER ACTIONS
-# ─────────────────────────────────────────────
+  async function toggleVisibility(item) {
+    try {
+      await fetch(`${API_URL}/api/marketplace/processed-food/${item.SourceID}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ ShowProcessedFood: !item.IsActive }),
+      });
+      fetchItems();
+    } catch { /* silent */ }
+  }
 
-@marketplace_router.get("/seller/orders")
-def get_seller_orders(business_id: int, db: Session = Depends(get_db)):
-    items = db.execute(text("""
-        SELECT oi.*, o.OrderNumber, o.BuyerName, o.BuyerEmail,
-               o.DeliveryMethod, o.RequestedDeliveryDate, o.CreatedAt AS OrderDate
-        FROM MarketplaceOrderItems oi
-        JOIN MarketplaceOrders o ON oi.OrderID = o.OrderID
-        WHERE oi.SellerBusinessID = :bid
-        ORDER BY o.CreatedAt DESC
-    """), {"bid": business_id}).fetchall()
-    result = []
-    for i in items:
-        row = dict(i._mapping)
-        for f in ["UnitPrice", "LineTotal", "SellerPayout"]:
-            if row.get(f) is not None:
-                row[f] = float(row[f])
-        result.append(row)
-    return result
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  const totalItems    = items.length;
+  const activeItems   = items.filter(i => i.IsActive).length;
+  const lowStockItems = items.filter(i => i.IsActive && i.QuantityAvailable <= 5).length;
+  const totalValue    = items.reduce((s, i) => s + (i.UnitPrice * i.QuantityAvailable), 0);
 
+  // ── Render ────────────────────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen bg-[#f7f5f0] font-sans">
 
-@marketplace_router.post("/seller/orders/{order_item_id}/action")
-def seller_item_action(order_item_id: int, req: SellerActionRequest, db: Session = Depends(get_db)):
-    item = db.execute(text("""
-        SELECT oi.*, o.OrderID FROM MarketplaceOrderItems oi
-        JOIN MarketplaceOrders o ON oi.OrderID = o.OrderID
-        WHERE oi.OrderItemID = :oiid
-    """), {"oiid": order_item_id}).fetchone()
-    if not item:
-        raise HTTPException(404, "Order item not found")
-    if item.SellerStatus not in ("pending",):
-        raise HTTPException(400, f"Item is already '{item.SellerStatus}'")
-    if req.SellerStatus not in ("confirmed", "rejected"):
-        raise HTTPException(400, "Status must be 'confirmed' or 'rejected'")
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-5">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 font-lora">Processed Food Inventory</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Manage your value-added and processed food listings</p>
+          </div>
+          <button
+            onClick={openAdd}
+            className="bg-[#819360] hover:bg-[#6a7a4f] text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2"
+          >
+            <span className="text-lg leading-none">+</span> Add Item
+          </button>
+        </div>
+      </div>
 
-    db.execute(text("""
-        UPDATE MarketplaceOrderItems
-        SET SellerStatus = :status, RejectionReason = :reason,
-            EstimatedDeliveryDate = :edd, UpdatedAt = GETDATE()
-        WHERE OrderItemID = :oiid
-    """), {"status": req.SellerStatus, "reason": req.RejectionReason,
-           "edd": req.EstimatedDeliveryDate, "oiid": order_item_id})
+      <div className="max-w-7xl mx-auto px-6 py-8">
 
-    # If rejected, restore inventory in source table
-    if req.SellerStatus == "rejected":
-        listing_id = item.ListingID
-        prefix = str(listing_id)[0].upper()
-        source_id = int(str(listing_id)[1:])
-        if prefix == "P":
-            db.execute(text("UPDATE Produce SET Quantity = Quantity + :qty WHERE ProduceID = :sid"),
-                       {"qty": item.Quantity, "sid": source_id})
-        elif prefix == "M":
-            db.execute(text("UPDATE MeatInventory SET Quantity = Quantity + :qty WHERE MeatInventoryID = :sid"),
-                       {"qty": item.Quantity, "sid": source_id})
-        elif prefix == "F":
-            db.execute(text("UPDATE ProcessedFood SET Quantity = Quantity + :qty WHERE ProcessedFoodID = :sid"),
-                       {"qty": item.Quantity, "sid": source_id})
+        {/* Stats row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: 'Total Items',   value: totalItems,                      color: 'text-gray-800' },
+            { label: 'Active',        value: activeItems,                     color: 'text-[#819360]' },
+            { label: 'Low Stock',     value: lowStockItems,                   color: 'text-amber-600' },
+            { label: 'Inventory Value', value: `$${totalValue.toFixed(2)}`,   color: 'text-gray-800' },
+          ].map(s => (
+            <div key={s.label} className="bg-white rounded-2xl px-5 py-4 shadow-sm border border-gray-100">
+              <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">{s.label}</p>
+              <p className={`text-2xl font-bold mt-1 ${s.color}`}>{s.value}</p>
+            </div>
+          ))}
+        </div>
 
-    db.commit()
-    return {"message": f"Item {req.SellerStatus}", "OrderID": item.OrderID}
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <input
+            type="text"
+            placeholder="Search items..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 bg-white"
+          />
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+            className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:border-[#819360] text-gray-600"
+          >
+            <option value="newest">Newest First</option>
+            <option value="name_asc">Name A–Z</option>
+            <option value="price_asc">Price: Low–High</option>
+            <option value="price_desc">Price: High–Low</option>
+            <option value="qty_asc">Quantity: Low–High</option>
+          </select>
+        </div>
 
+        {/* Error */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-6 text-sm">
+            {error}
+          </div>
+        )}
 
-@marketplace_router.post("/seller/orders/{order_item_id}/ship")
-def ship_item(order_item_id: int, req: ShipItemRequest, db: Session = Depends(get_db)):
-    item = db.execute(text("SELECT * FROM MarketplaceOrderItems WHERE OrderItemID = :oiid"),
-                      {"oiid": order_item_id}).fetchone()
-    if not item:
-        raise HTTPException(404, "Order item not found")
-    if item.SellerStatus != "confirmed":
-        raise HTTPException(400, "Item must be confirmed before shipping")
-    db.execute(text("""
-        UPDATE MarketplaceOrderItems
-        SET SellerStatus = 'shipped', TrackingNumber = :tracking,
-            EstimatedDeliveryDate = :edd, ShippedAt = GETDATE(), UpdatedAt = GETDATE()
-        WHERE OrderItemID = :oiid
-    """), {"tracking": req.TrackingNumber, "edd": req.EstimatedDeliveryDate, "oiid": order_item_id})
-    db.commit()
-    return {"message": "Item marked as shipped"}
+        {/* Loading */}
+        {loading && (
+          <div className="text-center py-20 text-gray-400 text-sm">Loading inventory...</div>
+        )}
 
+        {/* Empty state */}
+        {!loading && !error && filtered.length === 0 && (
+          <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
+            <p className="text-4xl mb-3">🫙</p>
+            <p className="text-gray-500 font-medium">No processed food items yet</p>
+            <p className="text-gray-400 text-sm mt-1">Add jams, sauces, baked goods, and more</p>
+            <button onClick={openAdd} className="mt-5 bg-[#819360] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#6a7a4f] transition-colors">
+              Add Your First Item
+            </button>
+          </div>
+        )}
 
-# ─────────────────────────────────────────────
-# SELLER LISTINGS  (read-only view of their inventory)
-# ─────────────────────────────────────────────
+        {/* Table */}
+        {!loading && filtered.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-[#f9faf7]">
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Retail Price</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Wholesale</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qty</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filtered.map(item => (
+                  <tr key={item.ListingID} className="hover:bg-[#f9faf7] transition-colors">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        {item.ImageURL ? (
+                          <img src={item.ImageURL} alt={item.Title} className="w-10 h-10 rounded-lg object-cover border border-gray-100" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-[#e8f0e0] flex items-center justify-center text-lg">🫙</div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-gray-800">{item.Title}</p>
+                          {item.Description && (
+                            <p className="text-gray-400 text-xs mt-0.5 line-clamp-1 max-w-[200px]">{item.Description}</p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 hidden md:table-cell text-gray-700 font-medium">
+                      ${item.UnitPrice?.toFixed(2)}
+                    </td>
+                    <td className="px-5 py-4 hidden md:table-cell text-gray-500">
+                      {item.WholesalePrice ? `$${item.WholesalePrice.toFixed(2)}` : '—'}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`font-semibold ${item.QuantityAvailable <= 5 ? 'text-amber-600' : 'text-gray-700'}`}>
+                        {item.QuantityAvailable}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <StatusBadge item={item} />
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => toggleVisibility(item)}
+                          className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+                        >
+                          {item.IsActive ? 'Hide' : 'Show'}
+                        </button>
+                        <button
+                          onClick={() => openEdit(item)}
+                          className="text-xs px-3 py-1.5 rounded-lg bg-[#819360] text-white hover:bg-[#6a7a4f] transition-colors font-medium"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
-@marketplace_router.get("/seller/listings")
-def get_seller_listings(business_id: int, db: Session = Depends(get_db)):
-    """Returns unified produce + meat + processed food for a seller."""
-    results = []
+      {/* Add/Edit Modal */}
+      {showModal && editing && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="bg-[#819360] px-6 py-5 rounded-t-2xl">
+              <h2 className="text-white font-bold text-lg font-lora">
+                {editing.ProcessedFoodID ? 'Edit Item' : 'Add New Item'}
+              </h2>
+            </div>
+            <form onSubmit={handleSave} className="px-6 py-6 space-y-4">
+              {formError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+                  {formError}
+                </div>
+              )}
 
-    produce = db.execute(text("""
-        SELECT p.ProduceID AS SourceID, 'produce' AS ProductType,
-               i.IngredientName AS Title, p.RetailPrice AS UnitPrice,
-               p.WholesalePrice, 'unit' AS UnitLabel,
-               p.Quantity AS QuantityAvailable,
-               p.IsOrganic, p.IsLocal, p.ShowProduce AS IsActive,
-               p.AvailableDate, p.ExpirationDate
-        FROM Produce p
-        JOIN Ingredients i ON p.IngredientID = i.IngredientID
-        WHERE p.BusinessID = :bid
-        ORDER BY p.ProduceID DESC
-    """), {"bid": business_id}).fetchall()
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Name *</label>
+                <input
+                  required
+                  value={editing.Name}
+                  onChange={e => setEditing(p => ({ ...p, Name: e.target.value }))}
+                  placeholder="e.g. Strawberry Jam, Hot Sauce..."
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20"
+                />
+              </div>
 
-    for r in produce:
-        m = dict(r._mapping)
-        m["ListingID"]  = f"P{m['SourceID']}"
-        m["UnitPrice"]  = float(m["UnitPrice"]) if m["UnitPrice"] else 0.0
-        m["WholesalePrice"] = float(m["WholesalePrice"]) if m["WholesalePrice"] else None
-        m["QuantityAvailable"] = float(m["QuantityAvailable"]) if m["QuantityAvailable"] else 0.0
-        m["IsOrganic"]  = bool(m["IsOrganic"])
-        m["IsLocal"]    = bool(m["IsLocal"])
-        m["IsActive"]   = bool(m["IsActive"])
-        m["IsFeatured"] = False
-        results.append(m)
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Description</label>
+                <textarea
+                  value={editing.Description}
+                  onChange={e => setEditing(p => ({ ...p, Description: e.target.value }))}
+                  rows={3}
+                  placeholder="Ingredients, flavor notes, size..."
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 resize-none"
+                />
+              </div>
 
-    meat = db.execute(text("""
-        SELECT m.MeatInventoryID AS SourceID, 'meat' AS ProductType,
-               i.IngredientName + ' - ' + ISNULL(ic.IngredientCut,'') AS Title,
-               m.RetailPrice AS UnitPrice, m.WholesalePrice,
-               m.WeightUnit AS UnitLabel, m.Quantity AS QuantityAvailable,
-               0 AS IsOrganic, 1 AS IsLocal, m.ShowMeat AS IsActive,
-               m.AvailableDate, NULL AS ExpirationDate
-        FROM MeatInventory m
-        JOIN Ingredients i ON m.IngredientID = i.IngredientID
-        LEFT JOIN IngredientCut ic ON m.IngredientCutID = ic.IngredientCutID
-        WHERE m.BusinessID = :bid
-        ORDER BY m.MeatInventoryID DESC
-    """), {"bid": business_id}).fetchall()
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Retail Price *</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                    <input
+                      required type="number" min="0" step="0.01"
+                      value={editing.RetailPrice}
+                      onChange={e => setEditing(p => ({ ...p, RetailPrice: e.target.value }))}
+                      placeholder="0.00"
+                      className="w-full border border-gray-200 rounded-xl pl-7 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Wholesale Price</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                    <input
+                      type="number" min="0" step="0.01"
+                      value={editing.WholesalePrice}
+                      onChange={e => setEditing(p => ({ ...p, WholesalePrice: e.target.value }))}
+                      placeholder="0.00"
+                      className="w-full border border-gray-200 rounded-xl pl-7 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20"
+                    />
+                  </div>
+                </div>
+              </div>
 
-    for r in meat:
-        m = dict(r._mapping)
-        m["ListingID"]  = f"M{m['SourceID']}"
-        m["UnitPrice"]  = float(m["UnitPrice"]) if m["UnitPrice"] else 0.0
-        m["WholesalePrice"] = float(m["WholesalePrice"]) if m["WholesalePrice"] else None
-        m["QuantityAvailable"] = float(m["QuantityAvailable"]) if m["QuantityAvailable"] else 0.0
-        m["IsOrganic"]  = False
-        m["IsLocal"]    = True
-        m["IsActive"]   = bool(m["IsActive"])
-        m["IsFeatured"] = False
-        results.append(m)
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Quantity *</label>
+                  <input
+                    required type="number" min="0" step="1"
+                    value={editing.Quantity}
+                    onChange={e => setEditing(p => ({ ...p, Quantity: e.target.value }))}
+                    placeholder="0"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Available Date</label>
+                  <input
+                    type="date"
+                    value={editing.AvailableDate}
+                    onChange={e => setEditing(p => ({ ...p, AvailableDate: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20"
+                  />
+                </div>
+              </div>
 
-    food = db.execute(text("""
-        SELECT f.ProcessedFoodID AS SourceID, 'processed_food' AS ProductType,
-               f.Name AS Title, f.RetailPrice AS UnitPrice,
-               f.WholesalePrice, 'each' AS UnitLabel,
-               f.Quantity AS QuantityAvailable,
-               0 AS IsOrganic, 1 AS IsLocal, f.ShowProcessedFood AS IsActive,
-               f.AvailableDate, NULL AS ExpirationDate
-        FROM ProcessedFood f
-        WHERE f.BusinessID = :bid
-        ORDER BY f.ProcessedFoodID DESC
-    """), {"bid": business_id}).fetchall()
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Image URL</label>
+                <input
+                  type="url"
+                  value={editing.ImageURL}
+                  onChange={e => setEditing(p => ({ ...p, ImageURL: e.target.value }))}
+                  placeholder="https://..."
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20"
+                />
+              </div>
 
-    for r in food:
-        m = dict(r._mapping)
-        m["ListingID"]  = f"F{m['SourceID']}"
-        m["UnitPrice"]  = float(m["UnitPrice"]) if m["UnitPrice"] else 0.0
-        m["WholesalePrice"] = float(m["WholesalePrice"]) if m["WholesalePrice"] else None
-        m["QuantityAvailable"] = float(m["QuantityAvailable"]) if m["QuantityAvailable"] else 0.0
-        m["IsOrganic"]  = False
-        m["IsLocal"]    = True
-        m["IsActive"]   = bool(m["IsActive"])
-        m["IsFeatured"] = False
-        results.append(m)
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setEditing(p => ({ ...p, ShowProcessedFood: !p.ShowProcessedFood }))}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${editing.ShowProcessedFood ? 'bg-[#819360]' : 'bg-gray-300'}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${editing.ShowProcessedFood ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
+                <span className="text-sm text-gray-600 font-medium">
+                  {editing.ShowProcessedFood ? 'Visible in marketplace' : 'Hidden from marketplace'}
+                </span>
+              </div>
 
-    return results
-
-
-# ─────────────────────────────────────────────
-# CHECKOUT  (server-side cart sync flow)
-# ─────────────────────────────────────────────
-
-class CheckoutRequest(BaseModel):
-    BuyerPeopleID:         int
-    BuyerBusinessID:       Optional[int]  = None
-    DeliveryMethod:        str            = "pickup"
-    DeliveryAddress:       Optional[str]  = None
-    DeliveryNotes:         Optional[str]  = None
-    RequestedDeliveryDate: Optional[date] = None
-
-
-@marketplace_router.post("/checkout")
-def checkout(req: CheckoutRequest, db: Session = Depends(get_db)):
-    rows = db.execute(text("""
-        SELECT ci.ListingID, ci.Quantity
-        FROM CartItems ci
-        WHERE ci.BuyerPeopleID = :pid
-    """), {"pid": req.BuyerPeopleID}).fetchall()
-
-    if not rows:
-        raise HTTPException(400, "Cart is empty")
-
-    items = [CartItem(ListingID=r[0], Quantity=float(r[1])) for r in rows]
-    order_req = PlaceOrderRequest(
-        BuyerPeopleID=req.BuyerPeopleID,
-        BuyerBusinessID=req.BuyerBusinessID,
-        DeliveryMethod=req.DeliveryMethod,
-        DeliveryAddress=req.DeliveryAddress,
-        DeliveryNotes=req.DeliveryNotes,
-        RequestedDeliveryDate=req.RequestedDeliveryDate,
-        items=items,
-    )
-    result = place_order(order_req, db)
-    db.execute(text("DELETE FROM CartItems WHERE BuyerPeopleID = :pid"), {"pid": req.BuyerPeopleID})
-    db.commit()
-    return result
-
-
-class CartItemAdd(BaseModel):
-    BuyerPeopleID:   int
-    BuyerBusinessID: Optional[int] = None
-    ListingID:       str
-    Quantity:        float
-    Notes:           Optional[str] = None
-
-
-@marketplace_router.post("/cart")
-def add_to_cart(data: CartItemAdd, db: Session = Depends(get_db)):
-    existing = db.execute(text(
-        "SELECT CartItemID FROM CartItems WHERE BuyerPeopleID = :pid AND ListingID = :lid"
-    ), {"pid": data.BuyerPeopleID, "lid": data.ListingID}).fetchone()
-
-    if existing:
-        db.execute(text(
-            "UPDATE CartItems SET Quantity = :qty, UpdatedAt = GETDATE() WHERE CartItemID = :cid"
-        ), {"qty": data.Quantity, "cid": existing[0]})
-    else:
-        db.execute(text("""
-            INSERT INTO CartItems (BuyerPeopleID, BuyerBusinessID, ListingID, Quantity, Notes)
-            VALUES (:pid, :bid, :lid, :qty, :notes)
-        """), {
-            "pid":   data.BuyerPeopleID,
-            "bid":   data.BuyerBusinessID,
-            "lid":   data.ListingID,
-            "qty":   data.Quantity,
-            "notes": data.Notes,
-        })
-    db.commit()
-    return {"message": "Added to cart"}
-
-
-# ─────────────────────────────────────────────
-# REVIEWS
-# ─────────────────────────────────────────────
-
-class ReviewRequest(BaseModel):
-    ListingID:        str
-    ReviewerPeopleID: int
-    OrderID:          int
-    Rating:           int
-    ReviewText:       Optional[str] = None
-
-
-@marketplace_router.post("/reviews")
-def submit_review(req: ReviewRequest, db: Session = Depends(get_db)):
-    if not 1 <= req.Rating <= 5:
-        raise HTTPException(400, "Rating must be between 1 and 5")
-    db.execute(text("""
-        INSERT INTO MarketplaceReviews (ListingID, ReviewerPeopleID, OrderID, Rating, ReviewText, CreatedAt)
-        VALUES (:lid, :pid, :oid, :rating, :text, GETDATE())
-    """), {"lid": req.ListingID, "pid": req.ReviewerPeopleID,
-           "oid": req.OrderID, "rating": req.Rating, "text": req.ReviewText})
-    db.commit()
-    return {"message": "Review submitted"}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button" onClick={closeModal}
+                  className="flex-1 border border-gray-200 text-gray-600 font-semibold py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit" disabled={saving}
+                  className="flex-1 bg-[#819360] hover:bg-[#6a7a4f] text-white font-semibold py-2.5 rounded-xl text-sm transition-colors disabled:opacity-60"
+                >
+                  {saving ? 'Saving...' : (editing.ProcessedFoodID ? 'Save Changes' : 'Add Item')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
