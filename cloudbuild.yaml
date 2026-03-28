@@ -6,7 +6,7 @@ steps:
       - '-t'
       - 'us-central1-docker.pkg.dev/animated-flare-421518/cloud-run-source-deploy/oatmealfarmnetwork-git'
       - '--build-arg'
-      - 'VITE_API_URL=https://crop-monitoring-api-802455386518.us-central1.run.app'
+      - 'VITE_API_URL=https://oatmealfarmnetwork-802455386518.us-central1.run.app'
       - '.'
 
   # Deploy to Cloud Run
