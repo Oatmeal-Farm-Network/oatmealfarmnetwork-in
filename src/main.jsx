@@ -16,6 +16,8 @@ import MarketplaceOrders from './MarketplaceOrders';
 import OrderDetail from './OrderDetail';
 import SellerOrders from './SellerOrders';
 import SellerListings from './SellerListings';
+import ForgotPassword from './ForgotPassword';
+
 
 const App = lazy(() => import('./App.jsx'))
 const About = lazy(() => import('./About.jsx'))
@@ -117,6 +119,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/services/add" element={<ServicesAdd />} />
           <Route path="/services/suggest-category" element={<ServicesSuggestCategory />} />
           <Route path="/services/edit" element={<ServicesEdit />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Marketplace routes — specific before generic */}
           <Route path="/marketplaces/farm-to-table" element={<FarmToTableMarketplace />} />

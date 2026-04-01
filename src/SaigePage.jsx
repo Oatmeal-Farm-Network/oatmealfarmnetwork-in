@@ -9,8 +9,6 @@ import { useAccount } from './AccountContext';
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001';
 
 // ─── STORAGE HELPERS (user-scoped) ───────────────────────────────────────────
-// All keys are prefixed with the userId so different accounts never share data.
-
 function threadsKey(userId) { return `saige_threads_${userId}`; }
 function msgKey(userId, threadId) { return `saige_msg_${userId}_${threadId}`; }
 function quizKey(userId, threadId) { return `saige_quiz_${userId}_${threadId}`; }
@@ -119,13 +117,11 @@ const ADVISORY_COLORS = {
 function ThinkingDots({ stage }) {
   const [msgIdx, setMsgIdx] = useState(0);
   const msgs = STAGE_MESSAGES[stage] || STAGE_MESSAGES.default;
-
   useEffect(() => {
     setMsgIdx(0);
     const iv = setInterval(() => setMsgIdx(i => (i + 1) % msgs.length), 1500);
     return () => clearInterval(iv);
   }, [stage, msgs.length]);
-
   return (
     <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
       <div style={{
@@ -160,9 +156,7 @@ function ChatBubble({ message }) {
       <div style={{
         maxWidth: '75%', borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
         padding: '10px 14px',
-        background: isUser
-          ? 'linear-gradient(135deg,#1d4ed8,#1e40af)'
-          : 'linear-gradient(135deg,#1e293b,#0f172a)',
+        background: isUser ? 'linear-gradient(135deg,#1d4ed8,#1e40af)' : 'linear-gradient(135deg,#1e293b,#0f172a)',
         border: isUser ? 'none' : '1px solid #334155',
         color: '#f1f5f9', fontSize: 14, lineHeight: 1.6,
         boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
@@ -309,14 +303,12 @@ function AboutSaige() {
     { icon: '🍽️', title: 'Farm-to-Table Enablement', desc: 'Assists with logistics, negotiations, and orders between farms and restaurants.' },
     { icon: '🔒', title: 'Trust & Security', desc: 'Built with privacy-first principles and secure data practices.' },
   ];
-
   const coming = [
     { icon: '🛒', title: 'Farm-to-Table Marketplace', desc: 'Connects farms directly to consumers and restaurants, streamlining plans and tasks based on real-time demand.' },
     { icon: '🐄', title: 'Livestock Marketplace', desc: 'A trusted platform for buying and selling livestock.' },
     { icon: '📊', title: 'Current Market Insights', desc: 'Provides real-time demand signals and pricing trends to help you make smarter business decisions.' },
     { icon: '🔬', title: 'Complete Data Analysis', desc: 'Turns your farm data into actionable insights, helping you boost efficiency and profitability.' },
   ];
-
   return (
     <div className="min-h-screen bg-white font-sans">
       <Header />
@@ -370,7 +362,6 @@ function AboutSaige() {
           </div>
         </div>
       </div>
-
       <div className="max-w-5xl mx-auto px-6 py-14">
         <h2 className="text-3xl font-bold text-gray-900 text-center mb-2">What Saige Can Do</h2>
         <p className="text-gray-500 text-center mb-10">Everything you need to run a smarter, more connected farm.</p>
@@ -378,36 +369,25 @@ function AboutSaige() {
           {features.map(f => (
             <div key={f.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex gap-4 items-start">
               <span className="text-3xl flex-shrink-0">{f.icon}</span>
-              <div>
-                <h3 className="font-bold text-gray-900 text-base mb-1">{f.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{f.desc}</p>
-              </div>
+              <div><h3 className="font-bold text-gray-900 text-base mb-1">{f.title}</h3><p className="text-gray-600 text-sm leading-relaxed">{f.desc}</p></div>
             </div>
           ))}
         </div>
       </div>
-
       <div className="py-14 px-6 text-center" style={{ background: 'linear-gradient(135deg, #0f172a, #14532d)' }}>
         <h2 className="text-3xl font-bold text-white mb-4">The Future of Farming is Integrated.</h2>
-        <p className="text-gray-300 max-w-2xl mx-auto text-base leading-relaxed">
-          Saige and The OatmealFarmNetwork.com bring the industry together, unifying every step from inventory and logistics to payments and market insights.
-        </p>
+        <p className="text-gray-300 max-w-2xl mx-auto text-base leading-relaxed">Saige and The OatmealFarmNetwork.com bring the industry together, unifying every step from inventory and logistics to payments and market insights.</p>
       </div>
-
       <div className="max-w-5xl mx-auto px-6 py-14">
         <div className="text-center mb-10">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-4" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid #eab308', color: '#d97706' }}>
-            🚀 Coming Soon
-          </span>
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-4" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid #eab308', color: '#d97706' }}>🚀 Coming Soon</span>
           <h2 className="text-3xl font-bold text-gray-900">What's Coming Next</h2>
           <p className="text-gray-500 mt-2">We're building the most complete agricultural platform ever made.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {coming.map(f => (
             <div key={f.title} className="bg-white rounded-2xl border border-yellow-100 shadow-sm p-6 relative overflow-hidden">
-              <div className="absolute top-3 right-3">
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Coming Soon</span>
-              </div>
+              <div className="absolute top-3 right-3"><span className="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Coming Soon</span></div>
               <span className="text-3xl mb-3 block">{f.icon}</span>
               <h3 className="font-bold text-gray-900 text-base mb-2">{f.title}</h3>
               <p className="text-gray-600 text-sm leading-relaxed">{f.desc}</p>
@@ -415,7 +395,6 @@ function AboutSaige() {
           ))}
         </div>
       </div>
-
       <div className="max-w-5xl mx-auto px-6 pb-14">
         <div className="rounded-2xl p-8 flex flex-col sm:flex-row items-center gap-6" style={{ background: 'linear-gradient(135deg, #14532d, #166534)' }}>
           <span className="text-5xl flex-shrink-0">📁</span>
@@ -445,11 +424,32 @@ const _msgCache = new Map();
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function SaigePage() {
   const [searchParams] = useSearchParams();
-  const BusinessID = searchParams.get('BusinessID');
-  const { Business, LoadBusiness } = useAccount();
+  const { Business, LoadBusiness, BusinessID: contextBusinessID } = useAccount();
+
+  // BusinessID priority: URL param > AccountContext > localStorage fallback
+  const [BusinessID, setBusinessID] = useState(() => {
+    return (
+      searchParams.get('BusinessID') ||
+      localStorage.getItem('selected_business_id') ||
+      null
+    );
+  });
+
+  // Keep BusinessID in sync with AccountContext and persist to localStorage
+  useEffect(() => {
+    const urlID = searchParams.get('BusinessID');
+    const ctxID = contextBusinessID ? String(contextBusinessID) : null;
+    const best = urlID || ctxID || localStorage.getItem('selected_business_id') || null;
+    if (best && best !== BusinessID) {
+      setBusinessID(best);
+    }
+    if (best) {
+      localStorage.setItem('selected_business_id', best);
+    }
+  }, [contextBusinessID, searchParams]);
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
-  // userId is read once after auth check and used as the storage scope key
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
@@ -479,13 +479,8 @@ export default function SaigePage() {
   const abortRef        = useRef(null);
   const inputRef        = useRef(null);
 
-  useEffect(() => {
-    if (!activeThreadId) setActiveThreadId(generateThreadId());
-  }, [activeThreadId]);
-
-  useEffect(() => {
-    if (window.innerWidth < 900) setSidebarCollapsed(true);
-  }, []);
+  useEffect(() => { if (!activeThreadId) setActiveThreadId(generateThreadId()); }, [activeThreadId]);
+  useEffect(() => { if (window.innerWidth < 900) setSidebarCollapsed(true); }, []);
 
   useEffect(() => {
     if (activeThreadId && activeChat.length > 0 && userId) {
@@ -503,7 +498,7 @@ export default function SaigePage() {
     const localThreads = getLocalThreads(userId);
     let apiThreads = [];
     try {
-      const res = await fetch(`${SAIGE_API}/threads`, { headers: getAuthHeaders() });
+      const res = await fetch(`${SAIGE_API}/threads?user_id=${userId}`, { headers: getAuthHeaders() });
       if (res.ok) { const d = await res.json(); apiThreads = d.threads || []; }
     } catch { /* backend unavailable */ }
     setThreads(mergeThreads(apiThreads, localThreads));
@@ -525,7 +520,7 @@ export default function SaigePage() {
         messages = cached.messages;
       } else {
         try {
-          const res = await fetch(`${SAIGE_API}/threads/${threadId}/messages`, { signal: ctrl.signal, headers: getAuthHeaders() });
+          const res = await fetch(`${SAIGE_API}/threads/${threadId}/messages?user_id=${userId}`, { signal: ctrl.signal, headers: getAuthHeaders() });
           if (res.ok) {
             const d = await res.json();
             messages = (d.messages || []).map(m => ({ role: m.role, content: m.content }));
@@ -550,7 +545,7 @@ export default function SaigePage() {
 
   async function handleDeleteThread(threadId) {
     deleteLocalThread(userId, threadId);
-    try { await fetch(`${SAIGE_API}/threads/${threadId}`, { method: 'DELETE', headers: getAuthHeaders() }); } catch { /* ok */ }
+    try { await fetch(`${SAIGE_API}/threads/${threadId}?user_id=${userId}`, { method: 'DELETE', headers: getAuthHeaders() }); } catch { /* ok */ }
     if (activeThreadId === threadId) {
       setActiveThreadId(generateThreadId());
       setActiveChat([WELCOME_MESSAGE]);
@@ -591,6 +586,7 @@ export default function SaigePage() {
         body: JSON.stringify({
           user_input: val,
           thread_id: activeThreadId,
+          user_id: userId,
           business_id: BusinessID || null,
         }),
       });
@@ -666,8 +662,7 @@ export default function SaigePage() {
           padding: '10px 20px', background: 'white', borderBottom: '1px solid #e8e0d5',
           display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
         }}>
-          <button
-            onClick={() => setSidebarCollapsed(p => !p)}
+          <button onClick={() => setSidebarCollapsed(p => !p)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 6, color: '#6b7280', fontSize: 18 }}
             title={sidebarCollapsed ? 'Show history' : 'Hide history'}
           >☰</button>
@@ -744,7 +739,6 @@ export default function SaigePage() {
           </div>
         </div>
       </div>
-
       <style>{`@keyframes saige-spin { 100% { transform: rotate(360deg); } }`}</style>
     </AccountLayout>
   );

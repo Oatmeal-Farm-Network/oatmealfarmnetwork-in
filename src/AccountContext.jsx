@@ -21,9 +21,10 @@ export function AccountProvider({ children }) {
     }
   }, []);
 
-  const LoadBusiness = (ID, Force = false) => {
+const LoadBusiness = (ID, Force = false) => {
     if (ID === BusinessID && Business && !Force) return;
     setBusinessID(ID);
+    localStorage.setItem('selected_business_id', ID);  // ← add this line
     fetch(`${import.meta.env.VITE_API_URL}/auth/account-home?BusinessID=${ID}`)
       .then(Res => Res.json())
       .then(Data => setBusiness(Data));
