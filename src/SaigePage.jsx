@@ -6,55 +6,66 @@ import Footer from './Footer';
 import { useAccount } from './AccountContext';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const SAIGE_API = 'https://saige-backend-802455386518.us-central1.run.app';
+const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001';
 
-// ─── STORAGE HELPERS ─────────────────────────────────────────────────────────
-const THREADS_KEY = 'saige_threads';
-const MSG_PREFIX  = 'saige_messages_';
-const QUIZ_PREFIX = 'saige_quiz_';
+// ─── STORAGE HELPERS (user-scoped) ───────────────────────────────────────────
+// All keys are prefixed with the userId so different accounts never share data.
 
-function saveThread(threadId, messages, status, advisoryType) {
+function threadsKey(userId) { return `saige_threads_${userId}`; }
+function msgKey(userId, threadId) { return `saige_msg_${userId}_${threadId}`; }
+function quizKey(userId, threadId) { return `saige_quiz_${userId}_${threadId}`; }
+
+function saveThread(userId, threadId, messages, status, advisoryType) {
+  if (!userId) return;
   try {
-    localStorage.setItem(MSG_PREFIX + threadId, JSON.stringify(messages));
-    const threads = getStoredThreads();
+    localStorage.setItem(msgKey(userId, threadId), JSON.stringify(messages));
+    const threads = getStoredThreads(userId);
     const preview = messages.filter(m => m.role === 'user').pop()?.content?.slice(0, 80) || 'New conversation';
     const entry = { thread_id: threadId, preview, status, advisory_type: advisoryType, updated_at: new Date().toISOString() };
     const idx = threads.findIndex(t => t.thread_id === threadId);
     if (idx >= 0) threads[idx] = entry; else threads.unshift(entry);
-    localStorage.setItem(THREADS_KEY, JSON.stringify(threads));
+    localStorage.setItem(threadsKey(userId), JSON.stringify(threads));
   } catch (e) { console.warn('saveThread failed', e); }
 }
 
-function getLocalThreads() { return getStoredThreads(); }
+function getLocalThreads(userId) {
+  if (!userId) return [];
+  return getStoredThreads(userId);
+}
 
-function getLocalMessages(threadId) {
-  try { const r = localStorage.getItem(MSG_PREFIX + threadId); return r ? JSON.parse(r) : []; }
+function getLocalMessages(userId, threadId) {
+  if (!userId) return [];
+  try { const r = localStorage.getItem(msgKey(userId, threadId)); return r ? JSON.parse(r) : []; }
   catch { return []; }
 }
 
-function saveQuiz(threadId, quiz) {
+function saveQuiz(userId, threadId, quiz) {
+  if (!userId) return;
   try {
-    if (quiz) localStorage.setItem(QUIZ_PREFIX + threadId, JSON.stringify(quiz));
-    else localStorage.removeItem(QUIZ_PREFIX + threadId);
+    if (quiz) localStorage.setItem(quizKey(userId, threadId), JSON.stringify(quiz));
+    else localStorage.removeItem(quizKey(userId, threadId));
   } catch (e) { console.warn('saveQuiz failed', e); }
 }
 
-function getLocalQuiz(threadId) {
-  try { const r = localStorage.getItem(QUIZ_PREFIX + threadId); return r ? JSON.parse(r) : null; }
+function getLocalQuiz(userId, threadId) {
+  if (!userId) return null;
+  try { const r = localStorage.getItem(quizKey(userId, threadId)); return r ? JSON.parse(r) : null; }
   catch { return null; }
 }
 
-function deleteLocalThread(threadId) {
+function deleteLocalThread(userId, threadId) {
+  if (!userId) return;
   try {
-    localStorage.removeItem(MSG_PREFIX + threadId);
-    localStorage.removeItem(QUIZ_PREFIX + threadId);
-    const threads = getStoredThreads().filter(t => t.thread_id !== threadId);
-    localStorage.setItem(THREADS_KEY, JSON.stringify(threads));
+    localStorage.removeItem(msgKey(userId, threadId));
+    localStorage.removeItem(quizKey(userId, threadId));
+    const threads = getStoredThreads(userId).filter(t => t.thread_id !== threadId);
+    localStorage.setItem(threadsKey(userId), JSON.stringify(threads));
   } catch (e) { console.warn('deleteLocalThread failed', e); }
 }
 
-function getStoredThreads() {
-  try { const r = localStorage.getItem(THREADS_KEY); return r ? JSON.parse(r) : []; }
+function getStoredThreads(userId) {
+  if (!userId) return [];
+  try { const r = localStorage.getItem(threadsKey(userId)); return r ? JSON.parse(r) : []; }
   catch { return []; }
 }
 
@@ -309,16 +320,8 @@ function AboutSaige() {
   return (
     <div className="min-h-screen bg-white font-sans">
       <Header />
-
-      {/* Hero — full bleed image with overlay */}
       <div className="w-full relative overflow-hidden" style={{ minHeight: '480px' }}>
-        <img
-          src="/images/SaigeBanner.webp"
-          alt="Farmer using Saige AI in the field"
-          fetchPriority="high"
-          loading="eager"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-        />
+        <img src="/images/SaigeBanner.webp" alt="Farmer using Saige AI in the field" fetchPriority="high" loading="eager" className="absolute inset-0 w-full h-full object-cover object-center" />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(10,20,10,0.88) 0%, rgba(10,20,10,0.65) 55%, rgba(10,20,10,0.15) 100%)' }} />
         <div className="relative max-w-5xl mx-auto px-6 py-16 flex flex-col md:flex-row items-center gap-10" style={{ minHeight: '480px' }}>
           <div className="flex-1 text-center md:text-left">
@@ -335,7 +338,6 @@ function AboutSaige() {
               <span className="text-lg">🚀</span> Coming Soon — Stay Tuned!
             </div>
           </div>
-
           <div className="flex-1 max-w-sm w-full">
             <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/20" style={{ background: 'rgba(15,23,42,0.92)', backdropFilter: 'blur(8px)' }}>
               <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10" style={{ background: 'rgba(30,41,59,0.95)' }}>
@@ -369,7 +371,6 @@ function AboutSaige() {
         </div>
       </div>
 
-      {/* Core features */}
       <div className="max-w-5xl mx-auto px-6 py-14">
         <h2 className="text-3xl font-bold text-gray-900 text-center mb-2">What Saige Can Do</h2>
         <p className="text-gray-500 text-center mb-10">Everything you need to run a smarter, more connected farm.</p>
@@ -386,7 +387,6 @@ function AboutSaige() {
         </div>
       </div>
 
-      {/* Future of farming banner */}
       <div className="py-14 px-6 text-center" style={{ background: 'linear-gradient(135deg, #0f172a, #14532d)' }}>
         <h2 className="text-3xl font-bold text-white mb-4">The Future of Farming is Integrated.</h2>
         <p className="text-gray-300 max-w-2xl mx-auto text-base leading-relaxed">
@@ -394,7 +394,6 @@ function AboutSaige() {
         </p>
       </div>
 
-      {/* Coming soon features */}
       <div className="max-w-5xl mx-auto px-6 py-14">
         <div className="text-center mb-10">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-4" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid #eab308', color: '#d97706' }}>
@@ -417,25 +416,17 @@ function AboutSaige() {
         </div>
       </div>
 
-      {/* Food-System Directory — live now */}
       <div className="max-w-5xl mx-auto px-6 pb-14">
         <div className="rounded-2xl p-8 flex flex-col sm:flex-row items-center gap-6" style={{ background: 'linear-gradient(135deg, #14532d, #166534)' }}>
           <span className="text-5xl flex-shrink-0">📁</span>
           <div className="text-center sm:text-left flex-1">
-            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold mb-2" style={{ background: 'rgba(74,222,128,0.2)', color: '#4ade80' }}>
-              ✓ Live Now
-            </div>
+            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold mb-2" style={{ background: 'rgba(74,222,128,0.2)', color: '#4ade80' }}>✓ Live Now</div>
             <h3 className="text-xl font-bold text-white mb-2">Food-System Business Directory</h3>
-            <p className="text-green-200 text-sm leading-relaxed">
-              Share your food-focused organization with thousands of interested customers.
-            </p>
+            <p className="text-green-200 text-sm leading-relaxed">Share your food-focused organization with thousands of interested customers.</p>
           </div>
-          <Link to="/directory" className="flex-shrink-0 bg-white text-green-800 font-bold py-2 px-6 rounded-xl text-sm hover:bg-green-50 transition-colors">
-            Explore Directory →
-          </Link>
+          <Link to="/directory" className="flex-shrink-0 bg-white text-green-800 font-bold py-2 px-6 rounded-xl text-sm hover:bg-green-50 transition-colors">Explore Directory →</Link>
         </div>
       </div>
-
       <Footer />
     </div>
   );
@@ -455,14 +446,17 @@ const _msgCache = new Map();
 export default function SaigePage() {
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
-  const PeopleID = localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  // userId is read once after auth check and used as the storage scope key
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
+    const pid = localStorage.getItem('people_id');
     setIsLoggedIn(Boolean(token));
+    setUserId(pid || null);
     setAuthChecked(true);
   }, []);
 
@@ -494,18 +488,19 @@ export default function SaigePage() {
   }, []);
 
   useEffect(() => {
-    if (activeThreadId && activeChat.length > 0) {
-      saveThread(activeThreadId, activeChat, 'active', advisoryTypeRef.current);
+    if (activeThreadId && activeChat.length > 0 && userId) {
+      saveThread(userId, activeThreadId, activeChat, 'active', advisoryTypeRef.current);
     }
-  }, [activeThreadId, activeChat]);
+  }, [activeThreadId, activeChat, userId]);
 
   useEffect(() => {
-    if (activeThreadId) saveQuiz(activeThreadId, quiz);
-  }, [activeThreadId, quiz]);
+    if (activeThreadId && userId) saveQuiz(userId, activeThreadId, quiz);
+  }, [activeThreadId, quiz, userId]);
 
   const fetchThreads = useCallback(async () => {
+    if (!userId) return;
     setThreadsLoading(true);
-    const localThreads = getLocalThreads();
+    const localThreads = getLocalThreads(userId);
     let apiThreads = [];
     try {
       const res = await fetch(`${SAIGE_API}/threads`, { headers: getAuthHeaders() });
@@ -513,9 +508,9 @@ export default function SaigePage() {
     } catch { /* backend unavailable */ }
     setThreads(mergeThreads(apiThreads, localThreads));
     setThreadsLoading(false);
-  }, []);
+  }, [userId]);
 
-  useEffect(() => { fetchThreads(); }, [fetchThreads]);
+  useEffect(() => { if (isLoggedIn && userId) fetchThreads(); }, [fetchThreads, isLoggedIn, userId]);
 
   async function handleSelectThread(threadId) {
     if (threadId === activeThreadId || switchingRef.current) return;
@@ -540,8 +535,8 @@ export default function SaigePage() {
           if (e instanceof DOMException && e.name === 'AbortError') return;
         }
       }
-      if (messages.length === 0) messages = getLocalMessages(threadId);
-      const savedQuiz = getLocalQuiz(threadId);
+      if (messages.length === 0) messages = getLocalMessages(userId, threadId);
+      const savedQuiz = getLocalQuiz(userId, threadId);
       setActiveThreadId(threadId);
       setActiveChat(messages.length > 0 ? messages : [WELCOME_MESSAGE]);
       setQuiz(savedQuiz);
@@ -554,7 +549,7 @@ export default function SaigePage() {
   }
 
   async function handleDeleteThread(threadId) {
-    deleteLocalThread(threadId);
+    deleteLocalThread(userId, threadId);
     try { await fetch(`${SAIGE_API}/threads/${threadId}`, { method: 'DELETE', headers: getAuthHeaders() }); } catch { /* ok */ }
     if (activeThreadId === threadId) {
       setActiveThreadId(generateThreadId());
@@ -593,7 +588,11 @@ export default function SaigePage() {
       const res = await fetch(`${SAIGE_API}/chat`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ user_input: val, thread_id: activeThreadId }),
+        body: JSON.stringify({
+          user_input: val,
+          thread_id: activeThreadId,
+          business_id: BusinessID || null,
+        }),
       });
 
       if (!res.ok) throw new Error(`Server error (${res.status})`);
@@ -630,7 +629,7 @@ export default function SaigePage() {
         advisoryTypeRef.current = data.advisory_type || null;
         setActiveChat(prev => {
           const updated = [...prev, { role: 'assistant', content }];
-          saveThread(activeThreadId, updated, 'complete', data.advisory_type || null);
+          saveThread(userId, activeThreadId, updated, 'complete', data.advisory_type || null);
           return updated;
         });
         fetchThreads();
@@ -656,15 +655,11 @@ export default function SaigePage() {
     sendMessage(answer, { showUserBubble: false });
   }
 
-  // Wait for auth check before rendering to avoid flash
   if (!authChecked) return null;
-
-  // Show About page for logged-out users
   if (!isLoggedIn) return <AboutSaige />;
 
-  // Show chatbot for logged-in users
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={userId}>
       <div style={{ margin: '-24px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
 
         <div style={{

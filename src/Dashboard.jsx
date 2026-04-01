@@ -50,12 +50,15 @@ export default function Dashboard() {
     }
   }, [navigate]);
 
-  const handleLogout = () => {
-    ['access_token','people_id','first_name','last_name','access_level',
-     'AccessToken','PeopleID','PeopleFirstName','PeopleLastName','AccessLevel']
-      .forEach(k => localStorage.removeItem(k));
-    navigate('/login');
-  };
+const handleLogout = () => {
+  ['access_token', 'people_id', 'first_name', 'last_name', 'access_level',
+   'AccessToken', 'PeopleID', 'PeopleFirstName', 'PeopleLastName', 'AccessLevel']
+    .forEach(k => localStorage.removeItem(k));
+Object.keys(localStorage)
+  .filter(k => k.startsWith('saige_'))
+  .forEach(k => localStorage.removeItem(k));
+  navigate('/login');
+};
 
   if (!user) return null;
 

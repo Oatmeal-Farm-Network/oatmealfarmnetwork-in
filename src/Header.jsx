@@ -39,14 +39,17 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    ['access_token','people_id','first_name','last_name','access_level',
-     'AccessToken','PeopleID','PeopleFirstName','PeopleLastName','AccessLevel']
-      .forEach(k => localStorage.removeItem(k));
-    setIsLoggedIn(false);
-    setUser(null);
-    navigate('/login');
-  };
+ const handleLogout = () => {
+  ['access_token', 'people_id', 'first_name', 'last_name', 'access_level',
+   'AccessToken', 'PeopleID', 'PeopleFirstName', 'PeopleLastName', 'AccessLevel']
+    .forEach(k => localStorage.removeItem(k));
+  Object.keys(localStorage)
+  .filter(k => k.startsWith('saige_'))
+  .forEach(k => localStorage.removeItem(k));
+  setIsLoggedIn(false);
+  setUser(null);
+  navigate('/login');
+};
 
   const KbDropdown = () => (
     <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded shadow-lg z-50 overflow-hidden">
