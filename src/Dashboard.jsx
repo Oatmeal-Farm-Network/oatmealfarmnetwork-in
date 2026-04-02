@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import { useAccount } from './AccountContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL;
+  const { setBusinesses: setContextBusinesses } = useAccount();
   const [user, setUser] = useState(null);
   const [businesses, setBusinesses] = useState([]);
   const [weather, setWeather] = useState(null);
@@ -28,7 +30,11 @@ export default function Dashboard() {
     if (peopleId) {
       fetch(`${API_URL}/auth/my-businesses?PeopleID=${peopleId}`)
         .then(r => r.json())
-        .then(data => setBusinesses(Array.isArray(data) ? data : []))
+        .then(data => {
+          const list = Array.isArray(data) ? data : [];
+          setBusinesses(list);
+          setContextBusinesses(list);
+        })
         .catch(() => setBusinesses([]));
     }
 
