@@ -17,6 +17,8 @@ import OrderDetail from './OrderDetail';
 import SellerOrders from './SellerOrders';
 import SellerListings from './SellerListings';
 import ForgotPassword from './ForgotPassword';
+import ServicesDirectory from './ServicesDirectory';
+import ServiceDetail from './ServiceDetail';
 
 
 const App = lazy(() => import('./App.jsx'))
@@ -31,6 +33,8 @@ const PrecisionAgAdd = lazy(() => import('./PrecisionAgAdd.jsx'))
 const PrecisionAgAnalyses = lazy(() => import('./PrecisionAgAnalyses.jsx'))
 const CropRotation = lazy(() => import('./CropRotation.jsx'))
 const OatSenseNotes = lazy(() => import('./OatSenseNotes.jsx'))
+const WebsiteBuilder = lazy(() => import('./WebsiteBuilder.jsx'))
+const WebsitePublic = lazy(() => import('./WebsitePublic.jsx'))
 const SaigePage = lazy(() => import('./SaigePage.jsx'))
 const AnimalsHome = lazy(() => import('./AnimalsHome.jsx'))
 const AccountChangeType = lazy(() => import('./AccountChangeType.jsx'))
@@ -64,6 +68,8 @@ const ServicesAdd = lazy(() => import('./ServicesAdd.jsx'))
 const ServicesSuggestCategory = lazy(() => import('./ServicesSuggestCategory.jsx'))
 const ServicesEdit = lazy(() => import('./ServicesEdit.jsx'))
 const FarmToTableMarketplace = lazy(() => import('./FarmToTableMarketplace.jsx'))
+const ProductsMarketplace = lazy(() => import('./ProductsMarketplace.jsx'))
+const ProductDetail = lazy(() => import('./ProductDetail.jsx'))
 const LivestockMarketplace = lazy(() => import('./LivestockMarketplace.jsx'))
 const LivestockForSale = lazy(() => import('./LivestockForSale.jsx'))
 const RanchList = lazy(() => import('./RanchList.jsx'))
@@ -96,6 +102,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/add" element={<PrecisionAgAdd />} />
           <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />
           <Route path="/precision-ag/crop-detection" element={<CropDetection />} />
+          <Route path="/website/builder" element={<WebsiteBuilder />} />
+          <Route path="/sites/:slug" element={<WebsitePublic />} />
           <Route path="/knowledgebases" element={<Knowledgebases />} />
           <Route path="/plant-knowledgebase" element={<PlantKnowledgebase />} />
           <Route path="/plant-knowledgebase/varietals/:plantId" element={<PlantVarietals />} />
@@ -119,6 +127,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/services/add" element={<ServicesAdd />} />
           <Route path="/services/suggest-category" element={<ServicesSuggestCategory />} />
           <Route path="/services/edit" element={<ServicesEdit />} />
+          <Route path="/services/public/:servicesId" element={<ServiceDetail />} />
+          <Route path="/services/directory/:categoryId" element={<ServicesDirectory />} />
+          <Route path="/services/directory" element={<ServicesDirectory />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Marketplace routes — specific before generic */}
@@ -134,6 +145,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/app/news/:id" element={<AccountLayout><ArticleDetail /></AccountLayout>} />
 
           {/* Public marketplace (anyone can browse) */}
+          <Route path="/marketplace/products/:id" element={<ProductDetail />} />
+          <Route path="/marketplace/products" element={<ProductsMarketplace />} />
           <Route path="/marketplace/:id" element={<MarketplaceProduct />} />
 
           {/* Buyer pages (login required) */}

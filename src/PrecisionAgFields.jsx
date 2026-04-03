@@ -38,14 +38,27 @@ async function createField(data) {
   return res.json();
 }
 
+async function updateField(fieldId, data) {
+  const res = await fetch(`${API_URL}/api/fields/${fieldId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to update field');
+  }
+  return res.json();
+}
+
 // ─── CreateFieldView ──────────────────────────────────────────────────────────
 
-function CreateFieldView({ businessId, onBack, onCreated }) {
+function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon }) {
   const [formData, setFormData] = useState({
     name: '',
     address: '',
-    latitude: '',
-    longitude: '',
+    latitude: initialLat || '',
+    longitude: initialLon || '',
     field_size_hectares: '',
     crop_type: '',
     planting_date: '',
@@ -59,6 +72,24 @@ function CreateFieldView({ businessId, onBack, onCreated }) {
   const mapRef = useRef(null);
   const drawnItemsRef = useRef(null);
   const mapContainerRef = useRef(null);
+
+  // Reverse geocode coordinates to fill address when coming from CropDetection
+  useEffect(() => {
+    if (!initialLat || !initialLon || formData.address) return;
+    fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${initialLat}&lon=${initialLon}&zoom=14&addressdetails=1`,
+      { headers: { 'User-Agent': 'OatmealFarmNetwork/1.0' } }
+    )
+      .then(r => r.json())
+      .then(data => {
+        if (data?.address) {
+          const a = data.address;
+          const parts = [a.road, a.city || a.town || a.village || a.county, a.state, a.postcode].filter(Boolean);
+          setFormData(prev => ({ ...prev, address: parts.join(', ') }));
+        }
+      })
+      .catch(() => {});
+  }, [initialLat, initialLon]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -82,7 +113,10 @@ function CreateFieldView({ businessId, onBack, onCreated }) {
   useEffect(() => {
     if (mapRef.current) return;
 
-    const map = L.map(mapContainerRef.current).setView([37.5, -121.9], 12);
+    const mapCenter = (initialLat && initialLon)
+      ? [parseFloat(initialLat), parseFloat(initialLon)]
+      : [37.5, -121.9];
+    const map = L.map(mapContainerRef.current).setView(mapCenter, 14);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -313,13 +347,226 @@ function CreateFieldView({ businessId, onBack, onCreated }) {
           </div>
 
           {/* Submit */}
-          <div className="pt-2">
+          <div className="pt-2 flex justify-end">
             <button
               type="submit"
               disabled={loading}
               className="px-8 py-2.5 bg-[#6D8E22] hover:bg-green-800 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors text-sm"
             >
-              {loading ? 'Creating…' : 'Create Field'}
+              {loading ? 'Adding…' : 'Add Field'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── EditFieldView ────────────────────────────────────────────────────────────
+
+function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
+  const [formData, setFormData] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+
+  const mapRef = useRef(null);
+  const drawnItemsRef = useRef(null);
+  const mapContainerRef = useRef(null);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/fields?business_id=${businessId}`)
+      .then(r => r.json())
+      .then(fields => {
+        const field = fields.find(f => (f.fieldid || f.id) === parseInt(fieldId));
+        if (!field) throw new Error('Field not found');
+        setFormData({
+          name: field.name || '',
+          address: field.address || '',
+          latitude: field.latitude ?? '',
+          longitude: field.longitude ?? '',
+          field_size_hectares: field.field_size_hectares ?? '',
+          crop_type: field.crop_type || '',
+          planting_date: field.planting_date || '',
+          boundary_geojson: '',
+          monitoring_interval_days: field.monitoring_interval_days ?? 5,
+          alert_threshold_health: field.alert_threshold_health ?? 50,
+        });
+      })
+      .catch(err => setError(err.message || 'Could not load field.'))
+      .finally(() => setFetching(false));
+  }, [businessId, fieldId]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await updateField(fieldId, { ...formData, business_id: businessId });
+      onSaved();
+    } catch (err) {
+      setError(err.message || 'Failed to update field. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!formData || mapRef.current) return;
+
+    const mapCenter = (formData.latitude && formData.longitude)
+      ? [parseFloat(formData.latitude), parseFloat(formData.longitude)]
+      : [37.5, -121.9];
+    const map = L.map(mapContainerRef.current).setView(mapCenter, 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors',
+    }).addTo(map);
+
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+    drawnItemsRef.current = drawnItems;
+
+    const drawControl = new L.Control.Draw({
+      draw: {
+        polygon: true,
+        rectangle: true,
+        circle: false,
+        marker: false,
+        polyline: false,
+        circlemarker: false,
+      },
+      edit: { featureGroup: drawnItems },
+    });
+    map.addControl(drawControl);
+
+    map.on(L.Draw.Event.CREATED, (e) => {
+      drawnItems.clearLayers();
+      drawnItems.addLayer(e.layer);
+      const geojson = e.layer.toGeoJSON().geometry;
+      const center = e.layer.getBounds().getCenter();
+      setFormData(prev => ({
+        ...prev,
+        boundary_geojson: JSON.stringify(geojson),
+        latitude: center.lat.toFixed(6),
+        longitude: center.lng.toFixed(6),
+      }));
+    });
+
+    mapRef.current = map;
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [formData]);
+
+  const inputClass =
+    'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6D8E22] focus:border-transparent transition';
+  const labelClass = 'block text-sm font-medium text-gray-700 mb-1';
+
+  if (fetching) return <div className="p-8 text-gray-500">Loading field…</div>;
+  if (!formData) return <div className="p-8 text-red-500">{error || 'Field not found.'}</div>;
+
+  return (
+    <div className="pb-16">
+      <button
+        onClick={onBack}
+        className="mb-6 text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
+      >
+        ← Back to Fields
+      </button>
+
+      <div className="bg-white rounded-lg shadow-sm p-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Field</h2>
+
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className={labelClass}>Field Name *</label>
+            <input type="text" name="name" value={formData.name} onChange={handleChange} required placeholder="e.g. North Pasture" className={inputClass} />
+          </div>
+
+          <div>
+            <label className={labelClass}>Address</label>
+            <input type="text" name="address" value={formData.address} onChange={handleChange} placeholder="Street address or nearest town" className={inputClass} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Latitude</label>
+              <input type="number" step="any" name="latitude" value={formData.latitude} onChange={handleChange} placeholder="Auto-filled from map" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Longitude</label>
+              <input type="number" step="any" name="longitude" value={formData.longitude} onChange={handleChange} placeholder="Auto-filled from map" className={inputClass} />
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              Draw Field Boundary{' '}
+              <span className="text-gray-400 font-normal">(optional — redraw to update)</span>
+            </label>
+            <div ref={mapContainerRef} style={{ height: '320px', width: '100%' }} className="rounded-lg border border-gray-200 z-0" />
+            {formData.boundary_geojson && (
+              <p className="mt-1 text-xs text-green-700 font-medium">
+                ✓ New boundary captured — centre set to {formData.latitude}, {formData.longitude}
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Field Size (hectares)</label>
+              <input type="number" step="0.01" min="0" name="field_size_hectares" value={formData.field_size_hectares} onChange={handleChange} placeholder="e.g. 12.5" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Crop Type</label>
+              <input type="text" name="crop_type" value={formData.crop_type} onChange={handleChange} placeholder="e.g. Oats, Wheat, Corn" className={inputClass} />
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClass}>Planting Date</label>
+            <input type="date" name="planting_date" value={formData.planting_date} onChange={handleChange} className={inputClass} />
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              Monitoring Interval —{' '}
+              <span className="text-[#6D8E22] font-semibold">every {formData.monitoring_interval_days} days</span>
+            </label>
+            <input type="range" name="monitoring_interval_days" min="1" max="30" value={formData.monitoring_interval_days} onChange={handleChange} className="w-full accent-[#6D8E22]" />
+            <div className="flex justify-between text-xs text-gray-400 mt-0.5"><span>1 day</span><span>30 days</span></div>
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              Alert Threshold —{' '}
+              <span className="text-[#6D8E22] font-semibold">health below {formData.alert_threshold_health}%</span>
+            </label>
+            <input type="range" name="alert_threshold_health" min="0" max="100" value={formData.alert_threshold_health} onChange={handleChange} className="w-full accent-[#6D8E22]" />
+            <div className="flex justify-between text-xs text-gray-400 mt-0.5"><span>0%</span><span>100%</span></div>
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-2.5 bg-[#6D8E22] hover:bg-green-800 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors text-sm"
+            >
+              {loading ? 'Saving…' : 'Save Changes'}
             </button>
           </div>
         </form>
@@ -339,6 +586,7 @@ function FieldList({ businessId, onCreateNew }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!businessId) return;
     getFields(businessId)
       .then(setFields)
       .catch((err) => setError(err.message || 'Could not load fields.'))
@@ -462,14 +710,40 @@ function FieldList({ businessId, onCreateNew }) {
 function PrecisionAgFields({ businessId: propBusinessId }) {
   const [searchParams] = useSearchParams();
   const businessId = propBusinessId || searchParams.get('BusinessID');
-  const PeopleID = localStorage.getItem('PeopleID');
+  const PeopleID = localStorage.getItem('PeopleID') || localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();
-  const initialView = searchParams.get('view') === 'create-field' ? 'create' : 'list';
+  const initialView = searchParams.get('view') === 'create-field'
+    ? 'create'
+    : searchParams.get('view') === 'edit-field'
+    ? 'edit'
+    : 'list';
   const [view, setView] = useState(initialView);
+  const initialLat = searchParams.get('lat');
+  const initialLon = searchParams.get('lon');
+  const editFieldId = searchParams.get('FieldID');
+  const [loadError, setLoadError] = useState(false);
+  const loadTimeoutRef = useRef(null);
 
-  useEffect(() => { if (businessId) LoadBusiness(businessId); }, [businessId]);
+  useEffect(() => {
+    if (!businessId) { setLoadError(true); return; }
+    setLoadError(false);
+    LoadBusiness(businessId);
+    if (!Business) {
+      loadTimeoutRef.current = setTimeout(() => setLoadError(true), 10000);
+    }
+    return () => clearTimeout(loadTimeoutRef.current);
+  }, [businessId]);
 
-  if (!Business) return <div className="p-8 text-gray-500">Loading...</div>;
+  // Cancel timeout and clear error once Business is confirmed loaded
+  useEffect(() => {
+    if (Business) {
+      clearTimeout(loadTimeoutRef.current);
+      setLoadError(false);
+    }
+  }, [Business]);
+
+  if (!Business && !loadError) return <div className="p-8 text-gray-500">Loading...</div>;
+  if (loadError || !Business) return <div className="p-8 text-red-500">Could not load account. Please go back and try again.</div>;
 
   return (
     <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID}>
@@ -485,6 +759,16 @@ function PrecisionAgFields({ businessId: propBusinessId }) {
             businessId={businessId}
             onBack={() => setView('list')}
             onCreated={() => setView('list')}
+            initialLat={initialLat}
+            initialLon={initialLon}
+          />
+        )}
+        {view === 'edit' && editFieldId && (
+          <EditFieldView
+            businessId={businessId}
+            fieldId={editFieldId}
+            onBack={() => setView('list')}
+            onSaved={() => setView('list')}
           />
         )}
       </div>

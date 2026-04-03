@@ -29,6 +29,28 @@ function NavChild({ to, label }) {
   );
 }
 
+function NavChildDropdown({ label, isOpen, onToggle, children }) {
+  return (
+    <div>
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
+        style={{ width: 'calc(100% - 1rem)' }}
+      >
+        <span>{label}</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 shrink-0">
+          {isOpen ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
+        </svg>
+      </button>
+      {isOpen && (
+        <div className="flex flex-col gap-0.5 mt-0.5">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function NavSection({ icon, label, expanded, isOpen, onToggle, children }) {
   return (
     <div className="mb-1">
@@ -36,7 +58,7 @@ function NavSection({ icon, label, expanded, isOpen, onToggle, children }) {
         onClick={onToggle}
         className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/50 text-gray-700 text-sm transition-all"
       >
-        <img src={icon} alt={label} className="w-6 h-6 shrink-0" />
+        {icon && <img src={icon} alt={label} className="w-6 h-6 shrink-0" />}
         {expanded && (
           <>
             <span className="flex-grow text-left whitespace-nowrap">{label}</span>
@@ -59,6 +81,8 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
   const { Expanded, setExpanded, OpenSections, setOpenSections } = useAccount();
   const BT = Business?.BusinessTypeID;
   const [fields, setFields] = useState([]);
+  const [websitePages, setWebsitePages] = useState([]);
+  const [websiteSlug, setWebsiteSlug] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -76,7 +100,21 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
         .then(data => setFields(Array.isArray(data) ? data : []))
         .catch(() => setFields([]));
     }
-  }, [BT, BusinessID, location.pathname, location.search]);
+  }, [BT, BusinessID]);
+
+  useEffect(() => {
+    if (!BusinessID) return;
+    fetch(`${API_URL}/api/website/site?business_id=${BusinessID}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(site => {
+        if (!site) return;
+        setWebsiteSlug(site.slug);
+        return fetch(`${API_URL}/api/website/pages?website_id=${site.website_id}`)
+          .then(r => r.ok ? r.json() : [])
+          .then(pages => setWebsitePages(Array.isArray(pages) ? pages.filter(p => p.is_published) : []));
+      })
+      .catch(() => {});
+  }, [BusinessID]);
 
   const toggleSection = (label) => {
     setOpenSections(prev => ({ ...prev, [label]: !prev[label] }));
@@ -91,7 +129,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
       <div className="flex flex-grow">
         <div
           className={`fixed top-[72px] left-0 bottom-0 z-40 flex flex-col transition-all duration-300 ${Expanded ? 'w-52' : 'w-16'}`}
-          style={{ backgroundColor: 'rgba(210, 211, 210, 0.75)', backdropFilter: 'blur(4px)' }}
+          style={{ backgroundColor: '#faf6ef' }}
         >
           <button
             onClick={() => setExpanded(!Expanded)}
@@ -117,9 +155,9 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
             <div className="mb-1">
               <div className="flex items-center gap-0 rounded-lg overflow-hidden">
                 <NavItem
-                  to={`/account?BusinessID=${BusinessID}`}
+                  to="/dashboard"
                   icon="/icons/Website.svg"
-                  label="Account Home"
+                  label="Dashboard"
                   expanded={Expanded}
                 />
                 {Expanded && (
@@ -142,25 +180,6 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               )}
             </div>
 
-            {/* Farm 2 Table — combined section (replaces separate Marketplace + Farm 2 Table) */}
-            <NavSection
-              icon="/icons/produce.webp"
-              label="Farm 2 Table"
-              expanded={Expanded}
-              isOpen={OpenSections['Farm 2 Table'] || false}
-              onToggle={() => toggleSection('Farm 2 Table')}
-            >
-              <NavChild to={`/seller/orders?BusinessID=${BusinessID}`} label="Incoming Orders" />
-              <NavChild to="/marketplaces/farm-to-table" label="Browse Marketplace" />
-              {[8, 10, 14, 26, 29, 31].includes(BT) && (
-                <>
-                  <NavChild to={`/produce/inventory?BusinessID=${BusinessID}`} label="Produce" />
-                  <NavChild to={`/produce/processed-food?BusinessID=${BusinessID}`} label="Processed Foods" />
-                  <NavChild to={`/produce/meat?BusinessID=${BusinessID}`} label="Meat" />
-                </>
-              )}
-            </NavSection>
-
             {BT === 8 && (
               <NavSection
                 icon="/icons/PrecisionAg.svg"
@@ -169,7 +188,6 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
                 isOpen={OpenSections['Precision Ag'] || false}
                 onToggle={() => toggleSection('Precision Ag')}
               >
-                <NavChild to={`/oatsense?BusinessID=${BusinessID}`} label="Dashboard" />
                 <NavChild to={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} label="Crop Detection" />
                 <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}`} label="Fields" />
                 <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`} label="Add Field" />
@@ -192,6 +210,24 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
                 <NavChild to={`/oatsense/notes?BusinessID=${BusinessID}`} label="Notes" />
               </NavSection>
             )}
+
+            {/* Farm 2 Table */}
+            <NavSection
+              icon="/icons/produce.webp"
+              label="Farm 2 Table"
+              expanded={Expanded}
+              isOpen={OpenSections['Farm 2 Table'] || false}
+              onToggle={() => toggleSection('Farm 2 Table')}
+            >
+              <NavChild to={`/seller/orders?BusinessID=${BusinessID}`} label="Incoming Orders" />
+              {[8, 10, 14, 26, 29, 31].includes(BT) && (
+                <>
+                  <NavChild to={`/produce/inventory?BusinessID=${BusinessID}`} label="Produce" />
+                  <NavChild to={`/produce/processed-food?BusinessID=${BusinessID}`} label="Processed Foods" />
+                  <NavChild to={`/produce/meat?BusinessID=${BusinessID}`} label="Meat" />
+                </>
+              )}
+            </NavSection>
 
             {BT === 8 && (
               <NavSection
@@ -216,8 +252,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               isOpen={OpenSections.Products || false}
               onToggle={() => toggleSection('Products')}
             >
-              <NavChild to={`/products?BusinessID=${BusinessID}`} label="List" />
-              <NavChild to={`/products/add?BusinessID=${BusinessID}`} label="Add" />
+              <NavChild to="/marketplace/products" label="Browse Marketplace" />
               <NavChild to={`/products/settings?BusinessID=${BusinessID}`} label="Settings" />
             </NavSection>
 
@@ -228,9 +263,9 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               isOpen={OpenSections.Services || false}
               onToggle={() => toggleSection('Services')}
             >
-              <NavChild to={`/services?BusinessID=${BusinessID}`} label="List" />
+              <NavChild to="/services/directory" label="Browse Services" />
+              <NavChild to={`/services?BusinessID=${BusinessID}`} label="My Services" />
               <NavChild to={`/services/add?BusinessID=${BusinessID}`} label="Add" />
-              <NavChild to={`/services/delete?BusinessID=${BusinessID}`} label="Delete" />
               <NavChild to={`/services/suggest-category?BusinessID=${BusinessID}`} label="Suggest Category" />
             </NavSection>
 
@@ -267,9 +302,27 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               isOpen={OpenSections['My Website'] || false}
               onToggle={() => toggleSection('My Website')}
             >
-              <NavChild to={`/website/design?BusinessID=${BusinessID}`} label="Graphic Design" />
-              <NavChild to={`/website/home?BusinessID=${BusinessID}&PeopleID=${PeopleID}`} label="Home Page" />
-              <NavChild to={`/website/about?BusinessID=${BusinessID}&PeopleID=${PeopleID}`} label="About Us" />
+              <NavChild to={`/website/builder?BusinessID=${BusinessID}`} label="Builder" />
+              {websitePages.length > 0 && (
+                <NavChildDropdown
+                  label="Pages"
+                  isOpen={OpenSections['Website Pages'] || false}
+                  onToggle={() => toggleSection('Website Pages')}
+                >
+                  {websitePages.map(page => (
+                    <NavChild
+                      key={page.page_id}
+                      to={`/website/builder?BusinessID=${BusinessID}&page=${page.page_id}`}
+                      label={page.page_name}
+                    />
+                  ))}
+                </NavChildDropdown>
+              )}
+              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=design`} label="Design" />
+              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=settings`} label="Settings" />
+              {websiteSlug && (
+                <NavChild to={`/sites/${websiteSlug}`} label="View Live Site ↗" />
+              )}
             </NavSection>
 
           </nav>

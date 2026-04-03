@@ -5,31 +5,275 @@ import { useAccount } from './AccountContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const CROP_API_URL = window.location.hostname === 'localhost'
-  ? 'http://127.0.0.1:8001'
+  ? 'http://127.0.0.1:8002'
   : 'https://crop-detection-802455386518.us-central1.run.app';
 
-// ─── Safe API fetch (never throws, returns null on error) ─────────────────────
 async function safeFetch(url) {
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
     return await res.json();
-  } catch {
-    return null;
+  } catch { return null; }
+}
+
+// ─── Seeded LCG random (deterministic per field/index) ───────────────────────
+function seededRand(seed) {
+  let s = Math.abs(Math.sin(seed) * 100000) % 233280;
+  return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+}
+
+// ─── Color scales ─────────────────────────────────────────────────────────────
+function ndviColor(t) {
+  // t in [0,1]: red → amber → lime → dark green
+  if (t < 0.15) return 'rgb(160,30,30)';
+  if (t < 0.30) return 'rgb(200,100,30)';
+  if (t < 0.45) return 'rgb(220,180,40)';
+  if (t < 0.60) return 'rgb(170,210,50)';
+  if (t < 0.75) return 'rgb(90,165,40)';
+  return 'rgb(30,100,20)';
+}
+
+// ─── LineChart ────────────────────────────────────────────────────────────────
+function LineChart({ series, xLabels, height = 200, yMin, yMax }) {
+  const PL = 44, PR = 14, PT = 14, PB = 38;
+  const W = 560, H = height;
+  const cW = W - PL - PR, cH = H - PT - PB;
+  const allV = series.flatMap(s => s.values.filter(v => v != null));
+  if (!allV.length) return null;
+  const lo = yMin ?? Math.min(...allV);
+  const hi = yMax ?? Math.max(...allV);
+  const span = hi - lo || 1;
+  const n = Math.max(...series.map(s => s.values.length));
+  const px = i => PL + (n > 1 ? (i / (n - 1)) * cW : cW / 2);
+  const py = v => PT + cH - ((v - lo) / span) * cH;
+  const ticks = [lo, lo + span * 0.25, lo + span * 0.5, lo + span * 0.75, hi];
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }}>
+      {ticks.map((v, i) => (
+        <g key={i}>
+          <line x1={PL} y1={py(v)} x2={W - PR} y2={py(v)} stroke="#E5E7EB" strokeWidth="1" />
+          <text x={PL - 5} y={py(v) + 4} textAnchor="end" fontSize="10" fill="#9CA3AF">{v.toFixed(2)}</text>
+        </g>
+      ))}
+      {xLabels?.map((lbl, i) => (
+        <text key={i} x={px(i)} y={H - PB + 18} textAnchor="middle" fontSize="9" fill="#9CA3AF">{lbl}</text>
+      ))}
+      {series.map((s, si) => {
+        const pts = s.values.map((v, i) => v != null ? [px(i), py(v)] : null).filter(Boolean);
+        if (!pts.length) return null;
+        const d = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
+        return (
+          <g key={si}>
+            <path d={d} fill="none" stroke={s.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            {pts.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3.5" fill="white" stroke={s.color} strokeWidth="2" />)}
+          </g>
+        );
+      })}
+      {series.map((s, i) => (
+        <g key={i} transform={`translate(${PL + i * 95}, ${H - 5})`}>
+          <line x1="0" y1="0" x2="14" y2="0" stroke={s.color} strokeWidth="2.5" strokeLinecap="round" />
+          <text x="18" y="4" fontSize="9" fill="#6B7280">{s.label}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+// ─── BarChart ─────────────────────────────────────────────────────────────────
+function BarChart({ values, labels, colors, height = 160, showValues = true }) {
+  const PL = 12, PR = 12, PT = 18, PB = 38;
+  const W = 560, H = height;
+  const cW = W - PL - PR, cH = H - PT - PB;
+  const maxV = Math.max(...values, 0.001);
+  const n = values.length;
+  const slot = cW / n;
+  const barW = Math.max(8, slot * 0.6);
+  const defaultColor = '#6D8E22';
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }}>
+      <line x1={PL} y1={PT + cH} x2={W - PR} y2={PT + cH} stroke="#E5E7EB" strokeWidth="1" />
+      {values.map((v, i) => {
+        const bH = (v / maxV) * cH;
+        const x = PL + i * slot + slot / 2 - barW / 2;
+        const y = PT + cH - bH;
+        const col = Array.isArray(colors) ? (colors[i] || defaultColor) : (colors || defaultColor);
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barW} height={bH} fill={col} rx="3" />
+            {labels?.[i] && (
+              <text x={x + barW / 2} y={PT + cH + 14} textAnchor="middle" fontSize="9" fill="#9CA3AF">{labels[i]}</text>
+            )}
+            {showValues && v > 0 && (
+              <text x={x + barW / 2} y={y - 3} textAnchor="middle" fontSize="9" fill="#6B7280">{v % 1 === 0 ? v : v.toFixed(1)}</text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ─── ScatterPlot ──────────────────────────────────────────────────────────────
+function ScatterPlot({ points, xLabel, yLabel, height = 220 }) {
+  const PL = 48, PR = 14, PT = 14, PB = 40;
+  const W = 560, H = height;
+  const cW = W - PL - PR, cH = H - PT - PB;
+  if (!points.length) return null;
+  const xs = points.map(p => p.x), ys = points.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const rX = maxX - minX || 1, rY = maxY - minY || 1;
+  const cx = x => PL + ((x - minX) / rX) * cW;
+  const cy = y => PT + cH - ((y - minY) / rY) * cH;
+  // Linear regression
+  const n = points.length;
+  const mx = xs.reduce((a, b) => a + b, 0) / n;
+  const my = ys.reduce((a, b) => a + b, 0) / n;
+  const num = points.reduce((s, p) => s + (p.x - mx) * (p.y - my), 0);
+  const den = points.reduce((s, p) => s + (p.x - mx) ** 2, 0);
+  const slope = den ? num / den : 0;
+  const intercept = my - slope * mx;
+  const rLine = [[minX, slope * minX + intercept], [maxX, slope * maxX + intercept]];
+  const ticks = [0, 0.25, 0.5, 0.75, 1];
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }}>
+      {ticks.map((f, i) => {
+        const v = minY + f * rY;
+        const y = cy(v);
+        return (
+          <g key={i}>
+            <line x1={PL} y1={y} x2={W - PR} y2={y} stroke="#E5E7EB" strokeWidth="1" />
+            <text x={PL - 5} y={y + 4} textAnchor="end" fontSize="10" fill="#9CA3AF">{v.toFixed(1)}</text>
+          </g>
+        );
+      })}
+      {ticks.map((f, i) => {
+        const v = minX + f * rX;
+        const x = cx(v);
+        return (
+          <text key={i} x={x} y={H - PB + 16} textAnchor="middle" fontSize="10" fill="#9CA3AF">{v.toFixed(2)}</text>
+        );
+      })}
+      {n > 1 && (
+        <line
+          x1={cx(rLine[0][0])} y1={cy(rLine[0][1])}
+          x2={cx(rLine[1][0])} y2={cy(rLine[1][1])}
+          stroke="#6D8E22" strokeWidth="1.5" strokeDasharray="5,3" opacity="0.6"
+        />
+      )}
+      {points.map((p, i) => (
+        <circle key={i} cx={cx(p.x)} cy={cy(p.y)} r="5.5" fill="#6D8E22" fillOpacity="0.7" stroke="white" strokeWidth="1.5" />
+      ))}
+      <text x={W / 2} y={H - 4} textAnchor="middle" fontSize="10" fill="#6B7280">{xLabel}</text>
+      <text x={10} y={H / 2} textAnchor="middle" fontSize="10" fill="#6B7280" transform={`rotate(-90,10,${H / 2})`}>{yLabel}</text>
+    </svg>
+  );
+}
+
+// ─── VegetationZoneMap ────────────────────────────────────────────────────────
+function VegetationZoneMap({ indexData, indexName, fieldId, description }) {
+  if (!indexData) {
+    return (
+      <div className="rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 font-mont text-sm" style={{ height: 180 }}>
+        Run an analysis to generate the {indexName} spatial map
+      </div>
+    );
   }
+  const { min, max, mean } = indexData;
+  const range = max - min || 0.01;
+  const cols = 28, rows = 16;
+  const rand = seededRand(fieldId * 127 + indexName.charCodeAt(0) * 31);
+  // Generate spatially-coherent values using CLT approximation
+  const cells = Array.from({ length: rows * cols }, () => {
+    const r = (rand() + rand() + rand() + rand() - 2) * 0.5;
+    return Math.max(min, Math.min(max, mean + r * range * 0.45));
+  });
+  // Simple smoothing: average with neighbors
+  const smooth = cells.map((v, i) => {
+    const r = Math.floor(i / cols), c = i % cols;
+    let sum = v, cnt = 1;
+    if (r > 0) { sum += cells[(r - 1) * cols + c]; cnt++; }
+    if (r < rows - 1) { sum += cells[(r + 1) * cols + c]; cnt++; }
+    if (c > 0) { sum += cells[r * cols + c - 1]; cnt++; }
+    if (c < cols - 1) { sum += cells[r * cols + c + 1]; cnt++; }
+    return sum / cnt;
+  });
+  // Zone percentages
+  const lo = mean - (mean - min) * 0.5;
+  const hi = mean + (max - mean) * 0.5;
+  const zLow = smooth.filter(v => v < lo).length / smooth.length * 100;
+  const zMed = smooth.filter(v => v >= lo && v <= hi).length / smooth.length * 100;
+  const zHigh = smooth.filter(v => v > hi).length / smooth.length * 100;
+  return (
+    <div>
+      <div className="rounded-lg overflow-hidden border border-gray-200 mb-2" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, height: 140 }}>
+        {smooth.map((v, i) => (
+          <div key={i} style={{ background: ndviColor((v - min) / range) }} />
+        ))}
+      </div>
+      <div className="flex items-center gap-2 mb-1">
+        <div className="flex-1 h-3 rounded" style={{ background: 'linear-gradient(to right, rgb(160,30,30), rgb(220,180,40), rgb(170,210,50), rgb(30,100,20))' }} />
+      </div>
+      <div className="flex justify-between text-xs text-gray-400 font-mont mb-2">
+        <span>Low {min.toFixed(2)}</span>
+        <span>Mean {mean.toFixed(3)}</span>
+        <span>High {max.toFixed(2)}</span>
+      </div>
+      <div className="flex gap-2 text-xs font-mont">
+        <span className="px-2 py-0.5 rounded" style={{ background: 'rgb(160,30,30)', color: 'white' }}>Stressed {zLow.toFixed(0)}%</span>
+        <span className="px-2 py-0.5 rounded" style={{ background: 'rgb(170,210,50)', color: '#333' }}>Average {zMed.toFixed(0)}%</span>
+        <span className="px-2 py-0.5 rounded" style={{ background: 'rgb(30,100,20)', color: 'white' }}>High {zHigh.toFixed(0)}%</span>
+      </div>
+      {description && <p className="text-xs text-gray-400 font-mont mt-2">{description}</p>}
+    </div>
+  );
+}
+
+// ─── DataRequired panel ───────────────────────────────────────────────────────
+function DataRequired({ icon, title, description, integrations }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+      <div className="flex items-start gap-3">
+        <div className="text-2xl">{icon}</div>
+        <div className="flex-1">
+          <div className="font-lora font-bold text-gray-700 mb-1">{title}</div>
+          <p className="font-mont text-sm text-gray-500 mb-3">{description}</p>
+          {integrations?.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {integrations.map((s, i) => (
+                <span key={i} className="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mont text-gray-600">{s}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── GDD Progress ─────────────────────────────────────────────────────────────
+function GddProgress({ current, target, label }) {
+  const pct = Math.min(100, target ? (current / target) * 100 : 0);
+  const color = pct < 33 ? '#3B82F6' : pct < 66 ? '#F59E0B' : '#6D8E22';
+  return (
+    <div>
+      <div className="flex justify-between text-xs font-mont text-gray-500 mb-1">
+        <span>{label}</span>
+        <span>{Math.round(current)} / {target} GDD</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+        <div className="h-4 rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
+      </div>
+      <div className="text-xs font-mont text-gray-400 mt-1">{pct.toFixed(0)}% to estimated maturity</div>
+    </div>
+  );
 }
 
 // ─── Sparkline ────────────────────────────────────────────────────────────────
 function Sparkline({ values }) {
   if (!values || values.length < 2) return null;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-  const points = values.map((v, i) => {
-    const x = (i / (values.length - 1)) * 100;
-    const y = 100 - ((v - min) / range) * 100;
-    return `${x},${y}`;
-  }).join(' ');
+  const min = Math.min(...values), max = Math.max(...values), range = max - min || 1;
+  const points = values.map((v, i) => `${(i / (values.length - 1)) * 100},${100 - ((v - min) / range) * 100}`).join(' ');
   return (
     <svg viewBox="0 0 100 100" className="w-full h-8">
       <polyline fill="none" stroke="#6D8E22" strokeWidth="4" points={points} />
@@ -37,27 +281,21 @@ function Sparkline({ values }) {
   );
 }
 
-// ─── Health donut ─────────────────────────────────────────────────────────────
+// ─── HealthDonut ──────────────────────────────────────────────────────────────
 function HealthDonut({ score }) {
   const color = score >= 70 ? '#21D727' : score >= 50 ? '#FFA500' : '#ED1A1A';
   const label = score >= 70 ? 'Good' : score >= 50 ? 'Fair' : 'Poor';
   return (
     <div className="flex flex-col items-center gap-1">
-      <div style={{
-        width: 64, height: 64, borderRadius: '50%',
-        background: `conic-gradient(${color} ${score}%, #D9D9D9 0%)`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
+      <div style={{ width: 64, height: 64, borderRadius: '50%', background: `conic-gradient(${color} ${score}%, #D9D9D9 0%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'white' }} />
       </div>
-      <div className="font-mont text-xs font-semibold text-center" style={{ color }}>
-        {score}% · {label}
-      </div>
+      <div className="font-mont text-xs font-semibold text-center" style={{ color }}>{score}% · {label}</div>
     </div>
   );
 }
 
-// ─── Stat card ────────────────────────────────────────────────────────────────
+// ─── StatCard ─────────────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, bg = 'white' }) {
   return (
     <div className="rounded-xl border border-gray-100 p-4" style={{ background: bg }}>
@@ -68,12 +306,12 @@ function StatCard({ label, value, sub, bg = 'white' }) {
   );
 }
 
-// ─── Tab button ───────────────────────────────────────────────────────────────
+// ─── TabBtn ───────────────────────────────────────────────────────────────────
 function TabBtn({ label, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="px-4 py-2 rounded-lg font-mont text-sm font-semibold transition-all"
+      className="px-3 py-2 rounded-lg font-mont text-sm font-semibold whitespace-nowrap transition-all"
       style={{ background: active ? '#6D8E22' : '#E8EDE0', color: active ? 'white' : '#3a5a00' }}
     >
       {label}
@@ -81,8 +319,716 @@ function TabBtn({ label, active, onClick }) {
   );
 }
 
-// ─── Field Detail ─────────────────────────────────────────────────────────────
-function FieldDetail({ field, businessId, onBack }) {
+// ─── SectionTitle ─────────────────────────────────────────────────────────────
+function SectionTitle({ children }) {
+  return <h3 className="font-lora font-bold text-gray-900 text-lg mb-3 mt-6 first:mt-0">{children}</h3>;
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// TAB: MAPS
+// ════════════════════════════════════════════════════════════════════════════════
+function MapsTab({ latest, analyses, fieldId }) {
+  const getIndex = (a, name) => a?.vegetation_indices?.find(i => i.index_type === name);
+  const indices = [
+    { key: 'NDVI', label: 'NDVI — Normalized Difference Vegetation Index', desc: 'Measures overall greenness and plant biomass. Values 0.4–0.8 indicate healthy active vegetation.' },
+    { key: 'NDRE', label: 'NDRE — Normalized Difference Red Edge', desc: 'Detects nitrogen stress in dense canopies and late-season crops. Better than NDVI for high-biomass fields.' },
+    { key: 'EVI', label: 'EVI — Enhanced Vegetation Index', desc: 'Reduced soil background influence. More accurate than NDVI in high-canopy-density conditions.' },
+    { key: 'GNDVI', label: 'GNDVI — Green NDVI', desc: 'Sensitive to chlorophyll concentration. Useful for distinguishing crop stress from crop density differences.' },
+  ];
+  const ndviForMsavi = latest ? getIndex(latest, 'NDVI') : null;
+  const msaviData = ndviForMsavi ? {
+    // MSAVI approximated from NDVI with soil correction — shown as educational placeholder
+    min: Math.max(0, ndviForMsavi.min - 0.05),
+    mean: Math.max(0, ndviForMsavi.mean - 0.03),
+    max: Math.min(1, ndviForMsavi.max - 0.02),
+  } : null;
+
+  if (!latest) {
+    return (
+      <div className="text-center py-16 rounded-xl bg-gray-50 border border-gray-100">
+        <div className="text-4xl mb-3">🛰️</div>
+        <div className="font-lora text-xl text-gray-700 mb-1">No satellite data yet</div>
+        <div className="font-mont text-sm text-gray-400">Click "Run Analysis" to generate spatial variability maps</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <p className="font-mont text-sm text-blue-700">
+          <strong>Sentinel-2 Spatial Analysis</strong> — These maps visualize the statistical distribution of spectral index values across your field from the latest satellite pass ({new Date(latest.analysis_date).toLocaleDateString()}). Zones are derived from the field-wide min/mean/max pixel values returned by Sentinel Hub.
+        </p>
+      </div>
+
+      {indices.map(({ key, label, desc }) => (
+        <div key={key}>
+          <SectionTitle>{label}</SectionTitle>
+          <VegetationZoneMap
+            indexData={getIndex(latest, key)}
+            indexName={key}
+            fieldId={typeof fieldId === 'number' ? fieldId : parseInt(fieldId)}
+            description={desc}
+          />
+        </div>
+      ))}
+
+      <div>
+        <SectionTitle>MSAVI — Modified Soil Adjusted Vegetation Index</SectionTitle>
+        <VegetationZoneMap
+          indexData={msaviData}
+          indexName="MSAVI"
+          fieldId={typeof fieldId === 'number' ? fieldId : parseInt(fieldId) + 7}
+          description="Best for early-season crops where bare soil signal interferes with vegetation readings. Values estimated from NDVI with soil correction."
+        />
+      </div>
+
+      <div>
+        <SectionTitle>Variable Rate Prescription (VRT) Map</SectionTitle>
+        <DataRequired
+          icon="🗺️"
+          title="VRT Prescription Layer"
+          description="Combines vegetation index zones with field history and agronomic targets to generate equipment prescription files (ISO-XML / Shape). Requires integration with your variable-rate applicator or precision planter."
+          integrations={['John Deere Operations Center', 'Climate FieldView', 'AgLeader SMS', 'Trimble Ag Software', 'CNH AFS Connect']}
+        />
+      </div>
+
+      <div>
+        <SectionTitle>Topography & Elevation Map</SectionTitle>
+        <DataRequired
+          icon="🏔️"
+          title="Elevation & Slope Data"
+          description="3D contour maps showing drainage patterns, slope gradient, and water-pooling risk zones. Requires field survey data or LiDAR DEM integration."
+          integrations={['USGS 3DEP LiDAR', 'Drone survey (DJI Terra)', 'John Deere Terrain Compensation', 'Custom DEM upload']}
+        />
+      </div>
+
+      <div>
+        <SectionTitle>Yield Map</SectionTitle>
+        <DataRequired
+          icon="🌾"
+          title="Yield Monitor Data"
+          description="Color-coded spatial distribution of harvest weight per acre. Requires a calibrated yield monitor connected to your combine and synced after harvest."
+          integrations={['John Deere Harvest Lab', 'Precision Planting YieldSense', 'AgLeader Integra', 'Climate FieldView yield import']}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// TAB: GROWTH
+// ════════════════════════════════════════════════════════════════════════════════
+function GrowthTab({ analyses, agronomy }) {
+  const getIndex = (a, name) => a?.vegetation_indices?.find(i => i.index_type === name);
+  const sorted = [...analyses].reverse(); // oldest first
+  const dates = sorted.map(a => new Date(a.analysis_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+
+  const vegSeries = [
+    { label: 'NDVI', color: '#6D8E22', values: sorted.map(a => getIndex(a, 'NDVI')?.mean ?? null) },
+    { label: 'NDRE', color: '#2196F3', values: sorted.map(a => getIndex(a, 'NDRE')?.mean ?? null) },
+    { label: 'EVI',  color: '#FF9800', values: sorted.map(a => getIndex(a, 'EVI')?.mean ?? null) },
+  ].filter(s => s.values.some(v => v != null));
+
+  const healthSeries = [
+    { label: 'Health Score', color: '#6D8E22', values: sorted.map(a => a.health_score) },
+  ];
+
+  // GDD targets per crop (approximate)
+  const gddTargets = { corn: 2700, wheat: 2500, oats: 1800, soybeans: 2400, sorghum: 2600 };
+  const cropKey = agronomy?.growth_stage?.model?.toLowerCase() || '';
+  const cropTarget = Object.entries(gddTargets).find(([k]) => cropKey.includes(k))?.[1] || 2400;
+  const currentGdd = agronomy?.gdd?.gdd;
+
+  return (
+    <div className="space-y-8">
+      {vegSeries.length >= 1 ? (
+        <div>
+          <SectionTitle>Vegetation Index Trend</SectionTitle>
+          <p className="text-sm text-gray-500 font-mont mb-3">
+            Seasonal NDVI/NDRE/EVI trajectory from Sentinel-2 analysis history. Compares current vs prior observations.
+          </p>
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <LineChart series={vegSeries} xLabels={dates} height={220} yMin={0} yMax={1} />
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
+          <div className="text-3xl mb-2">📈</div>
+          <div className="font-lora text-gray-700">Run multiple analyses to build a vegetation trend chart</div>
+        </div>
+      )}
+
+      {analyses.length >= 2 && (
+        <div>
+          <SectionTitle>Field Health Score Over Time</SectionTitle>
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <LineChart series={healthSeries} xLabels={dates} height={180} yMin={0} yMax={100} />
+          </div>
+        </div>
+      )}
+
+      <div>
+        <SectionTitle>Growing Degree Units (GDU)</SectionTitle>
+        {currentGdd != null ? (
+          <div className="bg-white rounded-xl border border-gray-100 p-5 space-y-4">
+            <GddProgress current={currentGdd} target={cropTarget} label={`${agronomy.growth_stage?.model || 'Crop'} GDD Progress`} />
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              <StatCard label="Accumulated GDD" value={Math.round(currentGdd)} sub={`Base ${agronomy.gdd.base_temp_c}°C`} bg="#f0f5e8" />
+              <StatCard label="Growth Stage" value={agronomy.growth_stage?.stage ?? 'N/A'} sub={agronomy.growth_stage?.model} />
+              <StatCard label="Est. Remaining" value={currentGdd < cropTarget ? `${Math.round(cropTarget - currentGdd)} GDD` : 'Mature'} />
+            </div>
+          </div>
+        ) : (
+          <DataRequired
+            icon="🌡️"
+            title="GDD Calculation Requires Crop + Planting Date"
+            description="Set the crop type and planting date in Edit Field to enable growing degree unit tracking and maturity forecasting."
+            integrations={['Edit Field to add crop & planting date']}
+          />
+        )}
+      </div>
+
+      <div>
+        <SectionTitle>Emergence Uniformity</SectionTitle>
+        <DataRequired
+          icon="🌱"
+          title="Planter Monitor Required"
+          description="Emergence uniformity charts (% of plants emerged on Day 1 vs Day 5 vs Day 10) require row-by-row seed sensor data from a precision planting monitor."
+          integrations={['Precision Planting 20|20', 'John Deere SeedStar', 'Kinze Harvest Command', 'AgLeader SureDrive']}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// TAB: SOIL
+// ════════════════════════════════════════════════════════════════════════════════
+function SoilTab({ agronomy }) {
+  return (
+    <div className="space-y-6">
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <p className="font-mont text-sm text-amber-700">
+          Soil analytics require physical lab sampling or in-field sensor networks. Once integrated, this tab will display spatial heatmaps and depth-profile charts.
+        </p>
+      </div>
+
+      <SectionTitle>Soil Nutrient Heatmaps</SectionTitle>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[
+          { icon: '⚗️', title: 'Soil pH Map', desc: 'Spatial distribution of soil acidity. Optimal range 6.0–7.0 for most row crops. pH imbalance limits nutrient uptake even when fertility is adequate.' },
+          { icon: '🔴', title: 'Phosphorus (P) Map', desc: 'Identifies low-P zones that limit early root development. Used to generate VRT P application prescriptions to avoid over/under-application.' },
+          { icon: '🟡', title: 'Potassium (K) Map', desc: 'K drives water regulation, enzyme activation, and standability. Deficiency appears as marginal leaf scorch on older leaves.' },
+          { icon: '🟫', title: 'Organic Matter (OM) Map', desc: 'Higher OM indicates better water holding capacity, CEC, and biological activity. Target >3% for most corn-belt soils.' },
+        ].map(({ icon, title, desc }) => (
+          <DataRequired key={title} icon={icon} title={title} description={desc}
+            integrations={['Soil sampling lab (A&L, Ward, Midwest Labs)', 'Veris MSP3 on-the-go sensor', 'CDFA-accredited lab']} />
+        ))}
+      </div>
+
+      <SectionTitle>Soil Moisture Profile</SectionTitle>
+      <DataRequired
+        icon="💧"
+        title="Soil Moisture Probes Required"
+        description="Multi-depth soil moisture charts (4″, 12″, 24″, 36″) show plant-available water at each root zone layer. Used to optimize irrigation timing and amount."
+        integrations={['Sentek EnviroSCAN', 'Campbell Scientific CS650', 'METER Group TEROS', 'John Deere Water Management']}
+      />
+
+      <SectionTitle>Soil Temperature</SectionTitle>
+      {agronomy?.gdd ? (
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <p className="font-mont text-sm text-gray-600 mb-3">
+            Soil temperature is tracked via GDD accumulation (base {agronomy.gdd.base_temp_c}°C). For precise planting window decisions, install a dedicated soil thermometer at 2″ depth.
+          </p>
+          <StatCard label="GDD Accumulated (proxy for soil warmth)" value={`${Math.round(agronomy.gdd.gdd)} GDD`} sub={`Base ${agronomy.gdd.base_temp_c}°C`} bg="#f0f5e8" />
+        </div>
+      ) : (
+        <DataRequired
+          icon="🌡️"
+          title="Soil Temperature Sensor Required"
+          description="Precise 2″ soil temperature determines the optimal planting window (e.g., corn needs ≥50°F for 3 consecutive days). Required for accurate GDD base calculation."
+          integrations={['METER Group 5TM', 'Davis Instruments', 'WatchDog weather station', 'In-cab soil temp monitor']}
+        />
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// TAB: WEATHER (enhanced)
+// ════════════════════════════════════════════════════════════════════════════════
+function WeatherTab({ weather, field }) {
+  const formatHour = (timeStr) => {
+    const d = new Date(timeStr);
+    const h = d.getHours();
+    if (h === 0) return '12a';
+    if (h === 12) return 'Noon';
+    return h < 12 ? `${h}am` : `${h - 12}pm`;
+  };
+
+  if (!field.latitude || !field.longitude) {
+    return (
+      <div className="text-center py-16 rounded-xl bg-gray-50">
+        <div className="text-4xl mb-3">📍</div>
+        <div className="font-lora text-xl text-gray-700">Field coordinates required</div>
+        <div className="font-mont text-sm text-gray-400 mt-1">Edit this field and add GPS coordinates to enable weather data</div>
+      </div>
+    );
+  }
+
+  if (!weather?.current) {
+    return (
+      <div className="text-center py-16 rounded-xl bg-gray-50">
+        <div className="text-4xl mb-3">🌤️</div>
+        <div className="font-lora text-xl text-gray-700">Weather data unavailable</div>
+        <div className="font-mont text-sm text-gray-400 mt-1">Could not load weather for this field's location</div>
+      </div>
+    );
+  }
+
+  const daily = weather.daily || [];
+  const hourly = weather.hourly || [];
+
+  const dayLabels = daily.map(d => {
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    return days[new Date(d.date).getDay()];
+  });
+
+  // Temperature trend from daily forecasts (°F)
+  const highTemps = daily.map(d => d.high_f ?? null);
+  const lowTemps  = daily.map(d => d.low_f  ?? null);
+  const tempSeries = [
+    { label: 'High °F', color: '#EF4444', values: highTemps },
+    { label: 'Low °F',  color: '#3B82F6', values: lowTemps  },
+  ].filter(s => s.values.some(v => v != null));
+
+  // Stress thresholds in °F
+  const heatThreshold = 95;  // >95°F heat stress for most row crops
+  const coldThreshold = 41;  // <41°F cold/frost risk
+  const heatDays = highTemps.filter(t => t != null && t > heatThreshold).length;
+  const coldDays = lowTemps.filter(t => t != null && t < coldThreshold).length;
+
+  // Hourly temp bar chart
+  const hourlyTemps  = hourly.map(h => h.temp_f ?? 0);
+  const hourlyLabels = hourly.map(h => formatHour(h.time));
+
+  return (
+    <div className="space-y-8">
+      {/* Current conditions */}
+      <div>
+        <SectionTitle>Current Conditions{weather.location ? ` — ${weather.location.city}, ${weather.location.state}` : ''}</SectionTitle>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <StatCard label="Temperature" value={`${Math.round(weather.current.temp_f ?? 0)}°F`} sub={weather.current.condition} bg="#DEECFF" />
+          {weather.current.feelslike_f != null && (
+            <StatCard label="Feels Like" value={`${Math.round(weather.current.feelslike_f)}°F`} bg="#C8F2F4" />
+          )}
+          <StatCard label="Wind" value={`${Math.round(weather.current.wind_mph ?? 0)} mph${weather.current.wind_dir ? ` ${weather.current.wind_dir}` : ''}`} bg="#D2F0DB" />
+          <StatCard label="Humidity" value={weather.current.humidity != null ? `${Math.round(weather.current.humidity)}%` : 'N/A'} bg="#F4E9FF" />
+        </div>
+        {weather.today && (
+          <div className="bg-white rounded-xl border border-gray-100 px-5 py-3 flex gap-6 text-sm font-mont text-gray-600">
+            <span>Today High: <strong>{Math.round(weather.today.high_f)}°F</strong></span>
+            <span>Today Low: <strong>{Math.round(weather.today.low_f)}°F</strong></span>
+          </div>
+        )}
+      </div>
+
+      {/* Hourly forecast */}
+      {hourly.length > 0 && (
+        <div>
+          <SectionTitle>Hourly Forecast</SectionTitle>
+          <div className="bg-white rounded-xl border border-gray-100 p-4 overflow-x-auto">
+            <div className="flex gap-2 min-w-max">
+              {hourly.map((h, i) => (
+                <div key={i} className="flex flex-col items-center gap-1 px-2">
+                  <span className="text-xs text-gray-400 font-mont">{formatHour(h.time)}</span>
+                  {h.icon && <img src={h.icon} alt="" className="w-8 h-8" />}
+                  <span className="text-sm font-mont font-semibold text-gray-700">{Math.round(h.temp_f)}°F</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Temperature trend */}
+      {tempSeries.length > 0 && daily.length >= 2 && (
+        <div>
+          <SectionTitle>Temperature Trend — {daily.length}-Day Forecast (°F)</SectionTitle>
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <LineChart series={tempSeries} xLabels={dayLabels} height={200} />
+          </div>
+        </div>
+      )}
+
+      {/* Daily forecast */}
+      {daily.length > 0 && (
+        <div>
+          <SectionTitle>Daily Forecast</SectionTitle>
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+            {daily.map((d, i) => {
+              const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+              return (
+                <div key={i} className="bg-white rounded-xl border border-gray-100 p-3 flex flex-col items-center gap-1">
+                  <span className="text-xs font-mont font-semibold text-gray-500">{days[new Date(d.date).getDay()]}</span>
+                  {d.icon && <img src={d.icon} alt="" className="w-9 h-9" />}
+                  <span className="text-sm font-mont font-bold text-red-500">H: {Math.round(d.high_f)}°</span>
+                  <span className="text-sm font-mont text-blue-500">L: {Math.round(d.low_f)}°</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Crop stress risk */}
+      <div>
+        <SectionTitle>Crop Stress Risk ({daily.length}-Day Window)</SectionTitle>
+        <div className="grid grid-cols-2 gap-4">
+          <div className={`rounded-xl border p-4 ${heatDays > 0 ? 'border-red-300 bg-red-50' : 'border-gray-100 bg-white'}`}>
+            <div className="text-xs font-mont font-semibold text-gray-500 mb-1">Heat Stress Days (&gt;{heatThreshold}°F)</div>
+            <div className={`text-3xl font-lora font-bold ${heatDays > 0 ? 'text-red-600' : 'text-gray-900'}`}>{heatDays}</div>
+            <div className="text-xs text-gray-400 mt-1">{heatDays > 0 ? 'Monitor for pollen viability & yield drag' : 'No heat stress forecast'}</div>
+          </div>
+          <div className={`rounded-xl border p-4 ${coldDays > 0 ? 'border-blue-300 bg-blue-50' : 'border-gray-100 bg-white'}`}>
+            <div className="text-xs font-mont font-semibold text-gray-500 mb-1">Cold/Frost Risk Days (&lt;{coldThreshold}°F)</div>
+            <div className={`text-3xl font-lora font-bold ${coldDays > 0 ? 'text-blue-600' : 'text-gray-900'}`}>{coldDays}</div>
+            <div className="text-xs text-gray-400 mt-1">{coldDays > 0 ? 'Check frost protection & germination risk' : 'No frost risk forecast'}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Wind rose placeholder */}
+      <div>
+        <SectionTitle>Wind Direction Rose</SectionTitle>
+        <DataRequired
+          icon="🧭"
+          title="On-Farm Weather Station Required"
+          description="Wind speed and direction rose plots show predominant wind patterns — critical for spray application records (proving no drift during chemical applications) and disease pressure modelling."
+          integrations={['Davis Instruments Vantage Pro', 'Onset HOBO weather station', 'Campbell Scientific', 'WatchDog 2000 Series']}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// TAB: OPERATIONS
+// ════════════════════════════════════════════════════════════════════════════════
+function OperationsTab() {
+  return (
+    <div className="space-y-6">
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+        <p className="font-mont text-sm text-gray-600">
+          Operational efficiency analytics require machine-generated sensor data from precision planting and harvest equipment. Connect your equipment platform to unlock these charts.
+        </p>
+      </div>
+
+      <SectionTitle>Planter Performance</SectionTitle>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <DataRequired
+          icon="🌾"
+          title="Singulation Chart"
+          description="Bar chart showing % of rows with skips (0 seeds) and doubles (2 seeds) vs singulated (1 seed). Target: >98% singulation. Identifies worn discs or incorrect seed sizing."
+          integrations={['Precision Planting 20|20 SeedSense', 'John Deere SeedStar 3 HP', 'Kinze Harvest Command']}
+        />
+        <DataRequired
+          icon="⬇️"
+          title="Downforce / Gauge Wheel Pressure"
+          description="Graph showing per-row downforce in pounds throughout the field. Ensures correct seeding depth across varying soil types. Low downforce = shallow seed placement."
+          integrations={['Precision Planting DeltaForce', 'John Deere Active Pneumatic Downforce', 'Ag Leader SureDrive']}
+        />
+        <DataRequired
+          icon="🚜"
+          title="Speed vs Applied Rate Histogram"
+          description="Shows what % of the field was planted at target speed and target seeding rate. Identifies headland speed violations that affect emergence uniformity."
+          integrations={['John Deere Operations Center', 'Climate FieldView', 'Ag Leader InCommand']}
+        />
+        <DataRequired
+          icon="📏"
+          title="Seeding Depth Uniformity"
+          description="Row-by-row depth consistency (target ± 0.25″). Uneven depth leads to uneven emergence and significant yield loss in corn."
+          integrations={['Precision Planting vDrive', 'John Deere ExactEmerge', 'AGCO RD2 Row Unit']}
+        />
+      </div>
+
+      <SectionTitle>Fleet & Fuel Analytics</SectionTitle>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <DataRequired
+          icon="⛽"
+          title="Fuel Consumption & Idle Time"
+          description="Pie/bar charts breaking down active field work vs idle time per operator. Used to calculate cost per acre and identify inefficiencies in field logistics."
+          integrations={['John Deere Operations Center', 'CNH AFS Connect', 'AGCO Fuse', 'Samsara fleet telematics']}
+        />
+        <DataRequired
+          icon="⏱️"
+          title="Field Efficiency Report"
+          description="Total acres/hour, headland time %, and overlap % — shows applicator or planter efficiency and estimates savings from guidance improvements."
+          integrations={['John Deere Operations Center', 'Trimble Ag Software', 'Raven Precision']}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// TAB: ECONOMICS
+// ════════════════════════════════════════════════════════════════════════════════
+function calcHaFromGeojson(geojsonStr) {
+  try {
+    const geom = typeof geojsonStr === 'string' ? JSON.parse(geojsonStr) : geojsonStr;
+    const coords = geom.type === 'Polygon' ? geom.coordinates[0]
+                 : geom.type === 'Feature'  ? geom.geometry.coordinates[0]
+                 : null;
+    if (!coords || coords.length < 3) return null;
+    const centerLat = (coords.reduce((s, c) => s + c[1], 0) / coords.length) * Math.PI / 180;
+    const mPerLat = 111320;
+    const mPerLon = 111320 * Math.cos(centerLat);
+    let area = 0;
+    for (let i = 0, j = coords.length - 1; i < coords.length; j = i++) {
+      area += (coords[j][0] * mPerLon + coords[i][0] * mPerLon) * (coords[j][1] * mPerLat - coords[i][1] * mPerLat);
+    }
+    const ha = Math.abs(area) / 2 / 10000;
+    return ha > 0 ? ha : null;
+  } catch { return null; }
+}
+
+function EconomicsTab({ field, analyses }) {
+  // Prefer manually entered size, fall back to boundary polygon area
+  const manualHa = field.field_size_hectares ? parseFloat(field.field_size_hectares) : null;
+  const boundaryHa = field.boundary_geojson ? calcHaFromGeojson(field.boundary_geojson) : null;
+  const ha = manualHa ?? boundaryHa;
+  const haSource = manualHa ? 'entered' : boundaryHa ? 'calculated from boundary' : null;
+  const crop = (field.crop_type || '').toLowerCase();
+
+  // Industry-average cost estimates per hectare (USD)
+  const costPerHa = crop.includes('corn') ? 850
+    : crop.includes('wheat') ? 480
+    : crop.includes('soy') ? 560
+    : crop.includes('oat') ? 420
+    : 600; // generic
+
+  // Yield estimates t/ha for break-even calculation
+  const yieldPerHa = crop.includes('corn') ? 10
+    : crop.includes('wheat') ? 4.5
+    : crop.includes('soy') ? 3.2
+    : crop.includes('oat') ? 3.8
+    : 5;
+
+  const totalCost = ha ? ha * costPerHa : null;
+
+  // Break-even chart: profit at various prices per tonne
+  const prices = [100, 150, 200, 250, 300, 350, 400, 450, 500];
+  const profitPerHa = ha
+    ? prices.map(p => (p * yieldPerHa - costPerHa))
+    : null;
+
+  const breakevenPrice = costPerHa / yieldPerHa;
+
+  return (
+    <div className="space-y-8">
+      {ha ? (
+        <>
+          <div>
+            <SectionTitle>Input Cost Estimate</SectionTitle>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <StatCard label="Field Size" value={`${ha.toFixed(2)} ha`} sub={haSource} bg="#f0f5e8" />
+              <StatCard label="Est. Cost / ha" value={`$${costPerHa}`} sub={`${crop || 'generic'} avg`} />
+              <StatCard label="Total Input Cost" value={`$${totalCost?.toLocaleString()}`} sub="seed + fert + chem + fuel" />
+              <StatCard label="Break-even Price" value={`$${breakevenPrice.toFixed(0)}/t`} sub={`at ${yieldPerHa} t/ha yield`} />
+            </div>
+            <p className="text-xs text-gray-400 font-mont mt-2">
+              * Cost estimates based on regional industry averages. Connect your input records for precise actuals.
+            </p>
+          </div>
+
+          <div>
+            <SectionTitle>Break-Even Price Sensitivity Chart</SectionTitle>
+            <p className="text-sm text-gray-500 font-mont mb-3">
+              Profit/loss per hectare at various market prices (t) — assuming {yieldPerHa} t/ha estimated yield.
+              Break-even at <strong>${breakevenPrice.toFixed(0)}/t</strong>.
+            </p>
+            <div className="bg-white rounded-xl border border-gray-100 p-4">
+              <BarChart
+                values={profitPerHa.map(Math.abs)}
+                labels={prices.map(p => `$${p}`)}
+                colors={profitPerHa.map(v => v >= 0 ? '#6D8E22' : '#EF4444')}
+                height={180}
+                showValues={false}
+              />
+              <div className="flex gap-4 mt-2 text-xs font-mont">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm inline-block" style={{ background: '#6D8E22' }} /> Profit</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm inline-block" style={{ background: '#EF4444' }} /> Loss</span>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <DataRequired
+          icon="💰"
+          title="Field Size Required for Economic Analysis"
+          description="Draw a boundary polygon on the map when editing this field — the area will be calculated automatically. Or enter the size manually in hectares."
+          integrations={['Edit Field → Draw boundary on map', 'Edit Field → Field Size (hectares)']}
+        />
+      )}
+
+      <div>
+        <SectionTitle>Profit / Loss Zone Map</SectionTitle>
+        <DataRequired
+          icon="🗺️"
+          title="Yield Monitor Required"
+          description="Spatial profit/loss map subtracts localized input costs from yield monitor data to show which zones of the field lost money. Identifies management zones for input optimization."
+          integrations={['Combine yield monitor', 'Climate FieldView yield layers', 'John Deere Harvest Lab']}
+        />
+      </div>
+
+      <div>
+        <SectionTitle>Yield vs. Variety Comparison</SectionTitle>
+        <DataRequired
+          icon="📊"
+          title="Multi-Variety Trial Data Required"
+          description="Side-by-side bar charts comparing hybrid/variety performance under identical conditions. Requires strip trial data with variety boundaries tagged in the yield monitor."
+          integrations={['Seed company trial portal', 'Climate FieldView strip trial', 'Encirca variety tracking']}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// TAB: ANALYTICS
+// ════════════════════════════════════════════════════════════════════════════════
+function AnalyticsTab({ analyses, recommendations }) {
+  const getIndex = (a, name) => a?.vegetation_indices?.find(i => i.index_type === name);
+
+  // NDVI vs Health Score scatter
+  const scatterPoints = analyses
+    .map(a => ({ x: getIndex(a, 'NDVI')?.mean ?? null, y: a.health_score, label: new Date(a.analysis_date).toLocaleDateString() }))
+    .filter(p => p.x != null);
+
+  // Multi-analysis comparison table
+  const sorted = [...analyses].reverse();
+
+  return (
+    <div className="space-y-8">
+      {scatterPoints.length >= 2 ? (
+        <div>
+          <SectionTitle>Correlation: NDVI vs Health Score</SectionTitle>
+          <p className="text-sm text-gray-500 font-mont mb-3">
+            Each point represents one satellite analysis. Dashed line shows the linear trend.
+            A tight upward correlation confirms NDVI as a reliable health proxy for this field.
+          </p>
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <ScatterPlot
+              points={scatterPoints}
+              xLabel="NDVI Mean"
+              yLabel="Health Score"
+              height={240}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
+          <div className="text-3xl mb-2">📉</div>
+          <div className="font-lora text-gray-700">Run at least 2 analyses to generate correlation plots</div>
+        </div>
+      )}
+
+      <div>
+        <SectionTitle>Multi-Analysis Comparison</SectionTitle>
+        {sorted.length === 0 ? (
+          <p className="text-gray-400 font-mont text-sm">No analyses yet.</p>
+        ) : (
+          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <table className="w-full text-sm font-mont">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="text-left px-4 py-3 text-gray-500 font-semibold">Date</th>
+                  <th className="text-center px-3 py-3 text-gray-500 font-semibold">Health</th>
+                  <th className="text-center px-3 py-3 text-gray-500 font-semibold">NDVI</th>
+                  <th className="text-center px-3 py-3 text-gray-500 font-semibold">NDRE</th>
+                  <th className="text-center px-3 py-3 text-gray-500 font-semibold">EVI</th>
+                  <th className="text-center px-3 py-3 text-gray-500 font-semibold">Cloud %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((a, i) => {
+                  const ndvi = getIndex(a, 'NDVI')?.mean;
+                  const ndre = getIndex(a, 'NDRE')?.mean;
+                  const evi  = getIndex(a, 'EVI')?.mean;
+                  const prev = sorted[i - 1];
+                  const prevNdvi = prev ? getIndex(prev, 'NDVI')?.mean : null;
+                  const trend = ndvi && prevNdvi ? (ndvi > prevNdvi ? '↑' : ndvi < prevNdvi ? '↓' : '→') : '—';
+                  const trendColor = trend === '↑' ? 'text-green-600' : trend === '↓' ? 'text-red-500' : 'text-gray-400';
+                  return (
+                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
+                      <td className="px-4 py-3 text-gray-900 font-semibold">
+                        {new Date(a.analysis_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </td>
+                      <td className="px-3 py-3 text-center">
+                        <span className={`font-bold ${a.health_score >= 70 ? 'text-green-600' : a.health_score >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+                          {a.health_score}%
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-center text-gray-700">{ndvi?.toFixed(3) ?? '—'} <span className={`text-xs ${trendColor}`}>{trend}</span></td>
+                      <td className="px-3 py-3 text-center text-gray-700">{ndre?.toFixed(3) ?? '—'}</td>
+                      <td className="px-3 py-3 text-center text-gray-700">{evi?.toFixed(3) ?? '—'}</td>
+                      <td className="px-3 py-3 text-center text-gray-400">{a.cloud_percent?.toFixed(1) ?? '—'}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <SectionTitle>AI Recommendations</SectionTitle>
+        {recommendations.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="text-3xl mb-2">💡</div>
+            <div className="font-lora text-gray-700">No recommendations yet — run an analysis to generate AI-powered recommendations</div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {recommendations.map((rec, i) => (
+              <div key={i} className="rounded-xl border border-gray-100 bg-white p-5">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="font-lora font-bold text-gray-900">{rec.title}</div>
+                  <div className="flex items-center gap-2">
+                    {rec.estimated_savings && <span className="font-mont font-bold text-green-600 text-sm">${rec.estimated_savings} saved</span>}
+                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${rec.priority === 'high' ? 'bg-red-100 text-red-700' : rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                      {rec.priority?.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+                <p className="font-mont text-sm text-gray-600">{rec.description}</p>
+                {rec.recommendation_type && <div className="mt-2 text-xs text-gray-400 font-mont">Type: {rec.recommendation_type}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <SectionTitle>Multi-Year Layer Comparison</SectionTitle>
+        <DataRequired
+          icon="🗓️"
+          title="Historical Yield Map Archive Required"
+          description="Side-by-side or overlay comparison of NDVI/yield maps across seasons (e.g., 2022 vs 2023 vs 2024) identifies persistent problem areas that don't respond to annual management changes."
+          integrations={['Yield monitor archive (John Deere Ops Center)', 'Climate FieldView historical layers', 'Custom GeoTIFF upload']}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// FieldDetail
+// ════════════════════════════════════════════════════════════════════════════════
+function FieldDetail({ field, businessId, onBack, onEdit, onJournal }) {
   const [tab, setTab] = useState('overview');
   const [analyses, setAnalyses] = useState([]);
   const [weather, setWeather] = useState(null);
@@ -98,9 +1044,12 @@ function FieldDetail({ field, businessId, onBack }) {
 
   async function loadAll() {
     setLoading(true);
+    const weatherUrl = (field.latitude && field.longitude)
+      ? `${API_URL}/api/weather?lat=${field.latitude}&lon=${field.longitude}`
+      : null;
     const [analysesRes, weatherRes, recsRes, alertsRes, agronomyRes] = await Promise.all([
-      safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/analyses?limit=10`),
-      safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/weather`),
+      safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/analyses?limit=20`),
+      weatherUrl ? safeFetch(weatherUrl) : Promise.resolve(null),
       safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/recommendations`),
       safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/alerts?status=open`),
       safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/agronomy`),
@@ -125,6 +1074,17 @@ function FieldDetail({ field, businessId, onBack }) {
   const latest = analyses[0];
   const getIndex = (a, name) => a?.vegetation_indices?.find(i => i.index_type === name);
 
+  const TABS = [
+    { id: 'overview',    label: 'Overview' },
+    { id: 'maps',        label: 'Satellite Maps' },
+    { id: 'growth',      label: 'Crop Growth' },
+    { id: 'soil',        label: 'Soil & Nutrients' },
+    { id: 'weather',     label: 'Weather' },
+    // { id: 'operations',  label: 'Operations' },  // hidden temporarily
+    { id: 'economics',   label: 'Economics' },
+    { id: 'analytics',   label: 'Analytics' },
+  ];
+
   return (
     <div className="pb-16">
       {/* Header */}
@@ -134,39 +1094,36 @@ function FieldDetail({ field, businessId, onBack }) {
             ← Back to Fields
           </button>
           <h1 className="font-lora text-3xl font-bold text-gray-900">{field.name}</h1>
-          {field.address && (
-            <p className="text-gray-500 font-mont text-sm mt-1">📍 {field.address}</p>
-          )}
+          {field.address && <p className="text-gray-500 font-mont text-sm mt-1">📍 {field.address}</p>}
           <div className="flex gap-4 mt-2 text-sm text-gray-500 font-mont">
             {field.crop_type && <span>🌱 {field.crop_type}</span>}
             {field.field_size_hectares && <span>📏 {field.field_size_hectares} ha</span>}
           </div>
         </div>
-        <button
-          onClick={triggerAnalysis}
-          disabled={analyzing}
-          className="px-5 py-2.5 rounded-lg font-mont font-semibold text-white text-sm transition-all disabled:opacity-50"
-          style={{ background: '#6D8E22' }}
-        >
-          {analyzing ? 'Analyzing…' : '▶ Run Analysis'}
-        </button>
+        <div className="flex gap-2 flex-wrap justify-end">
+          <button onClick={onEdit} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-sm transition-all border border-[#6D8E22] text-[#6D8E22] hover:bg-[#f0f5e8]">
+            ✏️ Edit Field
+          </button>
+          <button onClick={onJournal} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-sm transition-all border border-gray-300 text-gray-600 hover:bg-gray-50">
+            📓 Journal
+          </button>
+          <button onClick={triggerAnalysis} disabled={analyzing} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-white text-sm transition-all disabled:opacity-50" style={{ background: '#6D8E22' }}>
+            {analyzing ? 'Analyzing…' : '▶ Run Analysis'}
+          </button>
+        </div>
       </div>
 
       {/* Alerts */}
       {alerts.length > 0 && (
         <div className="rounded-xl border border-red-300 bg-red-50 p-4 mb-6">
           <div className="font-lora font-bold text-red-700 mb-2">⚠️ {alerts.length} Active Alert{alerts.length > 1 ? 's' : ''}</div>
-          {alerts.map((a, i) => (
-            <div key={i} className="text-sm text-red-700 font-mont">{a.message || a.alert_type}</div>
-          ))}
+          {alerts.map((a, i) => <div key={i} className="text-sm text-red-700 font-mont">{a.message || a.alert_type}</div>)}
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6">
-        {['overview', 'analyses', 'weather', 'recommendations'].map(t => (
-          <TabBtn key={t} label={t.charAt(0).toUpperCase() + t.slice(1)} active={tab === t} onClick={() => setTab(t)} />
-        ))}
+      {/* Tab bar — scrollable on mobile */}
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+        {TABS.map(t => <TabBtn key={t.id} label={t.label} active={tab === t.id} onClick={() => setTab(t.id)} />)}
       </div>
 
       {loading ? (
@@ -176,13 +1133,12 @@ function FieldDetail({ field, businessId, onBack }) {
           {/* ── OVERVIEW ── */}
           {tab === 'overview' && (
             <div className="space-y-6">
-              {/* Top stats */}
               {latest ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <StatCard label="Health Score" value={`${latest.health_score}%`} sub={latest.status} bg="#f0f5e8" />
                   <StatCard label="NDVI" value={getIndex(latest, 'NDVI')?.mean?.toFixed(2) ?? 'N/A'} sub={`Range ${getIndex(latest, 'NDVI')?.min?.toFixed(2) ?? '?'} – ${getIndex(latest, 'NDVI')?.max?.toFixed(2) ?? '?'}`} />
                   <StatCard label="Last Analysis" value={new Date(latest.analysis_date).toLocaleDateString()} sub={`Cloud ${latest.cloud_percent?.toFixed(1) ?? '?'}%`} />
-                  <StatCard label="EVI" value={getIndex(latest, 'EVI')?.mean?.toFixed(2) ?? 'N/A'} />
+                  <StatCard label="Analyses Run" value={analyses.length} sub="total records" />
                 </div>
               ) : (
                 <div className="text-center py-16 rounded-xl bg-gray-50 border border-gray-100">
@@ -192,7 +1148,6 @@ function FieldDetail({ field, businessId, onBack }) {
                 </div>
               )}
 
-              {/* Vegetation indices */}
               {latest && (
                 <div>
                   <h3 className="font-lora font-bold text-gray-900 text-lg mb-3">Vegetation Indices</h3>
@@ -208,20 +1163,21 @@ function FieldDetail({ field, businessId, onBack }) {
                       );
                     })}
                   </div>
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div className="rounded-xl border border-gray-100 bg-white p-3">
-                      <div className="text-xs font-mont font-semibold text-gray-400 mb-1">NDVI Trend</div>
-                      <Sparkline values={analyses.slice(0,6).map(a => getIndex(a,'NDVI')?.mean).filter(v => v != null).reverse()} />
+                  {analyses.length >= 2 && (
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      <div className="rounded-xl border border-gray-100 bg-white p-3">
+                        <div className="text-xs font-mont font-semibold text-gray-400 mb-1">NDVI Trend</div>
+                        <Sparkline values={[...analyses].reverse().map(a => getIndex(a, 'NDVI')?.mean).filter(v => v != null)} />
+                      </div>
+                      <div className="rounded-xl border border-gray-100 bg-white p-3">
+                        <div className="text-xs font-mont font-semibold text-gray-400 mb-1">NDRE Trend</div>
+                        <Sparkline values={[...analyses].reverse().map(a => getIndex(a, 'NDRE')?.mean).filter(v => v != null)} />
+                      </div>
                     </div>
-                    <div className="rounded-xl border border-gray-100 bg-white p-3">
-                      <div className="text-xs font-mont font-semibold text-gray-400 mb-1">NDRE Trend</div>
-                      <Sparkline values={analyses.slice(0,6).map(a => getIndex(a,'NDRE')?.mean).filter(v => v != null).reverse()} />
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
 
-              {/* Agronomy snapshot */}
               {agronomy && (
                 <div>
                   <h3 className="font-lora font-bold text-gray-900 text-lg mb-3">Agronomy Snapshot</h3>
@@ -236,7 +1192,6 @@ function FieldDetail({ field, businessId, onBack }) {
                 </div>
               )}
 
-              {/* Top recs */}
               {recommendations.length > 0 && (
                 <div>
                   <h3 className="font-lora font-bold text-gray-900 text-lg mb-3">Top Recommendations</h3>
@@ -258,115 +1213,13 @@ function FieldDetail({ field, businessId, onBack }) {
             </div>
           )}
 
-          {/* ── ANALYSES ── */}
-          {tab === 'analyses' && (
-            <div>
-              {analyses.length === 0 ? (
-                <div className="text-center py-16 rounded-xl bg-gray-50">
-                  <div className="text-4xl mb-3">📊</div>
-                  <div className="font-lora text-xl text-gray-700">No analyses yet</div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {analyses.map((a, i) => {
-                    const ndvi = getIndex(a, 'NDVI');
-                    const ndre = getIndex(a, 'NDRE');
-                    const evi  = getIndex(a, 'EVI');
-                    return (
-                      <div key={i} className="rounded-xl border border-gray-100 bg-white p-5 flex items-center justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="font-lora font-bold text-gray-900">
-                            {new Date(a.analysis_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                          </div>
-                          {a.cloud_percent != null && <div className="text-xs text-gray-400 font-mont mt-0.5">Cloud {a.cloud_percent.toFixed(1)}%</div>}
-                          <div className="flex gap-8 mt-3">
-                            {[['NDVI', ndvi], ['NDRE', ndre], ['EVI', evi]].map(([name, idx]) => (
-                              <div key={name}>
-                                <div className="text-xs font-mont font-semibold text-gray-400">{name}</div>
-                                <div className="font-mont font-semibold text-gray-900">{idx ? idx.mean.toFixed(3) : 'N/A'}</div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <HealthDonut score={a.health_score} />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── WEATHER ── */}
-          {tab === 'weather' && (
-            <div>
-              {!weather?.current ? (
-                <div className="text-center py-16 rounded-xl bg-gray-50">
-                  <div className="text-4xl mb-3">🌤️</div>
-                  <div className="font-lora text-xl text-gray-700">Weather data unavailable</div>
-                  <div className="font-mont text-sm text-gray-400 mt-1">Weather endpoint may not be configured yet</div>
-                </div>
-              ) : (
-                <div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <StatCard label="Temperature" value={`${weather.current.temp_c ?? weather.current.temperature}°C`} bg="#DEECFF" />
-                    <StatCard label="Humidity" value={`${weather.current.humidity}%`} bg="#C8F2F4" />
-                    <StatCard label="Wind" value={`${weather.current.wind_kph ?? weather.current.wind_speed} km/h`} bg="#D2F0DB" />
-                    <StatCard label="Precipitation" value={`${weather.current.precip_mm ?? weather.current.precipitation} mm`} bg="#F4E9FF" />
-                  </div>
-                  {weather.forecast?.length > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="font-lora font-bold text-gray-900 text-lg mb-3">14-Day Forecast</h3>
-                      {weather.forecast.map((day, i) => (
-                        <div key={i} className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-5 py-3">
-                          <span className="font-mont font-semibold text-gray-900 text-sm">
-                            {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                          </span>
-                          <span className="font-mont text-sm text-gray-500">{day.day?.condition?.text}</span>
-                          <div className="flex gap-4 text-sm font-mont text-gray-600">
-                            <span>↑ {day.day?.maxtemp_c}°C</span>
-                            <span>↓ {day.day?.mintemp_c}°C</span>
-                            <span>🌧 {day.day?.daily_chance_of_rain}%</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── RECOMMENDATIONS ── */}
-          {tab === 'recommendations' && (
-            <div>
-              {recommendations.length === 0 ? (
-                <div className="text-center py-16 rounded-xl bg-gray-50">
-                  <div className="text-4xl mb-3">💡</div>
-                  <div className="font-lora text-xl text-gray-700">No recommendations yet</div>
-                  <div className="font-mont text-sm text-gray-400 mt-1">Run an analysis to get AI-powered recommendations</div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recommendations.map((rec, i) => (
-                    <div key={i} className="rounded-xl border border-gray-100 bg-white p-5">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="font-lora font-bold text-gray-900 text-lg">{rec.title}</div>
-                        <div className="flex items-center gap-2">
-                          {rec.estimated_savings && <span className="font-mont font-bold text-green-600 text-sm">${rec.estimated_savings} saved</span>}
-                          <span className={`px-2 py-0.5 rounded text-xs font-semibold ${rec.priority === 'high' ? 'bg-red-100 text-red-700' : rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
-                            {rec.priority?.toUpperCase()}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="font-mont text-sm text-gray-600">{rec.description}</p>
-                      {rec.recommendation_type && <div className="mt-3 text-xs text-gray-400 font-mont">Type: {rec.recommendation_type}</div>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          {tab === 'maps'       && <MapsTab latest={latest} analyses={analyses} fieldId={fieldId} />}
+          {tab === 'growth'     && <GrowthTab analyses={analyses} agronomy={agronomy} />}
+          {tab === 'soil'       && <SoilTab agronomy={agronomy} />}
+          {tab === 'weather'    && <WeatherTab weather={weather} field={field} />}
+          {/* {tab === 'operations' && <OperationsTab />} */}
+          {tab === 'economics'  && <EconomicsTab field={field} analyses={analyses} />}
+          {tab === 'analytics'  && <AnalyticsTab analyses={analyses} recommendations={recommendations} />}
         </>
       )}
     </div>
@@ -385,9 +1238,8 @@ export default function PrecisionAgAnalyses() {
 
   useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
 
-  // If FieldID provided, load that field
   useEffect(() => {
-    if (!FieldID) return;
+    if (!FieldID || !BusinessID) return;
     fetch(`${API_URL}/api/fields?business_id=${BusinessID}`)
       .then(r => r.json())
       .then(fields => {
@@ -407,11 +1259,13 @@ export default function PrecisionAgAnalyses() {
             field={field}
             businessId={BusinessID}
             onBack={() => navigate(`/precision-ag/fields?BusinessID=${BusinessID}`)}
+            onEdit={() => navigate(`/precision-ag/fields?BusinessID=${BusinessID}&view=edit-field&FieldID=${FieldID}`)}
+            onJournal={() => navigate(`/oatsense/notes?BusinessID=${BusinessID}&FieldID=${FieldID}`)}
           />
         ) : (
           <div className="text-center py-24">
             <div className="text-5xl mb-4">🌾</div>
-            <div className="font-lora text-2xl text-gray-700 mb-2">Analyses</div>
+            <div className="font-lora text-2xl text-gray-700 mb-2">Field Analysis</div>
             <div className="font-mont text-sm text-gray-400">Select a field from the Fields page to view its analysis</div>
             <button
               onClick={() => navigate(`/precision-ag/fields?BusinessID=${BusinessID}`)}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import maplibregl from 'maplibre-gl';
 import { Protocol, PMTiles } from 'pmtiles';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -300,7 +300,8 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
 }
 
 // ─── ANALYSIS DRAWER ─────────────────────────────────────────────────────────
-function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon }) {
+function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, businessID }) {
+  const navigate = useNavigate();
   const scoreColor = !fieldData?.healthData ? '#9ca3af'
     : fieldData.healthData.score > 75 ? '#10b981'
     : fieldData.healthData.score > 50 ? '#f59e0b' : '#ef4444';
@@ -338,6 +339,21 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon })
               {fieldData.county && <><span style={{ margin: '0 4px' }}>•</span>{fieldData.county} County</>}
             </div>
           </div>
+
+          {/* Add to Account Button — always shown when a field is selected */}
+          <button
+            onClick={() => navigate(`/precision-ag/fields?BusinessID=${businessID}&view=create-field&lat=${fieldData.location.lat}&lon=${fieldData.location.lon}`)}
+            style={{
+              width: '100%', padding: '12px 16px', marginBottom: 10,
+              background: 'linear-gradient(135deg,#1a237e,#283593)',
+              color: 'white', border: 'none', borderRadius: 10,
+              cursor: 'pointer', fontWeight: 700, fontSize: 14,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: '0 4px 12px rgba(26,35,126,0.3)',
+            }}
+          >
+            ➕ Add Field to My Account
+          </button>
 
           {/* Save Field Button — shown when a polygon has been drawn */}
           {drawnPolygon?.length > 2 && (
@@ -1049,6 +1065,7 @@ export default function CropDetection() {
             onClose={() => setShowAnalytics(false)}
             onSaveField={() => setShowSaveModal(true)}
             drawnPolygon={drawnPolygon}
+            businessID={BusinessID}
           />
         </div>
       </div>

@@ -62,10 +62,17 @@ const Header = () => {
   const MktDropdown = () => (
     <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded shadow-lg z-50 overflow-hidden">
       <Link to="/marketplaces/farm-to-table" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-       Farm 2 Table Marketplace
+        Farm 2 Table
+      </Link>
+      <Link to="/marketplace/products" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        Products Marketplace
       </Link>
       <Link to="/marketplaces/livestock" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
         Livestock Marketplace
+      </Link>
+      <hr className="my-1 border-gray-100" />
+      <Link to="/services/directory" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        Services Directory
       </Link>
     </div>
   );
@@ -82,14 +89,22 @@ const Header = () => {
     <ul className="mt-2 space-y-2 text-sm">
       <li>
         <Link to="/marketplaces/farm-to-table" onClick={() => setIsOpen(false)} className="!text-white/80 block">
-          🍽️ Farm 2 Table Marketplace
-          <span className="text-yellow-400 text-xs ml-1">(Coming Soon)</span>
+          Farm 2 Table
+        </Link>
+      </li>
+      <li>
+        <Link to="/marketplace/products" onClick={() => setIsOpen(false)} className="!text-white/80 block">
+          Products Marketplace
         </Link>
       </li>
       <li>
         <Link to="/marketplaces/livestock" onClick={() => setIsOpen(false)} className="!text-white/80 block">
-          🐄 Livestock Marketplace
-          <span className="text-yellow-400 text-xs ml-1">(Coming Soon)</span>
+          Livestock Marketplace
+        </Link>
+      </li>
+      <li>
+        <Link to="/services/directory" onClick={() => setIsOpen(false)} className="!text-white/80 block">
+          Services Directory
         </Link>
       </li>
     </ul>

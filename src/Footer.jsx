@@ -2,12 +2,24 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 export default function Footer() {
+  const isLoggedIn = !!localStorage.getItem('access_token');
+
+  if (isLoggedIn) {
+    return (
+      <footer className="bg-[#1a1a1a] text-white py-4 mt-12">
+        <div className="text-center">
+          <p className="text-gray-500 text-xs tracking-[0.2em]">© 2025 - {new Date().getFullYear()} Oatmeal AI. All rights reserved.</p>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer className="bg-[#1a1a1a] text-white py-12 mt-12">
       <div className="max-w-7xl mx-auto px-4">
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          
+
           {/* Brand */}
           <div>
             <img
@@ -46,7 +58,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-800 pt-6 text-center">
-          <p className="text-gray-500 text-xs  tracking-[0.2em]">© 2025 - {new Date().getFullYear()} Oatmeal AI. All rights reserved.</p>
+          <p className="text-gray-500 text-xs tracking-[0.2em]">© 2025 - {new Date().getFullYear()} Oatmeal AI. All rights reserved.</p>
         </div>
 
       </div>
