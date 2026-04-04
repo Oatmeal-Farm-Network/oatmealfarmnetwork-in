@@ -29,82 +29,104 @@ export default function AccountHome() {
   // Sections shown based on BusinessTypeID
   const sections = [
 
-    // Precision Ag — BT 8
+    // Precision Ag — Farm/Ranch only
     BT === 8 && {
       icon: '/icons/PrecisionAg.svg',
       label: 'Precision Ag',
       links: [
-        { to: `/oatsense?BusinessID=${BusinessID}`, label: 'Dashboard' },
         { to: `/precision-ag/fields?BusinessID=${BusinessID}`, label: 'Fields' },
         { to: `/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`, label: 'Add Field' },
         { to: `/precision-ag/analyses?BusinessID=${BusinessID}`, label: 'Analyses' },
+        { to: `/precision-ag/crop-detection?BusinessID=${BusinessID}`, label: 'Crop Detection' },
+        { to: `/oatsense/crop-rotation?BusinessID=${BusinessID}`, label: 'Crop Rotation' },
+        { to: `/oatsense/notes?BusinessID=${BusinessID}`, label: 'Field Journal' },
       ],
     },
 
-    // Livestock — BT 8
+    // Livestock — Farm/Ranch only
     BT === 8 && {
       icon: '/icons/Livestock.svg',
       label: 'Livestock',
       links: [
-        { to: `/animals?BusinessID=${BusinessID}`, label: 'List of Animals' },
+        { to: `/animals?BusinessID=${BusinessID}`, label: 'List Animals' },
         { to: `/animals/add?BusinessID=${BusinessID}`, label: 'Add' },
-        { to: `/animals/delete?BusinessID=${BusinessID}`, label: 'Delete' },
         { to: `/animals/transfer?BusinessID=${BusinessID}`, label: 'Transfer' },
         { to: `/animals/stats?BusinessID=${BusinessID}`, label: 'Statistics' },
       ],
     },
 
-    // Produce — BT 8, 10, 14, 26, 29, 31
-    [8, 10, 14, 26, 29, 31].includes(BT) && {
+    // Farm 2 Table — food/produce sellers
+    [8, 9, 10, 11, 14, 19, 22, 23, 26, 29, 31, 33, 34].includes(BT) && {
       icon: '/icons/produce.webp',
-      label: 'Produce',
+      label: 'Farm 2 Table',
       links: [
-        { to: `/produce/inventory?BusinessID=${BusinessID}`, label: 'Inventory' },
-        { to: `/produce/add?BusinessID=${BusinessID}`, label: 'Add' },
-        { to: `/produce/orders?BusinessID=${BusinessID}`, label: 'Orders' },
+        { to: `/seller/orders?BusinessID=${BusinessID}`, label: 'Incoming Orders' },
+        ...[8, 10, 14, 26, 29, 31, 34].includes(BT)
+          ? [{ to: `/produce/inventory?BusinessID=${BusinessID}`, label: 'Produce Inventory' }]
+          : [],
+        ...[8, 10, 11, 14, 26, 29, 31, 33, 34].includes(BT)
+          ? [{ to: `/produce/processed-food?BusinessID=${BusinessID}`, label: 'Processed Foods' }]
+          : [],
+        ...[8, 10, 14, 19, 22, 23, 26, 29].includes(BT)
+          ? [{ to: `/produce/meat?BusinessID=${BusinessID}`, label: 'Meat' }]
+          : [],
       ],
     },
 
-    // Products — all
-    {
+    // Products — physical product sellers
+    [8, 10, 11, 14, 15, 16, 18, 19, 24, 25, 26, 29, 31, 33, 34].includes(BT) && {
       icon: '/icons/Products.svg',
       label: 'Products',
       links: [
-        { to: `/products?BusinessID=${BusinessID}`, label: 'List' },
-        { to: `/products/add?BusinessID=${BusinessID}`, label: 'Add' },
+        { to: `/marketplace/products`, label: 'Browse Marketplace' },
         { to: `/products/settings?BusinessID=${BusinessID}`, label: 'Settings' },
       ],
     },
 
-    // Services — all
+    // Services — service providers manage; all can browse
     {
       icon: '/icons/Services.svg',
       label: 'Services',
       links: [
-        { to: `/services?BusinessID=${BusinessID}`, label: 'List' },
-        { to: `/services/add?BusinessID=${BusinessID}`, label: 'Add' },
-        { to: `/services/delete?BusinessID=${BusinessID}`, label: 'Delete' },
-        { to: `/services/suggest-category?BusinessID=${BusinessID}`, label: 'Suggest Category' },
+        { to: `/services/directory`, label: 'Browse Directory' },
+        ...[1, 8, 9, 10, 17, 18, 20, 21, 27, 28, 32].includes(BT)
+          ? [
+              { to: `/services?BusinessID=${BusinessID}`, label: 'My Services' },
+              { to: `/services/add?BusinessID=${BusinessID}`, label: 'Add Service' },
+              { to: `/services/suggest-category?BusinessID=${BusinessID}`, label: 'Suggest Category' },
+            ]
+          : [],
       ],
     },
 
-    // Properties — BT 8, 30
+    // Events — all
+    {
+      icon: '/icons/Assoc-events-icon.svg',
+      label: 'Events',
+      links: [
+        { to: `/events`, label: 'Browse Events' },
+        { to: `/events/manage?BusinessID=${BusinessID}`, label: 'My Events' },
+        { to: `/events/my-registrations?BusinessID=${BusinessID}`, label: 'My Registrations' },
+      ],
+    },
+
+    // Properties — Farm/Ranch and Real Estate Agents
     [8, 30].includes(BT) && {
       icon: '/icons/Real-Estate.svg',
       label: 'Properties',
       links: [
-        { to: `/properties?BusinessID=${BusinessID}`, label: 'List of Properties' },
-        { to: `/properties/add?BusinessID=${BusinessID}`, label: 'Add a Property' },
+        { to: `/properties?BusinessID=${BusinessID}`, label: 'List Properties' },
+        { to: `/properties/add?BusinessID=${BusinessID}`, label: 'Add Property' },
       ],
     },
 
-    // Associations — BT 1
+    // Associations — Agricultural Associations only
     BT === 1 && {
       icon: '/icons/Assoc-administration-icon.svg',
       label: 'Associations',
       links: [
-        { to: `/association/create?BusinessID=${BusinessID}`, label: 'Create Account' },
-        { to: `/association/delete?BusinessID=${BusinessID}`, label: 'Delete Account' },
+        { to: `/association/create?BusinessID=${BusinessID}`, label: 'Create' },
+        { to: `/association/delete?BusinessID=${BusinessID}`, label: 'Delete' },
       ],
     },
 
@@ -113,9 +135,9 @@ export default function AccountHome() {
       icon: '/icons/Website.svg',
       label: 'My Website',
       links: [
-        { to: `/website/design?BusinessID=${BusinessID}`, label: 'Graphic Design (colors, fonts, etc.)' },
-        { to: `/website/home?BusinessID=${BusinessID}&PeopleID=${PeopleID}`, label: 'Home Page' },
-        { to: `/website/about?BusinessID=${BusinessID}&PeopleID=${PeopleID}`, label: 'About Us Page' },
+        { to: `/website/builder?BusinessID=${BusinessID}`, label: 'Builder' },
+        { to: `/website/builder?BusinessID=${BusinessID}&view=design`, label: 'Design' },
+        { to: `/website/builder?BusinessID=${BusinessID}&view=settings`, label: 'Settings' },
       ],
     },
 

@@ -24,10 +24,14 @@ export function AccountProvider({ children }) {
 const LoadBusiness = (ID, Force = false) => {
     if (ID === BusinessID && Business && !Force) return;
     setBusinessID(ID);
-    localStorage.setItem('selected_business_id', ID);  // ← add this line
+    localStorage.setItem('selected_business_id', ID);
     fetch(`${import.meta.env.VITE_API_URL}/auth/account-home?BusinessID=${ID}`)
-      .then(Res => Res.json())
-      .then(Data => setBusiness(Data));
+      .then(Res => {
+        if (!Res.ok) throw new Error(`HTTP ${Res.status}`);
+        return Res.json();
+      })
+      .then(Data => setBusiness(Data))
+      .catch(err => console.error('LoadBusiness failed:', err));
   };
 
   return (

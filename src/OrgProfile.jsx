@@ -178,6 +178,55 @@ function AnimalsTab({ businessId, isStuds }) {
   );
 }
 
+// ── Services tab ──────────────────────────────────────────────────────────────
+function ServicesTab({ businessId }) {
+  const [services, setServices] = useState([]);
+  const [loading, setLoading]   = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/services/business/${businessId}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(d => { setServices(Array.isArray(d) ? d : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [businessId]);
+
+  if (loading) return <div style={{ color: '#888', padding: '20px 0' }}>Loading services…</div>;
+  if (!services.length) return <p style={{ color: '#888', padding: '20px 0' }}>No services listed at this time.</p>;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {services.map(svc => (
+        <a key={svc.ServicesID} href={`/services/public/${svc.ServicesID}`}
+          style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', background: '#fff', border: '1px solid #eee', borderRadius: '10px', padding: '16px', textDecoration: 'none', color: 'inherit', transition: 'box-shadow 0.2s' }}
+          onMouseOver={e => e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.08)'}
+          onMouseOut={e => e.currentTarget.style.boxShadow = 'none'}
+        >
+          {svc.Photo1 ? (
+            <img src={svc.Photo1} alt={svc.ServiceTitle}
+              style={{ width: '72px', height: '72px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
+              onError={e => e.target.style.display = 'none'} />
+          ) : (
+            <div style={{ width: '72px', height: '72px', background: '#f3f4f6', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>🔧</div>
+          )}
+          <div style={{ flexGrow: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: '1rem', color: '#222', marginBottom: '4px' }}>{svc.ServiceTitle}</div>
+            {svc.ServicesCategory && <div style={{ fontSize: '0.8rem', color: '#507033', marginBottom: '4px' }}>{svc.ServicesCategory}</div>}
+            {svc.ServicesDescription && <div style={{ fontSize: '0.85rem', color: '#555', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{svc.ServicesDescription}</div>}
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            {svc.ServiceContactForPrice ? (
+              <span style={{ fontSize: '0.85rem', color: '#888', fontStyle: 'italic' }}>Contact for Price</span>
+            ) : svc.ServicePrice ? (
+              <span style={{ fontSize: '1rem', fontWeight: 700, color: '#507033' }}>${parseFloat(svc.ServicePrice).toLocaleString()}</span>
+            ) : null}
+            {svc.ServiceAvailable && <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '4px' }}>{svc.ServiceAvailable}</div>}
+          </div>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function OrgProfile() {
   const { businessId: urlBusinessId } = useParams();
@@ -185,7 +234,7 @@ export default function OrgProfile() {
   const routerLocation = useLocation();
   const [ranch, setRanch] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [counts, setCounts] = useState({ for_sale: 0, studs: 0 });
+  const [counts, setCounts] = useState({ for_sale: 0, studs: 0, services: 0 });
 
   const activeTab = searchParams.get('tab') || 'home';
   const setTab = (tab) => setSearchParams({ tab }, { replace: true });
@@ -243,6 +292,11 @@ export default function OrgProfile() {
         .then(r => r.ok ? r.json() : null)
         .then(d => d && setCounts(p => ({ ...p, studs: d.total })))
         .catch(() => {});
+
+      fetch(`${API_URL}/api/services/business/${businessId}`)
+        .then(r => r.ok ? r.json() : [])
+        .then(d => d && setCounts(p => ({ ...p, services: Array.isArray(d) ? d.length : 0 })))
+        .catch(() => {});
     }
   }, [businessId]);
 
@@ -270,10 +324,11 @@ export default function OrgProfile() {
   );
 
   const TABS = [
-    { key: 'home',    label: 'Home',                              show: true },
-    { key: 'animals', label: `Animals For Sale (${counts.for_sale})`, show: counts.for_sale > 0 },
-    { key: 'studs',   label: `Stud Services (${counts.studs})`,   show: counts.studs > 0 },
-    { key: 'contact', label: 'About / Contact',                   show: true },
+    { key: 'home',     label: 'Home',                                  show: true },
+    { key: 'animals',  label: `Animals For Sale (${counts.for_sale})`, show: counts.for_sale > 0 },
+    { key: 'studs',    label: `Stud Services (${counts.studs})`,       show: counts.studs > 0 },
+    { key: 'services', label: `Services (${counts.services})`,         show: counts.services > 0 },
+    { key: 'contact',  label: 'About / Contact',                       show: true },
   ].filter(t => t.show);
 
   const location = [ranch.address_city, ranch.address_state].filter(Boolean).join(', ');
@@ -388,6 +443,9 @@ export default function OrgProfile() {
 
         {/* ── Stud services tab ── */}
         {activeTab === 'studs' && <AnimalsTab businessId={businessId} isStuds={true} />}
+
+        {/* ── Services tab ── */}
+        {activeTab === 'services' && <ServicesTab businessId={businessId} />}
 
         {/* ── About / Contact tab ── */}
         {activeTab === 'contact' && (
