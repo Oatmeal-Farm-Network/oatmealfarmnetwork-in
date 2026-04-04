@@ -19,6 +19,11 @@ import SellerListings from './SellerListings';
 import ForgotPassword from './ForgotPassword';
 import ServicesDirectory from './ServicesDirectory';
 import ServiceDetail from './ServiceDetail';
+import EventsList from './EventsList';
+import EventDetail from './EventDetail';
+import EventRegister from './EventRegister';
+import EventsManage from './EventsManage';
+import EventsMyRegistrations from './EventsMyRegistrations';
 
 
 const App = lazy(() => import('./App.jsx'))
@@ -130,6 +135,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/services/public/:servicesId" element={<ServiceDetail />} />
           <Route path="/services/directory/:categoryId" element={<ServicesDirectory />} />
           <Route path="/services/directory" element={<ServicesDirectory />} />
+
+          {/* Events routes — specific before generic */}
+          <Route path="/events/manage" element={<EventsManage />} />
+          <Route path="/events/my-registrations" element={<EventsMyRegistrations />} />
+          <Route path="/events/:eventId/register" element={<EventRegister />} />
+          <Route path="/events/:eventId" element={<EventDetail />} />
+          <Route path="/events" element={<EventsList />} />
+
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Marketplace routes — specific before generic */}

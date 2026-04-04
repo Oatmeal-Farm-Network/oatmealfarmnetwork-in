@@ -74,6 +74,10 @@ const Header = () => {
       <Link to="/services/directory" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
         Services Directory
       </Link>
+      <hr className="my-1 border-gray-100" />
+      <Link to="/events" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        Events
+      </Link>
     </div>
   );
 
@@ -105,6 +109,11 @@ const Header = () => {
       <li>
         <Link to="/services/directory" onClick={() => setIsOpen(false)} className="!text-white/80 block">
           Services Directory
+        </Link>
+      </li>
+      <li>
+        <Link to="/events" onClick={() => setIsOpen(false)} className="!text-white/80 block">
+          Events
         </Link>
       </li>
     </ul>

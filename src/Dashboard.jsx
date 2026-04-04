@@ -84,6 +84,48 @@ export default function Dashboard() {
 
   if (!user) return null;
 
+  const getQuickLinks = (bt, bid) => {
+    const acct = { label: 'Account Settings', to: `/account?PeopleID=${user.peopleId}&BusinessID=${bid}` };
+    const website = { label: '🌐 Website', to: `/website/builder?BusinessID=${bid}` };
+    const orders = { label: '📦 Orders', to: `/seller/orders?BusinessID=${bid}` };
+    const services = { label: '🔧 My Services', to: `/services?BusinessID=${bid}` };
+    const products = { label: '🛍️ Products', to: `/products/settings?BusinessID=${bid}` };
+    const produce = { label: '🥬 Produce', to: `/produce/inventory?BusinessID=${bid}` };
+    const processedFood = { label: '🍯 Processed Foods', to: `/produce/processed-food?BusinessID=${bid}` };
+    const meat = { label: '🥩 Meat', to: `/produce/meat?BusinessID=${bid}` };
+    const events = { label: '🎪 Events', to: `/events/manage?BusinessID=${bid}` };
+    const properties = { label: '🏡 Properties', to: `/properties?BusinessID=${bid}` };
+
+    const map = {
+      1:  [acct, events, services, website],
+      9:  [acct, orders, services, website],
+      10: [acct, orders, produce, processedFood, website],
+      11: [acct, orders, processedFood, products, website],
+      14: [acct, orders, produce, processedFood, website],
+      15: [acct, products, website],
+      16: [acct, products, services, website],
+      17: [acct, services, website],
+      18: [acct, products, services, website],
+      19: [acct, orders, meat, products, website],
+      20: [acct, services, website],
+      21: [acct, services, website],
+      22: [acct, orders, meat, website],
+      23: [acct, orders, meat, website],
+      24: [acct, products, website],
+      25: [acct, products, website],
+      26: [acct, orders, produce, processedFood, products, website],
+      27: [acct, events, services, website],
+      28: [acct, services, website],
+      29: [acct, orders, produce, website],
+      30: [acct, properties, services, website],
+      31: [acct, orders, produce, processedFood, website],
+      32: [acct, services, website],
+      33: [acct, orders, processedFood, products, website],
+      34: [acct, orders, produce, products, website],
+    };
+    return map[bt] || [acct, website];
+  };
+
   const formatHour = (timeStr) => {
     const d = new Date(timeStr);
     const h = d.getHours();
@@ -294,7 +336,7 @@ export default function Dashboard() {
                               </div>
                             </>
                           ) : (
-                            /* Non-farm business: simple action links */
+                            /* Type-aware quick links for all non-farm accounts */
                             <div className="flex flex-wrap gap-2">
                               <Link
                                 to={`/account?PeopleID=${user.peopleId}&BusinessID=${b.BusinessID}`}
@@ -302,18 +344,15 @@ export default function Dashboard() {
                               >
                                 Go to Account
                               </Link>
-                              <Link
-                                to={`/seller/orders?BusinessID=${b.BusinessID}`}
-                                className="text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
-                              >
-                                Orders
-                              </Link>
-                              <Link
-                                to={`/products?BusinessID=${b.BusinessID}`}
-                                className="text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
-                              >
-                                Products
-                              </Link>
+                              {getQuickLinks(b.BusinessTypeID, b.BusinessID).slice(1).map(link => (
+                                <Link
+                                  key={link.to}
+                                  to={link.to}
+                                  className="text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
+                                >
+                                  {link.label}
+                                </Link>
+                              ))}
                             </div>
                           )}
                         </div>

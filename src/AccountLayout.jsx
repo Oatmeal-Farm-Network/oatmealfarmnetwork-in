@@ -211,23 +211,27 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
-            {/* Farm 2 Table */}
-            <NavSection
-              icon="/icons/produce.webp"
-              label="Farm 2 Table"
-              expanded={Expanded}
-              isOpen={OpenSections['Farm 2 Table'] || false}
-              onToggle={() => toggleSection('Farm 2 Table')}
-            >
-              <NavChild to={`/seller/orders?BusinessID=${BusinessID}`} label="Incoming Orders" />
-              {[8, 10, 14, 26, 29, 31].includes(BT) && (
-                <>
+            {/* Farm 2 Table — food/produce sellers only */}
+            {[8, 9, 10, 11, 14, 19, 22, 23, 26, 29, 31, 33, 34].includes(BT) && (
+              <NavSection
+                icon="/icons/produce.webp"
+                label="Farm 2 Table"
+                expanded={Expanded}
+                isOpen={OpenSections['Farm 2 Table'] || false}
+                onToggle={() => toggleSection('Farm 2 Table')}
+              >
+                <NavChild to={`/seller/orders?BusinessID=${BusinessID}`} label="Incoming Orders" />
+                {[8, 10, 14, 26, 29, 31, 34].includes(BT) && (
                   <NavChild to={`/produce/inventory?BusinessID=${BusinessID}`} label="Produce" />
+                )}
+                {[8, 10, 11, 14, 26, 29, 31, 33, 34].includes(BT) && (
                   <NavChild to={`/produce/processed-food?BusinessID=${BusinessID}`} label="Processed Foods" />
+                )}
+                {[8, 10, 14, 19, 22, 23, 26, 29].includes(BT) && (
                   <NavChild to={`/produce/meat?BusinessID=${BusinessID}`} label="Meat" />
-                </>
-              )}
-            </NavSection>
+                )}
+              </NavSection>
+            )}
 
             {BT === 8 && (
               <NavSection
@@ -245,16 +249,19 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
-            <NavSection
-              icon="/icons/Products.svg"
-              label="Products"
-              expanded={Expanded}
-              isOpen={OpenSections.Products || false}
-              onToggle={() => toggleSection('Products')}
-            >
-              <NavChild to="/marketplace/products" label="Browse Marketplace" />
-              <NavChild to={`/products/settings?BusinessID=${BusinessID}`} label="Settings" />
-            </NavSection>
+            {/* Products — physical product sellers */}
+            {[8, 10, 11, 14, 15, 16, 18, 19, 24, 25, 26, 29, 31, 33, 34].includes(BT) && (
+              <NavSection
+                icon="/icons/Products.svg"
+                label="Products"
+                expanded={Expanded}
+                isOpen={OpenSections.Products || false}
+                onToggle={() => toggleSection('Products')}
+              >
+                <NavChild to="/marketplace/products" label="Browse Marketplace" />
+                <NavChild to={`/products/settings?BusinessID=${BusinessID}`} label="Settings" />
+              </NavSection>
+            )}
 
             <NavSection
               icon="/icons/Services.svg"
@@ -264,9 +271,26 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               onToggle={() => toggleSection('Services')}
             >
               <NavChild to="/services/directory" label="Browse Services" />
-              <NavChild to={`/services?BusinessID=${BusinessID}`} label="My Services" />
-              <NavChild to={`/services/add?BusinessID=${BusinessID}`} label="Add" />
-              <NavChild to={`/services/suggest-category?BusinessID=${BusinessID}`} label="Suggest Category" />
+              {[1, 8, 9, 10, 17, 18, 20, 21, 27, 28, 32].includes(BT) && (
+                <>
+                  <NavChild to={`/services?BusinessID=${BusinessID}`} label="My Services" />
+                  <NavChild to={`/services/add?BusinessID=${BusinessID}`} label="Add" />
+                  <NavChild to={`/services/suggest-category?BusinessID=${BusinessID}`} label="Suggest Category" />
+                </>
+              )}
+            </NavSection>
+
+            {/* Events */}
+            <NavSection
+              icon="/icons/Assoc-events-icon.svg"
+              label="Events"
+              expanded={Expanded}
+              isOpen={OpenSections.Events || false}
+              onToggle={() => toggleSection('Events')}
+            >
+              <NavChild to="/events" label="Browse Events" />
+              <NavChild to={`/events/manage?BusinessID=${BusinessID}`} label="My Events" />
+              <NavChild to={`/events/my-registrations?BusinessID=${BusinessID}`} label="My Registrations" />
             </NavSection>
 
             {[8, 30].includes(BT) && (
