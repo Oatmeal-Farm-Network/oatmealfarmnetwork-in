@@ -523,10 +523,46 @@ export default function WebsitePublic() {
         )}
       </nav>
 
-      {/* Page content */}
-      {activePage && activePage.blocks.map(block => (
-        <RenderBlock key={block.block_id} block={block} site={site} businessId={site.business_id} />
-      ))}
+      {/* Page content — CSS Grid with col_span support */}
+      {activePage && (() => {
+        // Group consecutive half/third blocks into grid rows; full-width blocks get their own row
+        const rows = [];
+        let currentRow = [];
+        activePage.blocks.forEach(block => {
+          const span = block.block_data?.col_span || 'full';
+          if (span === 'full') {
+            if (currentRow.length > 0) { rows.push(currentRow); currentRow = []; }
+            rows.push([block]);
+          } else {
+            currentRow.push(block);
+            const totalSpan = currentRow.reduce((acc, b) => {
+              const s = b.block_data?.col_span || 'full';
+              return acc + (s === 'third' ? 1 : 2); // half=2/3cols, third=1/3col (out of 3)
+            }, 0);
+            if (totalSpan >= 3) { rows.push(currentRow); currentRow = []; }
+          }
+        });
+        if (currentRow.length > 0) rows.push(currentRow);
+
+        return rows.map((row, ri) => {
+          if (row.length === 1 && (!row[0].block_data?.col_span || row[0].block_data.col_span === 'full')) {
+            return <RenderBlock key={row[0].block_id} block={row[0]} site={site} businessId={site.business_id} />;
+          }
+          return (
+            <div key={ri} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', maxWidth: 1100, margin: '0 auto', padding: '0 1rem' }}>
+              {row.map(block => {
+                const span = block.block_data?.col_span || 'full';
+                const colSpan = span === 'third' ? 1 : 2;
+                return (
+                  <div key={block.block_id} style={{ gridColumn: `span ${colSpan}` }}>
+                    <RenderBlock block={block} site={site} businessId={site.business_id} />
+                  </div>
+                );
+              })}
+            </div>
+          );
+        });
+      })()}
 
       {/* Footer */}
       <footer style={{ background: site.footer_bg_color || site.primary_color, color: 'rgba(255,255,255,0.85)', padding: '2rem 1.5rem', fontFamily: site.font_family }}>

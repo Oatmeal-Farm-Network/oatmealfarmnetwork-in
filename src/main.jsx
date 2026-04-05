@@ -40,6 +40,7 @@ const CropRotation = lazy(() => import('./CropRotation.jsx'))
 const OatSenseNotes = lazy(() => import('./OatSenseNotes.jsx'))
 const WebsiteBuilder = lazy(() => import('./WebsiteBuilder.jsx'))
 const WebsitePublic = lazy(() => import('./WebsitePublic.jsx'))
+const AudioSettings = lazy(() => import('./AudioSettings.jsx'))
 const SaigePage = lazy(() => import('./SaigePage.jsx'))
 const AnimalsHome = lazy(() => import('./AnimalsHome.jsx'))
 const AccountChangeType = lazy(() => import('./AccountChangeType.jsx'))
@@ -108,6 +109,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />
           <Route path="/precision-ag/crop-detection" element={<CropDetection />} />
           <Route path="/website/builder" element={<WebsiteBuilder />} />
+          <Route path="/account/audio-settings" element={<AudioSettings />} />
           <Route path="/sites/:slug" element={<WebsitePublic />} />
           <Route path="/knowledgebases" element={<Knowledgebases />} />
           <Route path="/plant-knowledgebase" element={<PlantKnowledgebase />} />

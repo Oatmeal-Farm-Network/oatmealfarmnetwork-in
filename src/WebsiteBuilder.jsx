@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
+import WebsiteAIAgent from './WebsiteAIAgent';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -46,6 +47,21 @@ const FONTS = [
   'Raleway, sans-serif', 'Open Sans, sans-serif',
 ];
 
+const TEMPLATES = [
+  { id: 'farmstead',   name: 'Farmstead',      primary_color: '#3D6B34', secondary_color: '#819360', accent_color: '#FFC567', bg_color: '#FAFAF7', text_color: '#1a2e1a', nav_text_color: '#FFFFFF', footer_bg_color: '#3D6B34', font_family: 'Georgia, serif' },
+  { id: 'harvest',     name: 'Harvest',         primary_color: '#8B4513', secondary_color: '#CD853F', accent_color: '#FFD700', bg_color: '#FFF8F0', text_color: '#3d1a00', nav_text_color: '#FFFFFF', footer_bg_color: '#8B4513', font_family: 'Georgia, serif' },
+  { id: 'modern',      name: 'Modern Market',   primary_color: '#1E3A5F', secondary_color: '#2E86AB', accent_color: '#A8DADC', bg_color: '#F8FAFB', text_color: '#111827', nav_text_color: '#FFFFFF', footer_bg_color: '#1E3A5F', font_family: 'Inter, sans-serif' },
+  { id: 'artisan',     name: 'Artisan',         primary_color: '#6B2737', secondary_color: '#A0522D', accent_color: '#DEB887', bg_color: '#FAF6F0', text_color: '#2d1a0e', nav_text_color: '#FFFFFF', footer_bg_color: '#6B2737', font_family: 'Playfair Display, serif' },
+  { id: 'fresh',       name: 'Fresh',           primary_color: '#2E7D32', secondary_color: '#66BB6A', accent_color: '#FFF176', bg_color: '#F1F8F1', text_color: '#1B5E20', nav_text_color: '#FFFFFF', footer_bg_color: '#2E7D32', font_family: 'Montserrat, sans-serif' },
+  { id: 'classic',     name: 'Classic',         primary_color: '#1a237e', secondary_color: '#3949AB', accent_color: '#FFD700', bg_color: '#FFFFFF',  text_color: '#111827', nav_text_color: '#FFFFFF', footer_bg_color: '#1a237e', font_family: 'Georgia, serif' },
+  { id: 'meadow',      name: 'Meadow',          primary_color: '#4A7C59', secondary_color: '#80B192', accent_color: '#F6D365', bg_color: '#F5FAF6', text_color: '#1c3325', nav_text_color: '#FFFFFF', footer_bg_color: '#4A7C59', font_family: 'Raleway, sans-serif' },
+  { id: 'sunset',      name: 'Sunset Ranch',    primary_color: '#C0392B', secondary_color: '#E67E22', accent_color: '#F9CA24', bg_color: '#FFF9F5', text_color: '#2c1206', nav_text_color: '#FFFFFF', footer_bg_color: '#922B21', font_family: 'Lato, sans-serif' },
+  { id: 'slate',       name: 'Slate & Stone',   primary_color: '#37474F', secondary_color: '#607D8B', accent_color: '#80CBC4', bg_color: '#F5F7F8', text_color: '#1c2b33', nav_text_color: '#FFFFFF', footer_bg_color: '#263238', font_family: 'Montserrat, sans-serif' },
+  { id: 'lavender',    name: 'Lavender Field',  primary_color: '#6A4C93', secondary_color: '#9B72CF', accent_color: '#FFD6E0', bg_color: '#FAF8FF', text_color: '#2d1b4e', nav_text_color: '#FFFFFF', footer_bg_color: '#6A4C93', font_family: 'Raleway, sans-serif' },
+  { id: 'coastal',     name: 'Coastal',         primary_color: '#006D77', secondary_color: '#83C5BE', accent_color: '#FFDDD2', bg_color: '#F8FFFE', text_color: '#003d44', nav_text_color: '#FFFFFF', footer_bg_color: '#004E57', font_family: 'Open Sans, sans-serif' },
+  { id: 'midnight',    name: 'Midnight',        primary_color: '#1A1A2E', secondary_color: '#16213E', accent_color: '#E94560', bg_color: '#F4F4F8', text_color: '#1A1A2E', nav_text_color: '#FFFFFF', footer_bg_color: '#0F0F1A', font_family: 'Inter, sans-serif' },
+];
+
 const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 function authHeaders() {
@@ -68,6 +84,197 @@ function FormField({ label, children }) {
     <div className="mb-4">
       <label className="block text-sm font-semibold text-gray-700 mb-1">{label}</label>
       {children}
+    </div>
+  );
+}
+
+// ── Image upload helper ───────────────────────────────────────────
+async function uploadImageFile(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const token = localStorage.getItem('access_token');
+  const res = await fetch(`${API}/api/website/upload-image`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  if (!res.ok) throw new Error('Upload failed');
+  const data = await res.json();
+  return data.url;
+}
+
+// ── Drag-and-drop image upload field ─────────────────────────────
+function ImageUploadField({ label, value, onChange, hint, compact = false }) {
+  const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef(null);
+
+  const handleFiles = useCallback(async (files) => {
+    const file = files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadImageFile(file);
+      onChange(url);
+    } catch { alert('Image upload failed. Please try again.'); }
+    finally { setUploading(false); }
+  }, [onChange]);
+
+  const onDrop = (e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); };
+
+  return (
+    <div>
+      {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
+      {value && (
+        <div className="relative inline-block mb-2">
+          <img src={value} alt="" className={`rounded-lg object-cover border border-gray-200 ${compact ? 'h-12 w-20' : 'h-24 w-36'}`} />
+          <button onClick={() => onChange('')}
+            className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none hover:bg-red-600">×</button>
+        </div>
+      )}
+      <div
+        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+        onClick={() => inputRef.current?.click()}
+        className={`border-2 border-dashed rounded-xl text-center cursor-pointer transition-colors select-none
+          ${compact ? 'py-2 px-3 text-xs' : 'py-5 px-4 text-sm'}
+          ${dragging ? 'border-[#819360] bg-green-50' : 'border-gray-200 hover:border-[#819360] hover:bg-gray-50'}`}
+      >
+        {uploading
+          ? <span className="text-gray-400 animate-pulse">Uploading…</span>
+          : <span className="text-gray-400">Drop image here or <span className="text-[#3D6B34] font-medium">browse</span></span>}
+        <input ref={inputRef} type="file" accept="image/*" className="hidden"
+          onChange={e => handleFiles(e.target.files)} />
+      </div>
+      {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+    </div>
+  );
+}
+
+// ── Header images manager ─────────────────────────────────────────
+function HeaderImagesManager({ websiteId }) {
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!websiteId) return;
+    fetch(`${API}/api/website/header-images/${websiteId}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+    })
+      .then(r => r.json())
+      .then(data => setImages(Array.isArray(data) ? data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [websiteId]);
+
+  const validate = (imgs) => {
+    if (imgs.length < 2) return '';
+    const sorted = [...imgs].sort((a, b) => (a.start_date || '') < (b.start_date || '') ? -1 : 1);
+    for (let i = 0; i < sorted.length - 1; i++) {
+      if (!sorted[i].end_date || !sorted[i + 1].start_date) continue;
+      const endDate = new Date(sorted[i].end_date);
+      const nextStart = new Date(sorted[i + 1].start_date);
+      endDate.setDate(endDate.getDate() + 1);
+      if (endDate.toDateString() !== nextStart.toDateString()) {
+        return `Gap detected between "${sorted[i].end_date}" and "${sorted[i + 1].start_date}". Dates must be continuous with no gaps.`;
+      }
+    }
+    return '';
+  };
+
+  const addImage = async (url) => {
+    setSaving(true);
+    try {
+      const res = await fetch(`${API}/api/website/header-images`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+        body: JSON.stringify({ website_id: websiteId, image_url: url, sort_order: images.length }),
+      });
+      const newImg = await res.json();
+      setImages(prev => [...prev, newImg]);
+    } finally { setSaving(false); }
+  };
+
+  const updateImage = async (id, field, value) => {
+    const updated = images.map(img => img.header_image_id === id ? { ...img, [field]: value } : img);
+    setImages(updated);
+    const err = validate(updated);
+    setError(err);
+    if (!err) {
+      await fetch(`${API}/api/website/header-images/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+        body: JSON.stringify({ [field]: value }),
+      });
+    }
+  };
+
+  const deleteImage = async (id) => {
+    await fetch(`${API}/api/website/header-images/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+    });
+    const updated = images.filter(img => img.header_image_id !== id);
+    setImages(updated);
+    setError(validate(updated));
+  };
+
+  const sorted = [...images].sort((a, b) => (a.start_date || '') < (b.start_date || '') ? -1 : 1);
+
+  return (
+    <div>
+      <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Header Images</h3>
+      <p className="text-xs text-gray-400 mb-3">
+        Add one or more rotating header images. If using multiple, assign start/end dates with no gaps between them.
+      </p>
+
+      {error && (
+        <div className="mb-3 bg-amber-50 border border-amber-300 text-amber-700 rounded-lg px-3 py-2 text-xs">{error}</div>
+      )}
+
+      {loading ? (
+        <p className="text-xs text-gray-400">Loading…</p>
+      ) : (
+        <div className="space-y-3 mb-3">
+          {sorted.map((img, i) => (
+            <div key={img.header_image_id} className="border border-gray-100 rounded-xl p-3 bg-gray-50">
+              <div className="flex items-start gap-3">
+                {img.image_url && (
+                  <img src={img.image_url} alt="" className="w-20 h-12 object-cover rounded-lg border border-gray-200 shrink-0" />
+                )}
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-0.5">Start Date {images.length > 1 ? '' : <span className="text-gray-300">(Optional)</span>}</label>
+                      <input type="date" value={img.start_date || ''} className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs"
+                        onChange={e => updateImage(img.header_image_id, 'start_date', e.target.value)} />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-0.5">End Date {images.length > 1 ? '' : <span className="text-gray-300">(Optional)</span>}</label>
+                      <input type="date" value={img.end_date || ''} className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs"
+                        onChange={e => updateImage(img.header_image_id, 'end_date', e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+                <button onClick={() => deleteImage(img.header_image_id)}
+                  className="shrink-0 text-red-400 hover:text-red-600 text-lg leading-none mt-0.5">×</button>
+              </div>
+              <div className="mt-2">
+                <ImageUploadField compact value={img.image_url} onChange={url => updateImage(img.header_image_id, 'image_url', url)} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <ImageUploadField
+        hint="Upload to add another header image"
+        value=""
+        onChange={url => url && addImage(url)}
+      />
     </div>
   );
 }
@@ -104,8 +311,24 @@ function BlockEditorForm({ blockType, data, onChange }) {
     </FormField>
   );
 
+  const widthRow = (
+    <FormField label="Block Width">
+      <div className="flex gap-2">
+        {[['full','Full Width'],['half','Half Width'],['third','One Third']].map(([v,l]) => (
+          <button key={v} type="button"
+            onClick={() => set('col_span', v)}
+            className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors
+              ${(data.col_span || 'full') === v ? 'bg-[#3D6B34] text-white border-[#3D6B34]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+            {l}
+          </button>
+        ))}
+      </div>
+    </FormField>
+  );
+
   switch (blockType) {
     case 'hero': return (<>
+      {widthRow}
       {fi('headline', 'Headline')}
       {fta('subtext', 'Sub-text')}
       {fi('image_url', 'Background Image URL')}
@@ -115,19 +338,22 @@ function BlockEditorForm({ blockType, data, onChange }) {
       {fsel('align', 'Text Alignment', [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Center' }, { value: 'right', label: 'Right' }])}
     </>);
     case 'about': return (<>
+      {widthRow}
       {fi('heading', 'Heading')}
       {fta('body', 'Body Text')}
       {fi('image_url', 'Image URL')}
       {fsel('image_position', 'Image Position', [{ value: 'right', label: 'Right' }, { value: 'left', label: 'Left' }, { value: 'none', label: 'No Image' }])}
     </>);
     case 'content': return (<>
-      {fi('heading', 'Heading (optional)')}
+      {widthRow}
+      {fi('heading', 'Heading (Optional)')}
       {fta('body', 'Body Text')}
-      {fi('image_url', 'Image URL (optional)')}
+      {fi('image_url', 'Image URL (Optional)')}
       {fsel('image_position', 'Image Position', [{ value: 'right', label: 'Right' }, { value: 'left', label: 'Left' }, { value: 'top', label: 'Top' }, { value: 'none', label: 'No Image' }])}
     </>);
     case 'livestock':
     case 'studs': return (<>
+      {widthRow}
       {fi('heading', 'Heading')}
       {fcheck('show_for_sale', 'Show Animals For Sale')}
       {fcheck('show_studs', 'Show Stud Services')}
@@ -138,54 +364,77 @@ function BlockEditorForm({ blockType, data, onChange }) {
     case 'processed_food':
     case 'services':
     case 'marketplace': return (<>
+      {widthRow}
       {fi('heading', 'Heading')}
       {fi('max_items', 'Max Items to Show', 'number')}
     </>);
     case 'gallery': return (<>
+      {widthRow}
       {fi('heading', 'Heading')}
       {fsel('columns', 'Columns', [{ value: 2, label: '2 Columns' }, { value: 3, label: '3 Columns' }, { value: 4, label: '4 Columns' }])}
     </>);
     case 'blog': return (<>
+      {widthRow}
       {fi('heading', 'Heading')}
       {fi('max_posts', 'Max Posts to Show', 'number')}
     </>);
     case 'contact': return (<>
+      {widthRow}
       {fi('heading', 'Heading')}
-      {fta('custom_message', 'Custom Message (optional)')}
+      {fta('custom_message', 'Custom Message (Optional)')}
       {fcheck('show_form', 'Show Contact Form')}
     </>);
-    case 'divider': return fi('height', 'Height (px)', 'number');
+    case 'divider': return (<>{widthRow}{fi('height', 'Height (px)', 'number')}</>);
     default: return <p className="text-gray-400 text-sm">No settings for this block type.</p>;
   }
 }
 
 // ── Block card ────────────────────────────────────────────────────
-function BlockCard({ block, onEdit, onDelete, onMoveUp, onMoveDown, isFirst, isLast }) {
+function BlockCard({ block, onEdit, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onDragStart, onDragOver, onDrop, isDragging }) {
   const bt = BLOCK_TYPES.find(b => b.type === block.block_type) || { icon: '📦', label: block.block_type };
   const preview = block.block_data?.headline || block.block_data?.heading || block.block_data?.body?.slice(0, 80) || '';
+  const widthLabel = { full: 'Full', half: '½ Width', third: '⅓ Width' }[block.block_data?.col_span] || 'Full';
   return (
-    <div className="flex items-center gap-4 bg-white border border-gray-100 rounded-xl px-5 py-4 shadow-sm group hover:border-gray-200 transition-colors">
-      <span className="text-2xl shrink-0">{bt.icon}</span>
+    <div
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      className={`flex items-center gap-3 bg-white border rounded-xl px-4 py-3.5 shadow-sm transition-all
+        ${isDragging ? 'opacity-40 border-dashed border-[#3D6B34]' : 'border-gray-100 hover:border-gray-200'}`}
+    >
+      {/* Drag handle */}
+      <div className="shrink-0 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-400 pr-1" title="Drag to reorder">
+        <svg width="12" height="18" viewBox="0 0 12 18" fill="currentColor">
+          <circle cx="3" cy="3" r="1.5"/><circle cx="9" cy="3" r="1.5"/>
+          <circle cx="3" cy="9" r="1.5"/><circle cx="9" cy="9" r="1.5"/>
+          <circle cx="3" cy="15" r="1.5"/><circle cx="9" cy="15" r="1.5"/>
+        </svg>
+      </div>
+      <span className="text-xl shrink-0">{bt.icon}</span>
       <div className="flex-grow min-w-0">
         <div className="font-semibold text-sm text-gray-800">{bt.label}</div>
-        {preview && <div className="text-xs text-gray-400 truncate mt-0.5">{preview}</div>}
+        <div className="flex items-center gap-2 mt-0.5">
+          {preview && <span className="text-xs text-gray-400 truncate">{preview}</span>}
+          <span className="text-xs text-gray-300 shrink-0">{widthLabel}</span>
+        </div>
       </div>
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="flex items-center gap-1 shrink-0">
         <button onClick={onMoveUp} disabled={isFirst} title="Move up"
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 disabled:opacity-25 disabled:cursor-not-allowed transition-colors">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 15l-6-6-6 6"/></svg>
+          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 15l-6-6-6 6"/></svg>
         </button>
         <button onClick={onMoveDown} disabled={isLast} title="Move down"
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 disabled:opacity-25 disabled:cursor-not-allowed transition-colors">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <button onClick={onEdit}
-          className="px-3 py-1.5 text-sm font-medium text-[#3D6B34] border border-[#3D6B34]/30 rounded-lg hover:bg-green-50 transition-colors">
+          className="px-2.5 py-1.5 text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 rounded-lg hover:bg-green-50 transition-colors">
           Edit
         </button>
         <button onClick={onDelete}
-          className="px-3 py-1.5 text-sm font-medium text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
-          Delete
+          className="px-2.5 py-1.5 text-xs font-medium text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+          Del
         </button>
       </div>
     </div>
@@ -217,11 +466,24 @@ export default function WebsiteBuilder() {
   const [editingBlock, setEditingBlock]       = useState(null);
   const [editBlockData, setEditBlockData]     = useState({});
 
+  // Drag-to-reorder
+  const dragIdx = useRef(null);
+  const [draggingId, setDraggingId] = useState(null);
+
+  // Responsive preview
+  const [previewMode, setPreviewMode] = useState('desktop'); // 'desktop' | 'tablet' | 'mobile'
+
   // Setup wizard data
   const [setupData, setSetupData] = useState({
     site_name: '', slug: '', tagline: '', logo_url: '',
-    primary_color: '#3D6B34', secondary_color: '#819360', accent_color: '#FFC567',
-    bg_color: '#FFFFFF', text_color: '#111827', font_family: 'Inter, sans-serif',
+    primary_color:   TEMPLATES[0].primary_color,
+    secondary_color: TEMPLATES[0].secondary_color,
+    accent_color:    TEMPLATES[0].accent_color,
+    bg_color:        TEMPLATES[0].bg_color,
+    text_color:      TEMPLATES[0].text_color,
+    nav_text_color:  TEMPLATES[0].nav_text_color,
+    footer_bg_color: TEMPLATES[0].footer_bg_color,
+    font_family:     TEMPLATES[0].font_family,
     phone: '', email: '', address: '', facebook_url: '', instagram_url: '', twitter_url: '',
   });
 
@@ -380,6 +642,7 @@ export default function WebsiteBuilder() {
       await mkBlock(contactPage.page_id, 'contact', { heading: 'Get In Touch', custom_message: "Have a question about our products, want to place a bulk order, or just want to say hello? Fill out the form below and we'll get back to you as soon as possible.", show_form: true }, 1);
 
       await loadPages(data.website_id);
+      setActivePage('design');
     } catch (e) { alert(e.message); }
     finally { setSaving(false); }
   };
@@ -397,6 +660,16 @@ export default function WebsiteBuilder() {
 
   const togglePublish = async () => {
     await saveSite({ is_published: !site.is_published });
+  };
+
+  const deleteSite = async () => {
+    if (!site) return;
+    if (!window.confirm(`Delete "${site.site_name}"? This will permanently remove the website, all pages, and all content. This cannot be undone.`)) return;
+    try {
+      await apiFetch(`/api/website/site/${site.website_id}`, { method: 'DELETE' });
+      setSite(null);
+      setSetupMode(true);
+    } catch (e) { alert(e.message); }
   };
 
   // ── Page CRUD ─────────────────────────────────────────────────
@@ -485,6 +758,33 @@ export default function WebsiteBuilder() {
     } catch { loadBlocks(activePage.page_id); }
   };
 
+  // ── Drag-to-reorder handlers ──────────────────────────────────
+  const handleDragStart = useCallback((e, idx) => {
+    dragIdx.current = idx;
+    setDraggingId(blocks[idx]?.block_id);
+    e.dataTransfer.effectAllowed = 'move';
+  }, [blocks]);
+
+  const handleDragOver = useCallback((e, idx) => {
+    e.preventDefault();
+    if (dragIdx.current === null || dragIdx.current === idx) return;
+    const nb = [...blocks];
+    const dragged = nb.splice(dragIdx.current, 1)[0];
+    nb.splice(idx, 0, dragged);
+    dragIdx.current = idx;
+    setBlocks(nb);
+  }, [blocks]);
+
+  const handleDrop = useCallback(async () => {
+    setDraggingId(null);
+    dragIdx.current = null;
+    try {
+      const reordered = blocks.map((b, i) => ({ ...b, sort_order: i }));
+      setBlocks(reordered);
+      await apiFetch('/api/website/blocks/reorder', { method: 'POST', body: JSON.stringify({ block_ids: reordered.map(b => b.block_id) }) });
+    } catch { if (activePage?.page_id) loadBlocks(activePage.page_id); }
+  }, [blocks, activePage]);
+
   // ── Render guards ─────────────────────────────────────────────
   const PeopleID = localStorage.getItem('people_id');
 
@@ -497,31 +797,77 @@ export default function WebsiteBuilder() {
   // ── Setup wizard ──────────────────────────────────────────────
   if (setupMode) return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
-      <div style={{ maxWidth: 640, margin: '0 auto' }}>
+      <div style={{ maxWidth: 700, margin: '0 auto' }}>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Create Your Website</h1>
         <p className="text-gray-500 text-sm mb-6">Set up your public business website. You can change everything later.</p>
+
+        {/* Template picker */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow p-6 mb-4">
+          <h2 className="text-base font-bold text-gray-800 mb-1">Choose a Starting Design</h2>
+          <p className="text-xs text-gray-400 mb-4">Pick a color scheme to start with. You can customize every detail afterwards.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {TEMPLATES.map(t => (
+              <button
+                key={t.id}
+                onClick={() => setSetupData(p => ({ ...p,
+                  primary_color:   t.primary_color,
+                  secondary_color: t.secondary_color,
+                  accent_color:    t.accent_color,
+                  bg_color:        t.bg_color,
+                  text_color:      t.text_color,
+                  nav_text_color:  t.nav_text_color,
+                  footer_bg_color: t.footer_bg_color,
+                  font_family:     t.font_family,
+                }))}
+                className={`rounded-xl border-2 overflow-hidden text-left transition-all
+                  ${setupData.primary_color === t.primary_color
+                    ? 'border-[#3D6B34] shadow-md'
+                    : 'border-gray-100 hover:border-gray-300'}`}
+              >
+                {/* Color swatch strip */}
+                <div className="flex h-8">
+                  {[t.primary_color, t.secondary_color, t.accent_color, t.bg_color].map((c, i) => (
+                    <div key={i} className="flex-1" style={{ background: c }} />
+                  ))}
+                </div>
+                {/* Nav preview */}
+                <div className="px-2 py-1" style={{ background: t.primary_color }}>
+                  <span className="text-xs font-bold" style={{ color: t.nav_text_color, fontFamily: t.font_family }}>
+                    {t.name}
+                  </span>
+                </div>
+                <div className="px-2 py-1.5" style={{ background: t.bg_color }}>
+                  <span className="text-xs" style={{ color: t.text_color, fontFamily: t.font_family }}>
+                    Sample text
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="bg-white rounded-xl border border-gray-100 shadow p-6 flex flex-col gap-3">
-          <FormField label="Site Name *">
+          <FormField label="Site Name">
             <input className={inp} value={setupData.site_name} placeholder="Green Acres Farm"
               onChange={e => setSetupData(p => ({ ...p, site_name: e.target.value }))} />
           </FormField>
-          <FormField label={`URL Slug * — your site will be at /sites/${setupData.slug || 'your-farm'}`}>
+          <FormField label={`URL Slug — your site will be at /sites/${setupData.slug || 'your-farm'}`}>
             <input className={inp} value={setupData.slug} placeholder="green-acres-farm"
               onChange={e => setSetupData(p => ({ ...p, slug: slugify(e.target.value) }))} />
           </FormField>
-          <FormField label="Tagline">
+          <FormField label="Tagline (Optional)">
             <input className={inp} value={setupData.tagline} placeholder="Fresh, local, sustainably grown."
               onChange={e => setSetupData(p => ({ ...p, tagline: e.target.value }))} />
           </FormField>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Phone">
+            <FormField label="Phone (Optional)">
               <input className={inp} value={setupData.phone} onChange={e => setSetupData(p => ({ ...p, phone: e.target.value }))} />
             </FormField>
-            <FormField label="Email">
+            <FormField label="Email (Optional)">
               <input className={inp} value={setupData.email} onChange={e => setSetupData(p => ({ ...p, email: e.target.value }))} />
             </FormField>
           </div>
-          <FormField label="Primary Color">
+          <FormField label="Primary Color (Optional)">
             <div className="flex items-center gap-3">
               <input type="color" value={setupData.primary_color} onChange={e => setSetupData(p => ({ ...p, primary_color: e.target.value }))}
                 className="w-10 h-10 rounded cursor-pointer border border-gray-200" />
@@ -543,6 +889,7 @@ export default function WebsiteBuilder() {
   const isPage     = activePage && typeof activePage === 'object';
 
   return (
+    <>
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
 
       {/* ── Top bar ── */}
@@ -574,6 +921,19 @@ export default function WebsiteBuilder() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {/* Responsive preview toggle */}
+          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+            {[
+              { id: 'desktop', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>, title: 'Desktop' },
+              { id: 'tablet',  icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>, title: 'Tablet' },
+              { id: 'mobile',  icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>, title: 'Mobile' },
+            ].map(({ id, icon, title }) => (
+              <button key={id} onClick={() => setPreviewMode(id)} title={title}
+                className={`px-2.5 py-2 transition-colors ${previewMode === id ? 'bg-[#3D6B34] text-white' : 'text-gray-400 hover:bg-gray-50'}`}>
+                {icon}
+              </button>
+            ))}
+          </div>
           <button onClick={() => window.open(`/sites/${site.slug}?preview=1`, '_blank')}
             className="text-sm font-medium text-gray-600 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
             Preview ↗
@@ -593,6 +953,11 @@ export default function WebsiteBuilder() {
 
       {/* ── Main content area ── */}
       <div style={{ minHeight: 'calc(100vh - 230px)' }}>
+        {/* Responsive preview wrapper */}
+        <div className={`transition-all mx-auto ${
+          previewMode === 'tablet' ? 'max-w-[768px]' :
+          previewMode === 'mobile' ? 'max-w-[390px]' : 'max-w-none'
+        }`}>
 
           {/* ── PAGE EDITOR ── */}
           {isPage && (
@@ -631,6 +996,10 @@ export default function WebsiteBuilder() {
                       onMoveUp={() => moveBlock(idx, -1)}
                       onMoveDown={() => moveBlock(idx, 1)}
                       isFirst={idx === 0} isLast={idx === blocks.length - 1}
+                      isDragging={draggingId === block.block_id}
+                      onDragStart={(e) => handleDragStart(e, idx)}
+                      onDragOver={(e) => handleDragOver(e, idx)}
+                      onDrop={handleDrop}
                     />
                   ))}
                   <button onClick={() => setShowBlockPicker(true)}
@@ -644,12 +1013,12 @@ export default function WebsiteBuilder() {
 
           {/* ── DESIGN PAGE ── */}
           {isDesign && (
-            <DesignView site={site} onSave={saveSite} saving={saving} />
+            <DesignView site={site} onSave={saveSite} saving={saving} onDelete={deleteSite} />
           )}
 
           {/* ── SETTINGS PAGE ── */}
           {isSettings && (
-            <SettingsView site={site} onSave={saveSite} saving={saving} />
+            <SettingsView site={site} onSave={saveSite} saving={saving} onDelete={deleteSite} />
           )}
 
           {/* ── No page selected ── */}
@@ -659,6 +1028,7 @@ export default function WebsiteBuilder() {
             </div>
           )}
 
+        </div>{/* end preview wrapper */}
       </div>
 
       {/* ── Block picker modal ── */}
@@ -712,11 +1082,22 @@ export default function WebsiteBuilder() {
       )}
 
     </AccountLayout>
+
+    {/* ── Lavendir AI Agent — rendered outside AccountLayout so fixed positioning is unclipped ── */}
+    {site && (
+      <WebsiteAIAgent
+        websiteId={site.website_id}
+        businessId={parseInt(BusinessID)}
+        currentView={isDesign ? 'design' : isSettings ? 'settings' : activePage?.page_name || 'page'}
+      />
+    )}
+    </>
   );
 }
 
 // ── Design full view ──────────────────────────────────────────────
 function DesignView({ site, onSave, saving }) {
+
   const [local, setLocal] = useState({
     primary_color:   site.primary_color   || '#3D6B34',
     secondary_color: site.secondary_color || '#819360',
@@ -778,6 +1159,52 @@ function DesignView({ site, onSave, saving }) {
       <h2 className="text-lg font-bold text-gray-900 mb-1">Design</h2>
       <p className="text-sm text-gray-500 mb-5">Customize the look, colors, fonts, header, and footer of your website.</p>
 
+      {/* ── Palette switcher ── */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
+        <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Color Palettes</h3>
+        <p className="text-xs text-gray-400 mb-4">Apply a preset palette — you can still fine-tune individual colors below.</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {TEMPLATES.map(t => {
+            const active = local.primary_color === t.primary_color && local.secondary_color === t.secondary_color;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setLocal(p => ({ ...p,
+                  primary_color:   t.primary_color,
+                  secondary_color: t.secondary_color,
+                  accent_color:    t.accent_color,
+                  bg_color:        t.bg_color,
+                  text_color:      t.text_color,
+                  nav_text_color:  t.nav_text_color,
+                  footer_bg_color: t.footer_bg_color,
+                  font_family:     t.font_family,
+                }))}
+                className={`rounded-xl border-2 overflow-hidden text-left transition-all
+                  ${active ? 'border-[#3D6B34] shadow-md ring-2 ring-[#3D6B34]/20' : 'border-gray-100 hover:border-gray-300'}`}
+              >
+                {/* Color swatch strip */}
+                <div className="flex h-7">
+                  {[t.primary_color, t.secondary_color, t.accent_color, t.bg_color].map((c, i) => (
+                    <div key={i} className="flex-1" style={{ background: c }} />
+                  ))}
+                </div>
+                {/* Nav preview */}
+                <div className="px-2 py-1" style={{ background: t.primary_color }}>
+                  <span className="text-xs font-bold truncate block" style={{ color: t.nav_text_color, fontFamily: t.font_family }}>
+                    {t.name}
+                  </span>
+                </div>
+                <div className="px-2 py-1" style={{ background: t.bg_color }}>
+                  <span className="text-xs truncate block" style={{ color: t.text_color, fontFamily: t.font_family }}>
+                    Sample text
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* Header */}
@@ -786,11 +1213,19 @@ function DesignView({ site, onSave, saving }) {
           <ColorRow label="Header Background"  field="primary_color"   hint="Background color of the navigation bar" />
           <ColorRow label="Header Text Color"  field="nav_text_color"  hint="Color of the site name and nav links" />
           <div className="mt-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Logo Image URL</label>
-            <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" placeholder="https://..."
-              value={local.logo_url} onChange={e => setLocal(p => ({ ...p, logo_url: e.target.value }))} />
+            <ImageUploadField
+              label="Logo"
+              value={local.logo_url}
+              onChange={url => setLocal(p => ({ ...p, logo_url: url }))}
+              hint="Appears in the navigation bar. Recommended: square PNG with transparent background."
+            />
           </div>
           <HeaderPreview />
+        </div>
+
+        {/* Header Images */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
+          <HeaderImagesManager websiteId={site.website_id} />
         </div>
 
         {/* Footer */}
@@ -852,8 +1287,85 @@ function DesignView({ site, onSave, saving }) {
   );
 }
 
+// ── Version History panel ─────────────────────────────────────────
+function VersionHistoryPanel({ websiteId }) {
+  const [versions, setVersions]     = useState([]);
+  const [label, setLabel]           = useState('');
+  const [saving, setSaving]         = useState(false);
+  const [restoring, setRestoring]   = useState(false);
+
+  const load = () => {
+    fetch(`${API}/api/website/versions/${websiteId}`, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } })
+      .then(r => r.json()).then(d => setVersions(Array.isArray(d) ? d : [])).catch(() => {});
+  };
+  useEffect(() => { if (websiteId) load(); }, [websiteId]);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await fetch(`${API}/api/website/versions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+        body: JSON.stringify({ website_id: websiteId, version_label: label || undefined }),
+      });
+      setLabel('');
+      load();
+    } catch { alert('Could not save version.'); }
+    finally { setSaving(false); }
+  };
+
+  const restore = async (vid, lbl) => {
+    if (!window.confirm(`Restore version "${lbl}"? Your current site will be replaced.`)) return;
+    setRestoring(vid);
+    try {
+      await fetch(`${API}/api/website/versions/${vid}/restore`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+      });
+      window.location.reload();
+    } catch { alert('Could not restore version.'); }
+    finally { setRestoring(false); }
+  };
+
+  return (
+    <div>
+      <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Version History</h3>
+      <p className="text-xs text-gray-400 mb-3">Save a snapshot of your site to roll back later.</p>
+      <div className="flex gap-2 mb-4">
+        <input className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
+          placeholder="Version label (Optional)"
+          value={label} onChange={e => setLabel(e.target.value)} />
+        <button onClick={save} disabled={saving}
+          className="bg-[#3D6B34] text-white text-sm font-semibold px-4 rounded-lg hover:bg-[#2d5226] transition-colors disabled:opacity-50">
+          {saving ? '…' : 'Save Version'}
+        </button>
+      </div>
+      {versions.length === 0
+        ? <p className="text-xs text-gray-400">No saved versions yet.</p>
+        : (
+          <div className="space-y-2">
+            {versions.map(v => (
+              <div key={v.version_id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{v.version_label || `Version ${v.version_id}`}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{new Date(v.created_at).toLocaleString()}</p>
+                </div>
+                <button onClick={() => restore(v.version_id, v.version_label || `Version ${v.version_id}`)}
+                  disabled={restoring === v.version_id}
+                  className="text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50">
+                  {restoring === v.version_id ? 'Restoring…' : 'Restore'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )
+      }
+    </div>
+  );
+}
+
 // ── Settings full view ────────────────────────────────────────────
-function SettingsView({ site, onSave, saving }) {
+function SettingsView({ site, onSave, saving, onDelete }) {
   const [local, setLocal] = useState({
     site_name:     site.site_name     || '',
     slug:          site.slug          || '',
@@ -864,6 +1376,10 @@ function SettingsView({ site, onSave, saving }) {
     facebook_url:  site.facebook_url  || '',
     instagram_url: site.instagram_url || '',
     twitter_url:   site.twitter_url   || '',
+    meta_title:    site.meta_title    || '',
+    canonical_url: site.canonical_url || '',
+    og_image_url:  site.og_image_url  || '',
+    seo_extras_json: site.seo_extras_json || '{}',
   });
 
   const fi = (key, label, placeholder = '', type = 'text') => (
@@ -909,18 +1425,61 @@ function SettingsView({ site, onSave, saving }) {
           </div>
         </div>
 
+        {/* SEO & Metadata */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
+          <h3 className="font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100">SEO &amp; Metadata</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Meta Title (Optional)">
+              <input className={inp} value={local.meta_title} placeholder={local.site_name}
+                onChange={e => setLocal(p => ({ ...p, meta_title: e.target.value }))} />
+              <p className="text-xs text-gray-400 mt-1">Shown in browser tab and Google results. Defaults to site name.</p>
+            </FormField>
+            <FormField label="Canonical URL (Optional)">
+              <input className={inp} value={local.canonical_url} placeholder="https://yourfarm.com"
+                onChange={e => setLocal(p => ({ ...p, canonical_url: e.target.value }))} />
+              <p className="text-xs text-gray-400 mt-1">Your primary domain if using a custom domain.</p>
+            </FormField>
+            <FormField label="Social Share Image URL (Optional)">
+              <input className={inp} value={local.og_image_url} placeholder="https://…/og-image.jpg"
+                onChange={e => setLocal(p => ({ ...p, og_image_url: e.target.value }))} />
+              <p className="text-xs text-gray-400 mt-1">Image shown when sharing on Facebook, Twitter, etc. Recommended: 1200×630px.</p>
+            </FormField>
+            <FormField label="Schema / Structured Data (JSON-LD, Optional)">
+              <textarea className={`${inp} font-mono text-xs min-h-[80px] resize-y`}
+                value={(() => { try { const p = JSON.parse(local.seo_extras_json || '{}'); return p.schema_jsonld || ''; } catch { return ''; } })()}
+                placeholder={'{\n  "@context": "https://schema.org",\n  "@type": "LocalBusiness",\n  "name": "Your Farm"\n}'}
+                onChange={e => {
+                  try {
+                    const parsed = JSON.parse(local.seo_extras_json || '{}');
+                    setLocal(p => ({ ...p, seo_extras_json: JSON.stringify({ ...parsed, schema_jsonld: e.target.value }) }));
+                  } catch { setLocal(p => ({ ...p, seo_extras_json: JSON.stringify({ schema_jsonld: e.target.value }) })); }
+                }} />
+              <p className="text-xs text-gray-400 mt-1">Structured data helps search engines understand your business.</p>
+            </FormField>
+          </div>
+        </div>
+
         {/* Domain connection */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
           <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Custom Domain</h3>
           <DomainInstructions siteSlug={site.slug} />
         </div>
 
+        {/* Version History */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
+          <VersionHistoryPanel websiteId={site.website_id} />
+        </div>
+
       </div>
 
-      <div className="mt-5">
+      <div className="mt-5 flex items-center justify-between">
         <button onClick={() => onSave(local)} disabled={saving}
           className="regsubmit2 px-8 py-2.5 text-sm disabled:opacity-50">
           {saving ? 'Saving…' : 'Save Settings'}
+        </button>
+        <button onClick={onDelete}
+          className="text-sm text-red-500 border border-red-200 rounded-xl px-4 py-2.5 hover:bg-red-50 transition-colors">
+          Delete Website
         </button>
       </div>
     </div>

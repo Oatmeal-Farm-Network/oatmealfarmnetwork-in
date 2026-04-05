@@ -188,13 +188,13 @@ export default function ProduceInventory() {
 
               {/* Quantity */}
               <div>
-                <label className={labelCls}>Quantity</label>
+                <label className={labelCls}>Quantity <span className="text-gray-400 font-normal">(Optional)</span></label>
                 <input type="number" value={addForm.Quantity} onChange={e => setAddForm(f => ({ ...f, Quantity: e.target.value }))} className={inputCls} min="0" />
               </div>
 
               {/* Measurement */}
               <div>
-                <label className={labelCls}>Measurement</label>
+                <label className={labelCls}>Measurement <span className="text-gray-400 font-normal">(Optional)</span></label>
                 <select value={addForm.MeasurementID} onChange={e => setAddForm(f => ({ ...f, MeasurementID: e.target.value }))} className={inputCls}>
                   <option value="">Select</option>
                   {measurements.map(m => (
@@ -205,7 +205,7 @@ export default function ProduceInventory() {
 
               {/* Wholesale */}
               <div>
-                <label className={labelCls}>Wholesale (USD)</label>
+                <label className={labelCls}>Wholesale (USD) <span className="text-gray-400 font-normal">(Optional)</span></label>
                 <div className="flex items-center border border-gray-300 rounded overflow-hidden focus-within:border-[#819360]">
                   <span className="px-2 text-gray-400 text-sm bg-gray-50 border-r border-gray-300">$</span>
                   <input type="number" value={addForm.WholesalePrice} onChange={e => setAddForm(f => ({ ...f, WholesalePrice: e.target.value }))} className="px-2 py-1.5 text-sm focus:outline-none w-full" step="0.01" min="0" />
@@ -214,7 +214,7 @@ export default function ProduceInventory() {
 
               {/* Retail */}
               <div>
-                <label className={labelCls}>Retail (USD)</label>
+                <label className={labelCls}>Retail (USD) <span className="text-gray-400 font-normal">(Optional)</span></label>
                 <div className="flex items-center border border-gray-300 rounded overflow-hidden focus-within:border-[#819360]">
                   <span className="px-2 text-gray-400 text-sm bg-gray-50 border-r border-gray-300">$</span>
                   <input type="number" value={addForm.RetailPrice} onChange={e => setAddForm(f => ({ ...f, RetailPrice: e.target.value }))} className="px-2 py-1.5 text-sm focus:outline-none w-full" step="0.01" min="0" />
@@ -223,7 +223,7 @@ export default function ProduceInventory() {
 
               {/* Available Date */}
               <div>
-                <label className={labelCls}>Available Date</label>
+                <label className={labelCls}>Available Date <span className="text-gray-400 font-normal">(Optional)</span></label>
                 <input type="date" value={addForm.AvailableDate} onChange={e => setAddForm(f => ({ ...f, AvailableDate: e.target.value }))} className={inputCls} />
               </div>
 

@@ -159,7 +159,7 @@ export default function ContactUs() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Organization / Business Name</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Organization / Business Name <span className="text-gray-400 font-normal">(Optional)</span></label>
               <input
                 type="text"
                 name="BizName"
@@ -187,7 +187,7 @@ export default function ContactUs() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                How can we help? <span className="text-gray-400 font-normal">(optional)</span>
+                How can we help? <span className="text-gray-400 font-normal">(Optional)</span>
               </label>
               <textarea
                 name="CommentText"

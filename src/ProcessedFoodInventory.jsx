@@ -315,7 +315,7 @@ export default function ProcessedFoodInventory() {
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Name *</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Name</label>
                 <input
                   required
                   value={editing.Name}
@@ -326,7 +326,7 @@ export default function ProcessedFoodInventory() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Description</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Description <span className="text-gray-400 normal-case font-normal">(Optional)</span></label>
                 <textarea
                   value={editing.Description}
                   onChange={e => setEditing(p => ({ ...p, Description: e.target.value }))}
@@ -338,7 +338,7 @@ export default function ProcessedFoodInventory() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Retail Price *</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Retail Price</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                     <input
@@ -351,7 +351,7 @@ export default function ProcessedFoodInventory() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Wholesale Price</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Wholesale Price <span className="text-gray-400 normal-case font-normal">(Optional)</span></label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                     <input
@@ -367,7 +367,7 @@ export default function ProcessedFoodInventory() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Quantity *</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Quantity</label>
                   <input
                     required type="number" min="0" step="1"
                     value={editing.Quantity}
@@ -377,7 +377,7 @@ export default function ProcessedFoodInventory() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Available Date</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Available Date <span className="text-gray-400 normal-case font-normal">(Optional)</span></label>
                   <input
                     type="date"
                     value={editing.AvailableDate}
@@ -388,7 +388,7 @@ export default function ProcessedFoodInventory() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Image URL</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Image URL <span className="text-gray-400 normal-case font-normal">(Optional)</span></label>
                 <input
                   type="url"
                   value={editing.ImageURL}

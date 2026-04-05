@@ -69,8 +69,6 @@ export default function AccountNew() {
 
   const validateStep2 = () => {
     const e = {};
-    if (!form.AddressStreet) e.AddressStreet = 'Street is required.';
-    if (!form.AddressCity) e.AddressCity = 'City is required.';
     if (!form.StateIndex) e.StateIndex = 'Please select a state/province.';
     if (!form.PeoplePhone) e.PeoplePhone = 'Phone is required.';
     if (form.BusinessTypeID === '8') {
@@ -135,7 +133,7 @@ export default function AccountNew() {
           {step === 1 && (
             <div className="space-y-5">
               <div>
-                <label className={labelClass}>Account Type <span className="text-red-500">*</span></label>
+                <label className={labelClass}>Account Type</label>
                 <select
                   value={form.BusinessTypeID}
                   onChange={e => update('BusinessTypeID', e.target.value)}
@@ -188,9 +186,8 @@ export default function AccountNew() {
               )}
 
               <div>
-                <label className={labelClass}>Street <span className="text-red-500">*</span></label>
+                <label className={labelClass}>Street <span className="text-gray-400 font-normal">(Optional)</span></label>
                 <input type="text" value={form.AddressStreet} onChange={e => update('AddressStreet', e.target.value)} className={inputClass} />
-                {errors.AddressStreet && <p className={errorClass}>{errors.AddressStreet}</p>}
               </div>
 
               <div>
@@ -199,13 +196,12 @@ export default function AccountNew() {
               </div>
 
               <div>
-                <label className={labelClass}>City <span className="text-red-500">*</span></label>
+                <label className={labelClass}>City <span className="text-gray-400 font-normal">(Optional)</span></label>
                 <input type="text" value={form.AddressCity} onChange={e => update('AddressCity', e.target.value)} className={inputClass} />
-                {errors.AddressCity && <p className={errorClass}>{errors.AddressCity}</p>}
               </div>
 
               <div>
-                <label className={labelClass}>State / Province <span className="text-red-500">*</span></label>
+                <label className={labelClass}>State / Province</label>
                 <select value={form.StateIndex} onChange={e => update('StateIndex', e.target.value)} className={inputClass}>
                   <option value="">Select...</option>
                   {states.map(s => (
@@ -221,7 +217,7 @@ export default function AccountNew() {
               </div>
 
               <div>
-                <label className={labelClass}>Phone <span className="text-red-500">*</span></label>
+                <label className={labelClass}>Phone</label>
                 <input
                   type="text"
                   value={form.PeoplePhone}

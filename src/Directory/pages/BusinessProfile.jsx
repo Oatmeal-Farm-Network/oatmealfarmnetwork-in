@@ -252,7 +252,6 @@ const BusinessProfile = () => {
                                     <div key={id}>
                                         <label htmlFor={id} className="block text-sm font-semibold text-gray-700 mb-1">
                                             {label} {optional && <span className="text-gray-400 font-normal">(Optional)</span>}
-                                            {required && <span className="text-red-500"> *</span>}
                                         </label>
                                         <input
                                             type={type}

@@ -135,9 +135,8 @@ export default function AccountHome() {
       icon: '/icons/Website.svg',
       label: 'My Website',
       links: [
-        { to: `/website/builder?BusinessID=${BusinessID}`, label: 'Builder' },
         { to: `/website/builder?BusinessID=${BusinessID}&view=design`, label: 'Design' },
-        { to: `/website/builder?BusinessID=${BusinessID}&view=settings`, label: 'Settings' },
+        { to: `/website/builder?BusinessID=${BusinessID}&view=settings`, label: 'Settings (& Delete)' },
       ],
     },
 
