@@ -411,16 +411,16 @@ export default function ProcessedFoodInventory() {
                 </span>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button" onClick={closeModal}
-                  className="flex-1 border border-gray-200 text-gray-600 font-semibold py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+                  className="border border-gray-200 text-gray-600 font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit" disabled={saving}
-                  className="flex-1 bg-[#819360] hover:bg-[#6a7a4f] text-white font-semibold py-2.5 rounded-xl text-sm transition-colors disabled:opacity-60"
+                  className="bg-[#819360] hover:bg-[#6a7a4f] text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors disabled:opacity-60"
                 >
                   {saving ? 'Saving...' : (editing.ProcessedFoodID ? 'Save Changes' : 'Add Item')}
                 </button>

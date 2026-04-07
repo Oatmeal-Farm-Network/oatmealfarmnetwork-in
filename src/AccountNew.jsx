@@ -259,11 +259,11 @@ export default function AccountNew() {
                 </div>
               )}
 
-              <div className="flex gap-3 mt-4">
-                <button onClick={() => setStep(1)} className="flex-1 border border-gray-300 rounded px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+              <div className="flex justify-end gap-3 mt-4">
+                <button onClick={() => setStep(1)} className="border border-gray-300 rounded px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
                   ← Back
                 </button>
-                <button onClick={handleSubmit} disabled={submitting} className="regsubmit2 flex-1">
+                <button onClick={handleSubmit} disabled={submitting} className="regsubmit2">
                   {submitting ? 'Creating...' : 'Create Account'}
                 </button>
               </div>

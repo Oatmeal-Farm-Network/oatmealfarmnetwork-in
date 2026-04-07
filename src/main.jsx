@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 import { AccountProvider } from './AccountContext';
 import "./AnimalAddWizard.css";
@@ -81,6 +81,11 @@ const LivestockForSale = lazy(() => import('./LivestockForSale.jsx'))
 const RanchList = lazy(() => import('./RanchList.jsx'))
 const OrgProfile = lazy(() => import('./OrgProfile.jsx'))
 
+function RequireAuth({ children }) {
+  const token = localStorage.getItem('access_token');
+  return token ? children : <Navigate to="/login" replace />;
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <AccountProvider>
@@ -108,7 +113,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/add" element={<PrecisionAgAdd />} />
           <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />
           <Route path="/precision-ag/crop-detection" element={<CropDetection />} />
-          <Route path="/website/builder" element={<WebsiteBuilder />} />
+          <Route path="/website/builder" element={<RequireAuth><WebsiteBuilder /></RequireAuth>} />
           <Route path="/account/audio-settings" element={<AudioSettings />} />
           <Route path="/sites/:slug" element={<WebsitePublic />} />
           <Route path="/knowledgebases" element={<Knowledgebases />} />

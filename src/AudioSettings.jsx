@@ -265,7 +265,7 @@ export default function AudioSettings() {
         </div>
 
         {/* Save */}
-        <div className="flex items-center gap-3">
+        <div className="flex justify-end items-center gap-3">
           <button
             onClick={save}
             className="regsubmit2 px-8 py-2.5 text-sm"

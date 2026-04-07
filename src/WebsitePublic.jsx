@@ -19,42 +19,47 @@ async function fetchContent(url) {
 function HeroBlock({ data, site }) {
   const align = data.align || 'center';
   const alignClass = align === 'left' ? 'items-start text-left' : align === 'right' ? 'items-end text-right' : 'items-center text-center';
+  const bgWidth = site.body_bg_width || '100%';
+  const textWidth = site.body_content_width || '100%';
   return (
-    <section style={{
-      minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center',
-      backgroundImage: data.image_url ? `url(${data.image_url})` : `linear-gradient(135deg, ${site.primary_color}cc, ${site.secondary_color}cc)`,
-      backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative',
-    }}>
-      {data.image_url && data.overlay && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
-      )}
-      <div style={{ position: 'relative', maxWidth: 700, padding: '3rem 2rem', zIndex: 1 }}
-           className={`flex flex-col gap-4 ${alignClass}`}>
-        {data.headline && (
-          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15,
-                        color: data.image_url ? '#fff' : '#fff',
-                        fontFamily: site.font_family }}>
-            {data.headline}
-          </h1>
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <section style={{
+        width: '100%', maxWidth: bgWidth,
+        minHeight: '70vh', display: 'flex', alignItems: 'center',
+        justifyContent: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center',
+        backgroundImage: data.image_url ? `url(${data.image_url})` : `linear-gradient(135deg, ${site.primary_color}cc, ${site.secondary_color}cc)`,
+        backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative',
+      }}>
+        {data.image_url && data.overlay && (
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
         )}
-        {data.subtext && (
-          <p style={{ fontSize: '1.2rem', color: data.image_url ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.85)',
-                       fontFamily: site.font_family, maxWidth: 500 }}>
-            {data.subtext}
-          </p>
-        )}
-        {data.cta_text && data.cta_link && (
-          <a href={data.cta_link} style={{
-            display: 'inline-block', background: site.accent_color, color: '#fff',
-            fontWeight: 700, padding: '0.85rem 2rem', borderRadius: 50, textDecoration: 'none',
-            fontSize: '1rem', transition: 'transform 0.2s', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-          }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-             onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-            {data.cta_text}
-          </a>
-        )}
-      </div>
-    </section>
+        <div style={{ position: 'relative', width: '100%', maxWidth: textWidth, padding: '3rem 2rem', zIndex: 1 }}
+             className={`flex flex-col gap-4 ${alignClass}`}>
+          {data.headline && (
+            <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15,
+                          color: '#fff', fontFamily: site.font_family }}>
+              {data.headline}
+            </h1>
+          )}
+          {data.subtext && (
+            <p style={{ fontSize: '1.2rem', color: data.image_url ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.85)',
+                         fontFamily: site.font_family }}>
+              {data.subtext}
+            </p>
+          )}
+          {data.cta_text && data.cta_link && (
+            <a href={data.cta_link} style={{
+              display: 'inline-block', background: site.accent_color, color: '#fff',
+              fontWeight: 700, padding: '0.85rem 2rem', borderRadius: 50, textDecoration: 'none',
+              fontSize: '1rem', transition: 'transform 0.2s', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+               onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+              {data.cta_text}
+            </a>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -362,10 +367,15 @@ function DividerBlock({ data }) {
 
 // ── Shared layout components ──────────────────────────────────────
 function SectionWrap({ children, site, alt }) {
+  const bgColor = alt ? (site.bg_color === '#FFFFFF' ? '#F9FAFB' : site.bg_color + 'ee') : site.bg_color;
+  const bgWidth = site.body_bg_width || '100%';
+  const textWidth = site.body_content_width || '100%';
   return (
-    <section style={{ padding: '4rem 1.5rem', background: alt ? (site.bg_color === '#FFFFFF' ? '#F9FAFB' : site.bg_color + 'ee') : site.bg_color }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>{children}</div>
-    </section>
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <section style={{ width: '100%', maxWidth: bgWidth, padding: '4rem 1.5rem', background: bgColor }}>
+        <div style={{ maxWidth: textWidth, margin: '0 auto' }}>{children}</div>
+      </section>
+    </div>
   );
 }
 function SectionHeading({ children, site, centered }) {
@@ -476,8 +486,12 @@ export default function WebsitePublic() {
   const site = siteData;
   const pages = siteData.pages || [];
 
+  const pageBg = site.bg_image_url
+    ? `url(${site.bg_image_url}) center/cover no-repeat fixed`
+    : (site.bg_gradient || site.bg_color || '#fff');
+
   return (
-    <div style={{ minHeight: '100vh', background: site.bg_color, fontFamily: site.font_family }}>
+    <div style={{ minHeight: '100vh', background: pageBg, fontFamily: site.font_family }}>
       {/* Preview banner */}
       {isPreview && (
         <div style={{ background: '#1E3A5F', color: '#fff', textAlign: 'center', padding: '0.5rem', fontSize: '0.8rem', fontFamily: 'Inter, sans-serif' }}>
@@ -485,43 +499,101 @@ export default function WebsitePublic() {
         </div>
       )}
 
-      {/* Nav */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: site.primary_color, boxShadow: '0 2px 16px rgba(0,0,0,0.15)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60 }}>
-          {/* Logo / name */}
-          <button onClick={() => { setActivePage(pages.find(p => p.is_home_page) || pages[0]); setMobileMenu(false); }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'none', border: 0, cursor: 'pointer', textDecoration: 'none' }}>
-            {site.logo_url && <img src={site.logo_url} alt="logo" style={{ height: 36, width: 36, objectFit: 'contain', borderRadius: 6 }} />}
-            <span style={{ fontWeight: 800, fontSize: '1.1rem', color: site.nav_text_color || '#fff', fontFamily: site.font_family, whiteSpace: 'nowrap' }}>{site.site_name}</span>
-          </button>
+      {/* ── Site Header (3 zones) ── */}
+      <header style={{ position: 'sticky', top: 0, zIndex: 100, fontFamily: site.font_family, display: 'flex', justifyContent: 'center', background: 'transparent' }}>
+        {/* Background band — only this div carries the color, constrained to header_bg_width */}
+        <div style={{ width: '100%', maxWidth: site.header_bg_width || '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', background: site.primary_color || '#3D6B34' }}>
 
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1">
-            {pages.map(p => (
-              <button key={p.page_id} onClick={() => { setActivePage(p); setMobileMenu(false); }}
-                style={{ background: activePage?.page_id === p.page_id ? 'rgba(255,255,255,0.2)' : 'none', border: 0, color: site.nav_text_color || '#fff', padding: '0.4rem 0.9rem', borderRadius: 8, fontWeight: activePage?.page_id === p.page_id ? 700 : 500, cursor: 'pointer', fontSize: '0.9rem', fontFamily: site.font_family, transition: 'background 0.2s' }}>
-                {p.page_name}
+          {/* Zone 1: Top bar */}
+          {site.top_bar_enabled && site.top_bar_html && (
+            <div style={{
+              width: '100%', maxWidth: site.header_content_width || '100%',
+              background: site.top_bar_bg_color || '#f8f5ef',
+              padding: '5px 1.5rem', textAlign: site.top_bar_align || 'right',
+            }}>
+              <span style={{ fontSize: 13, color: site.top_bar_text_color || '#333' }}
+                dangerouslySetInnerHTML={{ __html: site.top_bar_html }} />
+            </div>
+          )}
+
+          {/* Zone 2: Header banner — image+logo constrained to header_content_width */}
+          {(site.header_banner_url || site.logo_url || site.show_site_name !== false) && (
+            <div style={{
+              width: '100%', maxWidth: site.header_content_width || '100%',
+              position: 'relative',
+            }}>
+              {site.header_banner_url ? (
+                <img src={site.header_banner_url} alt=""
+                  style={{ width: '100%', display: 'block' }} />
+              ) : (
+                <div style={{ height: site.header_height || 120, background: site.primary_color || '#3D6B34' }} />
+              )}
+              <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                display: 'flex', alignItems: 'center', padding: '0 1.5rem', gap: '1rem',
+              }}>
+                {site.logo_url && (
+                  <img src={site.logo_url} alt="logo" style={{
+                    height: Math.min((site.header_height || 120) * 0.55, 90),
+                    objectFit: 'contain', borderRadius: 4,
+                  }} />
+                )}
+                {site.show_site_name !== false && (
+                  <span style={{
+                    fontWeight: 800, color: site.nav_text_color || '#fff',
+                    fontSize: 'clamp(1.1rem, 2.5vw, 1.8rem)',
+                    textShadow: site.header_banner_url ? '1px 2px 6px rgba(0,0,0,0.55)' : 'none',
+                  }}>{site.site_name}</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Zone 3: Nav bar — constrained to header_content_width */}
+          <nav style={{
+            width: '100%', maxWidth: site.header_content_width || '100%',
+            background: site.nav_bg_image_url
+              ? `url(${site.nav_bg_image_url}) center/cover no-repeat`
+              : (site.primary_color || '#3D6B34'),
+            boxShadow: '0 2px 16px rgba(0,0,0,0.15)',
+          }}>
+            <div style={{
+              padding: '0 1.5rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 50,
+            }}>
+              {/* Desktop nav links */}
+              <div className="hidden md:flex items-center gap-1">
+                {pages.map(p => (
+                  <button key={p.page_id} onClick={() => { setActivePage(p); setMobileMenu(false); }}
+                    style={{ background: activePage?.page_id === p.page_id ? 'rgba(255,255,255,0.2)' : 'none', border: 0, color: site.nav_text_color || '#fff', padding: '0.4rem 0.9rem', borderRadius: 8, fontWeight: activePage?.page_id === p.page_id ? 700 : 500, cursor: 'pointer', fontSize: '0.9rem', fontFamily: site.font_family, transition: 'background 0.2s' }}>
+                    {p.page_name}
+                  </button>
+                ))}
+              </div>
+              {/* Mobile: site name + hamburger */}
+              <button onClick={() => { setActivePage(pages.find(p => p.is_home_page) || pages[0]); setMobileMenu(false); }}
+                className="md:hidden"
+                style={{ fontWeight: 800, color: site.nav_text_color || '#fff', background: 'none', border: 0, cursor: 'pointer', fontSize: '1rem' }}>
+                {site.site_name}
               </button>
-            ))}
-          </div>
-
-          {/* Mobile hamburger */}
-          <button onClick={() => setMobileMenu(!mobileMenu)} className="md:hidden" style={{ background: 'none', border: 0, color: site.nav_text_color || '#fff', cursor: 'pointer', fontSize: '1.4rem' }}>
-            {mobileMenu ? '✕' : '☰'}
-          </button>
+              <button onClick={() => setMobileMenu(!mobileMenu)} className="md:hidden" style={{ background: 'none', border: 0, color: site.nav_text_color || '#fff', cursor: 'pointer', fontSize: '1.4rem' }}>
+                {mobileMenu ? '✕' : '☰'}
+              </button>
+            </div>
+            {/* Mobile dropdown */}
+            {mobileMenu && (
+              <div style={{ background: site.secondary_color || site.primary_color, padding: '0.5rem 1.5rem 1rem' }}>
+                {pages.map(p => (
+                  <button key={p.page_id} onClick={() => { setActivePage(p); setMobileMenu(false); }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 0, color: site.nav_text_color || '#fff', padding: '0.6rem 0', fontWeight: activePage?.page_id === p.page_id ? 700 : 400, cursor: 'pointer', fontSize: '1rem', fontFamily: site.font_family, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                    {p.page_name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </nav>
         </div>
-        {/* Mobile menu */}
-        {mobileMenu && (
-          <div style={{ background: site.secondary_color, padding: '0.5rem 1.5rem 1rem' }}>
-            {pages.map(p => (
-              <button key={p.page_id} onClick={() => { setActivePage(p); setMobileMenu(false); }}
-                style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 0, color: site.nav_text_color || '#fff', padding: '0.6rem 0', fontWeight: activePage?.page_id === p.page_id ? 700 : 400, cursor: 'pointer', fontSize: '1rem', fontFamily: site.font_family, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                {p.page_name}
-              </button>
-            ))}
-          </div>
-        )}
-      </nav>
+      </header>
 
       {/* Page content — CSS Grid with col_span support */}
       {activePage && (() => {
@@ -549,7 +621,7 @@ export default function WebsitePublic() {
             return <RenderBlock key={row[0].block_id} block={row[0]} site={site} businessId={site.business_id} />;
           }
           return (
-            <div key={ri} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', maxWidth: 1100, margin: '0 auto', padding: '0 1rem' }}>
+            <div key={ri} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', maxWidth: site.body_content_width || '100%', margin: '0 auto', padding: '0 1rem' }}>
               {row.map(block => {
                 const span = block.block_data?.col_span || 'full';
                 const colSpan = span === 'third' ? 1 : 2;
@@ -564,25 +636,31 @@ export default function WebsitePublic() {
         });
       })()}
 
-      {/* Footer */}
-      <footer style={{ background: site.footer_bg_color || site.primary_color, color: 'rgba(255,255,255,0.85)', padding: '2rem 1.5rem', fontFamily: site.font_family }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: '#fff' }}>{site.site_name}</div>
-            {site.tagline && <div style={{ fontSize: '0.8rem', opacity: 0.8, marginTop: 2 }}>{site.tagline}</div>}
+      {/* Footer — outer band at footer_bg_width, inner content at footer_content_width */}
+      <footer style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family }}>
+        {/* Background band — only this div carries the color, constrained to footer_bg_width */}
+        <div style={{ width: '100%', maxWidth: site.footer_bg_width || '100%', position: 'relative', background: site.footer_bg_color || site.primary_color }}>
+          {site.footer_bg_image_url ? (
+            <img src={site.footer_bg_image_url} alt=""
+              style={{ width: '100%', display: 'block' }} />
+          ) : (
+            <div style={{ minHeight: site.footer_height || 200, background: site.footer_bg_color || site.primary_color }} />
+          )}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, color: 'rgba(255,255,255,0.9)' }}>
+            {/* Inner content constrained to footer_content_width */}
+            <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto' }}>
+              {site.footer_html ? (
+                <div style={{ padding: '2rem 1.5rem', color: '#fff', lineHeight: 1.7 }}
+                  dangerouslySetInnerHTML={{ __html: site.footer_html }} />
+              ) : null}
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.18)', padding: '0.5rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
+                  {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
+                </span>
+                <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)' }}>Powered by Oatmeal Farm Network</span>
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.82rem' }}>
-            {site.phone && <span>📞 {site.phone}</span>}
-            {site.email && <a href={`mailto:${site.email}`} style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none' }}>✉️ {site.email}</a>}
-          </div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            {site.facebook_url && <a href={site.facebook_url} target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem', textDecoration: 'none' }}>Facebook</a>}
-            {site.instagram_url && <a href={site.instagram_url} target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem', textDecoration: 'none' }}>Instagram</a>}
-            {site.twitter_url && <a href={site.twitter_url} target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem', textDecoration: 'none' }}>X</a>}
-          </div>
-        </div>
-        <div style={{ maxWidth: 1100, margin: '1rem auto 0', borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '1rem', fontSize: '0.72rem', opacity: 0.6, textAlign: 'center' }}>
-          {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name} · Powered by Oatmeal Farm Network`}
         </div>
       </footer>
     </div>

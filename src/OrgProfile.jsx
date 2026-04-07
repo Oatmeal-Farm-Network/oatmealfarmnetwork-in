@@ -53,16 +53,16 @@ function ContactForm({ ranch }) {
       {error && <div style={{ backgroundColor: '#f8d7da', border: '1px solid #f5c6cb', borderRadius: '4px', padding: '12px', marginBottom: '16px', color: '#721c24', fontSize: '0.9rem' }}>{error}</div>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
         <div>
-          <label style={formLabel}>First Name <span style={{ color: 'red' }}>*</span></label>
+          <label style={formLabel}>First Name</label>
           <input value={form.firstName} onChange={set('firstName')} required style={formInput} />
         </div>
         <div>
-          <label style={formLabel}>Last Name <span style={{ color: 'red' }}>*</span></label>
+          <label style={formLabel}>Last Name</label>
           <input value={form.lastName} onChange={set('lastName')} required style={formInput} />
         </div>
       </div>
       <div style={{ marginBottom: '12px' }}>
-        <label style={formLabel}>Email <span style={{ color: 'red' }}>*</span></label>
+        <label style={formLabel}>Email</label>
         <input type="email" value={form.email} onChange={set('email')} required style={formInput} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
@@ -88,9 +88,11 @@ function ContactForm({ ranch }) {
             placeholder="?" style={{ width: '70px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '1rem', textAlign: 'center' }} />
         </div>
       </div>
-      <button type="submit" style={{ width: '100%', padding: '12px', backgroundColor: '#507033', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}>
-        Send Message
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button type="submit" style={{ padding: '12px 32px', backgroundColor: '#507033', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}>
+          Send Message
+        </button>
+      </div>
     </form>
   );
 }

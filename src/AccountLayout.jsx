@@ -327,6 +327,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               isOpen={OpenSections['My Website'] || false}
               onToggle={() => toggleSection('My Website')}
             >
+              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=design`} label="Design" />
               {websitePages.length > 0 && (
                 <NavChildDropdown
                   label="Pages"
@@ -342,8 +343,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
                   ))}
                 </NavChildDropdown>
               )}
-              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=design`} label="Design" />
-              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=settings`} label="Settings" />
+              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=delete`} label="Delete Website" />
               {websiteSlug && (
                 <NavChild to={`/sites/${websiteSlug}`} label="View Live Site ↗" />
               )}

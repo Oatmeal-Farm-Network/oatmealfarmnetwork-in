@@ -97,7 +97,7 @@ export default function ServicesSuggestCategory() {
             {/* Suggested Categories */}
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontWeight: 600, fontSize: 13, color: '#5a3e2b', marginBottom: 5 }}>
-                Suggested Categories *
+                Suggested Categories
               </label>
               <textarea
                 value={form.Categories}
@@ -123,7 +123,17 @@ export default function ServicesSuggestCategory() {
             </div>
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => navigate(`/services?BusinessID=${BusinessID}`)}
+                style={{
+                  background: 'none', border: '1px solid #d5c9bc', borderRadius: 6,
+                  padding: '10px 20px', fontWeight: 600, fontSize: 14,
+                  color: '#8b7355', cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
               <button
                 onClick={submit}
                 disabled={saving || !form.Categories.trim()}
@@ -135,16 +145,6 @@ export default function ServicesSuggestCategory() {
                 }}
               >
                 {saving ? 'Sending…' : 'Send Suggestion'}
-              </button>
-              <button
-                onClick={() => navigate(`/services?BusinessID=${BusinessID}`)}
-                style={{
-                  background: 'none', border: '1px solid #d5c9bc', borderRadius: 6,
-                  padding: '10px 20px', fontWeight: 600, fontSize: 14,
-                  color: '#8b7355', cursor: 'pointer',
-                }}
-              >
-                Cancel
               </button>
             </div>
           </>

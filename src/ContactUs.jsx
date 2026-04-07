@@ -225,13 +225,15 @@ export default function ContactUs() {
               className="hidden"
             />
 
-            <button
-              type="submit"
-              disabled={loading || !canSubmit}
-              className="w-full rounded-lg bg-[#4A5C43] text-white font-semibold py-3 px-6 hover:bg-[#3e4d37] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Sending...' : 'Send Message'}
-            </button>
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={loading || !canSubmit}
+                className="rounded-lg bg-[#4A5C43] text-white font-semibold py-3 px-10 hover:bg-[#3e4d37] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Sending...' : 'Send Message'}
+              </button>
+            </div>
           </form>
         </section>
       </main>

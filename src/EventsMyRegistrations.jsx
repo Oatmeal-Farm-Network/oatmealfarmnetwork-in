@@ -22,7 +22,7 @@ export default function EventsMyRegistrations() {
   useEffect(() => {
     if (!PeopleID) return;
     if (BusinessID) LoadBusiness(BusinessID);
-    fetch(`${API}/api/events/my-registrations?people_id=${PeopleID}`)
+    fetch(`${API}/api/my-registrations?people_id=${PeopleID}`)
       .then(r => r.json()).then(d => { setRegs(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
   }, [PeopleID]);
