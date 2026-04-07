@@ -189,7 +189,7 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Field Name */}
           <div>
-            <label className={labelClass}>Field Name *</label>
+            <label className={labelClass}>Field Name</label>
             <input
               type="text"
               name="name"
@@ -493,7 +493,7 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className={labelClass}>Field Name *</label>
+            <label className={labelClass}>Field Name</label>
             <input type="text" name="name" value={formData.name} onChange={handleChange} required placeholder="e.g. North Pasture" className={inputClass} />
           </div>
 

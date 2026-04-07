@@ -151,19 +151,20 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
 
           <nav className="flex flex-col gap-1 p-2 flex-grow overflow-y-auto">
 
-            {/* Account Home */}
+            {/* Dashboard */}
             <div className="mb-1">
-              <div className="flex items-center gap-0 rounded-lg overflow-hidden">
-                <NavItem
+              <div className="flex items-center rounded-lg hover:bg-white/50 transition-all">
+                <Link
                   to="/dashboard"
-                  icon="/icons/Website.svg"
-                  label="Dashboard"
-                  expanded={Expanded}
-                />
+                  className="flex items-center gap-3 px-3 py-2 text-gray-700 text-sm flex-1 min-w-0"
+                >
+                  <img src="/icons/Website.svg" alt="Dashboard" className="w-6 h-6 shrink-0" />
+                  {Expanded && <span className="flex-grow text-left whitespace-nowrap">Dashboard</span>}
+                </Link>
                 {Expanded && (
                   <button
                     onClick={() => toggleSection('Account')}
-                    className="px-2 py-2 hover:bg-white/50 text-gray-400 transition-all"
+                    className="pr-3 py-2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       {isAccountOpen ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
@@ -326,7 +327,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               isOpen={OpenSections['My Website'] || false}
               onToggle={() => toggleSection('My Website')}
             >
-              <NavChild to={`/website/builder?BusinessID=${BusinessID}`} label="Builder" />
+              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=design`} label="Design" />
               {websitePages.length > 0 && (
                 <NavChildDropdown
                   label="Pages"
@@ -342,11 +343,21 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
                   ))}
                 </NavChildDropdown>
               )}
-              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=design`} label="Design" />
-              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=settings`} label="Settings" />
+              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=delete`} label="Delete Website" />
               {websiteSlug && (
                 <NavChild to={`/sites/${websiteSlug}`} label="View Live Site ↗" />
               )}
+            </NavSection>
+
+            {/* Settings */}
+            <NavSection
+              icon="/icons/Gears.webp"
+              label="Settings"
+              expanded={Expanded}
+              isOpen={OpenSections['Settings'] || false}
+              onToggle={() => toggleSection('Settings')}
+            >
+              <NavChild to={`/account/audio-settings?BusinessID=${BusinessID}`} label="🎙 Audio Settings" />
             </NavSection>
 
           </nav>

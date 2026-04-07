@@ -110,7 +110,7 @@ export default function ServicesAdd() {
           Fill in the details below. You can add photos and more details after saving.
         </p>
 
-        <Field label="Service Title *" error={errors.ServiceTitle} hint="Max 50 characters">
+        <Field label="Service Title" error={errors.ServiceTitle} hint="Max 50 characters">
           <input
             value={form.ServiceTitle}
             onChange={e => set('ServiceTitle', e.target.value)}
@@ -120,7 +120,7 @@ export default function ServicesAdd() {
           />
         </Field>
 
-        <Field label="Category *" error={errors.ServiceCategoryID}>
+        <Field label="Category" error={errors.ServiceCategoryID}>
           <select
             value={form.ServiceCategoryID}
             onChange={e => { set('ServiceCategoryID', e.target.value); set('ServiceSubCategoryID', ''); }}
@@ -219,7 +219,17 @@ export default function ServicesAdd() {
           </a>
         </p>
 
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => navigate(`/services?BusinessID=${BusinessID}`)}
+            style={{
+              background: 'none', border: '1px solid #d5c9bc', borderRadius: 6,
+              padding: '10px 20px', fontWeight: 600, fontSize: 14,
+              color: '#8b7355', cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
           <button
             onClick={submit}
             disabled={saving}
@@ -231,16 +241,6 @@ export default function ServicesAdd() {
             }}
           >
             {saving ? 'Saving…' : 'Save & Continue to Edit'}
-          </button>
-          <button
-            onClick={() => navigate(`/services?BusinessID=${BusinessID}`)}
-            style={{
-              background: 'none', border: '1px solid #d5c9bc', borderRadius: 6,
-              padding: '10px 20px', fontWeight: 600, fontSize: 14,
-              color: '#8b7355', cursor: 'pointer',
-            }}
-          >
-            Cancel
           </button>
         </div>
 

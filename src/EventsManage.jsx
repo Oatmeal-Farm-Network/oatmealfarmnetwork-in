@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
@@ -21,7 +21,7 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-// ── Event Form ─────────────────────────────────────────────────────────────────
+// ── Event Form ────────────────────────────────────────────────────────────────
 function EventForm({ initial, onSave, onCancel, saving }) {
   const [form, setForm] = useState(initial || EMPTY);
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
@@ -29,10 +29,9 @@ function EventForm({ initial, onSave, onCancel, saving }) {
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(form); }} className="space-y-5">
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
-          <label className={lbl}>Event Name *</label>
+          <label className={lbl}>Event Name</label>
           <input value={form.EventName} onChange={set('EventName')} className={inp} required placeholder="e.g. Summer Farm Tour" />
         </div>
         <div>
@@ -129,17 +128,98 @@ function EventForm({ initial, onSave, onCancel, saving }) {
         </div>
       </div>
 
-      <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={saving}
-          className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save Event'}
-        </button>
+      <div className="flex justify-end gap-3 pt-2">
         <button type="button" onClick={onCancel}
           className="px-5 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
           Cancel
         </button>
+        <button type="submit" disabled={saving}
+          className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
+          {saving ? 'Saving…' : 'Save Event'}
+        </button>
       </div>
     </form>
+  );
+}
+
+// ── Date / Time Slots Editor ──────────────────────────────────────────────────
+function DateSlotsEditor({ eventId }) {
+  const [dates, setDates] = useState([]);
+  const [adding, setAdding] = useState(false);
+  const [newDate, setNewDate] = useState({ EventDate: '', StartTime: '', EndTime: '' });
+
+  const load = () =>
+    fetch(`${API}/api/events/${eventId}/dates`)
+      .then(r => r.json()).then(d => setDates(Array.isArray(d) ? d : [])).catch(() => {});
+
+  useEffect(() => { load(); }, [eventId]);
+
+  const add = async () => {
+    if (!newDate.EventDate) return;
+    await fetch(`${API}/api/events/${eventId}/dates`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newDate),
+    });
+    setNewDate({ EventDate: '', StartTime: '', EndTime: '' });
+    setAdding(false);
+    load();
+  };
+
+  const del = async (id) => {
+    if (!confirm('Remove this date?')) return;
+    await fetch(`${API}/api/events/dates/${id}`, { method: 'DELETE' });
+    load();
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">Schedule / Date Slots</h3>
+        <button onClick={() => setAdding(true)} className="text-xs text-[#3D6B34] hover:underline font-semibold">+ Add Date</button>
+      </div>
+
+      {dates.length === 0 && !adding && (
+        <p className="text-sm text-gray-400">No additional date slots. Add specific session times here.</p>
+      )}
+
+      <div className="space-y-1.5">
+        {dates.map(d => (
+          <div key={d.DateID} className="flex items-center gap-3 bg-gray-50 rounded-lg px-3 py-2 text-sm">
+            <span className="font-medium text-gray-800">{formatDate(d.EventDate)}</span>
+            {(d.StartTime || d.EndTime) && (
+              <span className="text-gray-500">{d.StartTime}{d.EndTime ? ` – ${d.EndTime}` : ''}</span>
+            )}
+            <button onClick={() => del(d.DateID)} className="ml-auto text-xs text-red-400 hover:text-red-600">✕</button>
+          </div>
+        ))}
+      </div>
+
+      {adding && (
+        <div className="mt-3 bg-gray-50 rounded-lg p-3 space-y-2">
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className={lbl}>Date</label>
+              <input type="date" value={newDate.EventDate}
+                onChange={e => setNewDate(d => ({ ...d, EventDate: e.target.value }))} className={inp} />
+            </div>
+            <div>
+              <label className={lbl}>Start Time</label>
+              <input type="time" value={newDate.StartTime}
+                onChange={e => setNewDate(d => ({ ...d, StartTime: e.target.value }))} className={inp} />
+            </div>
+            <div>
+              <label className={lbl}>End Time</label>
+              <input type="time" value={newDate.EndTime}
+                onChange={e => setNewDate(d => ({ ...d, EndTime: e.target.value }))} className={inp} />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={add} className="text-sm bg-[#3D6B34] text-white px-4 py-1.5 rounded-lg hover:bg-[#2d5226]">Add</button>
+            <button onClick={() => setAdding(false)} className="text-sm border border-gray-200 px-4 py-1.5 rounded-lg text-gray-600 hover:bg-gray-100">Cancel</button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -149,7 +229,9 @@ function OptionsEditor({ eventId }) {
   const [adding, setAdding] = useState(false);
   const [newOpt, setNewOpt] = useState({ OptionName: '', OptionDescription: '', Price: '', MaxQty: '' });
 
-  const load = () => fetch(`${API}/api/events/${eventId}/options`).then(r => r.json()).then(d => setOpts(Array.isArray(d) ? d : [])).catch(() => {});
+  const load = () =>
+    fetch(`${API}/api/events/${eventId}/options`)
+      .then(r => r.json()).then(d => setOpts(Array.isArray(d) ? d : [])).catch(() => {});
 
   useEffect(() => { load(); }, [eventId]);
 
@@ -173,7 +255,7 @@ function OptionsEditor({ eventId }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">Registration Options</h3>
+        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">Registration Options / Tickets</h3>
         <button onClick={() => setAdding(true)} className="text-xs text-[#3D6B34] hover:underline font-semibold">+ Add Option</button>
       </div>
 
@@ -201,7 +283,7 @@ function OptionsEditor({ eventId }) {
         <div className="mt-3 bg-gray-50 rounded-lg p-3 space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <input value={newOpt.OptionName} onChange={e => setNewOpt(o => ({ ...o, OptionName: e.target.value }))} className={inp} placeholder="Option name *" />
-            <input value={newOpt.OptionDescription} onChange={e => setNewOpt(o => ({ ...o, OptionDescription: e.target.value }))} className={inp} placeholder="Description" />
+            <input value={newOpt.OptionDescription} onChange={e => setNewOpt(o => ({ ...o, OptionDescription: e.target.value }))} className={inp} placeholder="Description (optional)" />
             <input type="number" step="0.01" min="0" value={newOpt.Price} onChange={e => setNewOpt(o => ({ ...o, Price: e.target.value }))} className={inp} placeholder="Price (0 = Free)" />
             <input type="number" min="1" value={newOpt.MaxQty} onChange={e => setNewOpt(o => ({ ...o, MaxQty: e.target.value }))} className={inp} placeholder="Max qty (optional)" />
           </div>
@@ -215,67 +297,238 @@ function OptionsEditor({ eventId }) {
   );
 }
 
-// ── Registrations List (for organizer) ────────────────────────────────────────
+// ── Registrations List ────────────────────────────────────────────────────────
 function RegistrationsList({ eventId }) {
   const [regs, setRegs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAddresses, setShowAddresses] = useState(false);
+  const [expandedReg, setExpandedReg] = useState(null);
+  const printRef = useRef(null);
 
-  useEffect(() => {
+  const load = () =>
     fetch(`${API}/api/events/${eventId}/registrations`)
       .then(r => r.json()).then(d => { setRegs(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [eventId]);
+
+  useEffect(() => { load(); }, [eventId]);
+
+  const markPaid = async (regId) => {
+    await fetch(`${API}/api/events/registrations/${regId}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ PaymentStatus: 'paid' }),
+    });
+    load();
+  };
+
+  const markPending = async (regId) => {
+    await fetch(`${API}/api/events/registrations/${regId}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ PaymentStatus: 'pending' }),
+    });
+    load();
+  };
+
+  const deleteReg = async (regId) => {
+    if (!confirm('Delete this registration?')) return;
+    await fetch(`${API}/api/events/registrations/${regId}`, { method: 'DELETE' });
+    load();
+  };
+
+  const printList = () => {
+    const w = window.open('', '_blank');
+    w.document.write(`
+      <html><head><title>Registrations</title>
+      <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th { background: #f0f0f0; text-align: left; padding: 6px 8px; border-bottom: 2px solid #ccc; font-size: 11px; text-transform: uppercase; }
+        td { padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+        .items { font-size: 11px; color: #555; }
+        .total-row { font-weight: bold; background: #f8f8f8; }
+        h2 { margin-bottom: 4px; }
+        .meta { color: #666; font-size: 11px; margin-bottom: 12px; }
+      </style></head><body>
+      <h2>Event Registrations</h2>
+      <div class="meta">Printed: ${new Date().toLocaleDateString()}</div>
+      <table>
+        <tr>
+          <th>Date</th><th>Name</th><th>Email</th><th>Phone</th>
+          ${showAddresses ? '' : ''}<th>Items</th><th>Total</th><th>Status</th>
+        </tr>
+        ${regs.map(r => `
+          <tr>
+            <td>${new Date(r.RegDate).toLocaleDateString()}</td>
+            <td>${r.AttendeeFirstName} ${r.AttendeeLastName}</td>
+            <td>${r.AttendeeEmail || ''}</td>
+            <td>${r.AttendeePhone || ''}</td>
+            <td class="items">${(r.items || []).map(i => `${i.Quantity}× ${i.OptionName}`).join('<br>')}</td>
+            <td>$${parseFloat(r.TotalAmount || 0).toFixed(2)}</td>
+            <td>${r.PaymentStatus}</td>
+          </tr>
+        `).join('')}
+        <tr class="total-row">
+          <td colspan="5" style="text-align:right">Total Income:</td>
+          <td>$${regs.reduce((s, r) => s + parseFloat(r.TotalAmount || 0), 0).toFixed(2)}</td>
+          <td></td>
+        </tr>
+      </table>
+      </body></html>
+    `);
+    w.document.close();
+    w.print();
+  };
 
   if (loading) return <div className="text-gray-400 text-sm py-4">Loading registrations…</div>;
-  if (regs.length === 0) return <p className="text-sm text-gray-400">No registrations yet.</p>;
+
+  const totalIncome = regs.reduce((s, r) => s + parseFloat(r.TotalAmount || 0), 0);
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-200 text-xs text-gray-500 uppercase">
-            <th className="text-left py-2 px-2">Name</th>
-            <th className="text-left py-2 px-2">Email</th>
-            <th className="text-left py-2 px-2">Phone</th>
-            <th className="text-left py-2 px-2">Total</th>
-            <th className="text-left py-2 px-2">Status</th>
-            <th className="text-left py-2 px-2">Date</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {regs.map(r => (
-            <tr key={r.RegID}>
-              <td className="py-2 px-2 font-medium text-gray-800">{r.AttendeeFirstName} {r.AttendeeLastName}</td>
-              <td className="py-2 px-2 text-gray-600">{r.AttendeeEmail}</td>
-              <td className="py-2 px-2 text-gray-600">{r.AttendeePhone || '—'}</td>
-              <td className="py-2 px-2 font-bold text-[#3D6B34]">${parseFloat(r.TotalAmount || 0).toFixed(2)}</td>
-              <td className="py-2 px-2">
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${r.PaymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                  {r.PaymentStatus}
-                </span>
-              </td>
-              <td className="py-2 px-2 text-gray-400">{new Date(r.RegDate).toLocaleDateString()}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div>
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">
+          Registrations ({regs.length})
+        </h3>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+            <input type="checkbox" checked={showAddresses} onChange={e => setShowAddresses(e.target.checked)} className="w-3.5 h-3.5" />
+            Show contact details
+          </label>
+          <button onClick={printList} className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 px-2 py-1 rounded hover:bg-gray-50">
+            🖨 Print / Export
+          </button>
+        </div>
+      </div>
+
+      {regs.length === 0 ? (
+        <p className="text-sm text-gray-400">No registrations yet.</p>
+      ) : (
+        <>
+          <div className="overflow-x-auto rounded-xl border border-gray-200">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
+                  <th className="text-left py-2 px-3">Name</th>
+                  {showAddresses && <th className="text-left py-2 px-3">Contact</th>}
+                  <th className="text-left py-2 px-3">Items</th>
+                  <th className="text-right py-2 px-3">Total</th>
+                  <th className="text-left py-2 px-3">Status</th>
+                  <th className="text-left py-2 px-3">Date</th>
+                  <th className="py-2 px-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {regs.map(r => (
+                  <React.Fragment key={r.RegID}>
+                    <tr className="hover:bg-gray-50">
+                      <td className="py-2 px-3 font-medium text-gray-800">
+                        <button onClick={() => setExpandedReg(expandedReg === r.RegID ? null : r.RegID)}
+                          className="text-left hover:text-[#3D6B34]">
+                          {r.AttendeeFirstName} {r.AttendeeLastName}
+                        </button>
+                      </td>
+                      {showAddresses && (
+                        <td className="py-2 px-3 text-gray-500 text-xs">
+                          <div>{r.AttendeeEmail}</div>
+                          {r.AttendeePhone && <div>{r.AttendeePhone}</div>}
+                        </td>
+                      )}
+                      <td className="py-2 px-3 text-gray-500 text-xs">
+                        {(r.items || []).length > 0
+                          ? (r.items || []).map(i => `${i.Quantity}× ${i.OptionName}`).join(', ')
+                          : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="py-2 px-3 font-bold text-[#3D6B34] text-right">
+                        ${parseFloat(r.TotalAmount || 0).toFixed(2)}
+                      </td>
+                      <td className="py-2 px-3">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          r.PaymentStatus === 'paid' ? 'bg-green-100 text-green-700'
+                          : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {r.PaymentStatus}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 text-gray-400 text-xs">{new Date(r.RegDate).toLocaleDateString()}</td>
+                      <td className="py-2 px-3">
+                        <div className="flex items-center gap-1">
+                          {r.PaymentStatus !== 'paid' ? (
+                            <button onClick={() => markPaid(r.RegID)}
+                              className="text-xs text-green-600 hover:underline whitespace-nowrap">Mark paid</button>
+                          ) : (
+                            <button onClick={() => markPending(r.RegID)}
+                              className="text-xs text-gray-400 hover:text-gray-600 whitespace-nowrap">Unmark</button>
+                          )}
+                          <span className="text-gray-200">|</span>
+                          <button onClick={() => deleteReg(r.RegID)}
+                            className="text-xs text-red-400 hover:text-red-600">Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                    {/* Expanded detail row */}
+                    {expandedReg === r.RegID && (
+                      <tr>
+                        <td colSpan={showAddresses ? 7 : 6} className="bg-blue-50 px-4 py-3 text-sm border-y border-blue-100">
+                          <div className="flex flex-wrap gap-6">
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Contact</p>
+                              <p className="text-gray-800">{r.AttendeeFirstName} {r.AttendeeLastName}</p>
+                              <p className="text-gray-600">{r.AttendeeEmail}</p>
+                              {r.AttendeePhone && <p className="text-gray-600">{r.AttendeePhone}</p>}
+                            </div>
+                            {(r.items || []).length > 0 && (
+                              <div>
+                                <p className="text-xs font-bold text-gray-500 uppercase mb-1">Registered Items</p>
+                                {r.items.map((item, i) => (
+                                  <p key={i} className="text-gray-700">
+                                    {item.Quantity}× {item.OptionName}
+                                    {parseFloat(item.UnitPrice) > 0 && <span className="text-gray-400 ml-1">(${parseFloat(item.UnitPrice).toFixed(2)} ea.)</span>}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+                            {r.Notes && (
+                              <div>
+                                <p className="text-xs font-bold text-gray-500 uppercase mb-1">Notes</p>
+                                <p className="text-gray-700">{r.Notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+              {totalIncome > 0 && (
+                <tfoot>
+                  <tr className="border-t-2 border-gray-200 bg-gray-50">
+                    <td colSpan={showAddresses ? 3 : 2} className="py-2 px-3 text-xs font-bold text-gray-500 text-right uppercase">Total Income:</td>
+                    <td className="py-2 px-3 font-bold text-[#3D6B34] text-right">${totalIncome.toFixed(2)}</td>
+                    <td colSpan={showAddresses ? 3 : 2}></td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────────────────────
 export default function EventsManage() {
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();
-  const navigate = useNavigate();
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [expandedEvent, setExpandedEvent] = useState(null);
+  const [activeTab, setActiveTab] = useState({}); // eventId → 'dates' | 'options' | 'registrations'
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -286,7 +539,7 @@ export default function EventsManage() {
 
   const loadEvents = () => {
     setLoading(true);
-    fetch(`${API}/api/events/my-events?business_id=${BusinessID}`)
+    fetch(`${API}/api/my-events?business_id=${BusinessID}`)
       .then(r => r.json()).then(d => { setEvents(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
   };
@@ -327,6 +580,9 @@ export default function EventsManage() {
     await fetch(`${API}/api/events/${ev.EventID}`, { method: 'DELETE' });
     loadEvents();
   };
+
+  const getTab = (eventId) => activeTab[eventId] || 'registrations';
+  const setTab = (eventId, tab) => setActiveTab(prev => ({ ...prev, [eventId]: tab }));
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
@@ -382,36 +638,61 @@ export default function EventsManage() {
                       {ev.EventType && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{ev.EventType}</span>}
                     </div>
                     <div className="text-xs text-gray-500 flex gap-3 flex-wrap">
-                      {ev.EventStartDate && <span>📅 {formatDate(ev.EventStartDate)}{ev.EventEndDate && ev.EventEndDate !== ev.EventStartDate ? ` – ${formatDate(ev.EventEndDate)}` : ''}</span>}
+                      {ev.EventStartDate && (
+                        <span>📅 {formatDate(ev.EventStartDate)}{ev.EventEndDate && ev.EventEndDate !== ev.EventStartDate ? ` – ${formatDate(ev.EventEndDate)}` : ''}</span>
+                      )}
                       {ev.EventLocationCity && <span>📍 {[ev.EventLocationCity, ev.EventLocationState].filter(Boolean).join(', ')}</span>}
                       <span>👥 {ev.AttendeeCount || 0} registered</span>
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <Link to={`/events/${ev.EventID}`} target="_blank"
-                      className="text-xs text-gray-500 hover:underline no-underline border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">
-                      Preview
+                      className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 no-underline">
+                      Preview ↗
                     </Link>
-                    <button onClick={() => openEdit(ev)} className="text-xs text-blue-600 hover:underline border border-blue-100 px-3 py-1.5 rounded-lg hover:bg-blue-50">
+                    <button onClick={() => openEdit(ev)}
+                      className="text-xs text-blue-600 border border-blue-100 px-3 py-1.5 rounded-lg hover:bg-blue-50">
                       Edit
                     </button>
                     <button onClick={() => setExpandedEvent(expandedEvent === ev.EventID ? null : ev.EventID)}
-                      className="text-xs text-[#3D6B34] hover:underline border border-[#3D6B34]/20 px-3 py-1.5 rounded-lg hover:bg-[#3D6B34]/5">
-                      {expandedEvent === ev.EventID ? 'Hide' : 'Manage'}
+                      className="text-xs text-[#3D6B34] border border-[#3D6B34]/20 px-3 py-1.5 rounded-lg hover:bg-[#3D6B34]/5">
+                      {expandedEvent === ev.EventID ? 'Close ▲' : 'Manage ▼'}
                     </button>
-                    <button onClick={() => deleteEvent(ev)} className="text-xs text-red-500 hover:underline border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-50">
+                    <button onClick={() => deleteEvent(ev)}
+                      className="text-xs text-red-500 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-50">
                       Delete
                     </button>
                   </div>
                 </div>
 
-                {/* Expanded management panel */}
+                {/* Management panel */}
                 {expandedEvent === ev.EventID && (
-                  <div className="border-t border-gray-100 p-4 space-y-6 bg-gray-50">
-                    <OptionsEditor eventId={ev.EventID} />
-                    <div>
-                      <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide mb-3">Registrations ({ev.AttendeeCount || 0})</h3>
-                      <RegistrationsList eventId={ev.EventID} />
+                  <div className="border-t border-gray-100 bg-gray-50">
+                    {/* Tabs */}
+                    <div className="flex border-b border-gray-200 bg-white">
+                      {[
+                        { id: 'registrations', label: `Registrations (${ev.AttendeeCount || 0})` },
+                        { id: 'options', label: 'Ticket Options' },
+                        { id: 'dates', label: 'Date Slots' },
+                      ].map(tab => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setTab(ev.EventID, tab.id)}
+                          className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
+                            getTab(ev.EventID) === tab.id
+                              ? 'border-[#3D6B34] text-[#3D6B34]'
+                              : 'border-transparent text-gray-500 hover:text-gray-700'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="p-4">
+                      {getTab(ev.EventID) === 'registrations' && <RegistrationsList eventId={ev.EventID} />}
+                      {getTab(ev.EventID) === 'options' && <OptionsEditor eventId={ev.EventID} />}
+                      {getTab(ev.EventID) === 'dates' && <DateSlotsEditor eventId={ev.EventID} />}
                     </div>
                   </div>
                 )}

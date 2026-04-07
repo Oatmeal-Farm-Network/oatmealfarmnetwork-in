@@ -120,28 +120,28 @@ export default function AccountProfile() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>First Name</label>
+              <label className={labelClass}>First Name <span className="text-gray-400 font-normal">(Optional)</span></label>
               <input type="text" value={form.ContactFirstName || ''} onChange={e => update('ContactFirstName', e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Last Name</label>
+              <label className={labelClass}>Last Name <span className="text-gray-400 font-normal">(Optional)</span></label>
               <input type="text" value={form.ContactLastName || ''} onChange={e => update('ContactLastName', e.target.value)} className={inputClass} />
             </div>
           </div>
 
           <div>
-            <label className={labelClass}>Business / Organization Name <span className="text-red-500">*</span></label>
+            <label className={labelClass}>Business / Organization Name</label>
             <input type="text" value={form.BusinessName || ''} onChange={e => update('BusinessName', e.target.value)} className={inputClass} maxLength={100} />
             {errors.BusinessName && <p className={errorClass}>{errors.BusinessName}</p>}
           </div>
 
           <div>
-            <label className={labelClass}>Website</label>
+            <label className={labelClass}>Website <span className="text-gray-400 font-normal">(Optional)</span></label>
             <input type="text" value={form.BusinessWebsite || ''} onChange={e => update('BusinessWebsite', e.target.value)} className={inputClass} placeholder="https://yourwebsite.com" />
           </div>
 
           <div>
-            <label className={labelClass}>Email <span className="text-red-500">*</span></label>
+            <label className={labelClass}>Email</label>
             <input type="email" value={form.ContactEmail || ''} onChange={e => update('ContactEmail', e.target.value)} className={inputClass} />
             {errors.ContactEmail && <p className={errorClass}>{errors.ContactEmail}</p>}
           </div>
@@ -149,22 +149,22 @@ export default function AccountProfile() {
           <hr className="border-gray-100" />
 
           <div>
-            <label className={labelClass}>Mailing Address</label>
+            <label className={labelClass}>Mailing Address <span className="text-gray-400 font-normal">(Optional)</span></label>
             <input type="text" value={form.AddressStreet || ''} onChange={e => update('AddressStreet', e.target.value)} className={inputClass} />
           </div>
 
           <div>
-            <label className={labelClass}>Apartment / Suite</label>
+            <label className={labelClass}>Apartment / Suite <span className="text-gray-400 font-normal">(Optional)</span></label>
             <input type="text" value={form.AddressApt || ''} onChange={e => update('AddressApt', e.target.value)} className={inputClass} />
           </div>
 
           <div>
-            <label className={labelClass}>City</label>
+            <label className={labelClass}>City <span className="text-gray-400 font-normal">(Optional)</span></label>
             <input type="text" value={form.AddressCity || ''} onChange={e => update('AddressCity', e.target.value)} className={inputClass} />
           </div>
 
           <div>
-            <label className={labelClass}>Country</label>
+            <label className={labelClass}>Country <span className="text-gray-400 font-normal">(Optional)</span></label>
             <select value={form.country_name || 'USA'} onChange={e => handleCountryChange(e.target.value)} className={inputClass}>
               <option value="USA">USA</option>
               <option value="Canada">Canada</option>
@@ -172,7 +172,7 @@ export default function AccountProfile() {
           </div>
 
           <div>
-            <label className={labelClass}>State / Province</label>
+            <label className={labelClass}>State / Province <span className="text-gray-400 font-normal">(Optional)</span></label>
             <select value={form.StateIndex || ''} onChange={e => update('StateIndex', e.target.value)} className={inputClass}>
               <option value="">Select...</option>
               {states.map(s => (
@@ -182,24 +182,24 @@ export default function AccountProfile() {
           </div>
 
           <div>
-            <label className={labelClass}>Postal Code</label>
+            <label className={labelClass}>Postal Code <span className="text-gray-400 font-normal">(Optional)</span></label>
             <input type="text" value={form.AddressZip || ''} onChange={e => update('AddressZip', e.target.value)} className={inputClass} maxLength={10} />
           </div>
 
           <hr className="border-gray-100" />
 
           <div>
-            <label className={labelClass}>Phone</label>
+            <label className={labelClass}>Phone <span className="text-gray-400 font-normal">(Optional)</span></label>
             <input type="tel" value={form.BusinessPhone || ''} onChange={e => update('BusinessPhone', e.target.value.replace(/[^0-9().\-\s+]/g, ''))} className={inputClass} />
           </div>
 
           <div>
-            <label className={labelClass}>Cell</label>
+            <label className={labelClass}>Cell <span className="text-gray-400 font-normal">(Optional)</span></label>
             <input type="tel" value={form.BusinessCell || ''} onChange={e => update('BusinessCell', e.target.value.replace(/[^0-9().\-\s+]/g, ''))} className={inputClass} />
           </div>
 
           <div>
-            <label className={labelClass}>Fax</label>
+            <label className={labelClass}>Fax <span className="text-gray-400 font-normal">(Optional)</span></label>
             <input type="tel" value={form.BusinessFax || ''} onChange={e => update('BusinessFax', e.target.value.replace(/[^0-9().\-\s+]/g, ''))} className={inputClass} />
           </div>
 

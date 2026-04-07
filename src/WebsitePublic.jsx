@@ -3,6 +3,28 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 
 const API = import.meta.env.VITE_API_URL;
 
+// ── Build CSS rules for [data-rte-style] spans (mirrors WebsiteBuilder's buildRteTypoCss) ──
+function buildPublicRteTypoCss(site) {
+  if (!site) return '';
+  return [['h1','h1'],['h2','h2'],['h3','h3'],['h4','h4'],['body','body']].map(([k]) => {
+    const size       = site[`${k}_size`]   || (k==='body'?'16px':k==='h1'?'40px':k==='h2'?'29px':k==='h3'?'21px':'17px');
+    const weight     = site[`${k}_weight`] || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':k==='h3'?'600':'600');
+    const color      = site[`${k}_color`]  || site.text_color || '';
+    const fontFamily = site[`${k}_font`]   || site.font_family || '';
+    const uline      = site[`${k}_underline`];
+    const hasRule    = k !== 'body' && site[`${k}_rule`];
+    const ruleclr    = site[`${k}_rule_color`] || site.text_color || '#000';
+    const align      = site[`${k}_align`]  || 'left';
+    let css = `font-size:${size};font-weight:${weight};`;
+    if (fontFamily) css += `font-family:${fontFamily};`;
+    if (color)      css += `color:${color};`;
+    css += uline ? `text-decoration:underline;` : `text-decoration:none;`;
+    css += hasRule ? `border-bottom:2px solid ${ruleclr};padding-bottom:2px;` : `border-bottom:none;padding-bottom:0;`;
+    if (align !== 'left') css += `display:inline-block;text-align:${align};width:100%;`;
+    return `.site-rte [data-rte-style="${k}"] { ${css} }`;
+  }).join('\n    ');
+}
+
 // ── Content cache (avoid re-fetching per block) ──────────────────
 const contentCache = {};
 async function fetchContent(url) {
@@ -19,42 +41,47 @@ async function fetchContent(url) {
 function HeroBlock({ data, site }) {
   const align = data.align || 'center';
   const alignClass = align === 'left' ? 'items-start text-left' : align === 'right' ? 'items-end text-right' : 'items-center text-center';
+  const bgWidth = site.body_bg_width || '100%';
+  const textWidth = site.body_content_width || '100%';
   return (
-    <section style={{
-      minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center',
-      backgroundImage: data.image_url ? `url(${data.image_url})` : `linear-gradient(135deg, ${site.primary_color}cc, ${site.secondary_color}cc)`,
-      backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative',
-    }}>
-      {data.image_url && data.overlay && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
-      )}
-      <div style={{ position: 'relative', maxWidth: 700, padding: '3rem 2rem', zIndex: 1 }}
-           className={`flex flex-col gap-4 ${alignClass}`}>
-        {data.headline && (
-          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15,
-                        color: data.image_url ? '#fff' : '#fff',
-                        fontFamily: site.font_family }}>
-            {data.headline}
-          </h1>
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <section style={{
+        width: '100%', maxWidth: bgWidth,
+        minHeight: '70vh', display: 'flex', alignItems: 'center',
+        justifyContent: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center',
+        backgroundImage: data.image_url ? `url(${data.image_url})` : `linear-gradient(135deg, ${site.primary_color}cc, ${site.secondary_color}cc)`,
+        backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative',
+      }}>
+        {data.image_url && data.overlay && (
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
         )}
-        {data.subtext && (
-          <p style={{ fontSize: '1.2rem', color: data.image_url ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.85)',
-                       fontFamily: site.font_family, maxWidth: 500 }}>
-            {data.subtext}
-          </p>
-        )}
-        {data.cta_text && data.cta_link && (
-          <a href={data.cta_link} style={{
-            display: 'inline-block', background: site.accent_color, color: '#fff',
-            fontWeight: 700, padding: '0.85rem 2rem', borderRadius: 50, textDecoration: 'none',
-            fontSize: '1rem', transition: 'transform 0.2s', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-          }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-             onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-            {data.cta_text}
-          </a>
-        )}
-      </div>
-    </section>
+        <div style={{ position: 'relative', width: '100%', maxWidth: textWidth, padding: '3rem 2rem', zIndex: 1 }}
+             className={`flex flex-col gap-4 ${alignClass}`}>
+          {data.headline && (
+            <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15,
+                          color: '#fff', fontFamily: site.font_family }}>
+              {data.headline}
+            </h1>
+          )}
+          {data.subtext && (
+            <p style={{ fontSize: '1.2rem', color: data.image_url ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.85)',
+                         fontFamily: site.font_family }}>
+              {data.subtext}
+            </p>
+          )}
+          {data.cta_text && data.cta_link && (
+            <a href={data.cta_link} style={{
+              display: 'inline-block', background: site.accent_color, color: '#fff',
+              fontWeight: 700, padding: '0.85rem 2rem', borderRadius: 50, textDecoration: 'none',
+              fontSize: '1rem', transition: 'transform 0.2s', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+               onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+              {data.cta_text}
+            </a>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -65,8 +92,8 @@ function AboutBlock({ data, site }) {
     <SectionWrap site={site}>
       <div className={`flex flex-col md:flex-row gap-10 items-center ${!imgRight ? 'md:flex-row-reverse' : ''}`}>
         <div className="flex-1">
-          {data.heading && <SectionHeading site={site}>{data.heading}</SectionHeading>}
-          {data.body && <BodyText site={site}>{data.body}</BodyText>}
+          {data.heading && <SectionHeading html={data.heading} site={site} />}
+          {data.body && <BodyText html={data.body} site={site} />}
         </div>
         {hasImage && (
           <div className="flex-1">
@@ -87,8 +114,8 @@ function ContentBlock({ data, site }) {
       {imgTop && hasImage && <img src={data.image_url} alt="" style={{ width: '100%', borderRadius: 12, marginBottom: '1.5rem' }} />}
       <div className={`flex flex-col ${hasImage && !imgTop ? 'md:flex-row gap-10 items-start' : ''} ${hasImage && !imgTop && !imgRight ? 'md:flex-row-reverse' : ''}`}>
         <div className={hasImage && !imgTop ? 'flex-1' : 'w-full'}>
-          {data.heading && <SectionHeading site={site}>{data.heading}</SectionHeading>}
-          {data.body && <BodyText site={site}>{data.body}</BodyText>}
+          {data.heading && <SectionHeading html={data.heading} site={site} />}
+          {data.body && <BodyText html={data.body} site={site} />}
         </div>
         {hasImage && !imgTop && (
           <div className="flex-1">
@@ -362,23 +389,42 @@ function DividerBlock({ data }) {
 
 // ── Shared layout components ──────────────────────────────────────
 function SectionWrap({ children, site, alt }) {
+  const bgColor = alt ? (site.bg_color === '#FFFFFF' ? '#F9FAFB' : site.bg_color + 'ee') : site.bg_color;
+  const bgWidth = site.body_bg_width || '100%';
+  const textWidth = site.body_content_width || '100%';
   return (
-    <section style={{ padding: '4rem 1.5rem', background: alt ? (site.bg_color === '#FFFFFF' ? '#F9FAFB' : site.bg_color + 'ee') : site.bg_color }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>{children}</div>
-    </section>
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <section style={{ width: '100%', maxWidth: bgWidth, padding: '5px 1.5rem', background: bgColor }}>
+        <div style={{ maxWidth: textWidth, margin: '0 auto' }}>{children}</div>
+      </section>
+    </div>
   );
 }
-function SectionHeading({ children, site, centered }) {
-  return (
-    <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: 800, color: site.text_color, fontFamily: site.font_family, marginBottom: '0.5rem', textAlign: centered ? 'center' : 'left' }}>
-      {children}
-    </h2>
-  );
+function SectionHeading({ children, html, site, centered }) {
+  const style = {
+    fontSize: site.h2_size || 'clamp(1.5rem, 3vw, 2.2rem)',
+    fontWeight: site.h2_weight || 800,
+    color: site.h2_color || site.text_color,
+    fontFamily: site.font_family,
+    marginTop: (site.h2_margin_top ?? 0) + 'px',
+    marginBottom: (site.h2_margin_bottom ?? 8) + 'px',
+    textAlign: centered ? 'center' : (site.h2_align || 'left'),
+    textDecoration: site.h2_underline ? 'underline' : 'none',
+  };
+  if (html !== undefined) return <h2 style={style} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <h2 style={style}>{children}</h2>;
 }
-function BodyText({ children, site }) {
-  return (
-    <p style={{ color: '#4B5563', lineHeight: 1.75, fontSize: '1rem', fontFamily: site.font_family, whiteSpace: 'pre-wrap' }}>{children}</p>
-  );
+function BodyText({ children, html, site }) {
+  const style = {
+    color: site.body_color || '#4B5563',
+    lineHeight: site.body_line_height || 1.75,
+    fontSize: site.body_size || '1rem',
+    fontFamily: site.font_family,
+    marginTop: (site.body_margin_top ?? 0) + 'px',
+    marginBottom: (site.body_margin_bottom ?? 12) + 'px',
+  };
+  if (html !== undefined) return <div className="site-rte" style={style} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <p style={{ ...style, whiteSpace: 'pre-wrap' }}>{children}</p>;
 }
 function PriceCard({ icon, name, price, unit, image, desc, tags, site }) {
   return (
@@ -476,8 +522,23 @@ export default function WebsitePublic() {
   const site = siteData;
   const pages = siteData.pages || [];
 
+  const pageBg = site.bg_image_url
+    ? `url(${site.bg_image_url}) center/cover no-repeat fixed`
+    : (site.bg_gradient || site.bg_color || '#fff');
+
+  // Inject typography margin CSS for rich-text blocks (dangerouslySetInnerHTML)
+  const typographyCss = `
+    .site-rte h1 { margin-top:${site.h1_margin_top??0}px; margin-bottom:${site.h1_margin_bottom??8}px; }
+    .site-rte h2 { margin-top:${site.h2_margin_top??0}px; margin-bottom:${site.h2_margin_bottom??8}px; }
+    .site-rte h3 { margin-top:${site.h3_margin_top??0}px; margin-bottom:${site.h3_margin_bottom??6}px; }
+    .site-rte h4 { margin-top:${site.h4_margin_top??0}px; margin-bottom:${site.h4_margin_bottom??4}px; }
+    .site-rte p  { margin-top:${site.body_margin_top??0}px; margin-bottom:${site.body_margin_bottom??12}px; }
+    ${buildPublicRteTypoCss(site)}
+  `;
+
   return (
-    <div style={{ minHeight: '100vh', background: site.bg_color, fontFamily: site.font_family }}>
+    <div style={{ minHeight: '100vh', background: pageBg, fontFamily: site.font_family }}>
+      <style dangerouslySetInnerHTML={{ __html: typographyCss }} />
       {/* Preview banner */}
       {isPreview && (
         <div style={{ background: '#1E3A5F', color: '#fff', textAlign: 'center', padding: '0.5rem', fontSize: '0.8rem', fontFamily: 'Inter, sans-serif' }}>
@@ -485,68 +546,168 @@ export default function WebsitePublic() {
         </div>
       )}
 
-      {/* Nav */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: site.primary_color, boxShadow: '0 2px 16px rgba(0,0,0,0.15)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60 }}>
-          {/* Logo / name */}
-          <button onClick={() => { setActivePage(pages.find(p => p.is_home_page) || pages[0]); setMobileMenu(false); }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'none', border: 0, cursor: 'pointer', textDecoration: 'none' }}>
-            {site.logo_url && <img src={site.logo_url} alt="logo" style={{ height: 36, width: 36, objectFit: 'contain', borderRadius: 6 }} />}
-            <span style={{ fontWeight: 800, fontSize: '1.1rem', color: site.nav_text_color || '#fff', fontFamily: site.font_family, whiteSpace: 'nowrap' }}>{site.site_name}</span>
-          </button>
+      {/* ── Site Header (3 zones) ── */}
+      <header style={{ position: 'sticky', top: 0, zIndex: 100, fontFamily: site.font_family, display: 'flex', justifyContent: 'center', background: 'transparent' }}>
+        {/* Background band — only this div carries the color, constrained to header_bg_width */}
+        <div style={{ width: '100%', maxWidth: site.header_bg_width || '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', background: site.primary_color || '#3D6B34' }}>
 
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1">
-            {pages.map(p => (
-              <button key={p.page_id} onClick={() => { setActivePage(p); setMobileMenu(false); }}
-                style={{ background: activePage?.page_id === p.page_id ? 'rgba(255,255,255,0.2)' : 'none', border: 0, color: site.nav_text_color || '#fff', padding: '0.4rem 0.9rem', borderRadius: 8, fontWeight: activePage?.page_id === p.page_id ? 700 : 500, cursor: 'pointer', fontSize: '0.9rem', fontFamily: site.font_family, transition: 'background 0.2s' }}>
-                {p.page_name}
+          {/* Zone 1: Top bar */}
+          {site.top_bar_enabled && site.top_bar_html && (
+            <div style={{
+              width: '100%', maxWidth: site.header_content_width || '100%',
+              background: site.top_bar_bg_color || '#f8f5ef',
+              padding: '5px 1.5rem', textAlign: site.top_bar_align || 'right',
+            }}>
+              <span style={{ fontSize: 13, color: site.top_bar_text_color || '#333' }}
+                dangerouslySetInnerHTML={{ __html: site.top_bar_html }} />
+            </div>
+          )}
+
+          {/* Zone 2: Header banner — image+logo constrained to header_content_width */}
+          {(site.header_banner_url || site.logo_url || site.show_site_name !== false) && (
+            <div style={{
+              width: '100%', maxWidth: site.header_content_width || '100%',
+              position: 'relative',
+            }}>
+              {site.header_banner_url ? (
+                <img src={site.header_banner_url} alt=""
+                  style={{ width: '100%', display: 'block' }} />
+              ) : (
+                <div style={{ height: site.header_height || 120, background: site.primary_color || '#3D6B34' }} />
+              )}
+              <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                display: 'flex', alignItems: 'center', padding: '0 1.5rem', gap: '1rem',
+              }}>
+                {site.logo_url && (
+                  <img src={site.logo_url} alt="logo" style={{
+                    height: Math.min((site.header_height || 120) * 0.55, 90),
+                    objectFit: 'contain', borderRadius: 4,
+                  }} />
+                )}
+                {site.show_site_name !== false && (
+                  <span style={{
+                    fontWeight: 800, color: site.nav_text_color || '#fff',
+                    fontSize: 'clamp(1.1rem, 2.5vw, 1.8rem)',
+                    textShadow: site.header_banner_url ? '1px 2px 6px rgba(0,0,0,0.55)' : 'none',
+                  }}>{site.site_name}</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Zone 3: Nav bar — constrained to header_content_width */}
+          <nav style={{
+            width: '100%', maxWidth: site.header_content_width || '100%',
+            background: site.nav_bg_image_url
+              ? `url(${site.nav_bg_image_url}) center/cover no-repeat`
+              : (site.primary_color || '#3D6B34'),
+            boxShadow: '0 2px 16px rgba(0,0,0,0.15)',
+          }}>
+            <div style={{
+              padding: '0 1.5rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 50,
+            }}>
+              {/* Desktop nav links */}
+              <div className="hidden md:flex items-center gap-1">
+                {pages.map(p => (
+                  <button key={p.page_id} onClick={() => { setActivePage(p); setMobileMenu(false); }}
+                    style={{ background: activePage?.page_id === p.page_id ? 'rgba(255,255,255,0.2)' : 'none', border: 0, color: site.nav_text_color || '#fff', padding: '0.4rem 0.9rem', borderRadius: 8, fontWeight: activePage?.page_id === p.page_id ? 700 : 500, cursor: 'pointer', fontSize: '0.9rem', fontFamily: site.font_family, transition: 'background 0.2s' }}>
+                    {p.page_name}
+                  </button>
+                ))}
+              </div>
+              {/* Mobile: site name + hamburger */}
+              <button onClick={() => { setActivePage(pages.find(p => p.is_home_page) || pages[0]); setMobileMenu(false); }}
+                className="md:hidden"
+                style={{ fontWeight: 800, color: site.nav_text_color || '#fff', background: 'none', border: 0, cursor: 'pointer', fontSize: '1rem' }}>
+                {site.site_name}
               </button>
-            ))}
-          </div>
-
-          {/* Mobile hamburger */}
-          <button onClick={() => setMobileMenu(!mobileMenu)} className="md:hidden" style={{ background: 'none', border: 0, color: site.nav_text_color || '#fff', cursor: 'pointer', fontSize: '1.4rem' }}>
-            {mobileMenu ? '✕' : '☰'}
-          </button>
-        </div>
-        {/* Mobile menu */}
-        {mobileMenu && (
-          <div style={{ background: site.secondary_color, padding: '0.5rem 1.5rem 1rem' }}>
-            {pages.map(p => (
-              <button key={p.page_id} onClick={() => { setActivePage(p); setMobileMenu(false); }}
-                style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 0, color: site.nav_text_color || '#fff', padding: '0.6rem 0', fontWeight: activePage?.page_id === p.page_id ? 700 : 400, cursor: 'pointer', fontSize: '1rem', fontFamily: site.font_family, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                {p.page_name}
+              <button onClick={() => setMobileMenu(!mobileMenu)} className="md:hidden" style={{ background: 'none', border: 0, color: site.nav_text_color || '#fff', cursor: 'pointer', fontSize: '1.4rem' }}>
+                {mobileMenu ? '✕' : '☰'}
               </button>
-            ))}
-          </div>
-        )}
-      </nav>
-
-      {/* Page content */}
-      {activePage && activePage.blocks.map(block => (
-        <RenderBlock key={block.block_id} block={block} site={site} businessId={site.business_id} />
-      ))}
-
-      {/* Footer */}
-      <footer style={{ background: site.footer_bg_color || site.primary_color, color: 'rgba(255,255,255,0.85)', padding: '2rem 1.5rem', fontFamily: site.font_family }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: '#fff' }}>{site.site_name}</div>
-            {site.tagline && <div style={{ fontSize: '0.8rem', opacity: 0.8, marginTop: 2 }}>{site.tagline}</div>}
-          </div>
-          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.82rem' }}>
-            {site.phone && <span>📞 {site.phone}</span>}
-            {site.email && <a href={`mailto:${site.email}`} style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none' }}>✉️ {site.email}</a>}
-          </div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            {site.facebook_url && <a href={site.facebook_url} target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem', textDecoration: 'none' }}>Facebook</a>}
-            {site.instagram_url && <a href={site.instagram_url} target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem', textDecoration: 'none' }}>Instagram</a>}
-            {site.twitter_url && <a href={site.twitter_url} target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem', textDecoration: 'none' }}>X</a>}
-          </div>
+            </div>
+            {/* Mobile dropdown */}
+            {mobileMenu && (
+              <div style={{ background: site.secondary_color || site.primary_color, padding: '0.5rem 1.5rem 1rem' }}>
+                {pages.map(p => (
+                  <button key={p.page_id} onClick={() => { setActivePage(p); setMobileMenu(false); }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 0, color: site.nav_text_color || '#fff', padding: '0.6rem 0', fontWeight: activePage?.page_id === p.page_id ? 700 : 400, cursor: 'pointer', fontSize: '1rem', fontFamily: site.font_family, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                    {p.page_name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </nav>
         </div>
-        <div style={{ maxWidth: 1100, margin: '1rem auto 0', borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '1rem', fontSize: '0.72rem', opacity: 0.6, textAlign: 'center' }}>
-          {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name} · Powered by Oatmeal Farm Network`}
+      </header>
+
+      {/* Page content — CSS Grid with col_span support */}
+      {activePage && (() => {
+        // Group consecutive half/third blocks into grid rows; full-width blocks get their own row
+        const rows = [];
+        let currentRow = [];
+        activePage.blocks.forEach(block => {
+          const span = block.block_data?.col_span || 'full';
+          if (span === 'full') {
+            if (currentRow.length > 0) { rows.push(currentRow); currentRow = []; }
+            rows.push([block]);
+          } else {
+            currentRow.push(block);
+            const totalSpan = currentRow.reduce((acc, b) => {
+              const s = b.block_data?.col_span || 'full';
+              return acc + (s === 'third' ? 1 : 2); // half=2/3cols, third=1/3col (out of 3)
+            }, 0);
+            if (totalSpan >= 3) { rows.push(currentRow); currentRow = []; }
+          }
+        });
+        if (currentRow.length > 0) rows.push(currentRow);
+
+        return rows.map((row, ri) => {
+          if (row.length === 1 && (!row[0].block_data?.col_span || row[0].block_data.col_span === 'full')) {
+            return <RenderBlock key={row[0].block_id} block={row[0]} site={site} businessId={site.business_id} />;
+          }
+          return (
+            <div key={ri} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', maxWidth: site.body_content_width || '100%', margin: '0 auto', padding: '0 1rem' }}>
+              {row.map(block => {
+                const span = block.block_data?.col_span || 'full';
+                const colSpan = span === 'third' ? 1 : 2;
+                return (
+                  <div key={block.block_id} style={{ gridColumn: `span ${colSpan}` }}>
+                    <RenderBlock block={block} site={site} businessId={site.business_id} />
+                  </div>
+                );
+              })}
+            </div>
+          );
+        });
+      })()}
+
+      {/* Footer — outer band at footer_bg_width, inner content at footer_content_width */}
+      <footer style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family }}>
+        {/* Background band — only this div carries the color, constrained to footer_bg_width */}
+        <div style={{ width: '100%', maxWidth: site.footer_bg_width || '100%', position: 'relative', background: site.footer_bg_color || site.primary_color }}>
+          {site.footer_bg_image_url ? (
+            <img src={site.footer_bg_image_url} alt=""
+              style={{ width: '100%', display: 'block' }} />
+          ) : (
+            <div style={{ minHeight: site.footer_height || 200, background: site.footer_bg_color || site.primary_color }} />
+          )}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, color: 'rgba(255,255,255,0.9)' }}>
+            {/* Inner content constrained to footer_content_width */}
+            <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto' }}>
+              {site.footer_html ? (
+                <div style={{ padding: '2rem 1.5rem', color: '#fff', lineHeight: 1.7 }}
+                  dangerouslySetInnerHTML={{ __html: site.footer_html }} />
+              ) : null}
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.18)', padding: '0.5rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
+                  {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
+                </span>
+                <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)' }}>Powered by Oatmeal Farm Network</span>
+              </div>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
