@@ -3,6 +3,28 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 
 const API = import.meta.env.VITE_API_URL;
 
+// ── Build CSS rules for [data-rte-style] spans (mirrors WebsiteBuilder's buildRteTypoCss) ──
+function buildPublicRteTypoCss(site) {
+  if (!site) return '';
+  return [['h1','h1'],['h2','h2'],['h3','h3'],['h4','h4'],['body','body']].map(([k]) => {
+    const size       = site[`${k}_size`]   || (k==='body'?'16px':k==='h1'?'40px':k==='h2'?'29px':k==='h3'?'21px':'17px');
+    const weight     = site[`${k}_weight`] || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':k==='h3'?'600':'600');
+    const color      = site[`${k}_color`]  || site.text_color || '';
+    const fontFamily = site[`${k}_font`]   || site.font_family || '';
+    const uline      = site[`${k}_underline`];
+    const hasRule    = k !== 'body' && site[`${k}_rule`];
+    const ruleclr    = site[`${k}_rule_color`] || site.text_color || '#000';
+    const align      = site[`${k}_align`]  || 'left';
+    let css = `font-size:${size};font-weight:${weight};`;
+    if (fontFamily) css += `font-family:${fontFamily};`;
+    if (color)      css += `color:${color};`;
+    css += uline ? `text-decoration:underline;` : `text-decoration:none;`;
+    css += hasRule ? `border-bottom:2px solid ${ruleclr};padding-bottom:2px;` : `border-bottom:none;padding-bottom:0;`;
+    if (align !== 'left') css += `display:inline-block;text-align:${align};width:100%;`;
+    return `.site-rte [data-rte-style="${k}"] { ${css} }`;
+  }).join('\n    ');
+}
+
 // ── Content cache (avoid re-fetching per block) ──────────────────
 const contentCache = {};
 async function fetchContent(url) {
@@ -70,8 +92,8 @@ function AboutBlock({ data, site }) {
     <SectionWrap site={site}>
       <div className={`flex flex-col md:flex-row gap-10 items-center ${!imgRight ? 'md:flex-row-reverse' : ''}`}>
         <div className="flex-1">
-          {data.heading && <SectionHeading site={site}>{data.heading}</SectionHeading>}
-          {data.body && <BodyText site={site}>{data.body}</BodyText>}
+          {data.heading && <SectionHeading html={data.heading} site={site} />}
+          {data.body && <BodyText html={data.body} site={site} />}
         </div>
         {hasImage && (
           <div className="flex-1">
@@ -92,8 +114,8 @@ function ContentBlock({ data, site }) {
       {imgTop && hasImage && <img src={data.image_url} alt="" style={{ width: '100%', borderRadius: 12, marginBottom: '1.5rem' }} />}
       <div className={`flex flex-col ${hasImage && !imgTop ? 'md:flex-row gap-10 items-start' : ''} ${hasImage && !imgTop && !imgRight ? 'md:flex-row-reverse' : ''}`}>
         <div className={hasImage && !imgTop ? 'flex-1' : 'w-full'}>
-          {data.heading && <SectionHeading site={site}>{data.heading}</SectionHeading>}
-          {data.body && <BodyText site={site}>{data.body}</BodyText>}
+          {data.heading && <SectionHeading html={data.heading} site={site} />}
+          {data.body && <BodyText html={data.body} site={site} />}
         </div>
         {hasImage && !imgTop && (
           <div className="flex-1">
@@ -372,23 +394,37 @@ function SectionWrap({ children, site, alt }) {
   const textWidth = site.body_content_width || '100%';
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <section style={{ width: '100%', maxWidth: bgWidth, padding: '4rem 1.5rem', background: bgColor }}>
+      <section style={{ width: '100%', maxWidth: bgWidth, padding: '5px 1.5rem', background: bgColor }}>
         <div style={{ maxWidth: textWidth, margin: '0 auto' }}>{children}</div>
       </section>
     </div>
   );
 }
-function SectionHeading({ children, site, centered }) {
-  return (
-    <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: 800, color: site.text_color, fontFamily: site.font_family, marginBottom: '0.5rem', textAlign: centered ? 'center' : 'left' }}>
-      {children}
-    </h2>
-  );
+function SectionHeading({ children, html, site, centered }) {
+  const style = {
+    fontSize: site.h2_size || 'clamp(1.5rem, 3vw, 2.2rem)',
+    fontWeight: site.h2_weight || 800,
+    color: site.h2_color || site.text_color,
+    fontFamily: site.font_family,
+    marginTop: (site.h2_margin_top ?? 0) + 'px',
+    marginBottom: (site.h2_margin_bottom ?? 8) + 'px',
+    textAlign: centered ? 'center' : (site.h2_align || 'left'),
+    textDecoration: site.h2_underline ? 'underline' : 'none',
+  };
+  if (html !== undefined) return <h2 style={style} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <h2 style={style}>{children}</h2>;
 }
-function BodyText({ children, site }) {
-  return (
-    <p style={{ color: '#4B5563', lineHeight: 1.75, fontSize: '1rem', fontFamily: site.font_family, whiteSpace: 'pre-wrap' }}>{children}</p>
-  );
+function BodyText({ children, html, site }) {
+  const style = {
+    color: site.body_color || '#4B5563',
+    lineHeight: site.body_line_height || 1.75,
+    fontSize: site.body_size || '1rem',
+    fontFamily: site.font_family,
+    marginTop: (site.body_margin_top ?? 0) + 'px',
+    marginBottom: (site.body_margin_bottom ?? 12) + 'px',
+  };
+  if (html !== undefined) return <div className="site-rte" style={style} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <p style={{ ...style, whiteSpace: 'pre-wrap' }}>{children}</p>;
 }
 function PriceCard({ icon, name, price, unit, image, desc, tags, site }) {
   return (
@@ -490,8 +526,19 @@ export default function WebsitePublic() {
     ? `url(${site.bg_image_url}) center/cover no-repeat fixed`
     : (site.bg_gradient || site.bg_color || '#fff');
 
+  // Inject typography margin CSS for rich-text blocks (dangerouslySetInnerHTML)
+  const typographyCss = `
+    .site-rte h1 { margin-top:${site.h1_margin_top??0}px; margin-bottom:${site.h1_margin_bottom??8}px; }
+    .site-rte h2 { margin-top:${site.h2_margin_top??0}px; margin-bottom:${site.h2_margin_bottom??8}px; }
+    .site-rte h3 { margin-top:${site.h3_margin_top??0}px; margin-bottom:${site.h3_margin_bottom??6}px; }
+    .site-rte h4 { margin-top:${site.h4_margin_top??0}px; margin-bottom:${site.h4_margin_bottom??4}px; }
+    .site-rte p  { margin-top:${site.body_margin_top??0}px; margin-bottom:${site.body_margin_bottom??12}px; }
+    ${buildPublicRteTypoCss(site)}
+  `;
+
   return (
     <div style={{ minHeight: '100vh', background: pageBg, fontFamily: site.font_family }}>
+      <style dangerouslySetInnerHTML={{ __html: typographyCss }} />
       {/* Preview banner */}
       {isPreview && (
         <div style={{ background: '#1E3A5F', color: '#fff', textAlign: 'center', padding: '0.5rem', fontSize: '0.8rem', fontFamily: 'Inter, sans-serif' }}>

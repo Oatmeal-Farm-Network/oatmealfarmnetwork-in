@@ -44,6 +44,7 @@ const defaultBlockData = {
 
 // Full web-friendly font list (alphabetical)
 const WEB_FONTS = [
+  { label: 'Arial',              value: 'Arial, sans-serif' },
   { label: 'Bitter',             value: 'Bitter, serif' },
   { label: 'Caveat',             value: 'Caveat, cursive' },
   { label: 'Courier Prime',      value: 'Courier Prime, monospace' },
@@ -77,6 +78,7 @@ const WEB_FONTS = [
   { label: 'Source Code Pro',    value: 'Source Code Pro, monospace' },
   { label: 'Source Sans Pro',    value: 'Source Sans Pro, sans-serif' },
   { label: 'Space Mono',         value: 'Space Mono, monospace' },
+  { label: 'Times New Roman',    value: 'Times New Roman, serif' },
   { label: 'Ubuntu',             value: 'Ubuntu, sans-serif' },
   { label: 'Vollkorn',           value: 'Vollkorn, serif' },
   { label: 'Work Sans',          value: 'Work Sans, sans-serif' },
@@ -190,7 +192,7 @@ function ImageUploadField({ label, value, onChange, hint, compact = false }) {
 }
 
 // ── Header images manager ─────────────────────────────────────────
-function HeaderImagesManager({ websiteId }) {
+function HeaderImagesManager({ websiteId, hideTitle = false }) {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -263,9 +265,9 @@ function HeaderImagesManager({ websiteId }) {
 
   return (
     <div>
-      <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Header Images</h3>
+      {!hideTitle && <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Header Images</h3>}
       <p className="text-xs text-gray-400 mb-3">
-        Add one or more rotating header images. If using multiple, assign start/end dates with no gaps between them.
+        Upload one or more banner images. If using multiple, assign start/end dates with no gaps between them.
       </p>
       {error && (
         <div className="mb-3 bg-amber-50 border border-amber-300 text-amber-700 rounded-lg px-3 py-2 text-xs">{error}</div>
@@ -333,10 +335,41 @@ function CE({ value, tag: Tag = 'p', onSave, style, className, placeholder }) {
       suppressContentEditableWarning
       onFocus={() => { editing.current = true; }}
       onBlur={e => { editing.current = false; onSave(e.currentTarget.innerHTML); }}
-      style={{ outline: 'none', cursor: 'text', ...style }}
+      style={{ outline: 'none', cursor: 'text', overflowWrap: 'break-word', wordBreak: 'break-word', minWidth: 0, ...style }}
       className={className}
       data-placeholder={placeholder}
     />
+  );
+}
+
+// ── RichTextEditor: contentEditable body field (no toolbar — uses SelectionToolbar) ─
+function RichTextEditor({ value, onSave, style, placeholder }) {
+  const ref = useRef(null);
+  const editing = useRef(false);
+
+  useEffect(() => {
+    if (ref.current && !editing.current) {
+      ref.current.innerHTML = value || '';
+    }
+  }, [value]);
+
+  return (
+    <>
+      {/* Reset browser default heading/paragraph margins inside contentEditable */}
+      <style>{`.rte-editor h1,.rte-editor h2,.rte-editor h3,.rte-editor h4,.rte-editor p{margin:0 0 4px 0;}`}</style>
+      <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+        <div
+          ref={ref}
+          contentEditable
+          suppressContentEditableWarning
+          className="rte-editor"
+          onFocus={() => { editing.current = true; }}
+          onBlur={e => { editing.current = false; onSave(e.currentTarget.innerHTML); }}
+          style={{ outline: 'none', cursor: 'text', overflowWrap: 'break-word', wordBreak: 'break-word', padding: '6px 14px', ...style }}
+          data-placeholder={placeholder}
+        />
+      </div>
+    </>
   );
 }
 
@@ -403,7 +436,7 @@ function PaletteColorPicker({ paletteColors = [], onColor, dark = false }) {
           {/* Palette colors from the active theme */}
           {paletteColors.length > 0 && (
             <>
-              <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Site Palette</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>Site Palette</div>
               <div style={{ display: 'flex', gap: 5, marginBottom: 8, flexWrap: 'wrap' }}>
                 {paletteColors.map(c => (
                   <button key={c} onMouseDown={() => { pick(c); setCustom(c); }}
@@ -416,7 +449,7 @@ function PaletteColorPicker({ paletteColors = [], onColor, dark = false }) {
           )}
 
           {/* Standard swatches */}
-          <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Standard Colors</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>Standard Colors</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 3, marginBottom: 8 }}>
             {SWATCHES.map(c => (
               <button key={c} onMouseDown={() => { pick(c); setCustom(c); }}
@@ -428,7 +461,7 @@ function PaletteColorPicker({ paletteColors = [], onColor, dark = false }) {
           <div style={{ height: 1, background: '#e5e7eb', margin: '6px 0' }} />
 
           {/* Custom color */}
-          <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Custom Color</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>Custom Color</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input
               type="color"
@@ -456,12 +489,262 @@ function PaletteColorPicker({ paletteColors = [], onColor, dark = false }) {
   );
 }
 
+// ── InlineColorPicker: swatch button that opens palette popup ────────
+function InlineColorPicker({ value, onChange, paletteColors = [], popupAlign = 'left' }) {
+  const [open, setOpen] = useState(false);
+  const [custom, setCustom] = useState(value || '#ffffff');
+  const ref = useRef(null);
+
+  const SWATCHES = [
+    '#000000','#434343','#666666','#999999','#b7b7b7','#ffffff',
+    '#ff0000','#ff4444','#ff9900','#ffff00','#00ff00','#00ffff',
+    '#0000ff','#9900ff','#ff00ff','#ff99cc','#f6b26b','#ffd966',
+    '#93c47d','#76a5af','#6fa8dc','#8e7cc3','#c27ba0','#e06666',
+    '#cc0000','#e69138','#f1c232','#6aa84f','#45818e','#3d85c8',
+    '#674ea7','#a61c00','#85200c','#7f6000','#274e13','#0c343d',
+  ];
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  const pick = (hex) => { onChange(hex); setCustom(hex); setOpen(false); };
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <button
+        onClick={() => setOpen(p => !p)}
+        title={value}
+        style={{ width: 36, height: 36, background: value || '#ffffff', border: '2px solid #e5e7eb', borderRadius: 8, cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.12)', flexShrink: 0 }}
+      />
+      <input
+        type="text" value={value || ''} maxLength={7}
+        onChange={e => { if (/^#[0-9a-fA-F]{0,6}$/.test(e.target.value)) onChange(e.target.value); }}
+        style={{ width: 76, border: '1px solid #e5e7eb', borderRadius: 6, padding: '4px 7px', fontSize: 12, fontFamily: 'monospace', color: '#374151' }}
+      />
+      {open && (
+        <div style={{ position: 'absolute', top: '110%', ...(popupAlign === 'right' ? { right: 0 } : { left: 0 }), zIndex: 99999, background: '#fff', border: '1px solid #d1d5db', borderRadius: 10, padding: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', width: 220 }}
+          onMouseDown={e => e.preventDefault()}>
+          {paletteColors.length > 0 && (
+            <>
+              <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>Site Palette</div>
+              <div style={{ display: 'flex', gap: 5, marginBottom: 8, flexWrap: 'wrap' }}>
+                {paletteColors.map(c => (
+                  <button key={c} onMouseDown={() => pick(c)} title={c}
+                    style={{ width: 22, height: 22, borderRadius: 4, background: c, border: '2px solid #e5e7eb', cursor: 'pointer', padding: 0 }} />
+                ))}
+              </div>
+              <div style={{ height: 1, background: '#e5e7eb', margin: '6px 0' }} />
+            </>
+          )}
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>Standard Colors</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 3, marginBottom: 8 }}>
+            {SWATCHES.map(c => (
+              <button key={c} onMouseDown={() => pick(c)} title={c}
+                style={{ width: '100%', aspectRatio: '1', borderRadius: 3, background: c, border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer', padding: 0 }} />
+            ))}
+          </div>
+          <div style={{ height: 1, background: '#e5e7eb', margin: '6px 0' }} />
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>Custom Color</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input type="color" value={custom} onChange={e => setCustom(e.target.value)}
+              style={{ width: 32, height: 32, border: '1px solid #d1d5db', borderRadius: 4, cursor: 'pointer', padding: 1 }} />
+            <input type="text" value={custom} maxLength={7}
+              onChange={e => { if (/^#[0-9a-fA-F]{0,6}$/.test(e.target.value)) setCustom(e.target.value); }}
+              style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: 4, padding: '4px 6px', fontSize: 12, fontFamily: 'monospace' }} />
+            <button onMouseDown={() => { if (/^#[0-9a-fA-F]{6}$/.test(custom)) pick(custom); }}
+              style={{ padding: '4px 8px', background: '#3D6B34', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>
+              Apply
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── FontPickerDropdown: custom dropdown where each option renders in its own font ──
+// globalFont: when set, adds a "(global)" entry at top; undefined = omit that entry (for transient pickers)
+function FontPickerDropdown({ value, onChange, globalFont, dark = false, label = 'Font…' }) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef(null);
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0 });
+
+  const displayFont  = value || globalFont || 'inherit';
+  const displayLabel = value
+    ? (WEB_FONTS.find(f => f.value === value)?.label || value.split(',')[0].trim())
+    : globalFont
+      ? globalFont.split(',')[0].trim()
+      : label;
+
+  const openDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: rect.bottom + 4, left: rect.left });
+    }
+    setOpen(o => !o);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (!btnRef.current?.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onMouseDown={openDropdown}
+        title={displayLabel}
+        style={{
+          fontFamily: displayFont,
+          background: dark ? '#2d2d3e' : '#fff',
+          color: dark ? '#e2e8f0' : '#374151',
+          border: dark ? 'none' : '1px solid #e5e7eb',
+          borderRadius: 4,
+          fontSize: dark ? 11 : 12,
+          padding: '3px 6px',
+          cursor: 'pointer',
+          maxWidth: dark ? 120 : 150,
+          minWidth: dark ? 70 : 90,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          textAlign: 'left',
+        }}
+      >
+        {displayLabel} ▾
+      </button>
+      {open && createPortal(
+        <div
+          onMouseDown={e => e.stopPropagation()}
+          style={{
+            position: 'fixed',
+            top: dropPos.top,
+            left: dropPos.left,
+            zIndex: 999999,
+            background: dark ? '#1e1e2e' : '#fff',
+            border: dark ? '1px solid #555' : '1px solid #e5e7eb',
+            borderRadius: 6,
+            boxShadow: '0 6px 24px rgba(0,0,0,0.28)',
+            maxHeight: 300,
+            overflowY: 'auto',
+            minWidth: 200,
+          }}
+        >
+          {globalFont !== undefined && (
+            <div
+              onMouseDown={e => { e.preventDefault(); e.stopPropagation(); onChange(''); setOpen(false); }}
+              style={{
+                fontFamily: globalFont || 'inherit',
+                padding: '7px 14px',
+                fontSize: 13,
+                cursor: 'pointer',
+                color: dark ? '#94a3b8' : '#6b7280',
+                borderBottom: dark ? '1px solid #333' : '1px solid #f3f4f6',
+                background: !value ? (dark ? '#2d2d3e' : '#f0fdf4') : 'transparent',
+              }}
+            >
+              {globalFont ? globalFont.split(',')[0].trim() : 'Default'}
+              <span style={{ fontSize: 11, opacity: 0.65, marginLeft: 6 }}>(global)</span>
+            </div>
+          )}
+          {WEB_FONTS.map(f => (
+            <div
+              key={f.value}
+              onMouseDown={e => { e.preventDefault(); e.stopPropagation(); onChange(f.value); setOpen(false); }}
+              style={{
+                fontFamily: f.value,
+                padding: '7px 14px',
+                fontSize: 13,
+                cursor: 'pointer',
+                background: value === f.value ? (dark ? '#2d2d3e' : '#f0fdf4') : 'transparent',
+                color: dark ? '#e2e8f0' : '#1f2937',
+              }}
+            >
+              {f.label}
+            </div>
+          ))}
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
+// ── Build CSS for [data-rte-style] spans — injected into document head so live design changes update existing styled text ──
+function buildRteTypoCss(site) {
+  if (!site) return '';
+  return [['h1','h1'],['h2','h2'],['h3','h3'],['h4','h4'],['body','body']].map(([k]) => {
+    const size       = site[`${k}_size`]   || (k==='body'?'16px':k==='h1'?'40px':k==='h2'?'29px':k==='h3'?'21px':'17px');
+    const weight     = site[`${k}_weight`] || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':k==='h3'?'600':'600');
+    const color      = site[`${k}_color`]  || site.text_color || '';
+    const fontFamily = site[`${k}_font`]   || site.font_family || '';
+    const uline      = site[`${k}_underline`];
+    const hasRule    = k !== 'body' && site[`${k}_rule`];
+    const ruleclr    = site[`${k}_rule_color`] || site.text_color || '#000';
+    const align      = site[`${k}_align`]  || 'left';
+    let css = `font-size:${size};font-weight:${weight};`;
+    if (fontFamily) css += `font-family:${fontFamily};`;
+    if (color)      css += `color:${color};`;
+    css += uline ? `text-decoration:underline;` : `text-decoration:none;`;
+    css += hasRule ? `border-bottom:2px solid ${ruleclr};padding-bottom:2px;` : `border-bottom:none;padding-bottom:0;`;
+    if (align !== 'left') css += `display:inline-block;text-align:${align};width:100%;`;
+    return `.rte-editor [data-rte-style="${k}"] { ${css} }`;
+  }).join('\n');
+}
+
 // ── SelectionToolbar: appears above selected text ─────────────────
-function SelectionToolbar({ canvasRef, onImageAdd, paletteColors = [] }) {
+function SelectionToolbar({ canvasRef, onImageAdd, paletteColors = [], site = {} }) {
   const [pos, setPos] = useState(null);
   const savedRange = useRef(null);
-  const fileRef = useRef(null);
-  const [fontVal, setFontVal] = useState('');
+  const [styleVal, setStyleVal] = useState('');
+
+  // Apply typography style to selection using data-rte-style attribute.
+  // CSS is injected via buildRteTypoCss so changing design settings updates all styled text live.
+  const applyTypoStyle = (tag) => {
+    if (!tag) return;
+    const sel = window.getSelection();
+    if (savedRange.current) { sel.removeAllRanges(); sel.addRange(savedRange.current); }
+    if (!sel || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    // Extract plain text — strips all nested formatting
+    const plainText = range.toString();
+    range.deleteContents();
+    const span = document.createElement('span');
+    span.setAttribute('data-rte-style', tag === 'p' ? 'body' : tag);
+    span.textContent = plainText;
+    range.insertNode(span);
+    // Unwrap empty ancestor spans left behind by deleteContents()
+    let el = span.parentElement;
+    while (el && el !== document.body) {
+      if (el.tagName !== 'SPAN') break;
+      const parent = el.parentElement;
+      if (!parent) break;
+      const meaningfulSiblings = Array.from(el.childNodes).filter(n => {
+        if (n === span) return false;
+        if (n.nodeType === Node.TEXT_NODE) return n.textContent.trim() !== '';
+        return true;
+      });
+      if (meaningfulSiblings.length === 0) {
+        parent.replaceChild(span, el);
+        el = parent.tagName === 'SPAN' ? parent : null;
+      } else {
+        break;
+      }
+    }
+    range.selectNode(span);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    setStyleVal('');
+  };
 
   useEffect(() => {
     const update = () => {
@@ -499,21 +782,18 @@ function SelectionToolbar({ canvasRef, onImageAdd, paletteColors = [] }) {
 
   const applyFont = (f) => {
     if (!f) return;
-    restoreAndRun(() => {
-      const sel = window.getSelection();
-      if (!sel || !savedRange.current) return;
-      const span = document.createElement('span');
-      span.style.fontFamily = f;
-      try {
-        const range = savedRange.current.cloneRange();
-        range.surroundContents(span);
-        sel.removeAllRanges();
-        sel.addRange(range);
-      } catch {
-        document.execCommand('fontName', false, f.split(',')[0].trim());
-      }
-    });
-    setFontVal('');
+    const sel = window.getSelection();
+    if (savedRange.current) { sel.removeAllRanges(); sel.addRange(savedRange.current); }
+    if (!sel || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    const contents = range.extractContents();
+    const span = document.createElement('span');
+    span.style.fontFamily = f;
+    span.appendChild(contents);
+    range.insertNode(span);
+    range.selectNode(span);
+    sel.removeAllRanges();
+    sel.addRange(range);
   };
 
   return createPortal(
@@ -537,18 +817,34 @@ function SelectionToolbar({ canvasRef, onImageAdd, paletteColors = [] }) {
       }}
       onMouseDown={e => e.preventDefault()}
     >
+      {/* Paragraph style dropdown */}
       <select
-        value={fontVal}
-        onChange={e => { applyFont(e.target.value); setFontVal(''); }}
-        style={{ background: '#2d2d3e', color: '#e2e8f0', border: 'none', borderRadius: 4, fontSize: 11, padding: '3px 4px', cursor: 'pointer', maxWidth: 130 }}
+        value={styleVal}
+        onMouseDown={e => e.stopPropagation()}
+        onChange={e => applyTypoStyle(e.target.value)}
+        style={{ background: '#2d2d3e', color: '#e2e8f0', border: 'none', borderRadius: 4, fontSize: 11, padding: '3px 4px', cursor: 'pointer', maxWidth: 90 }}
       >
-        <option value="">Font…</option>
-        {WEB_FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+        <option value="">Style…</option>
+        <option value="h1">H1</option>
+        <option value="h2">H2</option>
+        <option value="h3">H3</option>
+        <option value="h4">H4</option>
+        <option value="p">Body</option>
       </select>
 
       <div style={{ width: 1, height: 18, background: '#444', margin: '0 2px' }} />
 
-      {[['bold','B',{ fontWeight: 700 }],['italic','I',{ fontStyle: 'italic' }],['underline','U',{ textDecoration: 'underline' }]].map(([c, lbl, s]) => (
+      {/* Font picker */}
+      <FontPickerDropdown
+        value=""
+        onChange={f => { if (f) applyFont(f); }}
+        dark={true}
+        label="Font…"
+      />
+
+      <div style={{ width: 1, height: 18, background: '#444', margin: '0 2px' }} />
+
+      {[['bold','B',{ fontWeight: 700 }],['italic','I',{ fontStyle: 'italic' }],['underline','U',{ textDecoration: 'underline' }],['strikeThrough','S',{ textDecoration: 'line-through' }]].map(([c, lbl, s]) => (
         <button key={c} onMouseDown={e => { e.preventDefault(); cmd(c); }}
           style={{ background: 'none', border: 'none', color: '#e2e8f0', cursor: 'pointer', fontSize: 12, padding: '2px 5px', borderRadius: 3, ...s }}>
           {lbl}
@@ -572,16 +868,6 @@ function SelectionToolbar({ canvasRef, onImageAdd, paletteColors = [] }) {
         </button>
       ))}
 
-      <div style={{ width: 1, height: 18, background: '#444', margin: '0 2px' }} />
-
-      <button
-        onMouseDown={e => { e.preventDefault(); fileRef.current?.click(); }}
-        style={{ background: 'none', border: '1px solid #60a5fa', color: '#93c5fd', cursor: 'pointer', fontSize: 11, padding: '2px 7px', borderRadius: 4, fontWeight: 600 }}
-      >
-        + Img
-      </button>
-      <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
-        onChange={e => { if (e.target.files[0]) onImageAdd(e.target.files[0]); e.target.value = ''; }} />
     </div>,
     document.body
   );
@@ -655,7 +941,7 @@ function AboutContentBlock({ block, isSelected, onFieldSave, onImagesChange, sit
   const d = block.block_data || {};
   const textColor  = site.text_color  || '#111827';
   const fontFamily = site.font_family || 'inherit';
-  const bgColor    = site.bg_color    || '#fff';
+  const bgColor    = d.bg_color || site.bg_color || '#fff';
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
 
@@ -721,8 +1007,13 @@ function AboutContentBlock({ block, isSelected, onFieldSave, onImagesChange, sit
     </div>
   );
 
+  const bgW = site.body_bg_width || '100%';
+  const cW  = site.body_content_width || '100%';
+
   return (
-    <div style={{ padding: '3rem', minHeight: 480, background: bgColor, fontFamily }}>
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: bgW, background: bgColor, fontFamily }}>
+        <div style={{ maxWidth: cW, margin: '0 auto', padding: '0 1.5rem 3rem', minHeight: 480 }}>
       {/* Top images */}
       {topImgs.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
@@ -738,12 +1029,26 @@ function AboutContentBlock({ block, isSelected, onFieldSave, onImagesChange, sit
           </div>
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <CE value={d.heading} tag="h2" onSave={v => onFieldSave('heading', v)}
-            style={{ fontSize: '1.8rem', fontWeight: 800, color: textColor, margin: '0 0 1rem 0', lineHeight: 1.2, fontFamily }}
-            placeholder="Enter heading…" />
-          <CE value={d.body} tag="div" onSave={v => onFieldSave('body', v)}
-            style={{ fontSize: '1rem', lineHeight: 1.75, color: textColor, minHeight: 380, fontFamily }}
-            placeholder="Write your content here…" />
+          <RichTextEditor
+            value={(d.heading ? `<h2>${d.heading}</h2>` : '') + (d.body || '')}
+            onSave={v => {
+              // Split heading (first block element if it's a heading tag) from body
+              const tmp = document.createElement('div');
+              tmp.innerHTML = v;
+              const first = tmp.firstElementChild;
+              const isHeading = first && /^h[1-4]$/i.test(first.tagName);
+              if (isHeading) {
+                onFieldSave('heading', first.innerHTML);
+                tmp.removeChild(first);
+                onFieldSave('body', tmp.innerHTML);
+              } else {
+                onFieldSave('heading', '');
+                onFieldSave('body', v);
+              }
+            }}
+            style={{ fontSize: '1rem', lineHeight: 1.75, color: textColor, minHeight: 400, fontFamily }}
+            placeholder="Start with a heading or body text…"
+          />
         </div>
         {rightImgs.length > 0 && (
           <div style={{ flexShrink: 0 }}>
@@ -770,6 +1075,8 @@ function AboutContentBlock({ block, isSelected, onFieldSave, onImagesChange, sit
             onChange={e => handleFiles(e.target.files)} />
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -838,30 +1145,39 @@ function CanvasSiteFooter({ site }) {
   const bgW = site.footer_bg_width || '100%';
   const cW  = site.footer_content_width || '100%';
   const hasBgImg = !!site.footer_bg_image_url;
+  const footerBg = site.footer_bg_color || site.primary_color || '#3D6B34';
+  const CopyrightBar = () => (
+    <div style={{ maxWidth: cW, margin: '0 auto' }}>
+      {site.footer_html ? (
+        <div style={{ padding: '1.5rem 1rem', color: '#fff', fontSize: '0.9rem', lineHeight: 1.6 }}
+          dangerouslySetInnerHTML={{ __html: site.footer_html }} />
+      ) : null}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.18)', padding: '0.6rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
+          {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
+        </span>
+        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>Powered by Oatmeal Farm Network</span>
+      </div>
+    </div>
+  );
   return (
     <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family }}>
-      {/* Background band — only this carries the color, constrained to footer_bg_width */}
-      <div style={{ width: '100%', maxWidth: bgW, position: 'relative', background: site.footer_bg_color || site.primary_color || '#3D6B34' }}>
+      {/* Background band constrained to footer_bg_width */}
+      <div style={{ width: '100%', maxWidth: bgW, background: footerBg }}>
         {hasBgImg ? (
-          <img src={site.footer_bg_image_url} alt="" style={{ width: '100%', display: 'block' }} />
+          /* Image case: stack image then copyright below */
+          <>
+            <img src={site.footer_bg_image_url} alt="" style={{ width: '100%', display: 'block' }} />
+            <CopyrightBar />
+          </>
         ) : (
-          <div style={{ minHeight: footerHeight, background: site.footer_bg_color || site.primary_color || '#3D6B34' }} />
-        )}
-        {/* Content overlaid at bottom, inner constrained to footer_content_width */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-          <div style={{ maxWidth: cW, margin: '0 auto' }}>
-            {site.footer_html ? (
-              <div style={{ padding: '1.5rem 1rem', color: '#fff', fontSize: '0.9rem', lineHeight: 1.6 }}
-                dangerouslySetInnerHTML={{ __html: site.footer_html }} />
-            ) : null}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.18)', padding: '0.6rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
-                {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
-              </span>
-              <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>Powered by Oatmeal Farm Network</span>
+          /* No image: solid color area with copyright pinned to bottom */
+          <div style={{ position: 'relative', minHeight: footerHeight }}>
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+              <CopyrightBar />
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -876,32 +1192,40 @@ function BlockPreview({ block, isSelected, onFieldSave, onImagesChange, site = {
   const textColor    = site.text_color    || '#111827';
   const fontFamily   = site.font_family   || 'inherit';
   const bgColor      = site.bg_color      || '#fff';
+  // Per-block bg override stored in block_data.bg_color
+  const blockBg = d.bg_color || bgColor;
 
   // ── Hero ──
   if (bt === 'hero') {
+    const heroBgW = site.body_bg_width || '100%';
+    // Hero defaults to Section Background color (site.bg_color), not nav color
+    const heroBg = d.bg_color || bgColor;
     return (
-      <div style={{
-        position: 'relative', minHeight: 300,
-        background: d.image_url ? `url(${d.image_url}) center/cover no-repeat` : primaryColor,
-        display: 'flex', alignItems: 'center',
-        justifyContent: d.align === 'left' ? 'flex-start' : d.align === 'right' ? 'flex-end' : 'center',
-        fontFamily,
-      }}>
-        {d.overlay && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.42)' }} />}
-        <div style={{ position: 'relative', zIndex: 1, padding: '2.5rem 3rem', textAlign: d.align || 'center', maxWidth: 720, width: '100%' }}>
-          <CE value={d.headline} tag="h1" onSave={v => onFieldSave('headline', v)}
-            style={{ color: '#fff', fontSize: '2.5rem', fontWeight: 800, margin: '0 0 0.6rem 0', lineHeight: 1.15, fontFamily }}
-            placeholder="Enter headline…" />
-          <CE value={d.subtext} tag="p" onSave={v => onFieldSave('subtext', v)}
-            style={{ color: 'rgba(255,255,255,0.88)', fontSize: '1.15rem', margin: '0 0 1.5rem 0', lineHeight: 1.55, fontFamily }}
-            placeholder="Enter sub-text…" />
-          {(d.cta_text || isSelected) && (
-            <CE value={d.cta_text} tag="span" onSave={v => onFieldSave('cta_text', v)}
-              style={{ display: 'inline-block', background: accentColor, color: '#fff', padding: '0.6rem 1.75rem', borderRadius: 8, fontWeight: 700, fontSize: '1rem', fontFamily, cursor: 'pointer' }}
-              placeholder="Button text…" />
-          )}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{
+          width: '100%', maxWidth: heroBgW,
+          position: 'relative', minHeight: 300,
+          background: d.image_url ? `url(${d.image_url}) center/cover no-repeat` : heroBg,
+          display: 'flex', alignItems: 'center',
+          justifyContent: d.align === 'left' ? 'flex-start' : d.align === 'right' ? 'flex-end' : 'center',
+          fontFamily,
+        }}>
+          {d.overlay && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.42)' }} />}
+          <div style={{ position: 'relative', zIndex: 1, padding: '2.5rem 3rem', textAlign: d.align || 'center', maxWidth: 720, width: '100%' }}>
+            <CE value={d.headline} tag="h1" onSave={v => onFieldSave('headline', v)}
+              style={{ color: '#fff', fontSize: '2.5rem', fontWeight: 800, margin: '0 0 0.6rem 0', lineHeight: 1.15, fontFamily }}
+              placeholder="Enter headline…" />
+            <CE value={d.subtext} tag="p" onSave={v => onFieldSave('subtext', v)}
+              style={{ color: 'rgba(255,255,255,0.88)', fontSize: '1.15rem', margin: '0 0 1.5rem 0', lineHeight: 1.55, fontFamily }}
+              placeholder="Enter sub-text…" />
+            {(d.cta_text || isSelected) && (
+              <CE value={d.cta_text} tag="span" onSave={v => onFieldSave('cta_text', v)}
+                style={{ display: 'inline-block', background: accentColor, color: '#fff', padding: '0.6rem 1.75rem', borderRadius: 8, fontWeight: 700, fontSize: '1rem', fontFamily, cursor: 'pointer' }}
+                placeholder="Button text…" />
+            )}
+          </div>
+          {isSelected && <HeroImageManager imageUrl={d.image_url} onFieldSave={onFieldSave} />}
         </div>
-        {isSelected && <HeroImageManager imageUrl={d.image_url} onFieldSave={onFieldSave} />}
       </div>
     );
   }
@@ -922,16 +1246,22 @@ function BlockPreview({ block, isSelected, onFieldSave, onImagesChange, site = {
 
   // ── Data-backed blocks (livestock, produce, services, etc.) ──
   const blockType = BLOCK_TYPES.find(b => b.type === bt) || { icon: '📦', label: bt };
+  const bgW = site.body_bg_width || '100%';
+  const cW  = site.body_content_width || '100%';
   return (
-    <div style={{ padding: '2.5rem 3rem', background: bgColor, borderTop: `3px solid ${primaryColor}20`, textAlign: 'center', minHeight: 180, fontFamily }}>
-      <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{blockType.icon}</div>
-      <div style={{ fontSize: '1rem', fontWeight: 700, color: primaryColor }}>{blockType.label}</div>
-      {d.heading !== undefined && (
-        <CE value={d.heading} tag="p" onSave={v => onFieldSave('heading', v)}
-          style={{ fontSize: '1.1rem', color: textColor, fontWeight: 700, margin: '0.5rem auto', maxWidth: 400, fontFamily }}
-          placeholder="Section heading…" />
-      )}
-      <div style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '0.5rem' }}>Live data from your account will appear here on your published site.</div>
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: bgW, background: blockBg }}>
+        <div style={{ maxWidth: cW, margin: '0 auto', padding: '0 3rem 2.5rem', borderTop: `3px solid ${primaryColor}20`, textAlign: 'center', minHeight: 180, fontFamily }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{blockType.icon}</div>
+          <div style={{ fontSize: '1rem', fontWeight: 700, color: primaryColor }}>{blockType.label}</div>
+          {d.heading !== undefined && (
+            <CE value={d.heading} tag="p" onSave={v => onFieldSave('heading', v)}
+              style={{ fontSize: '1.1rem', color: textColor, fontWeight: 700, margin: '0.5rem auto', maxWidth: 400, fontFamily }}
+              placeholder="Section heading…" />
+          )}
+          <div style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '0.5rem' }}>Live data from your account will appear here on your published site.</div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -970,8 +1300,12 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
 
   return (
     <div
-      draggable={!isSelected}
-      onDragStart={e => !isSelected && onDragStart(e, index)}
+      draggable
+      onDragStart={e => {
+        // Don't drag when user is trying to select text inside a contentEditable
+        if (isSelected || e.target.closest?.('[contenteditable]')) { e.preventDefault(); return; }
+        onDragStart(e, index);
+      }}
       onDragOver={handleDragOver}
       onDragLeave={() => setMediaDragOver(false)}
       onDrop={handleDrop}
@@ -1015,10 +1349,33 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
 }
 
 // ── BlockOptionsPanel: right-side structural options ──────────────
-function BlockOptionsPanel({ block, onFieldSave }) {
+function BlockOptionsPanel({ block, onFieldSave, site = {} }) {
   if (!block) return null;
   const d = block.block_data || {};
   const bt = block.block_type;
+
+  const paletteColors = [
+    site.primary_color, site.secondary_color, site.accent_color,
+    site.bg_color, site.text_color, site.nav_text_color, site.footer_bg_color,
+  ].filter(Boolean);
+
+  // Shared background color picker shown at top of every block panel
+  const BgColorField = () => (
+    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #f3f4f6' }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Block Background</div>
+      <InlineColorPicker
+        value={d.bg_color || site.bg_color || '#ffffff'}
+        onChange={v => onFieldSave('bg_color', v)}
+        paletteColors={paletteColors}
+      />
+      {d.bg_color && (
+        <button onClick={() => onFieldSave('bg_color', '')}
+          style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+          Reset to site default
+        </button>
+      )}
+    </div>
+  );
 
   const Pill = ({ label, active, onClick }) => (
     <button onClick={onClick}
@@ -1034,7 +1391,7 @@ function BlockOptionsPanel({ block, onFieldSave }) {
 
   const Field = ({ label, children }) => (
     <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{label}</div>
       {children}
     </div>
   );
@@ -1050,6 +1407,7 @@ function BlockOptionsPanel({ block, onFieldSave }) {
   if (bt === 'hero') return (
     <div style={{ padding: 16, overflowY: 'auto', height: '100%' }}>
       <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 16 }}>Hero Options</div>
+      <BgColorField />
       <Field label="Text Alignment">
         {[['left','Left'],['center','Center'],['right','Right']].map(([v,l]) => (
           <Pill key={v} label={l} active={(d.align || 'center') === v} onClick={() => onFieldSave('align', v)} />
@@ -1072,7 +1430,8 @@ function BlockOptionsPanel({ block, onFieldSave }) {
 
   if (bt === 'about' || bt === 'content') return (
     <div style={{ padding: 16, overflowY: 'auto', height: '100%' }}>
-      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 8 }}>Block Options</div>
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 16 }}>Block Options</div>
+      <BgColorField />
       <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 16, lineHeight: 1.4 }}>
         Select the block, then click an image to use the ↑ ← → ↓ buttons on each image to position it individually.
       </div>
@@ -1083,6 +1442,7 @@ function BlockOptionsPanel({ block, onFieldSave }) {
   if (bt === 'divider') return (
     <div style={{ padding: 16 }}>
       <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 16 }}>Divider Options</div>
+      <BgColorField />
       <Field label="Height (px)">
         <input type="number" className={inp} value={d.height || 40}
           onChange={e => onFieldSave('height', Number(e.target.value))} />
@@ -1094,6 +1454,7 @@ function BlockOptionsPanel({ block, onFieldSave }) {
   return (
     <div style={{ padding: 16 }}>
       <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 16 }}>Block Options</div>
+      <BgColorField />
       <WidthField />
       {(d.max_items !== undefined) && (
         <Field label="Max Items">
@@ -1258,6 +1619,18 @@ export default function WebsiteBuilder() {
   const canvasRef     = useRef(null);
   const blocksRef     = useRef(blocks);
   useEffect(() => { blocksRef.current = blocks; }, [blocks]);
+
+  // Inject/update CSS for [data-rte-style] spans so design changes apply live to existing styled text
+  useEffect(() => {
+    const css = buildRteTypoCss(site);
+    let styleEl = document.getElementById('rte-typo-styles');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'rte-typo-styles';
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = css;
+  }, [site]);
 
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [activeTab, setActiveTab]         = useState('pages'); // 'pages' | 'blocks' | 'media'
@@ -1666,6 +2039,11 @@ export default function WebsiteBuilder() {
               </span>
             </div>
 
+            {/* Center note */}
+            <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', fontSize: 12, color: '#9ca3af', fontStyle: 'italic', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+              ✓ Changes are automagically saved
+            </div>
+
             {/* Responsive preview */}
             <div style={{ display: 'flex', border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
               {[['desktop','🖥'],['tablet','📱'],['mobile','📲']].map(([id, icon]) => (
@@ -1680,6 +2058,12 @@ export default function WebsiteBuilder() {
               style={{ padding: '5px 14px', fontSize: 13, fontWeight: 500, color: '#374151', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, cursor: 'pointer' }}>
               Preview ↗
             </button>
+            {site.is_published && (
+              <a href={`/sites/${site.slug}`} target="_blank" rel="noreferrer"
+                style={{ padding: '5px 14px', fontSize: 13, fontWeight: 500, color: '#3D6B34', background: '#fff', border: '1px solid #3D6B34', borderRadius: 8, cursor: 'pointer', textDecoration: 'none' }}>
+                View Live ↗
+              </a>
+            )}
             <button onClick={togglePublish} disabled={saving}
               style={{ padding: '5px 14px', fontSize: 13, fontWeight: 700, color: site.is_published ? '#dc2626' : '#fff', background: site.is_published ? '#fef2f2' : '#3D6B34', border: `1px solid ${site.is_published ? '#fca5a5' : '#3D6B34'}`, borderRadius: 8, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
               {site.is_published ? 'Unpublish' : 'Publish Site'}
@@ -1714,7 +2098,7 @@ export default function WebsiteBuilder() {
               {/* Pages tab */}
               {activeTab === 'pages' && (
                 <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '4px 8px 8px' }}>Pages</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', padding: '4px 8px 8px' }}>Pages</div>
                   {pages.map(page => (
                     <div key={page.page_id}
                       style={{ borderRadius: 8, marginBottom: 2 }}>
@@ -1771,7 +2155,7 @@ export default function WebsiteBuilder() {
               {/* Blocks tab */}
               {activeTab === 'blocks' && (
                 <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '4px 8px 8px' }}>Add Block</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', padding: '4px 8px 8px' }}>Add Block</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
                     {BLOCK_TYPES.map(bt => (
                       <button key={bt.type} onClick={() => addBlock(bt.type)}
@@ -1790,7 +2174,7 @@ export default function WebsiteBuilder() {
               {/* Media tab */}
               {activeTab === 'media' && (
                 <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '12px 12px 4px' }}>Media Library</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', padding: '12px 12px 4px' }}>Media Library</div>
                   <div style={{ flex: 1, overflow: 'hidden' }}>
                     <MediaPanel siteId={site?.website_id} />
                   </div>
@@ -1805,8 +2189,9 @@ export default function WebsiteBuilder() {
               style={{
                 flex: 1,
                 overflowY: 'auto',
+                overflowX: 'hidden',
                 background: '#e5e7eb',
-                padding: '24px',
+                padding: '8px',
               }}
             >
               <div style={{
@@ -1871,6 +2256,7 @@ export default function WebsiteBuilder() {
                 <BlockOptionsPanel
                   block={selectedBlock}
                   onFieldSave={(key, val) => saveBlockField(selectedBlock.block_id, key, val)}
+                  site={site}
                 />
               </div>
             )}
@@ -1882,6 +2268,7 @@ export default function WebsiteBuilder() {
       <SelectionToolbar
         canvasRef={canvasRef}
         onImageAdd={addImageToSelectedBlock}
+        site={site}
         paletteColors={site ? [
           site.primary_color, site.secondary_color, site.accent_color,
           site.bg_color, site.text_color, site.nav_text_color, site.footer_bg_color,
@@ -2232,13 +2619,13 @@ function WidthDiagram({ local }) {
   return (
     <div>
       {/* Browser chrome */}
-      <div style={{ borderRadius: 8, border: '1px solid #d1d5db', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+      <div style={{ borderRadius: 8, border: '1px solid #d1d5db', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', minWidth: 0 }}>
         {/* Tab bar */}
-        <div style={{ background: '#e9ecef', padding: '5px 8px', display: 'flex', gap: 4, alignItems: 'center' }}>
+        <div style={{ background: '#e9ecef', padding: '8px 12px', display: 'flex', gap: 6, alignItems: 'center' }}>
           {['#ef4444','#f59e0b','#22c55e'].map(c => (
-            <div key={c} style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
+            <div key={c} style={{ width: 12, height: 12, borderRadius: '50%', background: c }} />
           ))}
-          <div style={{ flex: 1, background: '#fff', borderRadius: 4, height: 13, marginLeft: 4, opacity: 0.8 }} />
+          <div style={{ flex: 1, background: '#fff', borderRadius: 6, height: 18, marginLeft: 6, opacity: 0.8 }} />
         </div>
 
         {/* Page */}
@@ -2252,16 +2639,35 @@ function WidthDiagram({ local }) {
             bgImage={local.header_banner_url}
             labelRow={<LabelBar dark left={`Header BG: ${local.header_bg_width || '100%'}`} right={`Content: ${local.header_content_width || '100%'}`} />}
           >
-            <div style={{ padding: '4px 5px 2px', display: 'flex', alignItems: 'center', gap: 3 }}>
-              {local.logo_url
-                ? <img src={local.logo_url} alt="" style={{ height: 13, objectFit: 'contain', flexShrink: 0 }} />
-                : <div style={{ width: 20, height: 8, background: 'rgba(255,255,255,0.5)', borderRadius: 2, flexShrink: 0 }} />}
-              <div style={{ flex: 1, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                {[16,12,14,10].map((w, i) => <div key={i} style={{ width: w, height: 3, background: 'rgba(255,255,255,0.6)', borderRadius: 2 }} />)}
+            {/* Top bar */}
+            {local.top_bar_enabled && (
+              <div style={{ background: local.top_bar_bg_color || '#f8f5ef', padding: '5px 10px', display: 'flex', justifyContent: local.top_bar_align === 'left' ? 'flex-start' : local.top_bar_align === 'center' ? 'center' : 'flex-end' }}>
+                <div style={{ width: 80, height: 5, background: local.top_bar_text_color || '#333', opacity: 0.4, borderRadius: 2 }} />
               </div>
-            </div>
-            <div style={{ background: 'rgba(0,0,0,0.12)', padding: '3px 5px', display: 'flex', gap: 2 }}>
-              {[14,10,14,8].map((w, i) => <div key={i} style={{ width: w, height: 3, background: 'rgba(255,255,255,0.55)', borderRadius: 2 }} />)}
+            )}
+            {/* Banner — full image at natural aspect ratio, no cropping */}
+            {local.header_banner_url ? (
+              <img src={local.header_banner_url} alt="" style={{ width: '100%', display: 'block' }} />
+            ) : (
+              <div style={{ minHeight: 80, background: local.primary_color, display: 'flex', alignItems: 'center', padding: '10px 10px', gap: 6 }}>
+                {local.logo_url
+                  ? <img src={local.logo_url} alt="" style={{ height: 36, objectFit: 'contain', flexShrink: 0 }} />
+                  : <div style={{ width: 48, height: 22, background: 'rgba(255,255,255,0.5)', borderRadius: 3, flexShrink: 0 }} />}
+                <div style={{ flex: 1, display: 'flex', gap: 5, justifyContent: 'flex-end' }}>
+                  {[36,24,32,20].map((w, i) => <div key={i} style={{ width: w, height: 7, background: 'rgba(255,255,255,0.6)', borderRadius: 3 }} />)}
+                </div>
+              </div>
+            )}
+            {/* Logo overlay row when banner image is set */}
+            {local.header_banner_url && (local.logo_url || local.show_site_name !== false) && (
+              <div style={{ background: local.primary_color + 'cc', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                {local.logo_url && <img src={local.logo_url} alt="" style={{ height: 22, objectFit: 'contain' }} />}
+                {local.show_site_name !== false && <div style={{ width: 64, height: 7, background: 'rgba(255,255,255,0.7)', borderRadius: 3 }} />}
+              </div>
+            )}
+            {/* Nav bar */}
+            <div style={{ background: local.nav_bg_image_url ? `url(${local.nav_bg_image_url}) center/cover` : 'rgba(0,0,0,0.18)', padding: '9px 10px', display: 'flex', gap: 7 }}>
+              {[32,22,32,18].map((w, i) => <div key={i} style={{ width: w, height: 7, background: 'rgba(255,255,255,0.65)', borderRadius: 3 }} />)}
             </div>
           </Zone>
 
@@ -2278,10 +2684,10 @@ function WidthDiagram({ local }) {
                 ? <LabelBar left={`Body BG: ${local.body_bg_width || '100%'}`} right={`Text: ${local.body_content_width || '100%'}`} />
                 : null}
             >
-              <div style={{ padding: '5px 4px' }}>
-                <div style={{ height: 4, background: (local.text_color || '#111') + '55', borderRadius: 2, marginBottom: 2 }} />
-                <div style={{ height: 2.5, background: (local.text_color || '#111') + '33', borderRadius: 2, marginBottom: 2 }} />
-                <div style={{ height: 2.5, background: (local.text_color || '#111') + '22', borderRadius: 2, width: '75%' }} />
+              <div style={{ padding: '14px 10px' }}>
+                <div style={{ height: 9, background: (local.text_color || '#111') + '55', borderRadius: 3, marginBottom: 5 }} />
+                <div style={{ height: 6, background: (local.text_color || '#111') + '33', borderRadius: 3, marginBottom: 5 }} />
+                <div style={{ height: 6, background: (local.text_color || '#111') + '22', borderRadius: 3, width: '75%' }} />
               </div>
             </Zone>
           ))}
@@ -2291,17 +2697,32 @@ function WidthDiagram({ local }) {
             bgWidth={local.footer_bg_width}
             contentWidth={local.footer_content_width}
             bgColor={local.footer_bg_color || local.primary_color}
-            bgImage={local.footer_bg_image_url}
             labelRow={<LabelBar dark left={`Footer BG: ${local.footer_bg_width || '100%'}`} right={`Content: ${local.footer_content_width || '100%'}`} />}
           >
-            <div style={{ padding: '5px 4px 3px' }}>
-              <div style={{ height: 3, background: 'rgba(255,255,255,0.4)', borderRadius: 2, marginBottom: 2 }} />
-              <div style={{ height: 3, background: 'rgba(255,255,255,0.25)', borderRadius: 2, width: '55%', marginBottom: 4 }} />
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: 2, display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ height: 2, width: '28%', background: 'rgba(255,255,255,0.3)', borderRadius: 1 }} />
-                <div style={{ height: 2, width: '22%', background: 'rgba(255,255,255,0.2)', borderRadius: 1 }} />
+            {local.footer_bg_image_url ? (
+              <div style={{ position: 'relative' }}>
+                {/* Full image at natural aspect ratio — no cropping */}
+                <img src={local.footer_bg_image_url} alt="" style={{ width: '100%', display: 'block' }} />
+                {/* Content overlay */}
+                <div style={{ position: 'absolute', inset: 0, background: (local.footer_bg_color || local.primary_color) + 'aa', padding: '14px 10px 10px' }}>
+                  <div style={{ height: 7, background: 'rgba(255,255,255,0.4)', borderRadius: 3, marginBottom: 5 }} />
+                  <div style={{ height: 7, background: 'rgba(255,255,255,0.25)', borderRadius: 3, width: '55%', marginBottom: 10 }} />
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: 6, display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ height: 5, width: '28%', background: 'rgba(255,255,255,0.3)', borderRadius: 2 }} />
+                    <div style={{ height: 5, width: '22%', background: 'rgba(255,255,255,0.2)', borderRadius: 2 }} />
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ padding: '14px 10px 10px' }}>
+                <div style={{ height: 7, background: 'rgba(255,255,255,0.4)', borderRadius: 3, marginBottom: 5 }} />
+                <div style={{ height: 7, background: 'rgba(255,255,255,0.25)', borderRadius: 3, width: '55%', marginBottom: 10 }} />
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: 6, display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ height: 5, width: '28%', background: 'rgba(255,255,255,0.3)', borderRadius: 2 }} />
+                  <div style={{ height: 5, width: '22%', background: 'rgba(255,255,255,0.2)', borderRadius: 2 }} />
+                </div>
+              </div>
+            )}
           </Zone>
 
         </div>
@@ -2382,9 +2803,77 @@ function DesignView({ site, onSave, saving }) {
     // Page background
     bg_image_url:        site.bg_image_url        || '',
     bg_gradient:         site.bg_gradient         || '',
+    // Local-only UI state for the page background picker
+    bg_mode: (() => {
+      if (site.bg_gradient && site.bg_gradient.includes('gradient')) return 'gradient';
+      if (site.bg_color && site.bg_color !== '#FFFFFF' && site.bg_color !== '#ffffff') return 'solid';
+      return 'none';
+    })(),
+    bg_gradient_color1: (() => {
+      const m = (site.bg_gradient || '').match(/#[0-9a-fA-F]{3,6}/g);
+      return m && m[0] ? m[0] : '#e8f5e9';
+    })(),
+    bg_gradient_color2: (() => {
+      const m = (site.bg_gradient || '').match(/#[0-9a-fA-F]{3,6}/g);
+      return m && m[1] ? m[1] : '#ffffff';
+    })(),
+    // Typography / type scale
+    h1_size:          site.h1_size          || '40px',
+    h1_weight:        site.h1_weight        || '800',
+    h1_color:         site.h1_color         || '',
+    h1_align:         site.h1_align         || 'left',
+    h1_underline:     !!site.h1_underline,
+    h1_rule:          !!site.h1_rule,
+    h1_rule_color:    site.h1_rule_color    || '',
+    h1_margin_top:    site.h1_margin_top    ?? 0,
+    h1_margin_bottom: site.h1_margin_bottom ?? 8,
+    h1_font:          site.h1_font          || '',
+    h2_size:          site.h2_size          || '29px',
+    h2_weight:        site.h2_weight        || '700',
+    h2_color:         site.h2_color         || '',
+    h2_align:         site.h2_align         || 'left',
+    h2_underline:     !!site.h2_underline,
+    h2_rule:          !!site.h2_rule,
+    h2_rule_color:    site.h2_rule_color    || '',
+    h2_margin_top:    site.h2_margin_top    ?? 0,
+    h2_margin_bottom: site.h2_margin_bottom ?? 8,
+    h2_font:          site.h2_font          || '',
+    h3_size:          site.h3_size          || '21px',
+    h3_weight:        site.h3_weight        || '600',
+    h3_color:         site.h3_color         || '',
+    h3_align:         site.h3_align         || 'left',
+    h3_underline:     !!site.h3_underline,
+    h3_rule:          !!site.h3_rule,
+    h3_rule_color:    site.h3_rule_color    || '',
+    h3_margin_top:    site.h3_margin_top    ?? 0,
+    h3_margin_bottom: site.h3_margin_bottom ?? 6,
+    h3_font:          site.h3_font          || '',
+    h4_size:          site.h4_size          || '17px',
+    h4_weight:        site.h4_weight        || '600',
+    h4_color:         site.h4_color         || '',
+    h4_align:         site.h4_align         || 'left',
+    h4_underline:     !!site.h4_underline,
+    h4_rule:          !!site.h4_rule,
+    h4_rule_color:    site.h4_rule_color    || '',
+    h4_margin_top:    site.h4_margin_top    ?? 0,
+    h4_margin_bottom: site.h4_margin_bottom ?? 4,
+    h4_font:          site.h4_font          || '',
+    body_size:        site.body_size        || '16px',
+    body_line_height: site.body_line_height || '1.75',
+    body_color:       site.body_color       || '',
+    body_align:       site.body_align       || 'left',
+    body_underline:   !!site.body_underline,
+    body_margin_top:    site.body_margin_top    ?? 0,
+    body_margin_bottom: site.body_margin_bottom ?? 12,
+    body_font:          site.body_font          || '',
+    link_color:       site.link_color       || '',
+    link_underline:   site.link_underline !== false,
   });
 
   const set = (key, val) => setLocal(p => ({ ...p, [key]: val }));
+  const [designTab, setDesignTab] = useState('colors');
+
+  const paletteColors = [local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color, local.nav_text_color, local.footer_bg_color].filter(Boolean);
 
   const ColorRow = ({ label, field, hint }) => (
     <div className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
@@ -2392,15 +2881,7 @@ function DesignView({ site, onSave, saving }) {
         <span className="text-sm font-medium text-gray-700">{label}</span>
         {hint && <p className="text-xs text-gray-400 mt-0.5">{hint}</p>}
       </div>
-      <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-md border border-gray-200 shadow-sm" style={{ background: local[field] }} />
-        <input type="color" value={local[field]}
-          onChange={e => set(field, e.target.value)}
-          className="w-8 h-8 rounded-md cursor-pointer border border-gray-200 p-0.5" />
-        <input type="text" value={local[field]} maxLength={7}
-          onChange={e => set(field, e.target.value)}
-          className="w-20 border border-gray-200 rounded-lg px-2 py-1 text-xs font-mono" />
-      </div>
+      <InlineColorPicker value={local[field]} onChange={v => set(field, v)} paletteColors={paletteColors} />
     </div>
   );
 
@@ -2450,34 +2931,42 @@ function DesignView({ site, onSave, saving }) {
     const footerHeight = local.footer_height || 200;
     const bgW = local.footer_bg_width || '100%';
     const cW  = local.footer_content_width || '100%';
+    const PreviewCopyrightBar = () => (
+      <div style={{ maxWidth: cW, margin: '0 auto' }}>
+        {local.footer_html ? (
+          <div style={{ padding: '1rem', color: '#fff', fontSize: '0.82rem', lineHeight: 1.6 }}
+            dangerouslySetInnerHTML={{ __html: local.footer_html }} />
+        ) : (
+          <div style={{ padding: '1rem', color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', fontStyle: 'italic' }}>
+            No footer content — add some below.
+          </div>
+        )}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', padding: '0.5rem 1rem', background: 'rgba(0,0,0,0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.65)' }}>
+            {local.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
+          </span>
+          <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>Powered by Oatmeal Farm Network</span>
+        </div>
+      </div>
+    );
     return (
       <div style={{ borderRadius: 8, overflow: 'hidden', marginTop: '0.75rem', display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: local.font_family }}>
-        {/* Background band — only this carries the color, constrained to footer_bg_width */}
-        <div style={{ width: '100%', maxWidth: bgW, position: 'relative', background: local.footer_bg_color }}>
+        {/* Background band constrained to footer_bg_width */}
+        <div style={{ width: '100%', maxWidth: bgW, background: local.footer_bg_color }}>
           {hasBgImage ? (
-            <img src={local.footer_bg_image_url} alt="" style={{ width: '100%', display: 'block' }} />
+            /* Image case: image on top, copyright bar stacked below */
+            <>
+              <img src={local.footer_bg_image_url} alt="" style={{ width: '100%', display: 'block' }} />
+              <PreviewCopyrightBar />
+            </>
           ) : (
-            <div style={{ minHeight: footerHeight, background: local.footer_bg_color }} />
-          )}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-            {/* Inner content constrained to footer_content_width */}
-            <div style={{ maxWidth: cW, margin: '0 auto' }}>
-              {local.footer_html ? (
-                <div style={{ padding: '1rem', color: '#fff', fontSize: '0.82rem', lineHeight: 1.6 }}
-                  dangerouslySetInnerHTML={{ __html: local.footer_html }} />
-              ) : (
-                <div style={{ padding: '1rem', color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', fontStyle: 'italic' }}>
-                  No footer content — add some below.
-                </div>
-              )}
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', padding: '0.5rem 1rem', background: 'rgba(0,0,0,0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.65)' }}>
-                  {local.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
-                </span>
-                <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>Powered by Oatmeal Farm Network</span>
+            /* No image: solid color with copyright pinned to bottom */
+            <div style={{ position: 'relative', minHeight: footerHeight }}>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+                <PreviewCopyrightBar />
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     );
@@ -2485,373 +2974,484 @@ function DesignView({ site, onSave, saving }) {
 
   return (
     <div>
-      <h2 className="text-lg font-bold text-gray-900 mb-1">Design</h2>
-      <p className="text-sm text-gray-500 mb-5">Customize the look, colors, fonts, header, and footer of your website.</p>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-lg font-bold text-gray-900">Design</h2>
+        <button onClick={() => onSave(local)} disabled={saving}
+          className="regsubmit2 px-6 py-2 text-sm disabled:opacity-50">
+          {saving ? 'Saving…' : 'Save Design'}
+        </button>
+      </div>
+      <p className="text-sm text-gray-500 mb-4">Customize the look, colors, fonts, header, and footer of your website.</p>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
-        <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Color Palettes</h3>
-        <p className="text-xs text-gray-400 mb-4">Apply a preset palette — you can still fine-tune individual colors below.</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {TEMPLATES.map(t => {
-            const active = local.primary_color === t.primary_color && local.secondary_color === t.secondary_color;
-            return (
-              <button key={t.id}
-                onClick={() => setLocal(p => ({ ...p, primary_color: t.primary_color, secondary_color: t.secondary_color, accent_color: t.accent_color, bg_color: t.bg_color, text_color: t.text_color, nav_text_color: t.nav_text_color, footer_bg_color: t.footer_bg_color, font_family: t.font_family }))}
-                className={`rounded-xl border-2 overflow-hidden text-left transition-all ${active ? 'border-[#3D6B34] shadow-md ring-2 ring-[#3D6B34]/20' : 'border-gray-100 hover:border-gray-300'}`}>
-                <div className="flex h-7">{[t.primary_color, t.secondary_color, t.accent_color, t.bg_color].map((c, i) => <div key={i} className="flex-1" style={{ background: c }} />)}</div>
-                <div className="px-2 py-1" style={{ background: t.primary_color }}><span className="text-xs font-bold truncate block" style={{ color: t.nav_text_color, fontFamily: t.font_family }}>{t.name}</span></div>
-                <div className="px-2 py-1" style={{ background: t.bg_color }}><span className="text-xs truncate block" style={{ color: t.text_color, fontFamily: t.font_family }}>Sample text</span></div>
-              </button>
-            );
-          })}
-        </div>
+      {/* ── Tab bar ── */}
+      <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1">
+        {[['colors','Colors & Widths'],['typography','Typography'],['header','Header & Footer']].map(([id, label]) => (
+          <button key={id} onClick={() => setDesignTab(id)}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors
+              ${designTab === id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* ── Width Controls ── */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
-        <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Content Widths</h3>
-        <p className="text-xs text-gray-400 mb-4">Control how wide the background band and inner content are for each zone. All zones are centered on the page.</p>
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* ── Controls column ── */}
-          <div className="flex flex-col gap-4 flex-1">
-            <div className="border-l-4 pl-3" style={{ borderColor: local.primary_color }}>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Header</p>
-              <WidthControl
-                label="Header Background Width"
-                hint="How wide the header color/image band spans."
-                value={local.header_bg_width}
-                onChange={v => set('header_bg_width', v)}
-              />
-              <WidthControl
-                label="Header Content Width"
-                hint="Width of the logo, site name, and nav bar within the header band."
-                value={local.header_content_width}
-                onChange={v => set('header_content_width', v)}
-              />
+      {/* ══ COLORS TAB ══ */}
+      {designTab === 'colors' && (
+        <div>
+          {/* Colors: palettes + page colors */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Colors</h3>
+            <p className="text-xs text-gray-400 mb-4">Apply a preset palette or fine-tune individual colors by clicking any swatch.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-5">
+              {TEMPLATES.map(t => {
+                const active = local.primary_color === t.primary_color && local.secondary_color === t.secondary_color;
+                return (
+                  <button key={t.id}
+                    onClick={() => setLocal(p => ({ ...p, primary_color: t.primary_color, secondary_color: t.secondary_color, accent_color: t.accent_color, bg_color: t.bg_color, text_color: t.text_color, nav_text_color: t.nav_text_color, footer_bg_color: t.footer_bg_color, font_family: t.font_family }))}
+                    className={`rounded-xl border-2 overflow-hidden text-left transition-all ${active ? 'border-[#3D6B34] shadow-md ring-2 ring-[#3D6B34]/20' : 'border-gray-100 hover:border-gray-300'}`}>
+                    <div className="flex h-7">{[t.primary_color, t.secondary_color, t.accent_color, t.bg_color].map((c, i) => <div key={i} className="flex-1" style={{ background: c }} />)}</div>
+                    <div className="px-2 py-1" style={{ background: t.primary_color }}><span className="text-xs font-bold truncate block" style={{ color: t.nav_text_color, fontFamily: t.font_family }}>{t.name}</span></div>
+                    <div className="px-2 py-1" style={{ background: t.bg_color }}><span className="text-xs truncate block" style={{ color: t.text_color, fontFamily: t.font_family }}>Sample text</span></div>
+                  </button>
+                );
+              })}
             </div>
-            <div className="border-l-4 pl-3" style={{ borderColor: local.secondary_color }}>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Body</p>
-              <WidthControl
-                label="Body Background Width"
-                hint="Width of the color band behind each content block."
-                value={local.body_bg_width}
-                onChange={v => set('body_bg_width', v)}
-              />
-              <WidthControl
-                label="Body Text Width"
-                hint="Width of the text/content inside each block (must be ≤ background width)."
-                value={local.body_content_width}
-                onChange={v => set('body_content_width', v)}
-              />
-            </div>
-            <div className="border-l-4 pl-3" style={{ borderColor: local.footer_bg_color }}>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Footer</p>
-              <WidthControl
-                label="Footer Background Width"
-                hint="How wide the footer color/image band spans."
-                value={local.footer_bg_width}
-                onChange={v => set('footer_bg_width', v)}
-              />
-              <WidthControl
-                label="Footer Content Width"
-                hint="Width of the footer text and copyright bar within the footer band."
-                value={local.footer_content_width}
-                onChange={v => set('footer_content_width', v)}
-              />
-            </div>
-          </div>
-
-          {/* ── Live diagram column ── */}
-          <div className="flex-1 min-w-0 lg:min-w-72">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Live Preview</p>
-            <WidthDiagram local={local} />
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-        {/* ── Top Bar ── */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
-          <div className="flex items-center justify-between pb-2 border-b border-gray-100 mb-3">
-            <div>
-              <h3 className="font-bold text-gray-800">Top Bar</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Optional strip above the header — great for contact info or announcements.</p>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={!!local.top_bar_enabled} onChange={e => set('top_bar_enabled', e.target.checked)}
-                className="w-4 h-4 accent-green-600" />
-              <span className="text-sm font-medium text-gray-700">Enabled</span>
-            </label>
-          </div>
-          {local.top_bar_enabled && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                <TopBarEditor
-                  value={local.top_bar_html}
-                  onChange={v => set('top_bar_html', v)}
-                  bgColor={local.top_bar_bg_color}
-                  paletteColors={[
-                    local.primary_color, local.secondary_color, local.accent_color,
-                    local.bg_color, local.text_color, local.nav_text_color, local.footer_bg_color,
-                    local.top_bar_bg_color, local.top_bar_text_color,
-                  ].filter(Boolean)}
-                />
-                <p className="text-xs text-gray-400 mt-1">Highlight text to apply formatting. Use 🔗 to insert a link or email address.</p>
+            <div className="border-t border-gray-100 pt-4">
+              <p className="text-xs font-semibold text-gray-500 mb-3">Page Colors</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: 'Secondary / Accent', field: 'secondary_color', hint: 'Hover states and accents' },
+                  { label: 'Button / Highlight', field: 'accent_color',    hint: 'CTA buttons and highlights' },
+                  { label: 'Section Background', field: 'bg_color',        hint: 'Content sections and cards' },
+                  { label: 'Body Text',          field: 'text_color',      hint: 'Main text color' },
+                ].map(({ label, field, hint }) => (
+                  <div key={field} className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-gray-700 leading-tight">{label}</span>
+                    <span className="text-[10px] text-gray-400 leading-tight">{hint}</span>
+                    <InlineColorPicker value={local[field]} onChange={v => set(field, v)} paletteColors={paletteColors} />
+                  </div>
+                ))}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
-                <div className="flex items-center gap-2">
-                  <input type="color" value={local.top_bar_bg_color} onChange={e => set('top_bar_bg_color', e.target.value)}
-                    className="w-8 h-8 rounded cursor-pointer border border-gray-200" />
-                  <input type="text" value={local.top_bar_bg_color} maxLength={7} onChange={e => set('top_bar_bg_color', e.target.value)}
-                    className="w-24 border border-gray-200 rounded px-2 py-1 text-xs font-mono" />
+            </div>
+          </div>
+
+          {/* Content Widths */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Content Widths</h3>
+            <p className="text-xs text-gray-400 mb-4">Control how wide the background band and inner content are for each zone. All zones are centered on the page.</p>
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="flex flex-col gap-4 flex-1">
+                <div className="border-l-4 pl-3" style={{ borderColor: local.primary_color }}>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">Header</p>
+                  <WidthControl label="Header Background Width" hint="How wide the header color/image band spans." value={local.header_bg_width} onChange={v => set('header_bg_width', v)} />
+                  <WidthControl label="Header Content Width" hint="Width of the logo, site name, and nav bar within the header band." value={local.header_content_width} onChange={v => set('header_content_width', v)} />
+                </div>
+                <div className="border-l-4 pl-3" style={{ borderColor: local.secondary_color }}>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">Body</p>
+                  <WidthControl label="Body Background Width" hint="Width of the color band behind each content block." value={local.body_bg_width} onChange={v => set('body_bg_width', v)} />
+                  <WidthControl label="Body Text Width" hint="Width of the text/content inside each block (must be ≤ background width)." value={local.body_content_width} onChange={v => set('body_content_width', v)} />
+                </div>
+                <div className="border-l-4 pl-3" style={{ borderColor: local.footer_bg_color }}>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">Footer</p>
+                  <WidthControl label="Footer Background Width" hint="How wide the footer color/image band spans." value={local.footer_bg_width} onChange={v => set('footer_bg_width', v)} />
+                  <WidthControl label="Footer Content Width" hint="Width of the footer text and copyright bar within the footer band." value={local.footer_content_width} onChange={v => set('footer_content_width', v)} />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
-                <div className="flex items-center gap-2">
-                  <input type="color" value={local.top_bar_text_color} onChange={e => set('top_bar_text_color', e.target.value)}
-                    className="w-8 h-8 rounded cursor-pointer border border-gray-200" />
-                  <input type="text" value={local.top_bar_text_color} maxLength={7} onChange={e => set('top_bar_text_color', e.target.value)}
-                    className="w-24 border border-gray-200 rounded px-2 py-1 text-xs font-mono" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Alignment</label>
-                <div className="flex gap-2">
-                  {[['left','Left'],['center','Center'],['right','Right']].map(([v,l]) => (
-                    <button key={v} onClick={() => set('top_bar_align', v)}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors
-                        ${local.top_bar_align === v ? 'bg-[#3D6B34] text-white border-[#3D6B34]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
-                      {l}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex-1 min-w-0 lg:min-w-72">
+                <p className="text-xs font-semibold text-gray-500 mb-2">Live Preview</p>
+                <WidthDiagram local={local} />
               </div>
             </div>
-          )}
-        </div>
-
-        {/* ── Header Banner ── */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Header Banner</h3>
-          <p className="text-xs text-gray-400 mb-3">Large image area above the navigation — contains your logo and site name.</p>
-          <div className="mb-3">
-            <ImageUploadField
-              label="Banner Image"
-              value={local.header_banner_url}
-              onChange={url => set('header_banner_url', url)}
-              hint="Displays behind your logo and site name. Recommended: wide landscape image (1200×200px or larger)."
-            />
           </div>
-          <FormField label="Banner Height (px)">
-            <div className="flex items-center gap-3">
-              <input type="range" min={60} max={400} value={local.header_height || 120}
-                onChange={e => set('header_height', Number(e.target.value))}
-                className="flex-1 accent-green-600" />
-              <span className="text-sm font-mono text-gray-600 w-12">{local.header_height || 120}px</span>
-            </div>
-          </FormField>
-          <div className="mt-3">
-            <ImageUploadField
-              label="Logo"
-              value={local.logo_url}
-              onChange={url => set('logo_url', url)}
-              hint="Appears in the banner. Recommended: PNG with transparent background."
-            />
-          </div>
-          <ColorRow label="Site Name / Logo Text Color" field="nav_text_color" hint="Color of the site name displayed in the banner" />
-          <div className="flex items-center justify-between py-3 border-t border-gray-50 mt-1">
-            <div>
-              <span className="text-sm font-medium text-gray-700">Show Site Name</span>
-              <p className="text-xs text-gray-400 mt-0.5">Hide if your logo already contains your site name</p>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={local.show_site_name !== false}
-                onChange={e => set('show_site_name', e.target.checked)}
-                className="w-4 h-4 accent-green-600" />
-              <span className="text-sm text-gray-600">{local.show_site_name !== false ? 'Visible' : 'Hidden'}</span>
-            </label>
-          </div>
-        </div>
 
-        {/* ── Navigation Bar ── */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Navigation Bar</h3>
-          <p className="text-xs text-gray-400 mb-3">The bar containing your site's navigation links.</p>
-          <div className="mb-3">
-            <ImageUploadField
-              label="Nav Bar Background Image"
-              value={local.nav_bg_image_url}
-              onChange={url => set('nav_bg_image_url', url)}
-              hint="Optional texture or image behind the nav links. Leave blank to use the solid color below."
-            />
-          </div>
-          <ColorRow label="Nav Background Color" field="primary_color" hint="Solid color — used when no background image is set, or as overlay" />
-          <ColorRow label="Nav Link Color" field="nav_text_color" hint="Color of the navigation links" />
-          <p className="text-xs text-gray-400 mt-3">Live preview below shows top bar + banner + nav together.</p>
-          <HeaderPreview />
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
-          <HeaderImagesManager websiteId={site.website_id} />
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
-          <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Footer</h3>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-3">
-            {/* Left: background */}
-            <div>
-              <div className="mb-3">
-                <ImageUploadField
-                  label="Background Image"
-                  value={local.footer_bg_image_url}
-                  onChange={url => set('footer_bg_image_url', url)}
-                  hint="Optional texture or image. Leave blank to use the solid color."
-                />
-              </div>
-              <ColorRow label="Background Color" field="footer_bg_color" hint="Used when no background image is set" />
-              <div className="mt-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Footer Height (px)</label>
-                <div className="flex items-center gap-3">
-                  <input type="range" min={80} max={600} value={local.footer_height || 200}
-                    onChange={e => set('footer_height', Number(e.target.value))}
-                    className="flex-1 accent-green-600" />
-                  <span className="text-sm font-mono text-gray-600 w-12">{local.footer_height || 200}px</span>
-                </div>
+          {/* Page Background */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Page Background</h3>
+            <p className="text-xs text-gray-400 mb-4">Sets the background behind all page content. An image overrides the color or gradient.</p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Background Type</label>
+              <div className="flex gap-2">
+                {[['none','None'],['solid','Solid Color'],['gradient','Vertical Gradient']].map(([mode, label]) => (
+                  <button key={mode} onClick={() => {
+                    if (mode === 'none') setLocal(p => ({ ...p, bg_mode: 'none', bg_gradient: '', bg_color: '#FFFFFF' }));
+                    else if (mode === 'solid') setLocal(p => ({ ...p, bg_mode: 'solid', bg_gradient: '' }));
+                    else { const c1 = local.bg_gradient_color1 || '#e8f5e9'; const c2 = local.bg_gradient_color2 || '#ffffff'; setLocal(p => ({ ...p, bg_mode: 'gradient', bg_gradient: `linear-gradient(to bottom, ${c1}, ${c2})` })); }
+                  }}
+                    className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors ${local.bg_mode === mode ? 'bg-[#3D6B34] text-white border-[#3D6B34]' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}>
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
-
-            {/* Right: copyright */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Copyright Text</label>
-              <p className="text-xs text-gray-400 mb-2">Always displayed in the lower-left corner of the footer.</p>
-              <input
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
-                placeholder={`© ${new Date().getFullYear()} ${site.site_name} · All rights reserved`}
-                value={local.copyright_text}
-                onChange={e => set('copyright_text', e.target.value)}
-              />
-              <p className="text-xs text-gray-400 mt-1">Leave blank to use the default copyright line.</p>
-            </div>
-          </div>
-
-          {/* Footer body content editor */}
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">Footer Content</label>
-                <p className="text-xs text-gray-400 mt-0.5">Displayed above the copyright bar. Clear all text to remove.</p>
+            {local.bg_mode === 'solid' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                <InlineColorPicker value={local.bg_color} onChange={v => set('bg_color', v)} paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color].filter(Boolean)} />
+                <div className="mt-3 h-10 rounded-lg border border-gray-200" style={{ background: local.bg_color }} />
               </div>
-              {local.footer_html && (
-                <button
-                  onClick={() => set('footer_html', '')}
-                  className="text-xs text-red-500 border border-red-200 rounded-lg px-3 py-1 hover:bg-red-50 transition-colors"
-                >
-                  Remove Content
-                </button>
-              )}
-            </div>
-            <TopBarEditor
-              value={local.footer_html}
-              onChange={v => set('footer_html', v)}
-              bgColor={local.footer_bg_image_url ? undefined : local.footer_bg_color}
-              paletteColors={[
-                local.primary_color, local.secondary_color, local.accent_color,
-                local.bg_color, local.text_color, local.nav_text_color, local.footer_bg_color,
-              ].filter(Boolean)}
-            />
-          </div>
-
-          <div className="mt-4">
-            <p className="text-xs text-gray-400 mb-2 font-medium">Preview</p>
-            <FooterPreview />
-          </div>
-
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Page Colors</h3>
-          <ColorRow label="Secondary / Accent"  field="secondary_color" hint="Used for hover states and accents" />
-          <ColorRow label="Button / Highlight"  field="accent_color"    hint="CTA buttons and highlights" />
-          <ColorRow label="Page Background"     field="bg_color"        hint="Solid background color — used when no image or gradient is set" />
-          <ColorRow label="Body Text"           field="text_color"      hint="Main text color" />
-        </div>
-
-        {/* ── Page Background Image / Gradient ── */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Page Background</h3>
-          <p className="text-xs text-gray-400 mb-3">Set a background image or gradient behind your page content. Overrides the solid color above.</p>
-          <div className="mb-3">
-            <ImageUploadField
-              label="Background Image"
-              value={local.bg_image_url}
-              onChange={url => set('bg_image_url', url)}
-              hint="Tiled or stretched behind all page content. Leave blank to use solid color or gradient."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Gradient</label>
-            <p className="text-xs text-gray-400 mb-2">CSS gradient — leave blank if using a solid color or image. Example: <code className="bg-gray-100 px-1 rounded">linear-gradient(135deg, #f5f7fa, #c3cfe2)</code></p>
-            <input
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-300"
-              placeholder="linear-gradient(135deg, #fdf6e3, #e8d5b7)"
-              value={local.bg_gradient}
-              onChange={e => set('bg_gradient', e.target.value)}
-            />
-            {local.bg_gradient && (
-              <div className="mt-2 h-12 rounded-lg border border-gray-200" style={{ background: local.bg_gradient }} />
             )}
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {[
-                ['Warm Sand', 'linear-gradient(135deg, #fdf6e3, #e8d5b7)'],
-                ['Soft Sky', 'linear-gradient(135deg, #e0f2fe, #bae6fd)'],
-                ['Meadow', 'linear-gradient(135deg, #f0fdf4, #bbf7d0)'],
-                ['Sunset', 'linear-gradient(135deg, #fff7ed, #fed7aa)'],
-                ['Slate', 'linear-gradient(135deg, #f8fafc, #e2e8f0)'],
-                ['Lavender', 'linear-gradient(135deg, #faf5ff, #e9d5ff)'],
-              ].map(([name, val]) => (
-                <button key={name} onClick={() => set('bg_gradient', val)}
-                  className="px-2 py-1 rounded text-xs border border-gray-200 hover:border-gray-400 transition-colors"
-                  style={{ background: val }}>
-                  {name}
-                </button>
-              ))}
-              {local.bg_gradient && (
-                <button onClick={() => set('bg_gradient', '')}
-                  className="px-2 py-1 rounded text-xs border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
-                  Clear
-                </button>
-              )}
+            {local.bg_mode === 'gradient' && (
+              <div className="mb-4">
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Top Color</label>
+                    <InlineColorPicker value={local.bg_gradient_color1} onChange={v => { const c2 = local.bg_gradient_color2 || '#ffffff'; setLocal(p => ({ ...p, bg_gradient_color1: v, bg_gradient: `linear-gradient(to bottom, ${v}, ${c2})` })); }} paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color].filter(Boolean)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Bottom Color</label>
+                    <InlineColorPicker value={local.bg_gradient_color2} onChange={v => { const c1 = local.bg_gradient_color1 || '#e8f5e9'; setLocal(p => ({ ...p, bg_gradient_color2: v, bg_gradient: `linear-gradient(to bottom, ${c1}, ${v})` })); }} paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color].filter(Boolean)} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <p className="text-xs text-gray-400 mb-2">Presets</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[['Warm Sand','#fdf6e3','#e8d5b7'],['Soft Sky','#e0f2fe','#bae6fd'],['Meadow','#f0fdf4','#bbf7d0'],['Sunset','#fff7ed','#fed7aa'],['Slate','#f8fafc','#e2e8f0'],['Lavender','#faf5ff','#e9d5ff']].map(([name,c1,c2]) => (
+                      <button key={name} onClick={() => setLocal(p => ({ ...p, bg_gradient_color1: c1, bg_gradient_color2: c2, bg_gradient: `linear-gradient(to bottom, ${c1}, ${c2})` }))}
+                        className="px-2.5 py-1.5 rounded-lg text-xs border border-gray-200 hover:border-gray-400 transition-colors font-medium" style={{ background: `linear-gradient(to bottom, ${c1}, ${c2})` }}>
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {local.bg_gradient && <div className="mt-3 h-14 rounded-lg border border-gray-200" style={{ background: local.bg_gradient }} />}
+              </div>
+            )}
+            <div className={local.bg_mode !== 'none' ? 'mt-2 pt-4 border-t border-gray-100' : ''}>
+              <ImageUploadField label="Background Image" value={local.bg_image_url} onChange={url => set('bg_image_url', url)} hint="Overrides the color or gradient above. Leave blank to use the color/gradient setting." />
             </div>
           </div>
         </div>
+      )}
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 className="font-bold text-gray-800 mb-3 pb-2 border-b border-gray-100">Font</h3>
-          <select className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm"
-            value={local.font_family} onChange={e => setLocal(p => ({ ...p, font_family: e.target.value }))}>
-            {FONTS.map(f => <option key={f} value={f} style={{ fontFamily: f }}>{f.split(',')[0]}</option>)}
-          </select>
-          <div className="mt-3 p-4 rounded-lg border border-gray-100" style={{ background: local.bg_color }}>
-            <p style={{ fontFamily: local.font_family, color: local.text_color, fontWeight: 700, fontSize: '1rem', margin: 0 }}>The quick brown fox</p>
-            <p style={{ fontFamily: local.font_family, color: local.text_color, fontSize: '0.85rem', marginTop: 4, opacity: 0.7 }}>Jumps over the lazy dog. 0123456789</p>
+      {/* ══ TYPOGRAPHY TAB ══ */}
+      {designTab === 'typography' && (
+        <div>
+          {/* Base font */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Base Font</h3>
+            <p className="text-xs text-gray-400 mb-3">The default font used across the entire site. Individual heading levels can override this below.</p>
+            <FontPickerDropdown
+              value={local.font_family}
+              onChange={v => set('font_family', v)}
+              dark={false}
+            />
+            <div className="mt-3 p-4 rounded-lg border border-gray-100 grid grid-cols-2 gap-4" style={{ background: local.bg_color, fontFamily: local.font_family }}>
+              <div>
+                <p style={{ color: local.text_color, fontWeight: 800, fontSize: '1.5rem', margin: '0 0 2px 0', lineHeight: 1.2 }}>Heading</p>
+                <p style={{ color: local.text_color, fontSize: '0.9rem', margin: 0, opacity: 0.75, lineHeight: 1.6 }}>Body paragraph text. The quick brown fox jumps over the lazy dog.</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ color: local.text_color, fontWeight: 600, fontSize: '1rem', margin: '0 0 2px 0' }}>Subheading</p>
+                <p style={{ color: local.link_color || local.accent_color, fontSize: '0.9rem', margin: 0, textDecoration: local.link_underline !== false ? 'underline' : 'none' }}>Link example</p>
+                <p style={{ color: local.text_color, fontSize: '0.75rem', margin: '4px 0 0 0', opacity: 0.5 }}>0 1 2 3 4 5 6 7 8 9</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Type scale */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Type Scale</h3>
+            <p className="text-xs text-gray-400 mb-4">Set size, weight, and color for each heading and text level. Click a color swatch to change it.</p>
+
+            {[
+              { key: 'h1',   label: 'H1',        sample: 'Page Title',           defaultSize: '40px', defaultWeight: '800', hasRule: true },
+              { key: 'h2',   label: 'H2',        sample: 'Section Heading',      defaultSize: '29px', defaultWeight: '700', hasRule: true },
+              { key: 'h3',   label: 'H3',        sample: 'Sub Heading',          defaultSize: '21px', defaultWeight: '600', hasRule: true },
+              { key: 'h4',   label: 'H4 / Lead', sample: 'Card Title',           defaultSize: '17px', defaultWeight: '600', hasRule: true },
+              { key: 'body', label: 'Body',       sample: 'Paragraph body text — the main content of your pages.', defaultSize: '16px', defaultWeight: '400', hasRule: false },
+            ].map(({ key, label, sample, defaultSize, defaultWeight, hasRule }) => {
+              const sizeKey        = `${key}_size`;
+              const weightKey      = `${key}_weight`;
+              const colorKey       = `${key}_color`;
+              const alignKey       = `${key}_align`;
+              const underlineKey   = `${key}_underline`;
+              const ruleKey        = `${key}_rule`;
+              const ruleColorKey   = `${key}_rule_color`;
+              const marginTopKey   = `${key}_margin_top`;
+              const marginBotKey   = `${key}_margin_bottom`;
+              const fontKey        = `${key}_font`;
+              const color     = local[colorKey] || local.text_color || '#111827';
+              const align     = local[alignKey] || 'left';
+              const ruleColor = local[ruleColorKey] || local.text_color || '#111827';
+              const ALIGN_LABELS = { left: 'Left', center: 'Center', right: 'Right', justify: 'Justify' };
+              return (
+                <div key={key} className="py-3 border-b border-gray-50 last:border-0">
+                  {/* Row 1: Level | Preview | Size | Weight | Color */}
+                  <div className="grid items-center gap-2 mb-2" style={{ gridTemplateColumns: '64px 1fr 80px 110px auto' }}>
+                    <span className="text-xs font-bold text-gray-500">{label}</span>
+                    <div className="min-w-0 overflow-hidden">
+                      <p className="truncate m-0" style={{
+                        fontFamily: local[fontKey] || local.font_family,
+                        fontSize: local[sizeKey] || defaultSize,
+                        fontWeight: local[weightKey] || defaultWeight,
+                        color,
+                        lineHeight: 1.3,
+                        textAlign: align,
+                        textDecoration: local[underlineKey] ? 'underline' : 'none',
+                        borderBottom: hasRule && local[ruleKey] ? `2px solid ${ruleColor}` : 'none',
+                        paddingBottom: hasRule && local[ruleKey] ? 4 : 0,
+                        display: 'inline-block',
+                        width: '100%',
+                      }}>
+                        {sample}
+                      </p>
+                    </div>
+                    {/* Size: single dropdown showing current value */}
+                    <select
+                      value={local[sizeKey] || defaultSize}
+                      onChange={e => set(sizeKey, e.target.value)}
+                      className="border border-gray-200 rounded-lg px-1 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-300 w-full"
+                    >
+                      {!['8px','9px','10px','11px','12px','13px','14px','15px','16px','17px','18px','20px','22px','24px'].includes(local[sizeKey] || defaultSize) && (
+                        <option value={local[sizeKey] || defaultSize}>{local[sizeKey] || defaultSize}</option>
+                      )}
+                      {['8px','9px','10px','11px','12px','13px','14px','15px','16px','17px','18px','20px','22px','24px'].map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <select value={local[weightKey] || defaultWeight} onChange={e => set(weightKey, e.target.value)}
+                      className="border border-gray-200 rounded-lg px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-300">
+                      <option value="400">Normal (400)</option>
+                      <option value="500">Medium (500)</option>
+                      <option value="600">Semibold (600)</option>
+                      <option value="700">Bold (700)</option>
+                      <option value="800">Extra Bold (800)</option>
+                    </select>
+                    <InlineColorPicker value={color} onChange={v => set(colorKey, v)} paletteColors={paletteColors} popupAlign="right" />
+                  </div>
+                  {/* Row 2: Align | Underline | Rule (headings only) */}
+                  <div className="flex items-center gap-3 pl-16 flex-wrap">
+                    <div className="flex gap-1">
+                      {['left','center','right','justify'].map(a => (
+                        <button key={a} onClick={() => set(alignKey, a)} title={ALIGN_LABELS[a]}
+                          className={`w-7 h-7 rounded text-xs flex items-center justify-center border transition-colors ${align === a ? 'bg-blue-50 border-blue-400 text-blue-600' : 'border-gray-200 text-gray-400 hover:border-gray-400'}`}>
+                          {a === 'left' ? '▤' : a === 'center' ? '▥' : a === 'right' ? '▦' : '▪'}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="w-px h-5 bg-gray-200" />
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                      <input type="checkbox" checked={!!local[underlineKey]} onChange={e => set(underlineKey, e.target.checked)} className="w-3.5 h-3.5 accent-blue-500" />
+                      <span className="text-xs text-gray-500" style={{ textDecoration: 'underline' }}>Underline</span>
+                    </label>
+                    {hasRule && (
+                      <>
+                        <div className="w-px h-5 bg-gray-200" />
+                        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                          <input type="checkbox" checked={!!local[ruleKey]} onChange={e => set(ruleKey, e.target.checked)} className="w-3.5 h-3.5 accent-blue-500" />
+                          <span className="text-xs text-gray-500">Rule</span>
+                        </label>
+                        {local[ruleKey] && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-gray-400">Color</span>
+                            <InlineColorPicker value={ruleColor} onChange={v => set(ruleColorKey, v)} paletteColors={paletteColors} popupAlign="right" />
+                          </div>
+                        )}
+                      </>
+                    )}
+                    <div className="w-px h-5 bg-gray-200" />
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-gray-400">Margin</span>
+                      <span className="text-xs text-gray-400">↑</span>
+                      <input type="number" min="0" max="200" value={local[marginTopKey] ?? 0}
+                        onChange={e => set(marginTopKey, Number(e.target.value))}
+                        className="w-12 border border-gray-200 rounded px-1 py-0.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-green-300" />
+                      <span className="text-xs text-gray-400">↓</span>
+                      <input type="number" min="0" max="200" value={local[marginBotKey] ?? 0}
+                        onChange={e => set(marginBotKey, Number(e.target.value))}
+                        className="w-12 border border-gray-200 rounded px-1 py-0.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-green-300" />
+                      <span className="text-xs text-gray-400">px</span>
+                    </div>
+                    <div className="w-px h-5 bg-gray-200" />
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-gray-400">Font</span>
+                      <FontPickerDropdown
+                        value={local[fontKey] || ''}
+                        onChange={v => set(fontKey, v)}
+                        globalFont={local.font_family}
+                        dark={false}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Body line height row */}
+            <div className="flex items-center gap-3 pt-3 border-t border-gray-100 mt-1">
+              <span className="text-xs font-bold text-gray-500 w-16 shrink-0">Body Line Height</span>
+              <input type="text" value={local.body_line_height || '1.75'} onChange={e => set('body_line_height', e.target.value)}
+                className="w-20 border border-gray-200 rounded-lg px-2 py-1 text-xs font-mono text-center focus:outline-none focus:ring-1 focus:ring-green-300" />
+              <span className="text-xs text-gray-400">e.g. 1.5, 1.75, 2 — controls spacing between body text lines</span>
+            </div>
+          </div>
+
+          {/* Links */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Links</h3>
+            <p className="text-xs text-gray-400 mb-4">Style for hyperlinks within body content.</p>
+            <div className="flex items-center gap-4">
+              <div className="flex-1 p-3 rounded-lg border border-gray-100" style={{ background: local.bg_color }}>
+                <span style={{
+                  fontFamily: local.font_family,
+                  fontSize: local.body_size || '1rem',
+                  color: local.link_color || local.accent_color || '#FFC567',
+                  textDecoration: local.link_underline !== false ? 'underline' : 'none',
+                }}>
+                  Click here to learn more
+                </span>
+              </div>
+              <div className="flex flex-col gap-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-gray-600 w-12">Color</label>
+                  <InlineColorPicker value={local.link_color || local.accent_color || '#FFC567'} onChange={v => set('link_color', v)} paletteColors={paletteColors} />
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={local.link_underline !== false} onChange={e => set('link_underline', e.target.checked)} className="w-4 h-4 accent-green-600" />
+                  <span className="text-xs font-medium text-gray-600" style={{ textDecoration: 'underline' }}>Underline links</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="mt-5 rounded-xl overflow-hidden border border-gray-100 shadow-sm">
-        <div className="h-10 flex">
-          {[local.primary_color, local.footer_bg_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color].map((c, i) => (
-            <div key={i} className="flex-1" style={{ background: c }} title={c} />
-          ))}
+      {/* ══ HEADER TAB ══ */}
+      {designTab === 'header' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Top Bar */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100 mb-3">
+              <div>
+                <h3 className="font-bold text-gray-800">Top Bar</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Optional strip above the header — great for contact info or announcements.</p>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={!!local.top_bar_enabled} onChange={e => set('top_bar_enabled', e.target.checked)} className="w-4 h-4 accent-green-600" />
+                <span className="text-sm font-medium text-gray-700">Enabled</span>
+              </label>
+            </div>
+            {local.top_bar_enabled && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                  <TopBarEditor value={local.top_bar_html} onChange={v => set('top_bar_html', v)} bgColor={local.top_bar_bg_color}
+                    paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color, local.nav_text_color, local.footer_bg_color, local.top_bar_bg_color, local.top_bar_text_color].filter(Boolean)} />
+                  <p className="text-xs text-gray-400 mt-1">Highlight text to apply formatting. Use 🔗 to insert a link or email address.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
+                  <InlineColorPicker value={local.top_bar_bg_color} onChange={v => set('top_bar_bg_color', v)} paletteColors={paletteColors} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
+                  <InlineColorPicker value={local.top_bar_text_color} onChange={v => set('top_bar_text_color', v)} paletteColors={paletteColors} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Alignment</label>
+                  <div className="flex gap-2">
+                    {[['left','Left'],['center','Center'],['right','Right']].map(([v,l]) => (
+                      <button key={v} onClick={() => set('top_bar_align', v)}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${local.top_bar_align === v ? 'bg-[#3D6B34] text-white border-[#3D6B34]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Header Banner */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Header Banner</h3>
+            <p className="text-xs text-gray-400 mb-3">Large image area above the navigation — contains your logo and site name.</p>
+            <HeaderImagesManager websiteId={site.website_id} hideTitle />
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <FormField label="Banner Height (px)">
+                <div className="flex items-center gap-3">
+                  <input type="range" min={60} max={400} value={local.header_height || 120} onChange={e => set('header_height', Number(e.target.value))} className="flex-1 accent-green-600" />
+                  <span className="text-sm font-mono text-gray-600 w-12">{local.header_height || 120}px</span>
+                </div>
+              </FormField>
+              <div className="mt-3">
+                <ImageUploadField label="Logo" value={local.logo_url} onChange={url => set('logo_url', url)} hint="Appears in the banner. Recommended: PNG with transparent background." />
+              </div>
+              <ColorRow label="Site Name / Logo Text Color" field="nav_text_color" hint="Color of the site name displayed in the banner" />
+              <div className="flex items-center justify-between py-3 border-t border-gray-50 mt-1">
+                <div>
+                  <span className="text-sm font-medium text-gray-700">Show Site Name</span>
+                  <p className="text-xs text-gray-400 mt-0.5">Hide if your logo already contains your site name</p>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={local.show_site_name !== false} onChange={e => set('show_site_name', e.target.checked)} className="w-4 h-4 accent-green-600" />
+                  <span className="text-sm text-gray-600">{local.show_site_name !== false ? 'Visible' : 'Hidden'}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation Bar */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Navigation Bar</h3>
+            <p className="text-xs text-gray-400 mb-3">The bar containing your site's navigation links.</p>
+            <div className="mb-3">
+              <ImageUploadField label="Nav Bar Background Image" value={local.nav_bg_image_url} onChange={url => set('nav_bg_image_url', url)} hint="Optional texture or image behind the nav links. Leave blank to use the solid color below." />
+            </div>
+            <ColorRow label="Nav Background Color" field="primary_color" hint="Solid color — used when no background image is set, or as overlay" />
+            <ColorRow label="Nav Link Color" field="nav_text_color" hint="Color of the navigation links" />
+            <p className="text-xs text-gray-400 mt-3">Live preview below shows top bar + banner + nav together.</p>
+            <HeaderPreview />
+          </div>
+
+          {/* ── Footer ── */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Footer</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-3">
+              <div>
+                <div className="mb-3">
+                  <ImageUploadField label="Background Image" value={local.footer_bg_image_url} onChange={url => set('footer_bg_image_url', url)} hint="Optional texture or image. Leave blank to use the solid color." />
+                </div>
+                <ColorRow label="Background Color" field="footer_bg_color" hint="Used when no background image is set" />
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Footer Height (px)</label>
+                  <div className="flex items-center gap-3">
+                    <input type="range" min={80} max={600} value={local.footer_height || 200} onChange={e => set('footer_height', Number(e.target.value))} className="flex-1 accent-green-600" />
+                    <span className="text-sm font-mono text-gray-600 w-12">{local.footer_height || 200}px</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Copyright Text</label>
+                <p className="text-xs text-gray-400 mb-2">Always displayed in the lower-left corner of the footer.</p>
+                <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
+                  placeholder={`© ${new Date().getFullYear()} ${site.site_name} · All rights reserved`}
+                  value={local.copyright_text} onChange={e => set('copyright_text', e.target.value)} />
+                <p className="text-xs text-gray-400 mt-1">Leave blank to use the default copyright line.</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700">Footer Content</label>
+                  <p className="text-xs text-gray-400 mt-0.5">Displayed above the copyright bar. Clear all text to remove.</p>
+                </div>
+                {local.footer_html && (
+                  <button onClick={() => set('footer_html', '')} className="text-xs text-red-500 border border-red-200 rounded-lg px-3 py-1 hover:bg-red-50 transition-colors">
+                    Remove Content
+                  </button>
+                )}
+              </div>
+              <TopBarEditor value={local.footer_html} onChange={v => set('footer_html', v)}
+                bgColor={local.footer_bg_image_url ? undefined : local.footer_bg_color}
+                paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color, local.nav_text_color, local.footer_bg_color].filter(Boolean)} />
+            </div>
+            <div className="mt-4">
+              <p className="text-xs text-gray-400 mb-2 font-medium">Preview</p>
+              <FooterPreview />
+            </div>
+          </div>
         </div>
-        <div className="px-4 py-2 bg-white text-xs text-gray-400">Full color palette preview</div>
-      </div>
+      )}
 
+      {/* Always visible: palette strip + save */}
       <div className="mt-5 flex justify-end">
         <button onClick={() => onSave(local)} disabled={saving}
           className="regsubmit2 px-8 py-2.5 text-sm disabled:opacity-50">
