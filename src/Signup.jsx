@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+
+const API = import.meta.env.VITE_API_URL;
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -12,6 +14,15 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState(null); // null = still loading
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API}/auth/site-settings`)
+      .then(r => r.json())
+      .then(data => { setSettings(data); setSettingsLoaded(true); })
+      .catch(() => { setSettings({ signup_open: true, team_only_login: false }); setSettingsLoaded(true); });
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,30 +36,22 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const body = JSON.stringify({
-        PeopleFirstName: firstName,
-        PeopleLastName: lastName,
-        Email: email,
-        Password: password,
-      });
-      console.log('Sending:', body);
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/signup`, {
+      const response = await fetch(`${API}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: body,
+        body: JSON.stringify({
+          PeopleFirstName: firstName,
+          PeopleLastName: lastName,
+          Email: email,
+          Password: password,
+        }),
       });
 
       const data = await response.json();
-      console.log('Response:', JSON.stringify(data));
 
       if (!response.ok) {
         const detail = data.detail;
-        if (Array.isArray(detail)) {
-          setError(detail.map(function (d) { return d.msg; }).join(', '));
-        } else {
-          setError(detail || 'Signup failed. Please try again.');
-        }
+        setError(Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || 'Signup failed. Please try again.'));
         return;
       }
 
@@ -60,7 +63,6 @@ export default function Signup() {
 
       navigate('/dashboard');
     } catch (err) {
-      console.error('Signup error:', err);
       setError('Unable to connect to server. Please try again.');
     } finally {
       setLoading(false);
@@ -83,102 +85,113 @@ export default function Signup() {
                 className="h-10 mx-auto mb-4"
               />
               <h1 className="text-white text-2xl font-bold font-lora m-0">Create Account</h1>
-              <p className="text-white/80 text-sm mt-1">Sign up to join the Oatmeal Farm Network</p>
+              <p className="text-white/80 text-sm mt-1">Join the Oatmeal Farm Network</p>
             </div>
 
             <div className="px-8 py-8">
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-6 text-sm">
-                  {error}
+
+              {/* Wait for settings before showing anything */}
+              {!settingsLoaded ? (
+                <div className="text-center text-gray-400 py-6 text-sm">Loading…</div>
+              ) : !settings?.signup_open ? (
+                /* Registration closed */
+                <div className="text-center py-4">
+                  <div className="text-4xl mb-4">🔒</div>
+                  <h2 className="text-lg font-bold text-gray-800 mb-2">Registration is Currently Closed</h2>
+                  <p className="text-sm text-gray-500 mb-6">
+                    New account creation is not available at this time. Please check back later.
+                  </p>
+                  <Link to="/login" className="text-[#819360] font-semibold hover:text-[#4d734d] text-sm">
+                    ← Back to Sign In
+                  </Link>
                 </div>
+              ) : (
+                /* Normal signup form */
+                <>
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-6 text-sm">
+                      {error}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">First Name</label>
+                      <input
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required
+                        placeholder="John"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Last Name</label>
+                      <input
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        required
+                        placeholder="Doe"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        placeholder="you@example.com"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        placeholder="••••••••"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Confirm Password</label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        placeholder="••••••••"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-[#A3301E] hover:bg-[#8a2718] text-white font-bold py-3 px-6 rounded-xl transition-colors duration-200 text-sm uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {loading ? 'Creating Account...' : 'Sign Up'}
+                    </button>
+                  </form>
+
+                  <p className="text-center text-sm text-gray-500 mt-6">
+                    Already have an account?{' '}
+                    <Link to="/login" className="text-[#819360] font-semibold hover:text-[#4d734d]">
+                      Sign In
+                    </Link>
+                  </p>
+                </>
               )}
-
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                    placeholder="John"
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                    placeholder="Doe"
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder="you@example.com"
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder="••••••••"
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Confirm Password
-                  </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    placeholder="••••••••"
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-[#A3301E] hover:bg-[#8a2718] text-white font-bold py-3 px-6 rounded-xl transition-colors duration-200 text-sm uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Creating Account...' : 'Sign Up'}
-                </button>
-              </form>
-
-              <p className="text-center text-sm text-gray-500 mt-6">
-                Already have an account?{' '}
-                <Link to="/login" className="text-[#819360] font-semibold hover:text-[#4d734d]">
-                  Sign In
-                </Link>
-              </p>
             </div>
           </div>
         </div>

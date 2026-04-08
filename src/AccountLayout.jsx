@@ -29,27 +29,6 @@ function NavChild({ to, label }) {
   );
 }
 
-function NavChildDropdown({ label, isOpen, onToggle, children }) {
-  return (
-    <div>
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
-        style={{ width: 'calc(100% - 1rem)' }}
-      >
-        <span>{label}</span>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 shrink-0">
-          {isOpen ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
-        </svg>
-      </button>
-      {isOpen && (
-        <div className="flex flex-col gap-0.5 mt-0.5">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function NavSection({ icon, label, expanded, isOpen, onToggle, children }) {
   return (
@@ -81,7 +60,6 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
   const { Expanded, setExpanded, OpenSections, setOpenSections } = useAccount();
   const BT = Business?.BusinessTypeID;
   const [fields, setFields] = useState([]);
-  const [websitePages, setWebsitePages] = useState([]);
   const [websiteSlug, setWebsiteSlug] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -109,12 +87,16 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
       .then(site => {
         if (!site) return;
         setWebsiteSlug(site.slug);
-        return fetch(`${API_URL}/api/website/pages?website_id=${site.website_id}`)
-          .then(r => r.ok ? r.json() : [])
-          .then(pages => setWebsitePages(Array.isArray(pages) ? pages.filter(p => p.is_published) : []));
       })
       .catch(() => {});
   }, [BusinessID]);
+
+  // Auto-expand "My Website" whenever the user is on the website builder
+  useEffect(() => {
+    if (location.pathname.startsWith('/website/')) {
+      setOpenSections(prev => prev['My Website'] ? prev : { ...prev, 'My Website': true });
+    }
+  }, [location.pathname]);
 
   const toggleSection = (label) => {
     setOpenSections(prev => ({ ...prev, [label]: !prev[label] }));
@@ -327,22 +309,9 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               isOpen={OpenSections['My Website'] || false}
               onToggle={() => toggleSection('My Website')}
             >
+              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=manage-pages`} label="Dashboard" />
               <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=design`} label="Design" />
-              {websitePages.length > 0 && (
-                <NavChildDropdown
-                  label="Pages"
-                  isOpen={OpenSections['Website Pages'] || false}
-                  onToggle={() => toggleSection('Website Pages')}
-                >
-                  {websitePages.map(page => (
-                    <NavChild
-                      key={page.page_id}
-                      to={`/website/builder?BusinessID=${BusinessID}&page=${page.page_id}`}
-                      label={page.page_name}
-                    />
-                  ))}
-                </NavChildDropdown>
-              )}
+              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=settings`} label="Settings" />
               <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=delete`} label="Delete Website" />
               {websiteSlug && (
                 <NavChild to={`/sites/${websiteSlug}`} label="View Live Site ↗" />

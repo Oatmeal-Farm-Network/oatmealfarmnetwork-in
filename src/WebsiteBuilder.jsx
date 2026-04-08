@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import WebsiteAIAgent from './WebsiteAIAgent';
@@ -319,60 +319,6 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
 // WYSIWYG CANVAS COMPONENTS
 // ══════════════════════════════════════════════════════════════════
 
-// ── CE: contentEditable wrapper using innerHTML ───────────────────
-function CE({ value, tag: Tag = 'p', onSave, style, className, placeholder }) {
-  const ref = useRef(null);
-  const editing = useRef(false);
-  useEffect(() => {
-    if (ref.current && !editing.current) {
-      ref.current.innerHTML = value || '';
-    }
-  }, [value]);
-  return (
-    <Tag
-      ref={ref}
-      contentEditable
-      suppressContentEditableWarning
-      onFocus={() => { editing.current = true; }}
-      onBlur={e => { editing.current = false; onSave(e.currentTarget.innerHTML); }}
-      style={{ outline: 'none', cursor: 'text', overflowWrap: 'break-word', wordBreak: 'break-word', minWidth: 0, ...style }}
-      className={className}
-      data-placeholder={placeholder}
-    />
-  );
-}
-
-// ── RichTextEditor: contentEditable body field (no toolbar — uses SelectionToolbar) ─
-function RichTextEditor({ value, onSave, style, placeholder }) {
-  const ref = useRef(null);
-  const editing = useRef(false);
-
-  useEffect(() => {
-    if (ref.current && !editing.current) {
-      ref.current.innerHTML = value || '';
-    }
-  }, [value]);
-
-  return (
-    <>
-      {/* Reset browser default heading/paragraph margins inside contentEditable */}
-      <style>{`.rte-editor h1,.rte-editor h2,.rte-editor h3,.rte-editor h4,.rte-editor p{margin:0 0 4px 0;}`}</style>
-      <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
-        <div
-          ref={ref}
-          contentEditable
-          suppressContentEditableWarning
-          className="rte-editor"
-          onFocus={() => { editing.current = true; }}
-          onBlur={e => { editing.current = false; onSave(e.currentTarget.innerHTML); }}
-          style={{ outline: 'none', cursor: 'text', overflowWrap: 'break-word', wordBreak: 'break-word', padding: '6px 14px', ...style }}
-          data-placeholder={placeholder}
-        />
-      </div>
-    </>
-  );
-}
-
 // ── PaletteColorPicker: swatch grid + custom color input ─────────
 // paletteColors: array of hex strings from the active site theme
 // onColor: (hexColor) => void
@@ -679,7 +625,338 @@ function FontPickerDropdown({ value, onChange, globalFont, dark = false, label =
   );
 }
 
-// ── Build CSS for [data-rte-style] spans — injected into document head so live design changes update existing styled text ──
+// ── SimpleBlockPreview: read-only canvas preview of each block ────
+function SimpleBlockPreview({ block, site }) {
+  const d   = block.block_data || {};
+  const bt  = block.block_type;
+  const primary    = site?.primary_color  || '#3D6B34';
+  const accent     = site?.accent_color   || '#FFC567';
+  const textColor  = site?.text_color     || '#111827';
+  const fontFamily = site?.font_family    || 'inherit';
+  const bgColor    = d.bg_color || site?.bg_color || '#fff';
+  const bgWidth    = site?.body_bg_width      || '100%';
+  const cWidth     = site?.body_content_width || '100%';
+
+  // Shared wrapper: outer div only centers (no bg); inner band carries the bg color up to bgWidth;
+  // innermost div constrains content to cWidth — mirrors SectionWrap in WebsitePublic.jsx
+  const BlockWrap = ({ children }) => (
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: bgWidth, background: bgColor, padding: '1.75rem 2.5rem', fontFamily }}>
+        <div style={{ maxWidth: cWidth, margin: '0 auto' }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (bt === 'hero') {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{
+          width: '100%', maxWidth: bgWidth,
+          minHeight: 220, position: 'relative', display: 'flex', alignItems: 'center',
+          justifyContent: d.align === 'left' ? 'flex-start' : d.align === 'right' ? 'flex-end' : 'center',
+          background: d.image_url ? `url(${d.image_url}) center/cover no-repeat` : primary,
+          fontFamily,
+        }}>
+          {d.overlay && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.42)' }} />}
+          <div style={{ position: 'relative', zIndex: 1, padding: '2rem 3rem', textAlign: d.align || 'center', maxWidth: cWidth, width: '100%' }}>
+            <h1 style={{ color: '#fff', fontSize: '2rem', fontWeight: 800, margin: '0 0 0.5rem', lineHeight: 1.2 }}>
+              {d.headline || 'Your Headline'}
+            </h1>
+            {d.subtext && <p style={{ color: 'rgba(255,255,255,0.88)', fontSize: '1.05rem', margin: '0 0 1.2rem' }}>{d.subtext}</p>}
+            {d.cta_text && (
+              <span style={{ display: 'inline-block', background: accent, color: '#fff', padding: '0.5rem 1.5rem', borderRadius: 8, fontWeight: 700, fontSize: '0.95rem' }}>
+                {d.cta_text}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (bt === 'about' || bt === 'content') {
+    const imgs = Array.isArray(d.images) && d.images.length > 0 ? d.images : [];
+    const rawUrl = d.image_url || (imgs[0] ? (typeof imgs[0] === 'string' ? imgs[0] : imgs[0].url) : null);
+    const pos    = d.image_position || imgs[0]?.wrap || 'right';
+    const isLeft = pos === 'left';
+    return (
+      <BlockWrap>
+        <div style={{ display: 'flex', flexDirection: isLeft ? 'row' : 'row-reverse', gap: '2rem', alignItems: 'flex-start' }}>
+          {rawUrl && (
+            <img src={rawUrl} alt="" style={{ width: '38%', flexShrink: 0, borderRadius: 8, objectFit: 'cover', maxHeight: 220, display: 'block' }} />
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {d.heading && <h2 style={{ color: textColor, fontWeight: 700, fontSize: '1.5rem', margin: '0 0 0.6rem' }}>{d.heading}</h2>}
+            {d.body
+              ? <div style={{ color: textColor, fontSize: '1rem', lineHeight: 1.7 }} dangerouslySetInnerHTML={{ __html: d.body }} />
+              : !d.heading && <p style={{ color: '#9ca3af', fontStyle: 'italic', margin: 0 }}>Click to edit this block</p>}
+          </div>
+        </div>
+      </BlockWrap>
+    );
+  }
+
+  if (bt === 'divider') {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: bgWidth, height: d.height || 40, background: bgColor }} />
+      </div>
+    );
+  }
+
+  // Data-backed blocks: livestock, produce, services, etc.
+  const meta = BLOCK_TYPES.find(b => b.type === bt) || { icon: '📦', label: bt };
+  return (
+    <BlockWrap>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '2rem', marginBottom: '0.4rem' }}>{meta.icon}</div>
+        <div style={{ fontWeight: 700, fontSize: '1.1rem', color: primary, marginBottom: '0.25rem' }}>
+          {d.heading || meta.label}
+        </div>
+        <div style={{ fontSize: '0.82rem', color: '#9ca3af' }}>
+          Live data from your account will appear here on the published site.
+        </div>
+      </div>
+    </BlockWrap>
+  );
+}
+
+// ── CanvasBlock: click-to-select with ↑↓ + delete controls ────────
+function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onDragStart, onDragOver, onDrop, isDragging, site }) {
+  const meta = BLOCK_TYPES.find(b => b.type === block.block_type);
+  return (
+    <div
+      onClick={e => { e.stopPropagation(); onSelect(block); }}
+      draggable
+      onDragStart={e => onDragStart(e, index)}
+      onDragOver={e => { e.preventDefault(); onDragOver(e, index); }}
+      onDrop={e => { e.preventDefault(); onDrop(e, index); }}
+      style={{
+        position: 'relative',
+        outline: isSelected ? '2px solid #3b82f6' : '2px solid transparent',
+        outlineOffset: -2,
+        cursor: 'pointer',
+        opacity: isDragging ? 0.35 : 1,
+        transition: 'outline 0.1s, opacity 0.1s',
+      }}
+      className="canvas-block"
+    >
+      <SimpleBlockPreview block={block} site={site} />
+
+      {/* Controls — always visible when selected, shown on hover via CSS */}
+      <div className="block-controls" style={{
+        position: 'absolute', top: 8, right: 8, display: 'flex', gap: 4, zIndex: 10,
+        opacity: isSelected ? 1 : 0, transition: 'opacity 0.15s',
+      }}>
+        <span style={{ background: '#3b82f6', color: '#fff', fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 4, alignSelf: 'center', marginRight: 4 }}>
+          {meta?.label || block.block_type}
+        </span>
+        <button onClick={e => { e.stopPropagation(); onMoveUp(); }} disabled={isFirst}
+          style={{ padding: '3px 8px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, cursor: isFirst ? 'default' : 'pointer', fontSize: 12, opacity: isFirst ? 0.35 : 1 }}>↑</button>
+        <button onClick={e => { e.stopPropagation(); onMoveDown(); }} disabled={isLast}
+          style={{ padding: '3px 8px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, cursor: isLast ? 'default' : 'pointer', fontSize: 12, opacity: isLast ? 0.35 : 1 }}>↓</button>
+        <button onClick={e => { e.stopPropagation(); if (window.confirm('Delete this block?')) onDelete(block.block_id); }}
+          style={{ padding: '3px 8px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>🗑</button>
+      </div>
+      <style>{`.canvas-block:hover .block-controls { opacity: 1 !important; }`}</style>
+    </div>
+  );
+}
+
+// ── BlockEditorPanel: sidebar form editor for the selected block ───
+function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site }) {
+  if (!block) return null;
+  const d  = block.block_data || {};
+  const bt = block.block_type;
+
+  const paletteColors = [
+    site?.primary_color, site?.secondary_color, site?.accent_color,
+    site?.bg_color, site?.text_color,
+  ].filter(Boolean);
+
+  const Field = ({ label, children }) => (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>{label}</label>
+      {children}
+    </div>
+  );
+
+  // Uncontrolled text inputs — key ensures they remount when block changes
+  const TxtInp = ({ field, placeholder = '' }) => (
+    <input key={`${block.block_id}-${field}`} className={inp}
+      defaultValue={d[field] || ''}
+      placeholder={placeholder}
+      onBlur={e => { if (e.target.value !== (d[field] || '')) onFieldSave(field, e.target.value); }}
+    />
+  );
+
+  const TxtArea = ({ field, rows = 6, placeholder = '' }) => (
+    <textarea key={`${block.block_id}-${field}`} className={ta} rows={rows}
+      defaultValue={d[field] || ''}
+      placeholder={placeholder}
+      onBlur={e => { if (e.target.value !== (d[field] || '')) onFieldSave(field, e.target.value); }}
+    />
+  );
+
+  const Pill = ({ label, active, onClick }) => (
+    <button onClick={onClick}
+      style={{
+        padding: '4px 10px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
+        marginRight: 4, marginBottom: 4,
+        border: '1px solid ' + (active ? '#3b82f6' : '#d1d5db'),
+        background: active ? '#3b82f6' : '#f9fafb',
+        color: active ? '#fff' : '#374151',
+      }}>
+      {label}
+    </button>
+  );
+
+  const BgField = () => (
+    <Field label="Background Color">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        {paletteColors.map(c => (
+          <button key={c} onClick={() => onFieldSave('bg_color', c)}
+            style={{ width: 24, height: 24, borderRadius: 4, background: c, border: d.bg_color === c ? '2px solid #3b82f6' : '1px solid #e5e7eb', cursor: 'pointer', flexShrink: 0 }} />
+        ))}
+        <input type="color" value={d.bg_color || site?.bg_color || '#ffffff'}
+          onChange={e => onFieldSave('bg_color', e.target.value)}
+          title="Custom color"
+          style={{ width: 28, height: 24, border: '1px solid #e5e7eb', borderRadius: 4, padding: 1, cursor: 'pointer' }} />
+        {d.bg_color && (
+          <button onClick={() => onFieldSave('bg_color', '')}
+            style={{ fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
+            Reset
+          </button>
+        )}
+      </div>
+    </Field>
+  );
+
+  // ── Hero ──
+  if (bt === 'hero') return (
+    <div style={{ padding: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>Hero Banner</div>
+      <Field label="Headline">
+        <TxtInp field="headline" placeholder="Welcome to our farm…" />
+      </Field>
+      <Field label="Sub-text">
+        <TxtArea field="subtext" rows={3} placeholder="Fresh, local, sustainably grown." />
+      </Field>
+      <Field label="Button Text">
+        <TxtInp field="cta_text" placeholder="Learn More" />
+      </Field>
+      <Field label="Button Link">
+        <TxtInp field="cta_link" placeholder="#about or https://…" />
+      </Field>
+      <Field label="Background Image">
+        <ImageUploadField value={d.image_url || ''} onChange={url => onFieldSave('image_url', url)} />
+      </Field>
+      <Field label="Text Alignment">
+        {[['left','Left'],['center','Center'],['right','Right']].map(([v,l]) => (
+          <Pill key={v} label={l} active={(d.align || 'center') === v} onClick={() => onFieldSave('align', v)} />
+        ))}
+      </Field>
+      <Field label="Dark Overlay">
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#374151' }}>
+          <input type="checkbox" checked={!!d.overlay} onChange={e => onFieldSave('overlay', e.target.checked)}
+            style={{ width: 16, height: 16, accentColor: '#3b82f6' }} />
+          Show dark overlay over image
+        </label>
+      </Field>
+      <BgField />
+    </div>
+  );
+
+  // ── About / Content ──
+  if (bt === 'about' || bt === 'content') {
+    // Normalise image url + position from either legacy or new format
+    const imgs   = Array.isArray(d.images) && d.images.length > 0 ? d.images : [];
+    const imgUrl = d.image_url || (imgs[0] ? (typeof imgs[0] === 'string' ? imgs[0] : imgs[0].url) : '');
+    const imgPos = d.image_position || imgs[0]?.wrap || 'right';
+
+    const setImg = (url) => {
+      onFieldsSave({ image_url: url, images: url ? [{ url, wrap: imgPos }] : [] });
+    };
+    const setPos = (pos) => {
+      const newImages = imgs.length > 0
+        ? imgs.map(im => ({ ...(typeof im === 'string' ? { url: im } : im), wrap: pos }))
+        : imgUrl ? [{ url: imgUrl, wrap: pos }] : [];
+      onFieldsSave({ image_position: pos, images: newImages });
+    };
+
+    return (
+      <div style={{ padding: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
+          {bt === 'about' ? 'About Block' : 'Content Block'}
+        </div>
+        <Field label="Heading">
+          <TxtInp field="heading" placeholder="Section heading…" />
+        </Field>
+        <Field label="Body Text">
+          <TxtArea field="body" rows={8} placeholder="Write your content here…" />
+        </Field>
+        <Field label="Image">
+          <ImageUploadField value={imgUrl} onChange={setImg} />
+        </Field>
+        {imgUrl && (
+          <Field label="Image Position">
+            {[['right','Right ▶'],['left','◀ Left'],['center','▲ Center'],['full','⬛ Full']].map(([v,l]) => (
+              <Pill key={v} label={l} active={imgPos === v} onClick={() => setPos(v)} />
+            ))}
+          </Field>
+        )}
+        <BgField />
+      </div>
+    );
+  }
+
+  // ── Divider ──
+  if (bt === 'divider') return (
+    <div style={{ padding: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>Spacer / Divider</div>
+      <Field label="Height (px)">
+        <input key={`${block.block_id}-height`} type="number" className={inp} defaultValue={d.height || 40} min={8} max={400}
+          onBlur={e => onFieldSave('height', Number(e.target.value))} />
+      </Field>
+      <BgField />
+    </div>
+  );
+
+  // ── Generic data blocks ──
+  const meta = BLOCK_TYPES.find(b => b.type === bt) || { icon: '📦', label: bt };
+  return (
+    <div style={{ padding: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 4, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
+        {meta.icon} {meta.label}
+      </div>
+      <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 14, lineHeight: 1.5 }}>
+        This block pulls live data from your account automatically.
+      </p>
+      {d.heading !== undefined && (
+        <Field label="Section Heading">
+          <TxtInp field="heading" placeholder="Section heading…" />
+        </Field>
+      )}
+      {d.max_items !== undefined && (
+        <Field label="Max Items to Show">
+          <input key={`${block.block_id}-max`} type="number" className={inp} defaultValue={d.max_items} min={1} max={50}
+            onBlur={e => onFieldSave('max_items', Number(e.target.value))} />
+        </Field>
+      )}
+      {d.max_posts !== undefined && (
+        <Field label="Max Posts to Show">
+          <input key={`${block.block_id}-posts`} type="number" className={inp} defaultValue={d.max_posts} min={1} max={20}
+            onBlur={e => onFieldSave('max_posts', Number(e.target.value))} />
+        </Field>
+      )}
+      <BgField />
+    </div>
+  );
+}
+
+// (legacy stub — kept so DesignView references compile)
 function buildRteTypoCss(site) {
   if (!site) return '';
   return [['h1','h1'],['h2','h2'],['h3','h3'],['h4','h4'],['body','body']].map(([k]) => {
@@ -701,385 +978,7 @@ function buildRteTypoCss(site) {
   }).join('\n');
 }
 
-// ── SelectionToolbar: appears above selected text ─────────────────
-function SelectionToolbar({ canvasRef, onImageAdd, paletteColors = [], site = {} }) {
-  const [pos, setPos] = useState(null);
-  const savedRange = useRef(null);
-  const [styleVal, setStyleVal] = useState('');
-
-  // Apply typography style to selection using data-rte-style attribute.
-  // CSS is injected via buildRteTypoCss so changing design settings updates all styled text live.
-  const applyTypoStyle = (tag) => {
-    if (!tag) return;
-    const sel = window.getSelection();
-    if (savedRange.current) { sel.removeAllRanges(); sel.addRange(savedRange.current); }
-    if (!sel || sel.isCollapsed) return;
-    const range = sel.getRangeAt(0);
-    // Extract plain text — strips all nested formatting
-    const plainText = range.toString();
-    range.deleteContents();
-    const span = document.createElement('span');
-    span.setAttribute('data-rte-style', tag === 'p' ? 'body' : tag);
-    span.textContent = plainText;
-    range.insertNode(span);
-    // Unwrap empty ancestor spans left behind by deleteContents()
-    let el = span.parentElement;
-    while (el && el !== document.body) {
-      if (el.tagName !== 'SPAN') break;
-      const parent = el.parentElement;
-      if (!parent) break;
-      const meaningfulSiblings = Array.from(el.childNodes).filter(n => {
-        if (n === span) return false;
-        if (n.nodeType === Node.TEXT_NODE) return n.textContent.trim() !== '';
-        return true;
-      });
-      if (meaningfulSiblings.length === 0) {
-        parent.replaceChild(span, el);
-        el = parent.tagName === 'SPAN' ? parent : null;
-      } else {
-        break;
-      }
-    }
-    range.selectNode(span);
-    sel.removeAllRanges();
-    sel.addRange(range);
-    setStyleVal('');
-  };
-
-  useEffect(() => {
-    const update = () => {
-      const sel = window.getSelection();
-      if (!sel || sel.isCollapsed || !canvasRef.current?.contains(sel.anchorNode)) {
-        setPos(null);
-        return;
-      }
-      try {
-        savedRange.current = sel.getRangeAt(0).cloneRange();
-        const rect = sel.getRangeAt(0).getBoundingClientRect();
-        if (!rect.width) { setPos(null); return; }
-        setPos({
-          x: Math.max(220, Math.min(rect.left + rect.width / 2, window.innerWidth - 220)),
-          y: rect.top,
-        });
-      } catch { setPos(null); }
-    };
-    document.addEventListener('selectionchange', update);
-    return () => document.removeEventListener('selectionchange', update);
-  }, [canvasRef]);
-
-  if (!pos) return null;
-
-  const restoreAndRun = (fn) => {
-    const sel = window.getSelection();
-    if (savedRange.current) {
-      sel.removeAllRanges();
-      sel.addRange(savedRange.current);
-    }
-    fn();
-  };
-
-  const cmd = (c) => restoreAndRun(() => document.execCommand(c, false, null));
-
-  const applyFont = (f) => {
-    if (!f) return;
-    const sel = window.getSelection();
-    if (savedRange.current) { sel.removeAllRanges(); sel.addRange(savedRange.current); }
-    if (!sel || sel.isCollapsed) return;
-    const range = sel.getRangeAt(0);
-    const contents = range.extractContents();
-    const span = document.createElement('span');
-    span.style.fontFamily = f;
-    span.appendChild(contents);
-    range.insertNode(span);
-    range.selectNode(span);
-    sel.removeAllRanges();
-    sel.addRange(range);
-  };
-
-  return createPortal(
-    <div
-      style={{
-        position: 'fixed',
-        left: pos.x,
-        top: pos.y - 50,
-        transform: 'translateX(-50%)',
-        zIndex: 99999,
-        background: '#1e1e2e',
-        borderRadius: 8,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 2,
-        padding: '4px 8px',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.45)',
-        userSelect: 'none',
-        pointerEvents: 'auto',
-        whiteSpace: 'nowrap',
-      }}
-      onMouseDown={e => e.preventDefault()}
-    >
-      {/* Paragraph style dropdown */}
-      <select
-        value={styleVal}
-        onMouseDown={e => e.stopPropagation()}
-        onChange={e => applyTypoStyle(e.target.value)}
-        style={{ background: '#2d2d3e', color: '#e2e8f0', border: 'none', borderRadius: 4, fontSize: 11, padding: '3px 4px', cursor: 'pointer', maxWidth: 90 }}
-      >
-        <option value="">Style…</option>
-        <option value="h1">H1</option>
-        <option value="h2">H2</option>
-        <option value="h3">H3</option>
-        <option value="h4">H4</option>
-        <option value="p">Body</option>
-      </select>
-
-      <div style={{ width: 1, height: 18, background: '#444', margin: '0 2px' }} />
-
-      {/* Font picker */}
-      <FontPickerDropdown
-        value=""
-        onChange={f => { if (f) applyFont(f); }}
-        dark={true}
-        label="Font…"
-      />
-
-      <div style={{ width: 1, height: 18, background: '#444', margin: '0 2px' }} />
-
-      {[['bold','B',{ fontWeight: 700 }],['italic','I',{ fontStyle: 'italic' }],['underline','U',{ textDecoration: 'underline' }],['strikeThrough','S',{ textDecoration: 'line-through' }]].map(([c, lbl, s]) => (
-        <button key={c} onMouseDown={e => { e.preventDefault(); cmd(c); }}
-          style={{ background: 'none', border: 'none', color: '#e2e8f0', cursor: 'pointer', fontSize: 12, padding: '2px 5px', borderRadius: 3, ...s }}>
-          {lbl}
-        </button>
-      ))}
-
-      <div style={{ width: 1, height: 18, background: '#444', margin: '0 2px' }} />
-
-      <PaletteColorPicker
-        paletteColors={paletteColors}
-        dark={true}
-        onColor={hex => restoreAndRun(() => document.execCommand('foreColor', false, hex))}
-      />
-
-      <div style={{ width: 1, height: 18, background: '#444', margin: '0 2px' }} />
-
-      {[['justifyLeft','⬅'],['justifyCenter','≡'],['justifyRight','➡']].map(([c, lbl]) => (
-        <button key={c} onMouseDown={e => { e.preventDefault(); cmd(c); }}
-          style={{ background: 'none', border: 'none', color: '#e2e8f0', cursor: 'pointer', fontSize: 12, padding: '2px 5px', borderRadius: 3 }}>
-          {lbl}
-        </button>
-      ))}
-
-    </div>,
-    document.body
-  );
-}
-
-// ── FloatingBlockToolbar: move / delete controls ──────────────────
-function FloatingBlockToolbar({ onDelete, onMoveUp, onMoveDown, isFirst, isLast }) {
-  return (
-    <div
-      style={{
-        position: 'absolute', top: -38, right: 0, zIndex: 20,
-        display: 'flex', gap: 4,
-        background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.12)', padding: '4px 6px',
-      }}
-      onMouseDown={e => e.stopPropagation()}
-      onClick={e => e.stopPropagation()}
-    >
-      <button onClick={onMoveUp} disabled={isFirst} title="Move up"
-        style={{ background: 'none', border: 'none', cursor: isFirst ? 'not-allowed' : 'pointer', opacity: isFirst ? 0.3 : 1, padding: '2px 6px', borderRadius: 4, fontSize: 14, color: '#374151' }}>
-        ↑
-      </button>
-      <button onClick={onMoveDown} disabled={isLast} title="Move down"
-        style={{ background: 'none', border: 'none', cursor: isLast ? 'not-allowed' : 'pointer', opacity: isLast ? 0.3 : 1, padding: '2px 6px', borderRadius: 4, fontSize: 14, color: '#374151' }}>
-        ↓
-      </button>
-      <div style={{ width: 1, height: 22, background: '#e5e7eb', alignSelf: 'center' }} />
-      <button onClick={onDelete} title="Delete block"
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', borderRadius: 4, fontSize: 14, color: '#ef4444' }}>
-        🗑
-      </button>
-    </div>
-  );
-}
-
-// ── HeroImageManager: bottom-right overlay on hero blocks ─────────
-function HeroImageManager({ imageUrl, onFieldSave }) {
-  const fileRef = useRef(null);
-  const [uploading, setUploading] = useState(false);
-
-  const handleFile = async (file) => {
-    setUploading(true);
-    try {
-      const url = await uploadImageFile(file);
-      onFieldSave('image_url', url);
-    } catch { alert('Upload failed'); }
-    finally { setUploading(false); }
-  };
-
-  return (
-    <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 10, display: 'flex', gap: 6 }}>
-      <button
-        onClick={() => fileRef.current?.click()}
-        style={{ background: 'rgba(255,255,255,0.92)', border: 'none', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#374151', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>
-        {uploading ? 'Uploading…' : imageUrl ? 'Change Image' : '+ Background Image'}
-      </button>
-      {imageUrl && !uploading && (
-        <button onClick={() => onFieldSave('image_url', '')}
-          style={{ background: 'rgba(239,68,68,0.9)', border: 'none', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#fff' }}>
-          Remove
-        </button>
-      )}
-      <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
-        onChange={e => e.target.files[0] && handleFile(e.target.files[0])} />
-    </div>
-  );
-}
-
-// ── AboutContentBlock: about/content with per-image positioning ───
-function AboutContentBlock({ block, isSelected, onFieldSave, onImagesChange, site = {} }) {
-  const d = block.block_data || {};
-  const textColor  = site.text_color  || '#111827';
-  const fontFamily = site.font_family || 'inherit';
-  const bgColor    = d.bg_color || site.bg_color || '#fff';
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef(null);
-
-  // Normalize images to {url, position} objects (backward compat with string arrays)
-  const rawImages = Array.isArray(d.images) && d.images.length > 0
-    ? d.images
-    : (d.image_url ? [d.image_url] : []);
-  const imgObjs = rawImages.map(img =>
-    typeof img === 'string' ? { url: img, position: d.image_position || 'right' } : img
-  );
-
-  const withIdx = imgObjs.map((img, i) => ({ ...img, i }));
-  const topImgs    = withIdx.filter(img => img.position === 'top');
-  const bottomImgs = withIdx.filter(img => img.position === 'bottom');
-  const leftImgs   = withIdx.filter(img => img.position === 'left');
-  const rightImgs  = withIdx.filter(img => !img.position || img.position === 'right');
-
-  const updateImgPos = (idx, pos) => {
-    onImagesChange(imgObjs.map((img, i) => i === idx ? { ...img, position: pos } : img));
-  };
-  const removeImg = (idx) => {
-    onImagesChange(imgObjs.filter((_, i) => i !== idx));
-  };
-  const handleFiles = async (files) => {
-    setUploading(true);
-    const newImgs = [];
-    for (const file of Array.from(files)) {
-      try { newImgs.push({ url: await uploadImageFile(file), position: 'right' }); } catch {}
-    }
-    if (newImgs.length) onImagesChange([...imgObjs, ...newImgs]);
-    setUploading(false);
-  };
-
-  // Single image with delete + position controls
-  const ImgItem = ({ img }) => (
-    <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4, margin: 4, verticalAlign: 'top' }}>
-      <div style={{ position: 'relative' }}>
-        <img src={img.url} alt=""
-          style={{ width: 180, height: 140, objectFit: 'cover', borderRadius: 8, display: 'block', border: `2px solid ${isSelected ? '#93c5fd' : '#e5e7eb'}` }} />
-        {isSelected && (
-          <button onClick={() => removeImg(img.i)}
-            style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, background: 'rgba(239,68,68,0.9)', border: 'none', borderRadius: '50%', color: '#fff', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, lineHeight: 1 }}>
-            ×
-          </button>
-        )}
-      </div>
-      {isSelected && (
-        <div style={{ display: 'flex', gap: 3 }}>
-          {[['top','↑'],['left','←'],['right','→'],['bottom','↓']].map(([pos, lbl]) => (
-            <button key={pos} onClick={() => updateImgPos(img.i, pos)}
-              style={{
-                width: 26, height: 26, borderRadius: 4, cursor: 'pointer', fontSize: 13,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: img.position === pos ? '2px solid #3b82f6' : '1px solid #d1d5db',
-                background: img.position === pos ? '#3b82f6' : '#fff',
-                color: img.position === pos ? '#fff' : '#374151',
-              }}>
-              {lbl}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  const bgW = site.body_bg_width || '100%';
-  const cW  = site.body_content_width || '100%';
-
-  return (
-    <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: bgW, background: bgColor, fontFamily }}>
-        <div style={{ maxWidth: cW, margin: '0 auto', padding: '0 1.5rem 3rem', minHeight: 480 }}>
-      {/* Top images */}
-      {topImgs.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-          {topImgs.map(img => <ImgItem key={img.i} img={img} />)}
-        </div>
-      )}
-
-      {/* Left | Text | Right */}
-      <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-        {leftImgs.length > 0 && (
-          <div style={{ flexShrink: 0 }}>
-            {leftImgs.map(img => <ImgItem key={img.i} img={img} />)}
-          </div>
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <RichTextEditor
-            value={(d.heading ? `<h2>${d.heading}</h2>` : '') + (d.body || '')}
-            onSave={v => {
-              // Split heading (first block element if it's a heading tag) from body
-              const tmp = document.createElement('div');
-              tmp.innerHTML = v;
-              const first = tmp.firstElementChild;
-              const isHeading = first && /^h[1-4]$/i.test(first.tagName);
-              if (isHeading) {
-                onFieldSave('heading', first.innerHTML);
-                tmp.removeChild(first);
-                onFieldSave('body', tmp.innerHTML);
-              } else {
-                onFieldSave('heading', '');
-                onFieldSave('body', v);
-              }
-            }}
-            style={{ fontSize: '1rem', lineHeight: 1.75, color: textColor, minHeight: 400, fontFamily }}
-            placeholder="Start with a heading or body text…"
-          />
-        </div>
-        {rightImgs.length > 0 && (
-          <div style={{ flexShrink: 0 }}>
-            {rightImgs.map(img => <ImgItem key={img.i} img={img} />)}
-          </div>
-        )}
-      </div>
-
-      {/* Bottom images */}
-      {bottomImgs.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '1.5rem' }}>
-          {bottomImgs.map(img => <ImgItem key={img.i} img={img} />)}
-        </div>
-      )}
-
-      {/* Add image button */}
-      {isSelected && (
-        <div style={{ marginTop: 16 }}>
-          <button onClick={() => fileRef.current?.click()}
-            style={{ background: '#f9fafb', border: '1px dashed #9ca3af', borderRadius: 8, padding: '7px 14px', cursor: 'pointer', fontSize: 12, color: '#6b7280' }}>
-            {uploading ? '⏳ Uploading…' : imgObjs.length > 0 ? '+ Add Another Image' : '+ Add Image'}
-          </button>
-          <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
-            onChange={e => handleFiles(e.target.files)} />
-        </div>
-      )}
-        </div>
-      </div>
-    </div>
-  );
-}
+// (SelectionToolbar, FloatingBlockToolbar, HeroImageManager, WrapIcon, BlockImageEditor, AboutContentBlock removed — editing moved to BlockEditorPanel sidebar)
 
 // ── getVideoInfo: YouTube / Vimeo URL parser ──────────────────────
 function getVideoInfo(url) {
@@ -1092,15 +991,18 @@ function getVideoInfo(url) {
 }
 
 // ── CanvasSiteHeader: simulated site header shown in the canvas ───
-function CanvasSiteHeader({ site }) {
+function CanvasSiteHeader({ site, pages = [] }) {
   if (!site) return null;
   const headerHeight = Number(site.header_height) || 120;
   const bgW = site.header_bg_width || '100%';
   const cW  = site.header_content_width || '100%';
+  // Build nav tree: top-level pages and which ones have children
+  const topLevelNav = pages.filter(p => !p.parent_page_id && p.is_published !== false);
+  const hasChildren = (pageId) => pages.some(p => p.parent_page_id === pageId);
+  const navColor = site.nav_text_color || '#fff';
   return (
     <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family }}>
-      {/* Background band — only this carries the color, constrained to header_bg_width */}
-      <div style={{ width: '100%', maxWidth: bgW, display: 'flex', flexDirection: 'column', alignItems: 'center', background: site.primary_color || '#3D6B34' }}>
+      <div style={{ width: '100%', maxWidth: bgW, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {site.top_bar_enabled && site.top_bar_html && (
           <div style={{ width: '100%', maxWidth: cW, background: site.top_bar_bg_color || '#f8f5ef', padding: '5px 1rem', textAlign: site.top_bar_align || 'right' }}>
             <span style={{ fontSize: 12, color: site.top_bar_text_color || '#333' }}
@@ -1112,14 +1014,14 @@ function CanvasSiteHeader({ site }) {
           {site.header_banner_url ? (
             <img src={site.header_banner_url} alt="" style={{ width: '100%', display: 'block' }} />
           ) : (
-            <div style={{ height: headerHeight, background: site.primary_color || '#3D6B34' }} />
+            <div style={{ height: headerHeight, background: site.header_banner_bg_color || site.primary_color || '#3D6B34' }} />
           )}
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', padding: '0 1rem', gap: '1rem' }}>
             {site.logo_url && (
               <img src={site.logo_url} alt="" style={{ height: Math.min(headerHeight * 0.55, 80), objectFit: 'contain', borderRadius: 4 }} />
             )}
             {site.show_site_name !== false && (
-              <span style={{ fontWeight: 800, color: site.nav_text_color || '#fff', fontSize: '1.5rem', textShadow: site.header_banner_url ? '1px 1px 4px rgba(0,0,0,0.55)' : 'none' }}>{site.site_name}</span>
+              <span style={{ fontWeight: 800, color: navColor, fontSize: '1.5rem', textShadow: site.header_banner_url ? '1px 1px 4px rgba(0,0,0,0.55)' : 'none' }}>{site.site_name}</span>
             )}
           </div>
         </div>
@@ -1127,10 +1029,12 @@ function CanvasSiteHeader({ site }) {
         <div style={{
           width: '100%', maxWidth: cW,
           background: site.nav_bg_image_url ? `url(${site.nav_bg_image_url}) center/cover no-repeat` : (site.primary_color || '#3D6B34'),
-          padding: '0 1rem', height: 48, display: 'flex', alignItems: 'center', gap: '2rem',
+          padding: '0 1rem', height: 48, display: 'flex', alignItems: 'center', gap: 4,
         }}>
-          {['Home', 'About Us', 'Services', 'Contact'].map(n => (
-            <span key={n} style={{ color: site.nav_text_color || '#fff', fontSize: '0.85rem', fontWeight: 600 }}>{n}</span>
+          {(topLevelNav.length > 0 ? topLevelNav : [{ page_name: 'Home', page_id: 0 }]).map(p => (
+            <span key={p.page_id} style={{ color: navColor, fontSize: '0.85rem', fontWeight: 600, padding: '0.3rem 0.7rem', borderRadius: 6 }}>
+              {p.page_name}{hasChildren(p.page_id) ? <span style={{ fontSize: '0.6rem', marginLeft: 3, opacity: 0.8 }}>▾</span> : null}
+            </span>
           ))}
         </div>
       </div>
@@ -1141,333 +1045,66 @@ function CanvasSiteHeader({ site }) {
 // ── CanvasSiteFooter: simulated site footer shown in the canvas ───
 function CanvasSiteFooter({ site }) {
   if (!site) return null;
-  const footerHeight = site.footer_height || 200;
+  const footerHeight = Number(site.footer_height) || 200;
   const bgW = site.footer_bg_width || '100%';
   const cW  = site.footer_content_width || '100%';
   const hasBgImg = !!site.footer_bg_image_url;
-  const footerBg = site.footer_bg_color || site.primary_color || '#3D6B34';
-  const CopyrightBar = () => (
-    <div style={{ maxWidth: cW, margin: '0 auto' }}>
-      {site.footer_html ? (
-        <div style={{ padding: '1.5rem 1rem', color: '#fff', fontSize: '0.9rem', lineHeight: 1.6 }}
-          dangerouslySetInnerHTML={{ __html: site.footer_html }} />
-      ) : null}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.18)', padding: '0.6rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+  const footerBg    = site.footer_bg_color    || site.primary_color || '#3D6B34';
+  const copyrightBg = site.copyright_bar_bg_color || 'rgba(0,0,0,0.18)';
+
+  const FooterContent = () => (
+    <div style={{ background: footerBg }}>
+      <div style={{ maxWidth: cW, margin: '0 auto' }}>
+        {site.footer_html ? (
+          <div style={{ padding: '1.5rem 1rem', color: '#fff', fontSize: '0.9rem', lineHeight: 1.6 }}
+            dangerouslySetInnerHTML={{ __html: site.footer_html }} />
+        ) : null}
+      </div>
+    </div>
+  );
+
+  const CopyrightStrip = () => (
+    <div style={{ background: copyrightBg }}>
+      <div style={{ maxWidth: cW, margin: '0 auto', padding: '0.6rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
           {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
         </span>
-        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>Powered by Oatmeal Farm Network</span>
+        <a href="https://www.OatmealFarmNetwork.com" target="_blank" rel="noopener noreferrer"
+          style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>
+          Powered by Oatmeal Farm Network
+        </a>
       </div>
     </div>
   );
+
   return (
     <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family }}>
-      {/* Background band constrained to footer_bg_width */}
-      <div style={{ width: '100%', maxWidth: bgW, background: footerBg }}>
+      {/* Outer band — no background; footer content and copyright each carry their own */}
+      <div style={{ width: '100%', maxWidth: bgW }}>
         {hasBgImg ? (
-          /* Image case: stack image then copyright below */
-          <>
+          /* Image case: image as bg, footer content overlaid, copyright below */
+          <div style={{ position: 'relative' }}>
             <img src={site.footer_bg_image_url} alt="" style={{ width: '100%', display: 'block' }} />
-            <CopyrightBar />
-          </>
-        ) : (
-          /* No image: solid color area with copyright pinned to bottom */
-          <div style={{ position: 'relative', minHeight: footerHeight }}>
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-              <CopyrightBar />
+              <FooterContent />
             </div>
+            <CopyrightStrip />
           </div>
+        ) : (
+          /* No image: plain block siblings — minHeight on footer content drives the height slider */
+          <>
+            <div style={{ minHeight: footerHeight, background: footerBg }}>
+              <div style={{ maxWidth: cW, margin: '0 auto' }}>
+                {site.footer_html ? (
+                  <div style={{ padding: '1.5rem 1rem', color: '#fff', fontSize: '0.9rem', lineHeight: 1.6 }}
+                    dangerouslySetInnerHTML={{ __html: site.footer_html }} />
+                ) : null}
+              </div>
+            </div>
+            <CopyrightStrip />
+          </>
         )}
       </div>
-    </div>
-  );
-}
-
-// ── BlockPreview: renders each block type as real page content ────
-function BlockPreview({ block, isSelected, onFieldSave, onImagesChange, site = {} }) {
-  const d = block.block_data || {};
-  const bt = block.block_type;
-  const primaryColor = site.primary_color || '#3D6B34';
-  const accentColor  = site.accent_color  || '#FFC567';
-  const textColor    = site.text_color    || '#111827';
-  const fontFamily   = site.font_family   || 'inherit';
-  const bgColor      = site.bg_color      || '#fff';
-  // Per-block bg override stored in block_data.bg_color
-  const blockBg = d.bg_color || bgColor;
-
-  // ── Hero ──
-  if (bt === 'hero') {
-    const heroBgW = site.body_bg_width || '100%';
-    // Hero defaults to Section Background color (site.bg_color), not nav color
-    const heroBg = d.bg_color || bgColor;
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <div style={{
-          width: '100%', maxWidth: heroBgW,
-          position: 'relative', minHeight: 300,
-          background: d.image_url ? `url(${d.image_url}) center/cover no-repeat` : heroBg,
-          display: 'flex', alignItems: 'center',
-          justifyContent: d.align === 'left' ? 'flex-start' : d.align === 'right' ? 'flex-end' : 'center',
-          fontFamily,
-        }}>
-          {d.overlay && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.42)' }} />}
-          <div style={{ position: 'relative', zIndex: 1, padding: '2.5rem 3rem', textAlign: d.align || 'center', maxWidth: 720, width: '100%' }}>
-            <CE value={d.headline} tag="h1" onSave={v => onFieldSave('headline', v)}
-              style={{ color: '#fff', fontSize: '2.5rem', fontWeight: 800, margin: '0 0 0.6rem 0', lineHeight: 1.15, fontFamily }}
-              placeholder="Enter headline…" />
-            <CE value={d.subtext} tag="p" onSave={v => onFieldSave('subtext', v)}
-              style={{ color: 'rgba(255,255,255,0.88)', fontSize: '1.15rem', margin: '0 0 1.5rem 0', lineHeight: 1.55, fontFamily }}
-              placeholder="Enter sub-text…" />
-            {(d.cta_text || isSelected) && (
-              <CE value={d.cta_text} tag="span" onSave={v => onFieldSave('cta_text', v)}
-                style={{ display: 'inline-block', background: accentColor, color: '#fff', padding: '0.6rem 1.75rem', borderRadius: 8, fontWeight: 700, fontSize: '1rem', fontFamily, cursor: 'pointer' }}
-                placeholder="Button text…" />
-            )}
-          </div>
-          {isSelected && <HeroImageManager imageUrl={d.image_url} onFieldSave={onFieldSave} />}
-        </div>
-      </div>
-    );
-  }
-
-  // ── About / Content ──
-  if (bt === 'about' || bt === 'content') {
-    return <AboutContentBlock block={block} isSelected={isSelected} onFieldSave={onFieldSave} onImagesChange={onImagesChange} site={site} />;
-  }
-
-  // ── Divider ──
-  if (bt === 'divider') {
-    return (
-      <div style={{ height: d.height || 40, background: isSelected ? 'rgba(59,130,246,0.06)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {isSelected && <span style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Spacer — {d.height || 40}px</span>}
-      </div>
-    );
-  }
-
-  // ── Data-backed blocks (livestock, produce, services, etc.) ──
-  const blockType = BLOCK_TYPES.find(b => b.type === bt) || { icon: '📦', label: bt };
-  const bgW = site.body_bg_width || '100%';
-  const cW  = site.body_content_width || '100%';
-  return (
-    <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: bgW, background: blockBg }}>
-        <div style={{ maxWidth: cW, margin: '0 auto', padding: '0 3rem 2.5rem', borderTop: `3px solid ${primaryColor}20`, textAlign: 'center', minHeight: 180, fontFamily }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{blockType.icon}</div>
-          <div style={{ fontSize: '1rem', fontWeight: 700, color: primaryColor }}>{blockType.label}</div>
-          {d.heading !== undefined && (
-            <CE value={d.heading} tag="p" onSave={v => onFieldSave('heading', v)}
-              style={{ fontSize: '1.1rem', color: textColor, fontWeight: 700, margin: '0.5rem auto', maxWidth: 400, fontFamily }}
-              placeholder="Section heading…" />
-          )}
-          <div style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '0.5rem' }}>Live data from your account will appear here on your published site.</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── CanvasBlock: wraps BlockPreview with selection outline & drop ─
-function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onFieldSave, onFieldsSave, onMediaDrop, onDragStart, onDragOver, onDrop, isDragging, site }) {
-  const [mediaDragOver, setMediaDragOver] = useState(false);
-
-  const handleDragOver = (e) => {
-    if (e.dataTransfer.types.includes('application/x-media-url')) {
-      e.preventDefault();
-      e.stopPropagation();
-      setMediaDragOver(true);
-    } else {
-      onDragOver(e, index);
-    }
-  };
-
-  const handleDrop = (e) => {
-    if (e.dataTransfer.types.includes('application/x-media-url')) {
-      e.preventDefault();
-      e.stopPropagation();
-      setMediaDragOver(false);
-      const url = e.dataTransfer.getData('application/x-media-url');
-      if (url) onMediaDrop(block.block_id, url);
-    } else {
-      onDrop(e);
-    }
-  };
-
-  const handleImagesChange = useCallback((newImages) => {
-    // newImages is [{url, position}] — image_url tracks first image for backward compat
-    const firstUrl = newImages[0]?.url || newImages[0] || '';
-    onFieldsSave(block.block_id, { images: newImages, image_url: firstUrl });
-  }, [block.block_id, onFieldsSave]);
-
-  return (
-    <div
-      draggable
-      onDragStart={e => {
-        // Don't drag when user is trying to select text inside a contentEditable
-        if (isSelected || e.target.closest?.('[contenteditable]')) { e.preventDefault(); return; }
-        onDragStart(e, index);
-      }}
-      onDragOver={handleDragOver}
-      onDragLeave={() => setMediaDragOver(false)}
-      onDrop={handleDrop}
-      onClick={e => { e.stopPropagation(); onSelect(block); }}
-      style={{
-        position: 'relative',
-        outline: isSelected ? '2px solid #3b82f6' : mediaDragOver ? '2px dashed #60a5fa' : '2px solid transparent',
-        borderRadius: 4,
-        background: mediaDragOver ? 'rgba(59,130,246,0.04)' : 'transparent',
-        opacity: isDragging ? 0.4 : 1,
-        marginBottom: 2,
-        transition: 'outline 0.1s',
-        cursor: isSelected ? 'default' : 'pointer',
-      }}
-    >
-      <BlockPreview
-        block={block}
-        isSelected={isSelected}
-        onFieldSave={(key, val) => onFieldSave(block.block_id, key, val)}
-        onImagesChange={handleImagesChange}
-        site={site}
-      />
-      {isSelected && (
-        <FloatingBlockToolbar
-          onDelete={() => onDelete(block.block_id)}
-          onMoveUp={onMoveUp}
-          onMoveDown={onMoveDown}
-          isFirst={isFirst}
-          isLast={isLast}
-        />
-      )}
-      {mediaDragOver && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', borderRadius: 4, zIndex: 5 }}>
-          <span style={{ background: 'rgba(59,130,246,0.88)', color: '#fff', padding: '0.5rem 1.25rem', borderRadius: 6, fontSize: 14, fontWeight: 600 }}>
-            Drop to add image
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── BlockOptionsPanel: right-side structural options ──────────────
-function BlockOptionsPanel({ block, onFieldSave, site = {} }) {
-  if (!block) return null;
-  const d = block.block_data || {};
-  const bt = block.block_type;
-
-  const paletteColors = [
-    site.primary_color, site.secondary_color, site.accent_color,
-    site.bg_color, site.text_color, site.nav_text_color, site.footer_bg_color,
-  ].filter(Boolean);
-
-  // Shared background color picker shown at top of every block panel
-  const BgColorField = () => (
-    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #f3f4f6' }}>
-      <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Block Background</div>
-      <InlineColorPicker
-        value={d.bg_color || site.bg_color || '#ffffff'}
-        onChange={v => onFieldSave('bg_color', v)}
-        paletteColors={paletteColors}
-      />
-      {d.bg_color && (
-        <button onClick={() => onFieldSave('bg_color', '')}
-          style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
-          Reset to site default
-        </button>
-      )}
-    </div>
-  );
-
-  const Pill = ({ label, active, onClick }) => (
-    <button onClick={onClick}
-      style={{
-        padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: 'pointer', marginRight: 4, marginBottom: 4,
-        border: '1px solid ' + (active ? '#3b82f6' : '#d1d5db'),
-        background: active ? '#3b82f6' : '#f9fafb',
-        color: active ? '#fff' : '#374151',
-      }}>
-      {label}
-    </button>
-  );
-
-  const Field = ({ label, children }) => (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{label}</div>
-      {children}
-    </div>
-  );
-
-  const WidthField = () => (
-    <Field label="Block Width">
-      {[['full','Full'],['half','Half'],['third','⅓']].map(([v,l]) => (
-        <Pill key={v} label={l} active={(d.col_span || 'full') === v} onClick={() => onFieldSave('col_span', v)} />
-      ))}
-    </Field>
-  );
-
-  if (bt === 'hero') return (
-    <div style={{ padding: 16, overflowY: 'auto', height: '100%' }}>
-      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 16 }}>Hero Options</div>
-      <BgColorField />
-      <Field label="Text Alignment">
-        {[['left','Left'],['center','Center'],['right','Right']].map(([v,l]) => (
-          <Pill key={v} label={l} active={(d.align || 'center') === v} onClick={() => onFieldSave('align', v)} />
-        ))}
-      </Field>
-      <Field label="Dark Overlay">
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
-          <input type="checkbox" checked={!!d.overlay} onChange={e => onFieldSave('overlay', e.target.checked)}
-            style={{ width: 16, height: 16, accentColor: '#3b82f6' }} />
-          <span style={{ color: '#374151' }}>Enabled</span>
-        </label>
-      </Field>
-      <Field label="CTA Link">
-        <input className={inp} value={d.cta_link || ''} placeholder="#about or https://…"
-          onChange={e => onFieldSave('cta_link', e.target.value)} />
-      </Field>
-      <WidthField />
-    </div>
-  );
-
-  if (bt === 'about' || bt === 'content') return (
-    <div style={{ padding: 16, overflowY: 'auto', height: '100%' }}>
-      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 16 }}>Block Options</div>
-      <BgColorField />
-      <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 16, lineHeight: 1.4 }}>
-        Select the block, then click an image to use the ↑ ← → ↓ buttons on each image to position it individually.
-      </div>
-      <WidthField />
-    </div>
-  );
-
-  if (bt === 'divider') return (
-    <div style={{ padding: 16 }}>
-      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 16 }}>Divider Options</div>
-      <BgColorField />
-      <Field label="Height (px)">
-        <input type="number" className={inp} value={d.height || 40}
-          onChange={e => onFieldSave('height', Number(e.target.value))} />
-      </Field>
-    </div>
-  );
-
-  // Generic
-  return (
-    <div style={{ padding: 16 }}>
-      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 16 }}>Block Options</div>
-      <BgColorField />
-      <WidthField />
-      {(d.max_items !== undefined) && (
-        <Field label="Max Items">
-          <input type="number" className={inp} value={d.max_items}
-            onChange={e => onFieldSave('max_items', Number(e.target.value))} />
-        </Field>
-      )}
-      {(d.max_posts !== undefined) && (
-        <Field label="Max Posts">
-          <input type="number" className={inp} value={d.max_posts}
-            onChange={e => onFieldSave('max_posts', Number(e.target.value))} />
-        </Field>
-      )}
     </div>
   );
 }
@@ -1479,6 +1116,7 @@ function MediaPanel({ siteId }) {
     try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch { return []; }
   });
   const [uploading, setUploading] = useState(false);
+  const [mediaDragging, setMediaDragging] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
   const fileRef = useRef(null);
 
@@ -1513,10 +1151,14 @@ function MediaPanel({ siteId }) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Upload controls */}
       <div style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
-        <button onClick={() => fileRef.current?.click()}
-          style={{ width: '100%', padding: '7px 0', borderRadius: 8, border: '1px solid #bfdbfe', background: '#eff6ff', color: '#3b82f6', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          {uploading ? '⏳ Uploading…' : '+ Upload Images'}
-        </button>
+        <div
+          onClick={() => fileRef.current?.click()}
+          onDragOver={e => { e.preventDefault(); e.stopPropagation(); setMediaDragging(true); }}
+          onDragLeave={() => setMediaDragging(false)}
+          onDrop={e => { e.preventDefault(); e.stopPropagation(); setMediaDragging(false); handleUpload(e.dataTransfer.files); }}
+          style={{ width: '100%', padding: '10px 0', borderRadius: 8, border: `1.5px dashed ${mediaDragging ? '#3b82f6' : '#bfdbfe'}`, background: mediaDragging ? '#dbeafe' : '#eff6ff', color: mediaDragging ? '#1d4ed8' : '#3b82f6', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.15s', textAlign: 'center' }}>
+          {uploading ? '⏳ Uploading…' : mediaDragging ? '📂 Drop images here' : '+ Upload Images or Drop Here'}
+        </div>
         <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
           onChange={e => handleUpload(e.target.files)} />
         <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
@@ -1595,6 +1237,7 @@ function MediaPanel({ siteId }) {
 // ══════════════════════════════════════════════════════════════════
 export default function WebsiteBuilder() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
 
@@ -1611,6 +1254,7 @@ export default function WebsiteBuilder() {
   const [newPageName, setNewPageName]         = useState('');
   const [editingPageId, setEditingPageId]     = useState(null);
   const [editingPageName, setEditingPageName] = useState('');
+  const [nestingPageId, setNestingPageId]     = useState(null); // page showing parent picker
 
   // Block picker
   const [showBlockPicker, setShowBlockPicker] = useState(false);
@@ -1634,6 +1278,7 @@ export default function WebsiteBuilder() {
 
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [activeTab, setActiveTab]         = useState('pages'); // 'pages' | 'blocks' | 'media'
+  const [sidebarOpen, setSidebarOpen]     = useState(true);
 
   // Drag-to-reorder
   const dragIdx = useRef(null);
@@ -1664,7 +1309,7 @@ export default function WebsiteBuilder() {
 
   useEffect(() => {
     if (!site) return;
-    if (paramView === 'design' || paramView === 'settings' || paramView === 'delete') {
+    if (paramView === 'design' || paramView === 'settings' || paramView === 'delete' || paramView === 'manage-pages') {
       setActivePage(paramView);
       return;
     }
@@ -1702,7 +1347,7 @@ export default function WebsiteBuilder() {
   const loadPages = async (websiteId) => {
     const ps = await apiFetch(`/api/website/pages?website_id=${websiteId}`);
     setPages(ps);
-    if (paramView === 'design' || paramView === 'settings' || paramView === 'delete') {
+    if (paramView === 'design' || paramView === 'settings' || paramView === 'delete' || paramView === 'manage-pages') {
       setActivePage(paramView);
       return;
     }
@@ -1711,6 +1356,8 @@ export default function WebsiteBuilder() {
       const chosen = target || ps.find(p => p.is_home_page) || ps[0];
       setActivePage(chosen);
       await loadBlocks(chosen.page_id);
+    } else {
+      setActivePage('manage-pages');
     }
   };
 
@@ -1721,6 +1368,7 @@ export default function WebsiteBuilder() {
   };
 
   const selectPage = async (page) => {
+    navigate(`?BusinessID=${BusinessID}&page=${page.page_id}`, { replace: true });
     setActivePage(page);
     setBlocks([]);
     setShowBlockPicker(false);
@@ -1820,15 +1468,31 @@ export default function WebsiteBuilder() {
     } catch (e) { alert(e.message); }
   };
 
+  // Set or clear parent_page_id (null = promote to top-level)
+  const setPageParent = async (pageId, parentId) => {
+    try {
+      const updated = await apiFetch(`/api/website/pages/${pageId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ parent_page_id: parentId }),
+      });
+      setPages(prev => prev.map(p => p.page_id === pageId ? updated : p));
+      if (activePage?.page_id === pageId) setActivePage(updated);
+    } catch (e) { alert(e.message); }
+    setNestingPageId(null);
+  };
+
   const deletePage = async (pageId) => {
     if (!confirm('Delete this page and all its blocks?')) return;
     try {
       await apiFetch(`/api/website/pages/${pageId}`, { method: 'DELETE' });
-      const remaining = pages.filter(p => p.page_id !== pageId);
+      // Remove deleted page; children get promoted to top-level by backend
+      const remaining = pages
+        .filter(p => p.page_id !== pageId)
+        .map(p => p.parent_page_id === pageId ? { ...p, parent_page_id: null } : p);
       setPages(remaining);
       if (activePage?.page_id === pageId) {
-        if (remaining.length > 0) { await selectPage(remaining[0]); }
-        else { setActivePage(null); setBlocks([]); }
+        if (remaining.length > 0) { await selectPage(remaining.find(p => p.is_home_page) || remaining[0]); }
+        else { setActivePage('manage-pages'); setBlocks([]); }
       }
     } catch (e) { alert(e.message); }
   };
@@ -1838,6 +1502,77 @@ export default function WebsiteBuilder() {
       const updated = await apiFetch(`/api/website/pages/${page.page_id}`, { method: 'PUT', body: JSON.stringify({ is_published: !page.is_published }) });
       setPages(prev => prev.map(p => p.page_id === page.page_id ? updated : p));
       if (activePage?.page_id === page.page_id) setActivePage(updated);
+    } catch (e) { alert(e.message); }
+  };
+
+  // Move page within its sibling group (same parent)
+  const movePage = async (pageId, direction) => {
+    const page = pages.find(p => p.page_id === pageId);
+    if (!page) return;
+    const siblings = pages
+      .filter(p => p.parent_page_id === page.parent_page_id)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    const idx = siblings.findIndex(p => p.page_id === pageId);
+    const swapIdx = idx + direction;
+    if (swapIdx < 0 || swapIdx >= siblings.length) return;
+    // Swap sort_orders between the two pages
+    const swapPage = siblings[swapIdx];
+    const myOrder = page.sort_order ?? idx;
+    const theirOrder = swapPage.sort_order ?? swapIdx;
+    // Optimistic update
+    setPages(prev => prev.map(p => {
+      if (p.page_id === pageId) return { ...p, sort_order: theirOrder };
+      if (p.page_id === swapPage.page_id) return { ...p, sort_order: myOrder };
+      return p;
+    }));
+    try {
+      await Promise.all([
+        apiFetch(`/api/website/pages/${pageId}`, { method: 'PUT', body: JSON.stringify({ sort_order: theirOrder }) }),
+        apiFetch(`/api/website/pages/${swapPage.page_id}`, { method: 'PUT', body: JSON.stringify({ sort_order: myOrder }) }),
+      ]);
+    } catch { /* best-effort, state already updated */ }
+  };
+
+  const setHomePage = async (pageId) => {
+    try {
+      const updated = await apiFetch(`/api/website/pages/${pageId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ is_home_page: true }),
+      });
+      // Mark all others as not home page client-side
+      setPages(prev => prev.map(p => p.page_id === pageId ? updated : { ...p, is_home_page: false }));
+      if (activePage?.page_id === pageId) setActivePage(updated);
+    } catch (e) { alert(e.message); }
+  };
+
+  // Accepts an array of page IDs in the desired order within their sibling group
+  const reorderPages = async (orderedIds) => {
+    // Optimistic update: assign new sort_orders 0,1,2,...
+    setPages(prev => {
+      const updated = [...prev];
+      orderedIds.forEach((id, idx) => {
+        const i = updated.findIndex(p => p.page_id === id);
+        if (i !== -1) updated[i] = { ...updated[i], sort_order: idx };
+      });
+      return updated;
+    });
+    // Persist all in parallel (best-effort)
+    try {
+      await Promise.all(orderedIds.map((id, idx) =>
+        apiFetch(`/api/website/pages/${id}`, { method: 'PUT', body: JSON.stringify({ sort_order: idx }) })
+      ));
+    } catch { /* state already updated */ }
+  };
+
+  const renameDirect = async (pageId, name) => {
+    if (!name.trim()) return;
+    try {
+      const updated = await apiFetch(`/api/website/pages/${pageId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ page_name: name.trim(), slug: slugify(name.trim()) }),
+      });
+      setPages(prev => prev.map(p => p.page_id === pageId ? updated : p));
+      if (activePage?.page_id === pageId) setActivePage(updated);
     } catch (e) { alert(e.message); }
   };
 
@@ -2018,10 +1753,11 @@ export default function WebsiteBuilder() {
   );
 
   // ── Main builder UI ────────────────────────────────────────────
-  const isDesign   = activePage === 'design';
-  const isSettings = activePage === 'settings';
-  const isDelete   = activePage === 'delete';
-  const isPage     = activePage && typeof activePage === 'object';
+  const isDesign      = activePage === 'design';
+  const isSettings    = activePage === 'settings';
+  const isDelete      = activePage === 'delete';
+  const isManagePages = activePage === 'manage-pages';
+  const isPage        = activePage && typeof activePage === 'object';
 
   // ── CANVAS PAGE EDITOR ─────────────────────────────────────────
   if (isPage) return (
@@ -2076,12 +1812,16 @@ export default function WebsiteBuilder() {
             {/* ── Left icon tabs (52px) ── */}
             <div style={{ width: 52, flexShrink: 0, background: '#f9fafb', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 8, gap: 4 }}>
               {[['pages','📄','Pages'],['blocks','➕','Blocks'],['media','🖼️','Media']].map(([id, icon, label]) => (
-                <button key={id} onClick={() => setActiveTab(id)} title={label}
-                  style={{ width: 40, height: 40, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', background: activeTab === id ? '#e0f2fe' : 'transparent', color: activeTab === id ? '#0369a1' : '#6b7280' }}>
+                <button key={id} onClick={() => { if (activeTab === id) { setSidebarOpen(o => !o); } else { setActiveTab(id); setSidebarOpen(true); } }} title={label}
+                  style={{ width: 40, height: 40, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', background: activeTab === id && sidebarOpen ? '#e0f2fe' : 'transparent', color: activeTab === id && sidebarOpen ? '#0369a1' : '#6b7280' }}>
                   {icon}
                 </button>
               ))}
               <div style={{ flex: 1 }} />
+              <button onClick={() => setActivePage('manage-pages')} title="Manage Pages"
+                style={{ width: 40, height: 40, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 18, background: 'transparent', color: '#6b7280', marginBottom: 4 }}>
+                📋
+              </button>
               <button onClick={() => setActivePage('design')} title="Design"
                 style={{ width: 40, height: 40, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 18, background: 'transparent', color: '#6b7280', marginBottom: 4 }}>
                 🎨
@@ -2092,46 +1832,90 @@ export default function WebsiteBuilder() {
               </button>
             </div>
 
-            {/* ── Left content panel (240px) ── */}
-            <div style={{ width: 240, flexShrink: 0, background: '#fff', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* ── Left content panel (240px, collapsible) ── */}
+            <div style={{ width: sidebarOpen ? 240 : 0, flexShrink: 0, background: '#fff', borderRight: sidebarOpen ? '1px solid #e5e7eb' : 'none', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width 0.18s ease' }}>
 
               {/* Pages tab */}
               {activeTab === 'pages' && (
-                <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', padding: '4px 8px 8px' }}>Pages</div>
-                  {pages.map(page => (
-                    <div key={page.page_id}
-                      style={{ borderRadius: 8, marginBottom: 2 }}>
-                      {editingPageId === page.page_id ? (
-                        <div style={{ display: 'flex', gap: 4, padding: '4px 6px' }}>
-                          <input autoFocus value={editingPageName}
-                            onChange={e => setEditingPageName(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') renamePage(page.page_id); if (e.key === 'Escape') setEditingPageId(null); }}
-                            style={{ flex: 1, border: '1px solid #3b82f6', borderRadius: 6, padding: '3px 6px', fontSize: 12 }} />
-                          <button onClick={() => renamePage(page.page_id)} style={{ fontSize: 11, padding: '2px 6px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>✓</button>
-                        </div>
-                      ) : (
-                        <div
-                          onClick={() => selectPage(page)}
-                          style={{ display: 'flex', alignItems: 'center', padding: '7px 10px', borderRadius: 8, cursor: 'pointer', background: activePage?.page_id === page.page_id ? '#eff6ff' : 'transparent', gap: 6 }}
-                          className="group"
-                        >
-                          <span style={{ flex: 1, fontSize: 13, fontWeight: activePage?.page_id === page.page_id ? 600 : 400, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{page.page_name}</span>
-                          {!page.is_published && <span style={{ fontSize: 9, color: '#9ca3af', flexShrink: 0 }}>hidden</span>}
-                          <div style={{ display: 'flex', gap: 2, flexShrink: 0, opacity: 0 }} className="group-actions">
-                            <button onClick={e => { e.stopPropagation(); setEditingPageId(page.page_id); setEditingPageName(page.page_name); }}
-                              style={{ padding: '1px 5px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#6b7280' }} title="Rename">✏️</button>
-                            <button onClick={e => { e.stopPropagation(); togglePagePublished(page); }}
-                              style={{ padding: '1px 5px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12 }} title={page.is_published ? 'Hide' : 'Show'}>
-                              {page.is_published ? '👁' : '🚫'}
-                            </button>
-                            <button onClick={e => { e.stopPropagation(); deletePage(page.page_id); }}
-                              style={{ padding: '1px 5px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#ef4444' }} title="Delete">🗑</button>
+                <div style={{ flex: 1, overflowY: 'auto', padding: 8, minWidth: 240 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px 8px' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>Pages</span>
+                    <button onClick={() => setSidebarOpen(false)} title="Close panel" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16, lineHeight: 1, padding: '0 2px' }}>×</button>
+                  </div>
+                  {(() => {
+                    // Build ordered tree: top-level pages, each followed by their children
+                    const topLevel = pages.filter(p => !p.parent_page_id);
+                    const childrenOf = parentId => pages.filter(p => p.parent_page_id === parentId);
+                    const tree = [];
+                    topLevel.forEach(p => {
+                      tree.push({ page: p, depth: 0 });
+                      childrenOf(p.page_id).forEach(c => tree.push({ page: c, depth: 1 }));
+                    });
+                    return tree.map(({ page, depth }) => (
+                      <div key={page.page_id} style={{ borderRadius: 8, marginBottom: 2, marginLeft: depth === 1 ? 12 : 0 }}>
+                        {/* Parent picker shown inline when this page is being nested */}
+                        {nestingPageId === page.page_id ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+                            <span style={{ fontSize: 11, color: '#3b82f6', whiteSpace: 'nowrap' }}>Nest under:</span>
+                            <select autoFocus size={1}
+                              style={{ flex: 1, fontSize: 11, border: '1px solid #93c5fd', borderRadius: 4, padding: '1px 3px' }}
+                              defaultValue=""
+                              onChange={e => { if (e.target.value) setPageParent(page.page_id, parseInt(e.target.value)); }}>
+                              <option value="" disabled>Pick parent…</option>
+                              {topLevel.filter(p => p.page_id !== page.page_id).map(p => (
+                                <option key={p.page_id} value={p.page_id}>{p.page_name}</option>
+                              ))}
+                            </select>
+                            <button onClick={() => setNestingPageId(null)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 14, lineHeight: 1, padding: '0 2px' }}>×</button>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        ) : editingPageId === page.page_id ? (
+                          <div style={{ display: 'flex', gap: 4, padding: '4px 6px' }}>
+                            <input autoFocus value={editingPageName}
+                              onChange={e => setEditingPageName(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') renamePage(page.page_id); if (e.key === 'Escape') setEditingPageId(null); }}
+                              style={{ flex: 1, border: '1px solid #3b82f6', borderRadius: 6, padding: '3px 6px', fontSize: 12 }} />
+                            <button onClick={() => renamePage(page.page_id)} style={{ fontSize: 11, padding: '2px 6px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>✓</button>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() => selectPage(page)}
+                            style={{ display: 'flex', alignItems: 'center', padding: '7px 8px', borderRadius: 8, cursor: 'pointer', background: activePage?.page_id === page.page_id ? '#eff6ff' : 'transparent', gap: 4 }}
+                            className="group"
+                          >
+                            {/* Depth indicator for children */}
+                            {depth === 1 && <span style={{ color: '#d1d5db', fontSize: 10, flexShrink: 0 }}>└</span>}
+                            <span style={{ flex: 1, fontSize: 13, fontWeight: activePage?.page_id === page.page_id ? 600 : 400, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {page.page_name}
+                            </span>
+                            {childrenOf(page.page_id).length > 0 && (
+                              <span style={{ fontSize: 9, color: '#9ca3af', flexShrink: 0 }}>▾</span>
+                            )}
+                            {!page.is_published && <span style={{ fontSize: 9, color: '#9ca3af', flexShrink: 0 }}>hidden</span>}
+                            <div style={{ display: 'flex', gap: 1, flexShrink: 0, opacity: 0 }} className="group-actions">
+                              <button onClick={e => { e.stopPropagation(); setEditingPageId(page.page_id); setEditingPageName(page.page_name); }}
+                                style={{ padding: '1px 4px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#6b7280' }} title="Rename">✏️</button>
+                              {/* Nest (top-level → child) or Promote (child → top-level) */}
+                              {depth === 0 && topLevel.length > 1 && childrenOf(page.page_id).length === 0 && (
+                                <button onClick={e => { e.stopPropagation(); setNestingPageId(page.page_id); }}
+                                  style={{ padding: '1px 4px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#6b7280' }} title="Nest under another page">→</button>
+                              )}
+                              {depth === 1 && (
+                                <button onClick={e => { e.stopPropagation(); setPageParent(page.page_id, null); }}
+                                  style={{ padding: '1px 4px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#6b7280' }} title="Promote to top-level">←</button>
+                              )}
+                              <button onClick={e => { e.stopPropagation(); togglePagePublished(page); }}
+                                style={{ padding: '1px 4px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11 }} title={page.is_published ? 'Hide from nav' : 'Show in nav'}>
+                                {page.is_published ? '👁' : '🚫'}
+                              </button>
+                              <button onClick={e => { e.stopPropagation(); deletePage(page.page_id); }}
+                                style={{ padding: '1px 4px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#ef4444' }} title="Delete">🗑</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ));
+                  })()}
 
                   {showNewPage ? (
                     <div style={{ display: 'flex', gap: 4, padding: '4px 6px', marginTop: 4 }}>
@@ -2148,14 +1932,21 @@ export default function WebsiteBuilder() {
                       + Add Page
                     </button>
                   )}
+                  <button onClick={() => setActivePage('manage-pages')}
+                    style={{ width: '100%', marginTop: 10, padding: '6px 10px', background: 'none', border: '1px solid #e5e7eb', borderRadius: 8, cursor: 'pointer', fontSize: 11, color: '#6b7280', textAlign: 'center' }}>
+                    📋 Manage All Pages →
+                  </button>
                   <style>{`.group:hover .group-actions { opacity: 1 !important; }`}</style>
                 </div>
               )}
 
               {/* Blocks tab */}
               {activeTab === 'blocks' && (
-                <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', padding: '4px 8px 8px' }}>Add Block</div>
+                <div style={{ flex: 1, overflowY: 'auto', padding: 8, minWidth: 240 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px 8px' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>Add Block</span>
+                    <button onClick={() => setSidebarOpen(false)} title="Close panel" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16, lineHeight: 1, padding: '0 2px' }}>×</button>
+                  </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
                     {BLOCK_TYPES.map(bt => (
                       <button key={bt.type} onClick={() => addBlock(bt.type)}
@@ -2173,8 +1964,11 @@ export default function WebsiteBuilder() {
 
               {/* Media tab */}
               {activeTab === 'media' && (
-                <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', padding: '12px 12px 4px' }}>Media Library</div>
+                <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minWidth: 240 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 12px 4px' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>Media Library</span>
+                    <button onClick={() => setSidebarOpen(false)} title="Close panel" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16, lineHeight: 1, padding: '0 2px' }}>×</button>
+                  </div>
                   <div style={{ flex: 1, overflow: 'hidden' }}>
                     <MediaPanel siteId={site?.website_id} />
                   </div>
@@ -2207,7 +2001,7 @@ export default function WebsiteBuilder() {
                 maxWidth: previewMode === 'tablet' ? 768 : previewMode === 'mobile' ? 390 : '100%',
               }}>
                 {/* Simulated site header */}
-                <CanvasSiteHeader site={site} />
+                <CanvasSiteHeader site={site} pages={pages} />
 
                 {/* Page blocks */}
                 {blocks.length === 0 ? (
@@ -2215,7 +2009,7 @@ export default function WebsiteBuilder() {
                     <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>📄</div>
                     <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, color: '#374151' }}>This page has no blocks yet</div>
                     <div style={{ fontSize: 13, marginBottom: 20 }}>Click the ➕ tab on the left to add blocks</div>
-                    <button onClick={() => setActiveTab('blocks')}
+                    <button onClick={() => { setActiveTab('blocks'); setSidebarOpen(true); }}
                       style={{ padding: '8px 20px', background: site?.primary_color || '#3D6B34', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 14 }}>
                       + Add First Block
                     </button>
@@ -2233,9 +2027,6 @@ export default function WebsiteBuilder() {
                       onMoveDown={() => moveBlock(idx, 1)}
                       isFirst={idx === 0}
                       isLast={idx === blocks.length - 1}
-                      onFieldSave={saveBlockField}
-                      onFieldsSave={saveBlockFieldsMulti}
-                      onMediaDrop={handleMediaDrop}
                       onDragStart={handleDragStart}
                       onDragOver={handleDragOver}
                       onDrop={handleDrop}
@@ -2250,12 +2041,13 @@ export default function WebsiteBuilder() {
               </div>
             </main>
 
-            {/* ── Right options panel ── */}
+            {/* ── Right block editor panel ── */}
             {selectedBlock && (
-              <div style={{ width: 240, flexShrink: 0, background: '#fff', borderLeft: '1px solid #e5e7eb', overflowY: 'auto' }}>
-                <BlockOptionsPanel
+              <div key={selectedBlock.block_id} style={{ width: 280, flexShrink: 0, background: '#fff', borderLeft: '1px solid #e5e7eb', overflowY: 'auto' }}>
+                <BlockEditorPanel
                   block={selectedBlock}
                   onFieldSave={(key, val) => saveBlockField(selectedBlock.block_id, key, val)}
+                  onFieldsSave={(updates) => saveBlockFieldsMulti(selectedBlock.block_id, updates)}
                   site={site}
                 />
               </div>
@@ -2263,17 +2055,6 @@ export default function WebsiteBuilder() {
           </div>
         </div>
       </AccountLayout>
-
-      {/* SelectionToolbar rendered outside AccountLayout so fixed position is not clipped */}
-      <SelectionToolbar
-        canvasRef={canvasRef}
-        onImageAdd={addImageToSelectedBlock}
-        site={site}
-        paletteColors={site ? [
-          site.primary_color, site.secondary_color, site.accent_color,
-          site.bg_color, site.text_color, site.nav_text_color, site.footer_bg_color,
-        ].filter(Boolean) : []}
-      />
 
       {site && (
         <WebsiteAIAgent
@@ -2333,9 +2114,43 @@ export default function WebsiteBuilder() {
 
       <div style={{ minHeight: 'calc(100vh - 230px)' }}>
         <div className={`transition-all mx-auto ${previewMode === 'tablet' ? 'max-w-[768px]' : previewMode === 'mobile' ? 'max-w-[390px]' : 'max-w-none'}`}>
-
           {isDesign && <DesignView site={site} onSave={saveSite} saving={saving} onDelete={deleteSite} />}
           {isSettings && <SettingsView site={site} onSave={saveSite} saving={saving} onDelete={deleteSite} />}
+          {isManagePages && (
+            <PageManagementView
+              pages={pages}
+              site={site}
+              onMovePage={movePage}
+              onReorderPages={reorderPages}
+              onTogglePublished={togglePagePublished}
+              onSetHome={setHomePage}
+              onDelete={deletePage}
+              onSetParent={setPageParent}
+              onRename={renameDirect}
+              onAddPage={async (name, parentId, isNavHeading = false) => {
+                if (!name.trim()) return;
+                setSaving(true);
+                try {
+                  const siblings = pages.filter(p => p.parent_page_id === (parentId || null));
+                  const page = await apiFetch('/api/website/pages', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                      website_id: site.website_id,
+                      business_id: parseInt(BusinessID),
+                      page_name: name.trim(),
+                      slug: slugify(name.trim()),
+                      sort_order: siblings.length,
+                      parent_page_id: parentId || null,
+                      is_nav_heading: isNavHeading,
+                    }),
+                  });
+                  setPages(prev => [...prev, page]);
+                } catch (e) { alert(e.message); }
+                finally { setSaving(false); }
+              }}
+              onSelectPage={page => { selectPage(page); }}
+            />
+          )}
           {isDelete && (
             <div className="bg-white rounded-xl border border-red-100 shadow-sm p-6 max-w-lg">
               <h2 className="text-lg font-bold text-red-700 mb-2">Delete Website</h2>
@@ -2345,13 +2160,13 @@ export default function WebsiteBuilder() {
               </button>
             </div>
           )}
-          {!isDesign && !isSettings && !isDelete && (
-            <div className="flex items-center justify-center h-full bg-white rounded-xl border border-gray-100 text-gray-400 p-12">
-              Select a page from the sidebar to start editing.
+          {!isDesign && !isSettings && !isDelete && !isManagePages && (
+            <div className="flex items-center justify-center bg-white rounded-xl border border-gray-100 text-gray-400 p-12">
+              Select a page to start editing.
             </div>
           )}
-
         </div>
+
       </div>
     </AccountLayout>
 
@@ -2359,7 +2174,7 @@ export default function WebsiteBuilder() {
       <WebsiteAIAgent
         websiteId={site.website_id}
         businessId={parseInt(BusinessID)}
-        currentView={isDesign ? 'design' : isSettings ? 'settings' : 'page'}
+        currentView={isDesign ? 'design' : isSettings ? 'settings' : isManagePages ? 'pages' : 'page'}
       />
     )}
     </>
@@ -2764,6 +2579,260 @@ function WidthControl({ label, hint, value, onChange }) {
   );
 }
 
+// ── Page Management Dashboard ─────────────────────────────────────
+function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublished, onSetHome, onDelete, onSetParent, onRename, onAddPage, onSelectPage }) {
+  const [editingId, setEditingId] = useState(null);
+  const [editingName, setEditingName] = useState('');
+  const [newPageName, setNewPageName] = useState('');
+  const [newPageParent, setNewPageParent] = useState('');
+  const [addingType, setAddingType] = useState(null);
+  const [dragSrcId, setDragSrcId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
+
+  // Build ordered tree: top-level sorted, each with sorted children
+  const topLevel = [...pages.filter(p => !p.parent_page_id)].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  const headings = topLevel.filter(p => p.is_nav_heading);
+  const childrenOf = parentId => [...pages.filter(p => p.parent_page_id === parentId)].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+  const rows = [];
+  topLevel.forEach(p => {
+    rows.push({ page: p, depth: 0 });
+    childrenOf(p.page_id).forEach(c => rows.push({ page: c, depth: 1 }));
+  });
+
+  // Drag-and-drop: reorder within the same sibling group
+  const handleDragStart = (e, pageId) => {
+    setDragSrcId(pageId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(pageId));
+  };
+  const handleDragOver = (e, pageId) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (pageId !== dragSrcId) setDragOverId(pageId);
+  };
+  const handleDrop = (e, targetPageId) => {
+    e.preventDefault();
+    const srcId = dragSrcId;
+    setDragSrcId(null);
+    setDragOverId(null);
+    if (!srcId || srcId === targetPageId) return;
+    const srcPage = pages.find(p => p.page_id === srcId);
+    const tgtPage = pages.find(p => p.page_id === targetPageId);
+    if (!srcPage || !tgtPage) return;
+    // Only allow reorder within same parent group
+    if (srcPage.parent_page_id !== tgtPage.parent_page_id) return;
+    const siblings = (srcPage.parent_page_id
+      ? pages.filter(p => p.parent_page_id === srcPage.parent_page_id)
+      : pages.filter(p => !p.parent_page_id)
+    ).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    const srcIdx = siblings.findIndex(p => p.page_id === srcId);
+    const tgtIdx = siblings.findIndex(p => p.page_id === targetPageId);
+    if (srcIdx === -1 || tgtIdx === -1) return;
+    const reordered = [...siblings];
+    reordered.splice(srcIdx, 1);
+    reordered.splice(tgtIdx, 0, srcPage);
+    onReorderPages(reordered.map(p => p.page_id));
+  };
+  const handleDragEnd = () => { setDragSrcId(null); setDragOverId(null); };
+
+  const commitRename = (pageId) => {
+    onRename(pageId, editingName);
+    setEditingId(null);
+  };
+
+  const handleAdd = async () => {
+    if (!newPageName.trim()) return;
+    const isHeading = addingType === 'heading';
+    await onAddPage(newPageName, newPageParent ? parseInt(newPageParent) : null, isHeading);
+    setNewPageName('');
+    setNewPageParent('');
+    setAddingType(null);
+  };
+
+  const btnBase = {
+    padding: '3px 8px', fontSize: 11, borderRadius: 5,
+    border: '1px solid #e5e7eb', cursor: 'pointer',
+    background: '#fff', color: '#374151', whiteSpace: 'nowrap',
+  };
+
+  return (
+    <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Page Management</h2>
+          <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>Click a name to rename · Drag rows to reorder</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setAddingType(t => t === 'heading' ? null : 'heading')}
+            style={{ padding: '7px 14px', background: addingType === 'heading' ? '#7C5CBF' : '#f3f4f6', color: addingType === 'heading' ? '#fff' : '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+            + Nav Heading
+          </button>
+          <button onClick={() => setAddingType(t => t === 'page' ? null : 'page')}
+            style={{ padding: '7px 14px', background: addingType === 'page' ? '#3D6B34' : '#3D6B34', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+            + Add Page
+          </button>
+        </div>
+      </div>
+
+      {/* Add form (shared for page and heading) */}
+      {addingType && (
+        <div style={{ padding: '12px 20px', background: addingType === 'heading' ? '#f5f3ff' : '#f0fdf4', borderBottom: `1px solid ${addingType === 'heading' ? '#ddd6fe' : '#d1fae5'}`, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: addingType === 'heading' ? '#7C5CBF' : '#3D6B34', whiteSpace: 'nowrap' }}>
+            {addingType === 'heading' ? '📌 New nav heading:' : '📄 New page:'}
+          </span>
+          <input
+            autoFocus
+            value={newPageName}
+            onChange={e => setNewPageName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setAddingType(null); }}
+            placeholder={addingType === 'heading' ? 'Heading label…' : 'Page name…'}
+            style={{ flex: '1 1 160px', border: `1px solid ${addingType === 'heading' ? '#c4b5fd' : '#6ee7b7'}`, borderRadius: 6, padding: '6px 10px', fontSize: 13 }}
+          />
+          {addingType === 'page' && (
+            <select value={newPageParent} onChange={e => setNewPageParent(e.target.value)}
+              style={{ flex: '1 1 160px', border: '1px solid #6ee7b7', borderRadius: 6, padding: '6px 10px', fontSize: 13, background: '#fff' }}>
+              <option value="">Top-level page</option>
+              {headings.map(h => <option key={h.page_id} value={h.page_id}>Under heading: {h.page_name}</option>)}
+              {topLevel.filter(p => !p.is_nav_heading).map(p => <option key={p.page_id} value={p.page_id}>Under page: {p.page_name}</option>)}
+            </select>
+          )}
+          <button onClick={handleAdd}
+            style={{ padding: '6px 16px', background: addingType === 'heading' ? '#7C5CBF' : '#3D6B34', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+            Add
+          </button>
+          <button onClick={() => { setAddingType(null); setNewPageName(''); setNewPageParent(''); }}
+            style={{ padding: '6px 10px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#9ca3af', lineHeight: 1 }}>
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Column headers */}
+      <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 200px 90px 72px 60px', padding: '6px 16px', background: '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
+        {['', 'Name', 'Under Heading / Group', 'Visible', 'Home', 'Actions'].map(h => (
+          <span key={h} style={{ fontSize: 10, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+        ))}
+      </div>
+
+      {/* Rows */}
+      {rows.map(({ page, depth }) => {
+        const isEditing = editingId === page.page_id;
+        const isHeading = page.is_nav_heading;
+        const isDragging = dragSrcId === page.page_id;
+        const isOver    = dragOverId === page.page_id;
+
+        return (
+          <div key={page.page_id}
+            draggable
+            onDragStart={e => handleDragStart(e, page.page_id)}
+            onDragOver={e => handleDragOver(e, page.page_id)}
+            onDrop={e => handleDrop(e, page.page_id)}
+            onDragEnd={handleDragEnd}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '28px 1fr 200px 90px 72px 60px',
+              padding: '8px 16px',
+              borderBottom: '1px solid #f9fafb',
+              alignItems: 'center',
+              background: isDragging ? '#e0f2fe' : isOver ? '#fef9c3' : isHeading ? '#faf5ff' : depth === 1 ? '#fafafa' : '#fff',
+              borderLeft: isHeading ? '3px solid #7C5CBF' : depth === 0 ? '3px solid #3D6B34' : '3px solid #d1fae5',
+              opacity: isDragging ? 0.5 : 1,
+              outline: isOver ? '2px dashed #f59e0b' : 'none',
+              cursor: 'grab',
+              transition: 'background 0.1s',
+            }}
+          >
+            {/* Drag handle */}
+            <div style={{ color: '#d1d5db', fontSize: 14, cursor: 'grab', userSelect: 'none', textAlign: 'center' }} title="Drag to reorder">⠿</div>
+
+            {/* Name */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              {depth === 1 && <span style={{ color: '#d1d5db', fontSize: 12, flexShrink: 0 }}>└</span>}
+              {isHeading && <span style={{ fontSize: 10, background: '#ede9fe', color: '#7C5CBF', borderRadius: 4, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>HEADING</span>}
+              {isEditing ? (
+                <div style={{ display: 'flex', gap: 4, flex: 1 }}>
+                  <input autoFocus value={editingName}
+                    onChange={e => setEditingName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') commitRename(page.page_id); if (e.key === 'Escape') setEditingId(null); }}
+                    style={{ flex: 1, border: '1px solid #3b82f6', borderRadius: 5, padding: '3px 7px', fontSize: 13 }} />
+                  <button onClick={() => commitRename(page.page_id)} style={{ ...btnBase, background: '#3b82f6', color: '#fff', border: 'none' }}>✓</button>
+                  <button onClick={() => setEditingId(null)} style={{ ...btnBase, color: '#9ca3af' }}>✕</button>
+                </div>
+              ) : (
+                <button onClick={() => { setEditingId(page.page_id); setEditingName(page.page_name); }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '2px 4px', borderRadius: 4, fontSize: 13, fontWeight: isHeading || depth === 0 ? 600 : 400, color: isHeading ? '#7C5CBF' : '#111827', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  title="Click to rename">
+                  {page.page_name}
+                  {page.is_home_page && <span style={{ marginLeft: 6, fontSize: 10, background: '#fef9c3', color: '#92400e', borderRadius: 4, padding: '1px 5px', fontWeight: 600 }}>HOME</span>}
+                </button>
+              )}
+            </div>
+
+            {/* Menu group (parent) — headings are always top-level */}
+            {isHeading ? (
+              <span style={{ fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>— top level —</span>
+            ) : (
+              <select
+                value={page.parent_page_id || ''}
+                onChange={e => onSetParent(page.page_id, e.target.value ? parseInt(e.target.value) : null)}
+                style={{ fontSize: 12, border: '1px solid #e5e7eb', borderRadius: 5, padding: '3px 6px', background: '#fff', color: '#374151', width: '100%' }}
+              >
+                <option value="">— Top level —</option>
+                {topLevel.filter(p => p.page_id !== page.page_id).map(p => (
+                  <option key={p.page_id} value={p.page_id}>{p.is_nav_heading ? '📌 ' : ''}{p.page_name}</option>
+                ))}
+              </select>
+            )}
+
+            {/* Visible toggle — headings are always visible */}
+            {isHeading ? (
+              <span style={{ fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>always</span>
+            ) : (
+              <button onClick={() => onTogglePublished(page)}
+                style={{ ...btnBase, background: page.is_published ? '#dcfce7' : '#f3f4f6', color: page.is_published ? '#166534' : '#6b7280', border: `1px solid ${page.is_published ? '#86efac' : '#e5e7eb'}`, fontWeight: 600, textAlign: 'center' }}>
+                {page.is_published ? '● Visible' : '○ Hidden'}
+              </button>
+            )}
+
+            {/* Home — headings can't be home */}
+            {isHeading ? (
+              <span />
+            ) : (
+              <button onClick={() => !page.is_home_page && onSetHome(page.page_id)}
+                title={page.is_home_page ? 'This is the home page' : 'Set as home page'}
+                style={{ ...btnBase, background: page.is_home_page ? '#fef9c3' : 'transparent', color: page.is_home_page ? '#92400e' : '#d1d5db', border: `1px solid ${page.is_home_page ? '#fde68a' : '#e5e7eb'}`, fontSize: 15, textAlign: 'center', cursor: page.is_home_page ? 'default' : 'pointer' }}>
+                {page.is_home_page ? '★' : '☆'}
+              </button>
+            )}
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 3 }}>
+              {!isHeading && (
+                <button onClick={() => onSelectPage(page)} title="Edit page content"
+                  style={{ ...btnBase, background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '3px 7px' }}>
+                  ✏️
+                </button>
+              )}
+              <button onClick={() => onDelete(page.page_id)} title="Delete"
+                style={{ ...btnBase, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '3px 7px' }}>
+                🗑
+              </button>
+            </div>
+          </div>
+        );
+      })}
+
+      {rows.length === 0 && (
+        <div style={{ padding: '3rem', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
+          No pages yet. Use the buttons above to add a nav heading or a page.
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Design full view ──────────────────────────────────────────────
 function DesignView({ site, onSave, saving }) {
   const [local, setLocal] = useState({
@@ -2797,9 +2866,12 @@ function DesignView({ site, onSave, saving }) {
     footer_content_width: site.footer_content_width || '100%',
     footer_bg_width:      site.footer_bg_width      || '100%',
     // Footer
-    footer_bg_image_url: site.footer_bg_image_url || '',
-    footer_html:         site.footer_html         || '',
-    footer_height:       site.footer_height       || 200,
+    footer_bg_image_url:   site.footer_bg_image_url   || '',
+    footer_html:           site.footer_html           || '',
+    footer_height:         Number(site.footer_height)  || 200,
+    copyright_bar_bg_color: site.copyright_bar_bg_color || '',
+    // Header banner background (blank = use primary_color)
+    header_banner_bg_color: site.header_banner_bg_color || '',
     // Page background
     bg_image_url:        site.bg_image_url        || '',
     bg_gradient:         site.bg_gradient         || '',
@@ -2885,17 +2957,58 @@ function DesignView({ site, onSave, saving }) {
     </div>
   );
 
-  // ── Live header preview (all three zones) ──
-  const HeaderPreview = () => {
+  // Checkerboard = transparent indicator
+  const checkered = 'linear-gradient(45deg,#ccc 25%,transparent 25%),linear-gradient(-45deg,#ccc 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ccc 75%),linear-gradient(-45deg,transparent 75%,#ccc 75%)';
+
+  // Transparent-aware color picker row: shows color picker + "Transparent" toggle
+  const ColorRowTransparent = ({ label, field, hint, fallback }) => {
+    const isTransp = local[field] === 'transparent';
+    return (
+      <div className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
+        <div>
+          <span className="text-sm font-medium text-gray-700">{label}</span>
+          {hint && <p className="text-xs text-gray-400 mt-0.5">{hint}</p>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {!isTransp && (
+            <InlineColorPicker value={local[field] || fallback} onChange={v => set(field, v)} paletteColors={paletteColors} />
+          )}
+          <button
+            onClick={() => set(field, isTransp ? (fallback || '#ffffff') : 'transparent')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, padding: '4px 9px',
+              borderRadius: 6, cursor: 'pointer', fontWeight: 500,
+              border: isTransp ? '1.5px solid #3b82f6' : '1px solid #d1d5db',
+              background: isTransp ? '#eff6ff' : '#fff',
+              color: isTransp ? '#2563eb' : '#6b7280',
+            }}
+          >
+            <span style={{ width: 12, height: 12, borderRadius: 2, display: 'inline-block', border: '1px solid #d1d5db',
+              background: checkered, backgroundSize: '6px 6px',
+              backgroundPosition: '0 0,0 3px,3px -3px,-3px 0' }} />
+            {isTransp ? 'Transparent ✓' : 'Transparent'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // ── Live header preview (all three zones) — called as function, not component ──
+  const renderHeaderPreview = () => {
     const bgW = local.header_bg_width || '100%';
     const cW  = local.header_content_width || '100%';
+    const transpTile = ['linear-gradient(45deg,#d1d5db 25%,transparent 25%)','linear-gradient(-45deg,#d1d5db 25%,transparent 25%)','linear-gradient(45deg,transparent 75%,#d1d5db 75%)','linear-gradient(-45deg,transparent 75%,#d1d5db 75%)'].join(',');
+    const transpStyle = { backgroundImage: transpTile, backgroundSize: '14px 14px', backgroundPosition: '0 0,0 7px,7px -7px,-7px 0', backgroundColor: '#f9fafb' };
+    const isTranspTopBar = local.top_bar_bg_color === 'transparent';
+    const isTranspBanner = local.header_banner_bg_color === 'transparent';
     return (
       <div style={{ borderRadius: 8, overflow: 'hidden', marginTop: '0.75rem', border: '1px solid #e5e7eb', background: 'transparent', display: 'flex', justifyContent: 'center' }}>
-        {/* Background band — only this carries the color, constrained to header_bg_width */}
-        <div style={{ width: '100%', maxWidth: bgW, display: 'flex', flexDirection: 'column', alignItems: 'center', background: local.primary_color }}>
+        {/* Each zone carries its own background — outer band is transparent so transparent zones show page bg */}
+        <div style={{ width: '100%', maxWidth: bgW, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {local.top_bar_enabled && (
-            <div style={{ width: '100%', maxWidth: cW, background: local.top_bar_bg_color, padding: '4px 10px', textAlign: local.top_bar_align }}>
-              <span style={{ fontSize: 11, color: local.top_bar_text_color, fontFamily: local.font_family }}
+            <div style={{ width: '100%', maxWidth: cW, padding: '4px 10px', textAlign: local.top_bar_align,
+              ...(isTranspTopBar ? transpStyle : { background: local.top_bar_bg_color || '#f8f5ef' }) }}>
+              <span style={{ fontSize: 11, color: isTranspTopBar ? '#374151' : local.top_bar_text_color, fontFamily: local.font_family }}
                 dangerouslySetInnerHTML={{ __html: local.top_bar_html || '<em>your-email@example.com | 555-123-4567</em>' }} />
             </div>
           )}
@@ -2904,7 +3017,8 @@ function DesignView({ site, onSave, saving }) {
             {local.header_banner_url ? (
               <img src={local.header_banner_url} alt="" style={{ width: '100%', display: 'block' }} />
             ) : (
-              <div style={{ height: Number(local.header_height) || 120, background: local.primary_color }} />
+              <div style={{ height: Number(local.header_height) || 120,
+                ...(isTranspBanner ? transpStyle : { background: local.header_banner_bg_color || local.primary_color }) }} />
             )}
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', padding: '0 1rem', gap: '0.75rem' }}>
               {local.logo_url && (
@@ -2926,46 +3040,77 @@ function DesignView({ site, onSave, saving }) {
     );
   };
 
-  const FooterPreview = () => {
+  // Called as a function (not <FooterPreview />) to avoid React unmount/remount on every
+  // DesignView render, which would cause stale closure snapshots of `local`.
+  const renderFooterPreview = () => {
     const hasBgImage = !!local.footer_bg_image_url;
-    const footerHeight = local.footer_height || 200;
+    const footerHeight = Number(local.footer_height) || 200;
     const bgW = local.footer_bg_width || '100%';
     const cW  = local.footer_content_width || '100%';
-    const PreviewCopyrightBar = () => (
-      <div style={{ maxWidth: cW, margin: '0 auto' }}>
-        {local.footer_html ? (
-          <div style={{ padding: '1rem', color: '#fff', fontSize: '0.82rem', lineHeight: 1.6 }}
-            dangerouslySetInnerHTML={{ __html: local.footer_html }} />
-        ) : (
-          <div style={{ padding: '1rem', color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', fontStyle: 'italic' }}>
-            No footer content — add some below.
-          </div>
-        )}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', padding: '0.5rem 1rem', background: 'rgba(0,0,0,0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.65)' }}>
+    const copyrightBg       = local.copyright_bar_bg_color; // '' | 'transparent' | hex
+    const isTranspCopyright = copyrightBg === 'transparent';
+    const isTranspFooter    = local.footer_bg_color === 'transparent';
+
+    // Checkerboard tile — makes transparent areas visually obvious in preview
+    const transpTile = [
+      'linear-gradient(45deg,#d1d5db 25%,transparent 25%)',
+      'linear-gradient(-45deg,#d1d5db 25%,transparent 25%)',
+      'linear-gradient(45deg,transparent 75%,#d1d5db 75%)',
+      'linear-gradient(-45deg,transparent 75%,#d1d5db 75%)',
+    ].join(',');
+    const transpStyle = { backgroundImage: transpTile, backgroundSize: '14px 14px', backgroundPosition: '0 0,0 7px,7px -7px,-7px 0', backgroundColor: '#f9fafb' };
+
+    // Footer content area — independent background, checkerboard if transparent
+    const footerContentStyle = isTranspFooter
+      ? transpStyle
+      : { background: local.footer_bg_color || local.primary_color || '#3D6B34' };
+
+    // Copyright strip — independent background, checkerboard if transparent
+    const copyrightStripStyle = isTranspCopyright
+      ? transpStyle
+      : { background: copyrightBg || 'rgba(0,0,0,0.15)' };
+
+    const copyrightStrip = (
+      <div style={{ ...copyrightStripStyle }}>
+        <div style={{ maxWidth: cW, margin: '0 auto', padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.68rem', color: isTranspCopyright ? '#374151' : 'rgba(255,255,255,0.65)' }}>
             {local.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
           </span>
-          <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>Powered by Oatmeal Farm Network</span>
+          <a href="https://www.OatmealFarmNetwork.com" target="_blank" rel="noopener noreferrer"
+            style={{ fontSize: '0.65rem', color: isTranspCopyright ? '#6b7280' : 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>
+            Powered by Oatmeal Farm Network
+          </a>
         </div>
       </div>
     );
+
     return (
-      <div style={{ borderRadius: 8, overflow: 'hidden', marginTop: '0.75rem', display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: local.font_family }}>
-        {/* Background band constrained to footer_bg_width */}
-        <div style={{ width: '100%', maxWidth: bgW, background: local.footer_bg_color }}>
+      <div style={{ borderRadius: 8, overflow: 'hidden', marginTop: '0.75rem', display: 'flex', justifyContent: 'center', fontFamily: local.font_family, border: '1px solid #e5e7eb' }}>
+        {/* Outer band — no background; footer content and copyright each carry their own */}
+        <div style={{ width: '100%', maxWidth: bgW }}>
           {hasBgImage ? (
-            /* Image case: image on top, copyright bar stacked below */
+            /* Image case: image as bg, copyright below */
             <>
               <img src={local.footer_bg_image_url} alt="" style={{ width: '100%', display: 'block' }} />
-              <PreviewCopyrightBar />
+              {copyrightStrip}
             </>
           ) : (
-            /* No image: solid color with copyright pinned to bottom */
-            <div style={{ position: 'relative', minHeight: footerHeight }}>
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-                <PreviewCopyrightBar />
+            /* No image: plain block siblings — minHeight on footer content drives the height slider */
+            <>
+              <div style={{ minHeight: footerHeight, ...footerContentStyle }}>
+                <div style={{ maxWidth: cW, margin: '0 auto' }}>
+                  {local.footer_html ? (
+                    <div style={{ padding: '1rem', color: isTranspFooter ? '#374151' : '#fff', fontSize: '0.82rem', lineHeight: 1.6 }}
+                      dangerouslySetInnerHTML={{ __html: local.footer_html }} />
+                  ) : (
+                    <div style={{ padding: '1rem', color: isTranspFooter ? '#9ca3af' : 'rgba(255,255,255,0.35)', fontSize: '0.75rem', fontStyle: 'italic' }}>
+                      No footer content — add some in the Footer Content box below.
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+              {copyrightStrip}
+            </>
           )}
         </div>
       </div>
@@ -3337,8 +3482,22 @@ function DesignView({ site, onSave, saving }) {
                   <p className="text-xs text-gray-400 mt-1">Highlight text to apply formatting. Use 🔗 to insert a link or email address.</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
-                  <InlineColorPicker value={local.top_bar_bg_color} onChange={v => set('top_bar_bg_color', v)} paletteColors={paletteColors} />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    {local.top_bar_bg_color !== 'transparent' && (
+                      <InlineColorPicker value={local.top_bar_bg_color || '#f8f5ef'} onChange={v => set('top_bar_bg_color', v)} paletteColors={paletteColors} />
+                    )}
+                    <button
+                      onClick={() => set('top_bar_bg_color', local.top_bar_bg_color === 'transparent' ? '#f8f5ef' : 'transparent')}
+                      style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, padding:'4px 9px', borderRadius:6, cursor:'pointer', fontWeight:500,
+                        border: local.top_bar_bg_color === 'transparent' ? '1.5px solid #3b82f6' : '1px solid #d1d5db',
+                        background: local.top_bar_bg_color === 'transparent' ? '#eff6ff' : '#fff',
+                        color: local.top_bar_bg_color === 'transparent' ? '#2563eb' : '#6b7280' }}>
+                      <span style={{ width:12, height:12, borderRadius:2, display:'inline-block', border:'1px solid #d1d5db',
+                        background: checkered, backgroundSize:'6px 6px', backgroundPosition:'0 0,0 3px,3px -3px,-3px 0' }} />
+                      {local.top_bar_bg_color === 'transparent' ? 'Transparent ✓' : 'Transparent'}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
@@ -3374,6 +3533,7 @@ function DesignView({ site, onSave, saving }) {
               <div className="mt-3">
                 <ImageUploadField label="Logo" value={local.logo_url} onChange={url => set('logo_url', url)} hint="Appears in the banner. Recommended: PNG with transparent background." />
               </div>
+              <ColorRowTransparent label="Banner Background Color" field="header_banner_bg_color" fallback={local.primary_color || '#3D6B34'} hint="Solid color shown when no banner image is uploaded. Transparent shows nothing behind the logo." />
               <ColorRow label="Site Name / Logo Text Color" field="nav_text_color" hint="Color of the site name displayed in the banner" />
               <div className="flex items-center justify-between py-3 border-t border-gray-50 mt-1">
                 <div>
@@ -3398,7 +3558,7 @@ function DesignView({ site, onSave, saving }) {
             <ColorRow label="Nav Background Color" field="primary_color" hint="Solid color — used when no background image is set, or as overlay" />
             <ColorRow label="Nav Link Color" field="nav_text_color" hint="Color of the navigation links" />
             <p className="text-xs text-gray-400 mt-3">Live preview below shows top bar + banner + nav together.</p>
-            <HeaderPreview />
+            {renderHeaderPreview()}
           </div>
 
           {/* ── Footer ── */}
@@ -3409,7 +3569,8 @@ function DesignView({ site, onSave, saving }) {
                 <div className="mb-3">
                   <ImageUploadField label="Background Image" value={local.footer_bg_image_url} onChange={url => set('footer_bg_image_url', url)} hint="Optional texture or image. Leave blank to use the solid color." />
                 </div>
-                <ColorRow label="Background Color" field="footer_bg_color" hint="Used when no background image is set" />
+                <ColorRowTransparent label="Footer Background Color" field="footer_bg_color" fallback={local.primary_color || '#3D6B34'} hint="Used when no background image is set" />
+                <ColorRowTransparent label="Copyright Bar Background" field="copyright_bar_bg_color" fallback="rgba(0,0,0,0.15)" hint="Strip at the very bottom containing the copyright line" />
                 <div className="mt-3">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Footer Height (px)</label>
                   <div className="flex items-center gap-3">
@@ -3445,7 +3606,7 @@ function DesignView({ site, onSave, saving }) {
             </div>
             <div className="mt-4">
               <p className="text-xs text-gray-400 mb-2 font-medium">Preview</p>
-              <FooterPreview />
+              {renderFooterPreview()}
             </div>
           </div>
         </div>

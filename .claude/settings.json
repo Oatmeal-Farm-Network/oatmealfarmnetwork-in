@@ -3,7 +3,9 @@
     "allow": [
       "Bash(powershell -Command \"\\(Get-WmiObject Win32_Process -Filter 'ProcessId=18520'\\).CommandLine\")",
       "Bash(curl -s \"http://127.0.0.1:8001/openapi.json\")",
-      "Bash(cmd /c \"taskkill /F /PID 19780 && taskkill /F /PID 30864\")"
+      "Bash(cmd /c \"taskkill /F /PID 19780 && taskkill /F /PID 30864\")",
+      "Bash(python migrate_website_columns.py)",
+      "Bash(venv/Scripts/python migrate_website_columns.py)"
     ]
   }
 }
