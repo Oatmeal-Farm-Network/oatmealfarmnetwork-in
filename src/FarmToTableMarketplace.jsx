@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -218,6 +219,11 @@ export default function FarmToTableMarketplace() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#f7f5f0] font-sans">
+      <PageMeta
+        title="Farm-to-Table Marketplace | Local Produce, Meat & Farm Products"
+        description="Connect with local farms selling fresh produce, pasture-raised meat, dairy, and value-added products directly to restaurants, food hubs, and buyers."
+        canonical="https://oatmealfarmnetwork.com/marketplaces/farm-to-table"
+      />
       <Header />
 
       {/* ── Hero ── */}

@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
+
+const API = import.meta.env.VITE_API_URL;
 
 export default function Login() {
   const navigate = useNavigate();
@@ -9,36 +12,33 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
-console.log('API URL:', import.meta.env.VITE_API_URL);
+  const [settings, setSettings] = useState(null); // { team_only_login, signup_open }
+
+  useEffect(() => {
+    fetch(`${API}/auth/site-settings`)
+      .then(r => r.json())
+      .then(setSettings)
+      .catch(() => {}); // non-critical — UI degrades gracefully
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const body = JSON.stringify({ Email: email, Password: password });
-      console.log('Sending:', body);
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+      const response = await fetch(`${API}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: body,
+        body: JSON.stringify({ Email: email, Password: password }),
       });
 
-      // Safely parse response — avoids crash if server returns empty body
       const text = await response.text();
-      console.log('Raw response:', text);
       const data = text ? JSON.parse(text) : {};
-      console.log('Response:', JSON.stringify(data));
 
       if (!response.ok) {
         const detail = data.detail;
-        if (Array.isArray(detail)) {
-          setError(detail.map(function(d) { return d.msg; }).join(', '));
-        } else {
-          setError(detail || `Login failed (${response.status}). Please try again.`);
-        }
+        setError(Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || `Login failed (${response.status}). Please try again.`));
         return;
       }
 
@@ -49,9 +49,7 @@ console.log('API URL:', import.meta.env.VITE_API_URL);
       localStorage.setItem('access_level', data.AccessLevel);
 
       navigate('/dashboard');
-
     } catch (err) {
-      console.error('Login error:', err);
       setError('Unable to connect to server. Please try again.');
     } finally {
       setLoading(false);
@@ -60,6 +58,11 @@ console.log('API URL:', import.meta.env.VITE_API_URL);
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title="Sign In | Oatmeal Farm Network"
+        description="Sign in to your Oatmeal Farm Network account to manage your farm listings, marketplace, and website."
+        noIndex={true}
+      />
       <Header />
 
       <section className="py-16 px-4">
@@ -78,6 +81,14 @@ console.log('API URL:', import.meta.env.VITE_API_URL);
             </div>
 
             <div className="px-8 py-8">
+
+              {/* Team-only notice */}
+              {settings?.team_only_login && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 mb-6 text-sm text-center">
+                  This platform is currently available to team members only.
+                </div>
+              )}
+
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-6 text-sm">
                   {error}
@@ -130,12 +141,15 @@ console.log('API URL:', import.meta.env.VITE_API_URL);
                 </button>
               </form>
 
-              <p className="text-center text-sm text-gray-500 mt-6">
-                Don't have an account?{' '}
-                <Link to="/signup" className="text-[#819360] font-semibold hover:text-[#4d734d]">
-                  Sign Up
-                </Link>
-              </p>
+              {/* Only show Sign Up link if signup is open */}
+              {settings?.signup_open && (
+                <p className="text-center text-sm text-gray-500 mt-6">
+                  Don't have an account?{' '}
+                  <Link to="/signup" className="text-[#819360] font-semibold hover:text-[#4d734d]">
+                    Sign Up
+                  </Link>
+                </p>
+              )}
             </div>
           </div>
         </div>

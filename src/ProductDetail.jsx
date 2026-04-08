@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -143,8 +144,18 @@ export default function ProductDetail() {
     );
   }
 
+  const productName = product.prodName || product.Title || 'Farm Product';
+  const productDesc = product.prodDescription || product.Description || '';
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
+      <PageMeta
+        title={`${productName} | Farm Products Marketplace`}
+        description={productDesc
+          ? productDesc.replace(/<[^>]+>/g, '').slice(0, 155)
+          : `Shop ${productName} from ${product.SellerName || 'a local farm'} on Oatmeal Farm Network. Buy farm-fresh products directly from farmers.`}
+        image={mainImg || undefined}
+        ogType="product"
+      />
       <Header />
 
       {/* Breadcrumb */}

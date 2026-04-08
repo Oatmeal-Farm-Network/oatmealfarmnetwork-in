@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -67,6 +68,10 @@ export default function LivestockSpecies() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title={`${pluralTerm} Breeds | Livestock Database`}
+        description={`Browse all ${pluralTerm.toLowerCase()} breeds in the Oatmeal Farm Network livestock database. Find breed characteristics, origins, uses, and farming information.`}
+      />
       <Header />
 
       <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1rem 1rem 3rem' }}>

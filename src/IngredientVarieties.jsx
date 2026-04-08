@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -26,6 +27,10 @@ export default function IngredientVarieties() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title={ingredientName ? `${ingredientName} Varieties | Ingredient Knowledgebase` : 'Ingredient Varieties | Ingredient Knowledgebase'}
+        description={ingredientName ? `Browse all known varieties of ${ingredientName} including flavor profiles, sourcing information, and nutritional data.` : 'Browse ingredient varieties in the Oatmeal Farm Network knowledgebase.'}
+      />
      <Header />
 
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '1rem 1rem 3rem' }}>

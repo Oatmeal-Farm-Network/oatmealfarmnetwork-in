@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../../Header';
 import Footer from '../../Footer';
+import PageMeta from '../../PageMeta';
 
 import agriAssociaImg from '../Icons/Agricultural Associations.jpg';
 import artisianImg from '../Icons/Artisan Producers.jpg';
@@ -66,6 +67,11 @@ const DirectoryList = () => {
     }, []);
     return (
         <div className="min-h-screen bg-gray-100 font-sans">
+            <PageMeta
+              title="Farm & Food Business Directory | Find Local Farms & Producers"
+              description="Find farms, food hubs, farmers markets, restaurants, processors, artisan producers, and more in our comprehensive farm and food business directory."
+              canonical="https://oatmealfarmnetwork.com/directory"
+            />
             <Header />
 
         {/* Video Hero Banner */}

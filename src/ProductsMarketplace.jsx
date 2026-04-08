@@ -3,6 +3,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -171,6 +172,11 @@ export default function ProductsMarketplace() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      <PageMeta
+        title="Farm Products Marketplace | Shop Local Farm Goods"
+        description="Shop farm-fresh products including produce, meat, dairy, fiber, and value-added goods. Buy directly from local farmers and small food businesses on Oatmeal Farm Network."
+        canonical="https://oatmealfarmnetwork.com/marketplace/products"
+      />
       <Header />
 
       {/* Hero */}

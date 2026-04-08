@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -72,6 +73,13 @@ export default function PlantVarietalDetail() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title={`${detail.plant_variety_name} | ${detail.plant_name} Varietal`}
+        description={detail.plant_variety_description
+          ? detail.plant_variety_description.slice(0, 155)
+          : `Detailed growing information for ${detail.plant_variety_name}, a variety of ${detail.plant_name}. Includes soil, water, pH, nutrient, and climate requirements.`}
+        ogType="article"
+      />
      <Header />
 
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>

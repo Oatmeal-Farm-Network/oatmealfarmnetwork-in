@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const FeatureBox = ({ title, description, imgSrc, link }) => (
   <div className="flex flex-col bg-[white] rounded-[20px] p-[10px] shadow-[0_4px_8px_rgba(0,0,0,0.1)] min-h-[250px] text-center w-full mb-4 lg:mb-0 border border-[#4d734d]/20">
@@ -31,6 +32,11 @@ export default function Knowledgebases() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title="Agricultural Knowledgebases | Plants, Livestock & Ingredients"
+        description="Explore 4,000+ food plant varieties, 2,000+ livestock breeds across 28 species, and 1,400+ agricultural ingredients in our comprehensive farm knowledgebases."
+        canonical="https://oatmealfarmnetwork.com/knowledgebases"
+      />
        <Header />
 
       <section className="py-6 bg-white text-center">

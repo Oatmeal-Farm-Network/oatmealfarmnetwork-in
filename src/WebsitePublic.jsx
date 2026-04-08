@@ -85,43 +85,89 @@ function HeroBlock({ data, site }) {
   );
 }
 
+// Normalize images to {url, wrap, w} — handles new format and old position/x fields
+const POS_DEFAULTS_PUB = { right:{wrap:'right',w:38}, left:{wrap:'left',w:38}, top:{wrap:'center',w:50}, bottom:{wrap:'right',w:38} };
+function normImages(data) {
+  const raw = Array.isArray(data.images) && data.images.length > 0
+    ? data.images
+    : (data.image_url ? [data.image_url] : []);
+  return raw.map(img => {
+    if (typeof img === 'string') {
+      const pos = data.image_position || 'right';
+      return { url: img, ...(POS_DEFAULTS_PUB[pos] || POS_DEFAULTS_PUB.right) };
+    }
+    if (!img.wrap && typeof img.x === 'number') return { wrap: img.x < 50 ? 'left' : 'right', w: img.w || 38, y: img.y || 0, url: img.url };
+    if (!img.wrap && img.position) { const pos = img.position || 'right'; return { url: img.url, ...(POS_DEFAULTS_PUB[pos] || POS_DEFAULTS_PUB.right) }; }
+    return { y: 0, ...img };
+  });
+}
+
+function figureWrapStyle(img, shadow) {
+  const w  = `${Math.min(90, img.w || 38)}%`;
+  const mt = `${img.y || 0}%`;
+  const sh = shadow ? { boxShadow: '0 4px 20px rgba(0,0,0,0.12)' } : {};
+  const base = { margin: 0, padding: 0, borderRadius: 12, overflow: 'hidden', ...sh };
+  switch (img.wrap || 'right') {
+    case 'left':   return { ...base, float:'left',  width:w, marginTop:mt, marginRight:'1.5rem', marginBottom:'1rem' };
+    case 'right':  return { ...base, float:'right', width:w, marginTop:mt, marginLeft:'1.5rem',  marginBottom:'1rem' };
+    case 'center': return { ...base, display:'block', width:w, marginTop:mt, marginLeft:'auto', marginRight:'auto', marginBottom:'1rem', clear:'both' };
+    case 'full':   return { ...base, display:'block', width:'100%', marginTop:mt, marginBottom:'1rem', clear:'both' };
+    default:       return { ...base, float:'right', width:w, marginTop:mt, marginLeft:'1.5rem', marginBottom:'1rem' };
+  }
+}
+
+function BlockImage({ img, shadow }) {
+  const hasCaption = img.caption && img.caption.trim();
+  return (
+    <figure style={figureWrapStyle(img, shadow)}>
+      <img
+        src={img.url}
+        alt={img.caption || ''}
+        style={{
+          display: 'block',
+          width: '100%',
+          borderRadius: hasCaption ? '12px 12px 0 0' : 12,
+        }}
+      />
+      {hasCaption && (
+        <figcaption style={{
+          background: '#f3f4f6',
+          color: '#6b7280',
+          fontSize: '0.8rem',
+          textAlign: 'center',
+          padding: '5px 10px',
+          lineHeight: 1.4,
+        }}>
+          {img.caption}
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
 function AboutBlock({ data, site }) {
-  const hasImage = data.image_url && data.image_position !== 'none';
-  const imgRight = data.image_position !== 'left';
+  const imgs = normImages(data);
   return (
     <SectionWrap site={site}>
-      <div className={`flex flex-col md:flex-row gap-10 items-center ${!imgRight ? 'md:flex-row-reverse' : ''}`}>
-        <div className="flex-1">
-          {data.heading && <SectionHeading html={data.heading} site={site} />}
-          {data.body && <BodyText html={data.body} site={site} />}
-        </div>
-        {hasImage && (
-          <div className="flex-1">
-            <img src={data.image_url} alt="" style={{ width: '100%', borderRadius: 16, boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }} />
-          </div>
-        )}
+      <div style={{ overflow: 'hidden' }}>
+        {imgs.map((img, i) => <BlockImage key={i} img={img} shadow={true} />)}
+        {data.heading && <SectionHeading html={data.heading} site={site} />}
+        {data.body && <BodyText html={data.body} site={site} />}
+        <div style={{ clear: 'both' }} />
       </div>
     </SectionWrap>
   );
 }
 
 function ContentBlock({ data, site }) {
-  const hasImage = data.image_url && data.image_position !== 'none';
-  const imgRight = data.image_position === 'right';
-  const imgTop = data.image_position === 'top';
+  const imgs = normImages(data);
   return (
     <SectionWrap site={site}>
-      {imgTop && hasImage && <img src={data.image_url} alt="" style={{ width: '100%', borderRadius: 12, marginBottom: '1.5rem' }} />}
-      <div className={`flex flex-col ${hasImage && !imgTop ? 'md:flex-row gap-10 items-start' : ''} ${hasImage && !imgTop && !imgRight ? 'md:flex-row-reverse' : ''}`}>
-        <div className={hasImage && !imgTop ? 'flex-1' : 'w-full'}>
-          {data.heading && <SectionHeading html={data.heading} site={site} />}
-          {data.body && <BodyText html={data.body} site={site} />}
-        </div>
-        {hasImage && !imgTop && (
-          <div className="flex-1">
-            <img src={data.image_url} alt="" style={{ width: '100%', borderRadius: 12 }} />
-          </div>
-        )}
+      <div style={{ overflow: 'hidden' }}>
+        {imgs.map((img, i) => <BlockImage key={i} img={img} shadow={false} />)}
+        {data.heading && <SectionHeading html={data.heading} site={site} />}
+        {data.body && <BodyText html={data.body} site={site} />}
+        <div style={{ clear: 'both' }} />
       </div>
     </SectionWrap>
   );
@@ -394,7 +440,7 @@ function SectionWrap({ children, site, alt }) {
   const textWidth = site.body_content_width || '100%';
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <section style={{ width: '100%', maxWidth: bgWidth, padding: '5px 1.5rem', background: bgColor }}>
+      <section style={{ width: '100%', maxWidth: bgWidth, padding: '5px 1.5rem 0', background: bgColor }}>
         <div style={{ maxWidth: textWidth, margin: '0 auto' }}>{children}</div>
       </section>
     </div>
@@ -481,6 +527,7 @@ export default function WebsitePublic() {
   const [activePage, setActivePage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null); // page_id of open nav dropdown
 
   useEffect(() => {
     fetch(`${API}/api/website/bundle/${slug}`)
@@ -549,7 +596,7 @@ export default function WebsitePublic() {
       {/* ── Site Header (3 zones) ── */}
       <header style={{ position: 'sticky', top: 0, zIndex: 100, fontFamily: site.font_family, display: 'flex', justifyContent: 'center', background: 'transparent' }}>
         {/* Background band — only this div carries the color, constrained to header_bg_width */}
-        <div style={{ width: '100%', maxWidth: site.header_bg_width || '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', background: site.primary_color || '#3D6B34' }}>
+        <div style={{ width: '100%', maxWidth: site.header_bg_width || '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
           {/* Zone 1: Top bar */}
           {site.top_bar_enabled && site.top_bar_html && (
@@ -573,7 +620,7 @@ export default function WebsitePublic() {
                 <img src={site.header_banner_url} alt=""
                   style={{ width: '100%', display: 'block' }} />
               ) : (
-                <div style={{ height: site.header_height || 120, background: site.primary_color || '#3D6B34' }} />
+                <div style={{ height: site.header_height || 120, background: site.header_banner_bg_color || site.primary_color || '#3D6B34' }} />
               )}
               <div style={{
                 position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -597,48 +644,100 @@ export default function WebsitePublic() {
           )}
 
           {/* Zone 3: Nav bar — constrained to header_content_width */}
-          <nav style={{
-            width: '100%', maxWidth: site.header_content_width || '100%',
-            background: site.nav_bg_image_url
+          {(() => {
+            const navBg = site.nav_bg_image_url
               ? `url(${site.nav_bg_image_url}) center/cover no-repeat`
-              : (site.primary_color || '#3D6B34'),
-            boxShadow: '0 2px 16px rgba(0,0,0,0.15)',
-          }}>
-            <div style={{
-              padding: '0 1.5rem',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 50,
-            }}>
-              {/* Desktop nav links */}
-              <div className="hidden md:flex items-center gap-1">
-                {pages.map(p => (
-                  <button key={p.page_id} onClick={() => { setActivePage(p); setMobileMenu(false); }}
-                    style={{ background: activePage?.page_id === p.page_id ? 'rgba(255,255,255,0.2)' : 'none', border: 0, color: site.nav_text_color || '#fff', padding: '0.4rem 0.9rem', borderRadius: 8, fontWeight: activePage?.page_id === p.page_id ? 700 : 500, cursor: 'pointer', fontSize: '0.9rem', fontFamily: site.font_family, transition: 'background 0.2s' }}>
-                    {p.page_name}
+              : (site.primary_color || '#3D6B34');
+            const navColor = site.nav_text_color || '#fff';
+            const dropdownBg = site.primary_color || '#3D6B34';
+            // Build nav tree
+            const topLevelPages = pages.filter(p => !p.parent_page_id);
+            const childrenOf = parentId => pages.filter(p => p.parent_page_id === parentId);
+            const isActiveOrChild = p => activePage?.page_id === p.page_id || childrenOf(p.page_id).some(c => c.page_id === activePage?.page_id);
+            return (
+              <nav style={{ width: '100%', maxWidth: site.header_content_width || '100%', background: navBg, boxShadow: '0 2px 16px rgba(0,0,0,0.15)' }}>
+                <div style={{ padding: '0 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 50 }}>
+                  {/* Desktop nav */}
+                  <div className="hidden md:flex items-center gap-1" style={{ position: 'relative' }}>
+                    {topLevelPages.map(p => {
+                      const children = childrenOf(p.page_id);
+                      const active = isActiveOrChild(p);
+                      const isHeading = p.is_nav_heading || children.length > 0;
+                      if (!isHeading) {
+                        return (
+                          <button key={p.page_id}
+                            onClick={() => { setActivePage(p); setOpenDropdown(null); }}
+                            style={{ background: active ? 'rgba(255,255,255,0.2)' : 'none', border: 0, color: navColor, padding: '0.4rem 0.9rem', borderRadius: 8, fontWeight: active ? 700 : 500, cursor: 'pointer', fontSize: '0.9rem', fontFamily: site.font_family, transition: 'background 0.2s' }}>
+                            {p.page_name}
+                          </button>
+                        );
+                      }
+                      return (
+                        <div key={p.page_id} style={{ position: 'relative' }}
+                          onMouseEnter={() => setOpenDropdown(p.page_id)}
+                          onMouseLeave={() => setOpenDropdown(null)}>
+                          <span
+                            style={{ background: active ? 'rgba(255,255,255,0.2)' : 'none', color: navColor, padding: '0.4rem 0.9rem', borderRadius: 8, fontWeight: active ? 700 : 500, fontSize: '0.9rem', fontFamily: site.font_family, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'default', userSelect: 'none' }}>
+                            {p.page_name}
+                            {children.length > 0 && <span style={{ fontSize: '0.6rem', opacity: 0.75 }}>▾</span>}
+                          </span>
+                          {children.length > 0 && openDropdown === p.page_id && (
+                            <div style={{ position: 'absolute', top: '100%', left: 0, background: dropdownBg, borderRadius: 8, boxShadow: '0 6px 24px rgba(0,0,0,0.25)', minWidth: 170, zIndex: 300, overflow: 'hidden', marginTop: 2 }}>
+                              {children.map(child => (
+                                <button key={child.page_id}
+                                  onClick={() => { setActivePage(child); setOpenDropdown(null); }}
+                                  style={{ display: 'block', width: '100%', textAlign: 'left', background: activePage?.page_id === child.page_id ? 'rgba(255,255,255,0.15)' : 'none', border: 0, borderBottom: '1px solid rgba(255,255,255,0.08)', color: navColor, padding: '0.6rem 1rem', fontWeight: activePage?.page_id === child.page_id ? 700 : 400, cursor: 'pointer', fontSize: '0.87rem', fontFamily: site.font_family }}>
+                                  {child.page_name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Mobile: site name + hamburger */}
+                  <button onClick={() => { setActivePage(pages.find(p => p.is_home_page) || pages[0]); setMobileMenu(false); }}
+                    className="md:hidden"
+                    style={{ fontWeight: 800, color: navColor, background: 'none', border: 0, cursor: 'pointer', fontSize: '1rem' }}>
+                    {site.site_name}
                   </button>
-                ))}
-              </div>
-              {/* Mobile: site name + hamburger */}
-              <button onClick={() => { setActivePage(pages.find(p => p.is_home_page) || pages[0]); setMobileMenu(false); }}
-                className="md:hidden"
-                style={{ fontWeight: 800, color: site.nav_text_color || '#fff', background: 'none', border: 0, cursor: 'pointer', fontSize: '1rem' }}>
-                {site.site_name}
-              </button>
-              <button onClick={() => setMobileMenu(!mobileMenu)} className="md:hidden" style={{ background: 'none', border: 0, color: site.nav_text_color || '#fff', cursor: 'pointer', fontSize: '1.4rem' }}>
-                {mobileMenu ? '✕' : '☰'}
-              </button>
-            </div>
-            {/* Mobile dropdown */}
-            {mobileMenu && (
-              <div style={{ background: site.secondary_color || site.primary_color, padding: '0.5rem 1.5rem 1rem' }}>
-                {pages.map(p => (
-                  <button key={p.page_id} onClick={() => { setActivePage(p); setMobileMenu(false); }}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 0, color: site.nav_text_color || '#fff', padding: '0.6rem 0', fontWeight: activePage?.page_id === p.page_id ? 700 : 400, cursor: 'pointer', fontSize: '1rem', fontFamily: site.font_family, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                    {p.page_name}
+                  <button onClick={() => setMobileMenu(!mobileMenu)} className="md:hidden" style={{ background: 'none', border: 0, color: navColor, cursor: 'pointer', fontSize: '1.4rem' }}>
+                    {mobileMenu ? '✕' : '☰'}
                   </button>
-                ))}
-              </div>
-            )}
-          </nav>
+                </div>
+                {/* Mobile menu — parents then indented children */}
+                {mobileMenu && (
+                  <div style={{ background: site.secondary_color || site.primary_color, padding: '0.5rem 1.5rem 1rem' }}>
+                    {topLevelPages.map(p => {
+                      const children = childrenOf(p.page_id);
+                      const isHeading = p.is_nav_heading || children.length > 0;
+                      return (
+                        <React.Fragment key={p.page_id}>
+                          {isHeading ? (
+                            <div style={{ display: 'block', width: '100%', color: navColor, padding: '0.6rem 0 0.2rem', fontWeight: 600, fontSize: '0.75rem', fontFamily: site.font_family, opacity: 0.65, textTransform: 'uppercase', letterSpacing: '0.07em', userSelect: 'none' }}>
+                              {p.page_name}
+                            </div>
+                          ) : (
+                          <button onClick={() => { setActivePage(p); setMobileMenu(false); }}
+                            style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 0, color: navColor, padding: '0.6rem 0', fontWeight: isActiveOrChild(p) ? 700 : 400, cursor: 'pointer', fontSize: '1rem', fontFamily: site.font_family, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                            {p.page_name}
+                          </button>
+                          )}
+                          {children.map((child, ci) => (
+                            <button key={child.page_id} onClick={() => { setActivePage(child); setMobileMenu(false); }}
+                              style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 0, color: navColor, padding: '0.45rem 0 0.45rem 1.2rem', fontWeight: activePage?.page_id === child.page_id ? 700 : 400, cursor: 'pointer', fontSize: '0.9rem', fontFamily: site.font_family, opacity: 0.85, borderBottom: ci === children.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
+                              {child.page_name}
+                            </button>
+                          ))}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                )}
+              </nav>
+            );
+          })()}
         </div>
       </header>
 
@@ -685,29 +784,59 @@ export default function WebsitePublic() {
 
       {/* Footer — outer band at footer_bg_width, inner content at footer_content_width */}
       <footer style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family }}>
-        {/* Background band — only this div carries the color, constrained to footer_bg_width */}
-        <div style={{ width: '100%', maxWidth: site.footer_bg_width || '100%', position: 'relative', background: site.footer_bg_color || site.primary_color }}>
+        {/* Outer band — no background; footer content and copyright each carry their own */}
+        <div style={{ width: '100%', maxWidth: site.footer_bg_width || '100%' }}>
           {site.footer_bg_image_url ? (
-            <img src={site.footer_bg_image_url} alt=""
-              style={{ width: '100%', display: 'block' }} />
-          ) : (
-            <div style={{ minHeight: site.footer_height || 200, background: site.footer_bg_color || site.primary_color }} />
-          )}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, color: 'rgba(255,255,255,0.9)' }}>
-            {/* Inner content constrained to footer_content_width */}
-            <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto' }}>
-              {site.footer_html ? (
-                <div style={{ padding: '2rem 1.5rem', color: '#fff', lineHeight: 1.7 }}
-                  dangerouslySetInnerHTML={{ __html: site.footer_html }} />
-              ) : null}
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.18)', padding: '0.5rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
-                  {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
-                </span>
-                <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)' }}>Powered by Oatmeal Farm Network</span>
+            /* Image case: image as bg, footer content overlaid, copyright below */
+            <div style={{ position: 'relative' }}>
+              <img src={site.footer_bg_image_url} alt="" style={{ width: '100%', display: 'block' }} />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+                <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto' }}>
+                  {site.footer_html ? (
+                    <div style={{ padding: '2rem 1.5rem', color: '#fff', lineHeight: 1.7 }}
+                      dangerouslySetInnerHTML={{ __html: site.footer_html }} />
+                  ) : null}
+                </div>
+              </div>
+              {/* Copyright bar — its own background, below the image */}
+              <div style={{ background: site.copyright_bar_bg_color || 'rgba(0,0,0,0.18)' }}>
+                <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto', padding: '0.5rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
+                    {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
+                  </span>
+                  <a href="https://www.OatmealFarmNetwork.com" target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>
+                    Powered by Oatmeal Farm Network
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            /* No image: footer content and copyright are plain block siblings — no flex needed */
+            <>
+              {/* Footer content area — minHeight drives the height slider */}
+              <div style={{ minHeight: Number(site.footer_height) || 200, background: site.footer_bg_color || site.primary_color }}>
+                <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto' }}>
+                  {site.footer_html ? (
+                    <div style={{ padding: '2rem 1.5rem', color: '#fff', lineHeight: 1.7 }}
+                      dangerouslySetInnerHTML={{ __html: site.footer_html }} />
+                  ) : null}
+                </div>
+              </div>
+              {/* Copyright bar — its own independent background, always below footer content */}
+              <div style={{ background: site.copyright_bar_bg_color || 'rgba(0,0,0,0.18)' }}>
+                <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto', padding: '0.5rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
+                    {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
+                  </span>
+                  <a href="https://www.OatmealFarmNetwork.com" target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>
+                    Powered by Oatmeal Farm Network
+                  </a>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </footer>
     </div>

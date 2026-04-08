@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -43,8 +44,20 @@ export default function LivestockBreed() {
     ? species.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
     : '';
 
+  const breedImgUrl = breed?.image
+    ? (breed.image.startsWith('http') ? breed.image : `/images/${breed.image.replace(/^.*[\\/]/, '')}`)
+    : undefined;
+
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title={breed ? `${breed.breed} ${label} | Livestock Breed` : `${label} Breed | Livestock Database`}
+        description={breed
+          ? `Learn about the ${breed.breed} ${label.toLowerCase()} breed — origin, characteristics, and farming uses. Find ${breed.breed} listings on Oatmeal Farm Network.`
+          : `${label} breed information in the Oatmeal Farm Network livestock database.`}
+        image={breedImgUrl}
+        ogType="article"
+      />
       <Header />
 
       <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>

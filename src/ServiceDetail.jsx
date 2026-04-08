@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -47,6 +48,14 @@ export default function ServiceDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
+      <PageMeta
+        title={`${svc.ServiceTitle} | Agricultural Services`}
+        description={svc.ServiceDescription
+          ? svc.ServiceDescription.replace(/<[^>]+>/g, '').slice(0, 155)
+          : `${svc.ServiceTitle}${location ? ` in ${location}` : ''}${svc.ServicesCategory ? ` — ${svc.ServicesCategory}` : ''}. Find agricultural services on Oatmeal Farm Network.`}
+        image={mainPhoto || undefined}
+        ogType="article"
+      />
       <Header />
 
       <div className="max-w-5xl mx-auto px-4 py-8">

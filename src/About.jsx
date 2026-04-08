@@ -2,10 +2,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const About = () => {
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title="About Oatmeal Farm Network | Our Mission & Vision"
+        description="Learn how Oatmeal Farm Network connects farmers, buyers, and food businesses using AI-powered tools, comprehensive knowledgebases, and a direct-to-market platform."
+        canonical="https://oatmealfarmnetwork.com/about"
+      />
       <Header />
       
       {/* Container with correct JSX style object and className */}

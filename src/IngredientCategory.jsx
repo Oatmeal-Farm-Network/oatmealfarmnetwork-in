@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -148,8 +149,13 @@ export default function IngredientCategory() {
       })
     : null;
 
+  const displayName = catName || category;
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title={`${displayName} Ingredients | Ingredient Knowledgebase`}
+        description={`Browse ${displayName.toLowerCase()} ingredients in the Oatmeal Farm Network knowledgebase. Find flavor profiles, processing methods, varieties, and culinary uses.`}
+      />
       <Header />
 
       <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '0 1rem 3rem' }}>
