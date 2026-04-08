@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -63,6 +64,11 @@ export default function IngredientKnowledgebase() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title="Ingredient Knowledgebase | 1,400+ Agricultural Ingredients"
+        description="Browse 1,400+ agricultural ingredients and 14,000+ varieties. Search by category for flavor profiles, nutritional data, processing methods, and culinary uses."
+        canonical="https://oatmealfarmnetwork.com/ingredient-knowledgebase"
+      />
       <Header />
 
       <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1rem 1rem 3rem' }}>

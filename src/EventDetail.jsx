@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -47,8 +48,17 @@ export default function EventDetail() {
     [ev.EventLocationCity, ev.EventLocationState, ev.EventLocationZip].filter(Boolean).join(', ')]
     .filter(Boolean);
 
+  const locationStr = [ev.EventLocationCity, ev.EventLocationState].filter(Boolean).join(', ');
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
+      <PageMeta
+        title={`${ev.EventName} | Farm Events`}
+        description={ev.EventDescription
+          ? ev.EventDescription.slice(0, 155)
+          : `${ev.EventName}${locationStr ? ` in ${locationStr}` : ''}. Register for this farm event on Oatmeal Farm Network.`}
+        image={ev.EventImage || undefined}
+        ogType="event"
+      />
       <Header />
 
       <div className="max-w-5xl mx-auto px-4 py-8">

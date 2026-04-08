@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -269,6 +270,11 @@ export default function LivestockMarketplace() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title="Livestock Marketplace | Buy & Sell Farm Animals"
+        description="Browse livestock for sale including cattle, pigs, sheep, goats, chickens, alpacas, and more. Connect directly with farmers and breeders on Oatmeal Farm Network."
+        canonical="https://oatmealfarmnetwork.com/marketplaces/livestock"
+      />
       <Header />
 
       {/* Sidebar + all content sit side by side directly under header */}

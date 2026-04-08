@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const FeatureBox = ({ title, description, imgSrc, link, eager }) => (
   <div className="flex flex-col bg-white rounded-[20px] p-[10px] shadow-[0_4px_8px_rgba(0,0,0,0.1)] min-h-[250px] text-center w-full mb-4 lg:mb-0 border border-[#4d734d]/20">
@@ -32,6 +33,11 @@ const FeatureBox = ({ title, description, imgSrc, link, eager }) => (
 export default function App() {
   return (
     <div className="min-h-screen bg-gray-100 font-sans">
+      <PageMeta
+        title="Oatmeal Farm Network | AI-Powered Farm & Food Network"
+        description="Connect farms, buyers, and food businesses with AI-powered tools. Browse livestock, plants, ingredients, and local food markets on Oatmeal Farm Network."
+        canonical="https://oatmealfarmnetwork.com"
+      />
       <Header />
 
       {/* Hero Section */}

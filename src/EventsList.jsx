@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -39,6 +40,11 @@ export default function EventsList() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
+      <PageMeta
+        title="Farm Events & Agricultural Workshops"
+        description="Discover upcoming farm events, agricultural workshops, farm tours, and food industry conferences near you. Browse and register for events on Oatmeal Farm Network."
+        canonical="https://oatmealfarmnetwork.com/events"
+      />
       <Header />
 
       {/* Hero */}

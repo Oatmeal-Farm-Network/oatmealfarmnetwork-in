@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -57,6 +58,11 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title="Sign In | Oatmeal Farm Network"
+        description="Sign in to your Oatmeal Farm Network account to manage your farm listings, marketplace, and website."
+        noIndex={true}
+      />
       <Header />
 
       <section className="py-16 px-4">

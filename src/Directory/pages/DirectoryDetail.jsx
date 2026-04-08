@@ -5,6 +5,7 @@ import { DIRECTORY_TYPE_TO_IMAGE, DIRECTORY_TYPE_TO_BUSINESS_TYPE } from './dire
 import photoNotAvailable from '../images/photo not available .jpg';
 import Header from '../../Header';
 import Footer from '../../Footer';
+import PageMeta from '../../PageMeta';
 
 const DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID = {
     'agricultural-associations': '1',
@@ -283,6 +284,10 @@ const DirectoryDetail = function() {
 
     return (
         <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+           <PageMeta
+             title={`${pageTitle} Directory | Farm & Food Business Listings`}
+             description={`Find ${pageTitle.toLowerCase()} businesses near you. Browse verified listings with contact information, location, and details on Oatmeal Farm Network.`}
+           />
            <Header />
 
             {/* Page Header */}

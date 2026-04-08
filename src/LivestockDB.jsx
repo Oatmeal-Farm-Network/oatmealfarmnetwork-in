@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -68,6 +69,11 @@ export default function LivestockDB() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title="Livestock Database | 2,000+ Breeds Across 28 Species"
+        description="Explore over 2,000 livestock breeds across 28 species including cattle, pigs, sheep, goats, chickens, alpacas, and more. Find breed characteristics, origins, and farming information."
+        canonical="https://oatmealfarmnetwork.com/livestock"
+      />
       <Header />
 
       <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1rem 1rem 3rem' }}>

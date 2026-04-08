@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -46,6 +47,11 @@ export default function ServicesDirectory() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
+      <PageMeta
+        title="Agricultural Services Directory | Find Farm Services"
+        description="Find agricultural services including veterinary care, farm consulting, equipment rental, shearing, farriery, and more. Browse service providers near you."
+        canonical="https://oatmealfarmnetwork.com/services/directory"
+      />
       <Header />
 
       <div className="max-w-6xl mx-auto px-4 py-10 flex-grow w-full">

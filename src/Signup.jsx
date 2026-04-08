@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -14,14 +15,15 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [settings, setSettings] = useState(null); // null = still loading
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  // Default closed — flips to open only if the API explicitly confirms signup_open: true.
+  // This means the closed message shows immediately with no loading state.
+  const [settings, setSettings] = useState({ signup_open: false, team_only_login: true });
 
   useEffect(() => {
     fetch(`${API}/auth/site-settings`)
-      .then(r => r.json())
-      .then(data => { setSettings(data); setSettingsLoaded(true); })
-      .catch(() => { setSettings({ signup_open: true, team_only_login: false }); setSettingsLoaded(true); });
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data && 'signup_open' in data) setSettings(data); })
+      .catch(() => {}); // keep closed default on any error
   }, []);
 
   const handleSubmit = async (e) => {
@@ -71,6 +73,11 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title="Create Account | Oatmeal Farm Network"
+        description="Join Oatmeal Farm Network to list your farm, sell products, access agricultural knowledgebases, and connect with buyers and food businesses."
+        noIndex={true}
+      />
       <Header />
 
       <section className="py-16 px-4">
@@ -90,10 +97,7 @@ export default function Signup() {
 
             <div className="px-8 py-8">
 
-              {/* Wait for settings before showing anything */}
-              {!settingsLoaded ? (
-                <div className="text-center text-gray-400 py-6 text-sm">Loading…</div>
-              ) : !settings?.signup_open ? (
+              {!settings.signup_open ? (
                 /* Registration closed */
                 <div className="text-center py-4">
                   <div className="text-4xl mb-4">🔒</div>
@@ -102,7 +106,7 @@ export default function Signup() {
                     New account creation is not available at this time. Please check back later.
                   </p>
                   <Link to="/login" className="text-[#819360] font-semibold hover:text-[#4d734d] text-sm">
-                    ← Back to Sign In
+                  
                   </Link>
                 </div>
               ) : (

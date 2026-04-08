@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -72,6 +73,10 @@ export default function PlantCategory() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title={`${cat.label} Plants | Plant Knowledgebase`}
+        description={`Browse ${cat.label.toLowerCase()} plant varieties in the Oatmeal Farm Network plant knowledgebase. Find growing guides, soil requirements, and nutritional data for each variety.`}
+      />
       <Header />
 
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 1rem 2rem' }}>

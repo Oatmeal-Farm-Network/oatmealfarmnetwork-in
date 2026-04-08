@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -60,6 +61,11 @@ export default function PlantKnowledgebase() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <PageMeta
+        title="Plant Knowledgebase | 4,000+ Food Plant Varieties"
+        description="Browse over 4,000 food plant varieties across 22 categories including grains, berries, legumes, and herbs. Find growing guides, soil requirements, and nutritional data."
+        canonical="https://oatmealfarmnetwork.com/plant-knowledgebase"
+      />
       <Header />
 
       <div className="mx-auto px-4 py-2" style={{ maxWidth: '1300px' }}>
