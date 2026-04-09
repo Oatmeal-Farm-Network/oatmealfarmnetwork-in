@@ -36,6 +36,27 @@ async function fetchContent(url) {
   return data;
 }
 
+// ── Dropdown nav item with hover state ───────────────────────────
+function DropdownItem({ label, active, navColor, hoverColor, fontFamily, onClick }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'block', width: '100%', textAlign: 'left',
+        background: active || hovered ? hoverColor : 'none',
+        border: 0, borderBottom: '1px solid rgba(255,255,255,0.08)',
+        color: navColor, padding: '0.65rem 1rem',
+        fontWeight: active ? 700 : 400, cursor: 'pointer',
+        fontSize: '0.87rem', fontFamily,
+        transition: 'background 0.15s',
+      }}
+    >{label}</button>
+  );
+}
+
 // ── Block renderers ───────────────────────────────────────────────
 
 function HeroBlock({ data, site }) {
@@ -51,6 +72,7 @@ function HeroBlock({ data, site }) {
         justifyContent: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center',
         backgroundImage: data.image_url ? `url(${data.image_url})` : `linear-gradient(135deg, ${site.primary_color}cc, ${site.secondary_color}cc)`,
         backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative',
+        paddingTop: 10,
       }}>
         {data.image_url && data.overlay && (
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
@@ -86,19 +108,23 @@ function HeroBlock({ data, site }) {
 }
 
 // Normalize images to {url, wrap, w} — handles new format and old position/x fields
-const POS_DEFAULTS_PUB = { right:{wrap:'right',w:38}, left:{wrap:'left',w:38}, top:{wrap:'center',w:50}, bottom:{wrap:'right',w:38} };
+const POS_DEFAULTS_PUB = { right:{wrap:'right',w:38}, left:{wrap:'left',w:38}, center:{wrap:'center',w:60}, full:{wrap:'full',w:100}, top:{wrap:'center',w:50}, bottom:{wrap:'right',w:38} };
 function normImages(data) {
+  const topCaption = data.image_caption || '';
   const raw = Array.isArray(data.images) && data.images.length > 0
     ? data.images
     : (data.image_url ? [data.image_url] : []);
   return raw.map(img => {
     if (typeof img === 'string') {
       const pos = data.image_position || 'right';
-      return { url: img, ...(POS_DEFAULTS_PUB[pos] || POS_DEFAULTS_PUB.right) };
+      const defaults = POS_DEFAULTS_PUB[pos] || POS_DEFAULTS_PUB.right;
+      const w = data.image_width || defaults.w;
+      return { url: img, ...defaults, w, caption: topCaption };
     }
-    if (!img.wrap && typeof img.x === 'number') return { wrap: img.x < 50 ? 'left' : 'right', w: img.w || 38, y: img.y || 0, url: img.url };
-    if (!img.wrap && img.position) { const pos = img.position || 'right'; return { url: img.url, ...(POS_DEFAULTS_PUB[pos] || POS_DEFAULTS_PUB.right) }; }
-    return { y: 0, ...img };
+    const caption = img.caption || topCaption;
+    if (!img.wrap && typeof img.x === 'number') return { wrap: img.x < 50 ? 'left' : 'right', w: img.w || 38, y: img.y || 0, url: img.url, caption };
+    if (!img.wrap && img.position) { const pos = img.position || 'right'; return { url: img.url, ...(POS_DEFAULTS_PUB[pos] || POS_DEFAULTS_PUB.right), caption }; }
+    return { y: 0, ...img, caption };
   });
 }
 
@@ -126,12 +152,11 @@ function BlockImage({ img, shadow }) {
         style={{
           display: 'block',
           width: '100%',
-          borderRadius: hasCaption ? '12px 12px 0 0' : 12,
+          borderRadius: 12,
         }}
       />
       {hasCaption && (
         <figcaption style={{
-          background: '#f3f4f6',
           color: '#6b7280',
           fontSize: '0.8rem',
           textAlign: 'center',
@@ -145,14 +170,28 @@ function BlockImage({ img, shadow }) {
   );
 }
 
+const stripHtml = html => html?.replace(/<[^>]*>/g, '').trim() || '';
+
+// Ensure every <a> tag opens in a new tab
+const addLinkTargets = html =>
+  html ? html.replace(/<a\b([^>]*)>/gi, (_, attrs) => {
+    const clean = attrs
+      .replace(/\btarget\s*=\s*["'][^"']*["']/gi, '')
+      .replace(/\brel\s*=\s*["'][^"']*["']/gi, '');
+    return `<a${clean} target="_blank" rel="noopener noreferrer">`;
+  }) : html;
+
 function AboutBlock({ data, site }) {
-  const imgs = normImages(data);
+  const imgs       = normImages(data);
+  const hasHeading = !!data.heading?.trim();
+  const hasBody    = !!stripHtml(data.body);
+  if (!hasHeading && !hasBody && imgs.length === 0) return null;
   return (
     <SectionWrap site={site}>
       <div style={{ overflow: 'hidden' }}>
         {imgs.map((img, i) => <BlockImage key={i} img={img} shadow={true} />)}
-        {data.heading && <SectionHeading html={data.heading} site={site} />}
-        {data.body && <BodyText html={data.body} site={site} />}
+        {hasHeading && <SectionHeading html={data.heading} site={site} headingStyle={data.heading_style || 'h2'} />}
+        {hasBody && <BodyText html={data.body} site={site} />}
         <div style={{ clear: 'both' }} />
       </div>
     </SectionWrap>
@@ -160,13 +199,16 @@ function AboutBlock({ data, site }) {
 }
 
 function ContentBlock({ data, site }) {
-  const imgs = normImages(data);
+  const imgs       = normImages(data);
+  const hasHeading = !!data.heading?.trim();
+  const hasBody    = !!stripHtml(data.body);
+  if (!hasHeading && !hasBody && imgs.length === 0) return null;
   return (
     <SectionWrap site={site}>
       <div style={{ overflow: 'hidden' }}>
         {imgs.map((img, i) => <BlockImage key={i} img={img} shadow={false} />)}
-        {data.heading && <SectionHeading html={data.heading} site={site} />}
-        {data.body && <BodyText html={data.body} site={site} />}
+        {hasHeading && <SectionHeading html={data.heading} site={site} headingStyle={data.heading_style || 'h2'} />}
+        {hasBody && <BodyText html={data.body} site={site} />}
         <div style={{ clear: 'both' }} />
       </div>
     </SectionWrap>
@@ -433,6 +475,82 @@ function DividerBlock({ data }) {
   return <div style={{ height: data.height || 40 }} />;
 }
 
+function normLinksGroups(data) {
+  if (Array.isArray(data.groups) && data.groups.length > 0) return data.groups;
+  if (Array.isArray(data.items)  && data.items.length  > 0) return [{ heading: '', items: data.items }];
+  return [];
+}
+
+function LinksBlock({ data, site }) {
+  const groups    = normLinksGroups(data);
+  const cols      = data.columns || 3;
+  if (groups.length === 0) return null;
+  const linkColor = site.link_color || site.accent_color || '#2563eb';
+  const linkUline = site.link_underline !== false;
+  const bodyFont  = site.body_font  || site.font_family || 'inherit';
+  const bodySize  = site.body_size  || '1rem';
+  const bodyColor = site.body_color || site.text_color  || '#111827';
+
+  // Resolve H1/H2 styles from site typography settings
+  const h1Size   = site.h1_size   || '2.5rem'; const h1Weight = site.h1_weight || '800';
+  const h1Font   = site.h1_font   || site.font_family || 'inherit';
+  const h1Color  = site.h1_color  || site.text_color  || '#111827';
+  const h2Size   = site.h2_size   || '1.8rem'; const h2Weight = site.h2_weight || '700';
+  const h2Font   = site.h2_font   || site.font_family || 'inherit';
+  const h2Color  = site.h2_color  || site.text_color  || '#111827';
+
+  return (
+    <SectionWrap site={site}>
+      {data.heading && (
+        <h1 style={{ fontSize: h1Size, fontWeight: h1Weight, fontFamily: h1Font, color: h1Color, marginBottom: '1rem', lineHeight: 1.2 }}>
+          {data.heading}
+        </h1>
+      )}
+      {groups.map((group, gi) => (
+        <div key={gi} style={{ marginBottom: '1.5rem' }}>
+          {group.heading && (
+            <h2 style={{ fontSize: h2Size, fontWeight: h2Weight, fontFamily: h2Font, color: h2Color, marginBottom: '0.75rem', lineHeight: 1.3 }}>
+              {group.heading}
+            </h2>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '0.75rem' }}>
+            {(group.items || []).map((item, i) => (
+              <a
+                key={i}
+                href={item.url || '#'}
+                target={item.url ? '_blank' : undefined}
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex', gap: '0.6rem', alignItems: 'flex-start',
+                  color: linkColor,
+                  textDecoration: linkUline ? 'underline' : 'none',
+                  fontFamily: bodyFont,
+                  fontSize: bodySize,
+                }}
+              >
+                {item.icon_url && (
+                  <div style={{ flexShrink: 0 }}>
+                    <img src={item.icon_url} alt="" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 4 }} />
+                  </div>
+                )}
+                <div>
+                  <div dangerouslySetInnerHTML={{ __html: item.label || '' }} style={{ fontWeight: 600 }} />
+                  {item.description && (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: item.description }}
+                      style={{ color: bodyColor, fontWeight: 400, marginTop: 3, lineHeight: 1.4, textDecoration: 'none' }}
+                    />
+                  )}
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </SectionWrap>
+  );
+}
+
 // ── Shared layout components ──────────────────────────────────────
 function SectionWrap({ children, site, alt }) {
   const bgColor = alt ? (site.bg_color === '#FFFFFF' ? '#F9FAFB' : site.bg_color + 'ee') : site.bg_color;
@@ -440,25 +558,34 @@ function SectionWrap({ children, site, alt }) {
   const textWidth = site.body_content_width || '100%';
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <section style={{ width: '100%', maxWidth: bgWidth, padding: '5px 1.5rem 0', background: bgColor }}>
+      <section style={{ width: '100%', maxWidth: bgWidth, paddingTop: 10, paddingLeft: '1.5rem', paddingRight: '1.5rem', paddingBottom: 0, background: bgColor }}>
         <div style={{ maxWidth: textWidth, margin: '0 auto' }}>{children}</div>
       </section>
     </div>
   );
 }
-function SectionHeading({ children, html, site, centered }) {
+function SectionHeading({ children, html, site, centered, headingStyle }) {
+  // headingStyle is h1/h2/h3/h4/p from block_data; default to h2 for data-backed blocks
+  const k   = (!headingStyle || headingStyle === 'p') ? 'body' : headingStyle;
+  const tag = (!headingStyle || headingStyle === 'p') ? 'p'    : headingStyle;
+  const ruleclr = site[`${k}_rule_color`] || site.text_color || '#000';
+  const hasRule = k !== 'body' && !!site[`${k}_rule`];
+  const align   = centered ? 'center' : (site[`${k}_align`] || 'left');
   const style = {
-    fontSize: site.h2_size || 'clamp(1.5rem, 3vw, 2.2rem)',
-    fontWeight: site.h2_weight || 800,
-    color: site.h2_color || site.text_color,
-    fontFamily: site.font_family,
-    marginTop: (site.h2_margin_top ?? 0) + 'px',
-    marginBottom: (site.h2_margin_bottom ?? 8) + 'px',
-    textAlign: centered ? 'center' : (site.h2_align || 'left'),
-    textDecoration: site.h2_underline ? 'underline' : 'none',
+    fontSize:       site[`${k}_size`]   || (k==='body'?'1rem':k==='h1'?'2.5rem':k==='h2'?'clamp(1.5rem,3vw,2.2rem)':k==='h3'?'1.3rem':'1.1rem'),
+    fontWeight:     site[`${k}_weight`] || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':'600'),
+    color:          site[`${k}_color`]  || site.text_color,
+    fontFamily:     site[`${k}_font`]   || site.font_family,
+    marginTop:      (site[`${k}_margin_top`]    ?? 0)  + 'px',
+    marginBottom:   (site[`${k}_margin_bottom`] ?? 8)  + 'px',
+    textAlign:      align,
+    textDecoration: site[`${k}_underline`] ? 'underline' : 'none',
+    borderBottom:   hasRule ? `2px solid ${ruleclr}` : undefined,
+    paddingBottom:  hasRule ? '2px' : undefined,
   };
-  if (html !== undefined) return <h2 style={style} dangerouslySetInnerHTML={{ __html: html }} />;
-  return <h2 style={style}>{children}</h2>;
+  const Tag = tag;
+  if (html !== undefined) return <Tag style={style} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <Tag style={style}>{children}</Tag>;
 }
 function BodyText({ children, html, site }) {
   const style = {
@@ -469,7 +596,7 @@ function BodyText({ children, html, site }) {
     marginTop: (site.body_margin_top ?? 0) + 'px',
     marginBottom: (site.body_margin_bottom ?? 12) + 'px',
   };
-  if (html !== undefined) return <div className="site-rte" style={style} dangerouslySetInnerHTML={{ __html: html }} />;
+  if (html !== undefined) return <div className="site-rte" style={style} dangerouslySetInnerHTML={{ __html: addLinkTargets(html) }} />;
   return <p style={{ ...style, whiteSpace: 'pre-wrap' }}>{children}</p>;
 }
 function PriceCard({ icon, name, price, unit, image, desc, tags, site }) {
@@ -512,6 +639,7 @@ function RenderBlock({ block, site, businessId }) {
     case 'gallery':        return <GalleryBlock data={data} site={site} businessId={businessId} />;
     case 'blog':           return <BlogBlock data={data} site={site} businessId={businessId} />;
     case 'contact':        return <ContactBlock data={data} site={site} />;
+    case 'links':          return <LinksBlock data={data} site={site} />;
     case 'divider':        return <DividerBlock data={data} />;
     default:               return null;
   }
@@ -544,6 +672,13 @@ export default function WebsitePublic() {
       .catch(() => setLoading(false));
   }, [slug]);
 
+  // Close mobile menu when viewport widens past the md breakpoint (768px)
+  useEffect(() => {
+    const onResize = () => { if (window.innerWidth >= 768) setMobileMenu(false); };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#6B7280' }}>
       Loading…
@@ -573,15 +708,45 @@ export default function WebsitePublic() {
     ? `url(${site.bg_image_url}) center/cover no-repeat fixed`
     : (site.bg_gradient || site.bg_color || '#fff');
 
-  // Inject typography margin CSS for rich-text blocks (dangerouslySetInnerHTML)
-  const typographyCss = `
-    .site-rte h1 { margin-top:${site.h1_margin_top??0}px; margin-bottom:${site.h1_margin_bottom??8}px; }
-    .site-rte h2 { margin-top:${site.h2_margin_top??0}px; margin-bottom:${site.h2_margin_bottom??8}px; }
-    .site-rte h3 { margin-top:${site.h3_margin_top??0}px; margin-bottom:${site.h3_margin_bottom??6}px; }
-    .site-rte h4 { margin-top:${site.h4_margin_top??0}px; margin-bottom:${site.h4_margin_bottom??4}px; }
-    .site-rte p  { margin-top:${site.body_margin_top??0}px; margin-bottom:${site.body_margin_bottom??12}px; }
-    ${buildPublicRteTypoCss(site)}
-  `;
+  // Full typography CSS for .site-rte rich-text blocks (standard h1/h2/h3/h4/p tags from inline editor)
+  const buildSiteRteBodyCss = () => {
+    const linkColor = site.link_color || site.accent_color || '#2563eb';
+    const linkUline = site.link_underline !== false;
+    const linkRule  = `.site-rte a{color:${linkColor};${linkUline ? 'text-decoration:underline;' : 'text-decoration:none;'}}`;
+    const liFont  = site.body_font  || site.font_family || 'inherit';
+    const liSize  = site.body_size  || '1rem';
+    const liColor = site.body_color || site.text_color  || 'inherit';
+    const listRules = [
+      `.site-rte ul{list-style:disc!important;padding-left:1.5em!important;margin:0.4em 0!important;}`,
+      `.site-rte ol{list-style:decimal!important;padding-left:1.5em!important;margin:0.4em 0!important;}`,
+      `.site-rte li{margin:0.2em 0;font-family:${liFont};font-size:${liSize};color:${liColor};}`,
+      `.site-rte li *{font-family:inherit;font-size:inherit;color:inherit;}`,
+    ].join('');
+    const tagRules  = [
+      ['h1','h1'],['h2','h2'],['h3','h3'],['h4','h4'],['body','p'],
+    ].map(([k, tag]) => {
+      const size    = site[`${k}_size`]         || (k==='body'?'1rem':k==='h1'?'2.5rem':k==='h2'?'1.8rem':k==='h3'?'1.3rem':'1.1rem');
+      const weight  = site[`${k}_weight`]       || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':'600');
+      const color   = site[`${k}_color`]        || site.text_color || '';
+      const font    = site[`${k}_font`]         || site.font_family || '';
+      const uline   = site[`${k}_underline`];
+      const hasRule = k !== 'body' && site[`${k}_rule`];
+      const ruleclr = site[`${k}_rule_color`]   || site.text_color || '#000';
+      const align   = site[`${k}_align`]        || 'left';
+      const mt      = site[`${k}_margin_top`]   ?? 0;
+      const mb      = site[`${k}_margin_bottom`]?? (k === 'body' ? 12 : 8);
+      let css = `font-size:${size};font-weight:${weight};margin-top:${mt}px;margin-bottom:${mb}px;`;
+      if (font)    css += `font-family:${font};`;
+      if (color)   css += `color:${color};`;
+      if (uline)   css += `text-decoration:underline;`;
+      if (hasRule) css += `border-bottom:2px solid ${ruleclr};padding-bottom:2px;`;
+      if (align !== 'left') css += `text-align:${align};`;
+      return `.site-rte ${tag}{${css}}`;
+    }).join('\n');
+    return linkRule + '\n' + listRules + '\n' + tagRules;
+  };
+
+  const typographyCss = buildSiteRteBodyCss() + '\n' + buildPublicRteTypoCss(site);
 
   return (
     <div style={{ minHeight: '100vh', background: pageBg, fontFamily: site.font_family }}>
@@ -649,10 +814,14 @@ export default function WebsitePublic() {
               ? `url(${site.nav_bg_image_url}) center/cover no-repeat`
               : (site.primary_color || '#3D6B34');
             const navColor = site.nav_text_color || '#fff';
-            const dropdownBg = site.primary_color || '#3D6B34';
-            // Build nav tree
-            const topLevelPages = pages.filter(p => !p.parent_page_id);
-            const childrenOf = parentId => pages.filter(p => p.parent_page_id === parentId);
+            const dropdownBg = site.dropdown_bg_color2
+              ? `linear-gradient(${site.dropdown_gradient_dir || '135deg'}, ${site.dropdown_bg_color || site.primary_color || '#3D6B34'}, ${site.dropdown_bg_color2})`
+              : (site.dropdown_bg_color || site.primary_color || '#3D6B34');
+            const dropdownHover = site.dropdown_hover_color || 'rgba(255,255,255,0.15)';
+            // Build nav tree — filter unpublished pages/headings on live site
+            const visiblePages = isPreview ? pages : pages.filter(p => p.is_published !== false);
+            const topLevelPages = visiblePages.filter(p => !p.parent_page_id);
+            const childrenOf = parentId => visiblePages.filter(p => p.parent_page_id === parentId);
             const isActiveOrChild = p => activePage?.page_id === p.page_id || childrenOf(p.page_id).some(c => c.page_id === activePage?.page_id);
             return (
               <nav style={{ width: '100%', maxWidth: site.header_content_width || '100%', background: navBg, boxShadow: '0 2px 16px rgba(0,0,0,0.15)' }}>
@@ -677,21 +846,26 @@ export default function WebsitePublic() {
                           onMouseEnter={() => setOpenDropdown(p.page_id)}
                           onMouseLeave={() => setOpenDropdown(null)}>
                           <span
-                            style={{ background: active ? 'rgba(255,255,255,0.2)' : 'none', color: navColor, padding: '0.4rem 0.9rem', borderRadius: 8, fontWeight: active ? 700 : 500, fontSize: '0.9rem', fontFamily: site.font_family, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'default', userSelect: 'none' }}>
+                            style={{ background: active ? 'rgba(255,255,255,0.2)' : 'none', color: navColor, padding: '0.4rem 0.9rem', borderRadius: 8, fontWeight: active ? 700 : 500, fontSize: '0.9rem', fontFamily: site.font_family, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'default', userSelect: 'none' }}>
                             {p.page_name}
-                            {children.length > 0 && <span style={{ fontSize: '0.6rem', opacity: 0.75 }}>▾</span>}
+                            {children.length > 0 && <span style={{ fontSize: '1rem', lineHeight: 1, opacity: 0.9 }}>▾</span>}
                           </span>
-                          {children.length > 0 && openDropdown === p.page_id && (
-                            <div style={{ position: 'absolute', top: '100%', left: 0, background: dropdownBg, borderRadius: 8, boxShadow: '0 6px 24px rgba(0,0,0,0.25)', minWidth: 170, zIndex: 300, overflow: 'hidden', marginTop: 2 }}>
+                          {children.length > 0 && openDropdown === p.page_id && (<>
+                            {/* Invisible bridge — fills gap between trigger and dropdown so onMouseLeave doesn't fire */}
+                            <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', height: 8, background: 'transparent' }} />
+                            <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: dropdownBg, borderRadius: 8, boxShadow: '0 6px 24px rgba(0,0,0,0.25)', minWidth: 170, zIndex: 300, overflow: 'hidden' }}>
                               {children.map(child => (
-                                <button key={child.page_id}
+                                <DropdownItem key={child.page_id}
+                                  label={child.page_name}
+                                  active={activePage?.page_id === child.page_id}
+                                  navColor={navColor}
+                                  hoverColor={dropdownHover}
+                                  fontFamily={site.font_family}
                                   onClick={() => { setActivePage(child); setOpenDropdown(null); }}
-                                  style={{ display: 'block', width: '100%', textAlign: 'left', background: activePage?.page_id === child.page_id ? 'rgba(255,255,255,0.15)' : 'none', border: 0, borderBottom: '1px solid rgba(255,255,255,0.08)', color: navColor, padding: '0.6rem 1rem', fontWeight: activePage?.page_id === child.page_id ? 700 : 400, cursor: 'pointer', fontSize: '0.87rem', fontFamily: site.font_family }}>
-                                  {child.page_name}
-                                </button>
+                                />
                               ))}
                             </div>
-                          )}
+                          </>)}
                         </div>
                       );
                     })}
