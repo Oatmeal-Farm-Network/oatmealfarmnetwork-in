@@ -87,7 +87,7 @@ export default function MarketplaceCart() {
         <div className="text-center py-16">
           <p className="text-gray-400 text-lg mb-4">Your cart is empty.</p>
           <button onClick={() => navigate('/marketplaces/farm-to-table')}
-            className="bg-[#819360] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#6a7a4e]">
+            className="bg-[#819360] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#3D6B35]">
             Browse Marketplace
           </button>
         </div>
@@ -161,7 +161,7 @@ export default function MarketplaceCart() {
             </div>
             <p className="text-xs text-gray-400 mt-3">Payment will be processed only after sellers confirm your order. If a seller rejects an item, you'll only be charged for confirmed items.</p>
             <button onClick={handleCheckout} disabled={checking}
-              className="w-full mt-4 bg-[#819360] hover:bg-[#6a7a4e] text-white font-bold py-3 rounded-xl text-lg disabled:opacity-50">
+              className="w-full mt-4 bg-[#819360] hover:bg-[#3D6B35] text-white font-bold py-3 rounded-xl text-lg disabled:opacity-50">
               {checking ? 'Placing Order...' : 'Place Order'}
             </button>
           </div>

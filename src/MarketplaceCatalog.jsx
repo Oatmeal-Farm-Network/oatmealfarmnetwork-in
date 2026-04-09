@@ -189,7 +189,7 @@ export default function MarketplaceCatalog() {
                       </div>
                       <button
                         onClick={() => addToCart(l.ListingID)}
-                        className="bg-[#819360] hover:bg-[#6a7a4e] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                        className="bg-[#819360] hover:bg-[#3D6B35] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
                       >
                         Add to Cart
                       </button>

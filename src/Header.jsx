@@ -9,6 +9,8 @@ const Header = () => {
   const [kbMobileOpen, setKbMobileOpen] = useState(false);
   const [mktOpen, setMktOpen] = useState(false);
   const [mktMobileOpen, setMktMobileOpen] = useState(false);
+  const [nrOpen, setNrOpen] = useState(false);
+  const [nrMobileOpen, setNrMobileOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [acctOpen, setAcctOpen] = useState(false);
@@ -16,6 +18,7 @@ const Header = () => {
   const kbRef = useRef(null);
   const acctRef = useRef(null);
   const mktRef = useRef(null);
+  const nrRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
@@ -34,6 +37,7 @@ const Header = () => {
       if (kbRef.current && !kbRef.current.contains(e.target)) setKbOpen(false);
       if (acctRef.current && !acctRef.current.contains(e.target)) setAcctOpen(false);
       if (mktRef.current && !mktRef.current.contains(e.target)) setMktOpen(false);
+      if (nrRef.current && !nrRef.current.contains(e.target)) setNrOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -53,29 +57,36 @@ const Header = () => {
 
   const KbDropdown = () => (
     <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded shadow-lg z-50 overflow-hidden">
-      <Link to="/plant-knowledgebase" onClick={() => setKbOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Plants</Link>
-      <Link to="/livestock" onClick={() => setKbOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Livestock Breeds</Link>
-      <Link to="/ingredient-knowledgebase" onClick={() => setKbOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ingredients</Link>
+      <Link to="/plant-knowledgebase" onClick={() => setKbOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Plants</Link>
+      <Link to="/livestock" onClick={() => setKbOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Livestock Breeds</Link>
+      <Link to="/ingredient-knowledgebase" onClick={() => setKbOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Ingredients</Link>
+    </div>
+  );
+
+  const NrDropdown = () => (
+    <div className="absolute top-full left-0 mt-2 w-44 bg-white rounded shadow-lg z-50 overflow-hidden">
+      <Link to="/app/news" onClick={() => setNrOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Newsfeed</Link>
+      <Link to="/blog" onClick={() => setNrOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Blogs</Link>
     </div>
   );
 
   const MktDropdown = () => (
     <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded shadow-lg z-50 overflow-hidden">
-      <Link to="/marketplaces/farm-to-table" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+      <Link to="/marketplaces/farm-to-table" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
         Farm 2 Table
       </Link>
-      <Link to="/marketplace/products" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+      <Link to="/marketplace/products" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
         Products Marketplace
       </Link>
-      <Link to="/marketplaces/livestock" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+      <Link to="/marketplaces/livestock" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
         Livestock Marketplace
       </Link>
       <hr className="my-1 border-gray-100" />
-      <Link to="/services/directory" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+      <Link to="/services/directory" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
         Services Directory
       </Link>
       <hr className="my-1 border-gray-100" />
-      <Link to="/events" onClick={() => setMktOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+      <Link to="/events" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
         Events
       </Link>
     </div>
@@ -143,7 +154,7 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden lg:flex flex-grow justify-center">
-          <ul className="flex space-x-10 text-sm font-normal items-center">
+          <ul className="flex space-x-7 text-xs font-normal items-center">
 
             {isLoggedIn ? (
               <>
@@ -174,6 +185,14 @@ const Header = () => {
               {mktOpen && <MktDropdown />}
             </li>
 
+            {/* Newsroom dropdown */}
+            <li className="relative" ref={nrRef}>
+              <button onClick={() => setNrOpen(!nrOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
+                Newsroom <ChevronIcon open={nrOpen} />
+              </button>
+              {nrOpen && <NrDropdown />}
+            </li>
+
             {isLoggedIn ? (
               <>
                 {/* Accounts dropdown */}
@@ -183,8 +202,8 @@ const Header = () => {
                   </button>
                   {acctOpen && (
                     <div className="absolute top-full left-0 mt-2 w-52 bg-white rounded shadow-lg z-50 overflow-hidden">
-                      <Link to={`/accounts?PeopleID=${user?.peopleId}`} onClick={() => setAcctOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Accounts</Link>
-                      <Link to={`/accounts/new?PeopleID=${user?.peopleId}`} onClick={() => setAcctOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Add Account</Link>
+                      <Link to={`/accounts?PeopleID=${user?.peopleId}`} onClick={() => setAcctOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Accounts</Link>
+                      <Link to={`/accounts/new?PeopleID=${user?.peopleId}`} onClick={() => setAcctOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Add Account</Link>
                       {businesses.length > 0 && (
                         <>
                           <hr className="my-1 border-gray-200" />
@@ -193,7 +212,7 @@ const Header = () => {
                               key={b.BusinessID}
                               to={`/account?PeopleID=${user?.peopleId}&BusinessID=${b.BusinessID}`}
                               onClick={() => setAcctOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100"
                             >
                               {b.BusinessName.substring(0, 25)}
                             </Link>
@@ -203,7 +222,7 @@ const Header = () => {
                     </div>
                   )}
                 </li>
-                <li><Link to="/contact-us" className="nav-link">Contact Us</Link></li>
+                <li><Link to="/contact-us" className="nav-link">Contact</Link></li>
                 <li><button onClick={handleLogout} className="nav-link">Log Out</button></li>
               </>
             ) : (
@@ -260,6 +279,19 @@ const Header = () => {
               {mktMobileOpen && <MktMobileLinks />}
             </li>
 
+            {/* Newsroom mobile */}
+            <li>
+              <button onClick={() => setNrMobileOpen(!nrMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
+                Newsroom <ChevronIcon open={nrMobileOpen} />
+              </button>
+              {nrMobileOpen && (
+                <ul className="mt-2 space-y-2 text-sm">
+                  <li><Link to="/app/news" onClick={() => setIsOpen(false)} className="!text-white/80 block">Newsfeed</Link></li>
+                  <li><Link to="/blog" onClick={() => setIsOpen(false)} className="!text-white/80 block">Blogs</Link></li>
+                </ul>
+              )}
+            </li>
+
             {isLoggedIn ? (
               <>
                 <li>
@@ -281,14 +313,14 @@ const Header = () => {
                     )}
                   </ul>
                 </li>
-                <li><Link to="/contact-us" onClick={() => setIsOpen(false)} className="nav-link block">Contact Us</Link></li>
+                <li><Link to="/contact-us" onClick={() => setIsOpen(false)} className="nav-link block">Contact</Link></li>
                 <li><button onClick={handleLogout} className="nav-link">Log Out</button></li>
               </>
             ) : (
               <>
                 <li><Link to="/saige" onClick={() => setIsOpen(false)} className="!text-white block">Saige</Link></li>
                 <li><Link to="/about" onClick={() => setIsOpen(false)} className="!text-white block">About Us</Link></li>
-                <li><Link to="/contact-us" onClick={() => setIsOpen(false)} className="!text-white block">Contact Us</Link></li>
+                <li><Link to="/contact-us" onClick={() => setIsOpen(false)} className="!text-white block">Contact</Link></li>
                 <li><Link to="/login" onClick={() => setIsOpen(false)} className="!text-white block">Login</Link></li>
                 <li><Link to="/signup" onClick={() => setIsOpen(false)} className="!text-white block">Sign Up</Link></li>
               </>

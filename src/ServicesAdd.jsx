@@ -199,7 +199,7 @@ export default function ServicesAdd() {
           borderRadius: 8, padding: '16px 18px', marginBottom: 18,
         }}>
           <div style={{ fontWeight: 700, fontSize: 14, color: '#5a3e2b', marginBottom: 12 }}>
-            Contact Info <span style={{ fontWeight: 400, color: '#a08060', fontSize: 12 }}>(optional)</span>
+            Contact Info <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: 12 }}>(optional)</span>
           </div>
           <Field label="Phone">
             <input value={form.ServicePhone} onChange={e => set('ServicePhone', e.target.value)} style={inputStyle} placeholder="e.g. 555-123-4567" />

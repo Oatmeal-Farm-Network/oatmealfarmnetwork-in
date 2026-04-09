@@ -346,13 +346,13 @@ export default function SellerListings() {
                     <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Basic Info</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="md:col-span-3">
-                        <label className={lbl}>Title *</label>
+                        <label className={lbl}>Title</label>
                         <input value={form.prodName} onChange={pf('prodName')} className={inp} required placeholder="e.g. Hand-spun Merino Wool Yarn" />
                       </div>
 
                       {/* Category */}
                       <div>
-                        <label className={lbl}>Category</label>
+                        <label className={lbl}>Category <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <select value={form.prodCategoryId} onChange={handleCatChange} className={inp}>
                           <option value="">-- Select Category --</option>
                           {categories.map(c => (
@@ -363,7 +363,7 @@ export default function SellerListings() {
 
                       {/* Subcategory */}
                       <div>
-                        <label className={lbl}>Subcategory</label>
+                        <label className={lbl}>Subcategory <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <select value={form.prodSubCategoryId} onChange={pf('prodSubCategoryId')} className={inp} disabled={!subcategories.length}>
                           <option value="">-- Select Subcategory --</option>
                           {subcategories.map(s => (
@@ -373,18 +373,18 @@ export default function SellerListings() {
                       </div>
 
                       <div>
-                        <label className={lbl}>Short Description</label>
+                        <label className={lbl}>Short Description <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <input value={form.prodShortDescription} onChange={pf('prodShortDescription')} className={inp} placeholder="Brief tagline…" />
                       </div>
 
                       <div className="md:col-span-3">
-                        <label className={lbl}>Full Description</label>
+                        <label className={lbl}>Full Description <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <textarea value={form.prodDescription} onChange={pf('prodDescription')} className={inp} rows={4} placeholder="Describe your product in detail…" />
                       </div>
 
                       {/* Made In */}
                       <div>
-                        <label className={lbl}>Made In</label>
+                        <label className={lbl}>Made In <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <input value={form.prodMadeIn} onChange={pf('prodMadeIn')} className={inp} placeholder="e.g. USA, Montana…" />
                       </div>
                       <div className="flex items-center pt-5">
@@ -401,11 +401,11 @@ export default function SellerListings() {
                     <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Pricing</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className={lbl}>Retail Price *</label>
+                        <label className={lbl}>Retail Price</label>
                         <input type="number" step="0.01" min="0" value={form.prodPrice} onChange={pf('prodPrice')} className={inp} required placeholder="0.00" />
                       </div>
                       <div>
-                        <label className={lbl}>Sale Price</label>
+                        <label className={lbl}>Sale Price <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <input type="number" step="0.01" min="0" value={form.SalePrice} onChange={pf('SalePrice')} className={inp} placeholder="0.00" />
                       </div>
                       <div className="flex flex-col justify-end pb-2 gap-2">
@@ -443,15 +443,15 @@ export default function SellerListings() {
                     <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Physical Details</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="md:col-span-3">
-                        <label className={lbl}>Materials</label>
+                        <label className={lbl}>Materials <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <input value={form.Materials} onChange={pf('Materials')} className={inp} placeholder="e.g. 100% Merino Wool…" />
                       </div>
                       <div>
-                        <label className={lbl}>Weight</label>
+                        <label className={lbl}>Weight <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <input type="number" step="0.01" min="0" value={form.prodWeight} onChange={pf('prodWeight')} className={inp} placeholder="0.00" />
                       </div>
                       <div>
-                        <label className={lbl}>Weight Unit</label>
+                        <label className={lbl}>Weight Unit <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <select value={form.weightUnit} onChange={pf('weightUnit')} className={inp}>
                           {['oz', 'lb', 'g', 'kg'].map(u => <option key={u} value={u}>{u}</option>)}
                         </select>
@@ -463,19 +463,19 @@ export default function SellerListings() {
                         </label>
                       </div>
                       <div>
-                        <label className={lbl}>Length (in)</label>
+                        <label className={lbl}>Length (in) <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <input type="number" step="0.01" min="0" value={form.prodLength} onChange={pf('prodLength')} className={inp} placeholder="0.00" />
                       </div>
                       <div>
-                        <label className={lbl}>Width (in)</label>
+                        <label className={lbl}>Width (in) <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <input type="number" step="0.01" min="0" value={form.prodWidth} onChange={pf('prodWidth')} className={inp} placeholder="0.00" />
                       </div>
                       <div>
-                        <label className={lbl}>Height (in)</label>
+                        <label className={lbl}>Height (in) <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <input type="number" step="0.01" min="0" value={form.prodHeight} onChange={pf('prodHeight')} className={inp} placeholder="0.00" />
                       </div>
                       <div className="md:col-span-3">
-                        <label className={lbl}>Dimensions (free text)</label>
+                        <label className={lbl}>Dimensions (free text) <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <input value={form.ProdDimensions} onChange={pf('ProdDimensions')} className={inp} placeholder='e.g. 12" x 8" x 4"' />
                       </div>
                     </div>
@@ -511,15 +511,15 @@ export default function SellerListings() {
                     <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Animal Linkage</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className={lbl}>Animal ID 1</label>
+                        <label className={lbl}>Animal ID 1 <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <input value={form.ProdAnimalID} onChange={pf('ProdAnimalID')} className={inp} placeholder="Animal ID" />
                       </div>
                       <div>
-                        <label className={lbl}>Animal ID 2</label>
+                        <label className={lbl}>Animal ID 2 <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <input value={form.ProdAnimalID2} onChange={pf('ProdAnimalID2')} className={inp} placeholder="Animal ID" />
                       </div>
                       <div>
-                        <label className={lbl}>Animal ID 3</label>
+                        <label className={lbl}>Animal ID 3 <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                         <input value={form.ProdAnimalID3} onChange={pf('ProdAnimalID3')} className={inp} placeholder="Animal ID" />
                       </div>
                     </div>

@@ -24,6 +24,9 @@ import EventDetail from './EventDetail';
 import EventRegister from './EventRegister';
 import EventsManage from './EventsManage';
 import EventsMyRegistrations from './EventsMyRegistrations';
+import BlogList from './BlogList';
+import BlogDetail from './BlogDetail';
+import BlogManage from './BlogManage';
 
 
 const App = lazy(() => import('./App.jsx'))
@@ -163,6 +166,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/produce/meat" element={<MeatInventory />} />
           <Route path="/app/news" element={<AccountLayout><NewsFeed /></AccountLayout>} />
           <Route path="/app/news/:id" element={<AccountLayout><ArticleDetail /></AccountLayout>} />
+          <Route path="/blog/manage" element={<BlogManage />} />
+          <Route path="/blog/:postId" element={<BlogDetail />} />
+          <Route path="/blog" element={<BlogList />} />
 
           {/* Public marketplace (anyone can browse) */}
           <Route path="/marketplace/products/:id" element={<ProductDetail />} />
@@ -177,6 +183,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           {/* Seller pages (in AccountLayout) */}
           <Route path="/seller/orders" element={<SellerOrders />} />
           <Route path="/seller/listings" element={<SellerListings />} />
+
+          {/* Custom domain catch-all: when loaded on a non-OFN hostname every path
+              goes to the public site renderer which looks up the site by domain. */}
+          {!['oatmealfarmnetwork.com', 'www.oatmealfarmnetwork.com', 'localhost', '127.0.0.1']
+            .some(h => window.location.hostname === h || window.location.hostname.endsWith(`.${h}`)) && (
+            <Route path="*" element={<WebsitePublic />} />
+          )}
 
         </Routes>
       </Suspense>

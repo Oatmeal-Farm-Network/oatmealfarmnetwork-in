@@ -39,7 +39,7 @@ const defaultBlockData = {
   services:       { heading: 'Our Services', max_items: 6 },
   marketplace:    { heading: 'Shop Our Store', max_items: 12 },
   gallery:        { heading: 'Photo Gallery', columns: 3 },
-  blog:           { heading: 'From the Blog', max_posts: 3 },
+  blog:           { heading: 'From the Blog', max_posts: 3, category: '' },
   contact:        { heading: 'Get In Touch', show_form: true, custom_message: '' },
   links:          { heading: 'Links', columns: 3, groups: [
     { heading: 'Social Media', items: [{ icon_url: '', label: 'Link Title', url: '', description: 'Short description of this link' }] },
@@ -175,7 +175,7 @@ function ImageUploadField({ label, value, onChange, hint, compact = false }) {
         <div className="relative inline-block mb-2">
           <img src={value} alt="" className={`rounded-lg object-cover border border-gray-200 ${compact ? 'h-12 w-20' : 'h-24 w-36'}`} />
           <button onClick={() => onChange('')}
-            className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none hover:bg-red-600">×</button>
+            className="absolute -top-1.5 -right-1.5 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none" style={{ background: '#C0382B' }}>×</button>
         </div>
       )}
       <div
@@ -1776,7 +1776,7 @@ function InlineLinksEditor({ block, site, onFieldSave }) {
                   <button
                     title="Remove this group"
                     onMouseDown={e => { e.preventDefault(); e.stopPropagation(); removeGroup(gi); }}
-                    style={{ flexShrink: 0, marginTop: 4, padding: '2px 8px', fontSize: 11, border: '1px solid #fca5a5', borderRadius: 4, background: 'none', color: '#ef4444', cursor: 'pointer' }}
+                    style={{ flexShrink: 0, marginTop: 4, padding: '2px 8px', fontSize: 11, border: 'none', borderRadius: 4, background: '#C0382B', color: '#fff', cursor: 'pointer' }}
                   >✕ Remove Group</button>
                 )}
               </div>
@@ -1795,7 +1795,7 @@ function InlineLinksEditor({ block, site, onFieldSave }) {
                     <button
                       title="Remove this link"
                       onMouseDown={e => { e.preventDefault(); e.stopPropagation(); removeItem(gi, ii); }}
-                      style={{ position: 'absolute', top: 0, right: 0, fontSize: 10, padding: '1px 5px', border: '1px solid #fca5a5', borderRadius: 3, background: 'rgba(255,255,255,0.9)', color: '#ef4444', cursor: 'pointer', lineHeight: 1.4 }}
+                      style={{ position: 'absolute', top: 0, right: 0, fontSize: 10, padding: '1px 5px', border: 'none', borderRadius: 3, background: '#C0382B', color: '#fff', cursor: 'pointer', lineHeight: 1.4 }}
                     >✕</button>
                   </div>
                 ))}
@@ -1860,7 +1860,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
         <button onClick={e => { e.stopPropagation(); onMoveDown(); }} disabled={isLast}
           style={{ padding: '3px 8px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, cursor: isLast ? 'default' : 'pointer', fontSize: 12, opacity: isLast ? 0.35 : 1 }}>↓</button>
         <button onClick={e => { e.stopPropagation(); if (window.confirm('Delete this block?')) onDelete(block.block_id); }}
-          style={{ padding: '3px 8px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>🗑</button>
+          style={{ padding: '3px 8px', background: '#C0382B', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>🗑</button>
       </div>
       <style>{`.canvas-block:hover .block-controls { opacity: 1 !important; }`}</style>
     </div>
@@ -2307,6 +2307,13 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site }) {
         <Field label="Max Posts to Show">
           <input key={`${block.block_id}-posts`} type="number" className={inp} defaultValue={d.max_posts} min={1} max={20}
             onBlur={e => onFieldSave('max_posts', Number(e.target.value))} />
+        </Field>
+      )}
+      {d.max_posts !== undefined && (
+        <Field label="Filter by Category (optional)">
+          <input key={`${block.block_id}-cat`} type="text" className={inp} defaultValue={d.category || ''}
+            placeholder="e.g. Recipes, Farm News…"
+            onBlur={e => onFieldSave('category', e.target.value.trim())} />
         </Field>
       )}
       <BgField />
@@ -2847,7 +2854,6 @@ export default function WebsiteBuilder() {
 
   const deleteSite = async () => {
     if (!site) return;
-    if (!window.confirm(`Delete "${site.site_name}"? This will permanently remove the website, all pages, and all content.`)) return;
     try {
       await apiFetch(`/api/website/site/${site.website_id}`, { method: 'DELETE' });
       setSite(null); setSetupMode(true);
@@ -3211,7 +3217,7 @@ export default function WebsiteBuilder() {
               </a>
             )}
             <button onClick={togglePublish} disabled={saving}
-              style={{ padding: '5px 14px', fontSize: 13, fontWeight: 700, color: site.is_published ? '#dc2626' : '#fff', background: site.is_published ? '#fef2f2' : '#3D6B34', border: `1px solid ${site.is_published ? '#fca5a5' : '#3D6B34'}`, borderRadius: 8, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
+              style={{ padding: '5px 14px', fontSize: 13, fontWeight: 700, color: '#fff', background: site.is_published ? '#C0382B' : '#819360', border: 'none', borderRadius: 8, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
               {site.is_published ? 'Unpublish' : 'Publish Site'}
             </button>
           </div>
@@ -3236,7 +3242,7 @@ export default function WebsiteBuilder() {
                 style={{ width: 40, height: 40, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 18, background: 'transparent', color: '#6b7280', marginBottom: 4 }}>
                 🎨
               </button>
-              <button onClick={() => setActivePage('settings')} title="Settings"
+              <button onClick={() => setActivePage('settings')} title="Website Settings"
                 style={{ width: 40, height: 40, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 18, background: 'transparent', color: '#6b7280', marginBottom: 8 }}>
                 ⚙️
               </button>
@@ -3319,7 +3325,7 @@ export default function WebsiteBuilder() {
                                 {page.is_published ? '👁' : '🚫'}
                               </button>
                               <button onClick={e => { e.stopPropagation(); deletePage(page.page_id); }}
-                                style={{ padding: '1px 4px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#ef4444' }} title="Delete">🗑</button>
+                                style={{ padding: '1px 4px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#C0382B' }} title="Delete">🗑</button>
                             </div>
                           </div>
                         )}
@@ -3569,7 +3575,7 @@ export default function WebsiteBuilder() {
             <div className="bg-white rounded-xl border border-red-100 shadow-sm p-6 max-w-lg">
               <h2 className="text-lg font-bold text-red-700 mb-2">Delete Website</h2>
               <p className="text-sm text-gray-600 mb-4">This will permanently delete <strong>{site.site_name}</strong>, all its pages, and all content. This action cannot be undone.</p>
-              <button onClick={deleteSite} className="px-6 py-2 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors">
+              <button onClick={deleteSite} className="px-6 py-2 text-white font-bold rounded-xl transition-colors" style={{ background: '#C0382B' }}>
                 Permanently Delete
               </button>
             </div>
@@ -4228,7 +4234,7 @@ function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublish
                 </button>
               )}
               <button onClick={() => onDelete(page.page_id)} title="Delete"
-                style={{ ...btnBase, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '3px 7px' }}>
+                style={{ ...btnBase, background: '#C0382B', color: '#fff', border: 'none', padding: '3px 7px' }}>
                 🗑
               </button>
             </div>
@@ -4255,6 +4261,7 @@ function DesignView({ site, onSave, saving }) {
     text_color:         site.text_color         || '#111827',
     font_family:        site.font_family        || 'Inter, sans-serif',
     logo_url:           site.logo_url           || '',
+    favicon_url:        site.favicon_url        || '',
     nav_text_color:      site.nav_text_color      || '#FFFFFF',
     dropdown_bg_color:    site.dropdown_bg_color    || site.primary_color || '#3D6B34',
     dropdown_hover_color: site.dropdown_hover_color || 'rgba(255,255,255,0.15)',
@@ -4374,6 +4381,23 @@ function DesignView({ site, onSave, saving }) {
     }, 1500);
     return () => clearTimeout(autoSaveTimer.current);
   }, [local]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Temporarily show the site's favicon in the browser tab while the design panel is open.
+  // Saves the original OFN favicon and restores it when the component unmounts.
+  useEffect(() => {
+    const link = document.querySelector("link[rel~='icon']");
+    const originalHref = link ? link.href : '/images/OFNFavico.png';
+    return () => {
+      if (link) link.href = originalHref;
+    };
+  }, []); // run once on mount/unmount only
+
+  useEffect(() => {
+    if (!local.favicon_url) return; // no custom favicon — leave OFN favicon alone
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+    link.href = local.favicon_url;
+  }, [local.favicon_url]);
 
   const paletteColors = [local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color, local.nav_text_color, local.footer_bg_color].filter(Boolean);
 
@@ -4968,6 +4992,9 @@ function DesignView({ site, onSave, saving }) {
               <div className="mt-3">
                 <ImageUploadField label="Logo" value={local.logo_url} onChange={url => set('logo_url', url)} hint="Appears in the banner. Recommended: PNG with transparent background." />
               </div>
+              <div className="mt-3">
+                <ImageUploadField label="Favicon" value={local.favicon_url} onChange={url => set('favicon_url', url)} hint="Your website's browser tab icon (shown on your site only, not on OatmealFarmNetwork.com). Recommended: square PNG or ICO, 32×32 or 64×64 px." />
+              </div>
               <ColorRowTransparent label="Banner Background Color" field="header_banner_bg_color" fallback={local.primary_color || '#3D6B34'} hint="Solid color shown when no banner image is uploaded. Transparent shows nothing behind the logo." />
               <ColorRow label="Site Name / Logo Text Color" field="nav_text_color" hint="Color of the site name displayed in the banner" />
               <div className="flex items-center justify-between py-3 border-t border-gray-50 mt-1">
@@ -5065,7 +5092,7 @@ function DesignView({ site, onSave, saving }) {
                   <p className="text-xs text-gray-400 mt-0.5">Displayed above the copyright bar. Clear all text to remove.</p>
                 </div>
                 {local.footer_html && (
-                  <button onClick={() => set('footer_html', '')} className="text-xs text-red-500 border border-red-200 rounded-lg px-3 py-1 hover:bg-red-50 transition-colors">
+                  <button onClick={() => set('footer_html', '')} className="text-xs text-white rounded-lg px-3 py-1 transition-colors" style={{ background: '#C0382B' }}>
                     Remove Content
                   </button>
                 )}
@@ -5175,6 +5202,7 @@ function VersionHistoryPanel({ websiteId }) {
 
 // ── Settings full view ────────────────────────────────────────────
 function SettingsView({ site, onSave, saving, onDelete }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [local, setLocal] = useState({
     site_name:     site.site_name     || '',
     slug:          site.slug          || '',
@@ -5270,15 +5298,11 @@ function SettingsView({ site, onSave, saving, onDelete }) {
           <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Custom Domain</h3>
           <DomainInstructions siteSlug={site.slug} />
         </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
-          <VersionHistoryPanel websiteId={site.website_id} />
-        </div>
       </div>
 
       <div className="mt-5 flex items-center justify-between">
-        <button onClick={onDelete}
-          className="text-sm text-red-500 border border-red-200 rounded-xl px-4 py-2.5 hover:bg-red-50 transition-colors">
+        <button onClick={() => setConfirmDelete(true)}
+          className="text-sm text-white rounded-xl px-4 py-2.5 transition-colors" style={{ background: '#C0382B' }}>
           Delete Website
         </button>
         <button onClick={() => onSave(local)} disabled={saving}
@@ -5286,6 +5310,36 @@ function SettingsView({ site, onSave, saving, onDelete }) {
           {saving ? 'Saving…' : 'Save Settings'}
         </button>
       </div>
+
+      <div className="mt-5 bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <VersionHistoryPanel websiteId={site.website_id} />
+      </div>
+
+      {/* Delete confirmation dialog */}
+      {confirmDelete && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 440, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+            <div style={{ fontSize: 36, marginBottom: 12, textAlign: 'center' }}>⚠️</div>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 8, textAlign: 'center' }}>Delete Website?</h2>
+            <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 6, textAlign: 'center' }}>
+              This will <strong>permanently delete</strong> your website, all pages, and all content.
+            </p>
+            <p style={{ fontSize: 14, color: '#C0382B', fontWeight: 600, marginBottom: 24, textAlign: 'center' }}>
+              This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button onClick={() => setConfirmDelete(false)}
+                style={{ flex: 1, padding: '10px 20px', borderRadius: 10, border: '1px solid #d1d5db', background: '#fff', color: '#374151', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                Cancel
+              </button>
+              <button onClick={() => { setConfirmDelete(false); onDelete(); }}
+                style={{ flex: 1, padding: '10px 20px', borderRadius: 10, border: 'none', background: '#C0382B', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                Yes, Delete Website
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

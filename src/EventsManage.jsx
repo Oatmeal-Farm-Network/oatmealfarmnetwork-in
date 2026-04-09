@@ -282,7 +282,7 @@ function OptionsEditor({ eventId }) {
       {adding && (
         <div className="mt-3 bg-gray-50 rounded-lg p-3 space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <input value={newOpt.OptionName} onChange={e => setNewOpt(o => ({ ...o, OptionName: e.target.value }))} className={inp} placeholder="Option name *" />
+            <input value={newOpt.OptionName} onChange={e => setNewOpt(o => ({ ...o, OptionName: e.target.value }))} className={inp} placeholder="Option name" />
             <input value={newOpt.OptionDescription} onChange={e => setNewOpt(o => ({ ...o, OptionDescription: e.target.value }))} className={inp} placeholder="Description (optional)" />
             <input type="number" step="0.01" min="0" value={newOpt.Price} onChange={e => setNewOpt(o => ({ ...o, Price: e.target.value }))} className={inp} placeholder="Price (0 = Free)" />
             <input type="number" min="1" value={newOpt.MaxQty} onChange={e => setNewOpt(o => ({ ...o, MaxQty: e.target.value }))} className={inp} placeholder="Max qty (optional)" />
@@ -659,7 +659,7 @@ export default function EventsManage() {
                       {expandedEvent === ev.EventID ? 'Close ▲' : 'Manage ▼'}
                     </button>
                     <button onClick={() => deleteEvent(ev)}
-                      className="text-xs text-red-500 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-50">
+                      className="text-xs text-white px-3 py-1.5 rounded-lg" style={{ background: '#C0382B' }}>
                       Delete
                     </button>
                   </div>

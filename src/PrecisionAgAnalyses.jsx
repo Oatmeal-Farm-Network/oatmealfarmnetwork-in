@@ -312,7 +312,7 @@ function TabBtn({ label, active, onClick }) {
     <button
       onClick={onClick}
       className="px-3 py-2 rounded-lg font-mont text-sm font-semibold whitespace-nowrap transition-all"
-      style={{ background: active ? '#6D8E22' : '#E8EDE0', color: active ? 'white' : '#3a5a00' }}
+      style={{ background: active ? '#819360' : '#E8EDE0', color: active ? 'white' : '#3a5a00' }}
     >
       {label}
     </button>
@@ -858,7 +858,7 @@ function EconomicsTab({ field, analyses }) {
                 showValues={false}
               />
               <div className="flex gap-4 mt-2 text-xs font-mont">
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm inline-block" style={{ background: '#6D8E22' }} /> Profit</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm inline-block" style={{ background: '#819360' }} /> Profit</span>
                 <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm inline-block" style={{ background: '#EF4444' }} /> Loss</span>
               </div>
             </div>
@@ -1107,7 +1107,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal }) {
           <button onClick={onJournal} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-sm transition-all border border-gray-300 text-gray-600 hover:bg-gray-50">
             📓 Journal
           </button>
-          <button onClick={triggerAnalysis} disabled={analyzing} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-white text-sm transition-all disabled:opacity-50" style={{ background: '#6D8E22' }}>
+          <button onClick={triggerAnalysis} disabled={analyzing} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-white text-sm transition-all disabled:opacity-50" style={{ background: '#819360' }}>
             {analyzing ? 'Analyzing…' : '▶ Run Analysis'}
           </button>
         </div>
@@ -1270,7 +1270,7 @@ export default function PrecisionAgAnalyses() {
             <button
               onClick={() => navigate(`/precision-ag/fields?BusinessID=${BusinessID}`)}
               className="mt-6 px-5 py-2.5 rounded-lg text-white font-mont font-semibold text-sm"
-              style={{ background: '#6D8E22' }}
+              style={{ background: '#819360' }}
             >
               Go to Fields
             </button>

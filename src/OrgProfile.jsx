@@ -89,7 +89,7 @@ function ContactForm({ ranch }) {
         </div>
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <button type="submit" style={{ padding: '12px 32px', backgroundColor: '#507033', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}>
+        <button type="submit" style={{ padding: '12px 32px', backgroundColor: '#819360', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}>
           Send Message
         </button>
       </div>

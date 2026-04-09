@@ -158,7 +158,7 @@ export default function ProcessedFoodInventory() {
           </div>
           <button
             onClick={openAdd}
-            className="bg-[#819360] hover:bg-[#6a7a4f] text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2"
+            className="bg-[#819360] hover:bg-[#3D6B35] text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2"
           >
             <span className="text-lg leading-none">+</span> Add Item
           </button>
@@ -420,7 +420,7 @@ export default function ProcessedFoodInventory() {
                 </button>
                 <button
                   type="submit" disabled={saving}
-                  className="bg-[#819360] hover:bg-[#6a7a4f] text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors disabled:opacity-60"
+                  className="bg-[#819360] hover:bg-[#3D6B35] text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors disabled:opacity-60"
                 >
                   {saving ? 'Saving...' : (editing.ProcessedFoodID ? 'Save Changes' : 'Add Item')}
                 </button>

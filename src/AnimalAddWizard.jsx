@@ -101,7 +101,7 @@ function FormField({ label, required, error, hint, children }) {
     <div className="form-field">
       {label && (
         <label className="field-label">
-          {required && <span className="required-star">*</span>}{label}
+          {label}
         </label>
       )}
       {children}

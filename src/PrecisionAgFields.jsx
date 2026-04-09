@@ -351,7 +351,7 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
             <button
               type="submit"
               disabled={loading}
-              className="px-8 py-2.5 bg-[#6D8E22] hover:bg-green-800 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors text-sm"
+              className="px-8 py-2.5 bg-[#819360] hover:bg-[#3D6B35] disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors text-sm"
             >
               {loading ? 'Adding…' : 'Add Field'}
             </button>
@@ -564,7 +564,7 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
             <button
               type="submit"
               disabled={loading}
-              className="px-8 py-2.5 bg-[#6D8E22] hover:bg-green-800 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors text-sm"
+              className="px-8 py-2.5 bg-[#819360] hover:bg-[#3D6B35] disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors text-sm"
             >
               {loading ? 'Saving…' : 'Save Changes'}
             </button>
@@ -635,7 +635,7 @@ function FieldList({ businessId, onCreateNew }) {
               <button
                 onClick={() => handleDelete(confirmDeleteId)}
                 disabled={deleting}
-                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition disabled:opacity-50"
+                className="px-4 py-2 rounded-lg text-white text-sm font-medium transition disabled:opacity-50" style={{ background: '#C0382B' }}
               >
                 {deleting ? 'Deleting…' : 'Delete Field'}
               </button>
@@ -648,7 +648,7 @@ function FieldList({ businessId, onCreateNew }) {
         <h2 className="text-2xl font-bold text-gray-900">Fields</h2>
         <button
           onClick={onCreateNew}
-          className="px-5 py-2 bg-[#6D8E22] hover:bg-green-800 text-white rounded-lg font-medium text-sm transition-colors"
+          className="px-5 py-2 bg-[#819360] hover:bg-[#3D6B35] text-white rounded-lg font-medium text-sm transition-colors"
         >
           + Add Field
         </button>

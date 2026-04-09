@@ -148,7 +148,7 @@ function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSa
         </button>
         <button type="submit" disabled={saving}
           className="px-6 py-2 rounded-lg text-white text-sm font-semibold transition disabled:opacity-50"
-          style={{ background: '#6D8E22' }}>
+          style={{ background: '#819360' }}>
           {saving ? 'Saving…' : editNote ? 'Save Changes' : 'Add Entry'}
         </button>
       </div>
@@ -312,7 +312,7 @@ export default function OatSenseNotes() {
           </div>
           <button onClick={openNew}
             className="px-5 py-2.5 rounded-lg font-mont font-semibold text-white text-sm shadow-sm transition-all hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg,#6D8E22,#4a6318)' }}>
+            style={{ background: '#819360' }}>
             + New Entry
           </button>
         </div>
@@ -411,7 +411,7 @@ export default function OatSenseNotes() {
             {catFilter === 'all' && activeField === 'all' && (
               <button onClick={openNew}
                 className="px-6 py-2.5 rounded-lg text-white font-mont font-semibold text-sm"
-                style={{ background: '#6D8E22' }}>
+                style={{ background: '#819360' }}>
                 Write Your First Entry
               </button>
             )}
