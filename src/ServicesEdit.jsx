@@ -155,7 +155,7 @@ function BasicsTab({ ServicesID, BusinessID }) {
 
       <div style={{ background: '#f9f6f2', border: '1px solid #e8e0d5', borderRadius: 8, padding: '16px 18px', marginBottom: 16 }}>
         <div style={{ fontWeight: 700, fontSize: 14, color: '#5a3e2b', marginBottom: 12 }}>
-          Contact Info <span style={{ fontWeight: 400, color: '#a08060', fontSize: 12 }}>(optional)</span>
+          Contact Info <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: 12 }}>(optional)</span>
         </div>
         <Field label="Phone">
           <input value={form.ServicePhone || ''} onChange={e => set('ServicePhone', e.target.value)} style={inputStyle} placeholder="555-123-4567" />

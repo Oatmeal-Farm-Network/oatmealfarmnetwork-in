@@ -249,7 +249,7 @@ function Pagination({ page, totalPages, onPageChange }) {
       {page > 1 && <button onClick={() => onPageChange(page - 1)} style={btnStyle}>‹ Prev</button>}
       {pages.map(p => (
         <button key={p} onClick={() => onPageChange(p)}
-          style={{ ...btnStyle, backgroundColor: p === page ? '#507033' : '#fff', color: p === page ? '#fff' : '#333' }}>
+          style={{ ...btnStyle, backgroundColor: p === page ? '#819360' : '#fff', color: p === page ? '#fff' : '#333' }}>
           {p}
         </button>
       ))}

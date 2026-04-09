@@ -397,28 +397,52 @@ function GalleryBlock({ data, site, businessId }) {
 
 function BlogBlock({ data, site, businessId }) {
   const [posts, setPosts] = useState([]);
+  const maxPosts = data.max_posts || 3;
+  const filterCategory = data.category || '';
   useEffect(() => {
-    fetchContent(`${API}/api/website/content/blog?business_id=${businessId}`)
-      .then(d => setPosts(d.slice(0, data.max_posts || 3)));
-  }, [businessId]);
+    const params = new URLSearchParams({ business_id: businessId, limit: maxPosts });
+    if (filterCategory) params.set('category', filterCategory);
+    fetchContent(`${API}/api/blog/posts?${params}`)
+      .then(d => setPosts(Array.isArray(d) ? d : []))
+      .catch(() => {
+        // fallback to legacy endpoint
+        fetchContent(`${API}/api/website/content/blog?business_id=${businessId}`)
+          .then(d => setPosts((Array.isArray(d) ? d : []).slice(0, maxPosts).map(p => ({
+            post_id: null,
+            title: p.BlogHeadline,
+            excerpt: p.BlogText1?.slice(0, 150),
+            cover_image: p.BlogImage1,
+            created_at: p.BlogYear ? `${p.BlogYear}-${String(p.BlogMonth||1).padStart(2,'0')}-${String(p.BlogDay||1).padStart(2,'0')}` : null,
+            business_name: null,
+          }))));
+      });
+  }, [businessId, filterCategory, maxPosts]);
   if (posts.length === 0) return null;
+  const linkColor = site.link_color || site.accent_color || site.primary_color || '#2563eb';
   return (
     <SectionWrap site={site}>
       <SectionHeading site={site}>{data.heading || 'From the Blog'}</SectionHeading>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
-        {posts.map(p => (
-          <div key={p.BlogID} style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
-            {p.BlogImage1 && <img src={p.BlogImage1} alt="" style={{ width: '100%', height: 160, objectFit: 'cover' }} />}
-            <div style={{ padding: '1rem' }}>
-              <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4 }}>
-                {[p.BlogMonth, p.BlogDay, p.BlogYear].filter(Boolean).join('/')}
-                {p.Author && ` · ${p.Author}`}
+        {posts.map((p, i) => {
+          const dateStr = p.created_at ? new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+          return (
+            <div key={p.post_id || i} style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
+              {p.cover_image && <img src={p.cover_image} alt="" style={{ width: '100%', height: 160, objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />}
+              <div style={{ padding: '1rem' }}>
+                <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4 }}>
+                  {dateStr}{p.business_name && ` · ${p.business_name}`}
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: site.text_color, fontFamily: site.font_family, lineHeight: 1.3 }}>{p.title}</div>
+                {p.excerpt && <p style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: 6, lineHeight: 1.5 }}>{p.excerpt}</p>}
+                {p.post_id && (
+                  <a href={`/blog/${p.post_id}`} style={{ display: 'inline-block', marginTop: '0.5rem', fontSize: '0.82rem', color: linkColor, textDecoration: 'underline', fontWeight: 600 }}>
+                    Read more →
+                  </a>
+                )}
               </div>
-              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: site.text_color, fontFamily: site.font_family, lineHeight: 1.3 }}>{p.BlogHeadline}</div>
-              {p.BlogText1 && <p style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: 6, lineHeight: 1.5 }}>{p.BlogText1?.slice(0, 150)}…</p>}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </SectionWrap>
   );
@@ -645,6 +669,10 @@ function RenderBlock({ block, site, businessId }) {
   }
 }
 
+// Hostnames that are the OFN platform itself — everything else is a custom domain
+const OFN_HOSTS = ['oatmealfarmnetwork.com', 'www.oatmealfarmnetwork.com', 'localhost', '127.0.0.1'];
+const isCustomDomain = !OFN_HOSTS.some(h => window.location.hostname === h || window.location.hostname.endsWith(`.${h}`));
+
 // ── Main public site renderer ─────────────────────────────────────
 export default function WebsitePublic() {
   const { slug } = useParams();
@@ -658,7 +686,13 @@ export default function WebsitePublic() {
   const [openDropdown, setOpenDropdown] = useState(null); // page_id of open nav dropdown
 
   useEffect(() => {
-    fetch(`${API}/api/website/bundle/${slug}`)
+    // On a custom domain, look up by hostname instead of URL slug so the
+    // address bar keeps showing the custom domain (no redirect needed).
+    const url = isCustomDomain
+      ? `${API}/api/website/bundle-by-domain?domain=${encodeURIComponent(window.location.hostname)}`
+      : `${API}/api/website/bundle/${slug}`;
+
+    fetch(url)
       .then(r => {
         if (!r.ok) throw new Error('Site not found');
         return r.json();
@@ -671,6 +705,15 @@ export default function WebsitePublic() {
       })
       .catch(() => setLoading(false));
   }, [slug]);
+
+  // Apply favicon from site settings
+  useEffect(() => {
+    if (!siteData?.favicon_url) return;
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+    link.href = siteData.favicon_url;
+    return () => { link.href = '/favicon.ico'; };
+  }, [siteData?.favicon_url]);
 
   // Close mobile menu when viewport widens past the md breakpoint (768px)
   useEffect(() => {

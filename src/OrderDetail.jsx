@@ -104,7 +104,7 @@ export default function OrderDetail() {
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center">
               <p className="font-bold text-amber-800 mb-2">Payment Required</p>
               <p className="text-sm text-amber-600 mb-4">Your order is confirmed. Complete payment to proceed.</p>
-              <button className="bg-[#819360] text-white font-bold px-8 py-3 rounded-xl hover:bg-[#6a7a4e]"
+              <button className="bg-[#819360] text-white font-bold px-8 py-3 rounded-xl hover:bg-[#3D6B35]"
                 onClick={() => alert('Stripe payment UI will be integrated here.')}>
                 Pay ${parseFloat(order.TotalAmount).toFixed(2)}
               </button>

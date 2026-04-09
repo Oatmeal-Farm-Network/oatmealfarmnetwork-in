@@ -258,7 +258,7 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
         )}
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Field Name *</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Field Name</label>
           <input
             value={name} onChange={e => setName(e.target.value)}
             placeholder="e.g. North Corn Field"
@@ -267,7 +267,7 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Description (optional)</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Description <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
           <textarea
             value={description} onChange={e => setDescription(e.target.value)}
             placeholder="Notes about this field…"
@@ -287,7 +287,7 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
             Cancel
           </button>
           <button onClick={handleSave} disabled={saving} style={{
-            flex: 2, padding: '12px', background: saving ? '#93c5fd' : '#1e40af',
+            flex: 2, padding: '12px', background: saving ? '#7aab72' : '#819360',
             border: 'none', borderRadius: 8, cursor: saving ? 'not-allowed' : 'pointer',
             fontWeight: 600, fontSize: 14, color: 'white',
           }}>
@@ -686,7 +686,7 @@ export default function CropDetection() {
     `;
     const btn = document.createElement('button');
     btn.innerText = 'Run Field Analysis';
-    btn.style.cssText = 'width:100%;padding:12px 16px;background:#1e40af;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px';
+    btn.style.cssText = 'width:100%;padding:12px 16px;background:#819360;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px';
     btn.onclick = (ev) => { ev.preventDefault(); fetchAnalysis(lat, lon, cropName, props); };
     el.appendChild(btn);
 
@@ -940,7 +940,7 @@ export default function CropDetection() {
 
                 {!drawMode && drawnPolygon.length === 0 && (
                   <button onClick={startDrawing} style={{
-                    width: '100%', padding: '10px 12px', background: '#1e40af', color: 'white',
+                    width: '100%', padding: '10px 12px', background: '#819360', color: 'white',
                     border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 13,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>

@@ -5,7 +5,15 @@
       "Bash(curl -s \"http://127.0.0.1:8001/openapi.json\")",
       "Bash(cmd /c \"taskkill /F /PID 19780 && taskkill /F /PID 30864\")",
       "Bash(python migrate_website_columns.py)",
-      "Bash(venv/Scripts/python migrate_website_columns.py)"
+      "Bash(venv/Scripts/python migrate_website_columns.py)",
+      "Bash(grep -r \"bg-\\\\[\" src/*.jsx)",
+      "Bash(grep -r \"<button\" src/*.jsx)",
+      "Bash(grep -r \"Save\\\\|Submit\\\\|Publish\\\\|Add\\\\|Create\" src/*.jsx)",
+      "Bash(grep -n \"onClick={.*[Ss]ave\\\\|onClick={handleSave\" src/*.jsx)",
+      "Bash(grep -B 2 -A 2 \"#819360\\\\|#6D8E22\\\\|#507033\\\\|#166534\" src/*.jsx)",
+      "Bash(grep -r \"style=.*background\" src/*.jsx)",
+      "Bash(grep -h \"background:\" src/*.jsx)",
+      "Bash(grep -rn \"1e40af\\\\|819360\\\\|507033\\\\|6D8E22\\\\|6d8e22\" \"f:\\\\Oatmeal AI\\\\OatmealFarmNetwork Repo\\\\OatmealFarmNetwork\\\\src\\\\\" --include=\"*.jsx\" | grep -i \"button\\\\|bg-\\\\[#\\\\|background:\" | grep -v \"node_modules\" | head -40)"
     ]
   }
 }

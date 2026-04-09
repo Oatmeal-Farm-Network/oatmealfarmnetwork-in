@@ -1,6 +1,6 @@
 // src/NewsFeed.jsx
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const CATEGORIES = ['All', 'Markets', 'Weather', 'Policy', 'AgTech', 'Livestock', 'General'];
 
@@ -23,6 +23,7 @@ const NewsFeed = () => {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
   const [sort, setSort] = useState('Newest');
+  const isLoggedIn = !!localStorage.getItem('access_token');
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -105,8 +106,15 @@ const NewsFeed = () => {
       {error && <div style={{ textAlign: 'center', paddingTop: '2rem', color: '#dc2626' }}>{error}</div>}
       {!loading && !error && filtered.length === 0 && <div style={{ textAlign: 'center', paddingTop: '2rem', color: '#9ca3af' }}>No articles match your filters.</div>}
 
+      {!isLoggedIn && filtered.length > 4 && (
+        <div style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: '10px', padding: '1rem 1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.9rem', color: '#5b21b6' }}>Sign in to see all {filtered.length} articles and unlock full filtering.</span>
+          <Link to="/login" style={{ background: '#7C5CBF', color: '#fff', textDecoration: 'none', padding: '0.4rem 1rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Sign In</Link>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-        {filtered.map((a, i) => (
+        {(isLoggedIn ? filtered : filtered.slice(0, 4)).map((a, i) => (
           <div key={`${a.id}-${i}`} onClick={() => navigate(`/app/news/${a.id}`)}
             style={{ cursor: 'pointer', borderRadius: '10px', overflow: 'hidden', backgroundColor: '#fff', border: '1px solid #e5e7eb', transition: 'box-shadow 0.2s' }}
             onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; }}

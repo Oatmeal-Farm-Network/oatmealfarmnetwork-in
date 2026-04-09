@@ -115,7 +115,7 @@ export default function MarketplaceProduct() {
                     <button onClick={() => setQuantity(Math.min(l.QuantityAvailable, quantity + 1))} className="px-3 py-2 hover:bg-gray-50 text-lg font-bold">+</button>
                   </div>
                   <button onClick={addToCart} disabled={adding}
-                    className="flex-grow bg-[#819360] hover:bg-[#6a7a4e] text-white font-bold py-3 rounded-xl text-lg disabled:opacity-50 transition-colors">
+                    className="flex-grow bg-[#819360] hover:bg-[#3D6B35] text-white font-bold py-3 rounded-xl text-lg disabled:opacity-50 transition-colors">
                     {adding ? 'Adding...' : `Add to Cart · $${(parseFloat(l.UnitPrice) * quantity).toFixed(2)}`}
                   </button>
                 </div>

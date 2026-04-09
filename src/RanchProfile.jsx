@@ -125,12 +125,15 @@ function ContactTab({ ranch }) {
       )}
       <form onSubmit={handleSubmit}>
         {[
-          { id: 'name', label: 'Name *', type: 'text', required: true },
-          { id: 'email', label: 'Email *', type: 'email', required: true },
-          { id: 'phone', label: 'Phone (Optional)', type: 'tel', required: false },
+          { id: 'name', label: 'Name', type: 'text', required: true },
+          { id: 'email', label: 'Email', type: 'email', required: true },
+          { id: 'phone', label: 'Phone', type: 'tel', required: false, optional: true },
         ].map(f => (
           <div key={f.id} style={{ marginBottom: '12px' }}>
-            <label style={formLabel}>{f.label}</label>
+            <label style={formLabel}>
+              {f.label}
+              {f.optional && <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400, marginLeft: 4 }}>(optional)</span>}
+            </label>
             <input type={f.type} value={formData[f.id]} onChange={e => setFormData(p => ({ ...p, [f.id]: e.target.value }))}
               required={f.required} style={formInput} />
           </div>
@@ -148,7 +151,7 @@ function ContactTab({ ranch }) {
               placeholder="?" style={{ width: '60px', padding: '6px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '0.9rem' }} />
           </div>
         </div>
-        <button type="submit" style={{ backgroundColor: '#507033', color: '#fff', padding: '10px 24px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
+        <button type="submit" style={{ backgroundColor: '#819360', color: '#fff', padding: '10px 24px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
           Send Message
         </button>
       </form>

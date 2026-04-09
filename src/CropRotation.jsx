@@ -204,7 +204,7 @@ function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Season Year *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Season Year</label>
           <input type="number" value={form.season_year} onChange={e => set('season_year', e.target.value)}
             min="1900" max="2100" className={inp} required />
         </div>
@@ -219,12 +219,12 @@ function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Crop Name *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Crop Name</label>
           <input type="text" value={form.crop_name} onChange={e => set('crop_name', e.target.value)}
             placeholder="e.g. Corn, Soybeans, Winter Wheat" className={inp} required />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Variety / Hybrid</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Variety / Hybrid <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
           <input type="text" value={form.variety} onChange={e => set('variety', e.target.value)}
             placeholder="e.g. DeKalb DKC52-61" className={inp} />
         </div>
@@ -232,18 +232,18 @@ function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Planting Date</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Planting Date <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
           <input type="date" value={form.planting_date} onChange={e => set('planting_date', e.target.value)} className={inp} />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Harvest Date</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Harvest Date <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
           <input type="date" value={form.harvest_date} onChange={e => set('harvest_date', e.target.value)} className={inp} />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Yield</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Yield <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
           <input type="number" step="0.01" min="0" value={form.yield_amount} onChange={e => set('yield_amount', e.target.value)}
             placeholder="e.g. 185" className={inp} />
         </div>
@@ -269,7 +269,7 @@ function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
         </button>
         <button type="submit" disabled={saving}
           className="px-6 py-2 rounded-lg text-white text-sm font-semibold transition disabled:opacity-50"
-          style={{ background: '#6D8E22' }}>
+          style={{ background: '#819360' }}>
           {saving ? 'Saving…' : editEntry ? 'Save Changes' : 'Add Season'}
         </button>
       </div>
@@ -428,7 +428,7 @@ export default function CropRotation() {
           {activeField && (
             <button onClick={openNew}
               className="px-5 py-2.5 rounded-lg font-mont font-semibold text-white text-sm shadow-sm hover:opacity-90 transition"
-              style={{ background: 'linear-gradient(135deg,#6D8E22,#4a6318)' }}>
+              style={{ background: '#819360' }}>
               + Add Season
             </button>
           )}
@@ -490,7 +490,7 @@ export default function CropRotation() {
                 </div>
                 <button onClick={openNew}
                   className="px-6 py-2.5 rounded-lg text-white font-mont font-semibold text-sm"
-                  style={{ background: '#6D8E22' }}>
+                  style={{ background: '#819360' }}>
                   Add First Season
                 </button>
               </div>

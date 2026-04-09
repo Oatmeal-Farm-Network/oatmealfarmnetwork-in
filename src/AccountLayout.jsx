@@ -175,6 +175,16 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               )}
             </div>
 
+            <NavSection
+              icon="/icons/Blog.png"
+              label="Blog"
+              expanded={Expanded}
+              isOpen={OpenSections['Blog'] || false}
+              onToggle={() => toggleSection('Blog')}
+            >
+              <NavChild to={`/blog/manage?BusinessID=${BusinessID}`} label="Manage Blog" />
+            </NavSection>
+
             {on('precision_ag') && BT === 8 && (
               <NavSection
                 icon="/icons/PrecisionAg.svg"
@@ -325,7 +335,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               >
                 <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=manage-pages`} label="Dashboard" />
                 <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=design`} label="Design" />
-                <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=settings`} label="Settings" />
+                <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=settings`} label="Website Settings" />
                 <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=delete`} label="Delete Website" />
                 {websiteSlug && (
                   <a
