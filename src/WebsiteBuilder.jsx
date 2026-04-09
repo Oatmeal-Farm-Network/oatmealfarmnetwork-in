@@ -6,6 +6,7 @@ import { useAccount } from './AccountContext';
 import WebsiteAIAgent from './WebsiteAIAgent';
 
 const API = import.meta.env.VITE_API_URL;
+const SITE_BASE_URL = 'https://www.OatmealFarmNetwork.com';
 
 // ── Block type catalogue ─────────────────────────────────────────
 const BLOCK_TYPES = [
@@ -22,6 +23,7 @@ const BLOCK_TYPES = [
   { type: 'gallery',        icon: '🖼️',  label: 'Photo Gallery',      desc: 'Photo gallery from your albums' },
   { type: 'blog',           icon: '📝',  label: 'Blog Posts',         desc: 'Latest blog posts' },
   { type: 'contact',        icon: '📬',  label: 'Contact',            desc: 'Contact information and form' },
+  { type: 'links',          icon: '🔗',  label: 'Links',              desc: 'Icon links with title and description' },
   { type: 'divider',        icon: '➖',  label: 'Spacer / Divider',   desc: 'Visual separator between sections' },
 ];
 
@@ -39,6 +41,10 @@ const defaultBlockData = {
   gallery:        { heading: 'Photo Gallery', columns: 3 },
   blog:           { heading: 'From the Blog', max_posts: 3 },
   contact:        { heading: 'Get In Touch', show_form: true, custom_message: '' },
+  links:          { heading: 'Links', columns: 3, groups: [
+    { heading: 'Social Media', items: [{ icon_url: '', label: 'Link Title', url: '', description: 'Short description of this link' }] },
+    { heading: 'Link Heading 2', items: [{ icon_url: '', label: 'Link Title', url: '', description: 'Short description of this link' }] },
+  ]},
   divider:        { height: 40 },
 };
 
@@ -80,6 +86,7 @@ const WEB_FONTS = [
   { label: 'Space Mono',         value: 'Space Mono, monospace' },
   { label: 'Times New Roman',    value: 'Times New Roman, serif' },
   { label: 'Ubuntu',             value: 'Ubuntu, sans-serif' },
+  { label: 'Verdana',            value: 'Verdana, sans-serif' },
   { label: 'Vollkorn',           value: 'Vollkorn, serif' },
   { label: 'Work Sans',          value: 'Work Sans, sans-serif' },
 ];
@@ -436,19 +443,19 @@ function PaletteColorPicker({ paletteColors = [], onColor, dark = false }) {
 }
 
 // ── InlineColorPicker: swatch button that opens palette popup ────────
+const SWATCHES = [
+  '#000000','#434343','#666666','#999999','#b7b7b7','#ffffff',
+  '#ff0000','#ff4444','#ff9900','#ffff00','#00ff00','#00ffff',
+  '#0000ff','#9900ff','#ff00ff','#ff99cc','#f6b26b','#ffd966',
+  '#93c47d','#76a5af','#6fa8dc','#8e7cc3','#c27ba0','#e06666',
+  '#cc0000','#e69138','#f1c232','#6aa84f','#45818e','#3d85c8',
+  '#674ea7','#a61c00','#85200c','#7f6000','#274e13','#0c343d',
+];
+
 function InlineColorPicker({ value, onChange, paletteColors = [], popupAlign = 'left' }) {
   const [open, setOpen] = useState(false);
   const [custom, setCustom] = useState(value || '#ffffff');
   const ref = useRef(null);
-
-  const SWATCHES = [
-    '#000000','#434343','#666666','#999999','#b7b7b7','#ffffff',
-    '#ff0000','#ff4444','#ff9900','#ffff00','#00ff00','#00ffff',
-    '#0000ff','#9900ff','#ff00ff','#ff99cc','#f6b26b','#ffd966',
-    '#93c47d','#76a5af','#6fa8dc','#8e7cc3','#c27ba0','#e06666',
-    '#cc0000','#e69138','#f1c232','#6aa84f','#45818e','#3d85c8',
-    '#674ea7','#a61c00','#85200c','#7f6000','#274e13','#0c343d',
-  ];
 
   useEffect(() => {
     if (!open) return;
@@ -625,6 +632,651 @@ function FontPickerDropdown({ value, onChange, globalFont, dark = false, label =
   );
 }
 
+// ── ToolbarColorPicker: compact "A" swatch for use inside dark editor toolbars ──
+function ToolbarColorPicker({ color, onChange, paletteColors = [] }) {
+  const [open, setOpen] = useState(false);
+  const [custom, setCustom] = useState(color || '#000000');
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  const pick = (hex) => { onChange(hex); setCustom(hex); setOpen(false); };
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
+      <button
+        onMouseDown={e => { e.preventDefault(); setOpen(p => !p); }}
+        title="Font color"
+        style={{
+          display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '3px 7px', borderRadius: 4, cursor: 'pointer', gap: 2,
+          border: '1px solid #475569', background: open ? '#475569' : '#334155', color: '#e2e8f0', lineHeight: 1,
+        }}
+      >
+        <span style={{ fontSize: 12, fontWeight: 700 }}>A</span>
+        <span style={{ display: 'block', width: 14, height: 3, borderRadius: 1, background: color || '#ffffff' }} />
+      </button>
+      {open && (
+        <div
+          style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 99999, background: '#fff', border: '1px solid #d1d5db', borderRadius: 10, padding: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.22)', width: 220 }}
+          onMouseDown={e => e.preventDefault()}
+        >
+          {paletteColors.length > 0 && (
+            <>
+              <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>Site Palette</div>
+              <div style={{ display: 'flex', gap: 5, marginBottom: 8, flexWrap: 'wrap' }}>
+                {paletteColors.map(c => (
+                  <button key={c} onMouseDown={() => pick(c)} title={c}
+                    style={{ width: 22, height: 22, borderRadius: 4, background: c, border: '2px solid #e5e7eb', cursor: 'pointer', padding: 0 }} />
+                ))}
+              </div>
+              <div style={{ height: 1, background: '#e5e7eb', margin: '6px 0' }} />
+            </>
+          )}
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>Standard Colors</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 3, marginBottom: 8 }}>
+            {SWATCHES.map(c => (
+              <button key={c} onMouseDown={() => pick(c)} title={c}
+                style={{ width: '100%', aspectRatio: '1', borderRadius: 3, background: c, border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer', padding: 0 }} />
+            ))}
+          </div>
+          <div style={{ height: 1, background: '#e5e7eb', margin: '6px 0' }} />
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>Custom Color</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input type="color" value={custom} onChange={e => setCustom(e.target.value)}
+              style={{ width: 32, height: 32, border: '1px solid #d1d5db', borderRadius: 4, cursor: 'pointer', padding: 1 }} />
+            <input type="text" value={custom} maxLength={7}
+              onChange={e => { if (/^#[0-9a-fA-F]{0,6}$/.test(e.target.value)) setCustom(e.target.value); }}
+              style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: 4, padding: '4px 6px', fontSize: 12, fontFamily: 'monospace' }} />
+            <button onMouseDown={() => { if (/^#[0-9a-fA-F]{6}$/.test(custom)) pick(custom); }}
+              style={{ padding: '4px 8px', background: '#3D6B34', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>
+              Apply
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Shared paste handler: strips all formatting, inserts plain text only ──
+// Used for headings and captions where block format doesn't apply.
+const pastePlainText = e => {
+  e.preventDefault();
+  const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+  document.execCommand('insertText', false, text);
+};
+
+// ── Body paste handler: strips formatting AND resets to body/paragraph format ──
+// Splits multi-line content into <p> elements so each line is body-formatted.
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const pasteAsBodyText = e => {
+  e.preventDefault();
+  const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+  if (!text) return;
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length === 0) return;
+  if (lines.length === 1) {
+    // Single line — reset block to paragraph then insert as plain text
+    document.execCommand('formatBlock', false, 'p');
+    document.execCommand('insertText', false, lines[0]);
+  } else {
+    // Multiple lines — insert each as its own <p> so all land in body format
+    document.execCommand('insertHTML', false, lines.map(l => `<p>${esc(l)}</p>`).join(''));
+  }
+};
+
+// ── CaptionField: editable image caption with visible placeholder ────────
+function CaptionField({ initial, onSave }) {
+  const ref = useRef(null);
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    if (ref.current) ref.current.textContent = initial;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const isEmpty = !focused && !(ref.current?.textContent?.trim());
+  return (
+    <div style={{ position: 'relative', marginTop: 6 }}>
+      {/* Placeholder shown when empty and not focused */}
+      {isEmpty && (
+        <span style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '0.76rem', color: '#94a3b8', fontStyle: 'italic',
+          pointerEvents: 'none',
+        }}>
+          Add a caption…
+        </span>
+      )}
+      <div
+        ref={ref}
+        contentEditable
+        suppressContentEditableWarning
+        onFocus={() => setFocused(true)}
+        onBlur={e => { setFocused(false); onSave(e.currentTarget.textContent.trim()); }}
+        style={{
+          outline: 'none', fontSize: '0.76rem', color: '#475569', fontStyle: 'italic',
+          textAlign: 'center', padding: '4px 6px', minHeight: '1.5em',
+          background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 4,
+          cursor: 'text',
+        }}
+      />
+    </div>
+  );
+}
+
+// ── InlineContentEditor: direct canvas editing for about/content blocks ─
+function InlineContentEditor({ block, site, onFieldSave }) {
+  const d          = block.block_data || {};
+  const fontFamily = site?.font_family        || 'inherit';
+  const bgColor    = d.bg_color || site?.bg_color || '#fff';
+  const bgWidth    = site?.body_bg_width      || '100%';
+  const cWidth     = site?.body_content_width || '100%';
+
+  const headingRef      = useRef(null);
+  const bodyRef         = useRef(null);
+  const savedSel        = useRef(null);   // cloned Range
+  const activeEl        = useRef(null);   // which contenteditable last had focus
+  const imgWrapRef      = useRef(null);
+  const htmlTextareaRef = useRef(null);
+  const [imgWidth, setImgWidth] = useState(d.image_width || 38); // percent
+  const [htmlMode, setHtmlMode] = useState(false);
+  const [selStyle, setSelStyle] = useState('');
+  const [selFont,  setSelFont]  = useState('');
+  const [selSize,  setSelSize]  = useState('');
+  const [selColor, setSelColor] = useState('#000000');
+
+  const imgs   = Array.isArray(d.images) && d.images.length > 0 ? d.images : [];
+  const rawUrl = d.image_url || (imgs[0] ? (typeof imgs[0] === 'string' ? imgs[0] : imgs[0].url) : null);
+  const pos    = d.image_position || imgs[0]?.wrap || 'right';
+  const isSide = pos === 'left' || pos === 'right';
+  const isLeft = pos === 'left';
+
+  // Drag-to-resize image
+  const startResize = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX    = e.clientX;
+    const startW    = imgWrapRef.current?.offsetWidth || 200;
+    const container = imgWrapRef.current?.parentElement?.offsetWidth || 600;
+    // left: drag right-edge rightward; right/center/full: drag left-edge leftward
+    const dragRight = isLeft || !isSide;
+    const onMove = (mv) => {
+      const delta = dragRight ? mv.clientX - startX : startX - mv.clientX;
+      const newPx = Math.max(80, Math.min(container * 0.95, startW + delta));
+      const pct   = Math.round((newPx / container) * 100);
+      setImgWidth(pct);
+    };
+    const onUp = (mv) => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      const delta = dragRight ? mv.clientX - startX : startX - mv.clientX;
+      const newPx = Math.max(80, Math.min(container * 0.95, startW + delta));
+      const pct   = Math.round((newPx / container) * 100);
+      onFieldSave('image_width', pct);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  };
+
+  useEffect(() => {
+    if (headingRef.current) {
+      headingRef.current.textContent = d.heading || '';
+      Object.assign(headingRef.current.style, headingTypoStyle(d.heading_style, site));
+    }
+    if (bodyRef.current) bodyRef.current.innerHTML = d.body || '';
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Save selection from whichever editable currently has focus
+  const saveSel = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const anchor = sel.anchorNode;
+    if (headingRef.current?.contains(anchor)) {
+      activeEl.current  = headingRef.current;
+      savedSel.current  = sel.getRangeAt(0).cloneRange();
+    } else if (bodyRef.current?.contains(anchor)) {
+      activeEl.current  = bodyRef.current;
+      savedSel.current  = sel.getRangeAt(0).cloneRange();
+    }
+  };
+
+  // Detect style/font/size at the current cursor position and update toolbar state
+  const detectSelectionProps = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const anchor = sel.anchorNode;
+    let el = anchor?.nodeType === Node.TEXT_NODE ? anchor.parentElement : anchor;
+
+    // Walk up to find nearest block tag
+    let walker = el;
+    let blockTag = '';
+    const roots = [bodyRef.current, headingRef.current].filter(Boolean);
+    while (walker && !roots.includes(walker)) {
+      const tag = walker.tagName?.toLowerCase();
+      if (['h1','h2','h3','h4','p'].includes(tag)) { blockTag = tag; break; }
+      walker = walker.parentElement;
+    }
+    setSelStyle(blockTag);
+
+    // Walk up to find nearest inline font-family / font-size / color
+    let fontVal = '';
+    let sizeVal = '';
+    let colorVal = '';
+    let walker2 = el;
+    while (walker2 && !roots.includes(walker2)) {
+      if (!fontVal  && walker2.style?.fontFamily) fontVal  = walker2.style.fontFamily;
+      if (!sizeVal  && walker2.style?.fontSize)   sizeVal  = walker2.style.fontSize;
+      if (!colorVal && walker2.style?.color)      colorVal = walker2.style.color;
+      if (fontVal && sizeVal && colorVal) break;
+      walker2 = walker2.parentElement;
+    }
+    setSelFont(fontVal);
+    setSelSize(sizeVal ? String(parseInt(sizeVal)) : '');
+    // Normalise rgb() → hex for display in swatch
+    if (colorVal) {
+      const m = colorVal.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+      if (m) {
+        colorVal = '#' + [m[1],m[2],m[3]].map(n => parseInt(n).toString(16).padStart(2,'0')).join('');
+      }
+      setSelColor(colorVal);
+    }
+  };
+
+  const saveAndDetect = () => { saveSel(); detectSelectionProps(); };
+
+  // Restore focus + selection to whichever editable was last active
+  const restoreSel = () => {
+    const el = activeEl.current || bodyRef.current;
+    if (!el) return;
+    el.focus();
+    if (savedSel.current) {
+      try {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedSel.current);
+      } catch (_) { /* stale range — ignore */ }
+    }
+  };
+
+  // ── Toolbar command helpers ──────────────────────────────────────
+
+  // For BUTTONS: capture the live selection at mousedown (guaranteed valid),
+  // prevent focus loss, re-apply the captured range, then exec the command.
+  // This is more reliable than trusting e.preventDefault() alone to preserve
+  // selection across all browsers.
+  const btnCmd = (e, cmd, val = null) => {
+    const sel = window.getSelection();
+    const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : savedSel.current;
+    const el = sel && sel.rangeCount > 0
+      ? (headingRef.current?.contains(sel.anchorNode) ? headingRef.current
+        : bodyRef.current?.contains(sel.anchorNode)  ? bodyRef.current
+        : activeEl.current)
+      : activeEl.current;
+    e.preventDefault();
+    if (el) {
+      el.focus();
+      if (range) {
+        const s = window.getSelection();
+        s.removeAllRanges();
+        s.addRange(range);
+      }
+    }
+    document.execCommand(cmd, false, val);
+    saveSel();
+  };
+
+  // Block-level style — heading and body handled differently:
+  // • Heading: apply DB typography as inline styles + save heading_style to block_data
+  // • Body: use formatBlock so h1/h2/h3/h4/p tags get .rte-body CSS
+  const applyBlock = (tag) => {
+    if (activeEl.current === headingRef.current && headingRef.current) {
+      const styles = headingTypoStyle(tag, site);
+      Object.assign(headingRef.current.style, styles);
+      onFieldSave('heading_style', tag);
+      return;
+    }
+    restoreSel();
+    document.execCommand('formatBlock', false, tag);
+    saveSel();
+  };
+
+  // Wrap selection in a span with an explicit font-family.
+  // extractContents+insertNode works across element boundaries where surroundContents fails.
+  const applyFont = (fontFam) => {
+    restoreSel();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    if (sel.isCollapsed) {
+      document.execCommand('fontName', false, fontFam);
+      return;
+    }
+    try {
+      const range    = sel.getRangeAt(0);
+      const fragment = range.extractContents();
+      const span     = document.createElement('span');
+      span.style.fontFamily = fontFam;
+      span.appendChild(fragment);
+      range.insertNode(span);
+      const newRange = document.createRange();
+      newRange.selectNodeContents(span);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+      saveSel();
+    } catch (_) {
+      document.execCommand('fontName', false, fontFam);
+    }
+  };
+
+  const insertLink = () => {
+    // Save selection now (before prompt steals it)
+    saveSel();
+    const input = window.prompt('Enter a URL or email address:');
+    if (!input) return;
+    const val  = input.trim();
+    const href = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ? `mailto:${val}`
+               : /^https?:\/\//i.test(val)               ? val
+               : /^mailto:/i.test(val)                   ? val
+               : `https://${val}`;
+    // Restore selection after prompt closes, then wrap with link
+    restoreSel();
+    document.execCommand('createLink', false, href);
+    const el = activeEl.current || bodyRef.current;
+    el?.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
+  };
+
+  const clearFormatting = () => {
+    const el = activeEl.current || bodyRef.current;
+    if (!el) return;
+    el.focus();
+    document.execCommand('selectAll', false, null);
+    document.execCommand('removeFormat', false, null);
+    el.querySelectorAll('[style]').forEach(n => n.removeAttribute('style'));
+    el.querySelectorAll('font').forEach(n => {
+      const span = document.createElement('span');
+      span.textContent = n.textContent;
+      n.replaceWith(span);
+    });
+  };
+
+  const applyFontSize = (px) => {
+    restoreSel();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    try {
+      const range    = sel.getRangeAt(0);
+      const fragment = range.extractContents();
+      const span     = document.createElement('span');
+      span.style.fontSize = px + 'px';
+      span.appendChild(fragment);
+      range.insertNode(span);
+      const nr = document.createRange();
+      nr.selectNodeContents(span);
+      sel.removeAllRanges();
+      sel.addRange(nr);
+      saveSel();
+    } catch (_) { /* ignore */ }
+  };
+
+  const applyFontColor = (hex) => {
+    restoreSel();
+    document.execCommand('foreColor', false, hex);
+    setSelColor(hex);
+    saveSel();
+  };
+
+  // When HTML mode turns on, populate and focus the textarea
+  useEffect(() => {
+    if (htmlMode && htmlTextareaRef.current && bodyRef.current) {
+      htmlTextareaRef.current.value = bodyRef.current.innerHTML;
+      htmlTextareaRef.current.focus();
+    }
+  }, [htmlMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleHtmlMode = () => {
+    if (htmlMode) {
+      // Leaving HTML mode — commit textarea back to body div
+      if (htmlTextareaRef.current && bodyRef.current) {
+        bodyRef.current.innerHTML = htmlTextareaRef.current.value;
+        onFieldSave('body', htmlTextareaRef.current.value);
+      }
+    }
+    setHtmlMode(m => !m);
+  };
+
+  const tbBtn = {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    padding: '3px 8px', borderRadius: 4, fontSize: 12, cursor: 'pointer',
+    border: '1px solid #475569', background: '#334155', color: '#e2e8f0', lineHeight: 1,
+  };
+  const tbSel = {
+    fontSize: 11, border: '1px solid #475569', borderRadius: 4,
+    padding: '3px 5px', background: '#334155', color: '#e2e8f0', cursor: 'pointer',
+  };
+  const tbDiv = { width: 1, background: '#475569', alignSelf: 'stretch', margin: '0 2px' };
+
+  return (
+    <div onClick={e => e.stopPropagation()}>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: bgWidth, fontFamily }}>
+
+          {/* Toolbar */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '6px 10px', background: '#1e293b', alignItems: 'center' }}>
+            <select style={tbSel} value={selStyle} onMouseDown={saveSel} onChange={e => { applyBlock(e.target.value); setSelStyle(e.target.value); }}>
+              <option value="">Style</option>
+              <option value="p">Body</option>
+              <option value="h1">H1</option>
+              <option value="h2">H2</option>
+              <option value="h3">H3</option>
+              <option value="h4">H4</option>
+            </select>
+            <select style={{ ...tbSel, maxWidth: 120 }} value={selFont} onMouseDown={saveSel} onChange={e => { applyFont(e.target.value); setSelFont(e.target.value); }}>
+              <option value="">Font</option>
+              {WEB_FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+            </select>
+            <select style={{ ...tbSel, width: 62 }} value={selSize} onMouseDown={saveSel} onChange={e => { if (e.target.value) { applyFontSize(e.target.value); setSelSize(e.target.value); } }}>
+              <option value="">Size</option>
+              {[10,11,12,13,14,16,18,20,22,24,28,32,36,42,48,56,64,72].map(s => (
+                <option key={s} value={String(s)}>{s}px</option>
+              ))}
+            </select>
+            <ToolbarColorPicker
+              color={selColor}
+              onChange={applyFontColor}
+              paletteColors={[site?.primary_color, site?.secondary_color, site?.accent_color, site?.text_color, site?.nav_text_color].filter(Boolean)}
+            />
+            <div style={tbDiv} />
+            <button style={{ ...tbBtn, fontWeight: 700 }} title="Bold"
+              onMouseDown={e => btnCmd(e, 'bold')}>B</button>
+            <button style={{ ...tbBtn, textDecoration: 'underline' }} title="Underline"
+              onMouseDown={e => btnCmd(e, 'underline')}>U</button>
+            <button style={{ ...tbBtn, textDecoration: 'line-through' }} title="Strikethrough"
+              onMouseDown={e => btnCmd(e, 'strikeThrough')}>S</button>
+            <div style={tbDiv} />
+            <button style={tbBtn} title="Align Left"
+              onMouseDown={e => btnCmd(e, 'justifyLeft')}>
+              <svg width="14" height="11" viewBox="0 0 14 11" fill="currentColor">
+                <rect x="0" y="0" width="14" height="1.8"/><rect x="0" y="4" width="10" height="1.8"/><rect x="0" y="8" width="14" height="1.8"/>
+              </svg>
+            </button>
+            <button style={tbBtn} title="Center"
+              onMouseDown={e => btnCmd(e, 'justifyCenter')}>
+              <svg width="14" height="11" viewBox="0 0 14 11" fill="currentColor">
+                <rect x="0" y="0" width="14" height="1.8"/><rect x="2" y="4" width="10" height="1.8"/><rect x="0" y="8" width="14" height="1.8"/>
+              </svg>
+            </button>
+            <button style={tbBtn} title="Align Right"
+              onMouseDown={e => btnCmd(e, 'justifyRight')}>
+              <svg width="14" height="11" viewBox="0 0 14 11" fill="currentColor">
+                <rect x="0" y="0" width="14" height="1.8"/><rect x="4" y="4" width="10" height="1.8"/><rect x="0" y="8" width="14" height="1.8"/>
+              </svg>
+            </button>
+            <div style={tbDiv} />
+            <button style={tbBtn} title="Bullet List"
+              onMouseDown={e => btnCmd(e, 'insertUnorderedList')}>
+              <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor">
+                <circle cx="1.4" cy="2" r="1.3"/>
+                <rect x="4" y="1.2" width="10" height="1.6"/>
+                <circle cx="1.4" cy="6" r="1.3"/>
+                <rect x="4" y="5.2" width="10" height="1.6"/>
+                <circle cx="1.4" cy="10" r="1.3"/>
+                <rect x="4" y="9.2" width="10" height="1.6"/>
+              </svg>
+            </button>
+            <button style={tbBtn} title="Numbered List"
+              onMouseDown={e => btnCmd(e, 'insertOrderedList')}>
+              <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor">
+                <text x="0" y="3.5" fontSize="4" fontFamily="monospace">1.</text>
+                <rect x="4" y="1.2" width="10" height="1.6"/>
+                <text x="0" y="7.5" fontSize="4" fontFamily="monospace">2.</text>
+                <rect x="4" y="5.2" width="10" height="1.6"/>
+                <text x="0" y="11.5" fontSize="4" fontFamily="monospace">3.</text>
+                <rect x="4" y="9.2" width="10" height="1.6"/>
+              </svg>
+            </button>
+            <div style={tbDiv} />
+            <button style={tbBtn} title="Insert Link"
+              onMouseDown={e => { e.preventDefault(); insertLink(); }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+              </svg>
+            </button>
+            <button style={{ ...tbBtn, fontSize: 10 }} title="Remove Link"
+              onMouseDown={e => btnCmd(e, 'unlink')}>✕🔗</button>
+            <div style={tbDiv} />
+            <button style={{ ...tbBtn, fontSize: 10, color: '#fca5a5' }} title="Clear all formatting"
+              onMouseDown={e => { e.preventDefault(); clearFormatting(); }}>Tx</button>
+            <div style={tbDiv} />
+            <button
+              title={htmlMode ? 'Back to rich text' : 'View / edit HTML source'}
+              onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleHtmlMode(); }}
+              style={{
+                ...tbBtn, fontFamily: 'monospace', fontSize: 11, letterSpacing: '-0.5px',
+                background: htmlMode ? '#0f172a' : '#334155',
+                color: htmlMode ? '#7dd3fc' : '#e2e8f0',
+                border: `1px solid ${htmlMode ? '#1e40af' : '#475569'}`,
+              }}
+            >&lt;/&gt;</button>
+          </div>
+
+          {/* Editable content area */}
+          <div style={{ background: bgColor, padding: '1.75rem 2.5rem' }}>
+            <div style={{ maxWidth: cWidth, margin: '0 auto' }}>
+              <div style={{ display: 'flex', flexDirection: isSide ? (isLeft ? 'row' : 'row-reverse') : 'column', gap: '2rem', alignItems: isSide ? 'flex-start' : 'stretch' }}>
+                {rawUrl && (
+                  <div ref={imgWrapRef} style={{ width: pos === 'full' ? '100%' : pos === 'center' ? `${Math.min(imgWidth, 100)}%` : `${imgWidth}%`, flexShrink: 0, position: 'relative', ...(pos === 'center' ? { alignSelf: 'center' } : {}) }}>
+                    <img src={rawUrl} alt="" style={{ width: '100%', display: 'block', borderRadius: 8 }} />
+                    {/* Resize handle */}
+                    <div
+                      onMouseDown={startResize}
+                      title="Drag to resize"
+                      style={{
+                        position: 'absolute', top: '50%', [isLeft ? 'right' : 'left']: -8,
+                        transform: 'translateY(-50%)',
+                        width: 16, height: 40, borderRadius: 4,
+                        background: 'rgba(30,41,59,0.75)', border: '1px solid #94a3b8',
+                        cursor: 'ew-resize', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        userSelect: 'none', zIndex: 10,
+                      }}
+                    >
+                      <svg width="8" height="20" viewBox="0 0 8 20" fill="#e2e8f0">
+                        <rect x="1" y="0" width="2" height="20" rx="1"/><rect x="5" y="0" width="2" height="20" rx="1"/>
+                      </svg>
+                    </div>
+                    {/* Caption */}
+                    <CaptionField
+                      initial={d.image_caption || ''}
+                      onSave={val => onFieldSave('image_caption', val)}
+                    />
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="rte-body">
+                    {/* Heading — plain text; styles applied via headingTypoStyle() */}
+                    <h2
+                      ref={headingRef}
+                      contentEditable
+                      suppressContentEditableWarning
+                      onMouseUp={saveAndDetect}
+                      onKeyUp={saveAndDetect}
+                      onPaste={pastePlainText}
+                      onFocus={() => { activeEl.current = headingRef.current; }}
+                      onBlur={e => onFieldSave('heading', e.currentTarget.textContent)}
+                      style={{ outline: 'none', cursor: 'text', minHeight: '1.8rem', borderBottom: '1px dashed #cbd5e1', paddingBottom: 4, ...headingTypoStyle(d.heading_style, site) }}
+                    />
+                    {/* Body — rich text (hidden in HTML mode) */}
+                    <div
+                      ref={bodyRef}
+                      contentEditable
+                      suppressContentEditableWarning
+                      onMouseUp={saveAndDetect}
+                      onKeyUp={saveAndDetect}
+                      onPaste={pasteAsBodyText}
+                      onFocus={() => { activeEl.current = bodyRef.current; }}
+                      onInput={e => { if (!htmlMode) onFieldSave('body', e.currentTarget.innerHTML); }}
+                      onBlur={e => { if (!htmlMode) onFieldSave('body', e.currentTarget.innerHTML); }}
+                      style={{ display: htmlMode ? 'none' : 'block', outline: 'none', cursor: 'text', minHeight: '3rem', border: '1px dashed #cbd5e1', borderRadius: 4, padding: '4px 6px' }}
+                    />
+                    {/* HTML source textarea (shown in HTML mode) */}
+                    {htmlMode && (
+                      <textarea
+                        ref={htmlTextareaRef}
+                        onBlur={e => onFieldSave('body', e.target.value)}
+                        style={{
+                          width: '100%', minHeight: '8rem', padding: '8px 10px',
+                          fontSize: 11, fontFamily: 'monospace', lineHeight: 1.6,
+                          color: '#0f172a', background: '#f1f5f9',
+                          border: '1px solid #94a3b8', borderRadius: 4,
+                          outline: 'none', resize: 'vertical', boxSizing: 'border-box',
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Returns a complete inline style object for the heading based on the stored
+// style level (h1/h2/h3/h4/p) and site typography settings from the DB.
+// Mirrors all properties generated by buildRteBodyCss so heading and body
+// CSS stay in sync.
+function headingTypoStyle(tag, site) {
+  const k        = (!tag || tag === 'p') ? 'body' : tag;
+  const ruleclr  = site?.[`${k}_rule_color`] || site?.text_color || '#000';
+  const hasRule  = k !== 'body' && !!site?.[`${k}_rule`];
+  const align    = site?.[`${k}_align`] || 'left';
+  return {
+    fontSize:       site?.[`${k}_size`]   || (k==='body'?'1rem':k==='h1'?'2.5rem':k==='h2'?'1.8rem':k==='h3'?'1.3rem':'1.1rem'),
+    fontWeight:     site?.[`${k}_weight`] || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':'600'),
+    color:          site?.[`${k}_color`]  || site?.text_color || '',
+    fontFamily:     site?.[`${k}_font`]   || site?.font_family || '',
+    textAlign:      align,
+    textDecoration: site?.[`${k}_underline`] ? 'underline' : 'none',
+    borderBottom:   hasRule ? `2px solid ${ruleclr}` : 'none',
+    paddingBottom:  hasRule ? '2px' : '0',
+    marginTop:      (site?.[`${k}_margin_top`]    ?? 0)  + 'px',
+    marginBottom:   (site?.[`${k}_margin_bottom`] ?? 8)  + 'px',
+  };
+}
+
+// Normalize legacy links data (flat items → single group) or return groups as-is
+function normLinksGroups(d) {
+  if (Array.isArray(d.groups) && d.groups.length > 0) return d.groups;
+  if (Array.isArray(d.items)  && d.items.length  > 0) return [{ heading: '', items: d.items }];
+  return [{ heading: 'Links', items: [{ icon_url: '', label: 'Link Title', url: '', description: '' }] }];
+}
+
 // ── SimpleBlockPreview: read-only canvas preview of each block ────
 function SimpleBlockPreview({ block, site }) {
   const d   = block.block_data || {};
@@ -677,23 +1329,70 @@ function SimpleBlockPreview({ block, site }) {
   }
 
   if (bt === 'about' || bt === 'content') {
-    const imgs = Array.isArray(d.images) && d.images.length > 0 ? d.images : [];
-    const rawUrl = d.image_url || (imgs[0] ? (typeof imgs[0] === 'string' ? imgs[0] : imgs[0].url) : null);
-    const pos    = d.image_position || imgs[0]?.wrap || 'right';
-    const isLeft = pos === 'left';
+    const imgs       = Array.isArray(d.images) && d.images.length > 0 ? d.images : [];
+    const rawUrl     = d.image_url || (imgs[0] ? (typeof imgs[0] === 'string' ? imgs[0] : imgs[0].url) : null);
+    const pos        = d.image_position || imgs[0]?.wrap || 'right';
+    const isSide     = pos === 'left' || pos === 'right';
+    const flexDir    = isSide ? (pos === 'left' ? 'row' : 'row-reverse') : 'column';
+    const imgW       = pos === 'full' ? '100%' : pos === 'center' ? `${Math.min(d.image_width || 60, 100)}%` : `${d.image_width || 38}%`;
+    const imgAlign   = pos === 'center' ? { margin: '0 auto' } : {};
+    const hasHeading = !!d.heading?.trim();
+    const hasBody    = !!d.body?.replace(/<[^>]*>/g, '').trim();
+    const hasImage   = !!rawUrl;
+    const isEmpty    = !hasHeading && !hasBody && !hasImage;
     return (
       <BlockWrap>
-        <div style={{ display: 'flex', flexDirection: isLeft ? 'row' : 'row-reverse', gap: '2rem', alignItems: 'flex-start' }}>
-          {rawUrl && (
-            <img src={rawUrl} alt="" style={{ width: '38%', flexShrink: 0, borderRadius: 8, objectFit: 'cover', maxHeight: 220, display: 'block' }} />
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {d.heading && <h2 style={{ color: textColor, fontWeight: 700, fontSize: '1.5rem', margin: '0 0 0.6rem' }}>{d.heading}</h2>}
-            {d.body
-              ? <div style={{ color: textColor, fontSize: '1rem', lineHeight: 1.7 }} dangerouslySetInnerHTML={{ __html: d.body }} />
-              : !d.heading && <p style={{ color: '#9ca3af', fontStyle: 'italic', margin: 0 }}>Click to edit this block</p>}
+        {isEmpty
+          ? <p style={{ color: '#9ca3af', fontStyle: 'italic', margin: 0 }}>Click to edit this block</p>
+          : (
+            <div style={{ display: 'flex', flexDirection: flexDir, gap: '2rem', alignItems: isSide ? 'flex-start' : 'stretch' }}>
+              {hasImage && (
+                <div style={{ width: imgW, flexShrink: 0, ...imgAlign }}>
+                  <img src={rawUrl} alt={d.image_caption || ''} style={{ width: '100%', display: 'block', borderRadius: 8 }} />
+                  {d.image_caption && (
+                    <p style={{ fontSize: '0.78rem', color: '#64748b', fontStyle: 'italic', textAlign: 'center', margin: '4px 0 0' }}>
+                      {d.image_caption}
+                    </p>
+                  )}
+                </div>
+              )}
+              {(hasHeading || hasBody) && (
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="rte-body">
+                    {hasHeading && <h2 style={headingTypoStyle(d.heading_style, site)}>{d.heading}</h2>}
+                    {hasBody && <div dangerouslySetInnerHTML={{ __html: addLinkTargets(d.body) }} />}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        }
+      </BlockWrap>
+    );
+  }
+
+  if (bt === 'links') {
+    const groups = normLinksGroups(d);
+    const cols   = d.columns || 3;
+    return (
+      <BlockWrap>
+        {d.heading && <h1 style={{ ...headingTypoStyle('h1', site), marginBottom: '0.75rem' }}>{d.heading}</h1>}
+        {groups.map((group, gi) => (
+          <div key={gi} style={{ marginBottom: '1.25rem' }}>
+            {group.heading && <h2 style={{ ...headingTypoStyle('h2', site), marginBottom: '0.6rem' }}>{group.heading}</h2>}
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '0.75rem' }}>
+              {(group.items || []).map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                  {item.icon_url && <img src={item.icon_url} alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0, borderRadius: 4 }} />}
+                  <div>
+                    <div dangerouslySetInnerHTML={{ __html: item.label || 'Link' }} style={{ fontWeight: 600, fontSize: '0.87rem', color: primary }} />
+                    {item.description && <div dangerouslySetInnerHTML={{ __html: item.description }} style={{ fontSize: '0.78rem', color: '#6b7280', marginTop: 2 }} />}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ))}
       </BlockWrap>
     );
   }
@@ -723,27 +1422,430 @@ function SimpleBlockPreview({ block, site }) {
   );
 }
 
+// ── InlineLinksEditor: direct canvas editing for links blocks ────────
+
+// Group heading (H2) — self-initializing contenteditable
+function LinkGroupHeadingEditor({ heading, onSave, onMouseUp, onKeyUp, site }) {
+  const ref = useRef(null);
+  useEffect(() => { if (ref.current) ref.current.textContent = heading || ''; }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <h2
+      ref={ref}
+      contentEditable suppressContentEditableWarning
+      onPaste={pastePlainText}
+      onMouseUp={onMouseUp} onKeyUp={onKeyUp}
+      onBlur={e => onSave(e.currentTarget.textContent)}
+      style={{ ...headingTypoStyle('h2', site), outline: 'none', cursor: 'text',
+               borderBottom: '1px dashed #cbd5e1', paddingBottom: 2, marginBottom: '0.5rem' }}
+    />
+  );
+}
+
+// One link item — receives saveAndDetect from parent for toolbar sync
+function LinkItemEditor({ item, index, linkColor, linkUline, bodyFont, bodySize, bodyColor, onSave, onMouseUp, onKeyUp }) {
+  const labelRef = useRef(null);
+  const descRef  = useRef(null);
+  useEffect(() => {
+    if (labelRef.current) labelRef.current.innerHTML = item.label || '';
+    if (descRef.current)  descRef.current.innerHTML  = item.description || '';
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+      {item.icon_url && (
+        <img src={item.icon_url} alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0, borderRadius: 4 }} />
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          ref={labelRef}
+          contentEditable suppressContentEditableWarning
+          onPaste={pastePlainText}
+          onMouseUp={onMouseUp} onKeyUp={onKeyUp}
+          onInput={e => onSave(index, 'label', e.currentTarget.innerHTML)}
+          onBlur={e => onSave(index, 'label', e.currentTarget.innerHTML)}
+          style={{ fontWeight: 600, fontFamily: bodyFont, fontSize: bodySize, color: linkColor,
+                   textDecoration: linkUline ? 'underline' : 'none',
+                   cursor: 'text', outline: 'none',
+                   borderBottom: '1px dashed #cbd5e1', paddingBottom: 2, minHeight: '1.2em' }}
+        />
+        <div
+          ref={descRef}
+          contentEditable suppressContentEditableWarning
+          onPaste={pasteAsBodyText}
+          onMouseUp={onMouseUp} onKeyUp={onKeyUp}
+          onInput={e => onSave(index, 'description', e.currentTarget.innerHTML)}
+          onBlur={e => onSave(index, 'description', e.currentTarget.innerHTML)}
+          style={{ fontFamily: bodyFont, fontSize: bodySize, color: bodyColor,
+                   marginTop: 3, cursor: 'text', outline: 'none',
+                   borderBottom: '1px dashed #cbd5e1', paddingBottom: 2, minHeight: '1.2em' }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function InlineLinksEditor({ block, site, onFieldSave }) {
+  const d         = block.block_data || {};
+  const groups    = normLinksGroups(d);
+  const cols      = d.columns || 3;
+  const bgColor   = d.bg_color || site?.bg_color || '#fff';
+  const cWidth    = site?.body_content_width || '100%';
+  const linkColor = site?.link_color || site?.accent_color || site?.primary_color || '#2563eb';
+  const linkUline = site?.link_underline !== false;
+  const bodyFont  = site?.body_font  || site?.font_family || 'inherit';
+  const bodySize  = site?.body_size  || '1rem';
+  const bodyColor = site?.body_color || site?.text_color  || '#111827';
+
+  // Refs for selection management — containerRef tracks any contenteditable in the block
+  const containerRef = useRef(null);
+  const headingRef   = useRef(null);
+  const activeEl     = useRef(null);
+  const savedSel     = useRef(null);
+
+  // Toolbar display state
+  const [selStyle, setSelStyle] = useState('');
+  const [selFont,  setSelFont]  = useState('');
+  const [selSize,  setSelSize]  = useState('');
+  const [selColor, setSelColor] = useState('#000000');
+
+  useEffect(() => {
+    if (headingRef.current) headingRef.current.textContent = d.heading || '';
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Group / item mutation helpers ────────────────────────────────
+  const saveGroups = (newGroups) => onFieldSave('groups', newGroups);
+
+  const updateGroupHeading = (gi, text) => {
+    const next = groups.map((g, i) => i === gi ? { ...g, heading: text } : g);
+    saveGroups(next);
+  };
+  const addGroup = () => {
+    saveGroups([...groups, { heading: 'New Group', items: [{ icon_url: '', label: 'Link Title', url: '', description: '' }] }]);
+  };
+  const removeGroup = (gi) => {
+    if (groups.length <= 1) return;
+    saveGroups(groups.filter((_, i) => i !== gi));
+  };
+  const saveItem = (gi, ii, key, val) => {
+    const next = groups.map((g, i) => i !== gi ? g : {
+      ...g, items: g.items.map((it, j) => j === ii ? { ...it, [key]: val } : it),
+    });
+    saveGroups(next);
+  };
+  const addItem = (gi) => {
+    const next = groups.map((g, i) => i !== gi ? g : {
+      ...g, items: [...g.items, { icon_url: '', label: 'Link Title', url: '', description: '' }],
+    });
+    saveGroups(next);
+  };
+  const removeItem = (gi, ii) => {
+    const next = groups.map((g, i) => i !== gi ? g : {
+      ...g, items: g.items.filter((_, j) => j !== ii),
+    });
+    saveGroups(next);
+  };
+
+  // ── Selection helpers ────────────────────────────────────────────
+  const saveSel = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    if (containerRef.current?.contains(sel.anchorNode)) {
+      activeEl.current = document.activeElement;
+      savedSel.current = sel.getRangeAt(0).cloneRange();
+    }
+  };
+
+  const restoreSel = () => {
+    const el = activeEl.current;
+    if (!el) return;
+    el.focus();
+    if (savedSel.current) {
+      try { const s = window.getSelection(); s.removeAllRanges(); s.addRange(savedSel.current); } catch (_) {}
+    }
+  };
+
+  const detectSelectionProps = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    let el = sel.anchorNode;
+    if (el?.nodeType === Node.TEXT_NODE) el = el.parentElement;
+    let blockTag = '', fontVal = '', sizeVal = '', colorVal = '';
+    const root = containerRef.current;
+    let walker = el;
+    while (walker && walker !== root) {
+      const tag = walker.tagName?.toLowerCase();
+      if (!blockTag && ['h1','h2','h3','h4','p'].includes(tag)) blockTag = tag;
+      if (!fontVal  && walker.style?.fontFamily) fontVal  = walker.style.fontFamily;
+      if (!sizeVal  && walker.style?.fontSize)   sizeVal  = walker.style.fontSize;
+      if (!colorVal && walker.style?.color)      colorVal = walker.style.color;
+      if (blockTag && fontVal && sizeVal && colorVal) break;
+      walker = walker.parentElement;
+    }
+    setSelStyle(blockTag);
+    setSelFont(fontVal);
+    setSelSize(sizeVal ? String(parseInt(sizeVal)) : '');
+    if (colorVal) {
+      const m = colorVal.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+      if (m) colorVal = '#' + [m[1],m[2],m[3]].map(n => parseInt(n).toString(16).padStart(2,'0')).join('');
+      setSelColor(colorVal);
+    }
+  };
+
+  const saveAndDetect = () => { saveSel(); detectSelectionProps(); };
+
+  // ── Toolbar command helpers ──────────────────────────────────────
+  const btnCmd = (e, cmd, val = null) => {
+    const sel   = window.getSelection();
+    const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : savedSel.current;
+    const el    = (sel && sel.rangeCount > 0 && containerRef.current?.contains(sel.anchorNode))
+      ? document.activeElement : activeEl.current;
+    e.preventDefault();
+    if (el) { el.focus(); if (range) { const s = window.getSelection(); s.removeAllRanges(); s.addRange(range); } }
+    document.execCommand(cmd, false, val);
+    saveSel();
+  };
+
+  const applyBlock = (tag) => {
+    restoreSel();
+    document.execCommand('formatBlock', false, tag);
+    const sel2 = window.getSelection();
+    if (sel2 && sel2.rangeCount > 0) {
+      let node = sel2.anchorNode;
+      if (node?.nodeType === Node.TEXT_NODE) node = node.parentElement;
+      while (node && !['H1','H2','H3','H4','P'].includes(node.tagName)) node = node.parentElement;
+      if (node) {
+        const s = headingTypoStyle(tag, site);
+        node.style.fontSize = s.fontSize || ''; node.style.fontWeight = s.fontWeight || '';
+        node.style.color = s.color || ''; node.style.fontFamily = s.fontFamily || '';
+        node.style.textAlign = s.textAlign || ''; node.style.textDecoration = s.textDecoration || '';
+      }
+    }
+    saveSel();
+  };
+
+  const applyFont = (fontFam) => {
+    restoreSel();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { document.execCommand('fontName', false, fontFam); return; }
+    try {
+      const range = sel.getRangeAt(0); const frag = range.extractContents();
+      const span = document.createElement('span'); span.style.fontFamily = fontFam; span.appendChild(frag);
+      range.insertNode(span);
+      const nr = document.createRange(); nr.selectNodeContents(span);
+      sel.removeAllRanges(); sel.addRange(nr); saveSel();
+    } catch (_) { document.execCommand('fontName', false, fontFam); }
+  };
+
+  const applyFontSize = (px) => {
+    restoreSel();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    try {
+      const range = sel.getRangeAt(0); const frag = range.extractContents();
+      const span = document.createElement('span'); span.style.fontSize = px + 'px'; span.appendChild(frag);
+      range.insertNode(span);
+      const nr = document.createRange(); nr.selectNodeContents(span);
+      sel.removeAllRanges(); sel.addRange(nr); saveSel();
+    } catch (_) {}
+  };
+
+  const applyFontColor = (hex) => { restoreSel(); document.execCommand('foreColor', false, hex); setSelColor(hex); saveSel(); };
+
+  const insertLink = () => {
+    // Save selection before prompt steals it
+    saveSel();
+    const input = window.prompt('Enter a URL or email address:');
+    if (!input) return;
+    const val = input.trim();
+    const href = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ? `mailto:${val}`
+               : /^https?:\/\//i.test(val) ? val : /^mailto:/i.test(val) ? val : `https://${val}`;
+    // Restore selection after prompt closes, then wrap with link
+    restoreSel();
+    document.execCommand('createLink', false, href);
+    activeEl.current?.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
+  };
+
+  const clearFormatting = () => {
+    const el = activeEl.current; if (!el) return;
+    el.focus();
+    document.execCommand('selectAll', false, null);
+    document.execCommand('removeFormat', false, null);
+    el.querySelectorAll('[style]').forEach(n => n.removeAttribute('style'));
+    el.querySelectorAll('font').forEach(n => { const s = document.createElement('span'); s.textContent = n.textContent; n.replaceWith(s); });
+  };
+
+  // ── Shared toolbar styles ────────────────────────────────────────
+  const tbBtn = { display:'inline-flex', alignItems:'center', justifyContent:'center', padding:'3px 8px', borderRadius:4, fontSize:12, cursor:'pointer', border:'1px solid #475569', background:'#334155', color:'#e2e8f0', lineHeight:1 };
+  const tbSel = { fontSize:11, border:'1px solid #475569', borderRadius:4, padding:'3px 5px', background:'#334155', color:'#e2e8f0', cursor:'pointer' };
+  const tbDiv = { width:1, background:'#475569', alignSelf:'stretch', margin:'0 2px' };
+  const paletteColors = [site?.primary_color, site?.secondary_color, site?.accent_color, site?.text_color, site?.nav_text_color].filter(Boolean);
+
+  const addGroupBtn = {
+    display: 'block', width: '100%', marginTop: '1rem', padding: '7px 0',
+    border: '1px dashed #94a3b8', borderRadius: 8, background: 'none',
+    color: '#64748b', fontSize: 13, cursor: 'pointer', textAlign: 'center',
+  };
+  const addItemBtn = {
+    display: 'block', width: '100%', marginTop: '0.5rem', padding: '4px 0',
+    border: '1px dashed #cbd5e1', borderRadius: 6, background: 'none',
+    color: '#94a3b8', fontSize: 12, cursor: 'pointer', textAlign: 'center',
+  };
+
+  return (
+    <div ref={containerRef} onClick={e => e.stopPropagation()}>
+      {/* Toolbar */}
+      <div style={{ display:'flex', flexWrap:'wrap', gap:4, padding:'6px 10px', background:'#1e293b', alignItems:'center' }}>
+        <select style={tbSel} value={selStyle} onMouseDown={saveSel} onChange={e => { applyBlock(e.target.value); setSelStyle(e.target.value); }}>
+          <option value="">Style</option>
+          <option value="p">Body</option>
+          <option value="h1">H1</option>
+          <option value="h2">H2</option>
+          <option value="h3">H3</option>
+          <option value="h4">H4</option>
+        </select>
+        <select style={{ ...tbSel, maxWidth:120 }} value={selFont} onMouseDown={saveSel} onChange={e => { applyFont(e.target.value); setSelFont(e.target.value); }}>
+          <option value="">Font</option>
+          {WEB_FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+        </select>
+        <select style={{ ...tbSel, width:62 }} value={selSize} onMouseDown={saveSel} onChange={e => { if (e.target.value) { applyFontSize(e.target.value); setSelSize(e.target.value); } }}>
+          <option value="">Size</option>
+          {[10,11,12,13,14,16,18,20,22,24,28,32,36,42,48,56,64,72].map(s => <option key={s} value={String(s)}>{s}px</option>)}
+        </select>
+        <ToolbarColorPicker color={selColor} onChange={applyFontColor} paletteColors={paletteColors} />
+        <div style={tbDiv} />
+        <button style={{ ...tbBtn, fontWeight:700 }} title="Bold" onMouseDown={e => btnCmd(e, 'bold')}>B</button>
+        <button style={{ ...tbBtn, textDecoration:'underline' }} title="Underline" onMouseDown={e => btnCmd(e, 'underline')}>U</button>
+        <button style={{ ...tbBtn, textDecoration:'line-through' }} title="Strikethrough" onMouseDown={e => btnCmd(e, 'strikeThrough')}>S</button>
+        <div style={tbDiv} />
+        <button style={tbBtn} title="Align Left" onMouseDown={e => btnCmd(e, 'justifyLeft')}>
+          <svg width="14" height="11" viewBox="0 0 14 11" fill="currentColor"><rect x="0" y="0" width="14" height="1.8"/><rect x="0" y="4" width="10" height="1.8"/><rect x="0" y="8" width="14" height="1.8"/></svg>
+        </button>
+        <button style={tbBtn} title="Center" onMouseDown={e => btnCmd(e, 'justifyCenter')}>
+          <svg width="14" height="11" viewBox="0 0 14 11" fill="currentColor"><rect x="0" y="0" width="14" height="1.8"/><rect x="2" y="4" width="10" height="1.8"/><rect x="0" y="8" width="14" height="1.8"/></svg>
+        </button>
+        <button style={tbBtn} title="Align Right" onMouseDown={e => btnCmd(e, 'justifyRight')}>
+          <svg width="14" height="11" viewBox="0 0 14 11" fill="currentColor"><rect x="0" y="0" width="14" height="1.8"/><rect x="4" y="4" width="10" height="1.8"/><rect x="0" y="8" width="14" height="1.8"/></svg>
+        </button>
+        <div style={tbDiv} />
+        <button style={tbBtn} title="Bullet List" onMouseDown={e => btnCmd(e, 'insertUnorderedList')}>
+          <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor"><circle cx="1.4" cy="2" r="1.3"/><rect x="4" y="1.2" width="10" height="1.6"/><circle cx="1.4" cy="6" r="1.3"/><rect x="4" y="5.2" width="10" height="1.6"/><circle cx="1.4" cy="10" r="1.3"/><rect x="4" y="9.2" width="10" height="1.6"/></svg>
+        </button>
+        <button style={tbBtn} title="Numbered List" onMouseDown={e => btnCmd(e, 'insertOrderedList')}>
+          <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor"><text x="0" y="3.5" fontSize="4" fontFamily="monospace">1.</text><rect x="4" y="1.2" width="10" height="1.6"/><text x="0" y="7.5" fontSize="4" fontFamily="monospace">2.</text><rect x="4" y="5.2" width="10" height="1.6"/><text x="0" y="11.5" fontSize="4" fontFamily="monospace">3.</text><rect x="4" y="9.2" width="10" height="1.6"/></svg>
+        </button>
+        <div style={tbDiv} />
+        <button style={tbBtn} title="Insert Link" onMouseDown={e => { e.preventDefault(); insertLink(); }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        </button>
+        <button style={{ ...tbBtn, fontSize:10 }} title="Remove Link" onMouseDown={e => btnCmd(e, 'unlink')}>✕🔗</button>
+        <div style={tbDiv} />
+        <button style={{ ...tbBtn, fontSize:10, color:'#fca5a5' }} title="Clear all formatting"
+          onMouseDown={e => { e.preventDefault(); clearFormatting(); }}>Tx</button>
+        <div style={{ flex: 1 }} />
+        <span style={{ fontSize:10, color:'#475569', fontStyle:'italic' }}>Click any text to edit · icons &amp; URLs in side panel</span>
+      </div>
+
+      {/* Content */}
+      <div style={{ background: bgColor, padding: '1.75rem 2.5rem' }}>
+        <div style={{ maxWidth: cWidth, margin: '0 auto' }}>
+          {/* H1 main heading */}
+          <h1
+            ref={headingRef}
+            contentEditable suppressContentEditableWarning
+            onPaste={pastePlainText}
+            onMouseUp={saveAndDetect} onKeyUp={saveAndDetect}
+            onBlur={e => onFieldSave('heading', e.currentTarget.textContent)}
+            style={{ ...headingTypoStyle('h1', site), outline:'none', cursor:'text',
+                     borderBottom:'1px dashed #cbd5e1', paddingBottom:4, marginBottom:'1.25rem' }}
+          />
+
+          {/* Groups */}
+          {groups.map((group, gi) => (
+            <div key={`${block.block_id}-g${gi}-${groups.length}`} style={{ marginBottom: '1.5rem' }}>
+              {/* Group header row: H2 heading + remove button */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: '0.5rem' }}>
+                <div style={{ flex: 1 }}>
+                  <LinkGroupHeadingEditor
+                    key={`${block.block_id}-gh${gi}-${groups.length}`}
+                    heading={group.heading}
+                    onSave={text => updateGroupHeading(gi, text)}
+                    onMouseUp={saveAndDetect} onKeyUp={saveAndDetect}
+                    site={site}
+                  />
+                </div>
+                {groups.length > 1 && (
+                  <button
+                    title="Remove this group"
+                    onMouseDown={e => { e.preventDefault(); e.stopPropagation(); removeGroup(gi); }}
+                    style={{ flexShrink: 0, marginTop: 4, padding: '2px 8px', fontSize: 11, border: '1px solid #fca5a5', borderRadius: 4, background: 'none', color: '#ef4444', cursor: 'pointer' }}
+                  >✕ Remove Group</button>
+                )}
+              </div>
+
+              {/* Link items grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '0.75rem' }}>
+                {(group.items || []).map((item, ii) => (
+                  <div key={`${block.block_id}-g${gi}-i${ii}-${group.items.length}`} style={{ position: 'relative' }}>
+                    <LinkItemEditor
+                      item={item} index={ii}
+                      linkColor={linkColor} linkUline={linkUline}
+                      bodyFont={bodyFont} bodySize={bodySize} bodyColor={bodyColor}
+                      onSave={(idx, key, val) => saveItem(gi, idx, key, val)}
+                      onMouseUp={saveAndDetect} onKeyUp={saveAndDetect}
+                    />
+                    <button
+                      title="Remove this link"
+                      onMouseDown={e => { e.preventDefault(); e.stopPropagation(); removeItem(gi, ii); }}
+                      style={{ position: 'absolute', top: 0, right: 0, fontSize: 10, padding: '1px 5px', border: '1px solid #fca5a5', borderRadius: 3, background: 'rgba(255,255,255,0.9)', color: '#ef4444', cursor: 'pointer', lineHeight: 1.4 }}
+                    >✕</button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add link button */}
+              <button style={addItemBtn} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); addItem(gi); }}>
+                + Add Link
+              </button>
+            </div>
+          ))}
+
+          {/* Add group button */}
+          <button style={addGroupBtn} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); addGroup(); }}>
+            + Add Group
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── CanvasBlock: click-to-select with ↑↓ + delete controls ────────
-function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onDragStart, onDragOver, onDrop, isDragging, site }) {
+function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onDragStart, onDragOver, onDrop, isDragging, site, onFieldSave }) {
   const meta = BLOCK_TYPES.find(b => b.type === block.block_type);
+  const INLINE_TYPES = ['about', 'content', 'links'];
+  const isInlineEditable = isSelected && INLINE_TYPES.includes(block.block_type);
   return (
     <div
       onClick={e => { e.stopPropagation(); onSelect(block); }}
-      draggable
-      onDragStart={e => onDragStart(e, index)}
+      draggable={!isInlineEditable}
+      onDragStart={e => !isInlineEditable && onDragStart(e, index)}
       onDragOver={e => { e.preventDefault(); onDragOver(e, index); }}
       onDrop={e => { e.preventDefault(); onDrop(e, index); }}
       style={{
         position: 'relative',
+        marginTop: 5,
         outline: isSelected ? '2px solid #3b82f6' : '2px solid transparent',
         outlineOffset: -2,
-        cursor: 'pointer',
+        cursor: isInlineEditable ? 'default' : 'pointer',
         opacity: isDragging ? 0.35 : 1,
         transition: 'outline 0.1s, opacity 0.1s',
       }}
       className="canvas-block"
     >
-      <SimpleBlockPreview block={block} site={site} />
+      {isInlineEditable && block.block_type === 'links'
+        ? <InlineLinksEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} />
+        : isInlineEditable
+          ? <InlineContentEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} />
+          : <SimpleBlockPreview block={block} site={site} />}
 
       {/* Controls — always visible when selected, shown on hover via CSS */}
       <div className="block-controls" style={{
@@ -761,6 +1863,215 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
           style={{ padding: '3px 8px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>🗑</button>
       </div>
       <style>{`.canvas-block:hover .block-controls { opacity: 1 !important; }`}</style>
+    </div>
+  );
+}
+
+// ── RichTextEditor: toolbar + contenteditable rich text ─────────────
+function RichTextEditor({ value, onChange }) {
+  const editorRef  = useRef(null);
+  const htmlRef    = useRef(null);
+  const [htmlMode, setHtmlMode] = useState(false);
+
+  // Set content on mount (key prop handles block switching via remount)
+  useEffect(() => {
+    if (editorRef.current) editorRef.current.innerHTML = value || '';
+    if (htmlRef.current)   htmlRef.current.value       = value || '';
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync content whenever htmlMode flips
+  useEffect(() => {
+    if (htmlMode) {
+      // Entering HTML view — copy rich-text innerHTML into textarea
+      if (htmlRef.current && editorRef.current)
+        htmlRef.current.value = editorRef.current.innerHTML;
+    } else {
+      // Returning to rich-text view — apply textarea HTML into editor
+      if (editorRef.current && htmlRef.current)
+        editorRef.current.innerHTML = htmlRef.current.value;
+    }
+  }, [htmlMode]);
+
+  const exec = (cmd, val = null) => {
+    editorRef.current?.focus();
+    document.execCommand(cmd, false, val);
+  };
+
+  const clearFormatting = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    // Select all content then remove formatting
+    document.execCommand('selectAll', false, null);
+    document.execCommand('removeFormat', false, null);
+    // Strip any leftover inline style attributes from every element
+    editorRef.current.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
+    editorRef.current.querySelectorAll('font').forEach(el => {
+      const span = document.createElement('span');
+      span.innerHTML = el.innerHTML;
+      el.replaceWith(span);
+    });
+    onChange(editorRef.current.innerHTML);
+  };
+
+  const handleBlur = () => {
+    if (!htmlMode) onChange(editorRef.current?.innerHTML || '');
+  };
+
+  const applyBlock = (tag) => {
+    editorRef.current?.focus();
+    document.execCommand('formatBlock', false, tag);
+  };
+
+  const insertLink = () => {
+    const input = window.prompt('Enter a URL or email address:');
+    if (!input) return;
+    const val  = input.trim();
+    const href = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ? `mailto:${val}`
+               : /^https?:\/\//i.test(val)               ? val
+               : /^mailto:/i.test(val)                   ? val
+               : `https://${val}`;
+    exec('createLink', href);
+    // Ensure new link opens in a new tab
+    editorRef.current?.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
+  };
+
+  const applyFont = (fontFamily) => {
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+      document.execCommand('fontName', false, fontFamily);
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    const span = document.createElement('span');
+    span.style.fontFamily = fontFamily;
+    try { range.surroundContents(span); } catch { document.execCommand('fontName', false, fontFamily); }
+  };
+
+  const btn = {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    padding: '3px 7px', borderRadius: 4, fontSize: 12, cursor: 'pointer',
+    border: '1px solid #d1d5db', background: '#fff', color: '#374151',
+    lineHeight: 1,
+  };
+  const sel = {
+    fontSize: 11, border: '1px solid #d1d5db', borderRadius: 4,
+    padding: '3px 5px', background: '#fff', cursor: 'pointer', color: '#374151',
+  };
+
+  return (
+    <div style={{ border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden' }}>
+      {/* Toolbar */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '6px 8px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', alignItems: 'center' }}>
+        {!htmlMode && <>
+          <select style={sel} defaultValue="" onChange={e => { applyBlock(e.target.value); e.target.value = ''; }}>
+            <option value="" disabled>Style</option>
+            <option value="p">Body</option>
+            <option value="h1">H1</option>
+            <option value="h2">H2</option>
+            <option value="h3">H3</option>
+            <option value="h4">H4</option>
+          </select>
+          <select style={{ ...sel, maxWidth: 110 }} defaultValue="" onChange={e => { applyFont(e.target.value); e.target.value = ''; }}>
+            <option value="" disabled>Font</option>
+            {WEB_FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+          </select>
+          <div style={{ width: 1, background: '#e5e7eb', alignSelf: 'stretch', margin: '0 2px' }} />
+          <button style={{ ...btn, fontWeight: 700 }} title="Bold"
+            onMouseDown={e => { e.preventDefault(); exec('bold'); }}>B</button>
+          <button style={{ ...btn, textDecoration: 'underline' }} title="Underline"
+            onMouseDown={e => { e.preventDefault(); exec('underline'); }}>U</button>
+          <button style={{ ...btn, textDecoration: 'line-through' }} title="Strikethrough"
+            onMouseDown={e => { e.preventDefault(); exec('strikeThrough'); }}>S</button>
+          <div style={{ width: 1, background: '#e5e7eb', alignSelf: 'stretch', margin: '0 2px' }} />
+          <button style={btn} title="Align Left"
+            onMouseDown={e => { e.preventDefault(); exec('justifyLeft'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="0" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="0" y="11.5" width="9" height="1.5"/></svg>
+          </button>
+          <button style={btn} title="Center"
+            onMouseDown={e => { e.preventDefault(); exec('justifyCenter'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="2" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="2" y="11.5" width="9" height="1.5"/></svg>
+          </button>
+          <button style={btn} title="Align Right"
+            onMouseDown={e => { e.preventDefault(); exec('justifyRight'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="4" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="4" y="11.5" width="9" height="1.5"/></svg>
+          </button>
+          <div style={{ width: 1, background: '#e5e7eb', alignSelf: 'stretch', margin: '0 2px' }} />
+          <button style={btn} title="Bullet List"
+            onMouseDown={e => { e.preventDefault(); exec('insertUnorderedList'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor">
+              <circle cx="1.5" cy="2.5" r="1.2"/>
+              <rect x="4" y="1.8" width="9" height="1.4"/>
+              <circle cx="1.5" cy="6.5" r="1.2"/>
+              <rect x="4" y="5.8" width="9" height="1.4"/>
+              <circle cx="1.5" cy="10.5" r="1.2"/>
+              <rect x="4" y="9.8" width="9" height="1.4"/>
+            </svg>
+          </button>
+          <button style={btn} title="Numbered List"
+            onMouseDown={e => { e.preventDefault(); exec('insertOrderedList'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor">
+              <text x="0" y="4" fontSize="4.5" fontFamily="monospace">1.</text>
+              <rect x="4" y="1.8" width="9" height="1.4"/>
+              <text x="0" y="8" fontSize="4.5" fontFamily="monospace">2.</text>
+              <rect x="4" y="5.8" width="9" height="1.4"/>
+              <text x="0" y="12" fontSize="4.5" fontFamily="monospace">3.</text>
+              <rect x="4" y="9.8" width="9" height="1.4"/>
+            </svg>
+          </button>
+          <div style={{ width: 1, background: '#e5e7eb', alignSelf: 'stretch', margin: '0 2px' }} />
+          <button style={btn} title="Insert Link"
+            onMouseDown={e => { e.preventDefault(); insertLink(); }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+            </svg>
+          </button>
+          <button style={{ ...btn, fontSize: 10 }} title="Remove Link"
+            onMouseDown={e => { e.preventDefault(); exec('unlink'); }}>✕🔗</button>
+          <div style={{ width: 1, background: '#e5e7eb', alignSelf: 'stretch', margin: '0 2px' }} />
+          {/* Clear all formatting */}
+          <button style={{ ...btn, fontSize: 10, color: '#b91c1c' }} title="Clear all formatting"
+            onMouseDown={e => { e.preventDefault(); clearFormatting(); }}>Tx</button>
+          <div style={{ width: 1, background: '#e5e7eb', alignSelf: 'stretch', margin: '0 2px' }} />
+        </>}
+        {/* HTML source toggle */}
+        <button
+          title={htmlMode ? 'Back to rich text' : 'View / edit HTML source'}
+          onClick={() => setHtmlMode(m => !m)}
+          style={{
+            ...btn,
+            fontFamily: 'monospace', fontSize: 11, letterSpacing: '-0.5px',
+            background: htmlMode ? '#1e293b' : '#fff',
+            color: htmlMode ? '#7dd3fc' : '#374151',
+            border: `1px solid ${htmlMode ? '#334155' : '#d1d5db'}`,
+          }}
+        >&lt;/&gt;</button>
+      </div>
+      {/* Both areas always in DOM — toggled with display so refs are always valid */}
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        onBlur={handleBlur}
+        onPaste={pasteAsBodyText}
+        style={{
+          display: htmlMode ? 'none' : 'block',
+          minHeight: 160, padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
+          color: '#111827', outline: 'none', background: '#fff', overflowY: 'auto',
+        }}
+      />
+      <textarea
+        ref={htmlRef}
+        onBlur={e => { onChange(e.target.value); }}
+        style={{
+          display: htmlMode ? 'block' : 'none',
+          width: '100%', minHeight: 160, padding: '10px 12px',
+          fontSize: 11, fontFamily: 'monospace', lineHeight: 1.6,
+          color: '#0f172a', background: '#f8fafc', border: 'none', outline: 'none',
+          resize: 'vertical', boxSizing: 'border-box',
+        }}
+      />
     </div>
   );
 }
@@ -891,22 +2202,69 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site }) {
         <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
           {bt === 'about' ? 'About Block' : 'Content Block'}
         </div>
-        <Field label="Heading">
-          <TxtInp field="heading" placeholder="Section heading…" />
-        </Field>
-        <Field label="Body Text">
-          <TxtArea field="body" rows={8} placeholder="Write your content here…" />
-        </Field>
         <Field label="Image">
           <ImageUploadField value={imgUrl} onChange={setImg} />
         </Field>
         {imgUrl && (
           <Field label="Image Position">
-            {[['right','Right ▶'],['left','◀ Left'],['center','▲ Center'],['full','⬛ Full']].map(([v,l]) => (
+            {[['left','Left'],['center','Center'],['full','Full'],['right','Right']].map(([v,l]) => (
               <Pill key={v} label={l} active={imgPos === v} onClick={() => setPos(v)} />
             ))}
           </Field>
         )}
+        <BgField />
+      </div>
+    );
+  }
+
+  // ── Links ──
+  if (bt === 'links') {
+    const groups = normLinksGroups(d);
+    const saveGroups = (g) => onFieldSave('groups', g);
+    const updateItem = (gi, ii, key, val) => {
+      saveGroups(groups.map((g, i) => i !== gi ? g : {
+        ...g, items: g.items.map((it, j) => j === ii ? { ...it, [key]: val } : it),
+      }));
+    };
+
+    return (
+      <div style={{ padding: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>Links Block</div>
+        <Field label="Columns">
+          <select className={inp} defaultValue={d.columns || 3} onBlur={e => onFieldSave('columns', Number(e.target.value))}>
+            {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </Field>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Icons &amp; URLs</label>
+          <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>Edit headings and link text directly on the canvas. Set icons and URLs here.</p>
+          {groups.map((group, gi) => (
+            <div key={gi} style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 6, paddingBottom: 4, borderBottom: '1px solid #f3f4f6' }}>
+                {group.heading || `Group ${gi + 1}`}
+              </div>
+              {(group.items || []).map((item, ii) => (
+                <div key={ii} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 6, background: '#f9fafb' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>
+                    {String(item.label || '').replace(/<[^>]*>/g, '') || `Link ${ii + 1}`}
+                  </div>
+                  <div style={{ marginBottom: 5 }}>
+                    <label style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>Icon</label>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      {item.icon_url && <img src={item.icon_url} alt="" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 3, border: '1px solid #e5e7eb' }} />}
+                      <ImageUploadField compact value={item.icon_url || ''} onChange={url => updateItem(gi, ii, 'icon_url', url)} />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>URL</label>
+                    <input className={inp} defaultValue={item.url || ''} placeholder="https://…"
+                      onBlur={e => updateItem(gi, ii, 'url', e.target.value)} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
         <BgField />
       </div>
     );
@@ -954,6 +2312,58 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site }) {
       <BgField />
     </div>
   );
+}
+
+// ── Typography CSS for .rte-body containers (canvas + inline editor) ──
+// Generates CSS that targets standard h1/h2/h3/h4/p tags within .rte-body.
+// When typography settings change on the Design page, the style tag re-renders
+// and ALL .rte-body elements pick up the new values automatically.
+// Inline style overrides (e.g. from font picker) still win via specificity cascade.
+// Ensure every <a> tag in rendered HTML opens in a new tab
+const addLinkTargets = html =>
+  html ? html.replace(/<a\b([^>]*)>/gi, (_, attrs) => {
+    const clean = attrs
+      .replace(/\btarget\s*=\s*["'][^"']*["']/gi, '')
+      .replace(/\brel\s*=\s*["'][^"']*["']/gi, '');
+    return `<a${clean} target="_blank" rel="noopener noreferrer">`;
+  }) : html;
+
+function buildRteBodyCss(site) {
+  if (!site) return '';
+  const linkColor = site.link_color || site.accent_color || '#2563eb';
+  const linkUline = site.link_underline !== false;
+  const linkRule  = `.rte-body a{color:${linkColor};${linkUline ? 'text-decoration:underline;' : 'text-decoration:none;'}}`;
+  const liFont  = site.body_font  || site.font_family || 'inherit';
+  const liSize  = site.body_size  || '1rem';
+  const liColor = site.body_color || site.text_color  || 'inherit';
+  const listRules = [
+    `.rte-body ul{list-style:disc!important;padding-left:1.5em!important;margin:0.4em 0!important;}`,
+    `.rte-body ol{list-style:decimal!important;padding-left:1.5em!important;margin:0.4em 0!important;}`,
+    `.rte-body li{margin:0.2em 0;font-family:${liFont};font-size:${liSize};color:${liColor};}`,
+    `.rte-body li *{font-family:inherit;font-size:inherit;color:inherit;}`,
+  ].join('');
+  const tagRules  = [
+    ['h1', 'h1'], ['h2', 'h2'], ['h3', 'h3'], ['h4', 'h4'], ['body', 'p'],
+  ].map(([k, tag]) => {
+    const size    = site[`${k}_size`]         || (k==='body'?'1rem':k==='h1'?'2.5rem':k==='h2'?'1.8rem':k==='h3'?'1.3rem':'1.1rem');
+    const weight  = site[`${k}_weight`]       || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':'600');
+    const color   = site[`${k}_color`]        || site.text_color || '';
+    const font    = site[`${k}_font`]         || site.font_family || '';
+    const uline   = site[`${k}_underline`];
+    const hasRule = k !== 'body' && site[`${k}_rule`];
+    const ruleclr = site[`${k}_rule_color`]   || site.text_color || '#000';
+    const align   = site[`${k}_align`]        || 'left';
+    const mt      = site[`${k}_margin_top`]   ?? 0;
+    const mb      = site[`${k}_margin_bottom`]?? (k === 'body' ? 12 : 8);
+    let css = `font-size:${size};font-weight:${weight};margin-top:${mt}px;margin-bottom:${mb}px;`;
+    if (font)    css += `font-family:${font};`;
+    if (color)   css += `color:${color};`;
+    if (uline)   css += `text-decoration:underline;`;
+    if (hasRule) css += `border-bottom:2px solid ${ruleclr};padding-bottom:2px;`;
+    if (align !== 'left') css += `text-align:${align};`;
+    return `.rte-body ${tag}{${css}}`;
+  }).join('\n');
+  return linkRule + '\n' + listRules + '\n' + tagRules;
 }
 
 // (legacy stub — kept so DesignView references compile)
@@ -1727,7 +3137,7 @@ export default function WebsiteBuilder() {
             <input className={inp} value={setupData.site_name} placeholder="Green Acres Farm"
               onChange={e => setSetupData(p => ({ ...p, site_name: e.target.value }))} />
           </FormField>
-          <FormField label={`URL Slug — your site will be at /sites/${setupData.slug || 'your-farm'}`}>
+          <FormField label={`URL Slug — your site will be at ${SITE_BASE_URL}/sites/${setupData.slug || 'your-farm'}`}>
             <input className={inp} value={setupData.slug} placeholder="green-acres-farm"
               onChange={e => setSetupData(p => ({ ...p, slug: slugify(e.target.value) }))} />
           </FormField>
@@ -1795,7 +3205,7 @@ export default function WebsiteBuilder() {
               Preview ↗
             </button>
             {site.is_published && (
-              <a href={`/sites/${site.slug}`} target="_blank" rel="noreferrer"
+              <a href={`${SITE_BASE_URL}/sites/${site.slug}`} target="_blank" rel="noreferrer"
                 style={{ padding: '5px 14px', fontSize: 13, fontWeight: 500, color: '#3D6B34', background: '#fff', border: '1px solid #3D6B34', borderRadius: 8, cursor: 'pointer', textDecoration: 'none' }}>
                 View Live ↗
               </a>
@@ -2000,6 +3410,9 @@ export default function WebsiteBuilder() {
                 overflow: 'hidden',
                 maxWidth: previewMode === 'tablet' ? 768 : previewMode === 'mobile' ? 390 : '100%',
               }}>
+                {/* Typography CSS — re-renders when site changes; applies to all .rte-body elements */}
+                <style>{buildRteBodyCss(site)}</style>
+
                 {/* Simulated site header */}
                 <CanvasSiteHeader site={site} pages={pages} />
 
@@ -2032,6 +3445,7 @@ export default function WebsiteBuilder() {
                       onDrop={handleDrop}
                       isDragging={draggingId === block.block_id}
                       site={site}
+                      onFieldSave={(key, val) => saveBlockField(block.block_id, key, val)}
                     />
                   ))
                 )}
@@ -2079,7 +3493,7 @@ export default function WebsiteBuilder() {
             {site.is_published
               ? <span className="text-green-600 font-medium">● Published</span>
               : <span className="text-gray-400">○ Unpublished</span>}
-            <span className="ml-2">/sites/{site.slug}</span>
+            <span className="ml-2">{SITE_BASE_URL}/sites/{site.slug}</span>
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -2100,7 +3514,7 @@ export default function WebsiteBuilder() {
             Preview ↗
           </button>
           {site.is_published && (
-            <a href={`/sites/${site.slug}`} target="_blank" rel="noreferrer"
+            <a href={`${SITE_BASE_URL}/sites/${site.slug}`} target="_blank" rel="noreferrer"
               className="text-sm font-medium text-[#3D6B34] border border-[#3D6B34]/30 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors">
               View Live ↗
             </a>
@@ -2360,6 +3774,7 @@ function TopBarEditor({ value, onChange, bgColor, paletteColors = [] }) {
         onFocus={() => { editing.current = true; }}
         onBlur={() => { editing.current = false; emit(); }}
         onKeyUp={emit}
+        onPaste={pastePlainText}
         style={{
           padding: '8px 12px',
           minHeight: 44,
@@ -2786,15 +4201,12 @@ function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublish
               </select>
             )}
 
-            {/* Visible toggle — headings are always visible */}
-            {isHeading ? (
-              <span style={{ fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>always</span>
-            ) : (
-              <button onClick={() => onTogglePublished(page)}
-                style={{ ...btnBase, background: page.is_published ? '#dcfce7' : '#f3f4f6', color: page.is_published ? '#166534' : '#6b7280', border: `1px solid ${page.is_published ? '#86efac' : '#e5e7eb'}`, fontWeight: 600, textAlign: 'center' }}>
-                {page.is_published ? '● Visible' : '○ Hidden'}
-              </button>
-            )}
+            {/* Visible toggle */}
+            <button onClick={() => onTogglePublished(page)}
+              title={isHeading && !page.is_published ? 'Group and all its pages are hidden from nav' : undefined}
+              style={{ ...btnBase, background: page.is_published ? '#dcfce7' : '#f3f4f6', color: page.is_published ? '#166534' : '#6b7280', border: `1px solid ${page.is_published ? '#86efac' : '#e5e7eb'}`, fontWeight: 600, textAlign: 'center' }}>
+              {page.is_published ? '● Visible' : '○ Hidden'}
+            </button>
 
             {/* Home — headings can't be home */}
             {isHeading ? (
@@ -2843,7 +4255,11 @@ function DesignView({ site, onSave, saving }) {
     text_color:         site.text_color         || '#111827',
     font_family:        site.font_family        || 'Inter, sans-serif',
     logo_url:           site.logo_url           || '',
-    nav_text_color:     site.nav_text_color     || '#FFFFFF',
+    nav_text_color:      site.nav_text_color      || '#FFFFFF',
+    dropdown_bg_color:    site.dropdown_bg_color    || site.primary_color || '#3D6B34',
+    dropdown_hover_color: site.dropdown_hover_color || 'rgba(255,255,255,0.15)',
+    dropdown_bg_color2:   site.dropdown_bg_color2   || '',
+    dropdown_gradient_dir:site.dropdown_gradient_dir|| '135deg',
     footer_bg_color:    site.footer_bg_color    || site.primary_color || '#3D6B34',
     copyright_text:     site.copyright_text     || '',
     // Top bar
@@ -2944,6 +4360,20 @@ function DesignView({ site, onSave, saving }) {
 
   const set = (key, val) => setLocal(p => ({ ...p, [key]: val }));
   const [designTab, setDesignTab] = useState('colors');
+  const [autoSaved, setAutoSaved] = useState(false);
+  const autoSaveTimer = useRef(null);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      onSave(local);
+      setAutoSaved(true);
+      setTimeout(() => setAutoSaved(false), 2000);
+    }, 1500);
+    return () => clearTimeout(autoSaveTimer.current);
+  }, [local]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const paletteColors = [local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color, local.nav_text_color, local.footer_bg_color].filter(Boolean);
 
@@ -2953,7 +4383,7 @@ function DesignView({ site, onSave, saving }) {
         <span className="text-sm font-medium text-gray-700">{label}</span>
         {hint && <p className="text-xs text-gray-400 mt-0.5">{hint}</p>}
       </div>
-      <InlineColorPicker value={local[field]} onChange={v => set(field, v)} paletteColors={paletteColors} />
+      <InlineColorPicker value={local[field]} onChange={v => set(field, v)} paletteColors={paletteColors} popupAlign="right" />
     </div>
   );
 
@@ -2971,7 +4401,7 @@ function DesignView({ site, onSave, saving }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {!isTransp && (
-            <InlineColorPicker value={local[field] || fallback} onChange={v => set(field, v)} paletteColors={paletteColors} />
+            <InlineColorPicker value={local[field] || fallback} onChange={v => set(field, v)} paletteColors={paletteColors} popupAlign="right" />
           )}
           <button
             onClick={() => set(field, isTransp ? (fallback || '#ffffff') : 'transparent')}
@@ -3121,10 +4551,15 @@ function DesignView({ site, onSave, saving }) {
     <div>
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-lg font-bold text-gray-900">Design</h2>
-        <button onClick={() => onSave(local)} disabled={saving}
-          className="regsubmit2 px-6 py-2 text-sm disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save Design'}
-        </button>
+        <div className="flex items-center gap-3">
+          {autoSaved && !saving && (
+            <span className="text-xs text-green-600 font-medium animate-pulse">✓ Saved</span>
+          )}
+          <button onClick={() => onSave(local)} disabled={saving}
+            className="regsubmit2 px-6 py-2 text-sm disabled:opacity-50">
+            {saving ? 'Saving…' : 'Save Design'}
+          </button>
+        </div>
       </div>
       <p className="text-sm text-gray-500 mb-4">Customize the look, colors, fonts, header, and footer of your website.</p>
 
@@ -3557,6 +4992,41 @@ function DesignView({ site, onSave, saving }) {
             </div>
             <ColorRow label="Nav Background Color" field="primary_color" hint="Solid color — used when no background image is set, or as overlay" />
             <ColorRow label="Nav Link Color" field="nav_text_color" hint="Color of the navigation links" />
+            <ColorRow label="Dropdown Background Color" field="dropdown_bg_color" hint="Background color of dropdown menus" />
+            <ColorRow label="Dropdown Hover Color" field="dropdown_hover_color" hint="Background color when hovering a dropdown item" />
+            {/* Gradient second color + direction */}
+            <div className="py-3 border-b border-gray-50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-medium text-gray-700">Dropdown Gradient (optional)</span>
+                  <p className="text-xs text-gray-400 mt-0.5">Add a second color to make the dropdown a gradient</p>
+                </div>
+                <InlineColorPicker value={local.dropdown_bg_color2 || '#000000'} onChange={v => set('dropdown_bg_color2', v)} paletteColors={paletteColors} popupAlign="right" />
+              </div>
+              {local.dropdown_bg_color2 && (
+                <div className="mt-2 flex items-center gap-3">
+                  <span className="text-xs text-gray-500 w-28 shrink-0">Gradient Direction</span>
+                  <select
+                    value={local.dropdown_gradient_dir || '135deg'}
+                    onChange={e => set('dropdown_gradient_dir', e.target.value)}
+                    className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 bg-white"
+                  >
+                    <option value="to bottom">Top → Bottom</option>
+                    <option value="to right">Left → Right</option>
+                    <option value="135deg">Diagonal ↘</option>
+                    <option value="45deg">Diagonal ↗</option>
+                  </select>
+                  <button
+                    onClick={() => set('dropdown_bg_color2', '')}
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded border border-gray-200 hover:border-red-300"
+                  >Clear</button>
+                  <div style={{
+                    width: 40, height: 20, borderRadius: 4, border: '1px solid #e5e7eb',
+                    background: `linear-gradient(${local.dropdown_gradient_dir || '135deg'}, ${local.dropdown_bg_color || local.primary_color || '#3D6B34'}, ${local.dropdown_bg_color2})`
+                  }} />
+                </div>
+              )}
+            </div>
             <p className="text-xs text-gray-400 mt-3">Live preview below shows top bar + banner + nav together.</p>
             {renderHeaderPreview()}
           </div>
@@ -3613,7 +5083,10 @@ function DesignView({ site, onSave, saving }) {
       )}
 
       {/* Always visible: palette strip + save */}
-      <div className="mt-5 flex justify-end">
+      <div className="mt-5 flex items-center justify-end gap-3">
+        {autoSaved && !saving && (
+          <span className="text-xs text-green-600 font-medium animate-pulse">✓ Auto-saved</span>
+        )}
         <button onClick={() => onSave(local)} disabled={saving}
           className="regsubmit2 px-8 py-2.5 text-sm disabled:opacity-50">
           {saving ? 'Saving…' : 'Save Design'}
@@ -3736,7 +5209,7 @@ function SettingsView({ site, onSave, saving, onDelete }) {
           {fi('site_name', 'Site Name')}
           <FormField label="URL Slug">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400 shrink-0">/sites/</span>
+              <span className="text-sm text-gray-400 shrink-0">{SITE_BASE_URL}/sites/</span>
               <input className={inp} value={local.slug} placeholder="my-farm"
                 onChange={e => setLocal(p => ({ ...p, slug: slugify(e.target.value) }))} />
             </div>

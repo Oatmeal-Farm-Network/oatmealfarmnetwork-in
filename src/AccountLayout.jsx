@@ -314,7 +314,14 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=settings`} label="Settings" />
               <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=delete`} label="Delete Website" />
               {websiteSlug && (
-                <NavChild to={`/sites/${websiteSlug}`} label="View Live Site ↗" />
+                <a
+                  href={`https://www.OatmealFarmNetwork.com/sites/${websiteSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
+                >
+                  View Live Site ↗
+                </a>
               )}
             </NavSection>
 
