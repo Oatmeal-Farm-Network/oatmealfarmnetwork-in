@@ -61,6 +61,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
   const BT = Business?.BusinessTypeID;
   const [fields, setFields] = useState([]);
   const [websiteSlug, setWebsiteSlug] = useState(null);
+  const [features, setFeatures] = useState(null); // null = loading; object keyed by feature_key once loaded
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -84,12 +85,23 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
     if (!BusinessID) return;
     fetch(`${API_URL}/api/website/site?business_id=${BusinessID}`)
       .then(r => r.ok ? r.json() : null)
-      .then(site => {
-        if (!site) return;
-        setWebsiteSlug(site.slug);
-      })
+      .then(site => { if (site) setWebsiteSlug(site.slug); })
       .catch(() => {});
   }, [BusinessID]);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/company/features`)
+      .then(r => r.ok ? r.json() : [])
+      .then(rows => {
+        const map = {};
+        rows.forEach(f => { map[f.feature_key] = f.is_enabled; });
+        setFeatures(map);
+      })
+      .catch(() => setFeatures({})); // on error show nothing locked
+  }, []);
+
+  // Returns true while loading (fail-open) or when the feature is enabled
+  const on = (key) => features === null || features[key] === true;
 
   // Auto-expand "My Website" whenever the user is on the website builder
   useEffect(() => {
@@ -163,7 +175,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               )}
             </div>
 
-            {BT === 8 && (
+            {on('precision_ag') && BT === 8 && (
               <NavSection
                 icon="/icons/PrecisionAg.svg"
                 label="Precision Ag"
@@ -194,8 +206,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
-            {/* Farm 2 Table — food/produce sellers only */}
-            {[8, 9, 10, 11, 14, 19, 22, 23, 26, 29, 31, 33, 34].includes(BT) && (
+            {on('farm_2_table') && [8, 9, 10, 11, 14, 19, 22, 23, 26, 29, 31, 33, 34].includes(BT) && (
               <NavSection
                 icon="/icons/produce.webp"
                 label="Farm 2 Table"
@@ -216,7 +227,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
-            {BT === 8 && (
+            {on('livestock') && BT === 8 && (
               <NavSection
                 icon="/icons/Livestock.svg"
                 label="Livestock"
@@ -232,8 +243,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
-            {/* Products — physical product sellers */}
-            {[8, 10, 11, 14, 15, 16, 18, 19, 24, 25, 26, 29, 31, 33, 34].includes(BT) && (
+            {on('products') && [8, 10, 11, 14, 15, 16, 18, 19, 24, 25, 26, 29, 31, 33, 34].includes(BT) && (
               <NavSection
                 icon="/icons/Products.svg"
                 label="Products"
@@ -246,37 +256,40 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
-            <NavSection
-              icon="/icons/Services.svg"
-              label="Services"
-              expanded={Expanded}
-              isOpen={OpenSections.Services || false}
-              onToggle={() => toggleSection('Services')}
-            >
-              <NavChild to="/services/directory" label="Browse Services" />
-              {[1, 8, 9, 10, 17, 18, 20, 21, 27, 28, 32].includes(BT) && (
-                <>
-                  <NavChild to={`/services?BusinessID=${BusinessID}`} label="My Services" />
-                  <NavChild to={`/services/add?BusinessID=${BusinessID}`} label="Add" />
-                  <NavChild to={`/services/suggest-category?BusinessID=${BusinessID}`} label="Suggest Category" />
-                </>
-              )}
-            </NavSection>
+            {on('services') && (
+              <NavSection
+                icon="/icons/Services.svg"
+                label="Services"
+                expanded={Expanded}
+                isOpen={OpenSections.Services || false}
+                onToggle={() => toggleSection('Services')}
+              >
+                <NavChild to="/services/directory" label="Browse Services" />
+                {[1, 8, 9, 10, 17, 18, 20, 21, 27, 28, 32].includes(BT) && (
+                  <>
+                    <NavChild to={`/services?BusinessID=${BusinessID}`} label="My Services" />
+                    <NavChild to={`/services/add?BusinessID=${BusinessID}`} label="Add" />
+                    <NavChild to={`/services/suggest-category?BusinessID=${BusinessID}`} label="Suggest Category" />
+                  </>
+                )}
+              </NavSection>
+            )}
 
-            {/* Events */}
-            <NavSection
-              icon="/icons/Assoc-events-icon.svg"
-              label="Events"
-              expanded={Expanded}
-              isOpen={OpenSections.Events || false}
-              onToggle={() => toggleSection('Events')}
-            >
-              <NavChild to="/events" label="Browse Events" />
-              <NavChild to={`/events/manage?BusinessID=${BusinessID}`} label="My Events" />
-              <NavChild to={`/events/my-registrations?BusinessID=${BusinessID}`} label="My Registrations" />
-            </NavSection>
+            {on('events') && (
+              <NavSection
+                icon="/icons/Assoc-events-icon.svg"
+                label="Events"
+                expanded={Expanded}
+                isOpen={OpenSections.Events || false}
+                onToggle={() => toggleSection('Events')}
+              >
+                <NavChild to="/events" label="Browse Events" />
+                <NavChild to={`/events/manage?BusinessID=${BusinessID}`} label="My Events" />
+                <NavChild to={`/events/my-registrations?BusinessID=${BusinessID}`} label="My Registrations" />
+              </NavSection>
+            )}
 
-            {[8, 30].includes(BT) && (
+            {on('properties') && [8, 30].includes(BT) && (
               <NavSection
                 icon="/icons/Real-Estate.svg"
                 label="Properties"
@@ -289,7 +302,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
-            {BT === 1 && (
+            {on('associations') && BT === 1 && (
               <NavSection
                 icon="/icons/Assoc-administration-icon.svg"
                 label="Associations"
@@ -302,39 +315,42 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
-            <NavSection
-              icon="/icons/Website.svg"
-              label="My Website"
-              expanded={Expanded}
-              isOpen={OpenSections['My Website'] || false}
-              onToggle={() => toggleSection('My Website')}
-            >
-              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=manage-pages`} label="Dashboard" />
-              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=design`} label="Design" />
-              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=settings`} label="Settings" />
-              <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=delete`} label="Delete Website" />
-              {websiteSlug && (
-                <a
-                  href={`https://www.OatmealFarmNetwork.com/sites/${websiteSlug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
-                >
-                  View Live Site ↗
-                </a>
-              )}
-            </NavSection>
+            {on('my_website') && (
+              <NavSection
+                icon="/icons/Website.svg"
+                label="My Website"
+                expanded={Expanded}
+                isOpen={OpenSections['My Website'] || false}
+                onToggle={() => toggleSection('My Website')}
+              >
+                <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=manage-pages`} label="Dashboard" />
+                <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=design`} label="Design" />
+                <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=settings`} label="Settings" />
+                <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=delete`} label="Delete Website" />
+                {websiteSlug && (
+                  <a
+                    href={`https://www.OatmealFarmNetwork.com/sites/${websiteSlug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
+                  >
+                    View Live Site ↗
+                  </a>
+                )}
+              </NavSection>
+            )}
 
-            {/* Settings */}
-            <NavSection
-              icon="/icons/Gears.webp"
-              label="Settings"
-              expanded={Expanded}
-              isOpen={OpenSections['Settings'] || false}
-              onToggle={() => toggleSection('Settings')}
-            >
-              <NavChild to={`/account/audio-settings?BusinessID=${BusinessID}`} label="🎙 Audio Settings" />
-            </NavSection>
+            {on('audio_settings') && (
+              <NavSection
+                icon="/icons/Gears.webp"
+                label="Settings"
+                expanded={Expanded}
+                isOpen={OpenSections['Settings'] || false}
+                onToggle={() => toggleSection('Settings')}
+              >
+                <NavChild to={`/account/audio-settings?BusinessID=${BusinessID}`} label="🎙 Audio Settings" />
+              </NavSection>
+            )}
 
           </nav>
         </div>
