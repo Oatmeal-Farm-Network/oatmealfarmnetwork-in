@@ -1860,6 +1860,35 @@ function SimpleBlockPreview({ block, site, businessId }) {
   // Blog block — shows live posts in a table with refresh
   if (bt === 'blog') return <BlogBlockCanvas block={block} site={site} businessId={businessId} />;
 
+  // Contact block — show actual form preview
+  if (bt === 'contact') {
+    const inp = { border: '1px solid #E5E7EB', borderRadius: 8, padding: '0.5rem 0.8rem', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box', background: '#fff', color: '#111' };
+    const lbl = { display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#9CA3AF', marginBottom: 3, textTransform: 'lowercase' };
+    return (
+      <BlockWrap>
+        <div style={{ maxWidth: 600, margin: '0 auto' }}>
+          {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), textAlign: 'center', marginBottom: '0.5rem' }}>{d.heading}</h2>}
+          {d.sub_heading && <p style={{ color: '#6B7280', textAlign: 'center', marginBottom: '1.2rem', fontSize: '0.9rem', lineHeight: 1.6 }}>{d.sub_heading}</p>}
+          <div style={{ background: '#fff', borderRadius: 16, padding: '1.25rem', boxShadow: '0 2px 12px rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+              <div><label style={lbl}>first name</label><div style={inp}>&nbsp;</div></div>
+              <div><label style={lbl}>last name</label><div style={inp}>&nbsp;</div></div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+              <div><label style={lbl}>email</label><div style={inp}>&nbsp;</div></div>
+              <div><label style={lbl}>phone number <span style={{ fontWeight: 400 }}>(optional)</span></label><div style={inp}>&nbsp;</div></div>
+            </div>
+            <div><label style={lbl}>organization <span style={{ fontWeight: 400 }}>(optional)</span></label><div style={inp}>&nbsp;</div></div>
+            <div><label style={lbl}>message</label><div style={{ ...inp, minHeight: 70 }}>&nbsp;</div></div>
+            <div style={{ background: primary, color: '#fff', fontWeight: 700, padding: '0.6rem', borderRadius: 8, textAlign: 'center', fontSize: '0.9rem' }}>
+              Send Message
+            </div>
+          </div>
+        </div>
+      </BlockWrap>
+    );
+  }
+
   // Data-backed blocks: livestock, produce, services, etc.
   const meta = BLOCK_TYPES.find(b => b.type === bt) || { icon: '📦', label: bt };
   return (

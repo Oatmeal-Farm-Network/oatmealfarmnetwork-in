@@ -597,21 +597,13 @@ function BlogBlock({ data, site, businessId }) {
 
 const CONTACT_API = import.meta.env.VITE_API_URL;
 
+const contactInp = { border: '1px solid #E5E7EB', borderRadius: 8, padding: '0.6rem 0.9rem', fontSize: '0.9rem', width: '100%', boxSizing: 'border-box' };
+const contactLbl = { display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#9CA3AF', marginBottom: 4, textTransform: 'lowercase' };
+
 function ContactBlock({ data, site }) {
-  const emptyForm = { first_name: '', last_name: '', email: '', phone: '', organization: '', message: '' };
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', organization: '', message: '' });
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
-
-  const inp = { border: '1px solid #E5E7EB', borderRadius: 8, padding: '0.6rem 0.9rem', fontSize: '0.9rem', width: '100%', boxSizing: 'border-box' };
-  const lbl = { display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#9CA3AF', marginBottom: 4, textTransform: 'lowercase' };
-
-  const Field = ({ label, optional, children }) => (
-    <div>
-      <label style={lbl}>{label}{optional && <span style={{ fontWeight: 400 }}> (optional)</span>}</label>
-      {children}
-    </div>
-  );
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -654,28 +646,34 @@ function ContactBlock({ data, site }) {
           <form onSubmit={handleSubmit}
             style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <Field label="first name">
-                <input required placeholder="First name" value={form.first_name} onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))} style={inp} />
-              </Field>
-              <Field label="last name">
-                <input required placeholder="Last name" value={form.last_name} onChange={e => setForm(p => ({ ...p, last_name: e.target.value }))} style={inp} />
-              </Field>
+              <div>
+                <label style={contactLbl}>first name</label>
+                <input required placeholder="First name" value={form.first_name} onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))} style={contactInp} />
+              </div>
+              <div>
+                <label style={contactLbl}>last name</label>
+                <input required placeholder="Last name" value={form.last_name} onChange={e => setForm(p => ({ ...p, last_name: e.target.value }))} style={contactInp} />
+              </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <Field label="email">
-                <input required type="email" placeholder="Email address" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} style={inp} />
-              </Field>
-              <Field label="phone number" optional>
-                <input type="tel" placeholder="Phone number" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} style={inp} />
-              </Field>
+              <div>
+                <label style={contactLbl}>email</label>
+                <input required type="email" placeholder="Email address" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} style={contactInp} />
+              </div>
+              <div>
+                <label style={contactLbl}>phone number <span style={{ fontWeight: 400 }}>(optional)</span></label>
+                <input type="tel" placeholder="Phone number" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} style={contactInp} />
+              </div>
             </div>
-            <Field label="organization" optional>
-              <input placeholder="Organization" value={form.organization} onChange={e => setForm(p => ({ ...p, organization: e.target.value }))} style={inp} />
-            </Field>
-            <Field label="message">
+            <div>
+              <label style={contactLbl}>organization <span style={{ fontWeight: 400 }}>(optional)</span></label>
+              <input placeholder="Organization" value={form.organization} onChange={e => setForm(p => ({ ...p, organization: e.target.value }))} style={contactInp} />
+            </div>
+            <div>
+              <label style={contactLbl}>message</label>
               <textarea required placeholder="Your message" value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
-                style={{ ...inp, minHeight: 110, resize: 'vertical' }} />
-            </Field>
+                style={{ ...contactInp, minHeight: 110, resize: 'vertical' }} />
+            </div>
             <button type="submit" disabled={sending}
               style={{ background: site.primary_color, color: '#fff', fontWeight: 700, padding: '0.7rem 2rem', borderRadius: 8, border: 0, cursor: sending ? 'not-allowed' : 'pointer', fontSize: '0.9rem', opacity: sending ? 0.7 : 1 }}>
               {sending ? 'Sending…' : 'Send Message'}
