@@ -39,7 +39,7 @@ const defaultBlockData = {
   services:       { heading: 'Our Services', max_items: 6 },
   marketplace:    { heading: 'Shop Our Store', max_items: 12 },
   gallery:        { heading: 'Photo Gallery', columns: 3 },
-  blog:           { heading: 'From the Blog', max_posts: 3, category: '' },
+  blog:           { heading: 'From the Blog', heading_style: 'h1', max_posts: 0, category: '' },
   contact:        { heading: 'Get In Touch', show_form: true, custom_message: '' },
   links:          { heading: 'Links', columns: 3, groups: [
     { heading: 'Social Media', items: [{ icon_url: '', label: 'Link Title', url: '', description: 'Short description of this link' }] },
@@ -704,6 +704,84 @@ function ToolbarColorPicker({ color, onChange, paletteColors = [] }) {
   );
 }
 
+// ── ToolbarBgColorPicker: compact "BG" button for block background color ──
+function ToolbarBgColorPicker({ color, onChange, paletteColors = [] }) {
+  const [open, setOpen] = useState(false);
+  const [custom, setCustom] = useState(color || '#ffffff');
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  const pick = (hex) => { onChange(hex); setCustom(hex); setOpen(false); };
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
+      <button
+        onMouseDown={e => { e.preventDefault(); setOpen(p => !p); }}
+        title="Block background color"
+        style={{
+          display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '3px 6px', borderRadius: 4, cursor: 'pointer', gap: 2,
+          border: '1px solid #475569', background: open ? '#475569' : '#334155', lineHeight: 1,
+        }}
+      >
+        <span style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>BG</span>
+        <span style={{ display: 'block', width: 14, height: 3, borderRadius: 1, background: color || '#ffffff', border: '1px solid rgba(255,255,255,0.2)' }} />
+      </button>
+      {open && (
+        <div
+          style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 99999, background: '#fff', border: '1px solid #d1d5db', borderRadius: 10, padding: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.22)', width: 220 }}
+          onMouseDown={e => e.preventDefault()}
+        >
+          {paletteColors.length > 0 && (
+            <>
+              <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>Site Palette</div>
+              <div style={{ display: 'flex', gap: 5, marginBottom: 8, flexWrap: 'wrap' }}>
+                {paletteColors.map(c => (
+                  <button key={c} onMouseDown={() => pick(c)} title={c}
+                    style={{ width: 22, height: 22, borderRadius: 4, background: c, border: '2px solid #e5e7eb', cursor: 'pointer', padding: 0 }} />
+                ))}
+              </div>
+              <div style={{ height: 1, background: '#e5e7eb', margin: '6px 0' }} />
+            </>
+          )}
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>Standard Colors</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 3, marginBottom: 8 }}>
+            {SWATCHES.map(c => (
+              <button key={c} onMouseDown={() => pick(c)} title={c}
+                style={{ width: '100%', aspectRatio: '1', borderRadius: 3, background: c, border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer', padding: 0 }} />
+            ))}
+          </div>
+          <div style={{ height: 1, background: '#e5e7eb', margin: '6px 0' }} />
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>Custom Color</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input type="color" value={custom} onChange={e => setCustom(e.target.value)}
+              style={{ width: 32, height: 32, border: '1px solid #d1d5db', borderRadius: 4, cursor: 'pointer', padding: 1 }} />
+            <input type="text" value={custom} maxLength={7}
+              onChange={e => { if (/^#[0-9a-fA-F]{0,6}$/.test(e.target.value)) setCustom(e.target.value); }}
+              style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: 4, padding: '4px 6px', fontSize: 12, fontFamily: 'monospace' }} />
+            <button onMouseDown={() => { if (/^#[0-9a-fA-F]{6}$/.test(custom)) pick(custom); }}
+              style={{ padding: '4px 8px', background: '#3D6B34', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>
+              Apply
+            </button>
+          </div>
+          {color && (
+            <button onMouseDown={() => { onChange(''); setOpen(false); }}
+              style={{ marginTop: 8, width: '100%', padding: '4px', background: 'none', border: '1px solid #e5e7eb', borderRadius: 4, cursor: 'pointer', fontSize: 11, color: '#6b7280' }}>
+              Reset to default
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Shared paste handler: strips all formatting, inserts plain text only ──
 // Used for headings and captions where block format doesn't apply.
 const pastePlainText = e => {
@@ -777,24 +855,41 @@ function InlineContentEditor({ block, site, onFieldSave }) {
   const bgWidth    = site?.body_bg_width      || '100%';
   const cWidth     = site?.body_content_width || '100%';
 
+  // Derive image source info first (needed for imgWidth initial state)
+  const imgs    = Array.isArray(d.images) && d.images.length > 0 ? d.images : [];
+  const img0Obj = imgs[0] && typeof imgs[0] !== 'string' ? imgs[0] : null;
+  const rawUrl  = d.image_url || (img0Obj ? img0Obj.url : (typeof imgs[0] === 'string' ? imgs[0] : null));
+  const pos     = d.image_position || img0Obj?.wrap || 'right';
+  const isSide  = pos === 'left' || pos === 'right';
+  const isLeft  = pos === 'left';
+
   const headingRef      = useRef(null);
   const bodyRef         = useRef(null);
   const savedSel        = useRef(null);   // cloned Range
   const activeEl        = useRef(null);   // which contenteditable last had focus
   const imgWrapRef      = useRef(null);
   const htmlTextareaRef = useRef(null);
-  const [imgWidth, setImgWidth] = useState(d.image_width || 38); // percent
+  // Mirror normImages() in WebsitePublic: prefer d.image_width, then images[0].w, then default 38
+  const [imgWidth, setImgWidth] = useState(d.image_width ?? img0Obj?.w ?? 38); // percent
   const [htmlMode, setHtmlMode] = useState(false);
   const [selStyle, setSelStyle] = useState('');
   const [selFont,  setSelFont]  = useState('');
   const [selSize,  setSelSize]  = useState('');
   const [selColor, setSelColor] = useState('#000000');
 
-  const imgs   = Array.isArray(d.images) && d.images.length > 0 ? d.images : [];
-  const rawUrl = d.image_url || (imgs[0] ? (typeof imgs[0] === 'string' ? imgs[0] : imgs[0].url) : null);
-  const pos    = d.image_position || imgs[0]?.wrap || 'right';
-  const isSide = pos === 'left' || pos === 'right';
-  const isLeft = pos === 'left';
+  // Image insertion panel + floating toolbar
+  const fileInputRef    = useRef(null);
+  const [imgPanel, setImgPanel]           = useState(false);
+  const [imgUrl, setImgUrl]               = useState('');
+  const [imgAlign, setImgAlign]           = useState('center');
+  const [draggingOver, setDraggingOver]   = useState(false);
+  const [panelDragging, setPanelDragging] = useState(false);
+  const [uploading, setUploading]         = useState(false);
+  const [selectedImg, setSelectedImg]     = useState(null);
+  const [imgToolbarPos, setImgToolbarPos] = useState({ top: 0, left: 0 });
+  const [imgCaption, setImgCaption]       = useState('');
+  const [imgRect, setImgRect]             = useState(null);
+  const resizingRef                       = useRef(null);
 
   // Drag-to-resize image
   const startResize = (e) => {
@@ -1029,6 +1124,209 @@ function InlineContentEditor({ block, site, onFieldSave }) {
     saveSel();
   };
 
+  // ── Image insertion helpers ────────────────────────────────────────
+  const openImgPanel = (e) => {
+    e.preventDefault();
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && bodyRef.current?.contains(sel.anchorNode)) {
+      savedSel.current = sel.getRangeAt(0).cloneRange();
+      activeEl.current = bodyRef.current;
+    }
+    setImgPanel(p => !p);
+  };
+
+  const _figCss = (align) => ({
+    left:   'float:left;margin:0 1rem 0.75rem 0;max-width:50%;border-radius:6px;',
+    right:  'float:right;margin:0 0 0.75rem 1rem;max-width:50%;border-radius:6px;',
+    center: 'display:block;margin:0.75rem auto;max-width:80%;clear:both;border-radius:6px;',
+  }[align] || 'display:block;margin:0.75rem auto;max-width:80%;clear:both;border-radius:6px;');
+
+  const insertBodyImage = (url, align) => {
+    if (!url || !bodyRef.current) return;
+    const figure = document.createElement('figure');
+    figure.style.cssText = _figCss(align);
+    const img = document.createElement('img');
+    img.src = url;
+    img.style.cssText = 'width:100%;display:block;border-radius:6px;';
+    const figcaption = document.createElement('figcaption');
+    figcaption.style.cssText = 'font-size:0.82em;color:#6b7280;text-align:center;font-style:italic;margin-top:0.3em;min-height:1em;';
+    figure.appendChild(img);
+    figure.appendChild(figcaption);
+    const range = savedSel.current;
+    let refBlock = null;
+    if (range && bodyRef.current.contains(range.commonAncestorContainer)) {
+      let node = range.commonAncestorContainer;
+      if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+      if (node === bodyRef.current) {
+        refBlock = bodyRef.current.children[range.startOffset] || null;
+      } else {
+        while (node && node.parentElement !== bodyRef.current) node = node.parentElement;
+        if (node && node !== bodyRef.current) refBlock = node;
+      }
+    }
+    if (refBlock) {
+      bodyRef.current.insertBefore(figure, refBlock);
+    } else {
+      bodyRef.current.appendChild(figure);
+      const p = document.createElement('p');
+      p.innerHTML = '<br>';
+      bodyRef.current.appendChild(p);
+    }
+    onFieldSave('body', bodyRef.current.innerHTML);
+    setImgPanel(false);
+    setImgUrl('');
+  };
+
+  const handlePanelFile = async (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    setUploading(true);
+    try {
+      const url = await uploadImageFile(file);
+      insertBodyImage(url, imgAlign);
+    } catch { alert('Image upload failed.'); }
+    finally { setUploading(false); }
+  };
+
+  const _rootBodyEl = (node) => {
+    if (!node || !bodyRef.current) return null;
+    let n = node;
+    while (n && n.parentElement !== bodyRef.current) n = n.parentElement;
+    return (n && n.parentElement === bodyRef.current) ? n : null;
+  };
+
+  const _liftToBody = (img) => {
+    // Don't lift if already inside a figure that is a body child
+    if (img.parentElement?.tagName === 'FIGURE') return;
+    let node = img;
+    while (node.parentElement && node.parentElement !== bodyRef.current) node = node.parentElement;
+    if (node !== img && node.parentElement === bodyRef.current) {
+      bodyRef.current.insertBefore(img, node);
+      if (!node.textContent.trim() && node.children.length === 0) node.remove();
+    }
+  };
+
+  const selectBodyImg = (img) => {
+    setSelectedImg(img);
+    const fig = img.parentElement?.tagName === 'FIGURE' ? img.parentElement : null;
+    setImgCaption(fig ? (fig.querySelector('figcaption')?.textContent || '') : '');
+    const r = img.getBoundingClientRect();
+    setImgRect(r);
+    setImgToolbarPos({ top: r.top - 80, left: r.left });
+    const hide = () => { setSelectedImg(null); setImgRect(null); };
+    window.addEventListener('scroll', hide, { once: true, capture: true });
+  };
+
+  const startBodyImgResize = (e, dir) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const img = selectedImg;
+    if (!img) return;
+    const startX   = e.clientX;
+    const startY   = e.clientY;
+    const startW   = img.offsetWidth;
+    const startH   = img.offsetHeight;
+    const aspect   = startH / startW;
+    resizingRef.current = true;
+    const onMove = (mv) => {
+      let newW = startW, newH = startH;
+      if (dir === 'e')  newW = Math.max(40, startW + (mv.clientX - startX));
+      if (dir === 'w')  newW = Math.max(40, startW - (mv.clientX - startX));
+      if (dir === 'se') newW = Math.max(40, startW + (mv.clientX - startX));
+      if (dir === 'sw') newW = Math.max(40, startW - (mv.clientX - startX));
+      if (dir === 'ne') newW = Math.max(40, startW + (mv.clientX - startX));
+      if (dir === 'nw') newW = Math.max(40, startW - (mv.clientX - startX));
+      newH = Math.round(newW * aspect);
+      img.style.width  = newW + 'px';
+      img.style.height = newH + 'px';
+      setImgRect(img.getBoundingClientRect());
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      resizingRef.current = false;
+      onFieldSave('body', bodyRef.current.innerHTML);
+      setImgRect(img.getBoundingClientRect());
+      setImgToolbarPos({ top: img.getBoundingClientRect().top - 80, left: img.getBoundingClientRect().left });
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  };
+
+  const applyCaption = (text) => {
+    if (!selectedImg) return;
+    const fig = selectedImg.parentElement?.tagName === 'FIGURE' ? selectedImg.parentElement : null;
+    if (!fig) return;
+    let fc = fig.querySelector('figcaption');
+    if (!fc) {
+      fc = document.createElement('figcaption');
+      fc.style.cssText = 'font-size:0.82em;color:#6b7280;text-align:center;font-style:italic;margin-top:0.3em;min-height:1em;';
+      fig.appendChild(fc);
+    }
+    fc.textContent = text;
+    onFieldSave('body', bodyRef.current.innerHTML);
+  };
+
+  const applyImgAlign = (align) => {
+    if (!selectedImg) return;
+    const fig = selectedImg.parentElement?.tagName === 'FIGURE' ? selectedImg.parentElement : null;
+    if (fig) {
+      fig.style.cssText = _figCss(align);
+    } else {
+      _liftToBody(selectedImg);
+      selectedImg.style.cssText = _figCss(align);
+    }
+    onFieldSave('body', bodyRef.current.innerHTML);
+    const r = selectedImg.getBoundingClientRect();
+    setImgRect(r);
+    setImgToolbarPos({ top: r.top - 80, left: r.left });
+  };
+
+  const moveBodyImg = (dir) => {
+    if (!selectedImg) return;
+    const root = _rootBodyEl(selectedImg);
+    if (!root) return;
+    if (dir < 0) { const prev = root.previousElementSibling; if (prev) bodyRef.current.insertBefore(root, prev); }
+    else { const next = root.nextElementSibling; if (next) bodyRef.current.insertBefore(next, root); }
+    onFieldSave('body', bodyRef.current.innerHTML);
+    setTimeout(() => {
+      const r = selectedImg.getBoundingClientRect();
+      setImgRect(r);
+      setImgToolbarPos({ top: r.top - 80, left: r.left });
+    }, 0);
+  };
+
+  const handleBodyClick = (e) => {
+    if (e.target.tagName === 'IMG') {
+      e.preventDefault();
+      selectBodyImg(e.target);
+    } else if (e.target.tagName === 'FIGCAPTION') {
+      const img = e.target.closest('figure')?.querySelector('img');
+      if (img) selectBodyImg(img);
+    } else {
+      setSelectedImg(null);
+    }
+  };
+
+  const handleBodyDrop = (e) => {
+    e.preventDefault();
+    setDraggingOver(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0 && files[0].type.startsWith('image/')) {
+      if (document.caretRangeFromPoint) {
+        const r = document.caretRangeFromPoint(e.clientX, e.clientY);
+        if (r) { savedSel.current = r; activeEl.current = bodyRef.current; }
+      } else if (document.caretPositionFromPoint) {
+        const cp = document.caretPositionFromPoint(e.clientX, e.clientY);
+        if (cp) {
+          const r = document.createRange();
+          r.setStart(cp.offsetNode, cp.offset);
+          savedSel.current = r; activeEl.current = bodyRef.current;
+        }
+      }
+      handlePanelFile(files[0]);
+    }
+  };
+
   // When HTML mode turns on, populate and focus the textarea
   useEffect(() => {
     if (htmlMode && htmlTextareaRef.current && bodyRef.current) {
@@ -1152,6 +1450,24 @@ function InlineContentEditor({ block, site, onFieldSave }) {
             <button style={{ ...tbBtn, fontSize: 10, color: '#fca5a5' }} title="Clear all formatting"
               onMouseDown={e => { e.preventDefault(); clearFormatting(); }}>Tx</button>
             <div style={tbDiv} />
+            {/* Image insert */}
+            <button style={tbBtn} title="Insert image"
+              onMouseDown={openImgPanel}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+              onChange={e => { if (e.target.files[0]) handlePanelFile(e.target.files[0]); e.target.value = ''; }} />
+            <div style={tbDiv} />
+            {/* Block background color */}
+            <ToolbarBgColorPicker
+              color={d.bg_color || site?.bg_color || '#ffffff'}
+              paletteColors={[site?.primary_color, site?.secondary_color, site?.accent_color, site?.bg_color, site?.text_color].filter(Boolean)}
+              onChange={color => onFieldSave('bg_color', color)}
+            />
+            <div style={tbDiv} />
             <button
               title={htmlMode ? 'Back to rich text' : 'View / edit HTML source'}
               onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleHtmlMode(); }}
@@ -1164,8 +1480,57 @@ function InlineContentEditor({ block, site, onFieldSave }) {
             >&lt;/&gt;</button>
           </div>
 
+          {/* Image insertion panel */}
+          {imgPanel && (
+            <div style={{ background: '#0f172a', borderBottom: '1px solid #334155', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Paste image URL…"
+                  value={imgUrl}
+                  onChange={e => setImgUrl(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && imgUrl) insertBodyImage(imgUrl, imgAlign); }}
+                  style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: 6, padding: '5px 8px', fontSize: 12, color: '#e2e8f0', outline: 'none' }}
+                />
+                <button
+                  onMouseDown={e => { e.preventDefault(); if (imgUrl) insertBodyImage(imgUrl, imgAlign); }}
+                  style={{ padding: '5px 12px', background: '#3D6B34', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                  Insert
+                </button>
+                <button onMouseDown={e => { e.preventDefault(); setImgPanel(false); }}
+                  style={{ padding: '5px 8px', background: '#334155', color: '#94a3b8', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>✕</button>
+              </div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <span style={{ fontSize: 11, color: '#94a3b8' }}>Align:</span>
+                {[['left','← Left'],['center','↔ Center'],['right','Right →']].map(([a, lbl]) => (
+                  <button key={a} onMouseDown={e => { e.preventDefault(); setImgAlign(a); }}
+                    style={{ padding: '3px 8px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', fontWeight: imgAlign === a ? 700 : 400, background: imgAlign === a ? '#3D6B34' : '#334155', color: imgAlign === a ? '#fff' : '#e2e8f0' }}>
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+              {/* File drop zone */}
+              <div
+                onDragOver={e => { e.preventDefault(); setPanelDragging(true); }}
+                onDragLeave={() => setPanelDragging(false)}
+                onDrop={e => { e.preventDefault(); setPanelDragging(false); if (e.dataTransfer.files[0]) handlePanelFile(e.dataTransfer.files[0]); }}
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  border: `2px dashed ${panelDragging ? '#7dd3fc' : '#334155'}`,
+                  borderRadius: 8, padding: '10px', textAlign: 'center', cursor: 'pointer',
+                  background: panelDragging ? '#1e3a5f' : '#1e293b', transition: 'all 0.15s',
+                }}
+              >
+                {uploading
+                  ? <span style={{ fontSize: 12, color: '#94a3b8' }}>Uploading…</span>
+                  : <span style={{ fontSize: 12, color: '#64748b' }}>Drop image here or <span style={{ color: '#7dd3fc' }}>browse</span></span>}
+              </div>
+            </div>
+          )}
+
           {/* Editable content area */}
-          <div style={{ background: bgColor, padding: '1.75rem 2.5rem' }}>
+          <div style={{ background: d.bg_color || site?.bg_color || bgColor, padding: '1.75rem 2.5rem' }}>
             <div style={{ maxWidth: cWidth, margin: '0 auto' }}>
               <div style={{ display: 'flex', flexDirection: isSide ? (isLeft ? 'row' : 'row-reverse') : 'column', gap: '2rem', alignItems: isSide ? 'flex-start' : 'stretch' }}>
                 {rawUrl && (
@@ -1220,7 +1585,16 @@ function InlineContentEditor({ block, site, onFieldSave }) {
                       onFocus={() => { activeEl.current = bodyRef.current; }}
                       onInput={e => { if (!htmlMode) onFieldSave('body', e.currentTarget.innerHTML); }}
                       onBlur={e => { if (!htmlMode) onFieldSave('body', e.currentTarget.innerHTML); }}
-                      style={{ display: htmlMode ? 'none' : 'block', outline: 'none', cursor: 'text', minHeight: '3rem', border: '1px dashed #cbd5e1', borderRadius: 4, padding: '4px 6px' }}
+                      onClick={handleBodyClick}
+                      onDragOver={e => { e.preventDefault(); setDraggingOver(true); }}
+                      onDragLeave={() => setDraggingOver(false)}
+                      onDrop={handleBodyDrop}
+                      style={{
+                        display: htmlMode ? 'none' : 'block', outline: 'none', cursor: 'text',
+                        minHeight: '3rem', borderRadius: 4, padding: '4px 6px',
+                        border: draggingOver ? '2px dashed #7dd3fc' : '1px dashed #cbd5e1',
+                        overflow: 'hidden',
+                      }}
                     />
                     {/* HTML source textarea (shown in HTML mode) */}
                     {htmlMode && (
@@ -1243,6 +1617,82 @@ function InlineContentEditor({ block, site, onFieldSave }) {
           </div>
         </div>
       </div>
+
+      {/* Floating image toolbar + resize handles */}
+      {selectedImg && imgRect && createPortal(
+        <>
+          {/* Blue outline overlay */}
+          <div style={{
+            position: 'fixed', top: imgRect.top, left: imgRect.left,
+            width: imgRect.width, height: imgRect.height,
+            border: '2px solid #3b82f6', pointerEvents: 'none', zIndex: 99998,
+          }} />
+          {/* Size label */}
+          <div style={{
+            position: 'fixed', top: imgRect.bottom + 4, left: imgRect.left,
+            fontSize: 10, color: '#fff', background: 'rgba(59,130,246,0.85)',
+            padding: '1px 5px', borderRadius: 3, zIndex: 99999, pointerEvents: 'none',
+          }}>
+            {Math.round(imgRect.width)} × {Math.round(imgRect.height)}
+          </div>
+          {/* Resize handles */}
+          {[
+            { dir: 'nw', top: imgRect.top - 5,                      left: imgRect.left - 5 },
+            { dir: 'ne', top: imgRect.top - 5,                      left: imgRect.right - 5 },
+            { dir: 'sw', top: imgRect.bottom - 5,                   left: imgRect.left - 5 },
+            { dir: 'se', top: imgRect.bottom - 5,                   left: imgRect.right - 5 },
+            { dir: 'e',  top: imgRect.top + imgRect.height / 2 - 5, left: imgRect.right - 5 },
+            { dir: 'w',  top: imgRect.top + imgRect.height / 2 - 5, left: imgRect.left - 5 },
+          ].map(({ dir, top, left }) => (
+            <div key={dir} onMouseDown={e => startBodyImgResize(e, dir)}
+              style={{
+                position: 'fixed', top, left, width: 10, height: 10,
+                background: '#3b82f6', border: '1px solid #fff', borderRadius: 2,
+                cursor: dir === 'e' || dir === 'w' ? 'ew-resize' : dir === 'nw' || dir === 'se' ? 'nwse-resize' : 'nesw-resize',
+                zIndex: 99999,
+              }}
+            />
+          ))}
+          {/* Floating toolbar */}
+          <div style={{ position: 'fixed', top: imgToolbarPos.top, left: imgToolbarPos.left, zIndex: 99999, background: '#1e293b', borderRadius: 6, padding: '5px 7px', display: 'flex', flexDirection: 'column', gap: 5, boxShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
+            {/* Row 1: position + align + close */}
+            <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>Position:</span>
+              {[[-1,'↑'],[1,'↓']].map(([dir, icon]) => (
+                <button key={dir} onMouseDown={e => { e.preventDefault(); moveBodyImg(dir); }}
+                  style={{ padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 12, cursor: 'pointer', background: '#334155', color: '#e2e8f0' }}>
+                  {icon}
+                </button>
+              ))}
+              <div style={{ width: 1, background: '#475569', alignSelf: 'stretch', margin: '0 3px' }} />
+              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>Align:</span>
+              {[['left','← Left'],['center','↔'],['right','Right →']].map(([a, icon]) => (
+                <button key={a} onMouseDown={e => { e.preventDefault(); applyImgAlign(a); }}
+                  style={{ padding: '3px 8px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#334155', color: '#e2e8f0', fontWeight: 500 }}>
+                  {icon}
+                </button>
+              ))}
+              <button onMouseDown={e => { e.preventDefault(); setSelectedImg(null); setImgRect(null); }}
+                style={{ padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#334155', color: '#94a3b8', marginLeft: 2 }}>✕</button>
+            </div>
+            {/* Row 2: caption input (only for figure-wrapped images) */}
+            {selectedImg?.parentElement?.tagName === 'FIGURE' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 10, color: '#94a3b8', whiteSpace: 'nowrap' }}>Caption:</span>
+                <input
+                  value={imgCaption}
+                  onChange={e => setImgCaption(e.target.value)}
+                  onBlur={() => applyCaption(imgCaption)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCaption(imgCaption); } }}
+                  placeholder="Add caption…"
+                  style={{ flex: 1, minWidth: 160, padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 11, background: '#334155', color: '#e2e8f0', outline: 'none' }}
+                />
+              </div>
+            )}
+          </div>
+        </>,
+        document.body
+      )}
     </div>
   );
 }
@@ -1278,7 +1728,7 @@ function normLinksGroups(d) {
 }
 
 // ── SimpleBlockPreview: read-only canvas preview of each block ────
-function SimpleBlockPreview({ block, site }) {
+function SimpleBlockPreview({ block, site, businessId }) {
   const d   = block.block_data || {};
   const bt  = block.block_type;
   const primary    = site?.primary_color  || '#3D6B34';
@@ -1330,11 +1780,13 @@ function SimpleBlockPreview({ block, site }) {
 
   if (bt === 'about' || bt === 'content') {
     const imgs       = Array.isArray(d.images) && d.images.length > 0 ? d.images : [];
-    const rawUrl     = d.image_url || (imgs[0] ? (typeof imgs[0] === 'string' ? imgs[0] : imgs[0].url) : null);
-    const pos        = d.image_position || imgs[0]?.wrap || 'right';
+    const _img0Obj   = imgs[0] && typeof imgs[0] !== 'string' ? imgs[0] : null;
+    const rawUrl     = d.image_url || (_img0Obj ? _img0Obj.url : (typeof imgs[0] === 'string' ? imgs[0] : null));
+    const pos        = d.image_position || _img0Obj?.wrap || 'right';
     const isSide     = pos === 'left' || pos === 'right';
     const flexDir    = isSide ? (pos === 'left' ? 'row' : 'row-reverse') : 'column';
-    const imgW       = pos === 'full' ? '100%' : pos === 'center' ? `${Math.min(d.image_width || 60, 100)}%` : `${d.image_width || 38}%`;
+    const _imgW      = d.image_width ?? _img0Obj?.w ?? 38;
+    const imgW       = pos === 'full' ? '100%' : pos === 'center' ? `${Math.min(_imgW, 100)}%` : `${_imgW}%`;
     const imgAlign   = pos === 'center' ? { margin: '0 auto' } : {};
     const hasHeading = !!d.heading?.trim();
     const hasBody    = !!d.body?.replace(/<[^>]*>/g, '').trim();
@@ -1404,6 +1856,9 @@ function SimpleBlockPreview({ block, site }) {
       </div>
     );
   }
+
+  // Blog block — shows live posts in a table with refresh
+  if (bt === 'blog') return <BlogBlockCanvas block={block} site={site} businessId={businessId} />;
 
   // Data-backed blocks: livestock, produce, services, etc.
   const meta = BLOCK_TYPES.find(b => b.type === bt) || { icon: '📦', label: bt };
@@ -1819,7 +2274,7 @@ function InlineLinksEditor({ block, site, onFieldSave }) {
 }
 
 // ── CanvasBlock: click-to-select with ↑↓ + delete controls ────────
-function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onDragStart, onDragOver, onDrop, isDragging, site, onFieldSave }) {
+function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onDragStart, onDragOver, onDrop, isDragging, site, onFieldSave, businessId }) {
   const meta = BLOCK_TYPES.find(b => b.type === block.block_type);
   const INLINE_TYPES = ['about', 'content', 'links'];
   const isInlineEditable = isSelected && INLINE_TYPES.includes(block.block_type);
@@ -1845,7 +2300,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
         ? <InlineLinksEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} />
         : isInlineEditable
           ? <InlineContentEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} />
-          : <SimpleBlockPreview block={block} site={site} />}
+          : <SimpleBlockPreview block={block} site={site} businessId={businessId} />}
 
       {/* Controls — always visible when selected, shown on hover via CSS */}
       <div className="block-controls" style={{
@@ -2076,8 +2531,293 @@ function RichTextEditor({ value, onChange }) {
   );
 }
 
+// ── BlogBlockCanvas: canvas preview of blog block showing live posts in a table ──
+function renderBlogPostContent(content) {
+  if (!content) return null;
+  let blocks;
+  try {
+    blocks = JSON.parse(content);
+    if (!Array.isArray(blocks)) throw new Error();
+  } catch {
+    return <div style={{ fontSize: '0.9rem', color: '#1f2937', lineHeight: 1.8, wordBreak: 'break-word' }} dangerouslySetInnerHTML={{ __html: content }} />;
+  }
+  return (
+    <>
+      {blocks.map((block, i) => {
+        if (block.type === 'image') {
+          return (
+            <figure key={i} style={{ margin: '1.25rem 0', textAlign: block.align || 'center' }}>
+              <img src={block.url} alt={block.caption || ''} style={{ width: block.width || '100%', maxWidth: '100%', borderRadius: 8, display: 'inline-block' }} onError={e => e.target.style.display = 'none'} />
+              {block.caption && <figcaption style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.3rem', fontStyle: 'italic' }}>{block.caption}</figcaption>}
+            </figure>
+          );
+        }
+        return <div key={i} style={{ fontSize: '0.9rem', color: '#1f2937', lineHeight: 1.8, wordBreak: 'break-word', marginBottom: '0.4rem' }} dangerouslySetInnerHTML={{ __html: block.content || '' }} />;
+      })}
+    </>
+  );
+}
+
+function BlogBlockCanvas({ block, site, businessId }) {
+  const d = block.block_data || {};
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedIdx, setSelectedIdx] = useState(null);
+  const primary    = site?.primary_color  || '#3D6B34';
+  const textColor  = site?.text_color     || '#111827';
+  const fontFamily = site?.font_family    || 'inherit';
+  const bgWidth    = site?.body_bg_width  || '100%';
+  const bgColor    = d.bg_color || site?.bg_color || '#fff';
+
+  const fetchPosts = useCallback(() => {
+    if (!businessId) return;
+    setLoading(true);
+    const params = new URLSearchParams({ business_id: businessId, limit: d.max_posts || 100 });
+    if (d.category) params.set('category_name', d.category);
+    fetch(`${API}/api/blog/posts?${params}`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => setPosts(Array.isArray(data) ? data : []))
+      .catch(() => setPosts([]))
+      .finally(() => setLoading(false));
+  }, [businessId, d.category, d.max_posts]);
+
+  useEffect(() => { fetchPosts(); setSelectedIdx(null); }, [fetchPosts]);
+
+  const heading = d.heading || (d.category || 'From the Blog');
+  const HeadTag = d.heading_style || 'h1';
+  const headStyle = headingTypoStyle(HeadTag, site);
+
+  const bodySize  = site?.body_size  || '1rem';
+  const navLink = (disabled, handler, label) => ({
+    onMouseDown: e => { e.stopPropagation(); if (!disabled) handler(); },
+    style: {
+      background: 'none', border: 'none', padding: 0,
+      cursor: disabled ? 'default' : 'pointer',
+      fontFamily, fontSize: bodySize,
+      color: disabled ? 'transparent' : primary,
+      opacity: disabled ? 0 : 1, pointerEvents: disabled ? 'none' : 'auto',
+    },
+  });
+
+  // ── Detail view ──────────────────────────────────────────────────
+  if (selectedIdx !== null && posts[selectedIdx]) {
+    const p = posts[selectedIdx];
+    const dateStr = (p.published_at || p.created_at)
+      ? new Date(p.published_at || p.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : '';
+    const cover = p.cover_image || (p.content ? (p.content.match(/<img[^>]+src="([^"]+)"/)?.[1]) : null);
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: bgWidth, background: bgColor, fontFamily, padding: '1.75rem 2.5rem' }}>
+          {/* Back link — upper left */}
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '0.75rem' }}>
+            <button onMouseDown={e => { e.stopPropagation(); setSelectedIdx(null); }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily, fontSize: bodySize, color: primary }}>← Back to {heading}</button>
+          </div>
+
+          {/* Article */}
+          {cover && <img src={cover} alt="" style={{ width: '100%', maxHeight: 280, objectFit: 'cover', borderRadius: 10, display: 'block', marginBottom: '1rem' }} onError={e => e.target.style.display = 'none'} />}
+          <div style={{ fontSize: '0.72rem', color: '#9ca3af', marginBottom: '0.4rem' }}>{dateStr}</div>
+          <div style={{ fontWeight: 800, fontSize: '1.2rem', color: textColor, lineHeight: 1.3, marginBottom: '1rem' }}>{p.title}</div>
+          <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
+            {renderBlogPostContent(p.content)}
+          </div>
+          {/* Bottom nav — plain text arrows */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+            <button {...navLink(selectedIdx === 0, () => setSelectedIdx(selectedIdx - 1), '← Previous')}>← Previous</button>
+            <button {...navLink(selectedIdx === posts.length - 1, () => setSelectedIdx(selectedIdx + 1), 'Next →')}>Next →</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── List / table view ────────────────────────────────────────────
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: bgWidth, background: bgColor, fontFamily, padding: '1.75rem 2.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: 8 }}>
+          <div className="rte-body" style={{ flex: 1, minWidth: 0 }}>
+            <HeadTag style={headStyle}>{heading}</HeadTag>
+          </div>
+          <button
+            onClick={e => { e.stopPropagation(); fetchPosts(); }}
+            style={{ padding: '4px 10px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 6, cursor: 'pointer', fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}
+            title="Refresh posts"
+          >
+            {loading ? '…' : '↺'} Refresh
+          </button>
+        </div>
+        {loading && posts.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem', fontSize: 13 }}>Loading posts…</div>
+        ) : posts.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem', fontSize: 13, border: '1px dashed #e2e8f0', borderRadius: 8 }}>
+            No published posts found{d.category ? ` in category "${d.category}"` : ''}.<br />
+            <span style={{ fontSize: 11, marginTop: 4, display: 'block' }}>Publish posts in Blog Manager to see them here.</span>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {posts.map((p, i) => {
+              const dateStr = (p.published_at || p.created_at)
+                ? new Date(p.published_at || p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : '';
+              const cover = p.cover_image || (p.content ? (p.content.match(/<img[^>]+src="([^"]+)"/)?.[1]) : null);
+              const rawText = (() => {
+                if (!p.content) return '';
+                try {
+                  const blocks = JSON.parse(p.content);
+                  if (Array.isArray(blocks)) return blocks.filter(b => b.type === 'text').map(b => b.content || '').join(' ');
+                } catch {}
+                return p.content;
+              })();
+              const plain = rawText.replace(/<[^>]*>/g, '').trim();
+              const words = plain.split(/\s+/);
+              const excerpt = words.length <= 100 ? plain : words.slice(0, 100).join(' ') + '…';
+              return (
+                <div key={p.post_id || i}
+                  onClick={e => { e.stopPropagation(); setSelectedIdx(i); }}
+                  style={{ background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', cursor: 'pointer', transition: 'box-shadow 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.11)'}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'}
+                >
+                  {cover && (
+                    <img src={cover} alt="" style={{ width: 160, minWidth: 160, objectFit: 'cover', flexShrink: 0, display: 'block' }} onError={e => e.target.style.display = 'none'} />
+                  )}
+                  <div style={{ padding: '0.9rem 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+                    <div style={{ fontSize: '0.72rem', color: '#9ca3af' }}>{dateStr}</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: textColor, fontFamily, lineHeight: 1.35 }}>{p.title}</div>
+                    {excerpt && <p style={{ margin: 0, fontSize: '0.82rem', color: '#4b5563', lineHeight: 1.6 }}>{excerpt}</p>}
+                    <div style={{ marginTop: 'auto', paddingTop: '0.4rem', fontSize: '0.8rem', color: primary, fontWeight: 600 }}>Read more →</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── BlogBlockEditor: right-panel editor for blog blocks with category picker ──
+function BlogBlockEditor({ block, site, businessId, onFieldSave }) {
+  const d = block.block_data || {};
+  const [globalCats, setGlobalCats] = useState([]);
+  const [customCats, setCustomCats] = useState([]);
+  const [headingVal, setHeadingVal] = useState(d.heading || '');
+
+  useEffect(() => {
+    fetch(`${API}/api/blog/categories/global`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => setGlobalCats(Array.isArray(data) ? data : []))
+      .catch(() => {});
+    if (businessId) {
+      fetch(`${API}/api/blog/categories/custom?business_id=${businessId}`, { headers: authHeaders() })
+        .then(r => r.json())
+        .then(data => setCustomCats(Array.isArray(data) ? data : []))
+        .catch(() => {});
+    }
+  }, [businessId]);
+
+  // Keep headingVal in sync if block data changes (e.g. from AI agent)
+  useEffect(() => { setHeadingVal(d.heading || ''); }, [d.heading]);
+
+  const handleCategoryChange = (catName) => {
+    onFieldSave('category', catName);
+    // Auto-update heading if it still matches the previous category or the generic default
+    const prevCat  = d.category || '';
+    const curHead  = (d.heading || '').trim();
+    const defaults = ['', 'From the Blog', prevCat];
+    if (defaults.includes(curHead)) {
+      const newHead = catName || 'From the Blog';
+      setHeadingVal(newHead);
+      onFieldSave('heading', newHead);
+    }
+  };
+
+  const paletteColors = [site?.primary_color, site?.secondary_color, site?.accent_color, site?.bg_color, site?.text_color].filter(Boolean);
+
+  return (
+    <div style={{ padding: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
+        📝 Blog Posts Block
+      </div>
+
+      {/* Category */}
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Category</label>
+        <select className={inp} value={d.category || ''} onChange={e => handleCategoryChange(e.target.value)}>
+          <option value="">All Posts</option>
+          {globalCats.length > 0 && (
+            <optgroup label="Network Categories">
+              {globalCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+            </optgroup>
+          )}
+          {customCats.length > 0 && (
+            <optgroup label="Your Categories">
+              {customCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+            </optgroup>
+          )}
+        </select>
+        <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 4, marginBottom: 0 }}>
+          Filter posts by category, or leave blank to show all posts.
+        </p>
+      </div>
+
+      {/* Heading */}
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Section Heading</label>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+          <select className={inp} style={{ width: 68, flexShrink: 0 }}
+            value={d.heading_style || 'h1'}
+            onChange={e => onFieldSave('heading_style', e.target.value)}>
+            <option value="h1">H1</option>
+            <option value="h2">H2</option>
+            <option value="h3">H3</option>
+          </select>
+          <input className={inp}
+            key={`${block.block_id}-heading`}
+            value={headingVal}
+            onChange={e => setHeadingVal(e.target.value)}
+            onBlur={() => onFieldSave('heading', headingVal)}
+            placeholder="From the Blog"
+          />
+        </div>
+      </div>
+
+      {/* Max posts */}
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Max Posts to Show</label>
+        <input key={`${block.block_id}-maxposts`} type="number" className={inp}
+          defaultValue={d.max_posts || ''} min={1}
+          placeholder="Unlimited"
+          onBlur={e => onFieldSave('max_posts', e.target.value ? Number(e.target.value) : 0)} />
+      </div>
+
+      {/* Background color */}
+      <div style={{ marginBottom: 4 }}>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Background Color</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {paletteColors.map(c => (
+            <button key={c} onClick={() => onFieldSave('bg_color', c)}
+              style={{ width: 24, height: 24, borderRadius: 4, background: c, border: d.bg_color === c ? '2px solid #3b82f6' : '1px solid #e5e7eb', cursor: 'pointer', flexShrink: 0 }} />
+          ))}
+          <input type="color" value={d.bg_color || site?.bg_color || '#ffffff'}
+            onChange={e => onFieldSave('bg_color', e.target.value)}
+            style={{ width: 28, height: 24, border: '1px solid #e5e7eb', borderRadius: 4, padding: 1, cursor: 'pointer' }} />
+          {d.bg_color && (
+            <button onClick={() => onFieldSave('bg_color', '')}
+              style={{ fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
+              Reset
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── BlockEditorPanel: sidebar form editor for the selected block ───
-function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site }) {
+function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }) {
   if (!block) return null;
   const d  = block.block_data || {};
   const bt = block.block_type;
@@ -2143,6 +2883,11 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site }) {
         )}
       </div>
     </Field>
+  );
+
+  // ── Blog ──
+  if (bt === 'blog') return (
+    <BlogBlockEditor block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />
   );
 
   // ── Hero ──
@@ -2657,6 +3402,14 @@ export default function WebsiteBuilder() {
   const navigate = useNavigate();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
+
+  // If the OAT admin passed auth params via URL, seed localStorage so API calls work
+  useEffect(() => {
+    const urlPeopleId = searchParams.get('people_id');
+    const urlToken    = searchParams.get('access_token');
+    if (urlPeopleId) localStorage.setItem('people_id',    urlPeopleId);
+    if (urlToken)    localStorage.setItem('access_token', urlToken);
+  }, []);
 
   const [site, setSite]             = useState(null);
   const [pages, setPages]           = useState([]);
@@ -3451,6 +4204,7 @@ export default function WebsiteBuilder() {
                       onDrop={handleDrop}
                       isDragging={draggingId === block.block_id}
                       site={site}
+                      businessId={parseInt(BusinessID)}
                       onFieldSave={(key, val) => saveBlockField(block.block_id, key, val)}
                     />
                   ))
@@ -3461,14 +4215,15 @@ export default function WebsiteBuilder() {
               </div>
             </main>
 
-            {/* ── Right block editor panel ── */}
-            {selectedBlock && (
+            {/* ── Right block editor panel (not shown for about/content — editing is inline) ── */}
+            {selectedBlock && !['about', 'content'].includes(selectedBlock.block_type) && (
               <div key={selectedBlock.block_id} style={{ width: 280, flexShrink: 0, background: '#fff', borderLeft: '1px solid #e5e7eb', overflowY: 'auto' }}>
                 <BlockEditorPanel
                   block={selectedBlock}
                   onFieldSave={(key, val) => saveBlockField(selectedBlock.block_id, key, val)}
                   onFieldsSave={(updates) => saveBlockFieldsMulti(selectedBlock.block_id, updates)}
                   site={site}
+                  businessId={parseInt(BusinessID)}
                 />
               </div>
             )}

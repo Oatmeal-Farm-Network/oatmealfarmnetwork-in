@@ -183,6 +183,9 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               onToggle={() => toggleSection('Blog')}
             >
               <NavChild to={`/blog/manage?BusinessID=${BusinessID}`} label="Manage Blog" />
+              <NavChild to={`/blog/manage?BusinessID=${BusinessID}&view=new`} label="Add Post" />
+              <NavChild to={`/blog/manage?BusinessID=${BusinessID}&tab=categories`} label="Blog Categories" />
+              <NavChild to={`/blog/authors/manage?BusinessID=${BusinessID}`} label="Authors" />
             </NavSection>
 
             {on('precision_ag') && BT === 8 && (

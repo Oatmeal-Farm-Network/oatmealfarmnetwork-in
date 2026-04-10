@@ -5,6 +5,50 @@ import Footer from './Footer';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+function renderContent(content) {
+  if (!content) return null;
+  let blocks;
+  try {
+    blocks = JSON.parse(content);
+    if (!Array.isArray(blocks)) throw new Error();
+  } catch {
+    // Legacy plain text or HTML — render as-is
+    return (
+      <div style={{ fontSize: '1rem', color: '#1f2937', lineHeight: 1.8, wordBreak: 'break-word' }}
+        dangerouslySetInnerHTML={{ __html: content }} />
+    );
+  }
+  return (
+    <>
+      {blocks.map((block, i) => {
+        if (block.type === 'image') {
+          return (
+            <figure key={i} style={{ margin: '1.75rem 0', textAlign: block.align || 'center' }}>
+              <img
+                src={block.url}
+                alt={block.caption || ''}
+                style={{ width: block.width || '100%', maxWidth: '100%', borderRadius: 10, display: 'inline-block', objectFit: 'contain' }}
+                onError={e => e.target.style.display = 'none'}
+              />
+              {block.caption && (
+                <figcaption style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.4rem', fontStyle: 'italic' }}>
+                  {block.caption}
+                </figcaption>
+              )}
+            </figure>
+          );
+        }
+        return (
+          <div key={i}
+            style={{ fontSize: '1rem', color: '#1f2937', lineHeight: 1.8, wordBreak: 'break-word', marginBottom: '0.5rem' }}
+            dangerouslySetInnerHTML={{ __html: block.content || '' }}
+          />
+        );
+      })}
+    </>
+  );
+}
+
 export default function BlogDetail() {
   const { postId } = useParams();
   const [post, setPost] = useState(null);
@@ -70,21 +114,45 @@ export default function BlogDetail() {
                   {post.category}
                 </span>
               )}
-              <span style={{ fontSize: '0.85rem', color: '#9ca3af' }}>{formatDate(post.created_at)}</span>
+              <span style={{ fontSize: '0.85rem', color: '#9ca3af' }}>{formatDate(post.published_at || post.created_at)}</span>
             </div>
 
             <h1 style={{ margin: '0 0 1rem', fontSize: '1.75rem', fontWeight: 800, color: '#111827', lineHeight: 1.25 }}>
               {post.title}
             </h1>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.75rem', paddingBottom: '1.75rem', borderBottom: '1px solid #e5e7eb' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.75rem', paddingBottom: '1.75rem', borderBottom: '1px solid #e5e7eb', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.88rem', color: '#6b7280' }}>By</span>
-              <Link
-                to={`/directory/${post.business_id}`}
-                style={{ fontSize: '0.88rem', color: '#7C5CBF', fontWeight: 600, textDecoration: 'none' }}
-              >
-                {post.business_name}
-              </Link>
+              {post.author ? (
+                post.author_id ? (
+                  <Link
+                    to={`/blog/authors/${post.author_id}`}
+                    style={{ fontSize: '0.88rem', color: '#7C5CBF', fontWeight: 600, textDecoration: 'none' }}
+                  >
+                    {post.author}
+                  </Link>
+                ) : (
+                  <span style={{ fontSize: '0.88rem', color: '#374151', fontWeight: 600 }}>{post.author}</span>
+                )
+              ) : (
+                <Link
+                  to={`/directory/${post.business_id}`}
+                  style={{ fontSize: '0.88rem', color: '#7C5CBF', fontWeight: 600, textDecoration: 'none' }}
+                >
+                  {post.business_name}
+                </Link>
+              )}
+              {post.author && (
+                <>
+                  <span style={{ fontSize: '0.88rem', color: '#9ca3af' }}>·</span>
+                  <Link
+                    to={`/directory/${post.business_id}`}
+                    style={{ fontSize: '0.88rem', color: '#9ca3af', textDecoration: 'none' }}
+                  >
+                    {post.business_name}
+                  </Link>
+                </>
+              )}
             </div>
 
             {post.excerpt && (
@@ -93,9 +161,7 @@ export default function BlogDetail() {
               </p>
             )}
 
-            <div style={{ fontSize: '1rem', color: '#1f2937', lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-              {post.content}
-            </div>
+            {renderContent(post.content)}
 
             <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' }}>
               <Link
