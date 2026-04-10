@@ -10,9 +10,17 @@ steps:
       - '.'
 
 
-  # Deploy to Cloud Run
-  - name: 'gcr.io/cloud-builders/run'
+  # Push image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
     args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/animated-flare-421518/cloud-run-source-deploy/oatmealfarmnetwork-git'
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
       - 'deploy'
       - 'oatmealfarmnetwork'
       - '--image'

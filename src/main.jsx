@@ -91,10 +91,22 @@ function RequireAuth({ children }) {
   return token ? children : <Navigate to="/login" replace />;
 }
 
+// Custom domains (not OFN or localhost) get the full public site renderer for every path.
+const OFN_HOSTS = ['oatmealfarmnetwork.com', 'www.oatmealfarmnetwork.com', 'localhost', '127.0.0.1'];
+const isCustomDomain = !OFN_HOSTS.some(
+  h => window.location.hostname === h || window.location.hostname.endsWith(`.${h}`)
+);
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <AccountProvider>
       <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>}>
+        {/* On a custom domain every path renders the public site — no OFN chrome, no auth routes */}
+        {isCustomDomain ? (
+          <Routes>
+            <Route path="*" element={<WebsitePublic />} />
+          </Routes>
+        ) : (
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/about" element={<About />} />
@@ -188,14 +200,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/seller/orders" element={<SellerOrders />} />
           <Route path="/seller/listings" element={<SellerListings />} />
 
-          {/* Custom domain catch-all: when loaded on a non-OFN hostname every path
-              goes to the public site renderer which looks up the site by domain. */}
-          {!['oatmealfarmnetwork.com', 'www.oatmealfarmnetwork.com', 'localhost', '127.0.0.1']
-            .some(h => window.location.hostname === h || window.location.hostname.endsWith(`.${h}`)) && (
-            <Route path="*" element={<WebsitePublic />} />
-          )}
-
         </Routes>
+        )} {/* end isCustomDomain ternary */}
       </Suspense>
     </AccountProvider>
   </BrowserRouter>
