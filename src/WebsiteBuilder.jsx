@@ -40,7 +40,7 @@ const defaultBlockData = {
   marketplace:    { heading: 'Shop Our Store', max_items: 12 },
   gallery:        { heading: 'Photo Gallery', columns: 3 },
   blog:           { heading: 'From the Blog', heading_style: 'h1', max_posts: 0, category: '' },
-  contact:        { heading: 'Get In Touch', show_form: true, custom_message: '' },
+  contact:        { heading: 'Get In Touch', sub_heading: 'Have a question about our products, want to place a bulk order, or just want to say hello? Fill out the form below and we\'ll get back to you as soon as possible.', show_form: true, contact_email: '' },
   links:          { heading: 'Links', columns: 3, groups: [
     { heading: 'Social Media', items: [{ icon_url: '', label: 'Link Title', url: '', description: 'Short description of this link' }] },
     { heading: 'Link Heading 2', items: [{ icon_url: '', label: 'Link Title', url: '', description: 'Short description of this link' }] },
@@ -1860,6 +1860,35 @@ function SimpleBlockPreview({ block, site, businessId }) {
   // Blog block — shows live posts in a table with refresh
   if (bt === 'blog') return <BlogBlockCanvas block={block} site={site} businessId={businessId} />;
 
+  // Contact block — show actual form preview
+  if (bt === 'contact') {
+    const inp = { border: '1px solid #E5E7EB', borderRadius: 8, padding: '0.5rem 0.8rem', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box', background: '#fff', color: '#111' };
+    const lbl = { display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#9CA3AF', marginBottom: 3, textTransform: 'lowercase' };
+    return (
+      <BlockWrap>
+        <div style={{ maxWidth: 600, margin: '0 auto' }}>
+          {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), textAlign: 'center', marginBottom: '0.5rem' }}>{d.heading}</h2>}
+          {d.sub_heading && <p style={{ color: '#6B7280', textAlign: 'center', marginBottom: '1.2rem', fontSize: '0.9rem', lineHeight: 1.6 }}>{d.sub_heading}</p>}
+          <div style={{ background: '#fff', borderRadius: 16, padding: '1.25rem', boxShadow: '0 2px 12px rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+              <div><label style={lbl}>first name</label><div style={inp}>&nbsp;</div></div>
+              <div><label style={lbl}>last name</label><div style={inp}>&nbsp;</div></div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+              <div><label style={lbl}>email</label><div style={inp}>&nbsp;</div></div>
+              <div><label style={lbl}>phone number <span style={{ fontWeight: 400 }}>(optional)</span></label><div style={inp}>&nbsp;</div></div>
+            </div>
+            <div><label style={lbl}>organization <span style={{ fontWeight: 400 }}>(optional)</span></label><div style={inp}>&nbsp;</div></div>
+            <div><label style={lbl}>message</label><div style={{ ...inp, minHeight: 70 }}>&nbsp;</div></div>
+            <div style={{ background: primary, color: '#fff', fontWeight: 700, padding: '0.6rem', borderRadius: 8, textAlign: 'center', fontSize: '0.9rem' }}>
+              Send Message
+            </div>
+          </div>
+        </div>
+      </BlockWrap>
+    );
+  }
+
   // Data-backed blocks: livestock, produce, services, etc.
   const meta = BLOCK_TYPES.find(b => b.type === bt) || { icon: '📦', label: bt };
   return (
@@ -3016,6 +3045,23 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }
   }
 
   // ── Divider ──
+  // ── Contact ──
+  if (bt === 'contact') return (
+    <div style={{ padding: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>📬 Contact Form</div>
+      <Field label="Heading">
+        <TxtInp field="heading" placeholder="Get In Touch" />
+      </Field>
+      <Field label="Sub-heading Text">
+        <TxtArea field="sub_heading" rows={4} placeholder="Have a question? Fill out the form below…" />
+      </Field>
+      <Field label="Send Form To (Email)">
+        <TxtInp field="contact_email" placeholder="you@yourdomain.com" />
+      </Field>
+      <BgField />
+    </div>
+  );
+
   if (bt === 'divider') return (
     <div style={{ padding: 16 }}>
       <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>Spacer / Divider</div>
