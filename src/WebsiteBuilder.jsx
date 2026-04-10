@@ -3199,15 +3199,15 @@ function getVideoInfo(url) {
 }
 
 // ── CanvasSiteHeader: simulated site header shown in the canvas ───
-function CanvasSiteHeader({ site, pages = [] }) {
+function CanvasSiteHeader({ site, pages = [], isMobile = false }) {
   if (!site) return null;
   const headerHeight = Number(site.header_height) || 120;
   const bgW = site.header_bg_width || '100%';
   const cW  = site.header_content_width || '100%';
-  // Build nav tree: top-level pages and which ones have children
   const topLevelNav = pages.filter(p => !p.parent_page_id && p.is_published !== false);
   const hasChildren = (pageId) => pages.some(p => p.parent_page_id === pageId);
   const navColor = site.nav_text_color || '#fff';
+  const navBg = site.nav_bg_image_url ? `url(${site.nav_bg_image_url}) center/cover no-repeat` : (site.primary_color || '#3D6B34');
   return (
     <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family }}>
       <div style={{ width: '100%', maxWidth: bgW, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -3217,7 +3217,7 @@ function CanvasSiteHeader({ site, pages = [] }) {
               dangerouslySetInnerHTML={{ __html: site.top_bar_html }} />
           </div>
         )}
-        {/* Banner constrained to header_content_width */}
+        {/* Banner */}
         <div style={{ width: '100%', maxWidth: cW, position: 'relative' }}>
           {site.header_banner_url ? (
             <img src={site.header_banner_url} alt="" style={{ width: '100%', display: 'block' }} />
@@ -3233,17 +3233,26 @@ function CanvasSiteHeader({ site, pages = [] }) {
             )}
           </div>
         </div>
-        {/* Nav constrained to header_content_width */}
-        <div style={{
-          width: '100%', maxWidth: cW,
-          background: site.nav_bg_image_url ? `url(${site.nav_bg_image_url}) center/cover no-repeat` : (site.primary_color || '#3D6B34'),
-          padding: '0 1rem', height: 48, display: 'flex', alignItems: 'center', gap: 4,
-        }}>
-          {(topLevelNav.length > 0 ? topLevelNav : [{ page_name: 'Home', page_id: 0 }]).map(p => (
-            <span key={p.page_id} style={{ color: navColor, fontSize: '0.85rem', fontWeight: 600, padding: '0.3rem 0.7rem', borderRadius: 6 }}>
-              {p.page_name}{hasChildren(p.page_id) ? <span style={{ fontSize: '0.6rem', marginLeft: 3, opacity: 0.8 }}>▾</span> : null}
-            </span>
-          ))}
+        {/* Nav — hamburger on mobile/tablet, full links on desktop */}
+        <div style={{ width: '100%', maxWidth: cW, background: navBg, padding: '0 1rem', height: 48, display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'space-between' : 'flex-start', gap: 4 }}>
+          {isMobile ? (
+            <>
+              <span style={{ color: navColor, fontSize: '0.9rem', fontWeight: 700 }}>
+                {topLevelNav[0]?.page_name || 'Home'}
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer', padding: '4px 6px' }}>
+                <div style={{ width: 22, height: 2, background: navColor, borderRadius: 2 }} />
+                <div style={{ width: 22, height: 2, background: navColor, borderRadius: 2 }} />
+                <div style={{ width: 22, height: 2, background: navColor, borderRadius: 2 }} />
+              </div>
+            </>
+          ) : (
+            (topLevelNav.length > 0 ? topLevelNav : [{ page_name: 'Home', page_id: 0 }]).map(p => (
+              <span key={p.page_id} style={{ color: navColor, fontSize: '0.85rem', fontWeight: 600, padding: '0.3rem 0.7rem', borderRadius: 6 }}>
+                {p.page_name}{hasChildren(p.page_id) ? <span style={{ fontSize: '0.6rem', marginLeft: 3, opacity: 0.8 }}>▾</span> : null}
+              </span>
+            ))
+          )}
         </div>
       </div>
     </div>
@@ -4219,7 +4228,7 @@ export default function WebsiteBuilder() {
                 <style>{buildRteBodyCss(site)}</style>
 
                 {/* Simulated site header */}
-                <CanvasSiteHeader site={site} pages={pages} />
+                <CanvasSiteHeader site={site} pages={pages} isMobile={previewMode === 'mobile' || previewMode === 'tablet'} />
 
                 {/* Page blocks */}
                 {blocks.length === 0 ? (
