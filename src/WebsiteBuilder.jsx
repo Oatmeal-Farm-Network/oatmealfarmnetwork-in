@@ -40,7 +40,7 @@ const defaultBlockData = {
   marketplace:    { heading: 'Shop Our Store', max_items: 12 },
   gallery:        { heading: 'Photo Gallery', columns: 3 },
   blog:           { heading: 'From the Blog', heading_style: 'h1', max_posts: 0, category: '' },
-  contact:        { heading: 'Get In Touch', show_form: true, custom_message: '' },
+  contact:        { heading: 'Get In Touch', sub_heading: 'Have a question about our products, want to place a bulk order, or just want to say hello? Fill out the form below and we\'ll get back to you as soon as possible.', show_form: true, contact_email: '' },
   links:          { heading: 'Links', columns: 3, groups: [
     { heading: 'Social Media', items: [{ icon_url: '', label: 'Link Title', url: '', description: 'Short description of this link' }] },
     { heading: 'Link Heading 2', items: [{ icon_url: '', label: 'Link Title', url: '', description: 'Short description of this link' }] },
@@ -3016,6 +3016,23 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }
   }
 
   // ── Divider ──
+  // ── Contact ──
+  if (bt === 'contact') return (
+    <div style={{ padding: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>📬 Contact Form</div>
+      <Field label="Heading">
+        <TxtInp field="heading" placeholder="Get In Touch" />
+      </Field>
+      <Field label="Sub-heading Text">
+        <TxtArea field="sub_heading" rows={4} placeholder="Have a question? Fill out the form below…" />
+      </Field>
+      <Field label="Send Form To (Email)">
+        <TxtInp field="contact_email" placeholder="you@yourdomain.com" />
+      </Field>
+      <BgField />
+    </div>
+  );
+
   if (bt === 'divider') return (
     <div style={{ padding: 16 }}>
       <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>Spacer / Divider</div>

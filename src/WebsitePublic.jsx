@@ -595,14 +595,48 @@ function BlogBlock({ data, site, businessId }) {
   );
 }
 
+const CONTACT_API = import.meta.env.VITE_API_URL;
+
 function ContactBlock({ data, site }) {
-  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const emptyForm = { first_name: '', last_name: '', email: '', phone: '', organization: '', message: '' };
+  const [form, setForm] = useState(emptyForm);
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  const inp = { border: '1px solid #E5E7EB', borderRadius: 8, padding: '0.6rem 0.9rem', fontSize: '0.9rem', width: '100%', boxSizing: 'border-box' };
+  const lbl = { display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#9CA3AF', marginBottom: 4, textTransform: 'lowercase' };
+
+  const Field = ({ label, optional, children }) => (
+    <div>
+      <label style={lbl}>{label}{optional && <span style={{ fontWeight: 400 }}> (optional)</span>}</label>
+      {children}
+    </div>
+  );
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    setSending(true);
+    const toEmail = data.contact_email || site.email || 'livestockoftheworld@gmail.com';
+    try {
+      await fetch(`${CONTACT_API}/api/website/contact-form`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, to_email: toEmail, site_name: site.site_name }),
+      });
+    } catch {}
+    setSent(true);
+    setSending(false);
+  };
+
   return (
     <SectionWrap site={site} alt>
-      <div className="max-w-2xl mx-auto">
+      <div style={{ maxWidth: 680, margin: '0 auto' }}>
         <SectionHeading site={site} centered>{data.heading || 'Get In Touch'}</SectionHeading>
-        {data.custom_message && <p style={{ color: '#6B7280', textAlign: 'center', marginBottom: '1.5rem', fontFamily: site.font_family }}>{data.custom_message}</p>}
+        {data.sub_heading && (
+          <p style={{ color: '#6B7280', textAlign: 'center', marginBottom: '1.5rem', fontFamily: site.font_family, lineHeight: 1.7 }}>
+            {data.sub_heading}
+          </p>
+        )}
         {/* Contact info */}
         <div className="flex flex-wrap gap-6 justify-center mb-6 text-sm text-gray-600">
           {site.phone && <span>📞 {site.phone}</span>}
@@ -616,19 +650,35 @@ function ContactBlock({ data, site }) {
           {site.twitter_url && <a href={site.twitter_url} target="_blank" rel="noreferrer" style={{ color: site.primary_color, textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600 }}>X / Twitter</a>}
         </div>
         {/* Contact form */}
-        {data.show_form && !sent && (
-          <form onSubmit={e => { e.preventDefault(); setSent(true); }}
-            style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-              <input required placeholder="Your name" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: '0.6rem 0.9rem', fontSize: '0.9rem', width: '100%' }} />
-              <input required type="email" placeholder="Email address" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: '0.6rem 0.9rem', fontSize: '0.9rem', width: '100%' }} />
+        {data.show_form !== false && !sent && (
+          <form onSubmit={handleSubmit}
+            style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <Field label="first name">
+                <input required placeholder="First name" value={form.first_name} onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))} style={inp} />
+              </Field>
+              <Field label="last name">
+                <input required placeholder="Last name" value={form.last_name} onChange={e => setForm(p => ({ ...p, last_name: e.target.value }))} style={inp} />
+              </Field>
             </div>
-            <textarea required placeholder="Your message" value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
-              style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: '0.6rem 0.9rem', fontSize: '0.9rem', width: '100%', minHeight: 100, resize: 'vertical', marginBottom: '0.75rem' }} />
-            <button type="submit" style={{ background: site.primary_color, color: '#fff', fontWeight: 700, padding: '0.7rem 2rem', borderRadius: 8, border: 0, cursor: 'pointer', fontSize: '0.9rem', width: '100%' }}>
-              Send Message
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <Field label="email">
+                <input required type="email" placeholder="Email address" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} style={inp} />
+              </Field>
+              <Field label="phone number" optional>
+                <input type="tel" placeholder="Phone number" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} style={inp} />
+              </Field>
+            </div>
+            <Field label="organization" optional>
+              <input placeholder="Organization" value={form.organization} onChange={e => setForm(p => ({ ...p, organization: e.target.value }))} style={inp} />
+            </Field>
+            <Field label="message">
+              <textarea required placeholder="Your message" value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
+                style={{ ...inp, minHeight: 110, resize: 'vertical' }} />
+            </Field>
+            <button type="submit" disabled={sending}
+              style={{ background: site.primary_color, color: '#fff', fontWeight: 700, padding: '0.7rem 2rem', borderRadius: 8, border: 0, cursor: sending ? 'not-allowed' : 'pointer', fontSize: '0.9rem', opacity: sending ? 0.7 : 1 }}>
+              {sending ? 'Sending…' : 'Send Message'}
             </button>
           </form>
         )}
