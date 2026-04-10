@@ -25,6 +25,59 @@ function buildPublicRteTypoCss(site) {
   }).join('\n    ');
 }
 
+// ── Blog content helpers ─────────────────────────────────────────
+function blogExcerpt(content, wordLimit = 30) {
+  if (!content) return '';
+  let text = content;
+  try {
+    const blocks = JSON.parse(content);
+    if (Array.isArray(blocks))
+      text = blocks.filter(b => b.type === 'text').map(b => b.content || '').join(' ');
+  } catch {}
+  const plain = text.replace(/<[^>]*>/g, '').trim();
+  const words = plain.split(/\s+/);
+  if (words.length <= wordLimit) return plain;
+  return words.slice(0, wordLimit).join(' ') + '…';
+}
+
+function blogCoverImage(post) {
+  if (post.cover_image) return post.cover_image;
+  try {
+    const blocks = JSON.parse(post.content || '');
+    if (Array.isArray(blocks)) {
+      const img = blocks.find(b => b.type === 'image' && b.url);
+      if (img) return img.url;
+    }
+  } catch {}
+  return null;
+}
+
+function renderBlogContent(content) {
+  if (!content) return null;
+  let blocks;
+  try {
+    blocks = JSON.parse(content);
+    if (!Array.isArray(blocks)) throw new Error();
+  } catch {
+    return <div style={{ fontSize: '1rem', color: '#1f2937', lineHeight: 1.8, wordBreak: 'break-word' }} dangerouslySetInnerHTML={{ __html: content }} />;
+  }
+  return (
+    <>
+      {blocks.map((block, i) => {
+        if (block.type === 'image') {
+          return (
+            <figure key={i} style={{ margin: '1.75rem 0', textAlign: block.align || 'center' }}>
+              <img src={block.url} alt={block.caption || ''} style={{ width: block.width || '100%', maxWidth: '100%', borderRadius: 10, display: 'inline-block', objectFit: 'contain' }} onError={e => e.target.style.display = 'none'} />
+              {block.caption && <figcaption style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.4rem', fontStyle: 'italic' }}>{block.caption}</figcaption>}
+            </figure>
+          );
+        }
+        return <div key={i} style={{ fontSize: '1rem', color: '#1f2937', lineHeight: 1.8, wordBreak: 'break-word', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: block.content || '' }} />;
+      })}
+    </>
+  );
+}
+
 // ── Content cache (avoid re-fetching per block) ──────────────────
 const contentCache = {};
 async function fetchContent(url) {
@@ -187,7 +240,7 @@ function AboutBlock({ data, site }) {
   const hasBody    = !!stripHtml(data.body);
   if (!hasHeading && !hasBody && imgs.length === 0) return null;
   return (
-    <SectionWrap site={site}>
+    <SectionWrap site={site} blockBgColor={data.bg_color || undefined}>
       <div style={{ overflow: 'hidden' }}>
         {imgs.map((img, i) => <BlockImage key={i} img={img} shadow={true} />)}
         {hasHeading && <SectionHeading html={data.heading} site={site} headingStyle={data.heading_style || 'h2'} />}
@@ -203,8 +256,42 @@ function ContentBlock({ data, site }) {
   const hasHeading = !!data.heading?.trim();
   const hasBody    = !!stripHtml(data.body);
   if (!hasHeading && !hasBody && imgs.length === 0) return null;
+
+  // Use flexbox layout (matching editor) for a single side image (left/right).
+  // data.image_width is authoritative (set by the editor's resize handle);
+  // fall back to img0.w (from normImages/d.images) then to 38.
+  const img0   = imgs[0];
+  const isSide = img0 && (img0.wrap === 'left' || img0.wrap === 'right');
+
+  if (isSide && (hasHeading || hasBody)) {
+    const flexDir  = img0.wrap === 'left' ? 'row' : 'row-reverse';
+    const wPct     = data.image_width ?? img0.w ?? 38;
+    const imgW     = `${Math.min(90, wPct)}%`;
+    const imgUrl   = data.image_url || img0.url;
+    const caption  = data.image_caption || img0.caption || '';
+    const otherImgs = imgs.slice(1);
+    return (
+      <SectionWrap site={site} blockBgColor={data.bg_color || undefined}>
+        <div style={{ display: 'flex', flexDirection: flexDir, gap: '2rem', alignItems: 'flex-start' }}>
+          <div style={{ width: imgW, flexShrink: 0 }}>
+            <img src={imgUrl} alt={caption} style={{ width: '100%', display: 'block', borderRadius: 8 }} />
+            {caption && (
+              <p style={{ fontSize: '0.78rem', color: '#6b7280', fontStyle: 'italic', textAlign: 'center', margin: '4px 0 0' }}>{caption}</p>
+            )}
+          </div>
+          <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+            {otherImgs.map((img, i) => <BlockImage key={i} img={img} shadow={false} />)}
+            {hasHeading && <SectionHeading html={data.heading} site={site} headingStyle={data.heading_style || 'h2'} />}
+            {hasBody && <BodyText html={data.body} site={site} />}
+            <div style={{ clear: 'both' }} />
+          </div>
+        </div>
+      </SectionWrap>
+    );
+  }
+
   return (
-    <SectionWrap site={site}>
+    <SectionWrap site={site} blockBgColor={data.bg_color || undefined}>
       <div style={{ overflow: 'hidden' }}>
         {imgs.map((img, i) => <BlockImage key={i} img={img} shadow={false} />)}
         {hasHeading && <SectionHeading html={data.heading} site={site} headingStyle={data.heading_style || 'h2'} />}
@@ -397,48 +484,108 @@ function GalleryBlock({ data, site, businessId }) {
 
 function BlogBlock({ data, site, businessId }) {
   const [posts, setPosts] = useState([]);
-  const maxPosts = data.max_posts || 3;
+  const [selectedIdx, setSelectedIdx] = useState(null);
+  const maxPosts = data.max_posts || 100;
   const filterCategory = data.category || '';
+
   useEffect(() => {
     const params = new URLSearchParams({ business_id: businessId, limit: maxPosts });
-    if (filterCategory) params.set('category', filterCategory);
+    if (filterCategory) params.set('category_name', filterCategory);
     fetchContent(`${API}/api/blog/posts?${params}`)
       .then(d => setPosts(Array.isArray(d) ? d : []))
       .catch(() => {
-        // fallback to legacy endpoint
         fetchContent(`${API}/api/website/content/blog?business_id=${businessId}`)
           .then(d => setPosts((Array.isArray(d) ? d : []).slice(0, maxPosts).map(p => ({
-            post_id: null,
-            title: p.BlogHeadline,
-            excerpt: p.BlogText1?.slice(0, 150),
+            post_id: null, title: p.BlogHeadline, excerpt: p.BlogText1?.slice(0, 150),
             cover_image: p.BlogImage1,
             created_at: p.BlogYear ? `${p.BlogYear}-${String(p.BlogMonth||1).padStart(2,'0')}-${String(p.BlogDay||1).padStart(2,'0')}` : null,
             business_name: null,
           }))));
       });
   }, [businessId, filterCategory, maxPosts]);
+
   if (posts.length === 0) return null;
+
   const linkColor = site.link_color || site.accent_color || site.primary_color || '#2563eb';
+  const heading   = data.heading || (data.category || 'From the Blog');
+  const headingStyle = data.heading_style || 'h1';
+
+  const bodyFont   = site.font_family || 'inherit';
+  const bodySize   = site.body_size   || '1rem';
+  const bodyColor  = site.body_color  || site.text_color || '#1f2937';
+  const navLinkStyle = (disabled) => ({
+    background: 'none', border: 'none', padding: 0, cursor: disabled ? 'default' : 'pointer',
+    fontFamily: bodyFont, fontSize: bodySize, color: disabled ? 'transparent' : linkColor,
+    opacity: disabled ? 0 : 1, pointerEvents: disabled ? 'none' : 'auto',
+  });
+
+  // ── Detail view ─────────────────────────────────────────────────
+  if (selectedIdx !== null) {
+    const p = posts[selectedIdx];
+    const dateStr = (p.published_at || p.created_at)
+      ? new Date(p.published_at || p.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : '';
+    const cover = blogCoverImage(p);
+    return (
+      <SectionWrap site={site} blockBgColor={data.bg_color || undefined}>
+        {/* Back link — upper left */}
+        <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '1rem' }}>
+          <button style={navLinkStyle(false)} onClick={() => setSelectedIdx(null)}>← Back to {heading}</button>
+        </div>
+
+        {/* Article */}
+        <article style={{ maxWidth: 760, margin: '0 auto' }}>
+          {cover && (
+            <img src={cover} alt={p.title} style={{ width: '100%', maxHeight: 380, objectFit: 'cover', borderRadius: 12, display: 'block', marginBottom: '1.5rem' }} onError={e => e.target.style.display = 'none'} />
+          )}
+          <div style={{ fontSize: '0.8rem', color: '#9ca3af', marginBottom: '0.5rem' }}>
+            {dateStr}{p.business_name && ` · ${p.business_name}`}
+          </div>
+          <h2 style={{ margin: '0 0 1.25rem', fontSize: '1.6rem', fontWeight: 800, color: site.text_color || '#111827', fontFamily: bodyFont, lineHeight: 1.25 }}>
+            {p.title}
+          </h2>
+          <div style={{ paddingTop: '0.5rem', borderTop: '1px solid #e5e7eb' }}>
+            {renderBlogContent(p.content)}
+          </div>
+        </article>
+
+        {/* Bottom nav — plain text arrows */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2.5rem', paddingTop: '1.25rem', borderTop: '1px solid #e5e7eb' }}>
+          <button style={navLinkStyle(selectedIdx === 0)} onClick={() => setSelectedIdx(selectedIdx - 1)}>← Previous</button>
+          <button style={navLinkStyle(selectedIdx === posts.length - 1)} onClick={() => setSelectedIdx(selectedIdx + 1)}>Next →</button>
+        </div>
+      </SectionWrap>
+    );
+  }
+
+  // ── List view ────────────────────────────────────────────────────
   return (
-    <SectionWrap site={site}>
-      <SectionHeading site={site}>{data.heading || 'From the Blog'}</SectionHeading>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
+    <SectionWrap site={site} blockBgColor={data.bg_color || undefined}>
+      <SectionHeading site={site} headingStyle={headingStyle}>{heading}</SectionHeading>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '1.5rem' }}>
         {posts.map((p, i) => {
-          const dateStr = p.created_at ? new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+          const dateStr = (p.published_at || p.created_at) ? new Date(p.published_at || p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+          const cover = blogCoverImage(p);
+          const excerpt = p.excerpt || blogExcerpt(p.content, 100);
           return (
-            <div key={p.post_id || i} style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
-              {p.cover_image && <img src={p.cover_image} alt="" style={{ width: '100%', height: 160, objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />}
-              <div style={{ padding: '1rem' }}>
-                <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4 }}>
+            <div key={p.post_id || i}
+              onClick={() => setSelectedIdx(i)}
+              style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', display: 'flex', cursor: 'pointer', transition: 'box-shadow 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 18px rgba(0,0,0,0.11)'}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.06)'}
+            >
+              {cover && (
+                <img src={cover} alt="" style={{ width: 180, minWidth: 180, objectFit: 'cover', flexShrink: 0, display: 'block' }} onError={e => e.target.style.display = 'none'} />
+              )}
+              <div style={{ padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', flex: 1 }}>
+                <div style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>
                   {dateStr}{p.business_name && ` · ${p.business_name}`}
                 </div>
-                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: site.text_color, fontFamily: site.font_family, lineHeight: 1.3 }}>{p.title}</div>
-                {p.excerpt && <p style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: 6, lineHeight: 1.5 }}>{p.excerpt}</p>}
-                {p.post_id && (
-                  <a href={`/blog/${p.post_id}`} style={{ display: 'inline-block', marginTop: '0.5rem', fontSize: '0.82rem', color: linkColor, textDecoration: 'underline', fontWeight: 600 }}>
-                    Read more →
-                  </a>
-                )}
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: site.text_color || '#111827', fontFamily: site.font_family, lineHeight: 1.35 }}>{p.title}</div>
+                {excerpt && <p style={{ margin: 0, fontSize: '0.88rem', color: '#4B5563', lineHeight: 1.6 }}>{excerpt}</p>}
+                <div style={{ marginTop: 'auto', paddingTop: '0.5rem', fontSize: '0.83rem', color: linkColor, fontWeight: 600 }}>
+                  Read more →
+                </div>
               </div>
             </div>
           );
@@ -576,8 +723,8 @@ function LinksBlock({ data, site }) {
 }
 
 // ── Shared layout components ──────────────────────────────────────
-function SectionWrap({ children, site, alt }) {
-  const bgColor = alt ? (site.bg_color === '#FFFFFF' ? '#F9FAFB' : site.bg_color + 'ee') : site.bg_color;
+function SectionWrap({ children, site, alt, blockBgColor }) {
+  const bgColor = blockBgColor || (alt ? (site.bg_color === '#FFFFFF' ? '#F9FAFB' : site.bg_color + 'ee') : site.bg_color);
   const bgWidth = site.body_bg_width || '100%';
   const textWidth = site.body_content_width || '100%';
   return (

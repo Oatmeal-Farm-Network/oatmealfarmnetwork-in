@@ -27,6 +27,8 @@ import EventsMyRegistrations from './EventsMyRegistrations';
 import BlogList from './BlogList';
 import BlogDetail from './BlogDetail';
 import BlogManage from './BlogManage';
+import BlogAuthors from './BlogAuthors';
+import BlogAuthorDetail from './BlogAuthorDetail';
 
 
 const App = lazy(() => import('./App.jsx'))
@@ -166,6 +168,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/produce/meat" element={<MeatInventory />} />
           <Route path="/app/news" element={<AccountLayout><NewsFeed /></AccountLayout>} />
           <Route path="/app/news/:id" element={<AccountLayout><ArticleDetail /></AccountLayout>} />
+          <Route path="/blog/authors/manage" element={<BlogAuthors />} />
+          <Route path="/blog/authors/:authorId" element={<BlogAuthorDetail />} />
           <Route path="/blog/manage" element={<BlogManage />} />
           <Route path="/blog/:postId" element={<BlogDetail />} />
           <Route path="/blog" element={<BlogList />} />

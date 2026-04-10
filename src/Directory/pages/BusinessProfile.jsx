@@ -1,11 +1,98 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
 import photoNotAvailable from '../images/photo not available .jpg';
 import { DIRECTORY_TYPE_TO_IMAGE, DIRECTORY_TYPE_TO_BUSINESS_TYPE } from './directoryMappings';
 import { FaFacebookF, FaPinterestP, FaXTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaGlobe } from 'react-icons/fa6';
 import Header from '../../Header';
 import Footer from '../../Footer';
+
+const BLOG_API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+function getExcerpt(content, wordLimit = 35) {
+  if (!content) return '';
+  let text = content;
+  try {
+    const blocks = JSON.parse(content);
+    if (Array.isArray(blocks))
+      text = blocks.filter(b => b.type === 'text').map(b => b.content || '').join(' ');
+  } catch {}
+  const plain = text.replace(/<[^>]*>/g, '').trim();
+  const words = plain.split(/\s+/);
+  if (words.length <= wordLimit) return plain;
+  return words.slice(0, wordLimit).join(' ') + '…';
+}
+
+function getCoverImage(content, fallback) {
+  if (fallback) return fallback;
+  try {
+    const blocks = JSON.parse(content || '');
+    if (Array.isArray(blocks)) {
+      const img = blocks.find(b => b.type === 'image' && b.url);
+      if (img) return img.url;
+    }
+  } catch {}
+  return null;
+}
+
+function BusinessBlogPosts({ businessId }) {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!businessId) return;
+    fetch(`${BLOG_API}/api/blog/posts?business_id=${businessId}&limit=6`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setPosts(Array.isArray(data) ? data : []))
+      .catch(() => setPosts([]))
+      .finally(() => setLoading(false));
+  }, [businessId]);
+
+  if (loading || posts.length === 0) return null;
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm p-6">
+      <h2 className="text-lg font-bold text-[#4d734d] mb-4">Blog Posts</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+        {posts.map(post => {
+          const cover = getCoverImage(post.content, post.cover_image);
+          const date = (post.published_at || post.created_at)
+            ? new Date(post.published_at || post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            : '';
+          return (
+            <Link key={post.blog_id} to={`/blog/${post.blog_id}`}
+              style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+              <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', transition: 'box-shadow 0.2s', cursor: 'pointer', background: '#fafafa' }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.09)'}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                {cover ? (
+                  <img src={cover} alt={post.title} style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }}
+                    onError={e => e.target.style.display = 'none'} />
+                ) : (
+                  <div style={{ width: '100%', height: 80, background: 'linear-gradient(135deg,#f3f4f6,#e5e7eb)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '1.75rem' }}>📝</span>
+                  </div>
+                )}
+                <div style={{ padding: '0.7rem 0.85rem' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginBottom: 3 }}>{date}</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#111827', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {post.title}
+                  </div>
+                  {post.content && (
+                    <p style={{ margin: '0.3rem 0 0', fontSize: '0.78rem', color: '#6b7280', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {getExcerpt(post.content)}
+                    </p>
+                  )}
+                  <span style={{ display: 'inline-block', marginTop: '0.4rem', fontSize: '0.75rem', color: '#7C5CBF', fontWeight: 600 }}>Read more →</span>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 
 const BusinessProfile = () => {
@@ -234,6 +321,9 @@ const BusinessProfile = () => {
                                 )}
                             </div>
                         )}
+
+                        {/* Blog Posts */}
+                        <BusinessBlogPosts businessId={business.BusinessID} />
 
                     </div>
                     {/* END LEFT COLUMN */}

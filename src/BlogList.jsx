@@ -9,7 +9,13 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 function getExcerpt(content, wordLimit = 100) {
   if (!content) return '';
-  const plain = content.replace(/<[^>]*>/g, '').trim();
+  let text = content;
+  try {
+    const blocks = JSON.parse(content);
+    if (Array.isArray(blocks))
+      text = blocks.filter(b => b.type === 'text').map(b => b.content || '').join(' ');
+  } catch {}
+  const plain = text.replace(/<[^>]*>/g, '').trim();
   const words = plain.split(/\s+/);
   if (words.length <= wordLimit) return plain;
   return words.slice(0, wordLimit).join(' ') + '…';
@@ -28,47 +34,55 @@ const CATEGORY_COLORS = {
 
 function PostCard({ post }) {
   const catColor = CATEGORY_COLORS[post.category] || '#6b7280';
-  const date = post.created_at
-    ? new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const date = (post.published_at || post.created_at)
+    ? new Date(post.published_at || post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : '';
+  const excerpt = getExcerpt(post.content, 100);
 
   return (
-    <Link to={`/blog/${post.blog_id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-      <div
-        style={{ background: '#fff', borderRadius: '10px', border: '1px solid #e5e7eb', overflow: 'hidden', transition: 'box-shadow 0.2s', cursor: 'pointer' }}
-        onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'}
-        onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
-      >
-        {post.cover_image ? (
-          <img src={post.cover_image} alt={post.title} style={{ width: '100%', height: '160px', objectFit: 'cover', display: 'block' }} onError={e => e.target.style.display = 'none'} />
-        ) : (
-          <div style={{ width: '100%', height: '160px', background: 'linear-gradient(135deg, #f3f4f6, #e5e7eb)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '2.5rem' }}>📝</span>
-          </div>
-        )}
-        <div style={{ padding: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-            {post.category && (
-              <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: catColor, background: catColor + '18', padding: '2px 8px', borderRadius: '10px' }}>
-                {post.category}
-              </span>
-            )}
-            <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{date}</span>
-          </div>
-          <h3 style={{ margin: '0 0 0.4rem', fontSize: '0.95rem', fontWeight: 700, color: '#111827', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+    <div
+      style={{ background: '#fff', borderRadius: '10px', border: '1px solid #e5e7eb', overflow: 'hidden', transition: 'box-shadow 0.2s', display: 'flex', gap: 0 }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+    >
+      {post.cover_image && (
+        <img
+          src={post.cover_image} alt={post.title}
+          style={{ width: 180, minWidth: 180, objectFit: 'cover', display: 'block', flexShrink: 0 }}
+          onError={e => e.target.style.display = 'none'}
+        />
+      )}
+      <div style={{ padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {post.category && (
+            <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: catColor, background: catColor + '18', padding: '2px 8px', borderRadius: '10px' }}>
+              {post.category}
+            </span>
+          )}
+          <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{date}</span>
+          {post.business_name && (
+            <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+              · By <Link to={`/directory/${post.business_id}`} style={{ color: '#7C5CBF', textDecoration: 'none', fontWeight: 600 }}>{post.business_name}</Link>
+            </span>
+          )}
+        </div>
+        <Link to={`/blog/${post.blog_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+          <h3 style={{ margin: '0.1rem 0 0.3rem', fontSize: '1.05rem', fontWeight: 700, color: '#111827', lineHeight: 1.35 }}>
             {post.title}
           </h3>
-          {post.content && (
-            <p style={{ margin: '0 0 0.5rem', fontSize: '0.82rem', color: '#6b7280', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-              {getExcerpt(post.content)}
-            </p>
-          )}
-          <div style={{ fontSize: '0.78rem', color: '#9ca3af' }}>
-            By <Link to={`/directory/${post.business_id}`} onClick={e => e.stopPropagation()} style={{ color: '#7C5CBF', textDecoration: 'none', fontWeight: 600 }}>{post.business_name}</Link>
-          </div>
+        </Link>
+        {excerpt && (
+          <p style={{ margin: 0, fontSize: '0.88rem', color: '#4b5563', lineHeight: 1.6 }}>
+            {excerpt}
+          </p>
+        )}
+        <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
+          <Link to={`/blog/${post.blog_id}`} style={{ fontSize: '0.83rem', color: '#819360', fontWeight: 600, textDecoration: 'none' }}>
+            Read more →
+          </Link>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -82,16 +96,16 @@ function BlogListContent() {
   const activeCategory = searchParams.get('category') || '';
 
   useEffect(() => {
-    fetch(`${API_URL}/api/blog/categories`)
+    fetch(`${API_URL}/api/blog/categories/global`)
       .then(r => r.ok ? r.json() : [])
-      .then(data => setCategories(Array.isArray(data) ? data : []))
+      .then(data => setCategories(Array.isArray(data) ? data.map(c => c.name) : []))
       .catch(() => {});
   }, []);
 
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams({ limit: '50' });
-    if (activeCategory) params.set('category', activeCategory);
+    if (activeCategory) params.set('category_name', activeCategory);
     fetch(`${API_URL}/api/blog/posts?${params}`)
       .then(r => r.ok ? r.json() : [])
       .then(data => setPosts(Array.isArray(data) ? data : []))
@@ -145,7 +159,7 @@ function BlogListContent() {
         <p style={{ textAlign: 'center', color: '#9ca3af', padding: '3rem 0' }}>No posts found.</p>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {filtered.map(post => <PostCard key={post.blog_id} post={post} />)}
       </div>
     </div>

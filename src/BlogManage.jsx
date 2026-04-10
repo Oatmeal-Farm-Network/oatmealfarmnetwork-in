@@ -1,13 +1,704 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+// ── Rich text editor (shared with website builder) ──────────────
+const WEB_FONTS = [
+  { label: 'Arial',            value: 'Arial, sans-serif' },
+  { label: 'Georgia',          value: 'Georgia, serif' },
+  { label: 'Inter',            value: 'Inter, sans-serif' },
+  { label: 'Lato',             value: 'Lato, sans-serif' },
+  { label: 'Lora',             value: 'Lora, serif' },
+  { label: 'Merriweather',     value: 'Merriweather, serif' },
+  { label: 'Montserrat',       value: 'Montserrat, sans-serif' },
+  { label: 'Open Sans',        value: 'Open Sans, sans-serif' },
+  { label: 'Playfair Display', value: 'Playfair Display, serif' },
+  { label: 'Poppins',          value: 'Poppins, sans-serif' },
+  { label: 'Roboto',           value: 'Roboto, sans-serif' },
+  { label: 'Times New Roman',  value: 'Times New Roman, serif' },
+];
+
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+const pasteAsPlainText = e => {
+  e.preventDefault();
+  const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+  if (!text) return;
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length === 0) return;
+  if (lines.length === 1) {
+    document.execCommand('formatBlock', false, 'p');
+    document.execCommand('insertText', false, lines[0]);
+  } else {
+    document.execCommand('insertHTML', false, lines.map(l => `<p>${esc(l)}</p>`).join(''));
+  }
+};
+
+function BlogRichTextEditor({ value, onChange }) {
+  const editorRef = useRef(null);
+  const htmlRef   = useRef(null);
+  const [htmlMode, setHtmlMode] = useState(false);
+
+  useEffect(() => {
+    if (editorRef.current) editorRef.current.innerHTML = value || '';
+    if (htmlRef.current)   htmlRef.current.value       = value || '';
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (htmlMode) {
+      if (htmlRef.current && editorRef.current)
+        htmlRef.current.value = editorRef.current.innerHTML;
+    } else {
+      if (editorRef.current && htmlRef.current)
+        editorRef.current.innerHTML = htmlRef.current.value;
+    }
+  }, [htmlMode]);
+
+  const exec = (cmd, val = null) => {
+    editorRef.current?.focus();
+    document.execCommand(cmd, false, val);
+  };
+
+  const applyBlock = tag => { editorRef.current?.focus(); document.execCommand('formatBlock', false, tag); };
+
+  const applyFont = fontFamily => {
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { document.execCommand('fontName', false, fontFamily); return; }
+    const range = sel.getRangeAt(0);
+    const span = document.createElement('span');
+    span.style.fontFamily = fontFamily;
+    try { range.surroundContents(span); } catch { document.execCommand('fontName', false, fontFamily); }
+  };
+
+  const insertLink = () => {
+    const input = window.prompt('Enter a URL:');
+    if (!input) return;
+    const val = input.trim();
+    const href = /^https?:\/\//i.test(val) ? val : /^mailto:/i.test(val) ? val : `https://${val}`;
+    exec('createLink', href);
+    editorRef.current?.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
+  };
+
+  const clearFormatting = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand('selectAll', false, null);
+    document.execCommand('removeFormat', false, null);
+    editorRef.current.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
+    onChange(editorRef.current.innerHTML);
+  };
+
+  const handleBlur = () => { if (!htmlMode) onChange(editorRef.current?.innerHTML || ''); };
+
+  const savedRangeRef = useRef(null);
+  const fileInputRef  = useRef(null);
+  const [imgPanel, setImgPanel]       = useState(false);
+  const [imgUrl, setImgUrl]           = useState('');
+  const [imgAlign, setImgAlign]       = useState('center');
+  const [draggingOver, setDraggingOver]   = useState(false);
+  const [panelDragging, setPanelDragging] = useState(false);
+  const [uploading, setUploading]     = useState(false);
+  const [selectedImg, setSelectedImg] = useState(null);
+  const [imgToolbarPos, setImgToolbarPos] = useState({ top: 0, left: 0 });
+  const [imgCaption, setImgCaption] = useState('');
+  const [imgRect, setImgRect] = useState(null);
+  const resizingRef = useRef(null); // { startX, startWidth, dir: 'left'|'right' }
+
+  const selectImg = (img) => {
+    if (selectedImg) selectedImg.style.outline = '';
+    img.style.outline = '2px solid #3b82f6';
+    setSelectedImg(img);
+    const fig = img.closest('figure');
+    setImgCaption(fig ? (fig.querySelector('figcaption')?.textContent || '') : '');
+    const r = img.getBoundingClientRect();
+    setImgRect(r);
+    setImgToolbarPos({ top: r.top - 72, left: r.left });
+  };
+
+  const clearSelectedImg = () => {
+    if (selectedImg) selectedImg.style.outline = '';
+    setSelectedImg(null);
+    setImgRect(null);
+  };
+
+  const startResize = (e, dir) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!selectedImg) return;
+    resizingRef.current = {
+      dir,
+      startX:     e.clientX,
+      startWidth: selectedImg.getBoundingClientRect().width,
+    };
+    const onMove = (ev) => {
+      const { startX, startWidth, dir } = resizingRef.current;
+      const dx = dir === 'right' ? ev.clientX - startX : startX - ev.clientX;
+      const newWidth = Math.max(40, startWidth + dx);
+      selectedImg.style.width    = newWidth + 'px';
+      selectedImg.style.maxWidth = 'none';
+      setImgRect(selectedImg.getBoundingClientRect());
+    };
+    const onUp = () => {
+      onChange(editorRef.current?.innerHTML || '');
+      resizingRef.current = null;
+      setImgRect(selectedImg ? selectedImg.getBoundingClientRect() : null);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup',  onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup',  onUp);
+  };
+
+  const applyCaption = (text) => {
+    if (!selectedImg) return;
+    const fig = selectedImg.closest('figure');
+    if (!fig) {
+      // Wrap bare img in a figure so we can add a caption
+      const wrapper = document.createElement('figure');
+      wrapper.style.cssText = selectedImg.style.cssText || 'text-align:center;margin:1em 0;clear:both;';
+      selectedImg.style.cssText = 'max-width:100%;border-radius:4px;display:block;';
+      selectedImg.parentElement.insertBefore(wrapper, selectedImg);
+      wrapper.appendChild(selectedImg);
+      const fc = document.createElement('figcaption');
+      fc.style.cssText = 'font-size:0.82em;color:#6b7280;text-align:center;font-style:italic;margin-top:0.3em;';
+      fc.textContent = text;
+      wrapper.appendChild(fc);
+    } else {
+      let fc = fig.querySelector('figcaption');
+      if (!fc) {
+        fc = document.createElement('figcaption');
+        fc.style.cssText = 'font-size:0.82em;color:#6b7280;text-align:center;font-style:italic;margin-top:0.3em;';
+        fig.appendChild(fc);
+      }
+      fc.textContent = text;
+    }
+    onChange(editorRef.current?.innerHTML || '');
+  };
+
+  const handleEditorClick = (e) => {
+    if (e.target.tagName === 'IMG') { selectImg(e.target); }
+    else clearSelectedImg();
+  };
+
+  // Find the root-level element (direct child of editor) for an img
+  const _rootEl = (img) => {
+    if (!img) return null;
+    if (img.parentElement === editorRef.current) return img;
+    if (img.parentElement?.tagName === 'FIGURE' && img.parentElement?.parentElement === editorRef.current) return img.parentElement;
+    return null;
+  };
+
+  const moveImg = (dir) => {
+    if (!selectedImg) return;
+    const root = _rootEl(selectedImg);
+    if (!root) return;
+    if (dir < 0) {
+      const prev = root.previousElementSibling;
+      if (prev) editorRef.current.insertBefore(root, prev);
+    } else {
+      const next = root.nextElementSibling;
+      if (next) editorRef.current.insertBefore(next, root);
+    }
+    onChange(editorRef.current?.innerHTML || '');
+    setTimeout(() => {
+      const r = selectedImg.getBoundingClientRect();
+      setImgRect(r);
+      setImgToolbarPos({ top: r.top - 72, left: r.left });
+    }, 0);
+  };
+
+  // Lift img to be a direct child of the editor div so float works across paragraphs
+  const _liftToEditor = (img) => {
+    let node = img;
+    while (node.parentElement && node.parentElement !== editorRef.current) {
+      node = node.parentElement;
+    }
+    if (node !== img && node.parentElement === editorRef.current) {
+      editorRef.current.insertBefore(img, node);
+      if (!node.textContent.trim() && node.children.length === 0) node.remove();
+    }
+  };
+
+  const applyImgAlign = (align) => {
+    if (!selectedImg) return;
+    const img = selectedImg;
+    const parent = img.parentElement;
+    if (align === 'center') {
+      // Unwrap from figure first if present
+      if (parent.tagName === 'FIGURE') {
+        parent.style.cssText = 'text-align:center;margin:1em 0;clear:both;';
+        img.style.cssText = 'max-width:100%;border-radius:4px;float:none;';
+      } else {
+        // Lift to editor level, then wrap in figure
+        _liftToEditor(img);
+        const fig = document.createElement('figure');
+        fig.style.cssText = 'text-align:center;margin:1em 0;clear:both;';
+        editorRef.current.insertBefore(fig, img);
+        fig.appendChild(img);
+        img.style.cssText = 'max-width:100%;border-radius:4px;float:none;';
+      }
+    } else {
+      const cssText = align === 'left'
+        ? 'float:left;margin:0 1em 0.5em 0;max-width:45%;border-radius:4px;'
+        : 'float:right;margin:0 0 0.5em 1em;max-width:45%;border-radius:4px;';
+      if (parent.tagName === 'FIGURE') {
+        parent.parentElement.insertBefore(img, parent);
+        parent.remove();
+      }
+      // Lift to editor root so float affects sibling paragraphs
+      _liftToEditor(img);
+      img.style.cssText = cssText;
+    }
+    onChange(editorRef.current?.innerHTML || '');
+    setSelectedImg(null);
+  };
+
+  useEffect(() => {
+    if (!selectedImg) return;
+    const hide = () => clearSelectedImg();
+    const onKey = (e) => { if (e.key === 'Escape') clearSelectedImg(); };
+    window.addEventListener('scroll', hide, true);
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('scroll', hide, true); window.removeEventListener('keydown', onKey); };
+  }, [selectedImg]);
+
+  const handlePanelFile = async (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${API_URL}/api/blog/upload-image`, { method: 'POST', body: fd });
+      if (!res.ok) throw new Error();
+      const { url } = await res.json();
+      setImgUrl(url);
+    } catch { /* silent */ } finally { setUploading(false); }
+  };
+
+  const handleDragOver = (e) => { e.preventDefault(); setDraggingOver(true); };
+  const handleDragLeave = () => setDraggingOver(false);
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggingOver(false);
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    // Place cursor at drop point
+    editorRef.current?.focus();
+    const x = e.clientX, y = e.clientY;
+    let range;
+    if (document.caretRangeFromPoint) {
+      range = document.caretRangeFromPoint(x, y);
+    } else if (document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(x, y);
+      if (pos) { range = document.createRange(); range.setStart(pos.offsetNode, pos.offset); }
+    }
+    if (range) { const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${API_URL}/api/blog/upload-image`, { method: 'POST', body: fd });
+      if (!res.ok) throw new Error('Upload failed');
+      const { url } = await res.json();
+      const html = `<figure style="text-align:center;margin:1em 0;"><img src="${url}" style="max-width:100%;border-radius:4px;" /></figure>`;
+      document.execCommand('insertHTML', false, html);
+      onChange(editorRef.current?.innerHTML || '');
+    } catch {
+      // silent – user can retry via URL panel
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const openImgPanel = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+    setImgUrl('');
+    setImgAlign('center');
+    setImgPanel(p => !p);
+  };
+
+  const insertImage = () => {
+    if (!imgUrl.trim()) return;
+    const url = imgUrl.trim();
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (savedRangeRef.current) { sel.removeAllRanges(); sel.addRange(savedRangeRef.current); }
+
+    if (imgAlign === 'center') {
+      // Center: block figure, no float — insertHTML is fine
+      document.execCommand('insertHTML', false,
+        `<figure style="text-align:center;margin:1em 0;clear:both;"><img src="${url}" style="max-width:100%;border-radius:4px;" /></figure>`);
+    } else {
+      // Float left/right: must be a direct child of the editor div so text wraps properly
+      const cssText = imgAlign === 'left'
+        ? 'float:left;margin:0 1em 0.5em 0;max-width:45%;border-radius:4px;'
+        : 'float:right;margin:0 0 0.5em 1em;max-width:45%;border-radius:4px;';
+      const img = document.createElement('img');
+      img.src = url;
+      img.style.cssText = cssText;
+
+      // Find the block-level node (direct child of editor) at the cursor
+      const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+      let refBlock = null;
+      if (range) {
+        let node = range.commonAncestorContainer;
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+        if (node === editorRef.current) {
+          refBlock = editorRef.current.children[range.startOffset] || null;
+        } else {
+          while (node && node.parentElement !== editorRef.current) node = node.parentElement;
+          if (node && node !== editorRef.current) refBlock = node;
+        }
+      }
+
+      if (refBlock) {
+        editorRef.current.insertBefore(img, refBlock);
+        // Leave cursor in the sibling block so user types beside the float
+        try {
+          const r = document.createRange();
+          r.setStart(refBlock, 0);
+          r.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(r);
+        } catch { /* ignore cursor placement errors */ }
+      } else {
+        editorRef.current.appendChild(img);
+        // Ensure there's a paragraph after the image to type in
+        const p = document.createElement('p');
+        p.innerHTML = '<br>';
+        editorRef.current.appendChild(p);
+        try {
+          const r = document.createRange();
+          r.setStart(p, 0);
+          r.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(r);
+        } catch { /* ignore */ }
+      }
+    }
+    onChange(editorRef.current?.innerHTML || '');
+    setImgPanel(false);
+  };
+
+  const btn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '3px 7px', borderRadius: 4, fontSize: 12, cursor: 'pointer', border: '1px solid #d1d5db', background: '#fff', color: '#374151', lineHeight: 1 };
+  const selStyle = { fontSize: 11, border: '1px solid #d1d5db', borderRadius: 4, padding: '3px 5px', background: '#fff', cursor: 'pointer', color: '#374151' };
+  const div = <div style={{ width: 1, background: '#e5e7eb', alignSelf: 'stretch', margin: '0 2px' }} />;
+
+  return (
+    <div style={{ border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '6px 8px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', alignItems: 'center' }}>
+        {!htmlMode && <>
+          <select style={selStyle} defaultValue="" onChange={e => { applyBlock(e.target.value); e.target.value = ''; }}>
+            <option value="" disabled>Style</option>
+            <option value="p">Body</option>
+            <option value="h1">H1</option><option value="h2">H2</option>
+            <option value="h3">H3</option><option value="h4">H4</option>
+          </select>
+          <select style={{ ...selStyle, maxWidth: 110 }} defaultValue="" onChange={e => { applyFont(e.target.value); e.target.value = ''; }}>
+            <option value="" disabled>Font</option>
+            {WEB_FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+          </select>
+          {div}
+          <button style={{ ...btn, fontWeight: 700 }} title="Bold" onMouseDown={e => { e.preventDefault(); exec('bold'); }}>B</button>
+          <button style={{ ...btn, fontStyle: 'italic' }} title="Italic" onMouseDown={e => { e.preventDefault(); exec('italic'); }}>I</button>
+          <button style={{ ...btn, textDecoration: 'underline' }} title="Underline" onMouseDown={e => { e.preventDefault(); exec('underline'); }}>U</button>
+          <button style={{ ...btn, textDecoration: 'line-through' }} title="Strikethrough" onMouseDown={e => { e.preventDefault(); exec('strikeThrough'); }}>S</button>
+          {div}
+          <button style={btn} title="Align Left" onMouseDown={e => { e.preventDefault(); exec('justifyLeft'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="0" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="0" y="11.5" width="9" height="1.5"/></svg>
+          </button>
+          <button style={btn} title="Center" onMouseDown={e => { e.preventDefault(); exec('justifyCenter'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="2" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="2" y="11.5" width="9" height="1.5"/></svg>
+          </button>
+          <button style={btn} title="Align Right" onMouseDown={e => { e.preventDefault(); exec('justifyRight'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="4" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="4" y="11.5" width="9" height="1.5"/></svg>
+          </button>
+          {div}
+          <button style={btn} title="Bullet List" onMouseDown={e => { e.preventDefault(); exec('insertUnorderedList'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><circle cx="1.5" cy="2.5" r="1.2"/><rect x="4" y="1.8" width="9" height="1.4"/><circle cx="1.5" cy="6.5" r="1.2"/><rect x="4" y="5.8" width="9" height="1.4"/><circle cx="1.5" cy="10.5" r="1.2"/><rect x="4" y="9.8" width="9" height="1.4"/></svg>
+          </button>
+          <button style={btn} title="Numbered List" onMouseDown={e => { e.preventDefault(); exec('insertOrderedList'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><text x="0" y="4" fontSize="4.5" fontFamily="monospace">1.</text><rect x="4" y="1.8" width="9" height="1.4"/><text x="0" y="8" fontSize="4.5" fontFamily="monospace">2.</text><rect x="4" y="5.8" width="9" height="1.4"/><text x="0" y="12" fontSize="4.5" fontFamily="monospace">3.</text><rect x="4" y="9.8" width="9" height="1.4"/></svg>
+          </button>
+          {div}
+          <button style={btn} title="Insert Link" onMouseDown={e => { e.preventDefault(); insertLink(); }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          </button>
+          <button style={{ ...btn, fontSize: 10 }} title="Remove Link" onMouseDown={e => { e.preventDefault(); exec('unlink'); }}>✕🔗</button>
+          {div}
+          <button style={{ ...btn, fontSize: 10, color: '#b91c1c' }} title="Clear all formatting" onMouseDown={e => { e.preventDefault(); clearFormatting(); }}>Tx</button>
+          {div}
+          <button style={{ ...btn, background: imgPanel ? '#e0f2fe' : '#fff', borderColor: imgPanel ? '#7dd3fc' : '#d1d5db' }} title="Insert Image" onMouseDown={e => { e.preventDefault(); openImgPanel(); }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </button>
+          {div}
+        </>}
+        <button onClick={() => setHtmlMode(m => !m)}
+          style={{ ...btn, fontFamily: 'monospace', fontSize: 11, background: htmlMode ? '#1e293b' : '#fff', color: htmlMode ? '#7dd3fc' : '#374151', border: `1px solid ${htmlMode ? '#334155' : '#d1d5db'}` }}
+          title={htmlMode ? 'Back to rich text' : 'View/edit HTML'}>&lt;/&gt;</button>
+      </div>
+      {imgPanel && !htmlMode && (
+        <div style={{ padding: '10px', background: '#f0f9ff', borderBottom: '1px solid #bae6fd', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {/* URL row + browse button */}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <input
+              value={imgUrl} onChange={e => setImgUrl(e.target.value)}
+              placeholder="Paste image URL…" autoFocus
+              style={{ flex: 1, minWidth: 160, padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: 5, fontSize: 12 }}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); insertImage(); } if (e.key === 'Escape') setImgPanel(false); }}
+            />
+            <button onClick={() => fileInputRef.current?.click()}
+              style={{ padding: '4px 10px', border: '1px solid #d1d5db', borderRadius: 5, fontSize: 11, cursor: 'pointer', background: '#fff', color: '#374151', whiteSpace: 'nowrap' }}>
+              Browse…
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+              onChange={e => { const f = e.target.files[0]; if (f) handlePanelFile(f); e.target.value = ''; }} />
+          </div>
+          {/* Drop zone */}
+          <div
+            onDragOver={e => { e.preventDefault(); setPanelDragging(true); }}
+            onDragLeave={() => setPanelDragging(false)}
+            onDrop={e => { e.preventDefault(); setPanelDragging(false); handlePanelFile(e.dataTransfer.files[0]); }}
+            onClick={() => fileInputRef.current?.click()}
+            style={{ border: `2px dashed ${panelDragging ? '#3b82f6' : '#bae6fd'}`, borderRadius: 6, padding: '10px 8px', textAlign: 'center', fontSize: 11, color: panelDragging ? '#2563eb' : '#0891b2', cursor: 'pointer', background: panelDragging ? '#eff6ff' : 'transparent', transition: 'all 0.15s' }}>
+            {uploading ? 'Uploading…' : 'Drop image here or click to browse'}
+          </div>
+          {/* Alignment + actions */}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 3 }}>
+              {['left', 'center', 'right'].map(a => (
+                <button key={a} onClick={() => setImgAlign(a)}
+                  style={{ padding: '3px 9px', borderRadius: 4, border: '1px solid', fontSize: 11, cursor: 'pointer',
+                    background: imgAlign === a ? '#0891b2' : '#fff', color: imgAlign === a ? '#fff' : '#374151', borderColor: imgAlign === a ? '#0891b2' : '#d1d5db' }}>
+                  {a.charAt(0).toUpperCase() + a.slice(1)}
+                </button>
+              ))}
+            </div>
+            <button onClick={insertImage} disabled={!imgUrl.trim() || uploading}
+              style={{ padding: '3px 12px', borderRadius: 4, border: '1px solid #0891b2', background: imgUrl.trim() && !uploading ? '#0891b2' : '#94a3b8', color: '#fff', fontSize: 11, cursor: imgUrl.trim() && !uploading ? 'pointer' : 'default', fontWeight: 600 }}>
+              Insert
+            </button>
+            <button onClick={() => setImgPanel(false)}
+              style={{ padding: '3px 8px', borderRadius: 4, border: '1px solid #d1d5db', background: '#fff', color: '#6b7280', fontSize: 11, cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      {uploading && (
+        <div style={{ padding: '8px 12px', background: '#fefce8', borderBottom: '1px solid #fde68a', fontSize: 12, color: '#92400e', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".2"/><path d="M21 12a9 9 0 00-9-9"/></svg>
+          Uploading image…
+        </div>
+      )}
+      <div ref={editorRef} contentEditable suppressContentEditableWarning
+        onBlur={handleBlur} onPaste={pasteAsPlainText} onClick={handleEditorClick}
+        onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+        style={{ display: htmlMode ? 'none' : 'block', minHeight: 320, padding: '10px 12px', fontSize: 14, lineHeight: 1.75, color: '#111827', outline: 'none', background: draggingOver ? '#eff6ff' : '#fff', overflowY: 'auto', border: draggingOver ? '2px dashed #3b82f6' : 'none', transition: 'background 0.15s' }} />
+      <textarea ref={htmlRef} onBlur={e => { onChange(e.target.value); }}
+        style={{ display: htmlMode ? 'block' : 'none', width: '100%', minHeight: 320, padding: '10px 12px', fontSize: 11, fontFamily: 'monospace', lineHeight: 1.6, color: '#0f172a', background: '#f8fafc', border: 'none', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
+      {selectedImg && imgRect && createPortal(
+        <>
+          {/* Blue outline overlay */}
+          <div style={{ position: 'fixed', top: imgRect.top - 1, left: imgRect.left - 1, width: imgRect.width + 2, height: imgRect.height + 2, border: '2px solid #3b82f6', pointerEvents: 'none', zIndex: 9998 }} />
+
+          {/* Resize handles — left edge, right edge, corners */}
+          {[
+            { cursor: 'ew-resize', dir: 'left',  top: imgRect.top  + imgRect.height / 2 - 6, left: imgRect.left  - 6 },
+            { cursor: 'ew-resize', dir: 'right', top: imgRect.top  + imgRect.height / 2 - 6, left: imgRect.right - 6 },
+            { cursor: 'nw-resize', dir: 'left',  top: imgRect.top  - 6, left: imgRect.left  - 6 },
+            { cursor: 'ne-resize', dir: 'right', top: imgRect.top  - 6, left: imgRect.right - 6 },
+            { cursor: 'sw-resize', dir: 'left',  top: imgRect.bottom - 6, left: imgRect.left  - 6 },
+            { cursor: 'se-resize', dir: 'right', top: imgRect.bottom - 6, left: imgRect.right - 6 },
+          ].map(({ cursor, dir, top, left }, i) => (
+            <div key={i} onMouseDown={e => startResize(e, dir)}
+              style={{ position: 'fixed', top, left, width: 12, height: 12, background: '#fff', border: '2px solid #3b82f6', borderRadius: 2, cursor, zIndex: 9999 }} />
+          ))}
+
+          {/* Size label */}
+          <div style={{ position: 'fixed', top: imgRect.bottom + 4, left: imgRect.left, fontSize: 10, color: '#3b82f6', background: 'rgba(255,255,255,0.9)', padding: '1px 5px', borderRadius: 3, pointerEvents: 'none', zIndex: 9999 }}>
+            {Math.round(imgRect.width)} × {Math.round(imgRect.height)}px
+          </div>
+
+          {/* Floating toolbar */}
+          <div style={{ position: 'fixed', top: imgToolbarPos.top, left: imgRect.left, zIndex: 10000, background: '#1e293b', borderRadius: 6, padding: '5px 7px', display: 'flex', flexDirection: 'column', gap: 5, boxShadow: '0 2px 10px rgba(0,0,0,0.25)' }}>
+            <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>Position:</span>
+              {[[-1,'↑'],[1,'↓']].map(([d, icon]) => (
+                <button key={d} onMouseDown={e => { e.preventDefault(); moveImg(d); }}
+                  style={{ padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 12, cursor: 'pointer', background: '#334155', color: '#e2e8f0' }}>
+                  {icon}
+                </button>
+              ))}
+              <div style={{ width: 1, background: '#475569', alignSelf: 'stretch', margin: '0 3px' }} />
+              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>Align:</span>
+              {[['left','←'],['center','↔'],['right','→']].map(([a, icon]) => (
+                <button key={a} onMouseDown={e => { e.preventDefault(); applyImgAlign(a); }}
+                  style={{ padding: '3px 9px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#334155', color: '#e2e8f0', fontWeight: 500 }}>
+                  {icon} {a.charAt(0).toUpperCase() + a.slice(1)}
+                </button>
+              ))}
+              <button onMouseDown={e => { e.preventDefault(); clearSelectedImg(); }}
+                style={{ padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#334155', color: '#94a3b8', marginLeft: 2 }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ fontSize: 10, color: '#94a3b8', whiteSpace: 'nowrap' }}>Caption:</span>
+              <input
+                value={imgCaption}
+                onChange={e => setImgCaption(e.target.value)}
+                onBlur={() => applyCaption(imgCaption)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCaption(imgCaption); } }}
+                placeholder="Add a caption…"
+                style={{ flex: 1, minWidth: 180, padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 11, background: '#334155', color: '#e2e8f0', outline: 'none' }}
+              />
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
+    </div>
+  );
+}
+
+// ── Content Block Editor ──────────────────────────────────────────
+const parseContentBlocks = (v) => {
+  if (!v) return [{ id: 1, type: 'text', content: '' }];
+  try {
+    const parsed = JSON.parse(v);
+    if (Array.isArray(parsed) && parsed.length > 0)
+      return parsed.map((b, i) => ({ ...b, id: b.id ?? Date.now() + i }));
+  } catch {}
+  // Legacy plain text / HTML → wrap in a single text block
+  return [{ id: 1, type: 'text', content: v }];
+};
+
+let _blockId = 2000;
+const nextId = () => ++_blockId;
+
+function ContentBlockEditor({ value, onChange }) {
+  const [blocks, setBlocks] = useState(() => parseContentBlocks(value));
+
+  const commit = (nb) => { setBlocks(nb); onChange(JSON.stringify(nb)); };
+
+  const addBlock = (type) => {
+    const base = type === 'image'
+      ? { id: nextId(), type: 'image', url: '', caption: '', align: 'center', width: '100%' }
+      : { id: nextId(), type: 'text', content: '' };
+    commit([...blocks, base]);
+  };
+
+  const removeBlock = (id) => {
+    const next = blocks.filter(b => b.id !== id);
+    commit(next.length > 0 ? next : [{ id: nextId(), type: 'text', content: '' }]);
+  };
+
+  const moveBlock = (id, dir) => {
+    const idx = blocks.findIndex(b => b.id === id);
+    if ((dir < 0 && idx === 0) || (dir > 0 && idx === blocks.length - 1)) return;
+    const n = [...blocks];
+    [n[idx], n[idx + dir]] = [n[idx + dir], n[idx]];
+    commit(n);
+  };
+
+  const updateBlock = (id, patch) => commit(blocks.map(b => b.id === id ? { ...b, ...patch } : b));
+
+  const hdrStyle = { display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb' };
+  const mbtn = { background: 'none', border: '1px solid #d1d5db', borderRadius: 4, padding: '2px 7px', fontSize: 11, cursor: 'pointer', color: '#6b7280', lineHeight: 1.5 };
+  const imgInp = { padding: '0.4rem 0.65rem', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '0.88rem', width: '100%', boxSizing: 'border-box' };
+
+  return (
+    <div>
+      {blocks.map((block, idx) => (
+        <div key={block.id} style={{ marginBottom: '0.75rem', border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={hdrStyle}>
+            <span style={{ flex: 1, fontSize: '0.68rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {block.type === 'image' ? '🖼 Image Block' : '¶ Text Block'}
+            </span>
+            <button style={mbtn} onClick={() => moveBlock(block.id, -1)} disabled={idx === 0} title="Move up">↑</button>
+            <button style={mbtn} onClick={() => moveBlock(block.id, 1)} disabled={idx === blocks.length - 1} title="Move down">↓</button>
+            <button style={{ ...mbtn, color: '#C0382B', borderColor: '#fca5a5' }} onClick={() => removeBlock(block.id)} title="Remove block">✕</button>
+          </div>
+
+          {block.type === 'image' ? (
+            <div style={{ padding: '0.75rem', background: '#fff', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <input style={imgInp} placeholder="Image URL (https://...)" value={block.url || ''}
+                onChange={e => updateBlock(block.id, { url: e.target.value })} />
+              {block.url && (
+                <div style={{ textAlign: block.align || 'center' }}>
+                  <img src={block.url} alt={block.caption || ''} onError={e => e.target.style.display = 'none'}
+                    style={{ maxWidth: block.width || '100%', maxHeight: 220, borderRadius: 6, objectFit: 'contain', display: 'inline-block' }} />
+                  {/* Caption sits directly under the image, styled like published output */}
+                  <input
+                    value={block.caption || ''}
+                    onChange={e => updateBlock(block.id, { caption: e.target.value })}
+                    placeholder="Add a caption…"
+                    style={{
+                      display: 'block', width: '100%', boxSizing: 'border-box',
+                      border: 'none', borderBottom: '1px dashed #d1d5db',
+                      background: 'transparent', outline: 'none',
+                      textAlign: 'center', fontStyle: 'italic',
+                      fontSize: '0.82rem', color: '#6b7280',
+                      padding: '0.25rem 0.5rem', marginTop: '0.25rem',
+                    }}
+                  />
+                </div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>Align:</span>
+                {['left', 'center', 'right'].map(a => (
+                  <button key={a} onClick={() => updateBlock(block.id, { align: a })}
+                    style={{ padding: '3px 10px', borderRadius: 4, border: '1px solid', fontSize: '0.78rem', cursor: 'pointer',
+                      background: block.align === a ? '#819360' : '#f9fafb',
+                      color: block.align === a ? '#fff' : '#374151',
+                      borderColor: block.align === a ? '#819360' : '#d1d5db' }}>
+                    {a.charAt(0).toUpperCase() + a.slice(1)}
+                  </button>
+                ))}
+                <span style={{ fontSize: '0.78rem', color: '#6b7280', marginLeft: 8 }}>Width:</span>
+                <select value={block.width || '100%'} onChange={e => updateBlock(block.id, { width: e.target.value })}
+                  style={{ fontSize: '0.78rem', border: '1px solid #d1d5db', borderRadius: 4, padding: '3px 5px', background: '#fff', cursor: 'pointer' }}>
+                  {['25%', '33%', '50%', '66%', '75%', '100%'].map(w => <option key={w} value={w}>{w}</option>)}
+                </select>
+              </div>
+            </div>
+          ) : (
+            <BlogRichTextEditor key={`txt-${block.id}`} value={block.content}
+              onChange={v => updateBlock(block.id, { content: v })} />
+          )}
+        </div>
+      ))}
+
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+        <button onClick={() => addBlock('text')}
+          style={{ padding: '5px 14px', border: '1px dashed #d1d5db', borderRadius: 6, background: '#f9fafb', fontSize: '0.82rem', color: '#6b7280', cursor: 'pointer', fontWeight: 500 }}>
+          + Text Block
+        </button>
+        <button onClick={() => addBlock('image')}
+          style={{ padding: '5px 14px', border: '1px dashed #d1d5db', borderRadius: 6, background: '#f9fafb', fontSize: '0.82rem', color: '#6b7280', cursor: 'pointer', fontWeight: 500 }}>
+          + Image Block
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function getExcerpt(content, wordLimit = 100) {
   if (!content) return '';
-  const plain = content.replace(/<[^>]*>/g, '').trim();
+  let text = content;
+  try {
+    const blocks = JSON.parse(content);
+    if (Array.isArray(blocks))
+      text = blocks.filter(b => b.type === 'text').map(b => b.content || '').join(' ');
+  } catch {}
+  const plain = text.replace(/<[^>]*>/g, '').trim();
   const words = plain.split(/\s+/);
   if (words.length <= wordLimit) return plain;
   return words.slice(0, wordLimit).join(' ') + '…';
@@ -19,36 +710,70 @@ const emptyForm = {
   cover_image: '',
   author: '',
   author_link: '',
+  author_id: null,
+  published_at: '',
   blog_cat_id: null,
   custom_cat_id: null,
   is_published: false,
   is_featured: false,
+  show_on_directory: true,
+  show_on_website: true,
 };
 
 // ── PostEditor ──────────────────────────────────────────────────
-function PostEditor({ post, businessId, globalCategories, customCategories,
-                      onCustomCategoriesChange, onSave, onCancel }) {
+function PostEditor({ post, businessId, hasWebsite, globalCategories, customCategories,
+                      onSave, onCancel }) {
   const [form, setForm] = useState(post ? {
-    title:         post.title || '',
-    content:       post.content || '',
-    cover_image:   post.cover_image || '',
-    author:        post.author || '',
-    author_link:   post.author_link || '',
-    blog_cat_id:   post.blog_cat_id ?? null,
-    custom_cat_id: post.custom_cat_id ?? null,
-    is_published:  post.is_published || false,
-    is_featured:   post.is_featured || false,
+    title:             post.title || '',
+    content:           post.content || '',
+    cover_image:       post.cover_image || '',
+    author:            post.author || '',
+    author_link:       post.author_link || '',
+    author_id:         post.author_id ?? null,
+    published_at:      post.published_at ? post.published_at.slice(0, 10) : '',
+    blog_cat_id:       post.blog_cat_id ?? null,
+    custom_cat_id:     post.custom_cat_id ?? null,
+    is_published:      post.is_published || false,
+    is_featured:       post.is_featured || false,
+    show_on_directory: post.show_on_directory !== false,
+    show_on_website:   post.show_on_website !== false,
   } : { ...emptyForm });
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [savedAuthors, setSavedAuthors] = useState([]);
+  const [autoSaveStatus, setAutoSaveStatus] = useState(''); // '' | 'saving' | 'saved' | 'error'
+  const autoSaveTimer = React.useRef(null);
+  const isMount = React.useRef(true);
+  const postIdRef = React.useRef(post?.blog_id ?? null);
 
-  // Inline custom category management
-  const [showNewCat, setShowNewCat] = useState(false);
-  const [newCatName, setNewCatName] = useState('');
-  const [catSaving, setCatSaving] = useState(false);
-  const [catError, setCatError] = useState('');
-  const [removingCat, setRemovingCat] = useState(null);
+  useEffect(() => {
+    if (!businessId) return;
+    fetch(`${API_URL}/api/blog/authors?business_id=${businessId}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setSavedAuthors(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, [businessId]);
+
+  // Autosave: debounce 1.5s after any form change, only for existing posts
+  useEffect(() => {
+    if (isMount.current) { isMount.current = false; return; }
+    const blogId = postIdRef.current;
+    if (!blogId || !form.title.trim()) return;
+    clearTimeout(autoSaveTimer.current);
+    setAutoSaveStatus('saving');
+    autoSaveTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/blog/manage/${blogId}?business_id=${businessId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        });
+        setAutoSaveStatus(res.ok ? 'saved' : 'error');
+      } catch { setAutoSaveStatus('error'); }
+    }, 1500);
+    return () => clearTimeout(autoSaveTimer.current);
+  }, [form]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -57,9 +782,9 @@ function PostEditor({ post, businessId, globalCategories, customCategories,
     setSaving(true);
     setError('');
     try {
-      const isEdit = !!post;
+      const isEdit = !!postIdRef.current;
       const url = isEdit
-        ? `${API_URL}/api/blog/manage/${post.blog_id}?business_id=${businessId}`
+        ? `${API_URL}/api/blog/manage/${postIdRef.current}?business_id=${businessId}`
         : `${API_URL}/api/blog/manage?business_id=${businessId}`;
       const res = await fetch(url, {
         method: isEdit ? 'PUT' : 'POST',
@@ -67,49 +792,15 @@ function PostEditor({ post, businessId, globalCategories, customCategories,
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error('Save failed');
+      if (!isEdit) {
+        const data = await res.json();
+        if (data?.blog_id) postIdRef.current = data.blog_id;
+      }
       onSave();
     } catch {
       setError('Failed to save post. Please try again.');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleAddCategory = async () => {
-    const name = newCatName.trim();
-    if (!name) return;
-    setCatSaving(true);
-    setCatError('');
-    try {
-      const res = await fetch(`${API_URL}/api/blog/categories/custom?business_id=${businessId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
-      if (res.status === 409) { setCatError('Already exists.'); return; }
-      if (!res.ok) throw new Error();
-      const created = await res.json();
-      onCustomCategoriesChange([...customCategories, created]);
-      set('custom_cat_id', created.id);
-      setNewCatName('');
-      setShowNewCat(false);
-    } catch {
-      setCatError('Failed to add.');
-    } finally {
-      setCatSaving(false);
-    }
-  };
-
-  const handleRemoveCategory = async (cat) => {
-    if (!window.confirm(`Remove "${cat.name}" from your categories?`)) return;
-    setRemovingCat(cat.id);
-    try {
-      await fetch(`${API_URL}/api/blog/categories/custom/${cat.id}?business_id=${businessId}`,
-        { method: 'DELETE' });
-      onCustomCategoriesChange(customCategories.filter(c => c.id !== cat.id));
-      if (form.custom_cat_id === cat.id) set('custom_cat_id', null);
-    } finally {
-      setRemovingCat(null);
     }
   };
 
@@ -122,8 +813,6 @@ function PostEditor({ post, businessId, globalCategories, customCategories,
     color: '#374151', marginBottom: '0.25rem',
   };
 
-  const allCats = [...globalCategories, ...customCategories];
-  const selectedCat = allCats.find(c => c.id === form.blog_cat_id);
 
   return (
     <div style={{ background: '#fff', borderRadius: '10px', border: '1px solid #e5e7eb', padding: '1.5rem' }}>
@@ -143,16 +832,56 @@ function PostEditor({ post, businessId, globalCategories, customCategories,
         </div>
 
         {/* Author row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        {savedAuthors.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <label style={labelStyle}>Saved Author <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>(select to auto-fill)</span></label>
+              <select
+                style={inputStyle}
+                value={form.author_id ?? ''}
+                onChange={e => {
+                  const id = e.target.value ? Number(e.target.value) : null;
+                  const found = savedAuthors.find(a => a.author_id === id);
+                  setForm(f => ({
+                    ...f,
+                    author_id: id,
+                    author: found ? found.name : f.author,
+                    author_link: found ? (found.author_link || '') : f.author_link,
+                  }));
+                }}
+              >
+                <option value="">— None / type manually —</option>
+                {savedAuthors.map(a => (
+                  <option key={a.author_id} value={a.author_id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ paddingTop: '1.25rem' }}>
+              <Link to={`/blog/authors/manage?BusinessID=${businessId}`}
+                style={{ fontSize: '0.8rem', color: '#7C5CBF', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                Manage Authors ↗
+              </Link>
+            </div>
+          </div>
+        )}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
           <div>
             <label style={labelStyle}>Author <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
             <input style={inputStyle} value={form.author}
-              onChange={e => set('author', e.target.value)} placeholder="Author name" />
+              onChange={e => { set('author', e.target.value); set('author_id', null); }} placeholder="Author name" />
           </div>
           <div>
             <label style={labelStyle}>Author Link <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
             <input style={inputStyle} value={form.author_link}
               onChange={e => set('author_link', e.target.value)} placeholder="https://..." />
+          </div>
+          <div>
+            <label style={labelStyle}>Blog Date <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+            <input type="date" style={inputStyle} value={form.published_at}
+              onChange={e => set('published_at', e.target.value)} />
+            <p style={{ margin: '0.25rem 0 0', fontSize: '0.72rem', color: '#9ca3af' }}>
+              Display date shown on the post. Defaults to today.
+            </p>
           </div>
         </div>
 
@@ -193,65 +922,12 @@ function PostEditor({ post, businessId, globalCategories, customCategories,
               ))}
             </select>
             <p style={{ margin: '0.25rem 0 0', fontSize: '0.72rem', color: '#9ca3af' }}>
-              Shown on your website &amp; directory listing
+              Shown on your website &amp; directory listing ·{' '}
+              <Link to={`/blog/manage?BusinessID=${businessId}&tab=categories`}
+                style={{ color: '#7C5CBF', textDecoration: 'none', fontWeight: 600 }}>
+                Manage categories
+              </Link>
             </p>
-
-            {/* Inline add / remove custom categories */}
-            <div style={{ marginTop: '0.5rem', padding: '0.55rem 0.65rem', background: '#f9fafb', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: customCategories.length > 0 || showNewCat ? '0.4rem' : 0 }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Manage</span>
-                {!showNewCat && (
-                  <button type="button" onClick={() => { setShowNewCat(true); setCatError(''); }}
-                    style={{ fontSize: '0.72rem', color: '#819360', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}>
-                    + New
-                  </button>
-                )}
-              </div>
-
-              {customCategories.length > 0 && !showNewCat && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  {customCategories.map(c => (
-                    <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: '#374151' }}>{c.name}</span>
-                      <button type="button" onClick={() => handleRemoveCategory(c)} disabled={removingCat === c.id}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.7rem', color: '#C0382B', padding: 0 }}>
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {customCategories.length === 0 && !showNewCat && (
-                <p style={{ margin: 0, fontSize: '0.72rem', color: '#9ca3af' }}>No personal categories yet.</p>
-              )}
-
-              {showNewCat && (
-                <div>
-                  <div style={{ display: 'flex', gap: '0.3rem' }}>
-                    <input autoFocus
-                      style={{ flex: 1, padding: '0.25rem 0.4rem', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '0.8rem' }}
-                      value={newCatName}
-                      onChange={e => setNewCatName(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') handleAddCategory();
-                        if (e.key === 'Escape') { setShowNewCat(false); setNewCatName(''); }
-                      }}
-                      placeholder="Category name"
-                    />
-                    <button type="button" onClick={handleAddCategory} disabled={catSaving || !newCatName.trim()}
-                      style={{ background: '#819360', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>
-                      {catSaving ? '…' : 'Add'}
-                    </button>
-                    <button type="button" onClick={() => { setShowNewCat(false); setNewCatName(''); setCatError(''); }}
-                      style={{ background: '#f3f4f6', color: '#6b7280', border: '1px solid #d1d5db', borderRadius: '4px', padding: '0.25rem 0.4rem', fontSize: '0.75rem', cursor: 'pointer' }}>
-                      ✕
-                    </button>
-                  </div>
-                  {catError && <p style={{ margin: '0.2rem 0 0', fontSize: '0.72rem', color: '#C0382B' }}>{catError}</p>}
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Cover image */}
@@ -264,41 +940,62 @@ function PostEditor({ post, businessId, globalCategories, customCategories,
 
         {/* Content */}
         <div>
-          <label style={labelStyle}>Content</label>
-          <textarea
-            style={{ ...inputStyle, minHeight: '300px', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
+          <label style={labelStyle}>Content <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+          <ContentBlockEditor
+            key={post?.blog_id ?? 'new'}
             value={form.content}
-            onChange={e => set('content', e.target.value)}
-            placeholder="Write your blog post here..."
+            onChange={v => set('content', v)}
           />
         </div>
 
         {/* Flags */}
-        <div style={{ display: 'flex', gap: '1.5rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', color: '#374151', cursor: 'pointer' }}>
-            <input type="checkbox" checked={form.is_published}
-              onChange={e => set('is_published', e.target.checked)}
-              style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
-            Published (visible to public)
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', color: '#374151', cursor: 'pointer' }}>
-            <input type="checkbox" checked={form.is_featured}
-              onChange={e => set('is_featured', e.target.checked)}
-              style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
-            Featured post
-          </label>
+        <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '0.9rem 1rem' }}>
+          <p style={{ margin: '0 0 0.6rem', fontSize: '0.78rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Publishing Options</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem 2rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', color: '#374151', cursor: 'pointer' }}>
+              <input type="checkbox" checked={form.is_published}
+                onChange={e => set('is_published', e.target.checked)}
+                style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: '#819360' }} />
+              <span><strong>Published</strong> <span style={{ color: '#6b7280', fontWeight: 400 }}>(visible to public)</span></span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', color: '#374151', cursor: 'pointer' }}>
+              <input type="checkbox" checked={form.is_featured}
+                onChange={e => set('is_featured', e.target.checked)}
+                style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: '#819360' }} />
+              <strong>Featured</strong>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', color: '#374151', cursor: 'pointer' }}>
+              <input type="checkbox" checked={form.show_on_directory}
+                onChange={e => set('show_on_directory', e.target.checked)}
+                style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: '#819360' }} />
+              <span><strong>Show on Directory</strong> <span style={{ color: '#6b7280', fontWeight: 400 }}>(OFN network listing)</span></span>
+            </label>
+            {hasWebsite && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', color: '#374151', cursor: 'pointer' }}>
+                <input type="checkbox" checked={form.show_on_website}
+                  onChange={e => set('show_on_website', e.target.checked)}
+                  style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: '#819360' }} />
+                <span><strong>Show on Website</strong> <span style={{ color: '#6b7280', fontWeight: 400 }}>(your custom website)</span></span>
+              </label>
+            )}
+          </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
-        <button onClick={handleSave} disabled={saving}
-          style={{ background: '#819360', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.5rem 1.25rem', fontSize: '0.9rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
-          {saving ? 'Saving...' : 'Save Post'}
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem' }}>
         <button onClick={onCancel}
           style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', borderRadius: '6px', padding: '0.5rem 1.25rem', fontSize: '0.9rem', cursor: 'pointer' }}>
           Cancel
         </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {autoSaveStatus === 'saving' && <span style={{ fontSize: '0.78rem', color: '#9ca3af' }}>Saving…</span>}
+          {autoSaveStatus === 'saved'  && <span style={{ fontSize: '0.78rem', color: '#16a34a' }}>✓ Saved</span>}
+          {autoSaveStatus === 'error'  && <span style={{ fontSize: '0.78rem', color: '#dc2626' }}>Save failed</span>}
+          <button onClick={handleSave} disabled={saving}
+            style={{ background: '#819360', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.5rem 1.5rem', fontSize: '0.9rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+            {saving ? 'Saving...' : 'Save Post'}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -410,14 +1107,40 @@ export default function BlogManage() {
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('list');          // list | new | edit
-  const [activeTab, setActiveTab] = useState('posts'); // posts | categories
+  const [view, setView] = useState(() => searchParams.get('view') === 'new' ? 'new' : 'list');
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') === 'categories' ? 'categories' : 'posts');
   const [editPost, setEditPost] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [globalCategories, setGlobalCategories] = useState([]);
   const [customCategories, setCustomCategories] = useState([]);
+  const [hasWebsite, setHasWebsite] = useState(false);
+
+  // Sort / filter state
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');   // '' | 'published' | 'draft'
+  const [filterCat, setFilterCat] = useState('');         // category name
+  const [sortBy, setSortBy] = useState('date_desc');       // date_desc | date_asc | title_asc | title_desc
 
   useEffect(() => { if (BusinessID) LoadBusiness(BusinessID); }, [BusinessID]);
+
+  // Respond to URL param changes while the component is already mounted
+  // (e.g. clicking sidebar links or "Manage categories" from the editor)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    const viewParam = searchParams.get('view');
+    if (tabParam === 'categories') {
+      setActiveTab('categories');
+      setView('list');
+      setEditPost(null);
+    } else if (viewParam === 'new') {
+      setView('new');
+      setEditPost(null);
+      setActiveTab('posts');
+    } else if (!tabParam && !viewParam) {
+      setView('list');
+      setActiveTab('posts');
+    }
+  }, [searchParams]);
 
   const loadCategories = async () => {
     const [g, c] = await Promise.all([
@@ -438,7 +1161,14 @@ export default function BlogManage() {
   };
 
   useEffect(() => {
-    if (BusinessID) { load(); loadCategories(); }
+    if (BusinessID) {
+      load();
+      loadCategories();
+      // Check if this business has a website built
+      fetch(`${API_URL}/api/website/site?business_id=${BusinessID}`)
+        .then(r => setHasWebsite(r.ok))
+        .catch(() => setHasWebsite(false));
+    }
   }, [BusinessID]);
 
   const handleDelete = async (blogId) => {
@@ -452,20 +1182,85 @@ export default function BlogManage() {
 
   const handleSaved = () => { setView('list'); setEditPost(null); load(); };
 
+  const [togglingPublish, setTogglingPublish] = useState(null);
+  const [hoveredPublish, setHoveredPublish] = useState(null);
+  const handleTogglePublish = async (post) => {
+    setTogglingPublish(post.blog_id);
+    try {
+      const newVal = !post.is_published;
+      const body = {
+        title:             post.title || '',
+        content:           post.content || null,
+        cover_image:       post.cover_image || null,
+        author:            post.author || null,
+        author_link:       post.author_link || null,
+        author_id:         post.author_id || null,
+        blog_cat_id:       post.blog_cat_id || null,
+        custom_cat_id:     post.custom_cat_id || null,
+        is_published:      newVal,
+        is_featured:       post.is_featured || false,
+        show_on_directory: post.show_on_directory !== false,
+        show_on_website:   post.show_on_website !== false,
+        published_at:      newVal && !post.published_at
+          ? new Date().toISOString().slice(0, 10)
+          : (post.published_at || null),
+      };
+      const res = await fetch(`${API_URL}/api/blog/manage/${post.blog_id}?business_id=${BusinessID}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) console.error('Toggle publish failed:', res.status, await res.text());
+      load();
+    } finally { setTogglingPublish(null); }
+  };
+
   const formatDate = (dt) => {
     if (!dt) return '';
     return new Date(dt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const allCats = [...globalCategories, ...customCategories];
-  const catName = (id) => allCats.find(c => c.id === id)?.name || '';
+
+  // Derived: filtered + sorted posts
+  const visiblePosts = posts
+    .filter(p => {
+      if (filterStatus === 'published' && !p.is_published) return false;
+      if (filterStatus === 'draft' && p.is_published) return false;
+      if (filterCat) {
+        const [prefix, name] = filterCat.split(':');
+        const match = prefix === 'g'
+          ? (p.category_name || '') === name
+          : (p.custom_category_name || '') === name;
+        if (!match) return false;
+      }
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        if (!(p.title || '').toLowerCase().includes(q) &&
+            !(p.author || '').toLowerCase().includes(q) &&
+            !getExcerpt(p.content).toLowerCase().includes(q)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'title_asc')  return (a.title || '').localeCompare(b.title || '');
+      if (sortBy === 'title_desc') return (b.title || '').localeCompare(a.title || '');
+      const da = new Date(a.published_at || a.created_at || 0);
+      const db = new Date(b.published_at || b.created_at || 0);
+      return sortBy === 'date_asc' ? da - db : db - da;
+    });
+
+  const globalCatNames = globalCategories.map(c => c.name).sort();
+  const customCatNames = customCategories.map(c => c.name).sort();
 
   const tabStyle = (tab) => ({
-    padding: '0.45rem 1.1rem', fontSize: '0.88rem', fontWeight: 600,
+    padding: '0.4rem 1rem', fontSize: '0.85rem', fontWeight: 600,
     border: 'none', borderRadius: '7px', cursor: 'pointer',
     background: activeTab === tab ? '#819360' : '#f3f4f6',
     color: activeTab === tab ? '#fff' : '#374151',
   });
+
+  const ctrlStyle = { fontSize: '0.82rem', border: '1px solid #d1d5db', borderRadius: 6, padding: '0.35rem 0.6rem', background: '#fff', color: '#374151', cursor: 'pointer' };
 
   if (view === 'new' || view === 'edit') {
     return (
@@ -478,9 +1273,9 @@ export default function BlogManage() {
           <PostEditor
             post={editPost}
             businessId={BusinessID}
+            hasWebsite={hasWebsite}
             globalCategories={globalCategories}
             customCategories={customCategories}
-            onCustomCategoriesChange={setCustomCategories}
             onSave={handleSaved}
             onCancel={() => { setView('list'); setEditPost(null); }}
           />
@@ -491,24 +1286,21 @@ export default function BlogManage() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
-      <div style={{ maxWidth: '900px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700, color: '#111827' }}>Blog</h1>
-            <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#6b7280' }}>Manage your farm's blog content</p>
-          </div>
-          {activeTab === 'posts' && (
-            <button onClick={() => { setEditPost(null); setView('new'); }}
-              style={{ background: '#819360', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.5rem 1.1rem', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
-              + New Post
-            </button>
-          )}
-        </div>
+      <div style={{ maxWidth: '960px' }}>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
-          <button style={tabStyle('posts')} onClick={() => setActiveTab('posts')}>Posts</button>
-          <button style={tabStyle('categories')} onClick={() => setActiveTab('categories')}>Categories</button>
+        {/* ── Header row ── */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <h1 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 700, color: '#111827' }}>Manage Blog</h1>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button style={tabStyle('posts')} onClick={() => setActiveTab('posts')}>Posts</button>
+            <button style={tabStyle('categories')} onClick={() => setActiveTab('categories')}>Categories</button>
+            {activeTab === 'posts' && (
+              <button onClick={() => { setEditPost(null); setView('new'); }}
+                style={{ background: '#819360', color: '#fff', border: 'none', borderRadius: '7px', padding: '0.4rem 1rem', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>
+                + New Post
+              </button>
+            )}
+          </div>
         </div>
 
         {activeTab === 'categories' && (
@@ -522,6 +1314,46 @@ export default function BlogManage() {
 
         {activeTab === 'posts' && (
           <>
+            {/* ── Filter / sort bar ── */}
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search posts..."
+                style={{ ...ctrlStyle, flex: '1 1 160px', minWidth: '140px' }}
+              />
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={ctrlStyle}>
+                <option value="">All statuses</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+              <select value={filterCat} onChange={e => setFilterCat(e.target.value)} style={ctrlStyle}>
+                <option value="">All categories</option>
+                {globalCatNames.length > 0 && (
+                  <optgroup label="Global">
+                    {globalCatNames.map(n => <option key={`g:${n}`} value={`g:${n}`}>{n}</option>)}
+                  </optgroup>
+                )}
+                {customCatNames.length > 0 && (
+                  <optgroup label="Personal">
+                    {customCatNames.map(n => <option key={`c:${n}`} value={`c:${n}`}>{n}</option>)}
+                  </optgroup>
+                )}
+              </select>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={ctrlStyle}>
+                <option value="date_desc">Newest first</option>
+                <option value="date_asc">Oldest first</option>
+                <option value="title_asc">Title A–Z</option>
+                <option value="title_desc">Title Z–A</option>
+              </select>
+              {(search || filterStatus || filterCat) && (
+                <button onClick={() => { setSearch(''); setFilterStatus(''); setFilterCat(''); }}
+                  style={{ ...ctrlStyle, color: '#C0382B', borderColor: '#fca5a5' }}>
+                  Clear
+                </button>
+              )}
+            </div>
+
             {loading && <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>Loading posts...</p>}
 
             {!loading && posts.length === 0 && (
@@ -534,62 +1366,146 @@ export default function BlogManage() {
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {posts.map(post => (
-                <div key={post.blog_id} style={{ background: '#fff', borderRadius: '10px', border: '1px solid #e5e7eb', padding: '1rem 1.25rem', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                  {post.cover_image && (
-                    <img src={post.cover_image} alt="" style={{ width: '72px', height: '54px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
-                      onError={e => e.target.style.display = 'none'} />
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: '#111827' }}>{post.title}</h3>
-                      <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '1px 7px', borderRadius: '10px', background: post.is_published ? '#dcfce7' : '#f3f4f6', color: post.is_published ? '#16a34a' : '#6b7280' }}>
-                        {post.is_published ? 'Published' : 'Draft'}
-                      </span>
-                      {post.is_featured && (
-                        <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '1px 7px', borderRadius: '10px', background: '#fef9c3', color: '#854d0e' }}>Featured</span>
-                      )}
-                      {post.category_name && (
-                        <span style={{ fontSize: '0.7rem', padding: '1px 7px', borderRadius: '10px', background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}>
-                          {post.category_name}
+            {!loading && posts.length > 0 && visiblePosts.length === 0 && (
+              <p style={{ color: '#9ca3af', fontSize: '0.88rem', padding: '1.5rem 0' }}>No posts match your filters.</p>
+            )}
+
+            {/* ── Post list ── */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {visiblePosts.map(post => {
+                const cover = post.cover_image || (() => {
+                  try {
+                    const b = JSON.parse(post.content || '');
+                    if (Array.isArray(b)) { const im = b.find(x => x.type === 'image' && x.url); return im?.url || null; }
+                  } catch {} return null;
+                })();
+                return (
+                  <div key={post.blog_id}
+                    style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '0.65rem 1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+
+                    {/* Thumbnail */}
+                    {cover
+                      ? <img src={cover} alt="" onError={e => e.target.style.display = 'none'}
+                          style={{ width: 56, height: 44, objectFit: 'cover', borderRadius: 5, flexShrink: 0, marginTop: 2 }} />
+                      : <div style={{ width: 56, height: 44, background: '#f3f4f6', borderRadius: 5, flexShrink: 0, marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>📝</div>
+                    }
+
+                    {/* Main content */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+
+                      {/* Row 1: title + date + actions */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 280 }}>
+                          {post.title}
                         </span>
-                      )}
-                      {post.custom_category_name && (
-                        <span style={{ fontSize: '0.7rem', padding: '1px 7px', borderRadius: '10px', background: '#ede9fe', color: '#5b21b6', border: '1px solid #ddd6fe' }}>
-                          {post.custom_category_name}
+                        <span style={{ fontSize: '0.73rem', color: '#9ca3af', whiteSpace: 'nowrap', marginLeft: 'auto' }}>
+                          {formatDate(post.published_at || post.created_at)}
                         </span>
-                      )}
+                        {/* Actions */}
+                        <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
+                          {post.is_published && (
+                            <Link to={`/blog/${post.blog_id}`} target="_blank"
+                              style={{ fontSize: '0.75rem', color: '#819360', textDecoration: 'none', padding: '0.2rem 0.5rem', border: '1px solid #819360', borderRadius: '5px', whiteSpace: 'nowrap' }}>
+                              View ↗
+                            </Link>
+                          )}
+                          <button onClick={() => { setEditPost(post); setView('edit'); }}
+                            style={{ fontSize: '0.75rem', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '5px', padding: '0.2rem 0.5rem', cursor: 'pointer', color: '#374151' }}>
+                            Edit
+                          </button>
+                          <button onClick={() => handleDelete(post.blog_id)} disabled={deleting === post.blog_id}
+                            style={{ fontSize: '0.75rem', background: '#C0382B', border: 'none', borderRadius: '5px', padding: '0.2rem 0.5rem', cursor: 'pointer', color: '#fff', opacity: deleting === post.blog_id ? 0.6 : 1 }}>
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Row 2: status badges */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
+
+                        {/* Published / Draft — clickable toggle */}
+                        {(() => {
+                          const busy = togglingPublish === post.blog_id;
+                          const hov = hoveredPublish === post.blog_id;
+                          return (
+                            <button
+                              title={post.is_published ? 'Click to unpublish' : 'Click to publish'}
+                              onClick={() => handleTogglePublish(post)}
+                              onMouseEnter={() => setHoveredPublish(post.blog_id)}
+                              onMouseLeave={() => setHoveredPublish(null)}
+                              disabled={busy}
+                              style={{ fontSize: '0.67rem', fontWeight: 600, padding: '2px 7px', borderRadius: 10, flexShrink: 0,
+                                cursor: 'pointer', border: 'none', outline: 'none', transition: 'background 0.15s, color 0.15s',
+                                background: post.is_published
+                                  ? (hov ? '#fee2e2' : '#dcfce7')
+                                  : (hov ? '#dcfce7' : '#f3f4f6'),
+                                color: post.is_published
+                                  ? (hov ? '#b91c1c' : '#15803d')
+                                  : (hov ? '#15803d' : '#6b7280'),
+                                boxShadow: `0 0 0 1px ${post.is_published ? (hov ? '#fca5a5' : '#86efac') : (hov ? '#86efac' : '#e5e7eb')}`,
+                                opacity: busy ? 0.6 : 1,
+                              }}>
+                              {busy ? '…' : post.is_published ? (hov ? '○ Unpublish' : '● Published') : (hov ? '● Publish' : '○ Draft')}
+                            </button>
+                          );
+                        })()}
+
+                        {/* Featured */}
+                        <span title="Featured post" style={{ fontSize: '0.67rem', fontWeight: 600, padding: '2px 7px', borderRadius: 10, flexShrink: 0,
+                          background: post.is_featured ? '#fef9c3' : '#f9fafb',
+                          color: post.is_featured ? '#854d0e' : '#9ca3af',
+                          border: `1px solid ${post.is_featured ? '#fde68a' : '#e5e7eb'}` }}>
+                          {post.is_featured ? '★ Featured' : '☆ Not Featured'}
+                        </span>
+
+                        {/* Show on Directory */}
+                        <span title="Show on OFN network directory listing" style={{ fontSize: '0.67rem', fontWeight: 600, padding: '2px 7px', borderRadius: 10, flexShrink: 0,
+                          background: post.show_on_directory ? '#dbeafe' : '#f9fafb',
+                          color: post.show_on_directory ? '#1d4ed8' : '#9ca3af',
+                          border: `1px solid ${post.show_on_directory ? '#93c5fd' : '#e5e7eb'}` }}>
+                          {post.show_on_directory ? '● Directory' : '○ Directory'}
+                        </span>
+
+                        {/* Show on Website */}
+                        <span title="Show on your custom website" style={{ fontSize: '0.67rem', fontWeight: 600, padding: '2px 7px', borderRadius: 10, flexShrink: 0,
+                          background: post.show_on_website ? '#f0fdf4' : '#f9fafb',
+                          color: post.show_on_website ? '#166534' : '#9ca3af',
+                          border: `1px solid ${post.show_on_website ? '#86efac' : '#e5e7eb'}` }}>
+                          {post.show_on_website ? '● Website' : '○ Website'}
+                        </span>
+
+                        {/* Divider */}
+                        {(post.category_name || post.custom_category_name) && (
+                          <span style={{ width: 1, height: 14, background: '#e5e7eb', display: 'inline-block', margin: '0 2px', flexShrink: 0 }} />
+                        )}
+
+                        {/* Network / global category */}
+                        {post.category_name && (
+                          <span title="Network category" style={{ fontSize: '0.67rem', padding: '2px 7px', borderRadius: 10, flexShrink: 0,
+                            background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}>
+                            🌐 {post.category_name}
+                          </span>
+                        )}
+
+                        {/* Private / custom category */}
+                        {post.custom_category_name && (
+                          <span title="Your private category" style={{ fontSize: '0.67rem', padding: '2px 7px', borderRadius: 10, flexShrink: 0,
+                            background: '#ede9fe', color: '#5b21b6', border: '1px solid #ddd6fe' }}>
+                            🔒 {post.custom_category_name}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    {post.content && (
-                      <p style={{ margin: '0.3rem 0 0', fontSize: '0.82rem', color: '#6b7280', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                        {getExcerpt(post.content)}
-                      </p>
-                    )}
-                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#9ca3af' }}>
-                      {post.author && <span>{post.author} · </span>}
-                      {formatDate(post.created_at)}
-                    </p>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-                    {post.is_published && (
-                      <Link to={`/blog/${post.blog_id}`} target="_blank"
-                        style={{ fontSize: '0.8rem', color: '#819360', textDecoration: 'none', padding: '0.3rem 0.6rem', border: '1px solid #819360', borderRadius: '6px' }}>
-                        View ↗
-                      </Link>
-                    )}
-                    <button onClick={() => { setEditPost(post); setView('edit'); }}
-                      style={{ fontSize: '0.8rem', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', padding: '0.3rem 0.6rem', cursor: 'pointer', color: '#374151' }}>
-                      Edit
-                    </button>
-                    <button onClick={() => handleDelete(post.blog_id)} disabled={deleting === post.blog_id}
-                      style={{ fontSize: '0.8rem', background: '#C0382B', border: 'none', borderRadius: '6px', padding: '0.3rem 0.6rem', cursor: 'pointer', color: '#fff', opacity: deleting === post.blog_id ? 0.6 : 1 }}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
+
+            {!loading && visiblePosts.length > 0 && (
+              <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.75rem' }}>
+                Showing {visiblePosts.length} of {posts.length} post{posts.length !== 1 ? 's' : ''}
+              </p>
+            )}
           </>
         )}
       </div>
