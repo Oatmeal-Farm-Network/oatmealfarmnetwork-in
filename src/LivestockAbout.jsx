@@ -28,7 +28,7 @@ export default function LivestockAbout() {
   const label = species ? species.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '';
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <PageMeta
         title={`About ${label} | Livestock Species Overview`}
         description={`Learn about ${label.toLowerCase()} — history, characteristics, colors, uses, and farming considerations. Part of the Oatmeal Farm Network livestock knowledgebase.`}

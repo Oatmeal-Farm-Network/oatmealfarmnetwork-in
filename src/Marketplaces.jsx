@@ -118,7 +118,7 @@ export default function LivestockMarketplace() {
   const browse = listings.slice(4, 12);
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
 
       {/* Top banner image */}

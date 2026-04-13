@@ -299,7 +299,7 @@ export default function RanchList() {
   const label = singularTerm || fallbackLabel;
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
         <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(p => !p)} />

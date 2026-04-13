@@ -316,7 +316,7 @@ export default function OrgProfile() {
   }, [businessId]);
 
   if (loading) return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <div style={{ maxWidth: '1100px', margin: '40px auto', padding: '0 16px' }} className="animate-pulse">
         <div style={{ height: '100px', backgroundColor: '#e8e8e8', borderRadius: '8px', marginBottom: '24px' }} />
@@ -328,7 +328,7 @@ export default function OrgProfile() {
   );
 
   if (!ranch) return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <div style={{ textAlign: 'center', padding: '80px 16px' }}>
         <p style={{ color: '#888', marginBottom: '16px' }}>Organization not found.</p>
@@ -355,7 +355,7 @@ export default function OrgProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 16px 60px' }}>

@@ -90,15 +90,18 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
   }, [BusinessID]);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/company/features`)
+    const url = BusinessID
+      ? `${API_URL}/api/company/features?business_id=${BusinessID}`
+      : `${API_URL}/api/company/features`;
+    fetch(url)
       .then(r => r.ok ? r.json() : [])
       .then(rows => {
         const map = {};
         rows.forEach(f => { map[f.feature_key] = f.is_enabled; });
         setFeatures(map);
       })
-      .catch(() => setFeatures({})); // on error show nothing locked
-  }, []);
+      .catch(() => setFeatures({}));
+  }, [BusinessID]);
 
   // Returns true while loading (fail-open) or when the feature is enabled
   const on = (key) => features === null || features[key] === true;
@@ -175,18 +178,20 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               )}
             </div>
 
-            <NavSection
-              icon="/icons/Blog.png"
-              label="Blog"
-              expanded={Expanded}
-              isOpen={OpenSections['Blog'] || false}
-              onToggle={() => toggleSection('Blog')}
-            >
-              <NavChild to={`/blog/manage?BusinessID=${BusinessID}`} label="Manage Blog" />
-              <NavChild to={`/blog/manage?BusinessID=${BusinessID}&view=new`} label="Add Post" />
-              <NavChild to={`/blog/manage?BusinessID=${BusinessID}&tab=categories`} label="Blog Categories" />
-              <NavChild to={`/blog/authors/manage?BusinessID=${BusinessID}`} label="Authors" />
-            </NavSection>
+            {on('blog') && (
+              <NavSection
+                icon="/icons/Blog.png"
+                label="Blog"
+                expanded={Expanded}
+                isOpen={OpenSections['Blog'] || false}
+                onToggle={() => toggleSection('Blog')}
+              >
+                <NavChild to={`/blog/manage?BusinessID=${BusinessID}`} label="Manage Blog" />
+                <NavChild to={`/blog/manage?BusinessID=${BusinessID}&view=new`} label="Add Post" />
+                <NavChild to={`/blog/manage?BusinessID=${BusinessID}&tab=categories`} label="Blog Categories" />
+                <NavChild to={`/blog/authors/manage?BusinessID=${BusinessID}`} label="Authors" />
+              </NavSection>
+            )}
 
             {on('precision_ag') && BT === 8 && (
               <NavSection

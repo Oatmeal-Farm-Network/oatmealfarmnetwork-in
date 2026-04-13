@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
 import { DIRECTORY_TYPE_TO_IMAGE, DIRECTORY_TYPE_TO_BUSINESS_TYPE } from './directoryMappings';
 import photoNotAvailable from '../images/photo not available .jpg';
@@ -34,7 +34,7 @@ const DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID = {
     'veterinarians': '17',
     'vineyards': '34',
     'wineries': '33',
-    'others': '3'
+    'others': '3',
 };
 
 function fixUrl(val) {
@@ -43,9 +43,8 @@ function fixUrl(val) {
     return 'https://' + val;
 }
 
-function SocialLinks(props) {
-    var business = props.business;
-    var links = [
+function SocialLinks({ business }) {
+    const links = [
         { url: fixUrl(business.BusinessFacebook),     icon: '/icons/facebook.png',         alt: 'Facebook' },
         { url: fixUrl(business.BusinessX),            icon: '/icons/TwitterX.png',          alt: 'Twitter/X' },
         { url: fixUrl(business.BusinessInstagram),    icon: '/icons/instagramicon.png',     alt: 'Instagram' },
@@ -56,182 +55,188 @@ function SocialLinks(props) {
         { url: fixUrl(business.BusinessBlog),         icon: '/icons/BlogIcon.png',          alt: 'Blog' },
         { url: fixUrl(business.BusinessOtherSocial1), icon: '/icons/GeneralSocialIcon.png', alt: 'Social Media' },
         { url: fixUrl(business.BusinessOtherSocial2), icon: '/icons/GeneralSocialIcon.png', alt: 'Social Media' },
-    ];
+    ].filter(l => l.url !== null);
 
-    var activeLinks = links.filter(function(l) { return l.url !== null; });
-    if (activeLinks.length === 0) return null;
-
-    return React.createElement(
-        'div',
-        { style: { display: 'flex', gap: '6px', marginBottom: '10px', alignItems: 'center', flexWrap: 'wrap' } },
-        activeLinks.map(function(l, i) {
-            return React.createElement(
-                'a',
-                { key: i, href: l.url, target: '_blank', rel: 'noopener noreferrer' },
-                React.createElement('img', {
-                    src: l.icon,
-                    alt: l.alt,
-                    style: { width: '28px', height: '28px', objectFit: 'contain' }
-                })
-            );
-        })
+    if (links.length === 0) return null;
+    return (
+        <div className="flex gap-1.5 flex-wrap mt-2">
+            {links.map((l, i) => (
+                <a key={i} href={l.url} target="_blank" rel="noopener noreferrer">
+                    <img src={l.icon} alt={l.alt} style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+                </a>
+            ))}
+        </div>
     );
 }
 
-function Pagination(props) {
-    var currentPage = props.currentPage;
-    var totalPages = props.totalPages;
-    var onPageChange = props.onPageChange;
-
+function Pagination({ currentPage, totalPages, onPageChange }) {
     if (totalPages <= 1) return null;
 
-    var pages = [];
+    let pages = [];
     if (totalPages <= 7) {
-        for (var i = 1; i <= totalPages; i++) pages.push(i);
+        for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
-        var startPage = Math.max(1, currentPage - 2);
-        var endPage = Math.min(totalPages, currentPage + 2);
-        if (currentPage <= 3) endPage = Math.min(totalPages, 5);
-        if (currentPage >= totalPages - 2) startPage = Math.max(1, totalPages - 4);
-        for (var j = startPage; j <= endPage; j++) pages.push(j);
+        let start = Math.max(1, currentPage - 2);
+        let end   = Math.min(totalPages, currentPage + 2);
+        if (currentPage <= 3) end   = Math.min(totalPages, 5);
+        if (currentPage >= totalPages - 2) start = Math.max(1, totalPages - 4);
+        for (let j = start; j <= end; j++) pages.push(j);
     }
 
-    var btnBase = { padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer', fontSize: '0.85rem', color: '#333' };
-    var btnActive = { padding: '6px 12px', border: '1px solid #5a7a3a', borderRadius: '4px', backgroundColor: '#5a7a3a', cursor: 'pointer', fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' };
-
     return (
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
-            {pages.map(function(pageNum) {
-                return (
-                    <button key={pageNum} style={currentPage === pageNum ? btnActive : btnBase} onClick={function() { onPageChange(pageNum); }}>
-                        {pageNum}
-                    </button>
-                );
-            })}
-            {currentPage < totalPages ? (
-                <button style={btnBase} onClick={function() { onPageChange(currentPage + 1); }}>{'>'}</button>
-            ) : null}
-            {totalPages > 5 ? (
-                <button style={btnBase} onClick={function() { onPageChange(totalPages); }}>Last</button>
-            ) : null}
+        <div className="flex gap-1 flex-wrap items-center mb-4">
+            {pages.map(p => (
+                <button
+                    key={p}
+                    onClick={() => onPageChange(p)}
+                    className="w-9 h-9 text-sm font-bold rounded-lg transition-all"
+                    style={{
+                        backgroundColor: currentPage === p ? '#3D6B34' : '#fff',
+                        color:           currentPage === p ? '#fff'    : '#3D6B34',
+                        border:          '1px solid #3D6B34',
+                    }}
+                >
+                    {p}
+                </button>
+            ))}
+            {currentPage < totalPages && (
+                <button
+                    onClick={() => onPageChange(currentPage + 1)}
+                    className="px-3 h-9 text-sm font-bold rounded-lg transition-all"
+                    style={{ backgroundColor: '#fff', color: '#3D6B34', border: '1px solid #3D6B34' }}
+                >
+                    &rsaquo;
+                </button>
+            )}
+            {totalPages > 5 && (
+                <button
+                    onClick={() => onPageChange(totalPages)}
+                    className="px-3 h-9 text-sm font-bold rounded-lg transition-all"
+                    style={{ backgroundColor: '#fff', color: '#3D6B34', border: '1px solid #3D6B34' }}
+                >
+                    Last
+                </button>
+            )}
         </div>
     );
 }
 
-function BusinessCard(props) {
-    var business = props.business;
-    var onProfileClick = props.onProfileClick;
-
+function BusinessCard({ business, onProfileClick }) {
     return (
-        <div style={{  backgroundColor: '#fff', border: '1px solid #e0e0e0', borderRadius: '6px', padding: '16px', marginBottom: '12px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-            <div style={{ flexShrink: 0 }}>
+        <div className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200">
+            {/* Left: logo */}
+            <div
+                className="shrink-0 flex items-center justify-center bg-gray-50 border-r border-gray-100 cursor-pointer"
+                style={{ width: '130px', height: '130px' }}
+                onClick={() => onProfileClick(business)}
+            >
                 <img
-                    loading="lazy" 
+                    loading="lazy"
                     src={business.ProfileImage || photoNotAvailable}
                     alt={business.BusinessName + ' logo'}
-                    style={{ width: '90px', height: '90px', objectFit: 'contain', borderRadius: '4px', border: '1px solid #eee' }}
-                    onError={function(e) { e.target.onerror = null; e.target.src = photoNotAvailable; }}
+                    style={{ width: '110px', height: '110px', objectFit: 'contain', borderRadius: '6px' }}
+                    onError={e => { e.target.onerror = null; e.target.src = photoNotAvailable; }}
                 />
             </div>
-            <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#222', marginBottom: '4px' }}>
-                    {business.BusinessName}
-                </div>
-                <div style={{ fontSize: '0.9rem', color: '#555', marginBottom: '4px' }}>
-                    {[business.AddressCity, business.AddressState, business.AddressCountry].filter(Boolean).join(', ')}
-                </div>
-                {business.BusinessWebsite ? (
-                    <a
-                        href={fixUrl(business.BusinessWebsite)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ fontSize: '0.9rem', color: '#c47d00', textDecoration: 'none', display: 'block', marginBottom: '6px' }}
+
+            {/* Right: info */}
+            <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
+                <div>
+                    <button
+                        onClick={() => onProfileClick(business)}
+                        className="font-bold text-sm hover:underline text-left"
+                        style={{ color: '#3D6B34', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                     >
-                        {business.BusinessWebsite}
-                    </a>
-                ) : null}
-                <SocialLinks business={business} />
-                <button
-                    onClick={function() { onProfileClick(business); }}
-                    style={{ backgroundColor: '#5a7a3a', color: 'white', border: 'none', borderRadius: '4px', padding: '7px 18px', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer' }}
-                >
-                    Profile
-                </button>
+                        {business.BusinessName}
+                    </button>
+                    <p className="text-xs font-semibold mt-0.5" style={{ color: '#819360' }}>
+                        {[business.AddressCity, business.AddressState, business.AddressCountry].filter(Boolean).join(', ')}
+                    </p>
+                    {business.BusinessWebsite && (
+                        <a
+                            href={fixUrl(business.BusinessWebsite)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs hover:underline block mt-1 truncate"
+                            style={{ color: '#c47d00' }}
+                        >
+                            {business.BusinessWebsite}
+                        </a>
+                    )}
+                    <SocialLinks business={business} />
+                </div>
+                <div className="mt-3">
+                    <button
+                        onClick={() => onProfileClick(business)}
+                        className="text-xs font-bold hover:underline"
+                        style={{ color: '#3D6B34', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    >
+                        VIEW PROFILE →
+                    </button>
+                </div>
             </div>
         </div>
     );
 }
 
-const DirectoryDetail = function() {
-    var params = useParams();
-    var directoryType = params.directoryType;
-    var navigate = useNavigate();
-    var location = useLocation();
-    var backState = location.state;
+const DirectoryDetail = function () {
+    const { directoryType } = useParams();
+    const navigate  = useNavigate();
+    const location  = useLocation();
+    const backState = location.state;
 
-    var [isLoggedIn, setIsLoggedIn] = useState(false);
-    var [countries, setCountries] = useState([]);
-    var [states, setStates] = useState([]);
-    var [businesses, setBusinesses] = useState([]);
-    var [selectedCountry, setSelectedCountry] = useState(backState?.selectedCountry || '');
-    var [selectedState, setSelectedState] = useState(backState?.selectedState || '');
-    var [nameFilter, setNameFilter] = useState(backState?.nameFilter || '');
-    var [appliedCountry, setAppliedCountry] = useState(backState?.selectedCountry || '');
-    var [appliedState, setAppliedState] = useState(backState?.selectedState || '');
-    var [appliedName, setAppliedName] = useState(backState?.nameFilter || '');
-    var [loading, setLoading] = useState(true);
-    var [error, setError] = useState(null);
-    var [currentPage, setCurrentPage] = useState(1);
-    var itemsPerPage = 10;
+    const [countries, setCountries]           = useState([]);
+    const [states, setStates]                 = useState([]);
+    const [businesses, setBusinesses]         = useState([]);
+    const [selectedCountry, setSelectedCountry] = useState(backState?.selectedCountry || '');
+    const [selectedState, setSelectedState]   = useState(backState?.selectedState || '');
+    const [nameFilter, setNameFilter]         = useState(backState?.nameFilter || '');
+    const [appliedCountry, setAppliedCountry] = useState(backState?.selectedCountry || '');
+    const [appliedState, setAppliedState]     = useState(backState?.selectedState || '');
+    const [appliedName, setAppliedName]       = useState(backState?.nameFilter || '');
+    const [loading, setLoading]               = useState(true);
+    const [error, setError]                   = useState(null);
+    const [currentPage, setCurrentPage]       = useState(1);
+    const itemsPerPage = 10;
 
-    useEffect(function() {
-        const token = localStorage.getItem('access_token');
-        setIsLoggedIn(Boolean(token));
-    }, []);
-
-    var businessType = DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID[directoryType] || directoryType;
-    var pageTitle = directoryType
+    const businessType = DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID[directoryType] || directoryType;
+    const pageTitle    = directoryType
         .replace(/-/g, ' ')
         .split(' ')
-        .map(function(word) { return word.charAt(0).toUpperCase() + word.slice(1); })
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
-    var categoryIcon = DIRECTORY_TYPE_TO_IMAGE ? DIRECTORY_TYPE_TO_IMAGE[directoryType] : null;
+    const categoryIcon = DIRECTORY_TYPE_TO_IMAGE?.[directoryType] || null;
 
-    useEffect(function() {
-        if (backState) window.history.replaceState({}, document.title);
-    }, []);
+    useEffect(() => { if (backState) window.history.replaceState({}, document.title); }, []);
 
-    useEffect(function() {
+    useEffect(() => {
         fetch(API_ENDPOINTS.COUNTRIES)
-            .then(function(r) { return r.ok ? r.json() : []; })
-            .then(function(data) { setCountries(data); })
-            .catch(function() {});
+            .then(r => r.ok ? r.json() : [])
+            .then(data => setCountries(data))
+            .catch(() => {});
     }, []);
 
-    useEffect(function() {
+    useEffect(() => {
         if (!selectedCountry) { setStates([]); setSelectedState(''); return; }
         fetch(API_ENDPOINTS.STATES + '?country=' + encodeURIComponent(selectedCountry))
-            .then(function(r) { return r.ok ? r.json() : []; })
-            .then(function(data) { setStates(data || []); })
-            .catch(function() { setStates([]); });
+            .then(r => r.ok ? r.json() : [])
+            .then(data => setStates(data || []))
+            .catch(() => setStates([]));
     }, [selectedCountry]);
 
-    useEffect(function() {
+    useEffect(() => {
         setLoading(true);
         setError(null);
-        var url = API_ENDPOINTS.BUSINESSES + '?BusinessTypeID=' + encodeURIComponent(businessType);
+        let url = API_ENDPOINTS.BUSINESSES + '?BusinessTypeID=' + encodeURIComponent(businessType);
         if (appliedCountry) url += '&country=' + encodeURIComponent(appliedCountry);
-        if (appliedState) url += '&state=' + encodeURIComponent(appliedState);
+        if (appliedState)   url += '&state='   + encodeURIComponent(appliedState);
         fetch(url)
-            .then(function(r) {
-                if (!r.ok) throw new Error('Failed to fetch: ' + r.statusText);
-                return r.json();
-            })
-            .then(function(data) { setBusinesses(data || []); setLoading(false); })
-            .catch(function(err) { setError(err.message); setLoading(false); });
+            .then(r => { if (!r.ok) throw new Error('Failed to fetch: ' + r.statusText); return r.json(); })
+            .then(data => { setBusinesses(data || []); setLoading(false); })
+            .catch(err => { setError(err.message); setLoading(false); });
     }, [appliedCountry, appliedState, businessType]);
 
-    useEffect(function() { setCurrentPage(1); }, [appliedCountry, appliedState, appliedName]);
+    useEffect(() => { setCurrentPage(1); }, [appliedCountry, appliedState, appliedName]);
 
     function handleApplyFilters() {
         setAppliedCountry(selectedCountry);
@@ -242,7 +247,7 @@ const DirectoryDetail = function() {
 
     function handleProfileClick(business) {
         navigate('/profile', {
-            state: { business: business, directoryType: directoryType, selectedCountry: appliedCountry, selectedState: appliedState, nameFilter: appliedName }
+            state: { business, directoryType, selectedCountry: appliedCountry, selectedState: appliedState, nameFilter: appliedName },
         });
     }
 
@@ -251,110 +256,183 @@ const DirectoryDetail = function() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    var filteredBusinesses = businesses.filter(function(b) {
-        return b.BusinessName && b.BusinessName.trim() !== ''
-            && b.BusinessName.toLowerCase().indexOf(appliedName.toLowerCase()) !== -1;
-    });
-
-    var totalPages = Math.ceil(filteredBusinesses.length / itemsPerPage);
-    var startIndex = (currentPage - 1) * itemsPerPage;
-    var endIndex = startIndex + itemsPerPage;
-    var currentBusinesses = filteredBusinesses.slice(startIndex, endIndex);
+    const filteredBusinesses = businesses.filter(b =>
+        b.BusinessName && b.BusinessName.trim() !== '' &&
+        b.BusinessName.toLowerCase().includes(appliedName.toLowerCase())
+    );
+    const totalPages       = Math.ceil(filteredBusinesses.length / itemsPerPage);
+    const startIndex       = (currentPage - 1) * itemsPerPage;
+    const currentBusinesses = filteredBusinesses.slice(startIndex, startIndex + itemsPerPage);
 
     return (
-        <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-           <PageMeta
-             title={`${pageTitle} Directory | Farm & Food Business Listings`}
-             description={`Find ${pageTitle.toLowerCase()} businesses near you. Browse verified listings with contact information, location, and details on Oatmeal Farm Network.`}
-           />
-           <Header />
+        <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
+            <PageMeta
+                title={`${pageTitle} Directory | Farm & Food Business Listings`}
+                description={`Find ${pageTitle.toLowerCase()} businesses near you. Browse verified listings with contact information, location, and details on Oatmeal Farm Network.`}
+            />
+            <Header />
 
-            {/* Page Header */}
-         {/* Page Header */}
-<div style={{ backgroundColor: '#fff', borderBottom: '1px solid #e0e0e0' }}>
-    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '16px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {categoryIcon ? (
-            <img src={categoryIcon} alt={pageTitle} style={{ width: '52px', height: '52px', objectFit: 'contain' }} />
-        ) : null}
-        <h1 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#222', margin: 0 }}>{pageTitle}</h1>
-    </div>
-</div>
+            {/* ── Hero ── */}
+            <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
+                <div className="relative w-full overflow-hidden rounded-xl">
+                    <img
+                        src="/images/DirectoryHeader.webp"
+                        alt={pageTitle}
+                        className="w-full object-cover"
+                        style={{ height: '250px', display: 'block' }}
+                        loading="eager"
+                        onError={e => { e.target.style.display = 'none'; }}
+                    />
+                    <div
+                        className="absolute inset-0"
+                        style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }}
+                    />
+                    <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
+                        <div className="flex items-center gap-3 mb-3">
+                            {categoryIcon && (
+                                <img src={categoryIcon} alt={pageTitle} style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+                            )}
+                            <h1
+                                style={{
+                                    color: '#000000',
+                                    fontFamily: "'Lora','Times New Roman',serif",
+                                    fontSize: '2rem',
+                                    fontWeight: 'bold',
+                                    margin: 0,
+                                    lineHeight: 1.2,
+                                }}
+                            >
+                                {pageTitle}
+                            </h1>
+                        </div>
+                        <Link
+                            to="/directory"
+                            style={{
+                                display: 'inline-block',
+                                backgroundColor: '#3D6B34',
+                                color: '#fff',
+                                fontSize: '0.8rem',
+                                fontWeight: 'bold',
+                                padding: '7px 18px',
+                                borderRadius: '6px',
+                                textDecoration: 'none',
+                                width: 'fit-content',
+                            }}
+                        >
+                            ← All Categories
+                        </Link>
+                    </div>
+                </div>
+            </div>
 
-            <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px 16px' }}>
+            <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
-                {/* Filter Bar */}
-                <div style={{ backgroundColor: '#fff', border: '1px solid #e0e0e0', borderRadius: '6px', padding: '20px 24px', marginBottom: '20px' }}>
-                    <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '16px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1', minWidth: '160px' }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#333' }}>Country</label>
+                {/* ── Filter card ── */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <div className="flex gap-4 flex-wrap items-end mb-4">
+                        <div className="flex flex-col gap-1.5 flex-1" style={{ minWidth: '160px' }}>
+                            <label className="text-xs font-semibold text-gray-600">Country</label>
                             <select
                                 value={selectedCountry}
-                                onChange={function(e) { setSelectedCountry(e.target.value); setSelectedState(''); }}
-                                style={{ padding: '8px 10px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '0.9rem' }}
+                                onChange={e => { setSelectedCountry(e.target.value); setSelectedState(''); }}
+                                className="border border-gray-300 rounded-lg text-sm text-gray-700"
+                                style={{ padding: '8px 10px' }}
                             >
                                 <option value="">Select Country</option>
-                                {countries.map(function(c) { return <option key={c} value={c}>{c}</option>; })}
+                                {countries.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1', minWidth: '160px' }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#333' }}>State</label>
+                        <div className="flex flex-col gap-1.5 flex-1" style={{ minWidth: '160px' }}>
+                            <label className="text-xs font-semibold text-gray-600">State / Province</label>
                             <select
                                 value={selectedState}
-                                onChange={function(e) { setSelectedState(e.target.value); }}
+                                onChange={e => setSelectedState(e.target.value)}
                                 disabled={states.length === 0}
-                                style={{ padding: '8px 10px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '0.9rem' }}
+                                className="border border-gray-300 rounded-lg text-sm text-gray-700"
+                                style={{ padding: '8px 10px' }}
                             >
                                 <option value="">Any</option>
-                                {states.map(function(s) { return <option key={s.StateIndex} value={s.name}>{s.name}</option>; })}
+                                {states.map(s => <option key={s.StateIndex} value={s.name}>{s.name}</option>)}
                             </select>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '2', minWidth: '200px' }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#333' }}>Business Name</label>
+                        <div className="flex flex-col gap-1.5" style={{ minWidth: '200px', flex: 2 }}>
+                            <label className="text-xs font-semibold text-gray-600">Business Name</label>
                             <input
                                 type="text"
                                 value={nameFilter}
-                                onChange={function(e) { setNameFilter(e.target.value); }}
-                                placeholder="Search by name"
-                                style={{ padding: '8px 10px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '0.9rem' }}
+                                onChange={e => setNameFilter(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleApplyFilters()}
+                                placeholder="Search by name…"
+                                className="border border-gray-300 rounded-lg text-sm text-gray-700"
+                                style={{ padding: '8px 10px' }}
                             />
                         </div>
                     </div>
                     <button
                         onClick={handleApplyFilters}
-                        style={{ backgroundColor: '#5a7a3a', color: 'white', border: 'none', borderRadius: '4px', padding: '9px 24px', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer' }}
+                        style={{
+                            backgroundColor: '#3D6B34',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '8px 24px',
+                            fontSize: '0.85rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                        }}
                     >
                         Apply Filters
                     </button>
                 </div>
 
-                {/* Results count */}
-                {filteredBusinesses.length > 0 && !loading ? (
-                    <div style={{ textAlign: 'right', fontSize: '0.9rem', color: '#555', marginBottom: '10px' }}>
-                        {startIndex + 1} - {Math.min(endIndex, filteredBusinesses.length)} of {filteredBusinesses.length} Results
-                    </div>
-                ) : null}
+                {/* ── Results heading ── */}
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-gray-900">
+                        {pageTitle} Listings
+                    </h2>
+                    {!loading && filteredBusinesses.length > 0 && (
+                        <span className="text-sm text-gray-400">
+                            {startIndex + 1}–{Math.min(startIndex + itemsPerPage, filteredBusinesses.length)} of {filteredBusinesses.length}
+                        </span>
+                    )}
+                </div>
 
-                {error ? <p style={{ color: 'red' }}>Error: {error}</p> : null}
-                {loading ? <p style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Loading...</p> : null}
+                {error && <p className="text-red-500 mb-4">Error: {error}</p>}
 
                 <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
 
-                {currentBusinesses.length > 0 ? (
-                    currentBusinesses.map(function(business, index) {
-                        return <BusinessCard key={startIndex + index} business={business} onProfileClick={handleProfileClick} />;
-                    })
+                {/* ── Business cards ── */}
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 animate-pulse" style={{ height: '130px' }}>
+                                <div className="shrink-0 bg-gray-200" style={{ width: '130px' }} />
+                                <div className="flex-1 px-5 py-4 space-y-2">
+                                    <div className="bg-gray-200 h-4 rounded w-3/4" />
+                                    <div className="bg-gray-200 h-3 rounded w-1/2" />
+                                    <div className="bg-gray-200 h-3 rounded w-2/3" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : currentBusinesses.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        {currentBusinesses.map((business, i) => (
+                            <BusinessCard key={startIndex + i} business={business} onProfileClick={handleProfileClick} />
+                        ))}
+                    </div>
                 ) : (
-                    !loading ? (
-                        <div style={{ textAlign: 'center', color: '#666', padding: '40px', backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #e0e0e0' }}>
-                            No businesses found for the selected filters.
-                        </div>
-                    ) : null
+                    <div className="bg-white rounded-xl border border-gray-200 text-center text-gray-500 py-16">
+                        No businesses found for the selected filters.
+                    </div>
                 )}
 
+                <div className="mt-6">
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+                </div>
 
-                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
             </div>
 
             <Footer />

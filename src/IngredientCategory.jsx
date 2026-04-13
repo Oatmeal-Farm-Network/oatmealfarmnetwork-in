@@ -6,6 +6,53 @@ import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+// Category hero images — matches IngredientKnowledgebase CATEGORY_META keys
+const HERO_IMAGES = {
+  'algae':                   '/images/algaeIngredientHeader.webp',
+  'beans':                   '/images/beansIngredientHeader.webp',
+  'berries':                 '/images/berriesIngredientHeader.webp',
+  'breads':                  '/images/breadsIngredientHeader.webp',
+  'candy':                   '/images/candyIngredientHeader.webp',
+  'cheeses':                 '/images/CheesesIngredientHeader.webp',
+  'chemicals':               '/images/ChemicalsIngredientHeader.webp',
+  'edible-flowers':          '/images/EdibleflowersIngredientHeader.webp',
+  'fish':                    '/images/FishIngredientHeader.webp',
+  'flours':                  '/images/FloursIngredientHeader.webp',
+  'fruits':                  '/images/FruitsIngredientHeader.webp',
+  'fungi':                   '/images/FungisIngredientHeader.webp',
+  'gourds':                  '/images/GourdsIngredientHeader.webp',
+  'grains':                  '/images/GrainsIngredientHeader.webp',
+  'herbs':                   '/images/herbsIngredientHeader.webp',
+  'juices':                  '/images/JuicesIngredientHeader.webp',
+  'legumes':                 '/images/LegumesIngredientHeader.webp',
+  'meats':                   '/images/MeatsIngredientHeader.webp',
+  'melons':                  '/images/MelonsIngredientHeader.webp',
+  'milks':                   '/images/MilksIngredientHeader.webp',
+  'mollusks-crustaceans':    '/images/mollusksandcrustaceansIngredientHeader.webp',
+  'nuts':                    '/images/nutsIngredientHeader.webp',
+  'oils':                    '/images/OilsIngredientHeader.webp',
+  'pastas':                  '/images/PastasIngredientHeader.webp',
+  'peppers':                 '/images/peppersIngredientHeader.webp',
+  'powders':                 '/images/PowdersIngredientHeader.webp',
+  'rice':                    '/images/RicesIngredientHeader.webp',
+  'roots':                   '/images/RootsIngredientHeader.webp',
+  'salts':                   '/images/SaltsIngredientHeader.webp',
+  'seeds':                   '/images/SeedsIngredientHeader.webp',
+  'spices':                  '/images/SpicesIngredientHeader.webp',
+  'sugars':                  '/images/SugarsIngredientHeader.webp',
+  'teas':                    '/images/TeasIngredientHeader.webp',
+  'tubers':                  '/images/TubersIngredientHeader.webp',
+  'vegetables':              '/images/VegetablesIngredientHeader.webp',
+};
+
+function resolveHeroImg(category, catHeader) {
+  if (catHeader) return catHeader;
+  if (HERO_IMAGES[category]) return HERO_IMAGES[category];
+  // Fallback: try capitalised convention
+  const cap = category.replace(/-/g, '');
+  return '/images/' + cap.charAt(0).toUpperCase() + cap.slice(1) + 'IngredientHeader.webp';
+}
+
 // Resolve image src — prefer DB IngredientImage, fall back to local convention
 function imgSrc(ingredient) {
   const img = ingredient.image || ingredient.IngredientImage;
@@ -13,107 +60,64 @@ function imgSrc(ingredient) {
     if (img.startsWith('http') || img.startsWith('/')) return img;
     return '/images/' + img;
   }
-  // convention fallback
   return '/images/' + (ingredient.name || ingredient.IngredientName || '').replace(/ /g, '') + '.webp';
 }
 
-function IngredientCard({ ing, category }) {
-  const [imgErr, setImgErr] = useState(false);
+const EAGER_COUNT = 4;
+
+function IngredientCard({ ing, category, index }) {
   const src = imgSrc(ing);
   const name = ing.name || ing.IngredientName || '';
   const description = ing.description || ing.IngredientDescription || '';
   const hasVarieties = ing.variety_count > 0;
+  const linkTo = hasVarieties
+    ? `/ingredient-knowledgebase/${category}/varieties/${ing.id}`
+    : `/ingredient-knowledgebase/${category}/${ing.id || ing.IngredientID}`;
 
   return (
-    <div style={{
-      background: '#fff',
-      borderRadius: 12,
-      border: '1px solid #e5e7eb',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      transition: 'box-shadow 0.15s, transform 0.15s',
-    }}
-      onMouseEnter={e => {
-        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.10)';
-        e.currentTarget.style.transform = 'translateY(-2px)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.boxShadow = 'none';
-        e.currentTarget.style.transform = 'translateY(0)';
-      }}
-    >
-      {/* Image — linked if has varieties, otherwise links to detail page */}
-      {(() => {
-        const imgContent = !imgErr ? (
-          <img
-            src={src}
-            alt={name}
-            onError={() => setImgErr(true)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.2s' }}
-          />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
-            fontSize: '2.5rem',
-          }}>
-            🥬
-          </div>
-        );
+    <div className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200">
+      {/* Left: square image */}
+      <Link to={linkTo} className="shrink-0 overflow-hidden" style={{ width: '155px', height: '155px' }}>
+        <img
+          src={src}
+          alt={name}
+          width="155"
+          height="155"
+          loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
+          decoding={index < EAGER_COUNT ? 'sync' : 'async'}
+          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          onError={e => { e.target.style.display = 'none'; }}
+        />
+      </Link>
 
-        const containerStyle = {
-          width: '100%', aspectRatio: '4/3', background: '#f3f4f6',
-          overflow: 'hidden', flexShrink: 0, display: 'block',
-        };
-
-        const linkTo = hasVarieties
-          ? '/ingredient-knowledgebase/' + category + '/varieties/' + ing.id
-          : '/ingredient-knowledgebase/' + category + '/' + (ing.id || ing.IngredientID);
-
-        return (
+      {/* Right: text */}
+      <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
+        <div>
           <Link
             to={linkTo}
-            style={{ ...containerStyle, cursor: 'pointer' }}
-            onMouseEnter={e => { const img = e.currentTarget.querySelector('img'); if (img) img.style.transform = 'scale(1.04)'; }}
-            onMouseLeave={e => { const img = e.currentTarget.querySelector('img'); if (img) img.style.transform = 'scale(1)'; }}
-          >
-            {imgContent}
-          </Link>
-        );
-      })()}
-
-      {/* Body */}
-      <div style={{ padding: '0.75rem 0.875rem 0.875rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-        {hasVarieties ? (
-          <Link
-            to={'/ingredient-knowledgebase/' + category + '/varieties/' + ing.id}
-            style={{
-              color: '#3D6B34', fontWeight: 600, fontSize: '0.875rem',
-              textDecoration: 'none', lineHeight: 1.3,
-            }}
-            onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
-            onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+            className="font-bold text-sm hover:underline"
+            style={{ color: '#3D6B34' }}
           >
             {name}
-            <span style={{ fontSize: '0.72rem', color: '#6b7280', fontWeight: 400, marginLeft: '0.35rem' }}>
-              {ing.variety_count} {ing.variety_count === 1 ? 'variety' : 'varieties'} →
-            </span>
           </Link>
-        ) : (
-          <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827', lineHeight: 1.3 }}>{name}</span>
-        )}
-
-        {description && (
-          <p style={{
-            margin: 0, fontSize: '0.78rem', color: '#6b7280',
-            lineHeight: 1.5, flex: 1,
-            display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-          }}>
-            {description}
-          </p>
-        )}
+          {hasVarieties && (
+            <p className="text-xs font-semibold mt-0.5 mb-2" style={{ color: '#819360' }}>
+              {ing.variety_count} {ing.variety_count === 1 ? 'Variety' : 'Varieties'}
+            </p>
+          )}
+          {description && (
+            <p className="text-xs text-gray-600 leading-relaxed" style={{
+              display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            }}>
+              {description}
+            </p>
+          )}
+        </div>
+        <div className="mt-3">
+          <Link to={linkTo} className="text-xs font-bold hover:underline" style={{ color: '#3D6B34' }}>
+            EXPLORE →
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -121,15 +125,14 @@ function IngredientCard({ ing, category }) {
 
 export default function IngredientCategory() {
   const { category } = useParams();
-  const [catName, setCatName] = useState('');
-  const [catHeader, setCatHeader] = useState('');
+  const [catName, setCatName]       = useState('');
+  const [catHeader, setCatHeader]   = useState('');
   const [ingredients, setIngredients] = useState(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch]         = useState('');
 
   useEffect(() => {
     window.scrollTo(0, 0);
-
-    fetch(API_URL + '/api/ingredient-knowledgebase/category/' + category)
+    fetch(`${API_URL}/api/ingredient-knowledgebase/category/${category}`)
       .then(r => r.json())
       .then(data => {
         setCatName(data.category_name || category);
@@ -150,38 +153,83 @@ export default function IngredientCategory() {
     : null;
 
   const displayName = catName || category;
+  const heroImg = resolveHeroImg(category, catHeader);
+
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title={`${displayName} Ingredients | Ingredient Knowledgebase`}
         description={`Browse ${displayName.toLowerCase()} ingredients in the Oatmeal Farm Network knowledgebase. Find flavor profiles, processing methods, varieties, and culinary uses.`}
       />
       <Header />
 
-      <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '0 1rem 3rem' }}>
+      {/* ── Hero ── */}
+      <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
+        <div className="relative w-full overflow-hidden rounded-xl">
+          <img
+            src={heroImg}
+            alt={displayName}
+            className="w-full object-cover"
+            style={{ height: '250px', display: 'block' }}
+            loading="eager"
+            onError={e => {
+              const lower = '/images/' + category.replace(/-/g, '').toLowerCase() + 'IngredientHeader.webp';
+              if (e.target.src !== window.location.origin + lower) {
+                e.target.src = lower;
+              } else {
+                e.target.src = '/images/FruitsIngredientHeader.webp';
+              }
+            }}
+          />
+          {/* Gradient overlay */}
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }}
+          />
+          {/* Text */}
+          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
+            <h1
+              style={{
+                color: '#000000',
+                fontFamily: "'Lora','Times New Roman',serif",
+                fontSize: '2rem',
+                fontWeight: 'bold',
+                margin: '0 0 12px',
+                lineHeight: 1.2,
+              }}
+            >
+              {displayName}
+            </h1>
+            <div>
+              <Link
+                to="/ingredient-knowledgebase"
+                style={{
+                  display: 'inline-block',
+                  backgroundColor: '#3D6B34',
+                  color: '#fff',
+                  fontSize: '0.8rem',
+                  fontWeight: 'bold',
+                  padding: '7px 18px',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                }}
+              >
+                ← All Categories
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {/* Header image */}
-        <img
-          src={catHeader || '/images/' + category.replace(/-/g, '').charAt(0).toUpperCase() + category.replace(/-/g, '').slice(1) + 'IngredientHeader.webp'}
-          alt={catName}
-          className="w-full object-cover mb-5"
-          style={{ height: '200px', objectPosition: 'center', display: 'block' }}
-          onError={e => {
-            const lower = '/images/' + category.replace(/-/g, '').toLowerCase() + 'IngredientHeader.webp';
-            if (e.target.src !== window.location.origin + lower) {
-              e.target.src = lower;
-            } else {
-              e.target.style.display = 'none';
-            }
-          }}
-        />
+      {/* ── Content ── */}
+      <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
-        {/* Title + search */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>
-            {catName} Ingredient Types
+        {/* Section heading + search */}
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
+          <h2 className="text-lg font-bold text-gray-900">
+            {displayName} Ingredient Types
             {filtered && (
-              <span style={{ fontSize: '0.8rem', fontWeight: 400, color: '#9ca3af', marginLeft: '0.6rem' }}>
+              <span className="text-sm font-normal text-gray-400 ml-2">
                 {filtered.length} ingredient{filtered.length !== 1 ? 's' : ''}
               </span>
             )}
@@ -193,32 +241,27 @@ export default function IngredientCategory() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search ingredients…"
-              style={{
-                padding: '0.4rem 0.75rem', border: '1px solid #d1d5db', borderRadius: 8,
-                fontSize: '0.85rem', outline: 'none', width: 220, color: '#374151',
-              }}
+              className="border border-gray-300 rounded-lg text-sm text-gray-700 outline-none"
+              style={{ padding: '0.4rem 0.75rem', width: 220 }}
             />
           )}
         </div>
 
         {/* Grid */}
         {filtered === null ? (
-          <div style={{ textAlign: 'center', color: '#9ca3af', padding: '4rem 0', fontSize: '0.95rem' }}>Loading…</div>
+          <div className="text-center text-gray-400 py-16">Loading…</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#6b7280', padding: '4rem 0', fontSize: '0.95rem' }}>
+          <div className="text-center text-gray-500 py-16">
             {search ? `No results for "${search}"` : 'No ingredients found.'}
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gap: '1.25rem',
-          }}>
-            {filtered.map(ing => (
-              <IngredientCard key={ing.id || ing.IngredientID} ing={ing} category={category} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {filtered.map((ing, index) => (
+              <IngredientCard key={ing.id || ing.IngredientID} ing={ing} category={category} index={index} />
             ))}
           </div>
         )}
+
       </div>
 
       <Footer />

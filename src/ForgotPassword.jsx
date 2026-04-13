@@ -54,7 +54,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
 
       <section className="py-16 px-4">

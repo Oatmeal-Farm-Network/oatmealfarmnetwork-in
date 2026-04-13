@@ -9,6 +9,7 @@ export default function AccountHome() {
   const BusinessID = SearchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('PeopleID');
   const [Business, setBusiness] = useState(null);
+  const [features, setFeatures] = useState(null); // null = loading
   const [Error, setError] = useState(false);
 
   useEffect(() => {
@@ -21,16 +22,39 @@ export default function AccountHome() {
       });
   }, [BusinessID]);
 
+  useEffect(() => {
+    if (!BusinessID) return;
+    fetch(`${API_URL}/api/company/features?business_id=${BusinessID}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(rows => {
+        const map = {};
+        rows.forEach(f => { map[f.feature_key] = f.is_enabled; });
+        setFeatures(map);
+      })
+      .catch(() => setFeatures({}));
+  }, [BusinessID]);
+
   if (Error) return <div className="p-8 text-red-600">Error loading account.</div>;
-  if (!Business) return <div className="p-8 text-gray-500">Loading...</div>;
+  if (!Business || features === null) return <div className="p-8 text-gray-500">Loading...</div>;
 
   const BT = Business.BusinessTypeID;
+  // null = still loading (fail-open); otherwise check the map
+  const on = (key) => features === null || features[key] === true;
 
-  // Sections shown based on BusinessTypeID
+  // Sections gated by BOTH subscription feature AND business type where applicable
   const sections = [
 
-    // Precision Ag — Farm/Ranch only
-    BT === 8 && {
+    on('blog') && {
+      icon: '/icons/Blog.png',
+      label: 'Blog',
+      links: [
+        { to: `/blog/manage?BusinessID=${BusinessID}`, label: 'Manage Blog' },
+        { to: `/blog/manage?BusinessID=${BusinessID}&view=new`, label: 'Add Post' },
+        { to: `/blog/authors/manage?BusinessID=${BusinessID}`, label: 'Authors' },
+      ],
+    },
+
+    on('precision_ag') && BT === 8 && {
       icon: '/icons/PrecisionAg.svg',
       label: 'Precision Ag',
       links: [
@@ -43,8 +67,7 @@ export default function AccountHome() {
       ],
     },
 
-    // Livestock — Farm/Ranch only
-    BT === 8 && {
+    on('livestock') && BT === 8 && {
       icon: '/icons/Livestock.svg',
       label: 'Livestock',
       links: [
@@ -55,8 +78,7 @@ export default function AccountHome() {
       ],
     },
 
-    // Farm 2 Table — food/produce sellers
-    [8, 9, 10, 11, 14, 19, 22, 23, 26, 29, 31, 33, 34].includes(BT) && {
+    on('farm_2_table') && [8, 9, 10, 11, 14, 19, 22, 23, 26, 29, 31, 33, 34].includes(BT) && {
       icon: '/icons/produce.webp',
       label: 'Farm 2 Table',
       links: [
@@ -73,8 +95,7 @@ export default function AccountHome() {
       ],
     },
 
-    // Products — physical product sellers
-    [8, 10, 11, 14, 15, 16, 18, 19, 24, 25, 26, 29, 31, 33, 34].includes(BT) && {
+    on('products') && [8, 10, 11, 14, 15, 16, 18, 19, 24, 25, 26, 29, 31, 33, 34].includes(BT) && {
       icon: '/icons/Products.svg',
       label: 'Products',
       links: [
@@ -83,8 +104,7 @@ export default function AccountHome() {
       ],
     },
 
-    // Services — service providers manage; all can browse
-    {
+    on('services') && {
       icon: '/icons/Services.svg',
       label: 'Services',
       links: [
@@ -99,8 +119,7 @@ export default function AccountHome() {
       ],
     },
 
-    // Events — all
-    {
+    on('events') && {
       icon: '/icons/Assoc-events-icon.svg',
       label: 'Events',
       links: [
@@ -110,8 +129,7 @@ export default function AccountHome() {
       ],
     },
 
-    // Properties — Farm/Ranch and Real Estate Agents
-    [8, 30].includes(BT) && {
+    on('properties') && [8, 30].includes(BT) && {
       icon: '/icons/Real-Estate.svg',
       label: 'Properties',
       links: [
@@ -120,8 +138,7 @@ export default function AccountHome() {
       ],
     },
 
-    // Associations — Agricultural Associations only
-    BT === 1 && {
+    on('associations') && BT === 1 && {
       icon: '/icons/Assoc-administration-icon.svg',
       label: 'Associations',
       links: [
@@ -130,8 +147,7 @@ export default function AccountHome() {
       ],
     },
 
-    // My Website — all
-    {
+    on('my_website') && {
       icon: '/icons/Website.svg',
       label: 'My Website',
       links: [

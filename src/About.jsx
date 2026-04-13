@@ -6,7 +6,7 @@ import PageMeta from './PageMeta';
 
 const About = () => {
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <PageMeta
         title="About Oatmeal Farm Network | Our Mission & Vision"
         description="Learn how Oatmeal Farm Network connects farmers, buyers, and food businesses using AI-powered tools, comprehensive knowledgebases, and a direct-to-market platform."
