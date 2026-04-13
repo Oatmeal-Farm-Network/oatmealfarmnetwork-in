@@ -100,11 +100,15 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
         rows.forEach(f => { map[f.feature_key] = f.is_enabled; });
         setFeatures(map);
       })
-      .catch(() => setFeatures({}));
+      .catch(() => setFeatures({})); // on error show nothing locked
   }, [BusinessID]);
 
-  // Returns true while loading (fail-open) or when the feature is enabled
-  const on = (key) => features === null || features[key] === true;
+  // When BusinessID is present, wait for features to load (fail-closed during loading
+  // avoids the flash of hidden sections). Without BusinessID, fail-open.
+  const on = (key) => {
+    if (features === null) return !BusinessID; // loading: hide if we have a business to check
+    return features[key] === true;
+  };
 
   // Auto-expand "My Website" whenever the user is on the website builder
   useEffect(() => {

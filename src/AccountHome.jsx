@@ -54,6 +54,7 @@ export default function AccountHome() {
       ],
     },
 
+    // Precision Ag — Farm/Ranch only
     on('precision_ag') && BT === 8 && {
       icon: '/icons/PrecisionAg.svg',
       label: 'Precision Ag',
@@ -67,6 +68,7 @@ export default function AccountHome() {
       ],
     },
 
+    // Livestock — Farm/Ranch only
     on('livestock') && BT === 8 && {
       icon: '/icons/Livestock.svg',
       label: 'Livestock',
@@ -78,6 +80,7 @@ export default function AccountHome() {
       ],
     },
 
+    // Farm 2 Table — food/produce sellers
     on('farm_2_table') && [8, 9, 10, 11, 14, 19, 22, 23, 26, 29, 31, 33, 34].includes(BT) && {
       icon: '/icons/produce.webp',
       label: 'Farm 2 Table',
@@ -95,6 +98,7 @@ export default function AccountHome() {
       ],
     },
 
+    // Products — physical product sellers
     on('products') && [8, 10, 11, 14, 15, 16, 18, 19, 24, 25, 26, 29, 31, 33, 34].includes(BT) && {
       icon: '/icons/Products.svg',
       label: 'Products',
@@ -104,6 +108,7 @@ export default function AccountHome() {
       ],
     },
 
+    // Services — service providers manage; all can browse
     on('services') && {
       icon: '/icons/Services.svg',
       label: 'Services',
@@ -119,6 +124,7 @@ export default function AccountHome() {
       ],
     },
 
+    // Events — all
     on('events') && {
       icon: '/icons/Assoc-events-icon.svg',
       label: 'Events',
@@ -129,6 +135,7 @@ export default function AccountHome() {
       ],
     },
 
+    // Properties — Farm/Ranch and Real Estate Agents
     on('properties') && [8, 30].includes(BT) && {
       icon: '/icons/Real-Estate.svg',
       label: 'Properties',
@@ -138,6 +145,7 @@ export default function AccountHome() {
       ],
     },
 
+    // Associations — Agricultural Associations only
     on('associations') && BT === 1 && {
       icon: '/icons/Assoc-administration-icon.svg',
       label: 'Associations',
@@ -147,6 +155,7 @@ export default function AccountHome() {
       ],
     },
 
+    // My Website — all
     on('my_website') && {
       icon: '/icons/Website.svg',
       label: 'My Website',
