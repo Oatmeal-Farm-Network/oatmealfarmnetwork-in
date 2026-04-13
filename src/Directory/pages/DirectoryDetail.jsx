@@ -49,7 +49,7 @@ function SocialLinks(props) {
         { url: fixUrl(business.BusinessFacebook),     icon: '/icons/facebook.png',         alt: 'Facebook' },
         { url: fixUrl(business.BusinessX),            icon: '/icons/TwitterX.png',          alt: 'Twitter/X' },
         { url: fixUrl(business.BusinessInstagram),    icon: '/icons/instagramicon.png',     alt: 'Instagram' },
-        { url: fixUrl(business.BusinessLinkedIn),     icon: '/icons/linkedin.png',          alt: 'LinkedIn' },
+        { url: fixUrl(business.BusinessLinkedIn),     icon: '/icons/LinkedIcon.png',        alt: 'LinkedIn' },
         { url: fixUrl(business.BusinessPinterest),    icon: '/icons/PinterestLogo.png',     alt: 'Pinterest' },
         { url: fixUrl(business.BusinessYouTube),      icon: '/icons/YouTube.jpg',           alt: 'YouTube' },
         { url: fixUrl(business.BusinessTruthSocial),  icon: '/icons/Truthsocial.png',       alt: 'Truth Social' },
@@ -179,7 +179,7 @@ const DirectoryDetail = function() {
     var [appliedCountry, setAppliedCountry] = useState(backState?.selectedCountry || '');
     var [appliedState, setAppliedState] = useState(backState?.selectedState || '');
     var [appliedName, setAppliedName] = useState(backState?.nameFilter || '');
-    var [loading, setLoading] = useState(false);
+    var [loading, setLoading] = useState(true);
     var [error, setError] = useState(null);
     var [currentPage, setCurrentPage] = useState(1);
     var itemsPerPage = 10;
@@ -209,25 +209,6 @@ const DirectoryDetail = function() {
     }, []);
 
     useEffect(function() {
-        if (countries.length > 0 && !selectedCountry && !backState?.selectedCountry) {
-            fetch('https://ipapi.co/json/')
-                .then(function(r) { return r.ok ? r.json() : null; })
-                .then(function(data) {
-                    if (!data) return;
-                    var match = countries.find(function(c) {
-                        return c.toLowerCase() === (data.country_name || '').toLowerCase()
-                            || (data.country_code === 'US' && c === 'USA');
-                    });
-                    if (match) {
-                        setSelectedCountry(match);
-                        setAppliedCountry(match);
-                    }
-                })
-                .catch(function() {});
-        }
-    }, [countries]);
-
-    useEffect(function() {
         if (!selectedCountry) { setStates([]); setSelectedState(''); return; }
         fetch(API_ENDPOINTS.STATES + '?country=' + encodeURIComponent(selectedCountry))
             .then(function(r) { return r.ok ? r.json() : []; })
@@ -236,12 +217,10 @@ const DirectoryDetail = function() {
     }, [selectedCountry]);
 
     useEffect(function() {
-        if (!appliedCountry) { setBusinesses([]); return; }
         setLoading(true);
         setError(null);
-        var url = API_ENDPOINTS.BUSINESSES
-            + '?country=' + encodeURIComponent(appliedCountry)
-            + '&BusinessTypeID=' + encodeURIComponent(businessType);
+        var url = API_ENDPOINTS.BUSINESSES + '?BusinessTypeID=' + encodeURIComponent(businessType);
+        if (appliedCountry) url += '&country=' + encodeURIComponent(appliedCountry);
         if (appliedState) url += '&state=' + encodeURIComponent(appliedState);
         fetch(url)
             .then(function(r) {
@@ -367,18 +346,13 @@ const DirectoryDetail = function() {
                         return <BusinessCard key={startIndex + index} business={business} onProfileClick={handleProfileClick} />;
                     })
                 ) : (
-                    !loading && appliedCountry ? (
+                    !loading ? (
                         <div style={{ textAlign: 'center', color: '#666', padding: '40px', backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #e0e0e0' }}>
                             No businesses found for the selected filters.
                         </div>
                     ) : null
                 )}
 
-                {!appliedCountry && !loading ? (
-                    <div style={{ textAlign: 'center', color: '#666', padding: '40px', backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #e0e0e0' }}>
-                        Please select a country and click Apply Filters to view businesses.
-                    </div>
-                ) : null}
 
                 <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
             </div>

@@ -353,18 +353,6 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
-            {on('audio_settings') && (
-              <NavSection
-                icon="/icons/Gears.webp"
-                label="Settings"
-                expanded={Expanded}
-                isOpen={OpenSections['Settings'] || false}
-                onToggle={() => toggleSection('Settings')}
-              >
-                <NavChild to={`/account/audio-settings?BusinessID=${BusinessID}`} label="🎙 Audio Settings" />
-              </NavSection>
-            )}
-
           </nav>
         </div>
 
