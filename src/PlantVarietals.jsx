@@ -31,7 +31,7 @@ export default function PlantVarietals() {
   const water = (min, max) => (min == null || max == null) ? 'N/A' : `${min} - ${max}`;
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <PageMeta
         title={plantName ? `${plantName} Varietals | Plant Knowledgebase` : 'Plant Varietals | Plant Knowledgebase'}
         description={plantName ? `Browse all known varietals of ${plantName} including growing requirements, soil preferences, water needs, and nutritional profiles.` : 'Browse plant varietals in the Oatmeal Farm Network plant knowledgebase.'}

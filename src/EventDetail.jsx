@@ -25,7 +25,7 @@ export default function EventDetail() {
   }, [eventId]);
 
   if (loading) return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <div className="max-w-4xl mx-auto px-4 py-16 text-center text-gray-400">Loading…</div>
       <Footer />
@@ -33,7 +33,7 @@ export default function EventDetail() {
   );
 
   if (!ev) return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
         <p className="text-gray-500 mb-4">Event not found.</p>

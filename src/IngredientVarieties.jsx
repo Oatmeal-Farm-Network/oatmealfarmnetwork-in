@@ -26,7 +26,7 @@ export default function IngredientVarieties() {
   }, [ingredientId]);
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <PageMeta
         title={ingredientName ? `${ingredientName} Varieties | Ingredient Knowledgebase` : 'Ingredient Varieties | Ingredient Knowledgebase'}
         description={ingredientName ? `Browse all known varieties of ${ingredientName} including flavor profiles, sourcing information, and nutritional data.` : 'Browse ingredient varieties in the Oatmeal Farm Network knowledgebase.'}

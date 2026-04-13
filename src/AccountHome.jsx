@@ -9,8 +9,8 @@ export default function AccountHome() {
   const BusinessID = SearchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('PeopleID');
   const [Business, setBusiness] = useState(null);
+  const [features, setFeatures] = useState(null); // null = loading
   const [Error, setError] = useState(false);
-  const [features, setFeatures] = useState(null); // null = loading (fail-open)
 
   useEffect(() => {
     fetch(`${API_URL}/auth/account-home?BusinessID=${BusinessID}`)
@@ -34,20 +34,25 @@ export default function AccountHome() {
       .catch(() => setFeatures({}));
   }, [BusinessID]);
 
-  // Wait for features to load before showing/hiding sections.
-  // Fail-closed during loading (BusinessID present) to avoid flash of unlicensed content.
-  const on = (key) => {
-    if (features === null) return !BusinessID;
-    return features[key] === true;
-  };
-
   if (Error) return <div className="p-8 text-red-600">Error loading account.</div>;
-  if (!Business) return <div className="p-8 text-gray-500">Loading...</div>;
+  if (!Business || features === null) return <div className="p-8 text-gray-500">Loading...</div>;
 
   const BT = Business.BusinessTypeID;
+  // null = still loading (fail-open); otherwise check the map
+  const on = (key) => features === null || features[key] === true;
 
-  // Sections shown based on BusinessTypeID
+  // Sections gated by BOTH subscription feature AND business type where applicable
   const sections = [
+
+    on('blog') && {
+      icon: '/icons/Blog.png',
+      label: 'Blog',
+      links: [
+        { to: `/blog/manage?BusinessID=${BusinessID}`, label: 'Manage Blog' },
+        { to: `/blog/manage?BusinessID=${BusinessID}&view=new`, label: 'Add Post' },
+        { to: `/blog/authors/manage?BusinessID=${BusinessID}`, label: 'Authors' },
+      ],
+    },
 
     // Precision Ag — Farm/Ranch only
     on('precision_ag') && BT === 8 && {

@@ -204,6 +204,7 @@ const Header = () => {
                     <div className="absolute top-full left-0 mt-2 w-52 bg-white rounded shadow-lg z-50 overflow-hidden">
                       <Link to={`/accounts?PeopleID=${user?.peopleId}`} onClick={() => setAcctOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Accounts</Link>
                       <Link to={`/accounts/new?PeopleID=${user?.peopleId}`} onClick={() => setAcctOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Add Account</Link>
+                      <Link to="/account/settings" onClick={() => setAcctOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Settings</Link>
                       {businesses.length > 0 && (
                         <>
                           <hr className="my-1 border-gray-200" />
@@ -299,6 +300,7 @@ const Header = () => {
                   <ul className="space-y-2">
                     <li><Link to={`/accounts?PeopleID=${user?.peopleId}`} onClick={() => setIsOpen(false)} className="nav-link block">Accounts</Link></li>
                     <li><Link to={`/accounts/new?PeopleID=${user?.peopleId}`} onClick={() => setIsOpen(false)} className="nav-link block">Add Account</Link></li>
+                    <li><Link to="/account/settings" onClick={() => setIsOpen(false)} className="nav-link block">Settings</Link></li>
                     {businesses.length > 0 && (
                       <>
                         <hr className="border-white/20 my-1" />

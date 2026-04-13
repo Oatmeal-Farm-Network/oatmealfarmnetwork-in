@@ -164,18 +164,18 @@ const BusinessProfile = () => {
     });
 
     const socialLinks = [
-        { key: 'Facebook',  label: 'Facebook',  icon: <FaFacebookF />,  base: 'https://facebook.com/',  color: 'bg-[#1877F2]' },
-        { key: 'Pinterest', label: 'Pinterest', icon: <FaPinterestP />, base: 'https://pinterest.com/', color: 'bg-[#E60023]' },
-        { key: 'Twitter',   label: 'Twitter',   icon: <FaXTwitter />,   base: 'https://twitter.com/',   color: 'bg-black' },
-        { key: 'Instagram', label: 'Instagram', icon: <FaInstagram />,  base: 'https://instagram.com/', color: 'bg-[#E1306C]' },
-        { key: 'LinkedIn',  label: 'LinkedIn',  icon: <FaLinkedinIn />, base: 'https://linkedin.com/company/', color: 'bg-[#0A66C2]' },
-        { key: 'YouTube',   label: 'YouTube',   icon: <FaYoutube />,    base: 'https://youtube.com/',   color: 'bg-[#FF0000]' },
-        { key: 'Website',   label: 'Website',   icon: <FaGlobe />,      base: '',                       color: 'bg-[#4d734d]' },
+        { key: 'BusinessFacebook',  label: 'Facebook',  icon: <FaFacebookF />,  base: 'https://facebook.com/',  color: 'bg-[#1877F2]' },
+        { key: 'BusinessPinterest', label: 'Pinterest', icon: <FaPinterestP />, base: 'https://pinterest.com/', color: 'bg-[#E60023]' },
+        { key: 'BusinessX',         label: 'Twitter',   icon: <FaXTwitter />,   base: 'https://twitter.com/',   color: 'bg-black' },
+        { key: 'BusinessInstagram', label: 'Instagram', icon: <FaInstagram />,  base: 'https://instagram.com/', color: 'bg-[#E1306C]' },
+        { key: 'BusinessLinkedIn',  label: 'LinkedIn',  icon: <FaLinkedinIn />, base: 'https://linkedin.com/company/', color: 'bg-[#0A66C2]' },
+        { key: 'BusinessYouTube',   label: 'YouTube',   icon: <FaYoutube />,    base: 'https://youtube.com/',   color: 'bg-[#FF0000]' },
+        { key: 'BusinessWebsite',   label: 'Website',   icon: <FaGlobe />,      base: '',                       color: 'bg-[#4d734d]' },
     ];
 
     if (!business) {
         return (
-            <div className="min-h-screen bg-white font-sans">
+            <div className="min-h-screen font-sans">
                 <Header />
                 <header className="header">
                     <div className="logo-container">
@@ -199,10 +199,10 @@ const BusinessProfile = () => {
         );
     }
 
-    const fullAddress = [business.Address, business.City, business.State, business.ZipCode, business.Country].filter(Boolean).join(', ');
+    const fullAddress = [business.AddressStreet, business.AddressCity, business.AddressState, business.AddressZip, business.AddressCountry].filter(Boolean).join(', ');
 
     return (
-        <div className="min-h-screen bg-white font-sans">
+        <div className="min-h-screen font-sans">
             <Header />
 
             {/* Main container */}
@@ -225,100 +225,67 @@ const BusinessProfile = () => {
                     {/* LEFT COLUMN */}
                     <div className="flex-1 space-y-6">
 
-                        {/* Profile image + contact info side by side */}
+                        {/* Business Information — top card, includes profile image + social icons */}
                         <div className="bg-white rounded-2xl shadow-sm p-6 flex flex-col sm:flex-row gap-6">
                             <img
                                 src={business.ProfileImage || photoNotAvailable}
                                 alt={business.BusinessName}
                                 className="w-40 h-40 object-cover rounded-xl border border-gray-200 flex-shrink-0"
                             />
-                            <div className="flex-1 space-y-3">
-                                {(business.Phone || business.Website) && (
-                                    <div>
-                                        <h2 className="text-lg font-bold text-[#4d734d] mb-2">Contact Information</h2>
-                                        {business.Phone && (
-                                            <p className="text-sm text-gray-700">
-                                                <span className="font-semibold">Phone: </span>
-                                                <a href={`tel:${business.Phone}`} className="text-[#4d734d] hover:underline">{business.Phone}</a>
-                                            </p>
-                                        )}
-                                        {business.Website && (
-                                            <p className="text-sm text-gray-700 mt-1">
-                                                <span className="font-semibold">Website: </span>
-                                                <a href={business.Website} target="_blank" rel="noopener noreferrer" className="text-[#4d734d] hover:underline break-all">{business.Website}</a>
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
+                            <div className="flex-1 min-w-0">
+                                <h2 className="text-lg font-bold text-[#4d734d] mb-3">Business Information</h2>
+                                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-gray-700 mb-4">
+                                    {[
+                                        ['Business Name', business.BusinessName],
+                                        ['Business Type', DIRECTORY_TYPE_TO_BUSINESS_TYPE[directoryType] || 'Business'],
+                                        ['Phone', business.BusinessPhone
+                                            ? <a href={`tel:${business.BusinessPhone}`} className="text-[#4d734d] hover:underline">{business.BusinessPhone}</a>
+                                            : null],
+                                        ['Website', business.BusinessWebsite
+                                            ? <a href={business.BusinessWebsite} target="_blank" rel="noopener noreferrer" className="text-[#4d734d] hover:underline break-all">{business.BusinessWebsite}</a>
+                                            : null],
+                                        ['Address', business.AddressStreet],
+                                        ['City', business.AddressCity],
+                                        ['State', business.AddressState],
+                                        ['Zip Code', business.AddressZip],
+                                        ['Country', business.AddressCountry],
+                                    ].filter(([, val]) => val).map(([label, val]) => (
+                                        <div key={label} className="flex flex-col">
+                                            <dt className="font-semibold text-gray-500 text-xs uppercase tracking-wide">{label}</dt>
+                                            <dd className="mt-0.5">{val}</dd>
+                                        </div>
+                                    ))}
+                                </dl>
 
-                                {/* Social icons */}
-                                <div>
-                                    <h2 className="text-lg font-bold text-[#4d734d] mb-2">Connect With Us</h2>
+                                {/* Social icons — icon only */}
+                                {socialLinks.some(({ key, base }) => {
+                                    const val = business[key];
+                                    return val && (val.startsWith('http') ? val : `${base}${val}`);
+                                }) && (
                                     <div className="flex flex-wrap gap-2">
                                         {socialLinks.map(({ key, label, icon, base, color }) => {
                                             const val = business[key];
                                             const href = val ? (val.startsWith('http') ? val : `${base}${val}`) : null;
-                                            return href ? (
-                                                <a key={key} href={href} target="_blank" rel="noopener noreferrer"
-                                                    className={`flex items-center gap-1.5 ${color} text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-80 transition-opacity`}>
-                                                    {icon} {label}
+                                            if (!href) return null;
+                                            return (
+                                                <a key={key} href={href} target="_blank" rel="noopener noreferrer" title={label}
+                                                    className={`flex items-center justify-center ${color} text-white rounded-lg hover:opacity-80 transition-opacity`}
+                                                    style={{ width: '32px', height: '32px', fontSize: '0.9rem' }}>
+                                                    {icon}
                                                 </a>
-                                            ) : (
-                                                <span key={key}
-                                                    className="flex items-center gap-1.5 bg-gray-200 text-gray-400 text-xs font-semibold px-3 py-1.5 rounded-full cursor-not-allowed">
-                                                    {icon} {label}
-                                                </span>
                                             );
                                         })}
                                     </div>
-                                </div>
+                                )}
                             </div>
-                        </div>
-                        {/* END profile image + contact */}
-
-                        {/* Business Information */}
-                        <div className="bg-white rounded-2xl shadow-sm p-6">
-                            <h2 className="text-lg font-bold text-[#4d734d] mb-4">Business Information</h2>
-                            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm text-gray-700">
-                                {[
-                                    ['Business Name', business.BusinessName],
-                                    ['Business Type', DIRECTORY_TYPE_TO_BUSINESS_TYPE[directoryType] || 'Business'],
-                                    ['Address', business.Address],
-                                    ['City', business.City],
-                                    ['State', business.State],
-                                    ['Zip Code', business.ZipCode],
-                                    ['Country', business.Country],
-                                ].filter(([, val]) => val).map(([label, val]) => (
-                                    <div key={label} className="flex flex-col">
-                                        <dt className="font-semibold text-gray-500 text-xs uppercase tracking-wide">{label}</dt>
-                                        <dd className="mt-0.5">{val}</dd>
-                                    </div>
-                                ))}
-                            </dl>
                         </div>
                         {/* END business information */}
 
-                        {/* Location */}
-                        {fullAddress && (
+                        {/* About */}
+                        {business.BusinessDescription && (
                             <div className="bg-white rounded-2xl shadow-sm p-6">
-                                <h2 className="text-lg font-bold text-[#4d734d] mb-2">Location</h2>
-                                <p className="text-sm text-gray-700">{fullAddress}</p>
-                            </div>
-                        )}
-
-                        {/* Description */}
-                        {(business.Heading || business.Description || business.About || business.Summary || business.Services || business.Details || business.Description2) && (
-                            <div className="bg-white rounded-2xl shadow-sm p-6">
-                                <h2 className="text-lg font-bold text-[#4d734d] mb-2">Description</h2>
-                                {business.Heading && <h3 className="text-base font-semibold text-gray-800 mb-2">{business.Heading}</h3>}
-                                {(business.Description || business.About || business.Summary || business.Services || business.Details) && (
-                                    <p className="text-sm text-gray-700 leading-relaxed">
-                                        {business.Description || business.About || business.Summary || business.Services || business.Details}
-                                    </p>
-                                )}
-                                {business.Description2 && (
-                                    <p className="text-sm text-gray-700 leading-relaxed mt-3">{business.Description2}</p>
-                                )}
+                                <h2 className="text-lg font-bold text-[#4d734d] mb-2">About</h2>
+                                <div className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: business.BusinessDescription }} />
                             </div>
                         )}
 

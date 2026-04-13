@@ -31,7 +31,7 @@ export default function Knowledgebases() {
   const isLoggedIn = useIsLoggedIn();
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <PageMeta
         title="Agricultural Knowledgebases | Plants, Livestock & Ingredients"
         description="Explore 4,000+ food plant varieties, 2,000+ livestock breeds across 28 species, and 1,400+ agricultural ingredients in our comprehensive farm knowledgebases."

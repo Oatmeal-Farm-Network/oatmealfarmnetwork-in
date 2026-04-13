@@ -310,7 +310,7 @@ function AboutSaige() {
     { icon: '🔬', title: 'Complete Data Analysis', desc: 'Turns your farm data into actionable insights, helping you boost efficiency and profitability.' },
   ];
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <div className="w-full relative overflow-hidden" style={{ minHeight: '480px' }}>
         <img src="/images/SaigeBanner.webp" alt="Farmer using Saige AI in the field" fetchPriority="high" loading="eager" className="absolute inset-0 w-full h-full object-cover object-center" />

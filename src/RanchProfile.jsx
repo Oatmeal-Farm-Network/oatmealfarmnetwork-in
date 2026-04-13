@@ -187,7 +187,7 @@ export default function RanchProfile() {
   }, [businessId]);
 
   if (loading) return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 16px' }} className="animate-pulse">
         <div style={{ height: '120px', backgroundColor: '#e8e8e8', borderRadius: '8px', marginBottom: '20px' }} />
@@ -199,7 +199,7 @@ export default function RanchProfile() {
   );
 
   if (!ranch) return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <div style={{ textAlign: 'center', padding: '60px' }}><p>Ranch not found.</p><Link to="/marketplaces/livestock">← Back</Link></div>
       <Footer />
@@ -214,7 +214,7 @@ export default function RanchProfile() {
   ].filter(t => t.always || t.show);
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
 
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 16px 3rem' }}>

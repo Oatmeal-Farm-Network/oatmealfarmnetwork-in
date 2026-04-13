@@ -182,18 +182,20 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               )}
             </div>
 
-            <NavSection
-              icon="/icons/Blog.png"
-              label="Blog"
-              expanded={Expanded}
-              isOpen={OpenSections['Blog'] || false}
-              onToggle={() => toggleSection('Blog')}
-            >
-              <NavChild to={`/blog/manage?BusinessID=${BusinessID}`} label="Manage Blog" />
-              <NavChild to={`/blog/manage?BusinessID=${BusinessID}&view=new`} label="Add Post" />
-              <NavChild to={`/blog/manage?BusinessID=${BusinessID}&tab=categories`} label="Blog Categories" />
-              <NavChild to={`/blog/authors/manage?BusinessID=${BusinessID}`} label="Authors" />
-            </NavSection>
+            {on('blog') && (
+              <NavSection
+                icon="/icons/Blog.png"
+                label="Blog"
+                expanded={Expanded}
+                isOpen={OpenSections['Blog'] || false}
+                onToggle={() => toggleSection('Blog')}
+              >
+                <NavChild to={`/blog/manage?BusinessID=${BusinessID}`} label="Manage Blog" />
+                <NavChild to={`/blog/manage?BusinessID=${BusinessID}&view=new`} label="Add Post" />
+                <NavChild to={`/blog/manage?BusinessID=${BusinessID}&tab=categories`} label="Blog Categories" />
+                <NavChild to={`/blog/authors/manage?BusinessID=${BusinessID}`} label="Authors" />
+              </NavSection>
+            )}
 
             {on('precision_ag') && BT === 8 && (
               <NavSection
@@ -357,18 +359,6 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
                     View Live Site ↗
                   </a>
                 )}
-              </NavSection>
-            )}
-
-            {on('audio_settings') && (
-              <NavSection
-                icon="/icons/Gears.webp"
-                label="Settings"
-                expanded={Expanded}
-                isOpen={OpenSections['Settings'] || false}
-                onToggle={() => toggleSection('Settings')}
-              >
-                <NavChild to={`/account/audio-settings?BusinessID=${BusinessID}`} label="🎙 Audio Settings" />
               </NavSection>
             )}
 

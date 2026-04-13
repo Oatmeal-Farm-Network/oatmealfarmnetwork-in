@@ -57,7 +57,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <PageMeta
         title="Sign In | Oatmeal Farm Network"
         description="Sign in to your Oatmeal Farm Network account to manage your farm listings, marketplace, and website."

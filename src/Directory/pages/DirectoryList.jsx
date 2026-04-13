@@ -1,136 +1,298 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../../Header';
 import Footer from '../../Footer';
 import PageMeta from '../../PageMeta';
 
 import agriAssociaImg from '../Icons/Agricultural Associations.jpg';
-import artisianImg from '../Icons/Artisan Producers.jpg';
-import brImg from '../Icons/Business Resources.jpg';
-import crafOrgImg from '../Icons/Crafter-organizations.jpg';
+import artisianImg     from '../Icons/Artisan Producers.jpg';
+import brImg           from '../Icons/Business Resources.jpg';
+import crafOrgImg      from '../Icons/Crafter-organizations.jpg';
 import farmersMarketImg from '../Icons/Farmers Markets.jpg';
 import farmsRanchesImg from '../Icons/Farms_Ranches.jpg';
-import fiberImg from '../Icons/Fiber Cooperatives.jpg';
-import fiberMillsImg from '../Icons/Fiber Mills.jpg';
-import fisheriesImg from '../Icons/Fisheries.jpg';
-import fishermenImg from '../Icons/Fishermen.jpg';
-import foodCopImg from '../Icons/Food Cooperatives.jpg';
-import foodHubImg from '../Icons/Food Hubs.jpg';
+import fiberImg        from '../Icons/Fiber Cooperatives.jpg';
+import fiberMillsImg   from '../Icons/Fiber Mills.jpg';
+import fisheriesImg    from '../Icons/Fisheries.jpg';
+import fishermenImg    from '../Icons/Fishermen.jpg';
+import foodCopImg      from '../Icons/Food Cooperatives.jpg';
+import foodHubImg      from '../Icons/Food Hubs.jpg';
 import groceryStoreImg from '../Icons/Grocery Stores.jpg';
-import manfacImg from '../Icons/Manufacturers.jpg';
-import marinasImg from '../Icons/Marinas.jpg';
-import meatImg from '../Icons/Meat Wholesalers.jpg';
-import realEstateImg from '../Icons/Real Estate Agents.jpg';
-import restaurantsImg from '../Icons/Restaurants.jpg';
-import retailersImg from '../Icons/Retailers.jpg';
+import manfacImg       from '../Icons/Manufacturers.jpg';
+import marinasImg      from '../Icons/Marinas.jpg';
+import meatImg         from '../Icons/Meat Wholesalers.jpg';
+import realEstateImg   from '../Icons/Real Estate Agents.jpg';
+import restaurantsImg  from '../Icons/Restaurants.jpg';
+import retailersImg    from '../Icons/Retailers.jpg';
 import serviceProvidersImg from '../Icons/Service Providers.jpg';
 import universitiesImg from '../Icons/Universities.jpg';
-import vetImg from '../Icons/Veterinarians.jpg';
-import vineyardsImg from '../Icons/Vineyards.jpg';
-import wineriesImg from '../Icons/Wineries.jpg';
-import othersImg from '../Icons/Other.jpg';
+import vetImg          from '../Icons/Veterinarians.jpg';
+import vineyardsImg    from '../Icons/Vineyards.jpg';
+import wineriesImg     from '../Icons/Wineries.jpg';
+import othersImg       from '../Icons/Other.jpg';
 
-const directoryCategories = [
-    { title: "Agricultural Associations", slug: "agricultural-associations", imgSrc: agriAssociaImg },
-    { title: "Artisan Producers",         slug: "artisan-producers",         imgSrc: artisianImg },
-    { title: "Business Resources",        slug: "business-resources",        imgSrc: brImg },
-    { title: "Crafter Organizations",     slug: "crafter-organizations",     imgSrc: crafOrgImg },
-    { title: "Farmers Markets",           slug: "farmers-markets",           imgSrc: farmersMarketImg },
-    { title: "Farms / Ranches",           slug: "farms-ranches",             imgSrc: farmsRanchesImg },
-    { title: "Fiber Cooperatives",        slug: "fiber-cooperatives",        imgSrc: fiberImg },
-    { title: "Fiber Mills",               slug: "fiber-mills",               imgSrc: fiberMillsImg },
-    { title: "Fisheries",                 slug: "fisheries",                 imgSrc: fisheriesImg },
-    { title: "Fishermen",                 slug: "fishermen",                 imgSrc: fishermenImg },
-    { title: "Food Cooperatives",         slug: "food-cooperatives",         imgSrc: foodCopImg },
-    { title: "Food Hubs",                 slug: "food-hubs",                 imgSrc: foodHubImg },
-    { title: "Grocery Stores",            slug: "grocery-stores",            imgSrc: groceryStoreImg },
-    { title: "Manufacturers",             slug: "manufacturers",             imgSrc: manfacImg },
-    { title: "Marinas",                   slug: "marinas",                   imgSrc: marinasImg },
-    { title: "Meat Wholesalers",          slug: "meat-wholesalers",          imgSrc: meatImg },
-    { title: "Real Estate Agents",        slug: "real-estate-agents",        imgSrc: realEstateImg },
-    { title: "Restaurants",              slug: "restaurants",               imgSrc: restaurantsImg },
-    { title: "Retailers",                 slug: "retailers",                 imgSrc: retailersImg },
-    { title: "Service Providers",         slug: "service-providers",         imgSrc: serviceProvidersImg },
-    { title: "Universities",              slug: "universities",              imgSrc: universitiesImg },
-    { title: "Veterinarians",             slug: "veterinarians",             imgSrc: vetImg },
-    { title: "Vineyards",                 slug: "vineyards",                 imgSrc: vineyardsImg },
-    { title: "Wineries",                  slug: "wineries",                  imgSrc: wineriesImg },
-    { title: "Other",                     slug: "others",                    imgSrc: othersImg },
+const CATEGORIES = [
+  {
+    title: 'Agricultural Associations',
+    slug:  'agricultural-associations',
+    img:   agriAssociaImg,
+    desc:  'Trade associations, cooperatives, and advocacy groups that support farmers, ranchers, and food producers across all sectors of agriculture.',
+  },
+  {
+    title: 'Artisan Producers',
+    slug:  'artisan-producers',
+    img:   artisianImg,
+    desc:  'Small-batch makers of specialty foods — cheesemakers, bread bakers, jam crafters, and other producers who put craft and care into every product.',
+  },
+  {
+    title: 'Business Resources',
+    slug:  'business-resources',
+    img:   brImg,
+    desc:  'Consultants, lenders, accountants, and support organizations that help farm and food businesses manage finances, compliance, and growth.',
+  },
+  {
+    title: 'Crafter Organizations',
+    slug:  'crafter-organizations',
+    img:   crafOrgImg,
+    desc:  'Guilds, co-ops, and collectives for fiber artists, weavers, knitters, and other crafters who work with natural and farm-sourced materials.',
+  },
+  {
+    title: 'Farmers Markets',
+    slug:  'farmers-markets',
+    img:   farmersMarketImg,
+    desc:  'Outdoor and indoor markets where farmers, growers, and producers sell directly to consumers — the heartbeat of local food communities.',
+  },
+  {
+    title: 'Farms / Ranches',
+    slug:  'farms-ranches',
+    img:   farmsRanchesImg,
+    desc:  'Working farms and ranches growing crops, raising livestock, and producing the raw ingredients that feed families and supply the food chain.',
+  },
+  {
+    title: 'Fiber Cooperatives',
+    slug:  'fiber-cooperatives',
+    img:   fiberImg,
+    desc:  'Member-owned cooperatives that pool fiber resources — raw wool, alpaca, mohair, and more — for processing, marketing, and sale.',
+  },
+  {
+    title: 'Fiber Mills',
+    slug:  'fiber-mills',
+    img:   fiberMillsImg,
+    desc:  'Facilities that wash, card, spin, and process raw animal fiber into yarn and textiles for the handcraft and textile industries.',
+  },
+  {
+    title: 'Fisheries',
+    slug:  'fisheries',
+    img:   fisheriesImg,
+    desc:  'Aquaculture operations and wild-catch fisheries that produce fish, shellfish, and other seafood for commercial and consumer markets.',
+  },
+  {
+    title: 'Fishermen',
+    slug:  'fishermen',
+    img:   fishermenImg,
+    desc:  'Independent commercial fishermen and small fishing operations harvesting seafood from oceans, lakes, and rivers.',
+  },
+  {
+    title: 'Food Cooperatives',
+    slug:  'food-cooperatives',
+    img:   foodCopImg,
+    desc:  'Member-owned grocery stores and buying clubs that prioritize local sourcing, fair prices, and community ownership of the food supply.',
+  },
+  {
+    title: 'Food Hubs',
+    slug:  'food-hubs',
+    img:   foodHubImg,
+    desc:  'Aggregation and distribution centers that help small and mid-scale farms access wholesale markets, schools, hospitals, and retail buyers.',
+  },
+  {
+    title: 'Grocery Stores',
+    slug:  'grocery-stores',
+    img:   groceryStoreImg,
+    desc:  'Independent and regional grocery retailers committed to stocking local and regional food products alongside everyday staples.',
+  },
+  {
+    title: 'Manufacturers',
+    slug:  'manufacturers',
+    img:   manfacImg,
+    desc:  'Food and beverage manufacturers that transform raw agricultural ingredients into packaged products for retail, foodservice, and export.',
+  },
+  {
+    title: 'Marinas',
+    slug:  'marinas',
+    img:   marinasImg,
+    desc:  'Coastal and inland marinas that support commercial fishing operations, aquaculture businesses, and waterfront food enterprises.',
+  },
+  {
+    title: 'Meat Wholesalers',
+    slug:  'meat-wholesalers',
+    img:   meatImg,
+    desc:  'Processors and distributors that source whole animals from farms and sell cuts, carcasses, and specialty meats to restaurants and retailers.',
+  },
+  {
+    title: 'Real Estate Agents',
+    slug:  'real-estate-agents',
+    img:   realEstateImg,
+    desc:  'Agents and brokers who specialize in agricultural land, farm properties, rural acreage, and food-business real estate transactions.',
+  },
+  {
+    title: 'Restaurants',
+    slug:  'restaurants',
+    img:   restaurantsImg,
+    desc:  'Farm-to-table restaurants, local diners, and food establishments that source directly from farmers and champion regional cuisine.',
+  },
+  {
+    title: 'Retailers',
+    slug:  'retailers',
+    img:   retailersImg,
+    desc:  'Specialty food shops, farm stores, and retail outlets that bring locally and regionally produced food products to everyday shoppers.',
+  },
+  {
+    title: 'Service Providers',
+    slug:  'service-providers',
+    img:   serviceProvidersImg,
+    desc:  'Veterinarians, agronomists, equipment dealers, and other service businesses that keep farms and food enterprises running smoothly.',
+  },
+  {
+    title: 'Universities',
+    slug:  'universities',
+    img:   universitiesImg,
+    desc:  'Agricultural colleges, land-grant universities, and extension programs that conduct research and provide education to the farming community.',
+  },
+  {
+    title: 'Veterinarians',
+    slug:  'veterinarians',
+    img:   vetImg,
+    desc:  'Large-animal and mixed-practice veterinarians who provide health care, herd management, and consulting services for livestock producers.',
+  },
+  {
+    title: 'Vineyards',
+    slug:  'vineyards',
+    img:   vineyardsImg,
+    desc:  'Grape growers and estate vineyards that cultivate wine grapes, table grapes, and specialty varietals across growing regions.',
+  },
+  {
+    title: 'Wineries',
+    slug:  'wineries',
+    img:   wineriesImg,
+    desc:  'Craft and commercial wineries that ferment, age, and bottle wine from grapes and other fruits, often sourcing from local vineyards.',
+  },
+  {
+    title: 'Other',
+    slug:  'others',
+    img:   othersImg,
+    desc:  "Food system businesses and organizations that don't fit neatly into other categories — from food trucks to community gardens and beyond.",
+  },
 ];
 
-const DirectoryList = () => {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+const EAGER_COUNT = 4;
 
-    useEffect(() => {
-        const token = localStorage.getItem('access_token');
-        setIsLoggedIn(Boolean(token));
-    }, []);
-    return (
-        <div className="min-h-screen bg-gray-100 font-sans">
-            <PageMeta
-              title="Farm & Food Business Directory | Find Local Farms & Producers"
-              description="Find farms, food hubs, farmers markets, restaurants, processors, artisan producers, and more in our comprehensive farm and food business directory."
-              canonical="https://oatmealfarmnetwork.com/directory"
-            />
-            <Header />
+export default function DirectoryList() {
+  return (
+    <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
+      <PageMeta
+        title="Farm & Food Business Directory | Find Local Farms & Producers"
+        description="Find farms, food hubs, farmers markets, restaurants, processors, artisan producers, and more in our comprehensive farm and food business directory."
+        canonical="https://oatmealfarmnetwork.com/directory"
+      />
+      <Header />
 
-        {/* Video Hero Banner */}
-{/* Video Hero Banner */}
-<div className="w-full overflow-hidden bg-black" style={{ maxWidth: '1300px', margin: '0 auto' }}>
-    <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="w-full block"
-        style={{ maxHeight: '300px', objectFit: 'cover', width: '100%' }}
-    >
-        <source src="/images/FoodSystemDirectory.mp4" type="video/mp4" />
-    </video>
-</div>
-
-            {/* Hero Text - below video */}
-            <div className="bg-white px-6 py-6 border-b border-gray-200">
-                <div className="max-w-6xl mx-auto">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Food System &amp; Beyond Directory
-                    </h1>
-                    <p className="text-gray-600 text-base">
-                        Find what you're looking for in our directory; it makes it easy to search and connect with local farms, food hubs, restaurants, and more.
-                    </p>
-                </div>
-            </div>
-
-            {/* Category Grid */}
-            <div className="max-w-6xl mx-auto px-5 py-10">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-                    {directoryCategories.map((dir) => (
-                        <Link
-                            key={dir.slug}
-                            to={'/directory/' + dir.slug}
-                            className="no-underline group"
-                        >
-                            <div className="flex flex-col items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-200 h-full p-4">
-                                {/* Icon area */}
-                                <div className="flex items-center justify-center w-full mb-3">
-                                    <img
-                                        src={dir.imgSrc}
-                                        alt={dir.title}
-                                        className="w-24 h-24 object-contain"
-                                    />
-                                </div>
-                                {/* Green text label */}
-                                <span className="text-[#4d734d] text-sm font-semibold text-center leading-tight group-hover:underline">
-                                    {dir.title}
-                                </span>
-                            </div>
-                        </Link>
-                    ))}
-               </div>
-            </div>
-            <Footer />  
+      {/* ── Hero ── */}
+      <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
+        <div className="relative w-full overflow-hidden rounded-xl">
+          <img
+            src="/images/DirectoryHeader.webp"
+            alt="Food System & Beyond Directory"
+            className="w-full object-cover"
+            style={{ height: '250px', display: 'block' }}
+            loading="eager"
+          />
+          {/* Gradient overlay */}
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }}
+          />
+          {/* Text */}
+          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
+            <h1
+              style={{
+                color: '#000000',
+                fontFamily: "'Lora','Times New Roman',serif",
+                fontSize: '2rem',
+                fontWeight: 'bold',
+                margin: '0 0 12px',
+                lineHeight: 1.2,
+              }}
+            >
+              Food System &amp; Beyond Directory
+            </h1>
+            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 8px', lineHeight: 1.6 }}>
+              Find what you're looking for across <strong>25 categories</strong> — from farms and food hubs to
+              restaurants, fiber mills, and more.
+            </p>
+            <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
+              Search and connect with local farms, food businesses, and organizations in your area. Want to add
+              your business?{' '}
+              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>Contact Us</Link>
+              {' '}and we'll get you listed.
+            </p>
+          </div>
         </div>
-    );
-};
+      </div>
 
-export default DirectoryList;
+      <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
+
+        {/* ── Section heading ── */}
+        <h2 className="text-lg font-bold text-gray-900 mb-5">Directory Categories</h2>
+
+        {/* ── 2-column grid of horizontal cards ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {CATEGORIES.map((cat, index) => (
+            <div
+              key={cat.slug}
+              className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200"
+            >
+              {/* Left: square image */}
+              <Link to={`/directory/${cat.slug}`} className="shrink-0 overflow-hidden" style={{ width: '155px', height: '155px' }}>
+                <img
+                  src={cat.img}
+                  alt={cat.title}
+                  width="155"
+                  height="155"
+                  loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
+                  decoding={index < EAGER_COUNT ? 'sync' : 'async'}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  onError={e => { e.target.src = '/images/DirectoryHome.webp'; }}
+                />
+              </Link>
+
+              {/* Right: text content */}
+              <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
+                <div>
+                  <Link
+                    to={`/directory/${cat.slug}`}
+                    className="font-bold text-sm hover:underline"
+                    style={{ color: '#3D6B34' }}
+                  >
+                    {cat.title}
+                  </Link>
+                  <p className="text-xs text-gray-600 leading-relaxed mt-1">{cat.desc}</p>
+                </div>
+                <div className="mt-3">
+                  <Link
+                    to={`/directory/${cat.slug}`}
+                    className="text-xs font-bold hover:underline"
+                    style={{ color: '#3D6B34' }}
+                  >
+                    EXPLORE →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+      </div>
+
+      <Footer />
+    </div>
+  );
+}

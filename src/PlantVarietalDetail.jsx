@@ -48,7 +48,7 @@ export default function PlantVarietalDetail() {
   }, [varietyId]);
 
   if (loading) return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <div className="text-center py-20 text-gray-400">Loading...</div>
       <Footer />
@@ -56,7 +56,7 @@ export default function PlantVarietalDetail() {
   );
 
   if (!detail) return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <div className="text-center py-20 text-gray-500">Varietal not found.</div>
       <Footer />
@@ -72,7 +72,7 @@ export default function PlantVarietalDetail() {
     : 'N/A';
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <PageMeta
         title={`${detail.plant_variety_name} | ${detail.plant_name} Varietal`}
         description={detail.plant_variety_description

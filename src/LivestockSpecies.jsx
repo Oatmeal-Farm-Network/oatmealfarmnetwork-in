@@ -6,6 +6,39 @@ import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+// Fallback card images (same as LivestockDB index) keyed by slug
+const FALLBACK_IMAGES = {
+  'alpacas':      '/images/AlpacasHeader.webp',
+  'bison':        '/images/BisonHeader.webp',
+  'buffalo':      '/images/BuffaloHeader.webp',
+  'camels':       '/images/camelHeader.webp',
+  'cattle':       '/images/CattleHeader.webp',
+  'chickens':     '/images/ChickenHeader.webp',
+  'crocodiles':   '/images/CrocodileHeader.webp',
+  'deer':         '/images/DeerHeader.webp',
+  'dogs':         '/images/WorkingDogsHeader.webp',
+  'donkeys':      '/images/DonkeysHeader.webp',
+  'ducks':        '/images/DucksHeader.webp',
+  'emus':         '/images/Emus.webp',
+  'geese':        '/images/Geese.webp',
+  'goats':        '/images/Goats.webp',
+  'guinea-fowl':  '/images/Guineafowl.webp',
+  'honey-bees':   '/images/HoneyBees.webp',
+  'horses':       '/images/cowboy2.webp',
+  'llamas':       '/images/Llama2.webp',
+  'musk-ox':      '/images/muskox.webp',
+  'ostriches':    '/images/Ostrich.webp',
+  'pheasants':    '/images/Pheasant.webp',
+  'pigs':         '/images/Pig.webp',
+  'pigeons':      '/images/Pigeon.webp',
+  'quails':       '/images/Quail.webp',
+  'rabbits':      '/images/Rabitts.webp',
+  'sheep':        '/images/Sheepbreeds.webp',
+  'snails':       '/images/Snail.webp',
+  'turkeys':      '/images/Turkey.webp',
+  'yaks':         '/images/Yak.webp',
+};
+
 const getImageSrc = (image) => {
   if (!image) return null;
   if (image.startsWith('http')) return image;
@@ -13,119 +46,163 @@ const getImageSrc = (image) => {
   return `/images/${filename}`;
 };
 
+const resolveHeroSrc = (speciesInfo, species) => {
+  if (speciesInfo?.main_image) return getImageSrc(speciesInfo.main_image);
+  return FALLBACK_IMAGES[species] || '/images/HomepageLivestockDB.webp';
+};
+
+const EAGER_COUNT = 4;
+
 export default function LivestockSpecies() {
   const { species } = useParams();
-  const [speciesInfo, setSpeciesInfo] = useState(null);
+  const [speciesInfo, setSpeciesInfo]           = useState(null);
   const [availableLetters, setAvailableLetters] = useState([]);
-  const [selectedLetter, setSelectedLetter] = useState(null);
-  const [breeds, setBreeds] = useState(null);
-  const [loadingBreeds, setLoadingBreeds] = useState(false);
+  const [selectedLetter, setSelectedLetter]     = useState(null);
+  const [breeds, setBreeds]                     = useState(null);
+  const [loadingBreeds, setLoadingBreeds]        = useState(false);
+  const [showAll, setShowAll]                   = useState(false);
 
-  // On species change: load species info + available letters
   useEffect(() => {
     window.scrollTo(0, 0);
     setSpeciesInfo(null);
     setBreeds(null);
     setSelectedLetter(null);
     setAvailableLetters([]);
+    setShowAll(false);
 
-    fetch(API_URL + '/api/livestock/species/' + species + '/letters')
+    fetch(`${API_URL}/api/livestock/species/${species}/letters`)
       .then(r => r.json())
       .then(data => {
         setSpeciesInfo(data.species_info || null);
-        const letters = data.letters || [];
-        setAvailableLetters(letters);
-        // Auto-select first available letter
-        if (letters.length > 0) {
-          setSelectedLetter(letters[0]);
+        const letters      = data.letters || [];
+        const totalBreeds  = data.total_breeds || 0;
+
+        if (totalBreeds > 0 && totalBreeds < 26) {
+          // Few breeds — load all at once, no letter nav
+          setShowAll(true);
+          setAvailableLetters([]);
+        } else {
+          setShowAll(false);
+          setAvailableLetters(letters);
+          if (letters.length > 0) setSelectedLetter(letters[0]);
         }
       })
       .catch(() => {});
   }, [species]);
 
-  // When selected letter changes: fetch breeds for that letter
+  // Load all breeds when showAll is set
   useEffect(() => {
-    if (!selectedLetter) return;
+    if (!showAll) return;
+    setLoadingBreeds(true);
+    fetch(`${API_URL}/api/livestock/species/${species}`)
+      .then(r => r.json())
+      .then(data => { setBreeds(data.breeds || []); setLoadingBreeds(false); })
+      .catch(() => { setBreeds([]); setLoadingBreeds(false); });
+  }, [showAll, species]);
+
+  // Load breeds by letter when paginating
+  useEffect(() => {
+    if (showAll || !selectedLetter) return;
     setBreeds(null);
     setLoadingBreeds(true);
-    fetch(API_URL + '/api/livestock/species/' + species + '?letter=' + encodeURIComponent(selectedLetter))
+    fetch(`${API_URL}/api/livestock/species/${species}?letter=${encodeURIComponent(selectedLetter)}`)
       .then(r => r.json())
-      .then(data => {
-        setBreeds(data.breeds || []);
-        setLoadingBreeds(false);
-      })
+      .then(data => { setBreeds(data.breeds || []); setLoadingBreeds(false); })
       .catch(() => { setBreeds([]); setLoadingBreeds(false); });
-  }, [species, selectedLetter]);
+  }, [species, selectedLetter, showAll]);
 
-  const label = species
-    ? species.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-    : '';
-
+  const label      = species ? species.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '';
   const pluralTerm = speciesInfo?.plural || label;
-  const headerImg = `/images/${label.replace(/ /g, '')}header.webp`;
-  const headerImgJpg = `/images/${label.replace(/ /g, '')}header.jpg`;
-  const iconImg = `/icons/${label.replace(/ /g, '')}Iconwhite.png`;
+  const heroSrc    = resolveHeroSrc(speciesInfo, species);
+
+  const heroSnippet = speciesInfo?.description
+    ? (() => {
+        const plain = speciesInfo.description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        return plain.length > 180 ? plain.substring(0, 180).replace(/\s\S+$/, '') + '…' : plain;
+      })()
+    : null;
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title={`${pluralTerm} Breeds | Livestock Database`}
         description={`Browse all ${pluralTerm.toLowerCase()} breeds in the Oatmeal Farm Network livestock database. Find breed characteristics, origins, uses, and farming information.`}
       />
       <Header />
 
-      <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1rem 1rem 3rem' }}>
-
-        {/* Title with icon */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+      {/* ── Hero ── */}
+      <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
+        <div className="relative w-full overflow-hidden rounded-xl">
           <img
-            src={iconImg}
-            alt={label}
-            style={{ width: '40px', height: '40px', objectFit: 'contain' }}
-            onError={e => { e.target.style.display = 'none'; }}
+            src={heroSrc}
+            alt={pluralTerm}
+            className="w-full object-cover"
+            style={{ height: '250px', display: 'block' }}
+            loading="eager"
+            onError={e => { e.target.src = FALLBACK_IMAGES[species] || '/images/HomepageLivestockDB.webp'; }}
           />
-          Breeds of {pluralTerm}
-        </h1>
-
-        {/* Header image */}
-        <div style={{ width: '100%', height: '300px', backgroundColor: '#f3f4f6', borderRadius: '8px', marginBottom: '1rem', overflow: 'hidden' }}>
-          <img
-            src={headerImg}
-            alt={label}
-            style={{ width: '100%', height: '300px', objectFit: 'cover', display: 'block' }}
-            onError={e => {
-              if (e.target.src !== window.location.origin + headerImgJpg) {
-                e.target.src = headerImgJpg;
-              } else {
-                e.target.parentElement.style.display = 'none';
-              }
-            }}
+          {/* Gradient overlay */}
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }}
           />
+          {/* Text */}
+          <div className="absolute inset-0 flex flex-col justify-center px-8 py-4" style={{ maxWidth: '780px' }}>
+            <h1
+              style={{
+                color: '#000000',
+                fontFamily: "'Lora','Times New Roman',serif",
+                fontSize: '1.6rem',
+                fontWeight: 'bold',
+                margin: '0 0 8px',
+                lineHeight: 1.2,
+              }}
+            >
+              Breeds of {pluralTerm}
+            </h1>
+            {heroSnippet && (
+              <p style={{ color: '#111111', fontSize: '0.82rem', margin: '0 0 10px', lineHeight: 1.5 }}>
+                {heroSnippet}
+              </p>
+            )}
+            <div>
+              <Link
+                to={`/livestock/${species}/about`}
+                style={{
+                  display: 'inline-block',
+                  backgroundColor: '#3D6B34',
+                  color: '#fff',
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                }}
+              >
+                Learn More About {pluralTerm}
+              </Link>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div className="flex justify-end mb-6">
-          <Link to={`/livestock/${species}/about`} className="regsubmit2">
-            Learn More About {pluralTerm}
-          </Link>
-        </div>
+      <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
-        {/* Breeds section */}
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
-          All {label} Breeds
-        </h2>
+        {/* ── Section heading ── */}
+        <h2 className="text-lg font-bold text-gray-900 mb-4">All {label} Breeds</h2>
 
-        {/* Letter selector */}
-        {availableLetters.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-6 p-3 bg-gray-50 rounded-lg border border-gray-300">
+        {/* ── Letter selector (only when paginating) ── */}
+        {!showAll && availableLetters.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-6 p-3 bg-white rounded-xl border border-gray-200 shadow-sm">
             {availableLetters.map(letter => (
               <button
                 key={letter}
                 onClick={() => setSelectedLetter(letter)}
-                className="w-9 h-9 text-sm font-bold rounded transition-all"
+                className="w-9 h-9 text-sm font-bold rounded-lg transition-all"
                 style={{
                   backgroundColor: selectedLetter === letter ? '#3D6B34' : '#fff',
-                  color: selectedLetter === letter ? '#fff' : '#3D6B34',
-                  border: '1px solid #3D6B34',
+                  color:           selectedLetter === letter ? '#fff'    : '#3D6B34',
+                  border:          '1px solid #3D6B34',
                 }}
               >
                 {letter}
@@ -134,85 +211,92 @@ export default function LivestockSpecies() {
           </div>
         )}
 
-        {/* Breeds list */}
+        {/* ── Breed cards ── */}
         {loadingBreeds ? (
-          <div className="text-gray-400 py-12 text-center">Loading breeds...</div>
-        ) : breeds === null ? (
-          <div className="text-gray-400 py-12 text-center">Select a letter above to browse breeds.</div>
-        ) : breeds.length === 0 ? (
-          <div className="text-gray-400 py-8 text-center">No breeds found for "{selectedLetter}".</div>
-        ) : (
-          <div className="space-y-4">
-            {breeds.map((b, i) => (
-              <div
-                key={b.breed_id}
-                className="border border-gray-400 rounded-lg overflow-hidden shadow-sm flex gap-0"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: i % 2 === 0 ? '200px 1fr' : '1fr 200px',
-                gridTemplateAreas: i % 2 === 0 ? '"image content"' : '"content image"',
-              }}
-              >
-                {/* Image */}
-               <div style={{
-                gridArea: 'image',
-                width: '200px',
-                flexShrink: 0,
-                backgroundColor: '#f9fafb',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '8px',
-              }}>
-                {b.image ? (
-                  <Link to={`/livestock/${species}/breed/${b.breed_id}`}>
-                    <img
-                      src={getImageSrc(b.image)}
-                      alt={b.breed}
-                      loading="lazy"
-                      style={{ width: '184px', height: 'auto', objectFit: 'contain', display: 'block' }}
-                      onError={e => { e.target.parentElement.style.display = 'none'; }}
-                    />
-                  </Link>
-                ) : (
-                  <span className="text-gray-300 text-xs text-center px-2">No image</span>
-                )}
-              </div>
-
-                {/* Content */}
-                <div style={{
-                  gridArea: 'content',
-                  backgroundColor: '#EFF3E5',
-                  padding: '14px 16px',
-                  margin: '12px',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                }}>
-                  <div>
-                    <h3 className="font-bold text-base mb-2" style={{ color: '#3f51b5', borderBottom: '1px solid #ddd', paddingBottom: '5px' }}>
-                      {b.breed}
-                    </h3>
-                    {b.description && (
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {b.description.replace(/<[^>]+>/g, '').substring(0, 350)}
-                        {b.description.length > 350 ? '...' : ''}
-                      </p>
-                    )}
-                  </div>
-                  {b.description && b.description.length > 25 && (
-                    <div className="flex justify-center mt-3">
-                      <Link to={`/livestock/${species}/breed/${b.breed_id}`} className="regsubmit2">
-                        Learn More
-                      </Link>
-                    </div>
-                  )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 animate-pulse" style={{ height: '155px' }}>
+                <div className="shrink-0 bg-gray-200" style={{ width: '155px', height: '155px' }} />
+                <div className="flex-1 px-5 py-4 space-y-2">
+                  <div className="bg-gray-200 h-4 rounded w-3/4" />
+                  <div className="bg-gray-200 h-3 rounded w-full" />
+                  <div className="bg-gray-200 h-3 rounded w-5/6" />
+                  <div className="bg-gray-200 h-3 rounded w-2/3" />
                 </div>
               </div>
             ))}
           </div>
+        ) : breeds === null ? (
+          <div className="text-gray-400 py-12 text-center">Select a letter above to browse breeds.</div>
+        ) : breeds.length === 0 ? (
+          <div className="text-gray-400 py-8 text-center">No breeds found.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {breeds.map((b, index) => {
+              const imgSrc = getImageSrc(b.image);
+              const shortDesc = b.description
+                ? b.description.replace(/<[^>]+>/g, '').substring(0, 220) + (b.description.length > 220 ? '…' : '')
+                : null;
+              return (
+                <div
+                  key={b.breed_id}
+                  className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200"
+                >
+                  <Link
+                    to={`/livestock/${species}/breed/${b.breed_id}`}
+                    className="shrink-0 overflow-hidden bg-gray-100 flex items-center justify-center"
+                    style={{ width: '155px', height: '155px' }}
+                  >
+                    {imgSrc ? (
+                      <img
+                        src={imgSrc}
+                        alt={b.breed}
+                        width="155"
+                        height="155"
+                        loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
+                        decoding={index < EAGER_COUNT ? 'sync' : 'async'}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        onError={e => { e.target.parentElement.classList.add('hidden'); }}
+                      />
+                    ) : (
+                      <span className="text-gray-300 text-xs text-center px-3">No image</span>
+                    )}
+                  </Link>
+
+                  <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
+                    <div>
+                      <Link
+                        to={`/livestock/${species}/breed/${b.breed_id}`}
+                        className="font-bold text-sm hover:underline"
+                        style={{ color: '#3D6B34' }}
+                      >
+                        {b.breed}
+                      </Link>
+                      {b.origin && (
+                        <p className="text-xs font-semibold mt-0.5 mb-1" style={{ color: '#819360' }}>
+                          {b.origin}
+                        </p>
+                      )}
+                      {shortDesc && (
+                        <p className="text-xs text-gray-600 leading-relaxed">{shortDesc}</p>
+                      )}
+                    </div>
+                    <div className="mt-3">
+                      <Link
+                        to={`/livestock/${species}/breed/${b.breed_id}`}
+                        className="text-xs font-bold hover:underline"
+                        style={{ color: '#3D6B34' }}
+                      >
+                        LEARN MORE →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
+
       </div>
 
       <Footer />

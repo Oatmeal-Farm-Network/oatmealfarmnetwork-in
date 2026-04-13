@@ -25,7 +25,7 @@ export default function Accounts() {
   }, [peopleId]);
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
 
       <div className="container mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>

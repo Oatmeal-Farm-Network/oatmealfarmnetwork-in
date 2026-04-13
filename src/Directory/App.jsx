@@ -28,7 +28,7 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <section className="py-6 bg-white">
         <div className="max-w-7xl mx-auto px-4">

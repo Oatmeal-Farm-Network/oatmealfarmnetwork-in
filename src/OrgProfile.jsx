@@ -2,20 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import { useAccount } from './AccountContext';
+import { FaFacebookF, FaPinterestP, FaXTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaGlobe, FaBlog } from 'react-icons/fa6';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const GCP = 'https://storage.googleapis.com/oatmeal-farm-network-images/Animals/Uploads';
 
 const SOCIAL_LINKS = [
-  { key: 'facebook',     label: 'Facebook',    icon: '📘', color: '#1877f2' },
-  { key: 'instagram',    label: 'Instagram',   icon: '📷', color: '#e1306c' },
-  { key: 'x',           label: 'Twitter / X', icon: '🐦', color: '#000' },
-  { key: 'pinterest',   label: 'Pinterest',   icon: '📌', color: '#e60023' },
-  { key: 'youtube',     label: 'YouTube',     icon: '▶️', color: '#ff0000' },
-  { key: 'blog',        label: 'Blog',        icon: '✍️', color: '#507033' },
-  { key: 'truth_social',label: 'Truth Social',icon: '🗣️', color: '#5b2d8e' },
-  { key: 'other_social1',label: 'Social',     icon: '🔗', color: '#666' },
-  { key: 'other_social2',label: 'Social',     icon: '🔗', color: '#666' },
+  { key: 'facebook',    label: 'Facebook',    icon: <FaFacebookF />,  base: 'https://facebook.com/',          color: 'bg-[#1877F2]' },
+  { key: 'instagram',   label: 'Instagram',   icon: <FaInstagram />,  base: 'https://instagram.com/',         color: 'bg-[#E1306C]' },
+  { key: 'linkedin',    label: 'LinkedIn',    icon: <FaLinkedinIn />, base: 'https://linkedin.com/company/',  color: 'bg-[#0A66C2]' },
+  { key: 'x',          label: 'Twitter / X', icon: <FaXTwitter />,   base: 'https://twitter.com/',           color: 'bg-black' },
+  { key: 'pinterest',  label: 'Pinterest',   icon: <FaPinterestP />, base: 'https://pinterest.com/',         color: 'bg-[#E60023]' },
+  { key: 'youtube',    label: 'YouTube',     icon: <FaYoutube />,    base: 'https://youtube.com/',           color: 'bg-[#FF0000]' },
+  { key: 'blog',       label: 'Blog',        icon: <FaBlog />,       base: '',                               color: 'bg-[#507033]' },
+  { key: 'truth_social',label:'Truth Social', icon: <FaGlobe />,     base: '',                               color: 'bg-[#5b2d8e]' },
+  { key: 'other_social1',label:'Social',      icon: <FaGlobe />,     base: '',                               color: 'bg-gray-500' },
+  { key: 'other_social2',label:'Social',      icon: <FaGlobe />,     base: '',                               color: 'bg-gray-500' },
 ];
 
 // ── Contact form ──────────────────────────────────────────────────────────────
@@ -234,6 +237,7 @@ export default function OrgProfile() {
   const { businessId: urlBusinessId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const routerLocation = useLocation();
+  const { businesses } = useAccount();
   const [ranch, setRanch] = useState(null);
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ for_sale: 0, studs: 0, services: 0 });
@@ -241,10 +245,14 @@ export default function OrgProfile() {
   const activeTab = searchParams.get('tab') || 'home';
   const setTab = (tab) => setSearchParams({ tab }, { replace: true });
 
-  // Business ID can come from URL param (/ranch/:businessId)
-  // or from router state (directory Profile button passes full business object)
+  // Business ID can come from URL param (/ranch/:businessId),
+  // router state (directory Profile button), the logged-in user's first business,
+  // or the last selected business stored in localStorage
   const directoryBusiness = routerLocation.state?.business || null;
-  const businessId = urlBusinessId || directoryBusiness?.BusinessID;
+  const businessId = urlBusinessId
+    || directoryBusiness?.BusinessID
+    || businesses?.[0]?.BusinessID
+    || localStorage.getItem('selected_business_id');
 
   useEffect(() => {
     // If directory passed full business object, use it directly
@@ -258,14 +266,19 @@ export default function OrgProfile() {
         home_heading: '',
         home_text: '',
         home_text2: '',
+        description: b.BusinessDescription || '',
         address_street: b.AddressStreet || '',
         address_city: b.AddressCity || '',
         address_state: b.AddressState || '',
         address_zip: b.AddressZip || '',
         address_country: b.AddressCountry || '',
-        email: b.BusinessEmail || '',
+        website: b.BusinessWebsite || '',
+        phone: b.BusinessPhone || '',
+        contact_first_name: '',
+        contact_last_name: '',
         facebook: b.BusinessFacebook || '',
         instagram: b.BusinessInstagram || '',
+        linkedin: b.BusinessLinkedIn || '',
         x: b.BusinessX || '',
         pinterest: b.BusinessPinterest || '',
         youtube: b.BusinessYouTube || '',
@@ -303,7 +316,7 @@ export default function OrgProfile() {
   }, [businessId]);
 
   if (loading) return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <div style={{ maxWidth: '1100px', margin: '40px auto', padding: '0 16px' }} className="animate-pulse">
         <div style={{ height: '100px', backgroundColor: '#e8e8e8', borderRadius: '8px', marginBottom: '24px' }} />
@@ -315,7 +328,7 @@ export default function OrgProfile() {
   );
 
   if (!ranch) return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
       <div style={{ textAlign: 'center', padding: '80px 16px' }}>
         <p style={{ color: '#888', marginBottom: '16px' }}>Organization not found.</p>
@@ -335,9 +348,14 @@ export default function OrgProfile() {
 
   const location = [ranch.address_city, ranch.address_state].filter(Boolean).join(', ');
   const activeSocials = SOCIAL_LINKS.filter(s => ranch[s.key]);
+  const socialHref = (s) => {
+    const val = ranch[s.key];
+    if (!val) return null;
+    return val.startsWith('http') ? val : `${s.base}${val}`;
+  };
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <Header />
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 16px 60px' }}>
@@ -381,6 +399,10 @@ export default function OrgProfile() {
             {/* Left — ranch info */}
             <div>
               {ranch.home_heading && <h2 style={{ fontSize: '1.3rem', marginBottom: '12px' }}>{ranch.home_heading}</h2>}
+              {ranch.description && (
+                <div className="prose prose-sm max-w-none text-sm text-gray-700 leading-relaxed mb-4"
+                  dangerouslySetInnerHTML={{ __html: ranch.description }} />
+              )}
               {ranch.home_text && <div style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#444', marginBottom: '16px' }}
                 dangerouslySetInnerHTML={{ __html: ranch.home_text }} />}
               {ranch.home_text2 && <div style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#444', marginBottom: '24px' }}
@@ -390,12 +412,11 @@ export default function OrgProfile() {
               {activeSocials.length > 0 && (
                 <div style={{ marginBottom: '24px' }}>
                   <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '12px', color: '#333' }}>Connect With Us</h3>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <div className="flex flex-wrap gap-2">
                     {activeSocials.map(s => (
-                      <a key={s.key} href={ranch[s.key].startsWith('http') ? ranch[s.key] : `https://${ranch[s.key]}`}
-                        target="_blank" rel="noopener noreferrer"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', border: `1px solid ${s.color}`, borderRadius: '20px', textDecoration: 'none', color: s.color, fontSize: '0.85rem', fontWeight: 500 }}>
-                        <span>{s.icon}</span> {s.label}
+                      <a key={s.key} href={socialHref(s)} target="_blank" rel="noopener noreferrer"
+                        className={`flex items-center gap-1.5 ${s.color} text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-80 transition-opacity`}>
+                        {s.icon} {s.label}
                       </a>
                     ))}
                   </div>
@@ -418,10 +439,22 @@ export default function OrgProfile() {
                       <p style={{ margin: 0, fontWeight: 500 }}>{location}</p>
                     </div>
                   )}
-                  {ranch.email && (
+                  {(ranch.contact_first_name || ranch.contact_last_name) && (
                     <div>
-                      <p style={{ margin: '0 0 2px', fontSize: '0.75rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</p>
-                      <a href={`mailto:${ranch.email}`} style={{ color: '#507033', fontWeight: 500 }}>{ranch.email}</a>
+                      <p style={{ margin: '0 0 2px', fontSize: '0.75rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Contact</p>
+                      <p style={{ margin: 0, fontWeight: 500 }}>{[ranch.contact_first_name, ranch.contact_last_name].filter(Boolean).join(' ')}</p>
+                    </div>
+                  )}
+                  {ranch.phone && (
+                    <div>
+                      <p style={{ margin: '0 0 2px', fontSize: '0.75rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Phone</p>
+                      <p style={{ margin: 0, fontWeight: 500 }}><a href={`tel:${ranch.phone}`} style={{ color: '#507033', textDecoration: 'none' }}>{ranch.phone}</a></p>
+                    </div>
+                  )}
+                  {ranch.website && (
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <p style={{ margin: '0 0 2px', fontSize: '0.75rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Website</p>
+                      <p style={{ margin: 0 }}><a href={ranch.website.startsWith('http') ? ranch.website : `https://${ranch.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#507033', wordBreak: 'break-all' }}>{ranch.website}</a></p>
                     </div>
                   )}
                 </div>
@@ -454,6 +487,10 @@ export default function OrgProfile() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '40px', alignItems: 'flex-start' }}>
             <div>
               <h2 style={{ fontSize: '1.3rem', marginBottom: '16px' }}>About {ranch.business_name}</h2>
+              {ranch.description && (
+                <div className="prose prose-sm max-w-none text-sm text-gray-700 leading-relaxed mb-4"
+                  dangerouslySetInnerHTML={{ __html: ranch.description }} />
+              )}
               {ranch.home_text && <div style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#444', marginBottom: '16px' }}
                 dangerouslySetInnerHTML={{ __html: ranch.home_text }} />}
               {ranch.home_text2 && <div style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#444', marginBottom: '24px' }}
@@ -461,20 +498,31 @@ export default function OrgProfile() {
 
               <div style={{ backgroundColor: '#f9f9f7', border: '1px solid #e8e8e0', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
                 <strong style={{ display: 'block', marginBottom: '8px' }}>{ranch.business_name}</strong>
-                {[ranch.address_street, location && `${location} ${ranch.address_zip}`, ranch.address_country]
+                {[ranch.address_street, location && `${location} ${ranch.address_zip}`.trim(), ranch.address_country]
                   .filter(Boolean).map((line, i) => <p key={i} style={{ margin: '0 0 4px', fontSize: '0.9rem', color: '#555' }}>{line}</p>)}
-                {ranch.email && <p style={{ margin: '4px 0 0' }}>
-                  <a href={`mailto:${ranch.email}`} style={{ color: '#507033' }}>{ranch.email}</a>
-                </p>}
+                {(ranch.contact_first_name || ranch.contact_last_name) && (
+                  <p style={{ margin: '8px 0 0', fontSize: '0.9rem', color: '#555' }}>
+                    Contact: {[ranch.contact_first_name, ranch.contact_last_name].filter(Boolean).join(' ')}
+                  </p>
+                )}
+                {ranch.phone && (
+                  <p style={{ margin: '4px 0 0', fontSize: '0.9rem', color: '#555' }}>
+                    <a href={`tel:${ranch.phone}`} style={{ color: '#507033', textDecoration: 'none' }}>{ranch.phone}</a>
+                  </p>
+                )}
+                {ranch.website && (
+                  <p style={{ margin: '4px 0 0', fontSize: '0.9rem' }}>
+                    <a href={ranch.website.startsWith('http') ? ranch.website : `https://${ranch.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#507033', wordBreak: 'break-all' }}>{ranch.website}</a>
+                  </p>
+                )}
               </div>
 
               {activeSocials.length > 0 && (
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <div className="flex flex-wrap gap-2">
                   {activeSocials.map(s => (
-                    <a key={s.key} href={ranch[s.key].startsWith('http') ? ranch[s.key] : `https://${ranch[s.key]}`}
-                      target="_blank" rel="noopener noreferrer"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', border: `1px solid ${s.color}`, borderRadius: '20px', textDecoration: 'none', color: s.color, fontSize: '0.85rem' }}>
-                      <span>{s.icon}</span> {s.label}
+                    <a key={s.key} href={socialHref(s)} target="_blank" rel="noopener noreferrer"
+                      className={`flex items-center gap-1.5 ${s.color} text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-80 transition-opacity`}>
+                      {s.icon} {s.label}
                     </a>
                   ))}
                 </div>

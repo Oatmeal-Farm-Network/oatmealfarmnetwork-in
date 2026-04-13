@@ -269,7 +269,7 @@ export default function LivestockMarketplace() {
   const browse = listings.slice(4, 12);
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <PageMeta
         title="Livestock Marketplace | Buy & Sell Farm Animals"
         description="Browse livestock for sale including cattle, pigs, sheep, goats, chickens, alpacas, and more. Connect directly with farmers and breeders on Oatmeal Farm Network."

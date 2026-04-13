@@ -72,7 +72,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans">
       <PageMeta
         title="Create Account | Oatmeal Farm Network"
         description="Join Oatmeal Farm Network to list your farm, sell products, access agricultural knowledgebases, and connect with buyers and food businesses."

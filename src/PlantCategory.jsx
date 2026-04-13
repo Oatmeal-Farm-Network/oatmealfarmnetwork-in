@@ -64,7 +64,7 @@ export default function PlantCategory() {
   }, [category, cat?.dbType]);
 
   if (!cat) return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <Header />
       <div className="text-center py-20 text-gray-500">Category not found: {category}</div>
       <Footer />
@@ -72,36 +72,62 @@ export default function PlantCategory() {
   );
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title={`${cat.label} Plants | Plant Knowledgebase`}
         description={`Browse ${cat.label.toLowerCase()} plant varieties in the Oatmeal Farm Network plant knowledgebase. Find growing guides, soil requirements, and nutritional data for each variety.`}
       />
       <Header />
 
-      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 1rem 2rem' }}>
+      {/* ── Hero: same max-width as body content ── */}
+      <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
+        <div className="relative w-full overflow-hidden rounded-xl">
+          <img
+            src={cat.header}
+            alt={cat.label}
+            loading="eager"
+            fetchPriority="high"
+            className="w-full object-cover"
+            style={{ maxHeight: '400px', minHeight: '260px', display: 'block' }}
+            onError={e => { e.target.style.display = 'none'; }}
+          />
+          {/* Gradient overlay — opaque on the left where text sits, fades to transparent */}
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }} />
+          {/* Text over image */}
+          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '680px' }}>
+            <h1
+              style={{
+                color: '#000000',
+                fontFamily: "'Lora','Times New Roman',serif",
+                fontSize: '2rem',
+                fontWeight: 'bold',
+                margin: '0 0 8px',
+                lineHeight: 1.2,
+              }}
+            >
+              {cat.label}
+            </h1>
+            <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
+              Browse {cat.label.toLowerCase()} plant varieties. Click any plant to explore its varietals,
+              growing requirements, soil preferences, and nutritional data.
+            </p>
+          </div>
+        </div>
+      </div>
 
-        {/* Header image — eager since it's above the fold */}
-        <img
-          src={cat.header}
-          alt={cat.label}
-          loading="eager"
-          fetchPriority="high"
-          className="w-full object-cover mb-5"
-          style={{ height: '200px', objectPosition: 'center', display: 'block' }}
-          onError={e => { e.target.style.display = 'none'; }}
-        />
+      <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
-        <h2 className="text-xl font-bold text-gray-900 mb-6">{cat.label} Plant Types</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-5">{cat.label} Plant Types</h2>
 
         {plants === null ? (
-          /* Skeleton placeholders so the page doesn't feel empty while loading */
-          <div className="grid grid-cols-2 gap-x-8 gap-y-8">
+          /* Skeleton placeholders */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="flex gap-3 items-start animate-pulse">
-                <div className="bg-gray-200 rounded shrink-0" style={{ width: '150px', height: '150px' }} />
-                <div className="flex-1 pt-2 space-y-2">
+              <div key={i} className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 animate-pulse">
+                <div className="bg-gray-200 shrink-0" style={{ width: '155px', height: '155px' }} />
+                <div className="flex-1 px-5 py-4 space-y-2">
                   <div className="bg-gray-200 h-4 rounded w-3/4" />
+                  <div className="bg-gray-200 h-3 rounded w-1/3" />
                   <div className="bg-gray-200 h-3 rounded w-full" />
                   <div className="bg-gray-200 h-3 rounded w-5/6" />
                 </div>
@@ -111,31 +137,50 @@ export default function PlantCategory() {
         ) : plants.length === 0 ? (
           <div className="text-gray-500 py-12 text-center">No plants found for {cat.dbType}</div>
         ) : (
-          <div className="grid grid-cols-2 gap-x-8 gap-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {plants.map((plant, index) => (
-              <div key={plant.plant_id} className="flex gap-3 items-start">
-                <Link to={'/plant-knowledgebase/varietals/' + plant.plant_id} className="shrink-0">
+              <div
+                key={plant.plant_id}
+                className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200"
+              >
+                {/* Left: square image */}
+                <Link to={'/plant-knowledgebase/varietals/' + plant.plant_id} className="shrink-0 overflow-hidden" style={{ width: '155px', height: '155px' }}>
                   <img
                     src={plantImgSrc(plant)}
                     alt={plant.plant_name}
-                    width="150"
-                    height="150"
-                    className="object-cover rounded mb-2"
+                    width="155"
+                    height="155"
                     loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
                     decoding={index < EAGER_COUNT ? 'sync' : 'async'}
-                    style={{ width: '150px', height: '150px' }}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     onError={e => { e.target.src = '/images/PlantDBHome.webp'; }}
                   />
                 </Link>
-                <div>
-                  <Link
-                    to={'/plant-knowledgebase/varietals/' + plant.plant_id}
-                    className="hover:underline text-sm font-medium block mb-1"
-                    style={{ color: '#3D6B34' }}
-                  >
-                    {plant.plant_name} ({plant.variety_count} Varieties)
-                  </Link>
-                  <p className="text-sm text-gray-700 leading-relaxed">{plant.plant_description}</p>
+
+                {/* Right: text */}
+                <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
+                  <div>
+                    <Link
+                      to={'/plant-knowledgebase/varietals/' + plant.plant_id}
+                      className="font-bold text-sm hover:underline"
+                      style={{ color: '#3D6B34' }}
+                    >
+                      {plant.plant_name}
+                    </Link>
+                    <p className="text-xs font-semibold mt-0.5 mb-2" style={{ color: '#819360' }}>
+                      {plant.variety_count > 0 ? `${plant.variety_count.toLocaleString()} Varieties` : '—'}
+                    </p>
+                    <p className="text-xs text-gray-600 leading-relaxed">{plant.plant_description}</p>
+                  </div>
+                  <div className="mt-3">
+                    <Link
+                      to={'/plant-knowledgebase/varietals/' + plant.plant_id}
+                      className="text-xs font-bold hover:underline"
+                      style={{ color: '#3D6B34' }}
+                    >
+                      EXPLORE →
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

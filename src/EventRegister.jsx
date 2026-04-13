@@ -94,14 +94,14 @@ export default function EventRegister() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-white font-sans"><Header />
+    <div className="min-h-screen font-sans"><Header />
       <div className="max-w-2xl mx-auto px-4 py-16 text-center text-gray-400">Loading…</div>
       <Footer />
     </div>
   );
 
   if (!ev) return (
-    <div className="min-h-screen bg-white font-sans"><Header />
+    <div className="min-h-screen font-sans"><Header />
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <p className="text-gray-500 mb-4">Event not found.</p>
         <Link to="/events" className="text-[#3D6B34] hover:underline">← Back to Events</Link>
