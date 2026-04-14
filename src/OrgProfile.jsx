@@ -68,15 +68,13 @@ function ContactForm({ ranch }) {
         <label style={formLabel}>Email</label>
         <input type="email" value={form.email} onChange={set('email')} required style={formInput} />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-        <div>
-          <label style={formLabel}>Phone <span style={{ color: '#999', fontWeight: 400 }}>(Optional)</span></label>
-          <input type="tel" value={form.phone} onChange={set('phone')} style={formInput} />
-        </div>
-        <div>
-          <label style={formLabel}>State / Province <span style={{ color: '#999', fontWeight: 400 }}>(Optional)</span></label>
-          <input value={form.state} onChange={set('state')} style={formInput} />
-        </div>
+      <div style={{ marginBottom: '12px' }}>
+        <label style={formLabel}>Phone <span style={{ color: '#999', fontWeight: 400 }}>(Optional)</span></label>
+        <input type="tel" value={form.phone} onChange={set('phone')} style={formInput} />
+      </div>
+      <div style={{ marginBottom: '12px' }}>
+        <label style={formLabel}>State / Province <span style={{ color: '#999', fontWeight: 400 }}>(Optional)</span></label>
+        <input value={form.state} onChange={set('state')} style={formInput} />
       </div>
       <div style={{ marginBottom: '12px' }}>
         <label style={formLabel}>Questions / Comments <span style={{ color: '#999', fontWeight: 400 }}>(Optional)</span></label>
@@ -364,11 +362,11 @@ export default function OrgProfile() {
         <div style={{ textAlign: 'center', padding: '32px 0 20px', borderBottom: '1px solid #eee' }}>
           {ranch.header_image ? (
             <img src={ranch.header_image} alt={ranch.business_name}
-              style={{ maxHeight: '140px', maxWidth: '100%', objectFit: 'contain', marginBottom: '12px' }}
+              style={{ display: 'block', maxHeight: '140px', maxWidth: '100%', objectFit: 'contain', margin: '0 auto 12px' }}
               onError={e => e.target.style.display = 'none'} />
           ) : ranch.logo ? (
             <img src={ranch.logo} alt={ranch.business_name}
-              style={{ maxHeight: '100px', maxWidth: '100%', objectFit: 'contain', marginBottom: '12px' }}
+              style={{ display: 'block', maxHeight: '100px', maxWidth: '100%', objectFit: 'contain', margin: '0 auto 12px' }}
               onError={e => e.target.style.display = 'none'} />
           ) : null}
           <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#222', margin: '0 0 6px' }}>
@@ -397,69 +395,88 @@ export default function OrgProfile() {
         {activeTab === 'home' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '40px', alignItems: 'flex-start' }}>
             {/* Left — ranch info */}
-            <div>
-              {ranch.home_heading && <h2 style={{ fontSize: '1.3rem', marginBottom: '12px' }}>{ranch.home_heading}</h2>}
-              {ranch.description && (
-                <div className="prose prose-sm max-w-none text-sm text-gray-700 leading-relaxed mb-4"
-                  dangerouslySetInnerHTML={{ __html: ranch.description }} />
-              )}
-              {ranch.home_text && <div style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#444', marginBottom: '16px' }}
-                dangerouslySetInnerHTML={{ __html: ranch.home_text }} />}
-              {ranch.home_text2 && <div style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#444', marginBottom: '24px' }}
-                dangerouslySetInnerHTML={{ __html: ranch.home_text2 }} />}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-              {/* Connect With Us */}
-              {activeSocials.length > 0 && (
-                <div style={{ marginBottom: '24px' }}>
-                  <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '12px', color: '#333' }}>Connect With Us</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {activeSocials.map(s => (
-                      <a key={s.key} href={socialHref(s)} target="_blank" rel="noopener noreferrer"
-                        className={`flex items-center gap-1.5 ${s.color} text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-80 transition-opacity`}>
-                        {s.icon} {s.label}
-                      </a>
-                    ))}
+              {/* Business Information card — top */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                {/* Centered logo */}
+                {(ranch.logo || ranch.header_image) && (
+                  <div className="flex justify-center mb-4">
+                    <img
+                      src={ranch.logo || ranch.header_image}
+                      alt={ranch.business_name}
+                      style={{ maxHeight: '100px', maxWidth: '240px', objectFit: 'contain' }}
+                      onError={e => { e.target.parentElement.style.display = 'none'; }}
+                    />
                   </div>
-                </div>
-              )}
-
-              {/* Business info card */}
-              <div style={{ backgroundColor: '#f9f9f7', border: '1px solid #e8e8e0', borderRadius: '8px', padding: '20px' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#507033', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Business Information
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <p style={{ margin: '0 0 2px', fontSize: '0.75rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Business Name</p>
-                    <p style={{ margin: 0, fontWeight: 500 }}>{ranch.business_name}</p>
+                )}
+                <h3 className="text-base font-bold mb-4" style={{ color: '#507033' }}>Business Information</h3>
+                <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm text-gray-700 mb-4">
+                  <div className="flex flex-col">
+                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Business Name</dt>
+                    <dd className="mt-0.5 font-medium">{ranch.business_name}</dd>
                   </div>
                   {location && (
-                    <div>
-                      <p style={{ margin: '0 0 2px', fontSize: '0.75rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Location</p>
-                      <p style={{ margin: 0, fontWeight: 500 }}>{location}</p>
+                    <div className="flex flex-col">
+                      <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Location</dt>
+                      <dd className="mt-0.5 font-medium">{location}</dd>
                     </div>
                   )}
                   {(ranch.contact_first_name || ranch.contact_last_name) && (
-                    <div>
-                      <p style={{ margin: '0 0 2px', fontSize: '0.75rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Contact</p>
-                      <p style={{ margin: 0, fontWeight: 500 }}>{[ranch.contact_first_name, ranch.contact_last_name].filter(Boolean).join(' ')}</p>
+                    <div className="flex flex-col">
+                      <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Contact</dt>
+                      <dd className="mt-0.5 font-medium">{[ranch.contact_first_name, ranch.contact_last_name].filter(Boolean).join(' ')}</dd>
                     </div>
                   )}
                   {ranch.phone && (
-                    <div>
-                      <p style={{ margin: '0 0 2px', fontSize: '0.75rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Phone</p>
-                      <p style={{ margin: 0, fontWeight: 500 }}><a href={`tel:${ranch.phone}`} style={{ color: '#507033', textDecoration: 'none' }}>{ranch.phone}</a></p>
+                    <div className="flex flex-col">
+                      <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Phone</dt>
+                      <dd className="mt-0.5 font-medium">
+                        <a href={`tel:${ranch.phone}`} style={{ color: '#507033', textDecoration: 'none' }}>{ranch.phone}</a>
+                      </dd>
                     </div>
                   )}
                   {ranch.website && (
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <p style={{ margin: '0 0 2px', fontSize: '0.75rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Website</p>
-                      <p style={{ margin: 0 }}><a href={ranch.website.startsWith('http') ? ranch.website : `https://${ranch.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#507033', wordBreak: 'break-all' }}>{ranch.website}</a></p>
+                    <div className="flex flex-col">
+                      <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Website</dt>
+                      <dd className="mt-0.5">
+                        <a href={ranch.website.startsWith('http') ? ranch.website : `https://${ranch.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#507033', wordBreak: 'break-all' }}>{ranch.website}</a>
+                      </dd>
                     </div>
                   )}
-                </div>
+                </dl>
+                {/* Social icons — icon only */}
+                {activeSocials.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {activeSocials.map(s => (
+                      <a key={s.key} href={socialHref(s)} target="_blank" rel="noopener noreferrer" title={s.label}
+                        className={`flex items-center justify-center ${s.color} text-white rounded-lg hover:opacity-80 transition-opacity`}
+                        style={{ width: '32px', height: '32px', fontSize: '0.9rem' }}>
+                        {s.icon}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
 
+              {/* About card */}
+              {(ranch.home_heading || ranch.description || ranch.home_text || ranch.home_text2) && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                  {ranch.home_heading && <h2 className="text-lg font-bold mb-3" style={{ color: '#507033' }}>{ranch.home_heading}</h2>}
+                  {ranch.description && (
+                    <div className="prose prose-sm max-w-none text-sm text-gray-700 leading-relaxed mb-3"
+                      dangerouslySetInnerHTML={{ __html: ranch.description }} />
+                  )}
+                  {ranch.home_text && (
+                    <div style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#444', marginBottom: '12px' }}
+                      dangerouslySetInnerHTML={{ __html: ranch.home_text }} />
+                  )}
+                  {ranch.home_text2 && (
+                    <div style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#444' }}
+                      dangerouslySetInnerHTML={{ __html: ranch.home_text2 }} />
+                  )}
+                </div>
+              )}
 
             </div>
 
@@ -485,48 +502,97 @@ export default function OrgProfile() {
         {/* ── About / Contact tab ── */}
         {activeTab === 'contact' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '40px', alignItems: 'flex-start' }}>
-            <div>
-              <h2 style={{ fontSize: '1.3rem', marginBottom: '16px' }}>About {ranch.business_name}</h2>
-              {ranch.description && (
-                <div className="prose prose-sm max-w-none text-sm text-gray-700 leading-relaxed mb-4"
-                  dangerouslySetInnerHTML={{ __html: ranch.description }} />
-              )}
-              {ranch.home_text && <div style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#444', marginBottom: '16px' }}
-                dangerouslySetInnerHTML={{ __html: ranch.home_text }} />}
-              {ranch.home_text2 && <div style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#444', marginBottom: '24px' }}
-                dangerouslySetInnerHTML={{ __html: ranch.home_text2 }} />}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-              <div style={{ backgroundColor: '#f9f9f7', border: '1px solid #e8e8e0', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
-                <strong style={{ display: 'block', marginBottom: '8px' }}>{ranch.business_name}</strong>
-                {[ranch.address_street, location && `${location} ${ranch.address_zip}`.trim(), ranch.address_country]
-                  .filter(Boolean).map((line, i) => <p key={i} style={{ margin: '0 0 4px', fontSize: '0.9rem', color: '#555' }}>{line}</p>)}
-                {(ranch.contact_first_name || ranch.contact_last_name) && (
-                  <p style={{ margin: '8px 0 0', fontSize: '0.9rem', color: '#555' }}>
-                    Contact: {[ranch.contact_first_name, ranch.contact_last_name].filter(Boolean).join(' ')}
-                  </p>
+              {/* Business Information card — top */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                {/* Centered logo */}
+                {(ranch.logo || ranch.header_image) && (
+                  <div className="flex justify-center mb-4">
+                    <img
+                      src={ranch.logo || ranch.header_image}
+                      alt={ranch.business_name}
+                      style={{ maxHeight: '100px', maxWidth: '240px', objectFit: 'contain' }}
+                      onError={e => { e.target.parentElement.style.display = 'none'; }}
+                    />
+                  </div>
                 )}
-                {ranch.phone && (
-                  <p style={{ margin: '4px 0 0', fontSize: '0.9rem', color: '#555' }}>
-                    <a href={`tel:${ranch.phone}`} style={{ color: '#507033', textDecoration: 'none' }}>{ranch.phone}</a>
-                  </p>
-                )}
-                {ranch.website && (
-                  <p style={{ margin: '4px 0 0', fontSize: '0.9rem' }}>
-                    <a href={ranch.website.startsWith('http') ? ranch.website : `https://${ranch.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#507033', wordBreak: 'break-all' }}>{ranch.website}</a>
-                  </p>
+                <h3 className="text-base font-bold mb-4" style={{ color: '#507033' }}>Business Information</h3>
+                <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm text-gray-700 mb-4">
+                  <div className="flex flex-col">
+                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Business Name</dt>
+                    <dd className="mt-0.5 font-medium">{ranch.business_name}</dd>
+                  </div>
+                  {location && (
+                    <div className="flex flex-col">
+                      <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Location</dt>
+                      <dd className="mt-0.5 font-medium">{location}</dd>
+                    </div>
+                  )}
+                  {ranch.address_street && (
+                    <div className="flex flex-col col-span-2">
+                      <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Address</dt>
+                      <dd className="mt-0.5 font-medium">
+                        {[ranch.address_street, `${location} ${ranch.address_zip}`.trim(), ranch.address_country].filter(Boolean).join(', ')}
+                      </dd>
+                    </div>
+                  )}
+                  {(ranch.contact_first_name || ranch.contact_last_name) && (
+                    <div className="flex flex-col">
+                      <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Contact</dt>
+                      <dd className="mt-0.5 font-medium">{[ranch.contact_first_name, ranch.contact_last_name].filter(Boolean).join(' ')}</dd>
+                    </div>
+                  )}
+                  {ranch.phone && (
+                    <div className="flex flex-col">
+                      <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Phone</dt>
+                      <dd className="mt-0.5 font-medium">
+                        <a href={`tel:${ranch.phone}`} style={{ color: '#507033', textDecoration: 'none' }}>{ranch.phone}</a>
+                      </dd>
+                    </div>
+                  )}
+                  {ranch.website && (
+                    <div className="flex flex-col">
+                      <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Website</dt>
+                      <dd className="mt-0.5">
+                        <a href={ranch.website.startsWith('http') ? ranch.website : `https://${ranch.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#507033', wordBreak: 'break-all' }}>{ranch.website}</a>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+                {/* Social icons — icon only */}
+                {activeSocials.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {activeSocials.map(s => (
+                      <a key={s.key} href={socialHref(s)} target="_blank" rel="noopener noreferrer" title={s.label}
+                        className={`flex items-center justify-center ${s.color} text-white rounded-lg hover:opacity-80 transition-opacity`}
+                        style={{ width: '32px', height: '32px', fontSize: '0.9rem' }}>
+                        {s.icon}
+                      </a>
+                    ))}
+                  </div>
                 )}
               </div>
 
-              {activeSocials.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {activeSocials.map(s => (
-                    <a key={s.key} href={socialHref(s)} target="_blank" rel="noopener noreferrer"
-                      className={`flex items-center gap-1.5 ${s.color} text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-80 transition-opacity`}>
-                      {s.icon} {s.label}
-                    </a>
-                  ))}
+              {/* About card */}
+              {(ranch.description || ranch.home_text || ranch.home_text2) && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                  <h2 className="text-lg font-bold mb-3" style={{ color: '#507033' }}>About {ranch.business_name}</h2>
+                  {ranch.description && (
+                    <div className="prose prose-sm max-w-none text-sm text-gray-700 leading-relaxed mb-3"
+                      dangerouslySetInnerHTML={{ __html: ranch.description }} />
+                  )}
+                  {ranch.home_text && (
+                    <div style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#444', marginBottom: '12px' }}
+                      dangerouslySetInnerHTML={{ __html: ranch.home_text }} />
+                  )}
+                  {ranch.home_text2 && (
+                    <div style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#444' }}
+                      dangerouslySetInnerHTML={{ __html: ranch.home_text2 }} />
+                  )}
                 </div>
               )}
+
             </div>
 
             <div style={{ backgroundColor: '#fff', border: '1px solid #e8e8e8', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>

@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
 import './index.css'
 import { AccountProvider } from './AccountContext';
 import "./AnimalAddWizard.css";
@@ -84,12 +84,20 @@ const ProductsMarketplace = lazy(() => import('./ProductsMarketplace.jsx'))
 const ProductDetail = lazy(() => import('./ProductDetail.jsx'))
 const LivestockMarketplace = lazy(() => import('./LivestockMarketplace.jsx'))
 const LivestockForSale = lazy(() => import('./LivestockForSale.jsx'))
+const LivestockAnimalDetail = lazy(() => import('./LivestockAnimalDetail.jsx'))
 const RanchList = lazy(() => import('./RanchList.jsx'))
 const OrgProfile = lazy(() => import('./OrgProfile.jsx'))
 
 function RequireAuth({ children }) {
   const token = localStorage.getItem('access_token');
   return token ? children : <Navigate to="/login" replace />;
+}
+
+// Redirect legacy ASP URL: /livestockmarketplace/Animals/Details.asp?ID=xxx
+function LegacyAnimalRedirect() {
+  const [params] = useSearchParams();
+  const id = params.get('ID') || params.get('id');
+  return <Navigate to={id ? `/marketplaces/livestock/animal/${id}` : '/marketplaces/livestock'} replace />;
 }
 
 // Custom domains (not OFN or localhost) get the full public site renderer for every path.
@@ -173,12 +181,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
           {/* Marketplace routes — specific before generic */}
           <Route path="/marketplaces/farm-to-table" element={<FarmToTableMarketplace />} />
+          <Route path="/marketplaces/livestock/animal/:id" element={<LivestockAnimalDetail />} />
           <Route path="/marketplaces/livestock/ranch/:businessId" element={<OrgProfile />} />
           <Route path="/marketplaces/livestock/ranches/:slug" element={<RanchList />} />
           <Route path="/marketplaces/livestock/studs/:slug" element={<LivestockForSale />} />
           <Route path="/marketplaces/livestock/:slug" element={<LivestockForSale />} />
           <Route path="/marketplaces/livestock" element={<LivestockMarketplace />} />
           <Route path="/marketplaces" element={<LivestockMarketplace />} />
+          {/* Legacy ASP redirect */}
+          <Route path="/livestockmarketplace/Animals/Details.asp" element={<LegacyAnimalRedirect />} />
           <Route path="/produce/meat" element={<MeatInventory />} />
           <Route path="/app/news" element={<AccountLayout><NewsFeed /></AccountLayout>} />
           <Route path="/app/news/:id" element={<AccountLayout><ArticleDetail /></AccountLayout>} />
