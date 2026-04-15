@@ -12,7 +12,9 @@ const SITE_BASE_URL = 'https://www.OatmealFarmNetwork.com';
 const BLOCK_TYPES = [
   { type: 'hero',           icon: '🖼️',  label: 'Hero Banner',        desc: 'Full-width hero with image, headline & CTA' },
   { type: 'about',          icon: '🏡',  label: 'About Us',           desc: 'About section with text and image' },
-  { type: 'content',        icon: '📄',  label: 'Content Block',      desc: 'Heading, text, and optional image' },
+  { type: 'content',        icon: '📄',  label: '1 Column Block',     desc: 'Heading, text, and optional image' },
+  { type: 'content_2col',   icon: '📰',  label: '2 Column Block',     desc: 'Two side-by-side content columns (stack on mobile)' },
+  { type: 'content_4col',   icon: '🗂️',  label: '4 Column Block',     desc: 'Four side-by-side content columns (stack on mobile)' },
   { type: 'livestock',      icon: '🐄',  label: 'Livestock For Sale', desc: 'Animals listed for sale from your inventory' },
   { type: 'studs',          icon: '🐂',  label: 'Stud Services',      desc: 'Stud animals available for breeding' },
   { type: 'produce',        icon: '🥕',  label: 'Produce',            desc: 'Fresh produce from your inventory' },
@@ -31,6 +33,16 @@ const defaultBlockData = {
   hero:           { headline: 'Welcome to Our Farm', subtext: 'Fresh, local, and sustainably grown.', image_url: '', cta_text: 'Learn More', cta_link: '#about', overlay: true, align: 'center' },
   about:          { heading: 'About Us', body: 'Tell your story here...', image_url: '', images: [], image_position: 'right' },
   content:        { heading: '', body: '', image_url: '', images: [], image_position: 'right' },
+  content_2col:   { columns: [
+    { heading: '', body: '', image_url: '', images: [], image_position: 'right' },
+    { heading: '', body: '', image_url: '', images: [], image_position: 'right' },
+  ]},
+  content_4col:   { columns: [
+    { heading: '', body: '', image_url: '', images: [], image_position: 'right' },
+    { heading: '', body: '', image_url: '', images: [], image_position: 'right' },
+    { heading: '', body: '', image_url: '', images: [], image_position: 'right' },
+    { heading: '', body: '', image_url: '', images: [], image_position: 'right' },
+  ]},
   livestock:      { heading: 'Animals For Sale', show_for_sale: true, show_studs: false, max_items: 6 },
   studs:          { heading: 'Stud Services', show_for_sale: false, show_studs: true, max_items: 6 },
   produce:        { heading: 'Fresh Produce', max_items: 8 },
@@ -47,6 +59,19 @@ const defaultBlockData = {
   ]},
   divider:        { height: 40 },
 };
+
+// Normalize any size value to a px string. Accepts 'px', 'rem', 'em', or unitless.
+// Returns '' for empty/invalid input so defaults can kick in upstream.
+function remToPx(val) {
+  if (val === null || val === undefined || val === '') return '';
+  const s = String(val).trim();
+  if (!s) return '';
+  if (s.endsWith('px')) return s;
+  const num = parseFloat(s);
+  if (isNaN(num)) return '';
+  if (s.endsWith('rem') || s.endsWith('em')) return `${Math.round(num * 16)}px`;
+  return `${Math.round(num)}px`;
+}
 
 // Full web-friendly font list (alphabetical)
 const WEB_FONTS = [
@@ -84,6 +109,7 @@ const WEB_FONTS = [
   { label: 'Source Code Pro',    value: 'Source Code Pro, monospace' },
   { label: 'Source Sans Pro',    value: 'Source Sans Pro, sans-serif' },
   { label: 'Space Mono',         value: 'Space Mono, monospace' },
+  { label: 'Tempus Sans ITC',    value: '"Tempus Sans ITC", sans-serif' },
   { label: 'Times New Roman',    value: 'Times New Roman, serif' },
   { label: 'Ubuntu',             value: 'Ubuntu, sans-serif' },
   { label: 'Verdana',            value: 'Verdana, sans-serif' },
@@ -848,12 +874,19 @@ function CaptionField({ initial, onSave }) {
 }
 
 // ── InlineContentEditor: direct canvas editing for about/content blocks ─
-function InlineContentEditor({ block, site, onFieldSave }) {
-  const d          = block.block_data || {};
+// `data` optional — when supplied (e.g. from a multi-column wrapper), the editor
+// reads/writes that object instead of block.block_data. `onFieldSave(key, val)`
+// is still called by the editor for every change, but the parent decides where
+// the save goes (top-level vs. nested column).
+function InlineContentEditor({ block, site, onFieldSave, data, compact, pages }) {
+  const d          = data || block.block_data || {};
   const fontFamily = site?.font_family        || 'inherit';
-  const bgColor    = d.bg_color || site?.bg_color || '#fff';
+  const bgColor    = d.bg_color || site?.page_background_color || site?.bg_color || '#fff';
   const bgWidth    = site?.body_bg_width      || '100%';
-  const cWidth     = site?.body_content_width || '100%';
+  const cWidth     = compact ? '100%' : (site?.body_content_width || '100%');
+  // Compact mode (4-col blocks) shrinks the outer padding so content isn't
+  // smothered by ~40px side gutters when the column is already narrow.
+  const outerPad   = compact ? '0.5rem 0.5rem' : '1.75rem 2.5rem';
 
   // Derive image source info first (needed for imgWidth initial state)
   const imgs    = Array.isArray(d.images) && d.images.length > 0 ? d.images : [];
@@ -881,7 +914,14 @@ function InlineContentEditor({ block, site, onFieldSave }) {
   const fileInputRef    = useRef(null);
   const [imgPanel, setImgPanel]           = useState(false);
   const [imgUrl, setImgUrl]               = useState('');
-  const [imgAlign, setImgAlign]           = useState('center');
+  const [imgAlign, setImgAlign]           = useState('right');
+  const [vidPanel, setVidPanel]           = useState(false);
+  const [vidUrl, setVidUrl]               = useState('');
+  const [vidAlign, setVidAlign]           = useState('center');
+  const [linkPanel, setLinkPanel]         = useState(false);
+  const [linkMode, setLinkMode]           = useState('url');   // 'url' | 'page'
+  const [linkHref, setLinkHref]           = useState('');
+  const [linkPageSlug, setLinkPageSlug]   = useState('');
   const [draggingOver, setDraggingOver]   = useState(false);
   const [panelDragging, setPanelDragging] = useState(false);
   const [uploading, setUploading]         = useState(false);
@@ -1067,21 +1107,54 @@ function InlineContentEditor({ block, site, onFieldSave }) {
     }
   };
 
-  const insertLink = () => {
-    // Save selection now (before prompt steals it)
-    saveSel();
-    const input = window.prompt('Enter a URL or email address:');
-    if (!input) return;
-    const val  = input.trim();
+  const openLinkPanel = (e) => {
+    e.preventDefault();
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && (bodyRef.current?.contains(sel.anchorNode) || headingRef.current?.contains(sel.anchorNode))) {
+      savedSel.current = sel.getRangeAt(0).cloneRange();
+      activeEl.current = headingRef.current?.contains(sel.anchorNode) ? headingRef.current : bodyRef.current;
+    }
+    setLinkPanel(p => !p);
+  };
+
+  // Apply a URL link: external / mailto / https normalised
+  const applyUrlLink = () => {
+    const val = (linkHref || '').trim();
+    if (!val) return;
     const href = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ? `mailto:${val}`
                : /^https?:\/\//i.test(val)               ? val
                : /^mailto:/i.test(val)                   ? val
                : `https://${val}`;
-    // Restore selection after prompt closes, then wrap with link
     restoreSel();
     document.execCommand('createLink', false, href);
     const el = activeEl.current || bodyRef.current;
-    el?.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
+    el?.querySelectorAll('a[href="' + href + '"]').forEach(a => {
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener noreferrer');
+      a.removeAttribute('data-page-slug');
+    });
+    if (bodyRef.current) onFieldSave('body', bodyRef.current.innerHTML);
+    setLinkPanel(false);
+    setLinkHref('');
+  };
+
+  // Apply an internal-page link: uses data-page-slug so the public SPA
+  // intercepts the click and calls setActivePage.
+  const applyPageLink = () => {
+    if (!linkPageSlug) return;
+    const sentinel = '#__ofn_page_link__';
+    restoreSel();
+    document.execCommand('createLink', false, sentinel);
+    const el = activeEl.current || bodyRef.current;
+    el?.querySelectorAll('a[href="' + sentinel + '"]').forEach(a => {
+      a.setAttribute('href', '#');
+      a.setAttribute('data-page-slug', linkPageSlug);
+      a.removeAttribute('target');
+      a.removeAttribute('rel');
+    });
+    if (bodyRef.current) onFieldSave('body', bodyRef.current.innerHTML);
+    setLinkPanel(false);
+    setLinkPageSlug('');
   };
 
   const clearFormatting = () => {
@@ -1187,6 +1260,121 @@ function InlineContentEditor({ block, site, onFieldSave }) {
     finally { setUploading(false); }
   };
 
+  const openVidPanel = (e) => {
+    e.preventDefault();
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && bodyRef.current?.contains(sel.anchorNode)) {
+      savedSel.current = sel.getRangeAt(0).cloneRange();
+      activeEl.current = bodyRef.current;
+    }
+    setVidPanel(p => !p);
+  };
+
+  // Parse video URL → embed URL. Returns null for direct video files.
+  const _parseVideoEmbed = (raw) => {
+    const url = (raw || '').trim();
+    if (!url) return null;
+    // YouTube (watch, youtu.be, shorts, embed)
+    const ytFull  = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/))([A-Za-z0-9_-]{11})/);
+    const ytShort = url.match(/youtu\.be\/([A-Za-z0-9_-]{11})/);
+    const ytId = (ytFull && ytFull[1]) || (ytShort && ytShort[1]);
+    if (ytId) return `https://www.youtube.com/embed/${ytId}`;
+    // Vimeo
+    const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
+    return null;
+  };
+
+  // If the raw input contains an <iframe>, extract and sanitize it.
+  // Accepts bare <iframe> tags or snippets wrapped in <div>/other markup.
+  const _parseRawIframe = (raw) => {
+    const txt = (raw || '').trim();
+    if (!/<iframe[\s>]/i.test(txt)) return null;
+    const tpl = document.createElement('template');
+    tpl.innerHTML = txt;
+    const iframe = tpl.content.querySelector('iframe');
+    if (!iframe) return null;
+    // Whitelist attributes — drop anything we don't explicitly allow
+    const allowed = ['src','allow','allowfullscreen','title','loading','referrerpolicy'];
+    [...iframe.attributes].forEach(a => {
+      if (!allowed.includes(a.name.toLowerCase())) iframe.removeAttribute(a.name);
+    });
+    // Force responsive sizing
+    iframe.setAttribute('frameborder', '0');
+    iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;';
+    return iframe;
+  };
+
+  const _vidFigCss = (align) => ({
+    left:   'float:left;margin:0 1rem 0.75rem 0;width:60%;clear:both;',
+    right:  'float:right;margin:0 0 0.75rem 1rem;width:60%;clear:both;',
+    center: 'display:block;margin:0.75rem auto;width:80%;clear:both;',
+  }[align] || 'display:block;margin:0.75rem auto;width:80%;clear:both;');
+
+  const insertBodyVideo = (url, align) => {
+    if (!url || !bodyRef.current) return;
+    const rawIframe = _parseRawIframe(url);
+    const embed = rawIframe ? null : _parseVideoEmbed(url);
+    const figure = document.createElement('figure');
+    figure.style.cssText = _vidFigCss(align);
+    // Wrapper keeps 16:9 aspect ratio
+    const wrap = document.createElement('div');
+    wrap.className = 'wb-video-wrap';
+    wrap.style.cssText = 'position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;background:#000;';
+    if (rawIframe) {
+      wrap.appendChild(rawIframe);
+    } else if (embed) {
+      const iframe = document.createElement('iframe');
+      iframe.src = embed;
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+      iframe.setAttribute('allowfullscreen', '');
+      iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;';
+      wrap.appendChild(iframe);
+    } else {
+      // Treat as a direct video file
+      const video = document.createElement('video');
+      video.src = url;
+      video.controls = true;
+      video.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
+      wrap.appendChild(video);
+    }
+    // Click shield — intercepts clicks in the builder so the user can select
+    // the video without the iframe swallowing input. Hidden on the public site.
+    const shield = document.createElement('div');
+    shield.className = 'wb-video-shield';
+    shield.style.cssText = 'position:absolute;inset:0;z-index:2;cursor:pointer;';
+    wrap.appendChild(shield);
+    figure.appendChild(wrap);
+    const figcaption = document.createElement('figcaption');
+    figcaption.style.cssText = 'font-size:0.82em;color:#6b7280;text-align:center;font-style:italic;margin-top:0.3em;min-height:1em;';
+    figure.appendChild(figcaption);
+
+    const range = savedSel.current;
+    let refBlock = null;
+    if (range && bodyRef.current.contains(range.commonAncestorContainer)) {
+      let node = range.commonAncestorContainer;
+      if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+      if (node === bodyRef.current) {
+        refBlock = bodyRef.current.children[range.startOffset] || null;
+      } else {
+        while (node && node.parentElement !== bodyRef.current) node = node.parentElement;
+        if (node && node !== bodyRef.current) refBlock = node;
+      }
+    }
+    if (refBlock) {
+      bodyRef.current.insertBefore(figure, refBlock);
+    } else {
+      bodyRef.current.appendChild(figure);
+      const p = document.createElement('p');
+      p.innerHTML = '<br>';
+      bodyRef.current.appendChild(p);
+    }
+    onFieldSave('body', bodyRef.current.innerHTML);
+    setVidPanel(false);
+    setVidUrl('');
+  };
+
   const _rootBodyEl = (node) => {
     if (!node || !bodyRef.current) return null;
     let n = node;
@@ -1221,23 +1409,46 @@ function InlineContentEditor({ block, site, onFieldSave }) {
     e.stopPropagation();
     const img = selectedImg;
     if (!img) return;
+    const isVideo  = img.classList?.contains('wb-video-wrap');
+    const fig      = img.parentElement?.tagName === 'FIGURE' ? img.parentElement : null;
     const startX   = e.clientX;
     const startY   = e.clientY;
-    const startW   = img.offsetWidth;
-    const startH   = img.offsetHeight;
+    const startW   = fig ? fig.offsetWidth : img.offsetWidth;
+    const startH   = (isVideo && fig) ? fig.offsetHeight : img.offsetHeight;
     const aspect   = startH / startW;
+    // n/s handles resize height only for images. Videos always keep 16:9 via the wrapper.
+    const heightOnly = !isVideo && (dir === 'n' || dir === 's');
     resizingRef.current = true;
     const onMove = (mv) => {
       let newW = startW, newH = startH;
-      if (dir === 'e')  newW = Math.max(40, startW + (mv.clientX - startX));
-      if (dir === 'w')  newW = Math.max(40, startW - (mv.clientX - startX));
-      if (dir === 'se') newW = Math.max(40, startW + (mv.clientX - startX));
-      if (dir === 'sw') newW = Math.max(40, startW - (mv.clientX - startX));
-      if (dir === 'ne') newW = Math.max(40, startW + (mv.clientX - startX));
-      if (dir === 'nw') newW = Math.max(40, startW - (mv.clientX - startX));
-      newH = Math.round(newW * aspect);
-      img.style.width  = newW + 'px';
-      img.style.height = newH + 'px';
+      if (heightOnly) {
+        if (dir === 's') newH = Math.max(30, startH + (mv.clientY - startY));
+        if (dir === 'n') newH = Math.max(30, startH - (mv.clientY - startY));
+        img.style.height = newH + 'px';
+        img.style.objectFit = img.style.objectFit || 'cover';
+      } else {
+        if (dir === 'e')  newW = Math.max(80, startW + (mv.clientX - startX));
+        if (dir === 'w')  newW = Math.max(80, startW - (mv.clientX - startX));
+        if (dir === 'se') newW = Math.max(80, startW + (mv.clientX - startX));
+        if (dir === 'sw') newW = Math.max(80, startW - (mv.clientX - startX));
+        if (dir === 'ne') newW = Math.max(80, startW + (mv.clientX - startX));
+        if (dir === 'nw') newW = Math.max(80, startW - (mv.clientX - startX));
+        if (fig) {
+          // Resize the figure — keeps image + caption aligned within the same
+          // width. For video wrappers the 16:9 aspect is preserved by CSS.
+          fig.style.maxWidth = 'none';
+          fig.style.width    = newW + 'px';
+          if (!isVideo) {
+            // Let the img fill the figure so it and the caption share its width.
+            img.style.width  = '100%';
+            img.style.height = 'auto';
+          }
+        } else {
+          newH = Math.round(newW * aspect);
+          img.style.width  = newW + 'px';
+          img.style.height = newH + 'px';
+        }
+      }
       setImgRect(img.getBoundingClientRect());
     };
     const onUp = () => {
@@ -1268,9 +1479,10 @@ function InlineContentEditor({ block, site, onFieldSave }) {
 
   const applyImgAlign = (align) => {
     if (!selectedImg) return;
+    const isVideo = selectedImg.classList?.contains('wb-video-wrap');
     const fig = selectedImg.parentElement?.tagName === 'FIGURE' ? selectedImg.parentElement : null;
     if (fig) {
-      fig.style.cssText = _figCss(align);
+      fig.style.cssText = isVideo ? _vidFigCss(align) : _figCss(align);
     } else {
       _liftToBody(selectedImg);
       selectedImg.style.cssText = _figCss(align);
@@ -1279,6 +1491,30 @@ function InlineContentEditor({ block, site, onFieldSave }) {
     const r = selectedImg.getBoundingClientRect();
     setImgRect(r);
     setImgToolbarPos({ top: r.top - 80, left: r.left });
+  };
+
+  const deleteBodyImg = () => {
+    if (!selectedImg) return;
+    const fig = selectedImg.parentElement?.tagName === 'FIGURE' ? selectedImg.parentElement : null;
+    if (fig) fig.remove();
+    else selectedImg.remove();
+    onFieldSave('body', bodyRef.current.innerHTML);
+    setSelectedImg(null);
+    setImgRect(null);
+  };
+
+  // Toggle [data-no-style] — opts this image out of the site-wide image
+  // styling (border radius, shadow, margin) set in Design → Images.
+  const toggleImgRawStyle = () => {
+    if (!selectedImg) return;
+    const isVideo = selectedImg.classList?.contains('wb-video-wrap');
+    const target  = isVideo ? selectedImg.querySelector('iframe,video') : selectedImg;
+    if (!target) return;
+    if (target.hasAttribute('data-no-style')) target.removeAttribute('data-no-style');
+    else target.setAttribute('data-no-style', '');
+    onFieldSave('body', bodyRef.current.innerHTML);
+    // force a rerender of the toolbar so the button reflects the new state
+    setImgRect(selectedImg.getBoundingClientRect());
   };
 
   const moveBodyImg = (dir) => {
@@ -1299,12 +1535,23 @@ function InlineContentEditor({ block, site, onFieldSave }) {
     if (e.target.tagName === 'IMG') {
       e.preventDefault();
       selectBodyImg(e.target);
-    } else if (e.target.tagName === 'FIGCAPTION') {
-      const img = e.target.closest('figure')?.querySelector('img');
-      if (img) selectBodyImg(img);
-    } else {
-      setSelectedImg(null);
+      return;
     }
+    // Video: click on the shield/wrapper/iframe/video/figure picks the wrapper
+    const wrap = e.target.closest?.('.wb-video-wrap');
+    if (wrap) {
+      e.preventDefault();
+      selectBodyImg(wrap);
+      return;
+    }
+    if (e.target.tagName === 'FIGCAPTION') {
+      const fig = e.target.closest('figure');
+      const img = fig?.querySelector('img');
+      if (img) { selectBodyImg(img); return; }
+      const vwrap = fig?.querySelector('.wb-video-wrap');
+      if (vwrap) { selectBodyImg(vwrap); return; }
+    }
+    setSelectedImg(null);
   };
 
   const handleBodyDrop = (e) => {
@@ -1436,9 +1683,27 @@ function InlineContentEditor({ block, site, onFieldSave }) {
                 <rect x="4" y="9.2" width="10" height="1.6"/>
               </svg>
             </button>
+            <button style={tbBtn} title="Decrease indent"
+              onMouseDown={e => { e.preventDefault(); try { document.execCommand('styleWithCSS', false, true); } catch(_){} btnCmd(e, 'outdent'); }}>
+              <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor">
+                <rect x="0" y="0" width="14" height="1.6"/>
+                <rect x="4" y="4" width="10" height="1.6"/>
+                <rect x="4" y="8" width="10" height="1.6"/>
+                <polygon points="0,3 3,6 0,9"/>
+              </svg>
+            </button>
+            <button style={tbBtn} title="Increase indent"
+              onMouseDown={e => { e.preventDefault(); try { document.execCommand('styleWithCSS', false, true); } catch(_){} btnCmd(e, 'indent'); }}>
+              <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor">
+                <rect x="0" y="0" width="14" height="1.6"/>
+                <rect x="0" y="4" width="10" height="1.6"/>
+                <rect x="0" y="8" width="10" height="1.6"/>
+                <polygon points="14,3 11,6 14,9"/>
+              </svg>
+            </button>
             <div style={tbDiv} />
             <button style={tbBtn} title="Insert Link"
-              onMouseDown={e => { e.preventDefault(); insertLink(); }}>
+              onMouseDown={openLinkPanel}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
                 <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
@@ -1460,6 +1725,14 @@ function InlineContentEditor({ block, site, onFieldSave }) {
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
               onChange={e => { if (e.target.files[0]) handlePanelFile(e.target.files[0]); e.target.value = ''; }} />
+            {/* Video insert */}
+            <button style={tbBtn} title="Embed video (YouTube, Vimeo, or direct URL)"
+              onMouseDown={openVidPanel}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="5" width="15" height="14" rx="2"/>
+                <polygon points="17 9 22 6 22 18 17 15" fill="currentColor"/>
+              </svg>
+            </button>
             <div style={tbDiv} />
             {/* Block background color */}
             <ToolbarBgColorPicker
@@ -1529,8 +1802,128 @@ function InlineContentEditor({ block, site, onFieldSave }) {
             </div>
           )}
 
+          {/* Video embed panel */}
+          {vidPanel && (
+            <div style={{ background: '#0f172a', borderBottom: '1px solid #334155', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                <textarea
+                  autoFocus
+                  rows={2}
+                  placeholder="YouTube / Vimeo URL, direct video URL, or paste full <iframe…> code"
+                  value={vidUrl}
+                  onChange={e => setVidUrl(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && vidUrl) { e.preventDefault(); insertBodyVideo(vidUrl, vidAlign); } }}
+                  style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: 6, padding: '5px 8px', fontSize: 12, color: '#e2e8f0', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+                />
+                <button
+                  onMouseDown={e => { e.preventDefault(); if (vidUrl) insertBodyVideo(vidUrl, vidAlign); }}
+                  style={{ padding: '5px 12px', background: '#3D6B34', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                  Embed
+                </button>
+                <button onMouseDown={e => { e.preventDefault(); setVidPanel(false); }}
+                  style={{ padding: '5px 8px', background: '#334155', color: '#94a3b8', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>✕</button>
+              </div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <span style={{ fontSize: 11, color: '#94a3b8' }}>Align:</span>
+                {[['left','← Left'],['center','↔ Center'],['right','Right →']].map(([a, lbl]) => (
+                  <button key={a} onMouseDown={e => { e.preventDefault(); setVidAlign(a); }}
+                    style={{ padding: '3px 8px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', fontWeight: vidAlign === a ? 700 : 400, background: vidAlign === a ? '#3D6B34' : '#334155', color: vidAlign === a ? '#fff' : '#e2e8f0' }}>
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 10, color: '#64748b', lineHeight: 1.4 }}>
+                Paste a YouTube/Vimeo link, a direct MP4/WebM URL, or a full <code style={{ background:'#1e293b', padding:'0 3px', borderRadius:3 }}>&lt;iframe&gt;</code> embed code.
+              </div>
+            </div>
+          )}
+
+          {/* Link insert panel */}
+          {linkPanel && (
+            <div style={{ background: '#0f172a', borderBottom: '1px solid #334155', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {[['url','External URL'],['page','Page on this site']].map(([m, lbl]) => (
+                  <button key={m} onMouseDown={e => { e.preventDefault(); setLinkMode(m); }}
+                    style={{ padding: '4px 10px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', fontWeight: linkMode === m ? 700 : 400, background: linkMode === m ? '#3D6B34' : '#334155', color: linkMode === m ? '#fff' : '#e2e8f0' }}>
+                    {lbl}
+                  </button>
+                ))}
+                <div style={{ flex: 1 }} />
+                <button onMouseDown={e => { e.preventDefault(); setLinkPanel(false); }}
+                  style={{ padding: '4px 8px', background: '#334155', color: '#94a3b8', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}>✕</button>
+              </div>
+              {linkMode === 'url' ? (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="https://example.com or name@example.com"
+                    value={linkHref}
+                    onChange={e => setLinkHref(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyUrlLink(); } }}
+                    style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: 6, padding: '5px 8px', fontSize: 12, color: '#e2e8f0', outline: 'none' }}
+                  />
+                  <button onMouseDown={e => { e.preventDefault(); applyUrlLink(); }}
+                    style={{ padding: '5px 14px', background: '#3D6B34', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                    Link
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <select
+                    autoFocus
+                    value={linkPageSlug}
+                    onChange={e => setLinkPageSlug(e.target.value)}
+                    style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: 6, padding: '5px 8px', fontSize: 12, color: '#e2e8f0', outline: 'none' }}>
+                    <option value="">— Choose a page —</option>
+                    {(() => {
+                      // Mirror the public nav: top-level first (sort_order),
+                      // then each parent's children indented underneath.
+                      // Nav-heading rows are non-selectable group labels.
+                      const all = pages || [];
+                      const byOrder = (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0);
+                      const tops = all.filter(p => !p.parent_page_id).sort(byOrder);
+                      const childrenOf = (id) => all.filter(p => p.parent_page_id === id).sort(byOrder);
+                      const rows = [];
+                      tops.forEach(p => {
+                        const kids = childrenOf(p.page_id);
+                        const isHeading = p.is_nav_heading || (kids.length > 0 && !p.slug);
+                        if (isHeading) {
+                          rows.push(
+                            <option key={`h-${p.page_id}`} value="" disabled style={{ color: '#94a3b8', fontWeight: 700 }}>
+                              {p.page_name}
+                            </option>
+                          );
+                        } else if (p.slug) {
+                          rows.push(
+                            <option key={p.page_id} value={p.slug}>{p.page_name}</option>
+                          );
+                        }
+                        kids.forEach(c => {
+                          if (!c.slug) return;
+                          rows.push(
+                            <option key={c.page_id} value={c.slug}>{`\u00A0\u00A0\u00A0\u00A0— ${c.page_name}`}</option>
+                          );
+                        });
+                      });
+                      return rows;
+                    })()}
+                  </select>
+                  <button onMouseDown={e => { e.preventDefault(); applyPageLink(); }}
+                    disabled={!linkPageSlug}
+                    style={{ padding: '5px 14px', background: linkPageSlug ? '#3D6B34' : '#475569', color: '#fff', border: 'none', borderRadius: 6, cursor: linkPageSlug ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: 600 }}>
+                    Link
+                  </button>
+                </div>
+              )}
+              <div style={{ fontSize: 10, color: '#64748b', lineHeight: 1.4 }}>
+                Select text first, then choose a link destination. Internal page links navigate within this site.
+              </div>
+            </div>
+          )}
+
           {/* Editable content area */}
-          <div style={{ background: d.bg_color || site?.bg_color || bgColor, padding: '1.75rem 2.5rem' }}>
+          <div style={{ background: d.bg_color || site?.bg_color || bgColor, padding: outerPad }}>
             <div style={{ maxWidth: cWidth, margin: '0 auto' }}>
               <div style={{ display: 'flex', flexDirection: isSide ? (isLeft ? 'row' : 'row-reverse') : 'column', gap: '2rem', alignItems: isSide ? 'flex-start' : 'stretch' }}>
                 {rawUrl && (
@@ -1572,7 +1965,7 @@ function InlineContentEditor({ block, site, onFieldSave }) {
                       onPaste={pastePlainText}
                       onFocus={() => { activeEl.current = headingRef.current; }}
                       onBlur={e => onFieldSave('heading', e.currentTarget.textContent)}
-                      style={{ outline: 'none', cursor: 'text', minHeight: '1.8rem', borderBottom: '1px dashed #cbd5e1', paddingBottom: 4, ...headingTypoStyle(d.heading_style, site) }}
+                      style={{ outline: 'none', cursor: 'text', minHeight: '1.8rem', border: '1px dashed #cbd5e1', borderRadius: 4, padding: '4px 6px', marginBottom: 6, ...headingTypoStyle(d.heading_style, site) }}
                     />
                     {/* Body — rich text (hidden in HTML mode) */}
                     <div
@@ -1643,14 +2036,20 @@ function InlineContentEditor({ block, site, onFieldSave }) {
             { dir: 'se', top: imgRect.bottom - 5,                   left: imgRect.right - 5 },
             { dir: 'e',  top: imgRect.top + imgRect.height / 2 - 5, left: imgRect.right - 5 },
             { dir: 'w',  top: imgRect.top + imgRect.height / 2 - 5, left: imgRect.left - 5 },
+            { dir: 'n',  top: imgRect.top - 5,                      left: imgRect.left + imgRect.width / 2 - 5 },
+            { dir: 's',  top: imgRect.bottom - 5,                   left: imgRect.left + imgRect.width / 2 - 5 },
           ].map(({ dir, top, left }) => (
             <div key={dir} onMouseDown={e => startBodyImgResize(e, dir)}
               style={{
                 position: 'fixed', top, left, width: 10, height: 10,
-                background: '#3b82f6', border: '1px solid #fff', borderRadius: 2,
-                cursor: dir === 'e' || dir === 'w' ? 'ew-resize' : dir === 'nw' || dir === 'se' ? 'nwse-resize' : 'nesw-resize',
+                background: dir === 'n' || dir === 's' ? '#f59e0b' : '#3b82f6',
+                border: '1px solid #fff', borderRadius: 2,
+                cursor: dir === 'e' || dir === 'w' ? 'ew-resize'
+                      : dir === 'n' || dir === 's' ? 'ns-resize'
+                      : dir === 'nw' || dir === 'se' ? 'nwse-resize' : 'nesw-resize',
                 zIndex: 99999,
               }}
+              title={dir === 'n' || dir === 's' ? 'Drag to resize height only' : 'Drag to resize'}
             />
           ))}
           {/* Floating toolbar */}
@@ -1672,6 +2071,28 @@ function InlineContentEditor({ block, site, onFieldSave }) {
                   {icon}
                 </button>
               ))}
+              <div style={{ width: 1, background: '#475569', alignSelf: 'stretch', margin: '0 3px' }} />
+              {(() => {
+                const isVideo = selectedImg?.classList?.contains('wb-video-wrap');
+                const target  = isVideo ? selectedImg?.querySelector('iframe,video') : selectedImg;
+                const isRaw   = !!target?.hasAttribute?.('data-no-style');
+                return (
+                  <button onMouseDown={e => { e.preventDefault(); toggleImgRawStyle(); }}
+                    title={isRaw ? 'Site image styling disabled — click to re-enable' : 'Remove site image styling for this image'}
+                    style={{ padding: '3px 8px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: isRaw ? '#7dd3fc' : '#334155', color: isRaw ? '#0f172a' : '#e2e8f0', fontWeight: 600 }}>
+                    {isRaw ? 'Raw ✓' : 'Raw'}
+                  </button>
+                );
+              })()}
+              <div style={{ width: 1, background: '#475569', alignSelf: 'stretch', margin: '0 3px' }} />
+              <button onMouseDown={e => { e.preventDefault(); deleteBodyImg(); }}
+                title="Delete image"
+                style={{ padding: '3px 8px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#7f1d1d', color: '#fecaca', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 012-2h2a2 2 0 012 2v2"/>
+                </svg>
+                Delete
+              </button>
               <button onMouseDown={e => { e.preventDefault(); setSelectedImg(null); setImgRect(null); }}
                 style={{ padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#334155', color: '#94a3b8', marginLeft: 2 }}>✕</button>
             </div>
@@ -1697,6 +2118,63 @@ function InlineContentEditor({ block, site, onFieldSave }) {
   );
 }
 
+// ── MultiColumnInlineEditor: N InlineContentEditors side-by-side, one per column.
+// Each column's data lives in block.block_data.columns[i] and is kept in sync
+// through a local state copy that mirrors block.block_data.columns (so individual
+// field saves don't clobber each other while React re-renders).
+function MultiColumnInlineEditor({ block, site, onFieldSave, columnCount, pages }) {
+  const initial = Array.isArray(block.block_data?.columns) && block.block_data.columns.length
+    ? block.block_data.columns
+    : Array.from({ length: columnCount }, () => ({ heading: '', body: '', image_url: '', images: [], image_position: 'right' }));
+  // Pad/trim to columnCount
+  const padded = [...initial];
+  while (padded.length < columnCount) padded.push({ heading: '', body: '', image_url: '', images: [], image_position: 'right' });
+  padded.length = columnCount;
+
+  const columnsRef = useRef(padded);
+  // Keep ref in sync when parent state changes (e.g., another save arrives)
+  useEffect(() => {
+    const fresh = Array.isArray(block.block_data?.columns) && block.block_data.columns.length
+      ? block.block_data.columns
+      : [];
+    const next = [...fresh];
+    while (next.length < columnCount) next.push({ heading: '', body: '', image_url: '', images: [], image_position: 'right' });
+    next.length = columnCount;
+    columnsRef.current = next;
+  }, [block.block_data, columnCount]);
+
+  const saveColumnField = (idx, key, val) => {
+    const next = columnsRef.current.map((c, i) => i === idx ? { ...c, [key]: val } : c);
+    columnsRef.current = next;
+    onFieldSave('columns', next);
+  };
+
+  // Responsive: flex-wrap so columns stack automatically when the canvas narrows
+  return (
+    <div style={{ background: block.block_data?.bg_color || site?.bg_color || '#fff' }}>
+      <div className="wb-multicol" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch' }}>
+        {columnsRef.current.map((colData, i) => (
+          <div key={i} className="wb-multicol-col" style={{ flex: `1 1 ${columnCount === 2 ? 'calc(50% - 1px)' : 'calc(25% - 1px)'}`, minWidth: columnCount === 4 ? 160 : 240, borderLeft: i === 0 ? 'none' : '1px dashed #e5e7eb' }}>
+            <InlineContentEditor
+              block={block}
+              data={colData}
+              site={site}
+              onFieldSave={(k, v) => saveColumnField(i, k, v)}
+              compact={columnCount === 4}
+              pages={pages}
+            />
+          </div>
+        ))}
+      </div>
+      <style>{`
+        @media (max-width: 900px) {
+          .wb-multicol .wb-multicol-col { flex: 1 1 100% !important; border-left: none !important; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 // Returns a complete inline style object for the heading based on the stored
 // style level (h1/h2/h3/h4/p) and site typography settings from the DB.
 // Mirrors all properties generated by buildRteBodyCss so heading and body
@@ -1707,11 +2185,12 @@ function headingTypoStyle(tag, site) {
   const hasRule  = k !== 'body' && !!site?.[`${k}_rule`];
   const align    = site?.[`${k}_align`] || 'left';
   return {
-    fontSize:       site?.[`${k}_size`]   || (k==='body'?'1rem':k==='h1'?'2.5rem':k==='h2'?'1.8rem':k==='h3'?'1.3rem':'1.1rem'),
+    fontSize:       remToPx(site?.[`${k}_size`]) || (k==='body'?'16px':k==='h1'?'40px':k==='h2'?'29px':k==='h3'?'21px':'17px'),
     fontWeight:     site?.[`${k}_weight`] || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':'600'),
     color:          site?.[`${k}_color`]  || site?.text_color || '',
     fontFamily:     site?.[`${k}_font`]   || site?.font_family || '',
     textAlign:      align,
+    fontStyle:      site?.[`${k}_italic`] ? 'italic' : 'normal',
     textDecoration: site?.[`${k}_underline`] ? 'underline' : 'none',
     borderBottom:   hasRule ? `2px solid ${ruleclr}` : 'none',
     paddingBottom:  hasRule ? '2px' : '0',
@@ -1735,7 +2214,7 @@ function SimpleBlockPreview({ block, site, businessId }) {
   const accent     = site?.accent_color   || '#FFC567';
   const textColor  = site?.text_color     || '#111827';
   const fontFamily = site?.font_family    || 'inherit';
-  const bgColor    = d.bg_color || site?.bg_color || '#fff';
+  const bgColor    = d.bg_color || site?.page_background_color || site?.bg_color || '#fff';
   const bgWidth    = site?.body_bg_width      || '100%';
   const cWidth     = site?.body_content_width || '100%';
 
@@ -1789,7 +2268,7 @@ function SimpleBlockPreview({ block, site, businessId }) {
     const imgW       = pos === 'full' ? '100%' : pos === 'center' ? `${Math.min(_imgW, 100)}%` : `${_imgW}%`;
     const imgAlign   = pos === 'center' ? { margin: '0 auto' } : {};
     const hasHeading = !!d.heading?.trim();
-    const hasBody    = !!d.body?.replace(/<[^>]*>/g, '').trim();
+    const hasBody    = !!d.body && (!!d.body.replace(/<[^>]*>/g, '').trim() || /<(img|iframe|video|figure)\b/i.test(d.body));
     const hasImage   = !!rawUrl;
     const isEmpty    = !hasHeading && !hasBody && !hasImage;
     return (
@@ -1819,6 +2298,45 @@ function SimpleBlockPreview({ block, site, businessId }) {
             </div>
           )
         }
+      </BlockWrap>
+    );
+  }
+
+  if (bt === 'content_2col' || bt === 'content_4col') {
+    const columnCount = bt === 'content_2col' ? 2 : 4;
+    const rawCols = Array.isArray(d.columns) ? d.columns : [];
+    const cols = [...rawCols];
+    while (cols.length < columnCount) cols.push({});
+    cols.length = columnCount;
+    const isEmpty = cols.every(c => !c.heading?.trim() && !(c.body && (c.body.replace(/<[^>]*>/g, '').trim() || /<(img|iframe|video|figure)\b/i.test(c.body))) && !c.image_url);
+    return (
+      <BlockWrap>
+        {isEmpty
+          ? <p style={{ color: '#9ca3af', fontStyle: 'italic', margin: 0 }}>Click to edit this {columnCount}-column block</p>
+          : (
+            <div className="wb-multicol-preview" style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'flex-start' }}>
+              {cols.map((c, i) => {
+                const hasHeading = !!c.heading?.trim();
+                const hasBody    = !!c.body && (!!c.body.replace(/<[^>]*>/g, '').trim() || /<(img|iframe|video|figure)\b/i.test(c.body));
+                const imgUrl     = c.image_url;
+                return (
+                  <div key={i} className="wb-multicol-preview-col" style={{ flex: `1 1 ${columnCount === 2 ? 'calc(50% - 0.75rem)' : 'calc(25% - 1.125rem)'}`, minWidth: 0 }}>
+                    {imgUrl && <img src={imgUrl} alt={c.image_caption || ''} style={{ width: '100%', display: 'block', borderRadius: 8, marginBottom: 8 }} />}
+                    <div className="rte-body">
+                      {hasHeading && <h2 style={headingTypoStyle(c.heading_style, site)}>{c.heading}</h2>}
+                      {hasBody && <div dangerouslySetInnerHTML={{ __html: addLinkTargets(c.body) }} />}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        }
+        <style>{`
+          @media (max-width: 900px) {
+            .wb-multicol-preview .wb-multicol-preview-col { flex: 1 1 100% !important; }
+          }
+        `}</style>
       </BlockWrap>
     );
   }
@@ -2303,9 +2821,9 @@ function InlineLinksEditor({ block, site, onFieldSave }) {
 }
 
 // ── CanvasBlock: click-to-select with ↑↓ + delete controls ────────
-function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onDragStart, onDragOver, onDrop, isDragging, site, onFieldSave, businessId }) {
+function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onDragStart, onDragOver, onDrop, isDragging, site, onFieldSave, businessId, pages }) {
   const meta = BLOCK_TYPES.find(b => b.type === block.block_type);
-  const INLINE_TYPES = ['about', 'content', 'links'];
+  const INLINE_TYPES = ['about', 'content', 'content_2col', 'content_4col', 'links'];
   const isInlineEditable = isSelected && INLINE_TYPES.includes(block.block_type);
   return (
     <div
@@ -2327,9 +2845,13 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
     >
       {isInlineEditable && block.block_type === 'links'
         ? <InlineLinksEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} />
-        : isInlineEditable
-          ? <InlineContentEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} />
-          : <SimpleBlockPreview block={block} site={site} businessId={businessId} />}
+        : isInlineEditable && block.block_type === 'content_2col'
+          ? <MultiColumnInlineEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} columnCount={2} pages={pages} />
+          : isInlineEditable && block.block_type === 'content_4col'
+            ? <MultiColumnInlineEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} columnCount={4} pages={pages} />
+            : isInlineEditable
+              ? <InlineContentEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} pages={pages} />
+              : <SimpleBlockPreview block={block} site={site} businessId={businessId} />}
 
       {/* Controls — always visible when selected, shown on hover via CSS */}
       <div className="block-controls" style={{
@@ -3117,9 +3639,11 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }
 // When typography settings change on the Design page, the style tag re-renders
 // and ALL .rte-body elements pick up the new values automatically.
 // Inline style overrides (e.g. from font picker) still win via specificity cascade.
-// Ensure every <a> tag in rendered HTML opens in a new tab
+// Ensure every external <a> tag opens in a new tab. Internal page links
+// (marked with data-page-slug) stay same-tab so the SPA handler intercepts them.
 const addLinkTargets = html =>
-  html ? html.replace(/<a\b([^>]*)>/gi, (_, attrs) => {
+  html ? html.replace(/<a\b([^>]*)>/gi, (full, attrs) => {
+    if (/\bdata-page-slug\s*=/i.test(attrs)) return full;
     const clean = attrs
       .replace(/\btarget\s*=\s*["'][^"']*["']/gi, '')
       .replace(/\brel\s*=\s*["'][^"']*["']/gi, '');
@@ -3132,7 +3656,7 @@ function buildRteBodyCss(site) {
   const linkUline = site.link_underline !== false;
   const linkRule  = `.rte-body a{color:${linkColor};${linkUline ? 'text-decoration:underline;' : 'text-decoration:none;'}}`;
   const liFont  = site.body_font  || site.font_family || 'inherit';
-  const liSize  = site.body_size  || '1rem';
+  const liSize  = remToPx(site.body_size) || '16px';
   const liColor = site.body_color || site.text_color  || 'inherit';
   const listRules = [
     `.rte-body ul{list-style:disc!important;padding-left:1.5em!important;margin:0.4em 0!important;}`,
@@ -3143,11 +3667,12 @@ function buildRteBodyCss(site) {
   const tagRules  = [
     ['h1', 'h1'], ['h2', 'h2'], ['h3', 'h3'], ['h4', 'h4'], ['body', 'p'],
   ].map(([k, tag]) => {
-    const size    = site[`${k}_size`]         || (k==='body'?'1rem':k==='h1'?'2.5rem':k==='h2'?'1.8rem':k==='h3'?'1.3rem':'1.1rem');
+    const size    = remToPx(site[`${k}_size`]) || (k==='body'?'16px':k==='h1'?'40px':k==='h2'?'29px':k==='h3'?'21px':'17px');
     const weight  = site[`${k}_weight`]       || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':'600');
     const color   = site[`${k}_color`]        || site.text_color || '';
     const font    = site[`${k}_font`]         || site.font_family || '';
     const uline   = site[`${k}_underline`];
+    const italic  = site[`${k}_italic`];
     const hasRule = k !== 'body' && site[`${k}_rule`];
     const ruleclr = site[`${k}_rule_color`]   || site.text_color || '#000';
     const align   = site[`${k}_align`]        || 'left';
@@ -3156,6 +3681,7 @@ function buildRteBodyCss(site) {
     let css = `font-size:${size};font-weight:${weight};margin-top:${mt}px;margin-bottom:${mb}px;`;
     if (font)    css += `font-family:${font};`;
     if (color)   css += `color:${color};`;
+    if (italic)  css += `font-style:italic;`;
     if (uline)   css += `text-decoration:underline;`;
     if (hasRule) css += `border-bottom:2px solid ${ruleclr};padding-bottom:2px;`;
     if (align !== 'left') css += `text-align:${align};`;
@@ -3164,21 +3690,52 @@ function buildRteBodyCss(site) {
   return linkRule + '\n' + listRules + '\n' + tagRules;
 }
 
+// Build CSS for site-wide image styling (rounded corners + drop shadow).
+// Applies to all images rendered inside rich-text bodies (canvas + public site).
+function buildImageCss(site) {
+  if (!site) return '';
+  const radius   = Number(site.image_border_radius ?? 0);
+  const enabled  = !!site.image_shadow_enabled;
+  const color    = site.image_shadow_color    || 'rgba(0,0,0,0.35)';
+  const distance = Number(site.image_shadow_distance ?? 4);
+  const blur     = Number(site.image_shadow_blur     ?? 8);
+  const angle    = Number(site.image_shadow_angle    ?? 135);
+  const rad = (angle * Math.PI) / 180;
+  const ox  = Math.round(Math.cos(rad) * distance);
+  const oy  = Math.round(Math.sin(rad) * distance);
+  const parts = ['margin:8px !important;'];
+  if (radius > 0)  parts.push(`border-radius:${radius}% !important;`);
+  if (enabled)     parts.push(`box-shadow:${ox}px ${oy}px ${blur}px ${color} !important;`);
+  const rule = parts.join('');
+  // Margin rule applies to bare imgs only — imgs inside figures rely on the
+  // figure's own margins so a 100%-wide img doesn't overflow its parent.
+  // [data-no-style] opts an image out of all site-wide styling.
+  const figRule = [];
+  if (radius > 0) figRule.push(`border-radius:${radius}% !important;`);
+  if (enabled)    figRule.push(`box-shadow:${ox}px ${oy}px ${blur}px ${color} !important;`);
+  const figStyle = figRule.join('');
+  return `.rte-body img:not([data-no-style]), .site-rte img:not([data-no-style]) { ${rule} }
+.rte-body figure > img:not([data-no-style]), .site-rte figure > img:not([data-no-style]) { margin:0 !important; ${figStyle} }
+.rte-body iframe:not([data-no-style]), .site-rte iframe:not([data-no-style]), .rte-body video:not([data-no-style]), .site-rte video:not([data-no-style]) { ${figStyle} }`;
+}
+
 // (legacy stub — kept so DesignView references compile)
 function buildRteTypoCss(site) {
   if (!site) return '';
   return [['h1','h1'],['h2','h2'],['h3','h3'],['h4','h4'],['body','body']].map(([k]) => {
-    const size       = site[`${k}_size`]   || (k==='body'?'16px':k==='h1'?'40px':k==='h2'?'29px':k==='h3'?'21px':'17px');
+    const size       = remToPx(site[`${k}_size`]) || (k==='body'?'16px':k==='h1'?'40px':k==='h2'?'29px':k==='h3'?'21px':'17px');
     const weight     = site[`${k}_weight`] || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':k==='h3'?'600':'600');
     const color      = site[`${k}_color`]  || site.text_color || '';
     const fontFamily = site[`${k}_font`]   || site.font_family || '';
     const uline      = site[`${k}_underline`];
+    const italic     = site[`${k}_italic`];
     const hasRule    = k !== 'body' && site[`${k}_rule`];
     const ruleclr    = site[`${k}_rule_color`] || site.text_color || '#000';
     const align      = site[`${k}_align`]  || 'left';
     let css = `font-size:${size};font-weight:${weight};`;
     if (fontFamily) css += `font-family:${fontFamily};`;
     if (color)      css += `color:${color};`;
+    css += italic ? `font-style:italic;` : `font-style:normal;`;
     css += uline ? `text-decoration:underline;` : `text-decoration:none;`;
     css += hasRule ? `border-bottom:2px solid ${ruleclr};padding-bottom:2px;` : `border-bottom:none;padding-bottom:0;`;
     if (align !== 'left') css += `display:inline-block;text-align:${align};width:100%;`;
@@ -3480,6 +4037,18 @@ export default function WebsiteBuilder() {
   const [editingPageId, setEditingPageId]     = useState(null);
   const [editingPageName, setEditingPageName] = useState('');
   const [nestingPageId, setNestingPageId]     = useState(null); // page showing parent picker
+  const [collapsedParents, setCollapsedParents] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('wb_collapsedParents') || '[]')); }
+    catch { return new Set(); }
+  });
+  const toggleCollapsed = (pageId) => {
+    setCollapsedParents(prev => {
+      const next = new Set(prev);
+      if (next.has(pageId)) next.delete(pageId); else next.add(pageId);
+      try { localStorage.setItem('wb_collapsedParents', JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
 
   // Block picker
   const [showBlockPicker, setShowBlockPicker] = useState(false);
@@ -4035,7 +4604,7 @@ export default function WebsiteBuilder() {
 
             {/* ── Left icon tabs (52px) ── */}
             <div style={{ width: 52, flexShrink: 0, background: '#f9fafb', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 8, gap: 4 }}>
-              {[['pages','📄','Pages'],['blocks','➕','Blocks'],['media','🖼️','Media']].map(([id, icon, label]) => (
+              {[['pages','📄','Pages'],['blocks','➕','Blocks']].map(([id, icon, label]) => (
                 <button key={id} onClick={() => { if (activeTab === id) { setSidebarOpen(o => !o); } else { setActiveTab(id); setSidebarOpen(true); } }} title={label}
                   style={{ width: 40, height: 40, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', background: activeTab === id && sidebarOpen ? '#e0f2fe' : 'transparent', color: activeTab === id && sidebarOpen ? '#0369a1' : '#6b7280' }}>
                   {icon}
@@ -4073,7 +4642,9 @@ export default function WebsiteBuilder() {
                     const tree = [];
                     topLevel.forEach(p => {
                       tree.push({ page: p, depth: 0 });
-                      childrenOf(p.page_id).forEach(c => tree.push({ page: c, depth: 1 }));
+                      if (!collapsedParents.has(p.page_id)) {
+                        childrenOf(p.page_id).forEach(c => tree.push({ page: c, depth: 1 }));
+                      }
                     });
                     return tree.map(({ page, depth }) => (
                       <div key={page.page_id} style={{ borderRadius: 8, marginBottom: 2, marginLeft: depth === 1 ? 12 : 0 }}>
@@ -4107,14 +4678,22 @@ export default function WebsiteBuilder() {
                             style={{ display: 'flex', alignItems: 'center', padding: '7px 8px', borderRadius: 8, cursor: 'pointer', background: activePage?.page_id === page.page_id ? '#eff6ff' : 'transparent', gap: 4 }}
                             className="group"
                           >
+                            {/* Expand/collapse toggle for parent pages with children */}
+                            {depth === 0 && childrenOf(page.page_id).length > 0 ? (
+                              <button
+                                onClick={e => { e.stopPropagation(); toggleCollapsed(page.page_id); }}
+                                title={collapsedParents.has(page.page_id) ? 'Expand' : 'Collapse'}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', color: '#6b7280', fontSize: 10, lineHeight: 1, flexShrink: 0, width: 14, textAlign: 'center' }}>
+                                {collapsedParents.has(page.page_id) ? '▸' : '▾'}
+                              </button>
+                            ) : depth === 0 ? (
+                              <span style={{ width: 14, flexShrink: 0 }} />
+                            ) : null}
                             {/* Depth indicator for children */}
                             {depth === 1 && <span style={{ color: '#d1d5db', fontSize: 10, flexShrink: 0 }}>└</span>}
                             <span style={{ flex: 1, fontSize: 13, fontWeight: activePage?.page_id === page.page_id ? 600 : 400, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {page.page_name}
                             </span>
-                            {childrenOf(page.page_id).length > 0 && (
-                              <span style={{ fontSize: 9, color: '#9ca3af', flexShrink: 0 }}>▾</span>
-                            )}
                             {!page.is_published && <span style={{ fontSize: 9, color: '#9ca3af', flexShrink: 0 }}>hidden</span>}
                             <div style={{ display: 'flex', gap: 1, flexShrink: 0, opacity: 0 }} className="group-actions">
                               <button onClick={e => { e.stopPropagation(); setEditingPageId(page.page_id); setEditingPageName(page.page_name); }}
@@ -4216,7 +4795,7 @@ export default function WebsiteBuilder() {
                 margin: '0 auto',
                 background: site?.bg_image_url
                   ? `url(${site.bg_image_url}) center/cover no-repeat`
-                  : (site?.bg_gradient || site?.bg_color || '#fff'),
+                  : (site?.bg_gradient || site?.screen_background_color || site?.bg_color || '#fff'),
                 color: site?.text_color || '#111827',
                 fontFamily: site?.font_family || 'inherit',
                 boxShadow: '0 4px 32px rgba(0,0,0,0.12)',
@@ -4224,15 +4803,19 @@ export default function WebsiteBuilder() {
                 overflow: 'hidden',
                 maxWidth: previewMode === 'tablet' ? 768 : previewMode === 'mobile' ? 390 : '100%',
               }}>
-                {/* Typography CSS — re-renders when site changes; applies to all .rte-body elements */}
-                <style>{buildRteBodyCss(site)}</style>
+                {/* Typography + image CSS — re-renders when site changes; applies to all .rte-body elements */}
+                <style>{buildRteBodyCss(site) + '\n' + buildImageCss(site)}</style>
 
                 {/* Simulated site header */}
                 <CanvasSiteHeader site={site} pages={pages} isMobile={previewMode === 'mobile' || previewMode === 'tablet'} />
 
+                {/* Body band centered at body_bg_width, filled with page_background_color.
+                    Outside the band shows the screen background (matches header/footer sides). */}
+                <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent' }}>
+                <div style={{ width: '100%', maxWidth: site?.body_bg_width || '100%', background: site?.page_background_color || 'transparent' }}>
                 {/* Page blocks */}
                 {blocks.length === 0 ? (
-                  <div style={{ padding: '4rem', textAlign: 'center', color: '#9ca3af', background: site?.bg_color || '#fff' }}>
+                  <div style={{ padding: '4rem', textAlign: 'center', color: '#9ca3af', background: site?.page_background_color || site?.screen_background_color || site?.bg_color || '#fff' }}>
                     <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>📄</div>
                     <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, color: '#374151' }}>This page has no blocks yet</div>
                     <div style={{ fontSize: 13, marginBottom: 20 }}>Click the ➕ tab on the left to add blocks</div>
@@ -4260,10 +4843,14 @@ export default function WebsiteBuilder() {
                       isDragging={draggingId === block.block_id}
                       site={site}
                       businessId={parseInt(BusinessID)}
+                      pages={pages}
                       onFieldSave={(key, val) => saveBlockField(block.block_id, key, val)}
                     />
                   ))
                 )}
+                </div>
+                </div>
+                {/* end body band */}
 
                 {/* Simulated site footer */}
                 <CanvasSiteFooter site={site} />
@@ -4622,9 +5209,9 @@ function WidthDiagram({ local }) {
     return '100%';
   };
 
-  const pageBg = local.bg_image_url
+  const screenBg = local.bg_image_url
     ? `url(${local.bg_image_url}) center/cover`
-    : (local.bg_gradient || local.bg_color || '#fff');
+    : (local.bg_gradient || local.screen_background_color || local.bg_color || '#fff');
 
   // Zone renders the bg band (centered via margin:auto) and overlays a dashed
   // content-width indicator — both widths are relative to the same zone container
@@ -4674,8 +5261,8 @@ function WidthDiagram({ local }) {
           <div style={{ flex: 1, background: '#fff', borderRadius: 6, height: 18, marginLeft: 6, opacity: 0.8 }} />
         </div>
 
-        {/* Page */}
-        <div style={{ background: pageBg }}>
+        {/* Page — outer area is the screen background (shows on sides of every zone) */}
+        <div style={{ background: screenBg }}>
 
           {/* Header */}
           <Zone
@@ -4717,15 +5304,19 @@ function WidthDiagram({ local }) {
             </div>
           </Zone>
 
-          {/* Body blocks */}
-          {[false, true, false].map((alt, bi) => (
+          {/* Body blocks — body band is page_background_color (or transparent, letting screen bg show through).
+              The outer screenBg wrapper above fills the sides of each zone, matching the header/footer treatment. */}
+          {[false, true, false].map((alt, bi) => {
+            const pageBg = local.page_background_color || 'transparent';
+            const stripeBg = alt && local.page_background_color
+              ? (local.page_background_color + 'dd')
+              : pageBg;
+            return (
             <Zone
               key={bi}
               bgWidth={local.body_bg_width}
               contentWidth={local.body_content_width}
-              bgColor={alt
-                ? (local.bg_color === '#FFFFFF' || local.bg_color === '#ffffff' ? '#F3F4F6' : (local.bg_color || '#fff') + 'dd')
-                : (local.bg_color || '#fff')}
+              bgColor={stripeBg}
               labelRow={bi === 1
                 ? <LabelBar left={`Body BG: ${local.body_bg_width || '100%'}`} right={`Text: ${local.body_content_width || '100%'}`} />
                 : null}
@@ -4736,7 +5327,8 @@ function WidthDiagram({ local }) {
                 <div style={{ height: 6, background: (local.text_color || '#111') + '22', borderRadius: 3, width: '75%' }} />
               </div>
             </Zone>
-          ))}
+            );
+          })}
 
           {/* Footer */}
           <Zone
@@ -5068,6 +5660,8 @@ function DesignView({ site, onSave, saving }) {
     secondary_color:    site.secondary_color    || '#819360',
     accent_color:       site.accent_color       || '#FFC567',
     bg_color:           site.bg_color           || '#FFFFFF',
+    screen_background_color: site.screen_background_color || site.bg_color || '#FFFFFF',
+    page_background_color:   site.page_background_color   || '',
     text_color:         site.text_color         || '#111827',
     font_family:        site.font_family        || 'Inter, sans-serif',
     logo_url:           site.logo_url           || '',
@@ -5122,57 +5716,69 @@ function DesignView({ site, onSave, saving }) {
       const m = (site.bg_gradient || '').match(/#[0-9a-fA-F]{3,6}/g);
       return m && m[1] ? m[1] : '#ffffff';
     })(),
-    // Typography / type scale
-    h1_size:          site.h1_size          || '40px',
-    h1_weight:        site.h1_weight        || '800',
-    h1_color:         site.h1_color         || '',
-    h1_align:         site.h1_align         || 'left',
+    // Typography / type scale — sizes always normalized to px
+    h1_size:          remToPx(site.h1_size)   || '40px',
+    h1_weight:        site.h1_weight          || '800',
+    h1_color:         site.h1_color           || '',
+    h1_align:         site.h1_align           || 'left',
     h1_underline:     !!site.h1_underline,
+    h1_italic:        !!site.h1_italic,
     h1_rule:          !!site.h1_rule,
-    h1_rule_color:    site.h1_rule_color    || '',
-    h1_margin_top:    site.h1_margin_top    ?? 0,
-    h1_margin_bottom: site.h1_margin_bottom ?? 8,
-    h1_font:          site.h1_font          || '',
-    h2_size:          site.h2_size          || '29px',
-    h2_weight:        site.h2_weight        || '700',
-    h2_color:         site.h2_color         || '',
-    h2_align:         site.h2_align         || 'left',
+    h1_rule_color:    site.h1_rule_color      || '',
+    h1_margin_top:    site.h1_margin_top      ?? 0,
+    h1_margin_bottom: site.h1_margin_bottom   ?? 8,
+    h1_font:          site.h1_font            || '',
+    h2_size:          remToPx(site.h2_size)   || '29px',
+    h2_weight:        site.h2_weight          || '700',
+    h2_color:         site.h2_color           || '',
+    h2_align:         site.h2_align           || 'left',
     h2_underline:     !!site.h2_underline,
+    h2_italic:        !!site.h2_italic,
     h2_rule:          !!site.h2_rule,
-    h2_rule_color:    site.h2_rule_color    || '',
-    h2_margin_top:    site.h2_margin_top    ?? 0,
-    h2_margin_bottom: site.h2_margin_bottom ?? 8,
-    h2_font:          site.h2_font          || '',
-    h3_size:          site.h3_size          || '21px',
-    h3_weight:        site.h3_weight        || '600',
-    h3_color:         site.h3_color         || '',
-    h3_align:         site.h3_align         || 'left',
+    h2_rule_color:    site.h2_rule_color      || '',
+    h2_margin_top:    site.h2_margin_top      ?? 0,
+    h2_margin_bottom: site.h2_margin_bottom   ?? 8,
+    h2_font:          site.h2_font            || '',
+    h3_size:          remToPx(site.h3_size)   || '21px',
+    h3_weight:        site.h3_weight          || '600',
+    h3_color:         site.h3_color           || '',
+    h3_align:         site.h3_align           || 'left',
     h3_underline:     !!site.h3_underline,
+    h3_italic:        !!site.h3_italic,
     h3_rule:          !!site.h3_rule,
-    h3_rule_color:    site.h3_rule_color    || '',
-    h3_margin_top:    site.h3_margin_top    ?? 0,
-    h3_margin_bottom: site.h3_margin_bottom ?? 6,
-    h3_font:          site.h3_font          || '',
-    h4_size:          site.h4_size          || '17px',
-    h4_weight:        site.h4_weight        || '600',
-    h4_color:         site.h4_color         || '',
-    h4_align:         site.h4_align         || 'left',
+    h3_rule_color:    site.h3_rule_color      || '',
+    h3_margin_top:    site.h3_margin_top      ?? 0,
+    h3_margin_bottom: site.h3_margin_bottom   ?? 6,
+    h3_font:          site.h3_font            || '',
+    h4_size:          remToPx(site.h4_size)   || '17px',
+    h4_weight:        site.h4_weight          || '600',
+    h4_color:         site.h4_color           || '',
+    h4_align:         site.h4_align           || 'left',
     h4_underline:     !!site.h4_underline,
+    h4_italic:        !!site.h4_italic,
     h4_rule:          !!site.h4_rule,
-    h4_rule_color:    site.h4_rule_color    || '',
-    h4_margin_top:    site.h4_margin_top    ?? 0,
-    h4_margin_bottom: site.h4_margin_bottom ?? 4,
-    h4_font:          site.h4_font          || '',
-    body_size:        site.body_size        || '16px',
-    body_line_height: site.body_line_height || '1.75',
-    body_color:       site.body_color       || '',
-    body_align:       site.body_align       || 'left',
+    h4_rule_color:    site.h4_rule_color      || '',
+    h4_margin_top:    site.h4_margin_top      ?? 0,
+    h4_margin_bottom: site.h4_margin_bottom   ?? 4,
+    h4_font:          site.h4_font            || '',
+    body_size:        remToPx(site.body_size) || '16px',
+    body_line_height: site.body_line_height   || '1.75',
+    body_color:       site.body_color         || '',
+    body_align:       site.body_align         || 'left',
     body_underline:   !!site.body_underline,
+    body_italic:      !!site.body_italic,
     body_margin_top:    site.body_margin_top    ?? 0,
     body_margin_bottom: site.body_margin_bottom ?? 12,
     body_font:          site.body_font          || '',
     link_color:       site.link_color       || '',
     link_underline:   site.link_underline !== false,
+    // Site-wide image styling
+    image_border_radius:   Number(site.image_border_radius ?? 0),
+    image_shadow_enabled:  !!site.image_shadow_enabled,
+    image_shadow_color:    site.image_shadow_color    || 'rgba(0,0,0,0.35)',
+    image_shadow_distance: Number(site.image_shadow_distance ?? 4),
+    image_shadow_blur:     Number(site.image_shadow_blur     ?? 8),
+    image_shadow_angle:    Number(site.image_shadow_angle    ?? 135),
   });
 
   const set = (key, val) => setLocal(p => ({ ...p, [key]: val }));
@@ -5399,7 +6005,7 @@ function DesignView({ site, onSave, saving }) {
 
       {/* ── Tab bar ── */}
       <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1">
-        {[['colors','Colors & Widths'],['typography','Typography'],['header','Header & Footer']].map(([id, label]) => (
+        {[['colors','Colors & Widths'],['typography','Typography'],['images','Images'],['header','Header & Footer']].map(([id, label]) => (
           <button key={id} onClick={() => setDesignTab(id)}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors
               ${designTab === id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -5431,12 +6037,11 @@ function DesignView({ site, onSave, saving }) {
             </div>
             <div className="border-t border-gray-100 pt-4">
               <p className="text-xs font-semibold text-gray-500 mb-3">Page Colors</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
-                  { label: 'Secondary / Accent', field: 'secondary_color', hint: 'Hover states and accents' },
-                  { label: 'Button / Highlight', field: 'accent_color',    hint: 'CTA buttons and highlights' },
-                  { label: 'Section Background', field: 'bg_color',        hint: 'Content sections and cards' },
-                  { label: 'Body Text',          field: 'text_color',      hint: 'Main text color' },
+                  { label: 'Secondary Color', field: 'secondary_color', hint: 'Link hover, borders, secondary nav and accent bars' },
+                  { label: 'Button Color',    field: 'accent_color',    hint: 'CTA buttons, badges and highlight chips' },
+                  { label: 'Body Text Color', field: 'text_color',      hint: 'Default paragraph and body text color' },
                 ].map(({ label, field, hint }) => (
                   <div key={field} className="flex flex-col gap-1">
                     <span className="text-xs font-semibold text-gray-700 leading-tight">{label}</span>
@@ -5444,6 +6049,87 @@ function DesignView({ site, onSave, saving }) {
                     <InlineColorPicker value={local[field]} onChange={v => set(field, v)} paletteColors={paletteColors} />
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* ── Screen Background (outer viewport) ── */}
+            <div className="border-t border-gray-100 pt-4 mt-4">
+              <p className="text-xs font-semibold text-gray-500 mb-1">Screen Background</p>
+              <p className="text-[10px] text-gray-400 mb-3 leading-tight">
+                Outer layer. Fills the entire browser viewport behind everything — including the area around the page when the page is narrower than the screen. An image overrides the color or gradient.
+              </p>
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-gray-600 mb-2">Background Type</label>
+                <div className="flex gap-2">
+                  {[['none','None'],['solid','Solid Color'],['gradient','Vertical Gradient']].map(([mode, label]) => (
+                    <button key={mode} onClick={() => {
+                      if (mode === 'none') setLocal(p => ({ ...p, bg_mode: 'none', bg_gradient: '', screen_background_color: '#FFFFFF' }));
+                      else if (mode === 'solid') setLocal(p => ({ ...p, bg_mode: 'solid', bg_gradient: '' }));
+                      else { const c1 = local.bg_gradient_color1 || '#e8f5e9'; const c2 = local.bg_gradient_color2 || '#ffffff'; setLocal(p => ({ ...p, bg_mode: 'gradient', bg_gradient: `linear-gradient(to bottom, ${c1}, ${c2})` })); }
+                    }}
+                      className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors ${local.bg_mode === mode ? 'bg-[#3D6B34] text-white border-[#3D6B34]' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {local.bg_mode === 'solid' && (
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-gray-600 mb-2">Color</label>
+                  <InlineColorPicker value={local.screen_background_color} onChange={v => set('screen_background_color', v)} paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.screen_background_color, local.page_background_color, local.text_color].filter(Boolean)} />
+                  <div className="mt-3 h-10 rounded-lg border border-gray-200" style={{ background: local.screen_background_color }} />
+                </div>
+              )}
+              {local.bg_mode === 'gradient' && (
+                <div className="mb-4">
+                  <div className="flex flex-col gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1.5">Top Color</label>
+                      <InlineColorPicker value={local.bg_gradient_color1} onChange={v => { const c2 = local.bg_gradient_color2 || '#ffffff'; setLocal(p => ({ ...p, bg_gradient_color1: v, bg_gradient: `linear-gradient(to bottom, ${v}, ${c2})` })); }} paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.screen_background_color, local.page_background_color, local.text_color].filter(Boolean)} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1.5">Bottom Color</label>
+                      <InlineColorPicker value={local.bg_gradient_color2} onChange={v => { const c1 = local.bg_gradient_color1 || '#e8f5e9'; setLocal(p => ({ ...p, bg_gradient_color2: v, bg_gradient: `linear-gradient(to bottom, ${c1}, ${v})` })); }} paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.screen_background_color, local.page_background_color, local.text_color].filter(Boolean)} />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <p className="text-xs text-gray-400 mb-2">Presets</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[['Warm Sand','#fdf6e3','#e8d5b7'],['Soft Sky','#e0f2fe','#bae6fd'],['Meadow','#f0fdf4','#bbf7d0'],['Sunset','#fff7ed','#fed7aa'],['Slate','#f8fafc','#e2e8f0'],['Lavender','#faf5ff','#e9d5ff']].map(([name,c1,c2]) => (
+                        <button key={name} onClick={() => setLocal(p => ({ ...p, bg_gradient_color1: c1, bg_gradient_color2: c2, bg_gradient: `linear-gradient(to bottom, ${c1}, ${c2})` }))}
+                          className="px-2.5 py-1.5 rounded-lg text-xs border border-gray-200 hover:border-gray-400 transition-colors font-medium" style={{ background: `linear-gradient(to bottom, ${c1}, ${c2})` }}>
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {local.bg_gradient && <div className="mt-3 h-14 rounded-lg border border-gray-200" style={{ background: local.bg_gradient }} />}
+                </div>
+              )}
+              <div className={local.bg_mode !== 'none' ? 'mt-2 pt-4 border-t border-gray-100' : ''}>
+                <ImageUploadField label="Screen Background Image" value={local.bg_image_url} onChange={url => set('bg_image_url', url)} hint="Overrides the color or gradient above. Leave blank to use the color/gradient setting." />
+              </div>
+            </div>
+
+            {/* ── Page Background (inner content band) ── */}
+            <div className="border-t border-gray-100 pt-4 mt-4">
+              <p className="text-xs font-semibold text-gray-500 mb-1">Page Background</p>
+              <p className="text-[10px] text-gray-400 mb-3 leading-tight">
+                Inner layer. Fills the page content band that sits on top of the Screen Background. Leave blank to let the Screen Background show through. Individual blocks can still override their own background.
+              </p>
+              <InlineColorPicker
+                value={local.page_background_color || ''}
+                onChange={v => set('page_background_color', v)}
+                paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.screen_background_color, local.page_background_color, local.text_color].filter(Boolean)}
+              />
+              <div className="flex items-center gap-2 mt-3">
+                <div className="flex-1 h-10 rounded-lg border border-gray-200" style={{ background: local.page_background_color || 'transparent' }} />
+                {local.page_background_color && (
+                  <button onClick={() => set('page_background_color', '')}
+                    className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded border border-gray-200 hover:border-gray-400">
+                    Clear
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -5477,62 +6163,6 @@ function DesignView({ site, onSave, saving }) {
             </div>
           </div>
 
-          {/* Page Background */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Page Background</h3>
-            <p className="text-xs text-gray-400 mb-4">Sets the background behind all page content. An image overrides the color or gradient.</p>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Background Type</label>
-              <div className="flex gap-2">
-                {[['none','None'],['solid','Solid Color'],['gradient','Vertical Gradient']].map(([mode, label]) => (
-                  <button key={mode} onClick={() => {
-                    if (mode === 'none') setLocal(p => ({ ...p, bg_mode: 'none', bg_gradient: '', bg_color: '#FFFFFF' }));
-                    else if (mode === 'solid') setLocal(p => ({ ...p, bg_mode: 'solid', bg_gradient: '' }));
-                    else { const c1 = local.bg_gradient_color1 || '#e8f5e9'; const c2 = local.bg_gradient_color2 || '#ffffff'; setLocal(p => ({ ...p, bg_mode: 'gradient', bg_gradient: `linear-gradient(to bottom, ${c1}, ${c2})` })); }
-                  }}
-                    className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors ${local.bg_mode === mode ? 'bg-[#3D6B34] text-white border-[#3D6B34]' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {local.bg_mode === 'solid' && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
-                <InlineColorPicker value={local.bg_color} onChange={v => set('bg_color', v)} paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color].filter(Boolean)} />
-                <div className="mt-3 h-10 rounded-lg border border-gray-200" style={{ background: local.bg_color }} />
-              </div>
-            )}
-            {local.bg_mode === 'gradient' && (
-              <div className="mb-4">
-                <div className="flex flex-col gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Top Color</label>
-                    <InlineColorPicker value={local.bg_gradient_color1} onChange={v => { const c2 = local.bg_gradient_color2 || '#ffffff'; setLocal(p => ({ ...p, bg_gradient_color1: v, bg_gradient: `linear-gradient(to bottom, ${v}, ${c2})` })); }} paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color].filter(Boolean)} />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Bottom Color</label>
-                    <InlineColorPicker value={local.bg_gradient_color2} onChange={v => { const c1 = local.bg_gradient_color1 || '#e8f5e9'; setLocal(p => ({ ...p, bg_gradient_color2: v, bg_gradient: `linear-gradient(to bottom, ${c1}, ${v})` })); }} paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color].filter(Boolean)} />
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <p className="text-xs text-gray-400 mb-2">Presets</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[['Warm Sand','#fdf6e3','#e8d5b7'],['Soft Sky','#e0f2fe','#bae6fd'],['Meadow','#f0fdf4','#bbf7d0'],['Sunset','#fff7ed','#fed7aa'],['Slate','#f8fafc','#e2e8f0'],['Lavender','#faf5ff','#e9d5ff']].map(([name,c1,c2]) => (
-                      <button key={name} onClick={() => setLocal(p => ({ ...p, bg_gradient_color1: c1, bg_gradient_color2: c2, bg_gradient: `linear-gradient(to bottom, ${c1}, ${c2})` }))}
-                        className="px-2.5 py-1.5 rounded-lg text-xs border border-gray-200 hover:border-gray-400 transition-colors font-medium" style={{ background: `linear-gradient(to bottom, ${c1}, ${c2})` }}>
-                        {name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {local.bg_gradient && <div className="mt-3 h-14 rounded-lg border border-gray-200" style={{ background: local.bg_gradient }} />}
-              </div>
-            )}
-            <div className={local.bg_mode !== 'none' ? 'mt-2 pt-4 border-t border-gray-100' : ''}>
-              <ImageUploadField label="Background Image" value={local.bg_image_url} onChange={url => set('bg_image_url', url)} hint="Overrides the color or gradient above. Leave blank to use the color/gradient setting." />
-            </div>
-          </div>
         </div>
       )}
 
@@ -5578,6 +6208,7 @@ function DesignView({ site, onSave, saving }) {
               const colorKey       = `${key}_color`;
               const alignKey       = `${key}_align`;
               const underlineKey   = `${key}_underline`;
+              const italicKey      = `${key}_italic`;
               const ruleKey        = `${key}_rule`;
               const ruleColorKey   = `${key}_rule_color`;
               const marginTopKey   = `${key}_margin_top`;
@@ -5586,20 +6217,23 @@ function DesignView({ site, onSave, saving }) {
               const color     = local[colorKey] || local.text_color || '#111827';
               const align     = local[alignKey] || 'left';
               const ruleColor = local[ruleColorKey] || local.text_color || '#111827';
+              const currentSize = remToPx(local[sizeKey]) || defaultSize;
+              const SIZE_PRESETS = ['10px','12px','14px','16px','18px','20px','24px','30px','36px','48px'];
               const ALIGN_LABELS = { left: 'Left', center: 'Center', right: 'Right', justify: 'Justify' };
               return (
                 <div key={key} className="py-3 border-b border-gray-50 last:border-0">
                   {/* Row 1: Level | Preview | Size | Weight | Color */}
-                  <div className="grid items-center gap-2 mb-2" style={{ gridTemplateColumns: '64px 1fr 80px 110px auto' }}>
+                  <div className="grid items-center gap-2 mb-2" style={{ gridTemplateColumns: '64px 1fr 120px 110px auto' }}>
                     <span className="text-xs font-bold text-gray-500">{label}</span>
                     <div className="min-w-0 overflow-hidden">
                       <p className="truncate m-0" style={{
                         fontFamily: local[fontKey] || local.font_family,
-                        fontSize: local[sizeKey] || defaultSize,
+                        fontSize: currentSize,
                         fontWeight: local[weightKey] || defaultWeight,
                         color,
                         lineHeight: 1.3,
                         textAlign: align,
+                        fontStyle: local[italicKey] ? 'italic' : 'normal',
                         textDecoration: local[underlineKey] ? 'underline' : 'none',
                         borderBottom: hasRule && local[ruleKey] ? `2px solid ${ruleColor}` : 'none',
                         paddingBottom: hasRule && local[ruleKey] ? 4 : 0,
@@ -5609,17 +6243,28 @@ function DesignView({ site, onSave, saving }) {
                         {sample}
                       </p>
                     </div>
-                    {/* Size: single dropdown showing current value */}
-                    <select
-                      value={local[sizeKey] || defaultSize}
-                      onChange={e => set(sizeKey, e.target.value)}
-                      className="border border-gray-200 rounded-lg px-1 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-300 w-full"
-                    >
-                      {!['8px','9px','10px','11px','12px','13px','14px','15px','16px','17px','18px','20px','22px','24px'].includes(local[sizeKey] || defaultSize) && (
-                        <option value={local[sizeKey] || defaultSize}>{local[sizeKey] || defaultSize}</option>
-                      )}
-                      {['8px','9px','10px','11px','12px','13px','14px','15px','16px','17px','18px','20px','22px','24px'].map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    {/* Size: custom input + preset dropdown; always saved as px */}
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        min="6"
+                        max="200"
+                        value={parseInt(currentSize, 10) || ''}
+                        onChange={e => set(sizeKey, e.target.value ? `${parseInt(e.target.value, 10)}px` : '')}
+                        className="w-14 border border-gray-200 rounded-lg px-1.5 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-green-300"
+                        title="Font size in px"
+                      />
+                      <span className="text-[10px] text-gray-400">px</span>
+                      <select
+                        value={SIZE_PRESETS.includes(currentSize) ? currentSize : ''}
+                        onChange={e => { if (e.target.value) set(sizeKey, e.target.value); }}
+                        className="border border-gray-200 rounded-lg px-1 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-300"
+                        title="Preset sizes"
+                      >
+                        <option value="">▾</option>
+                        {SIZE_PRESETS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
                     <select value={local[weightKey] || defaultWeight} onChange={e => set(weightKey, e.target.value)}
                       className="border border-gray-200 rounded-lg px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-300">
                       <option value="400">Normal (400)</option>
@@ -5644,6 +6289,10 @@ function DesignView({ site, onSave, saving }) {
                     <label className="flex items-center gap-1.5 cursor-pointer select-none">
                       <input type="checkbox" checked={!!local[underlineKey]} onChange={e => set(underlineKey, e.target.checked)} className="w-3.5 h-3.5 accent-blue-500" />
                       <span className="text-xs text-gray-500" style={{ textDecoration: 'underline' }}>Underline</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                      <input type="checkbox" checked={!!local[italicKey]} onChange={e => set(italicKey, e.target.checked)} className="w-3.5 h-3.5 accent-blue-500" />
+                      <span className="text-xs text-gray-500" style={{ fontStyle: 'italic' }}>Italic</span>
                     </label>
                     {hasRule && (
                       <>
@@ -5722,6 +6371,123 @@ function DesignView({ site, onSave, saving }) {
                   <span className="text-xs font-medium text-gray-600" style={{ textDecoration: 'underline' }}>Underline links</span>
                 </label>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ IMAGES TAB ══ */}
+      {designTab === 'images' && (
+        <div>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Image Styling</h3>
+            <p className="text-xs text-gray-400 mb-4">These styles apply to every image added inside content blocks across all pages of your site.</p>
+
+            {/* Live preview */}
+            {(() => {
+              const radius = Number(local.image_border_radius || 0);
+              const enabled = !!local.image_shadow_enabled;
+              const rad = (Number(local.image_shadow_angle || 0) * Math.PI) / 180;
+              const ox = Math.round(Math.cos(rad) * Number(local.image_shadow_distance || 0));
+              const oy = Math.round(Math.sin(rad) * Number(local.image_shadow_distance || 0));
+              const blur = Number(local.image_shadow_blur || 0);
+              const color = local.image_shadow_color || 'rgba(0,0,0,0.35)';
+              const boxShadow = enabled ? `${ox}px ${oy}px ${blur}px ${color}` : 'none';
+              return (
+                <div className="flex items-center justify-center p-6 rounded-lg mb-5" style={{ background: local.page_background_color || '#f9fafb', minHeight: 200 }}>
+                  <div style={{ width: 260, height: 160, background: `url('/images/QualsHeader.jpg') center/cover no-repeat, linear-gradient(135deg, ${local.primary_color || '#3D6B34'}, ${local.accent_color || '#FFC567'})`, borderRadius: `${radius}%`, boxShadow }} />
+                </div>
+              );
+            })()}
+
+            {/* Rounded corners */}
+            <div className="pt-2 pb-4 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-gray-700">Rounded Corners</span>
+                <span className="text-xs font-mono text-gray-500">{local.image_border_radius || 0}%</span>
+              </div>
+              <p className="text-xs text-gray-400 mb-3">0% is square. 50% makes a square image fully round (circle).</p>
+              <input
+                type="range" min="0" max="50" step="1"
+                value={local.image_border_radius || 0}
+                onChange={e => set('image_border_radius', Number(e.target.value))}
+                className="w-full accent-green-600"
+              />
+              <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                <span>0% (square)</span>
+                <span>25%</span>
+                <span>50% (circle)</span>
+              </div>
+            </div>
+
+            {/* Drop shadow */}
+            <div className="pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold text-gray-700">Drop Shadow</span>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!local.image_shadow_enabled}
+                    onChange={e => set('image_shadow_enabled', e.target.checked)}
+                    className="w-4 h-4 accent-green-600"
+                  />
+                  <span className="text-xs font-medium text-gray-600">Enabled</span>
+                </label>
+              </div>
+              {local.image_shadow_enabled && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Color</label>
+                    <InlineColorPicker
+                      value={local.image_shadow_color || 'rgba(0,0,0,0.35)'}
+                      onChange={v => set('image_shadow_color', v)}
+                      paletteColors={paletteColors}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-medium text-gray-600">Distance</label>
+                      <span className="text-xs font-mono text-gray-500">{local.image_shadow_distance || 0}px</span>
+                    </div>
+                    <input
+                      type="range" min="0" max="60" step="1"
+                      value={local.image_shadow_distance || 0}
+                      onChange={e => set('image_shadow_distance', Number(e.target.value))}
+                      className="w-full accent-green-600"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-medium text-gray-600">Angle</label>
+                      <span className="text-xs font-mono text-gray-500">{local.image_shadow_angle || 0}°</span>
+                    </div>
+                    <input
+                      type="range" min="0" max="359" step="1"
+                      value={local.image_shadow_angle || 0}
+                      onChange={e => set('image_shadow_angle', Number(e.target.value))}
+                      className="w-full accent-green-600"
+                    />
+                    <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                      <span>0° →</span>
+                      <span>90° ↓</span>
+                      <span>180° ←</span>
+                      <span>270° ↑</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-medium text-gray-600">Blur</label>
+                      <span className="text-xs font-mono text-gray-500">{local.image_shadow_blur || 0}px</span>
+                    </div>
+                    <input
+                      type="range" min="0" max="60" step="1"
+                      value={local.image_shadow_blur || 0}
+                      onChange={e => set('image_shadow_blur', Number(e.target.value))}
+                      className="w-full accent-green-600"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
