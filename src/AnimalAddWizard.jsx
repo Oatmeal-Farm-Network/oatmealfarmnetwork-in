@@ -37,6 +37,7 @@ const WEB_FONTS = [
   { label: 'Playfair Display', value: 'Playfair Display, serif' },
   { label: 'Poppins',          value: 'Poppins, sans-serif' },
   { label: 'Roboto',           value: 'Roboto, sans-serif' },
+  { label: 'Tempus Sans ITC',  value: '"Tempus Sans ITC", sans-serif' },
   { label: 'Times New Roman',  value: 'Times New Roman, serif' },
 ];
 

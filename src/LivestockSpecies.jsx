@@ -32,7 +32,7 @@ const FALLBACK_IMAGES = {
   'pheasants':    '/images/PheasantHeader.webp',
   'pigs':         '/images/PigHeader.webp',
   'pigeons':      '/images/PigeonHeader.webp',
-  'quails':       '/images/Quail.webp',
+  'quails':       '/images/QualsHeader.jpg',
   'rabbits':      '/images/Rabitts.webp',
   'sheep':        '/images/Sheepbreeds.webp',
   'snails':       '/images/Snail.webp',

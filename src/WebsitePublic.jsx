@@ -4,21 +4,65 @@ import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL;
 
+// Convert rem/em font sizes to px so old DB values still render correctly
+function remToPx(val) {
+  if (val === null || val === undefined || val === '') return '';
+  const s = String(val).trim();
+  if (!s) return '';
+  if (s.endsWith('px')) return s;
+  const num = parseFloat(s);
+  if (isNaN(num)) return '';
+  if (s.endsWith('rem') || s.endsWith('em')) return `${Math.round(num * 16)}px`;
+  if (/^[0-9.]+$/.test(s)) return `${Math.round(num)}px`;
+  return s;
+}
+
+// Build CSS for site-wide image styling (rounded corners + drop shadow)
+function buildPublicImageCss(site) {
+  if (!site) return '';
+  const radius   = Number(site.image_border_radius ?? 0);
+  const enabled  = !!site.image_shadow_enabled;
+  const color    = site.image_shadow_color    || 'rgba(0,0,0,0.35)';
+  const distance = Number(site.image_shadow_distance ?? 4);
+  const blur     = Number(site.image_shadow_blur     ?? 8);
+  const angle    = Number(site.image_shadow_angle    ?? 135);
+  const rad = (angle * Math.PI) / 180;
+  const ox  = Math.round(Math.cos(rad) * distance);
+  const oy  = Math.round(Math.sin(rad) * distance);
+  const parts = ['margin:8px !important;'];
+  if (radius > 0)  parts.push(`border-radius:${radius}% !important;`);
+  if (enabled)     parts.push(`box-shadow:${ox}px ${oy}px ${blur}px ${color} !important;`);
+  const rule = parts.join('');
+  // Imgs inside figures share the figure's margins, so override the bare-img margin
+  // to 0 — otherwise 100%-wide imgs overflow their parent figure.
+  // [data-no-style] opts an image (or iframe/video) out of all site-wide styling.
+  const figRule = [];
+  if (radius > 0) figRule.push(`border-radius:${radius}% !important;`);
+  if (enabled)    figRule.push(`box-shadow:${ox}px ${oy}px ${blur}px ${color} !important;`);
+  const figStyle = figRule.join('');
+  return `.site-rte img:not([data-no-style]) { ${rule} }
+.site-rte figure > img:not([data-no-style]) { margin:0 !important; ${figStyle} }
+.site-rte iframe:not([data-no-style]), .site-rte video:not([data-no-style]) { ${figStyle} }
+.site-rte .wb-video-shield { display: none !important; }`;
+}
+
 // ── Build CSS rules for [data-rte-style] spans (mirrors WebsiteBuilder's buildRteTypoCss) ──
 function buildPublicRteTypoCss(site) {
   if (!site) return '';
   return [['h1','h1'],['h2','h2'],['h3','h3'],['h4','h4'],['body','body']].map(([k]) => {
-    const size       = site[`${k}_size`]   || (k==='body'?'16px':k==='h1'?'40px':k==='h2'?'29px':k==='h3'?'21px':'17px');
+    const size       = remToPx(site[`${k}_size`]) || (k==='body'?'16px':k==='h1'?'40px':k==='h2'?'29px':k==='h3'?'21px':'17px');
     const weight     = site[`${k}_weight`] || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':k==='h3'?'600':'600');
     const color      = site[`${k}_color`]  || site.text_color || '';
     const fontFamily = site[`${k}_font`]   || site.font_family || '';
     const uline      = site[`${k}_underline`];
+    const italic     = site[`${k}_italic`];
     const hasRule    = k !== 'body' && site[`${k}_rule`];
     const ruleclr    = site[`${k}_rule_color`] || site.text_color || '#000';
     const align      = site[`${k}_align`]  || 'left';
     let css = `font-size:${size};font-weight:${weight};`;
     if (fontFamily) css += `font-family:${fontFamily};`;
     if (color)      css += `color:${color};`;
+    css += italic ? `font-style:italic;` : `font-style:normal;`;
     css += uline ? `text-decoration:underline;` : `text-decoration:none;`;
     css += hasRule ? `border-bottom:2px solid ${ruleclr};padding-bottom:2px;` : `border-bottom:none;padding-bottom:0;`;
     if (align !== 'left') css += `display:inline-block;text-align:${align};width:100%;`;
@@ -225,10 +269,15 @@ function BlockImage({ img, shadow }) {
 }
 
 const stripHtml = html => html?.replace(/<[^>]*>/g, '').trim() || '';
+// True if the HTML has any visible content — text OR an embedded media element
+const hasRteContent = html => !!(html && (stripHtml(html) || /<(img|iframe|video|figure)\b/i.test(html)));
 
-// Ensure every <a> tag opens in a new tab
+// Ensure every external <a> tag opens in a new tab. Internal page links
+// (marked with data-page-slug) are left alone so the SPA click handler
+// can intercept them.
 const addLinkTargets = html =>
-  html ? html.replace(/<a\b([^>]*)>/gi, (_, attrs) => {
+  html ? html.replace(/<a\b([^>]*)>/gi, (full, attrs) => {
+    if (/\bdata-page-slug\s*=/i.test(attrs)) return full;
     const clean = attrs
       .replace(/\btarget\s*=\s*["'][^"']*["']/gi, '')
       .replace(/\brel\s*=\s*["'][^"']*["']/gi, '');
@@ -238,7 +287,7 @@ const addLinkTargets = html =>
 function AboutBlock({ data, site }) {
   const imgs       = normImages(data);
   const hasHeading = !!data.heading?.trim();
-  const hasBody    = !!stripHtml(data.body);
+  const hasBody    = hasRteContent(data.body);
   if (!hasHeading && !hasBody && imgs.length === 0) return null;
   return (
     <SectionWrap site={site} blockBgColor={data.bg_color || undefined}>
@@ -255,7 +304,7 @@ function AboutBlock({ data, site }) {
 function ContentBlock({ data, site }) {
   const imgs       = normImages(data);
   const hasHeading = !!data.heading?.trim();
-  const hasBody    = !!stripHtml(data.body);
+  const hasBody    = hasRteContent(data.body);
   if (!hasHeading && !hasBody && imgs.length === 0) return null;
 
   // Use flexbox layout (matching editor) for a single side image (left/right).
@@ -299,6 +348,74 @@ function ContentBlock({ data, site }) {
         {hasBody && <BodyText html={data.body} site={site} />}
         <div style={{ clear: 'both' }} />
       </div>
+    </SectionWrap>
+  );
+}
+
+// Multi-column content block — stacks on mobile
+function MultiColumnBlock({ data, site, columnCount }) {
+  const rawCols = Array.isArray(data.columns) ? data.columns : [];
+  const cols = [...rawCols];
+  while (cols.length < columnCount) cols.push({});
+  cols.length = columnCount;
+
+  const anyContent = cols.some(c =>
+    c.heading?.trim() || hasRteContent(c.body) || normImages(c).length > 0
+  );
+  if (!anyContent) return null;
+
+  const gap   = columnCount === 4 ? '0.5rem' : '1.5rem';
+  const basis = columnCount === 2 ? 'calc(50% - 0.75rem)' : 'calc(25% - 0.375rem)';
+
+  return (
+    <SectionWrap site={site} blockBgColor={data.bg_color || undefined}>
+      <div className="wb-multicol-public" style={{ display: 'flex', flexWrap: 'wrap', gap, alignItems: 'flex-start' }}>
+        {cols.map((c, i) => {
+          const colImgs    = normImages(c);
+          const hasHeading = !!c.heading?.trim();
+          const hasBody    = hasRteContent(c.body);
+          const img0       = colImgs[0];
+          const isSide     = img0 && (img0.wrap === 'left' || img0.wrap === 'right');
+          if (isSide && (hasHeading || hasBody)) {
+            const flexDir  = img0.wrap === 'left' ? 'row' : 'row-reverse';
+            const wPct     = c.image_width ?? img0.w ?? 38;
+            const imgW     = `${Math.min(90, wPct)}%`;
+            const imgUrl   = c.image_url || img0.url;
+            const caption  = c.image_caption || img0.caption || '';
+            return (
+              <div key={i} className="wb-multicol-public-col" style={{ flex: `1 1 ${basis}`, minWidth: 0 }}>
+                <div style={{ display: 'flex', flexDirection: flexDir, gap: '1rem', alignItems: 'flex-start' }}>
+                  <div style={{ width: imgW, flexShrink: 0 }}>
+                    <img src={imgUrl} alt={caption} style={{ width: '100%', display: 'block', borderRadius: 8 }} />
+                    {caption && <p style={{ fontSize: '0.78rem', color: '#6b7280', fontStyle: 'italic', textAlign: 'center', margin: '4px 0 0' }}>{caption}</p>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                    {colImgs.slice(1).map((img, j) => <BlockImage key={j} img={img} shadow={false} />)}
+                    {hasHeading && <SectionHeading html={c.heading} site={site} headingStyle={c.heading_style || 'h2'} />}
+                    {hasBody && <BodyText html={c.body} site={site} />}
+                    <div style={{ clear: 'both' }} />
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          return (
+            <div key={i} className="wb-multicol-public-col" style={{ flex: `1 1 ${basis}`, minWidth: 0 }}>
+              <div style={{ overflow: 'hidden' }}>
+                {colImgs.map((img, j) => <BlockImage key={j} img={img} shadow={false} />)}
+                {hasHeading && <SectionHeading html={c.heading} site={site} headingStyle={c.heading_style || 'h2'} />}
+                {hasBody && <BodyText html={c.body} site={site} />}
+                <div style={{ clear: 'both' }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 900px) {
+          .wb-multicol-public .wb-multicol-public-col { flex: 1 1 100% !important; }
+        }
+      `}} />
     </SectionWrap>
   );
 }
@@ -773,7 +890,8 @@ function LinksBlock({ data, site }) {
 
 // ── Shared layout components ──────────────────────────────────────
 function SectionWrap({ children, site, alt, blockBgColor }) {
-  const bgColor = blockBgColor || (alt ? (site.bg_color === '#FFFFFF' ? '#F9FAFB' : site.bg_color + 'ee') : site.bg_color);
+  const pageBg = site.page_background_color || site.bg_color || '#FFFFFF';
+  const bgColor = blockBgColor || (alt ? (pageBg === '#FFFFFF' ? '#F9FAFB' : pageBg + 'ee') : pageBg);
   const bgWidth = site.body_bg_width || '100%';
   const textWidth = site.body_content_width || '100%';
   return (
@@ -792,8 +910,9 @@ function SectionHeading({ children, html, site, centered, headingStyle }) {
   const hasRule = k !== 'body' && !!site[`${k}_rule`];
   const align   = centered ? 'center' : (site[`${k}_align`] || 'left');
   const style = {
-    fontSize:       site[`${k}_size`]   || (k==='body'?'1rem':k==='h1'?'2.5rem':k==='h2'?'clamp(1.5rem,3vw,2.2rem)':k==='h3'?'1.3rem':'1.1rem'),
+    fontSize:       remToPx(site[`${k}_size`]) || (k==='body'?'16px':k==='h1'?'40px':k==='h2'?'29px':k==='h3'?'21px':'17px'),
     fontWeight:     site[`${k}_weight`] || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':'600'),
+    fontStyle:      site[`${k}_italic`] ? 'italic' : 'normal',
     color:          site[`${k}_color`]  || site.text_color,
     fontFamily:     site[`${k}_font`]   || site.font_family,
     marginTop:      (site[`${k}_margin_top`]    ?? 0)  + 'px',
@@ -811,7 +930,8 @@ function BodyText({ children, html, site }) {
   const style = {
     color: site.body_color || '#4B5563',
     lineHeight: site.body_line_height || 1.75,
-    fontSize: site.body_size || '1rem',
+    fontSize: remToPx(site.body_size) || '16px',
+    fontStyle: site.body_italic ? 'italic' : 'normal',
     fontFamily: site.font_family,
     marginTop: (site.body_margin_top ?? 0) + 'px',
     marginBottom: (site.body_margin_bottom ?? 12) + 'px',
@@ -849,6 +969,8 @@ function RenderBlock({ block, site, businessId }) {
     case 'hero':           return <HeroBlock data={data} site={site} />;
     case 'about':          return <AboutBlock data={data} site={site} />;
     case 'content':        return <ContentBlock data={data} site={site} />;
+    case 'content_2col':   return <MultiColumnBlock data={data} site={site} columnCount={2} />;
+    case 'content_4col':   return <MultiColumnBlock data={data} site={site} columnCount={4} />;
     case 'livestock':
     case 'studs':          return <LivestockBlock data={data} site={site} businessId={businessId} />;
     case 'produce':        return <ProduceBlock data={data} site={site} businessId={businessId} />;
@@ -902,6 +1024,25 @@ export default function WebsitePublic() {
       .catch(() => setLoading(false));
   }, [slug]);
 
+  // Delegate clicks on internal page anchors (data-page-slug) inside rich-text
+  // bodies, so WYSIWYG "link to page" navigates within the SPA.
+  useEffect(() => {
+    if (!siteData?.pages) return;
+    const onClick = (e) => {
+      const a = e.target.closest?.('.site-rte a[data-page-slug]');
+      if (!a) return;
+      const slug = a.getAttribute('data-page-slug');
+      const target = siteData.pages.find(p => p.slug === slug);
+      if (target) {
+        e.preventDefault();
+        setActivePage(target);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, [siteData?.pages]);
+
   // Apply favicon from site settings
   useEffect(() => {
     if (!siteData?.favicon_url) return;
@@ -945,7 +1086,7 @@ export default function WebsitePublic() {
 
   const pageBg = site.bg_image_url
     ? `url(${site.bg_image_url}) center/cover no-repeat fixed`
-    : (site.bg_gradient || site.bg_color || '#fff');
+    : (site.bg_gradient || site.screen_background_color || site.bg_color || '#fff');
 
   // Full typography CSS for .site-rte rich-text blocks (standard h1/h2/h3/h4/p tags from inline editor)
   const buildSiteRteBodyCss = () => {
@@ -953,7 +1094,7 @@ export default function WebsitePublic() {
     const linkUline = site.link_underline !== false;
     const linkRule  = `.site-rte a{color:${linkColor};${linkUline ? 'text-decoration:underline;' : 'text-decoration:none;'}}`;
     const liFont  = site.body_font  || site.font_family || 'inherit';
-    const liSize  = site.body_size  || '1rem';
+    const liSize  = remToPx(site.body_size) || '16px';
     const liColor = site.body_color || site.text_color  || 'inherit';
     const listRules = [
       `.site-rte ul{list-style:disc!important;padding-left:1.5em!important;margin:0.4em 0!important;}`,
@@ -964,11 +1105,12 @@ export default function WebsitePublic() {
     const tagRules  = [
       ['h1','h1'],['h2','h2'],['h3','h3'],['h4','h4'],['body','p'],
     ].map(([k, tag]) => {
-      const size    = site[`${k}_size`]         || (k==='body'?'1rem':k==='h1'?'2.5rem':k==='h2'?'1.8rem':k==='h3'?'1.3rem':'1.1rem');
+      const size    = remToPx(site[`${k}_size`]) || (k==='body'?'16px':k==='h1'?'40px':k==='h2'?'29px':k==='h3'?'21px':'17px');
       const weight  = site[`${k}_weight`]       || (k==='body'?'400':k==='h1'?'800':k==='h2'?'700':'600');
       const color   = site[`${k}_color`]        || site.text_color || '';
       const font    = site[`${k}_font`]         || site.font_family || '';
       const uline   = site[`${k}_underline`];
+      const italic  = site[`${k}_italic`];
       const hasRule = k !== 'body' && site[`${k}_rule`];
       const ruleclr = site[`${k}_rule_color`]   || site.text_color || '#000';
       const align   = site[`${k}_align`]        || 'left';
@@ -977,6 +1119,7 @@ export default function WebsitePublic() {
       let css = `font-size:${size};font-weight:${weight};margin-top:${mt}px;margin-bottom:${mb}px;`;
       if (font)    css += `font-family:${font};`;
       if (color)   css += `color:${color};`;
+      if (italic)  css += `font-style:italic;`;
       if (uline)   css += `text-decoration:underline;`;
       if (hasRule) css += `border-bottom:2px solid ${ruleclr};padding-bottom:2px;`;
       if (align !== 'left') css += `text-align:${align};`;
@@ -985,7 +1128,7 @@ export default function WebsitePublic() {
     return linkRule + '\n' + listRules + '\n' + tagRules;
   };
 
-  const typographyCss = buildSiteRteBodyCss() + '\n' + buildPublicRteTypoCss(site);
+  const typographyCss = buildSiteRteBodyCss() + '\n' + buildPublicRteTypoCss(site) + '\n' + buildPublicImageCss(site);
 
   const pageName = activePage?.page_name || 'Home';
   const metaTitle = `${pageName} | ${site.site_name}`;
@@ -1174,7 +1317,10 @@ export default function WebsitePublic() {
         </div>
       </header>
 
-      {/* Page content — CSS Grid with col_span support */}
+      {/* Page content — body band centered at body_bg_width, filled with page_background_color.
+          Outside the band shows the screen background (same treatment as header/footer sides). */}
+      <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent' }}>
+      <div style={{ width: '100%', maxWidth: site.body_bg_width || '100%', background: site.page_background_color || 'transparent' }}>
       {activePage && (() => {
         // Group consecutive half/third blocks into grid rows; full-width blocks get their own row
         const rows = [];
@@ -1214,6 +1360,8 @@ export default function WebsitePublic() {
           );
         });
       })()}
+      </div>
+      </div>
 
       {/* Footer — outer band at footer_bg_width, inner content at footer_content_width */}
       <footer style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family }}>
