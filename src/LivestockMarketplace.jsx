@@ -6,6 +6,24 @@ import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+const PLACEHOLDER = '/images/MissingLivestockImage.webp';
+
+/** Match the Tailwind grid-cols-2 / sm:grid-cols-4 / xl:grid-cols-5 breakpoints. */
+function useColumnCount() {
+  const getCount = () => {
+    if (window.innerWidth >= 1280) return 5;
+    if (window.innerWidth >= 640)  return 4;
+    return 2;
+  };
+  const [cols, setCols] = useState(getCount);
+  useEffect(() => {
+    const update = () => setCols(getCount());
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  return cols;
+}
+
 const SIDEBAR_SECTIONS = [
   {
     label: 'Livestock For Sale',
@@ -117,7 +135,6 @@ function Sidebar({ collapsed, onToggle }) {
       maxHeight: 'calc(100vh - 72px)',
       flexShrink: 0,
     }}>
-      {/* Toggle button */}
       <button
         onClick={onToggle}
         style={{
@@ -180,70 +197,98 @@ function Sidebar({ collapsed, onToggle }) {
 }
 
 function AnimalCard({ animal }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) return null;
+  const [imgSrc, setImgSrc] = useState(animal.photo || PLACEHOLDER);
 
-  const priceDisplay = () => {
-    if (animal.sale_price && animal.price) {
-      const discounted = animal.price * ((100 - animal.sale_price) / 100);
-      return (
-        <>
-          Price: <span style={{ textDecoration: 'line-through', color: 'red' }}>${Math.round(animal.price).toLocaleString()}</span>
-          {' '}<strong>${Math.round(discounted).toLocaleString()}</strong>
-        </>
-      );
-    }
-    if (animal.price) {
-      return <>Price: <strong>${Math.round(animal.price).toLocaleString()}</strong></>;
-    }
-    return <strong>Call For Price</strong>;
-  };
+  const breeds = [animal.breeds?.[0], animal.breeds?.[1]].filter(Boolean).join(' / ') || '';
 
-  const shortName = animal.full_name?.length > 28
-    ? animal.full_name.substring(0, 28) + '...'
+  const priceLabel = animal.price
+    ? `$${Math.round(animal.price).toLocaleString()}`
+    : 'Call For Price';
+
+  const shortName = animal.full_name?.length > 30
+    ? animal.full_name.substring(0, 30) + '…'
     : animal.full_name;
 
   return (
-    <div
-      style={{
-        backgroundColor: '#fff', border: '2px solid #abacab',
-        borderRadius: '4px', padding: '10px',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        transition: 'box-shadow 0.2s, transform 0.2s', cursor: 'pointer',
-      }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = '2px 2px 15px #a7ac20'; e.currentTarget.style.transform = 'scale(1.02)'; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'scale(1)'; }}
+    <Link
+      to={`/marketplaces/livestock/animal/${animal.animal_id}`}
+      style={{ textDecoration: 'none', color: 'inherit', display: 'flex', height: '100%' }}
     >
-      <div style={{ width: '100%', height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', paddingTop: '10px' }}>
-        <img
-          src={animal.photo}
-          alt={animal.full_name}
-          loading="lazy"
-          onError={() => setFailed(true)}
-          style={{ width: '100%', height: '180px', objectFit: 'contain' }}
-        />
+      <div
+        style={{
+          backgroundColor: '#fff',
+          border: '1px solid #ddd',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          height: '100%',
+          transition: 'box-shadow 0.2s, transform 0.2s',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 18px rgba(0,0,0,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+        onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
+      >
+        {/* Image */}
+        <div style={{ width: '100%', height: '180px', backgroundColor: '#f0ede6', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img
+            src={imgSrc}
+            alt={animal.full_name}
+            loading="lazy"
+            onError={() => setImgSrc(PLACEHOLDER)}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
+        </div>
+
+        {/* Info */}
+        <div style={{ padding: '10px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#222', lineHeight: 1.3 }}>
+            {shortName}
+          </div>
+          {breeds && (
+            <div style={{ fontSize: '0.78rem', color: '#666' }}>{breeds}</div>
+          )}
+          {animal.seller && (
+            <div style={{ fontSize: '0.75rem', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {animal.seller}{animal.location ? `, ${animal.location}` : ''}
+            </div>
+          )}
+          <div style={{ fontSize: '0.85rem', color: '#3D6B34', fontWeight: 600, marginTop: '2px' }}>
+            {priceLabel}
+          </div>
+        </div>
+
+        {/* Explore link */}
+        <div style={{
+          padding: '8px 12px',
+          borderTop: '1px solid #f0ede6',
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#3D6B34' }}>
+            Explore →
+          </span>
+        </div>
       </div>
-      <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '0.82rem', color: '#555', width: '100%' }}>
-        <a
-          href={`/livestockmarketplace/Animals/Details.asp?ID=${animal.animal_id}&CurrentPeopleID=${animal.people_id}`}
-          style={{ fontWeight: 600, color: '#333', textDecoration: 'none', display: 'block' }}
-        >
-          {shortName}
-        </a>
-        <div style={{ color: '#666', marginTop: '2px' }}>{animal.breed} {animal.species}</div>
-        <div style={{ marginTop: '4px' }}>{priceDisplay()}</div>
-      </div>
+    </Link>
+  );
+}
+
+/** 2 cols on mobile, 4 on tablet, 5 on wide desktop — always one row. */
+function FeaturedRow({ animals }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-5 gap-4">
+      {animals.map(animal => (
+        <AnimalCard key={animal.animal_id} animal={animal} />
+      ))}
     </div>
   );
 }
 
 function CardGrid({ animals }) {
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-      gap: '16px',
-    }}>
+    <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-5 gap-4">
       {animals.map(animal => (
         <AnimalCard key={animal.animal_id} animal={animal} />
       ))}
@@ -255,6 +300,7 @@ export default function LivestockMarketplace() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const cols = useColumnCount();
 
   useEffect(() => {
     if (window.innerWidth < 768) setSidebarCollapsed(true);
@@ -265,11 +311,14 @@ export default function LivestockMarketplace() {
       .catch(() => setLoading(false));
   }, []);
 
-  const featured = listings.slice(0, 4);
-  const browse = listings.slice(4, 12);
+  // Featured = exactly one row (cols items). More listings = the remainder
+  // trimmed to complete rows so the last row is never a partial orphan.
+  const featured = listings.slice(0, cols);
+  const allRest  = listings.slice(cols);
+  const rest     = allRest.slice(0, Math.floor(allRest.length / cols) * cols);
 
   return (
-    <div className="min-h-screen font-sans">
+    <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title="Livestock Marketplace | Buy & Sell Farm Animals"
         description="Browse livestock for sale including cattle, pigs, sheep, goats, chickens, alpacas, and more. Connect directly with farmers and breeders on Oatmeal Farm Network."
@@ -277,15 +326,15 @@ export default function LivestockMarketplace() {
       />
       <Header />
 
-      {/* Sidebar + all content sit side by side directly under header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+      {/* Constrain total width */}
+      <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'flex-start' }}>
 
         <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(p => !p)} />
 
-        {/* Right side — banner then everything else */}
+        {/* Right side */}
         <div style={{ flex: 1, minWidth: 0 }}>
 
-          {/* Banner image */}
+          {/* Banner */}
           <div style={{ width: '100%' }}>
             <img
               src="/images/LOAwebbanner1898x360.webp"
@@ -297,7 +346,7 @@ export default function LivestockMarketplace() {
             />
           </div>
 
-          {/* Intro text */}
+          {/* Intro */}
           <div style={{ padding: '1.5rem 1.5rem 1rem' }}>
             <h1 style={{ textAlign: 'center', fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
               Connecting Ranches Across The United States
@@ -314,7 +363,7 @@ export default function LivestockMarketplace() {
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>Loading listings...</div>
+            <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>Loading listings…</div>
           ) : listings.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>
               <p style={{ marginBottom: '1rem' }}>No listings available right now.</p>
@@ -322,30 +371,27 @@ export default function LivestockMarketplace() {
             </div>
           ) : (
             <>
-              {/* Featured Listings */}
-              {featured.length > 0 && (
+              {/* Featured — single row, fills screen width */}
+              {listings.length > 0 && (
                 <div style={{ backgroundColor: '#e59a24', padding: '1.5rem' }}>
-                  <h2 style={{ textAlign: 'center', fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '1.25rem', color: '#222' }}>
+                  <h2 style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '1.25rem', color: '#222' }}>
                     Featured Listings
                   </h2>
-                  <CardGrid animals={featured} />
+                  <FeaturedRow animals={featured} />
                 </div>
               )}
 
-              {/* Browse Listings */}
-              {browse.length > 0 && (
+              {/* More listings */}
+              {rest.length > 0 && (
                 <div style={{
                   backgroundImage: "url('/images/HomepageBackground.jpg')",
                   backgroundSize: 'cover', backgroundPosition: 'center',
-                  padding: '1.5rem', minHeight: '500px',
+                  padding: '1.5rem',
                 }}>
-                  <h2 style={{ textAlign: 'center', fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '1.25rem', color: '#222' }}>
-                    Browse Listings
+                  <h2 style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '1.25rem', color: '#222' }}>
+                    More Listings
                   </h2>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <CardGrid animals={browse.slice(0, 4)} />
-                    {browse.length > 4 && <CardGrid animals={browse.slice(4, 8)} />}
-                  </div>
+                  <CardGrid animals={rest} />
                 </div>
               )}
             </>

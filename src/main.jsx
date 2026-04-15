@@ -49,6 +49,7 @@ const AudioSettings = lazy(() => import('./AudioSettings.jsx'))
 const AccountSettings = lazy(() => import('./AccountSettings.jsx'))
 const SaigePage = lazy(() => import('./SaigePage.jsx'))
 const AnimalsHome = lazy(() => import('./AnimalsHome.jsx'))
+const AnimalDelete = lazy(() => import('./AnimalDelete.jsx'))
 const AccountChangeType = lazy(() => import('./AccountChangeType.jsx'))
 const AnimalAddWizard = lazy(() => import('./AnimalAddWizard'))
 const DirectoryList = lazy(() => import('./Directory/pages/DirectoryList'))
@@ -85,8 +86,10 @@ const ProductDetail = lazy(() => import('./ProductDetail.jsx'))
 const LivestockMarketplace = lazy(() => import('./LivestockMarketplace.jsx'))
 const LivestockForSale = lazy(() => import('./LivestockForSale.jsx'))
 const LivestockAnimalDetail = lazy(() => import('./LivestockAnimalDetail.jsx'))
+const LivestockAnimalProgeny = lazy(() => import('./LivestockAnimalProgeny.jsx'))
 const RanchList = lazy(() => import('./RanchList.jsx'))
 const OrgProfile = lazy(() => import('./OrgProfile.jsx'))
+const Accounting = lazy(() => import('./Accounting.jsx'))
 
 function RequireAuth({ children }) {
   const token = localStorage.getItem('access_token');
@@ -131,6 +134,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/animals" element={<AnimalsHome />} />
           <Route path="/animals/add" element={<AnimalAddWizard />} />
           <Route path="/animals/edit" element={<AnimalEdit />} />
+          <Route path="/animals/delete" element={<AnimalDelete />} />
           <Route path="/saige" element={<SaigePage />} />
           <Route path="/oatsense" element={<OatSense />} />
           <Route path="/oatsense/crop-rotation" element={<CropRotation />} />
@@ -181,6 +185,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
           {/* Marketplace routes — specific before generic */}
           <Route path="/marketplaces/farm-to-table" element={<FarmToTableMarketplace />} />
+          <Route path="/marketplaces/livestock/animal/:id/progeny" element={<LivestockAnimalProgeny />} />
           <Route path="/marketplaces/livestock/animal/:id" element={<LivestockAnimalDetail />} />
           <Route path="/marketplaces/livestock/ranch/:businessId" element={<OrgProfile />} />
           <Route path="/marketplaces/livestock/ranches/:slug" element={<RanchList />} />
@@ -212,6 +217,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           {/* Seller pages (in AccountLayout) */}
           <Route path="/seller/orders" element={<SellerOrders />} />
           <Route path="/seller/listings" element={<SellerListings />} />
+
+          {/* Accounting */}
+          <Route path="/accounting" element={<RequireAuth><Accounting /></RequireAuth>} />
 
         </Routes>
         )} {/* end isCustomDomain ternary */}

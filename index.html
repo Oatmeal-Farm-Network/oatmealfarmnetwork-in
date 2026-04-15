@@ -2,11 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/images/OFNFavico.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#4A5C43" />
+    <link rel="icon" type="image/png" href="/images/OFNFavico.png" />
+    <link rel="apple-touch-icon" href="/images/OFNFavico.png" />
+
+    <!-- Default SEO — per-page PageMeta overrides these after React hydrates -->
     <title>Oatmeal Farm Network | AI-Powered Farm &amp; Food Network</title>
     <meta name="description" content="Connect farms, buyers, and food businesses with AI-powered tools. Browse livestock, plants, ingredients, and local food markets on Oatmeal Farm Network." />
-    <meta name="robots" content="index,follow" />
+    <meta name="keywords" content="Oatmeal Farm Network, livestock marketplace, farm to table, plant database, livestock database, ingredient directory, agricultural directory, farm AI, precision agriculture, AgTech" />
+    <meta name="author" content="Oatmeal Farm Network" />
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />
+    <meta name="googlebot" content="index,follow" />
 
     <!-- Open Graph -->
     <meta property="og:type"        content="website" />
@@ -14,7 +21,9 @@
     <meta property="og:title"       content="Oatmeal Farm Network | AI-Powered Farm &amp; Food Network" />
     <meta property="og:description" content="Connect farms, buyers, and food businesses with AI-powered tools. Browse livestock, plants, ingredients, and local food markets." />
     <meta property="og:image"       content="https://oatmealfarmnetwork.com/images/Oatmeal-Farm-Network-og-default.jpg" />
+    <meta property="og:image:alt"   content="Oatmeal Farm Network" />
     <meta property="og:url"         content="https://oatmealfarmnetwork.com" />
+    <meta property="og:locale"      content="en_US" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card"        content="summary_large_image" />
@@ -23,6 +32,37 @@
     <meta name="twitter:image"       content="https://oatmealfarmnetwork.com/images/Oatmeal-Farm-Network-og-default.jpg" />
 
     <link rel="canonical" href="https://oatmealfarmnetwork.com" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+
+    <!-- Organization structured data (site-wide) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Oatmeal Farm Network",
+      "url": "https://oatmealfarmnetwork.com",
+      "logo": "https://oatmealfarmnetwork.com/images/OFN-Logo.png",
+      "description": "Oatmeal Farm Network connects farms, ranches, and food businesses through AI-powered tools, livestock and plant databases, and local food marketplaces.",
+      "sameAs": [
+        "https://oatmeal-ai.com"
+      ]
+    }
+    </script>
+
+    <!-- WebSite + SearchAction structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Oatmeal Farm Network",
+      "url": "https://oatmealfarmnetwork.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://oatmealfarmnetwork.com/marketplaces/livestock?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

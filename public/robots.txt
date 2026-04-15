@@ -1,0 +1,66 @@
+# robots.txt for https://oatmealfarmnetwork.com
+# Public marketplace + databases; auth-gated app surfaces are disallowed
+
+User-agent: *
+Allow: /
+Disallow: /account
+Disallow: /accounts
+Disallow: /dashboard
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /cart
+Disallow: /orders
+Disallow: /seller/
+Disallow: /website/builder
+Disallow: /accounting
+Disallow: /animals
+Disallow: /oatsense
+Disallow: /precision-ag/
+Disallow: /produce/inventory
+Disallow: /produce/processed-food
+Disallow: /produce/meat
+Disallow: /services/add
+Disallow: /services/edit
+Disallow: /services/suggest-category
+Disallow: /events/manage
+Disallow: /events/my-registrations
+Disallow: /blog/manage
+Disallow: /blog/authors/manage
+Disallow: /api/
+
+User-agent: Googlebot
+Allow: /
+Disallow: /account
+Disallow: /accounts
+Disallow: /dashboard
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /cart
+Disallow: /orders
+Disallow: /seller/
+Disallow: /website/builder
+Disallow: /accounting
+Disallow: /api/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /account
+Disallow: /accounts
+Disallow: /dashboard
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /cart
+Disallow: /orders
+Disallow: /seller/
+Disallow: /api/
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+Sitemap: https://oatmealfarmnetwork.com/sitemap.xml

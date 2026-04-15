@@ -2,6 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
+
+function buildExcerpt(content, max = 160) {
+  if (!content) return '';
+  let text = content;
+  try {
+    const blocks = JSON.parse(content);
+    if (Array.isArray(blocks)) {
+      text = blocks.filter(b => b.type === 'text').map(b => b.content || '').join(' ');
+    }
+  } catch {}
+  const plain = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return plain.length > max ? plain.slice(0, max - 1) + '…' : plain;
+}
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -80,8 +94,54 @@ export default function BlogDetail() {
   };
   const catColor = post ? (CATEGORY_COLORS[post.category] || '#6b7280') : '#6b7280';
 
+  const postDesc = post ? (post.excerpt || buildExcerpt(post.content, 160)) : '';
+  const postImg = post && post.cover_image
+    ? (/^https?:\/\//i.test(post.cover_image) ? post.cover_image : `https://oatmealfarmnetwork.com${post.cover_image.startsWith('/') ? '' : '/'}${post.cover_image}`)
+    : undefined;
+  const publishedIso = post ? (() => {
+    const d = post.published_at || post.created_at;
+    if (!d) return undefined;
+    const parsed = new Date(d);
+    return isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+  })() : undefined;
+  const postCanonical = `https://oatmealfarmnetwork.com/blog/${postId}`;
+  const postJsonLd = post ? {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: postDesc,
+    ...(postImg ? { image: postImg } : {}),
+    author: { '@type': 'Person', name: post.author || post.business_name || 'Oatmeal Farm Network' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Oatmeal Farm Network',
+      logo: { '@type': 'ImageObject', url: 'https://oatmealfarmnetwork.com/images/OFN-Logo.png' },
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': postCanonical },
+    ...(publishedIso ? { datePublished: publishedIso, dateModified: publishedIso } : {}),
+    ...(post.category ? { articleSection: post.category } : {}),
+  } : null;
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      {post && (
+        <PageMeta
+          title={`${post.title}${post.business_name ? ' · ' + post.business_name : ''}`}
+          description={postDesc}
+          image={postImg}
+          canonical={postCanonical}
+          ogType="article"
+          jsonLd={postJsonLd}
+        />
+      )}
+      {!post && !loading && notFound && (
+        <PageMeta
+          title="Post Not Found"
+          description="The blog post you're looking for is no longer available on Oatmeal Farm Network."
+          canonical={`https://oatmealfarmnetwork.com/blog/${postId}`}
+          noIndex
+        />
+      )}
       <Header />
       <div style={{ maxWidth: '780px', margin: '0 auto', padding: '2rem 1.5rem', flex: 1, width: '100%', boxSizing: 'border-box' }}>
         <Link to="/blog" style={{ color: '#7C5CBF', textDecoration: 'none', fontSize: '0.85rem', display: 'inline-block', marginBottom: '1.5rem' }}>

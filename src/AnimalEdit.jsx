@@ -1,10 +1,27 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import AccountLayout from "./AccountLayout";
+import { useAccount } from "./AccountContext";
 
 const apiBase = import.meta.env.VITE_API_URL ?? "";
 
+/** Returns the stored JWT or null. Logs a warning if missing/invalid so it's easy to spot. */
+function getToken() {
+  const t = localStorage.getItem("access_token");
+  if (!t || t === "null" || t === "undefined") {
+    console.warn("[AnimalEdit] No valid access_token in localStorage — user needs to log in.");
+    return null;
+  }
+  return t;
+}
+
 const FOWL_IDS = [13, 14, 15, 19, 22, 26, 28, 29, 30, 31];
+// Species where the Horns? field is relevant (includes polled breeds)
+const HORNS_IDS = [6, 8, 9, 10, 17, 21, 27, 34]; // Goat, Cattle, Bison, Sheep, Yak, Deer, Musk Ox, Buffalo
+// Fiber/wool tab visibility and labelling
+const FIBER_SPECIES = [2, 4];                      // Alpaca, Llama → "Fiber Test Results"
+const WOOL_SPECIES  = [6, 9, 10, 11, 17, 27];      // Goat, Bison, Sheep, Rabbit, Yak, Musk Ox → "Wool Test Results"
 const NO_TEMPERAMENT_IDS = [23, 33, 22, 19, 15, 14, 13];
 const NO_COLOR_IDS = [26, 18, 21, 33, 28, 31, 23, 25, 22, 19, 15, 14, 13, 27];
 const SINGLE_BREED_IDS = [2, 9, 23, 34, 33];
@@ -18,23 +35,682 @@ const SPECIES_MAP = {
 };
 
 const TABS = [
-  { id: "basics", label: "Basics" },
-  { id: "pricing", label: "Pricing" },
+  { id: "basics",      label: "Basics" },
+  { id: "pricing",     label: "Pricing" },
   { id: "description", label: "Description" },
-  { id: "ancestry", label: "Ancestry" },
-  { id: "fiber", label: "Fiber / Wool" },
-  { id: "awards", label: "Awards" },
+  { id: "ancestry",    label: "Ancestry" },
+  { id: "fiber",       label: "Fiber / Wool" }, // label overridden per-species in visibleTabs
+  { id: "awards",      label: "Awards" },
+  { id: "photos",      label: "Photos and Documents" },
 ];
 
-function SaveBar({ saving, saved, onSave, label = "Save Changes" }) {
+// ─── MODULE-LEVEL FORM HELPERS ────────────────────────────────────────────────
+// IMPORTANT: Keep these at module scope. Defining them inside a render function
+// creates new function references each render → React remounts them → focus lost.
+
+function FormField({ label, hint, children }) {
   return (
-    <div style={{ display:"flex", justifyContent:"flex-end", alignItems:"center", gap:12, marginTop:24 }}>
-      {saved && <span style={{ color:"#4a7c3f", fontWeight:600, fontSize:14 }}>✓ Saved!</span>}
+    <div style={styles.field}>
+      <label style={styles.label}>{label}</label>
+      {children}
+      {hint && <div style={styles.hint}>{hint}</div>}
+    </div>
+  );
+}
+
+function FormInput({ value, onChange, type = "text", ...rest }) {
+  return (
+    <input
+      type={type}
+      value={value ?? ""}
+      onChange={e => onChange(e.target.value)}
+      style={styles.input}
+      {...rest}
+    />
+  );
+}
+
+function FormSelect({ value, onChange, children, ...rest }) {
+  return (
+    <select
+      value={value ?? ""}
+      onChange={e => onChange(e.target.value)}
+      style={styles.select}
+      {...rest}
+    >
+      {children}
+    </select>
+  );
+}
+
+function RadioGroup({ label, value, onChange }) {
+  return (
+    <div style={styles.field}>
+      <label style={styles.label}>{label}</label>
+      <div style={{ display: "flex", gap: 20 }}>
+        {["Yes", "No"].map(v => (
+          <label key={v} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+            <input
+              type="radio"
+              value={v === "Yes" ? "1" : "0"}
+              checked={value === (v === "Yes" ? "1" : "0")}
+              onChange={() => onChange(v === "Yes" ? "1" : "0")}
+            />
+            {v}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Cascade map: when a box's ancestor is picked, fetch that animal's ancestry
+// and fill these descendant slots. Keys are "relative" (Sire, Dam, SireSire…)
+// from the picked animal's ancestry data; values are the destination prefix
+// in THIS form.
+const ANCESTOR_CASCADE = {
+  Sire: {
+    Sire: "SireSire", Dam: "SireDam",
+    SireSire: "SireSireSire", SireDam: "SireSireDam",
+    DamSire: "SireDamSire",   DamDam: "SireDamDam",
+  },
+  Dam: {
+    Sire: "DamSire", Dam: "DamDam",
+    SireSire: "DamSireSire", SireDam: "DamSireDam",
+    DamSire: "DamDamSire",   DamDam: "DamDamDam",
+  },
+  SireSire: { Sire: "SireSireSire", Dam: "SireSireDam" },
+  SireDam:  { Sire: "SireDamSire",  Dam: "SireDamDam"  },
+  DamSire:  { Sire: "DamSireSire",  Dam: "DamSireDam"  },
+  DamDam:   { Sire: "DamDamSire",   Dam: "DamDamDam"   },
+};
+
+function AncestorBox({ nameKey, colorKey, linkKey, ariKey, label, gender, form, set, setMany, colors, boxInput, speciesID }) {
+  const isMale = gender === "male";
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState(null);
+  const searchTimer = useRef(null);
+  const inputRef = useRef(null);
+
+  const updatePos = () => {
+    if (inputRef.current) {
+      const r = inputRef.current.getBoundingClientRect();
+      setDropdownPos({ left: r.left, top: r.bottom + 2, width: r.width });
+    }
+  };
+
+  const selectedColors = (form[colorKey] || "")
+    .split(",")
+    .map(c => c.trim())
+    .filter(Boolean);
+  const toggleColor = (c) => {
+    const next = selectedColors.includes(c)
+      ? selectedColors.filter(x => x !== c)
+      : [...selectedColors, c];
+    set(colorKey, next.join(", "));
+  };
+
+  const runSearch = (q) => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!q || q.trim().length < 2) { setSearchResults([]); setShowResults(false); return; }
+    searchTimer.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const params = new URLSearchParams({ q });
+        if (speciesID) params.append("species_id", String(speciesID));
+        if (gender) params.append("gender", gender);
+        const res = await fetch(`${apiBase}/api/animals/search/ancestors?${params}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(Array.isArray(data) ? data : []);
+          updatePos();
+          setShowResults(true);
+        }
+      } catch {}
+      setSearching(false);
+    }, 220);
+  };
+
+  const pickAncestor = (hit) => {
+    const basePatch = {
+      [nameKey]: hit.full_name,
+      [colorKey]: hit.colors || "",
+      [linkKey]: `/marketplaces/livestock/animal/${hit.animal_id}`,
+    };
+    if (ariKey) basePatch[ariKey] = hit.reg_number || "";
+
+    // Apply base immediately so the user sees feedback even if cascade fetch is slow
+    if (setMany) setMany(basePatch);
+    else Object.entries(basePatch).forEach(([k, v]) => set(k, v));
+    setShowResults(false);
+    setSearchResults([]);
+
+    // Cascade: fetch picked animal's ancestry and fill descendant slots
+    const cascade = ANCESTOR_CASCADE[nameKey];
+    if (!cascade) return;
+    fetch(`${apiBase}/api/animals/${hit.animal_id}/ancestry`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(anc => {
+        if (!anc) return;
+        const cascadePatch = {};
+        for (const [srcPrefix, destPrefix] of Object.entries(cascade)) {
+          if (anc[srcPrefix])               cascadePatch[destPrefix]           = anc[srcPrefix];
+          if (anc[`${srcPrefix}Color`])     cascadePatch[`${destPrefix}Color`] = anc[`${srcPrefix}Color`];
+          if (anc[`${srcPrefix}Link`])      cascadePatch[`${destPrefix}Link`]  = anc[`${srcPrefix}Link`];
+          if (anc[`${srcPrefix}ARI`])       cascadePatch[`${destPrefix}ARI`]   = anc[`${srcPrefix}ARI`];
+        }
+        if (Object.keys(cascadePatch).length && setMany) setMany(cascadePatch);
+      })
+      .catch(() => {});
+  };
+
+  const handleNameChange = (e) => {
+    const v = e.target.value;
+    set(nameKey, v);
+    runSearch(v);
+  };
+
+  return (
+    <div style={{
+      background: isMale ? "#dbeafe" : "#fce7f3",
+      border: `1px solid ${isMale ? "#93c5fd" : "#f9a8d4"}`,
+      borderRadius: 6,
+      padding: "8px 10px",
+      width: "100%",
+      boxSizing: "border-box",
+      position: "relative",
+    }}>
+      <div style={{ fontWeight: 700, fontSize: 11, color: "#5a3e2b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+        {label}
+      </div>
+      <input
+        ref={inputRef}
+        value={form[nameKey] || ""}
+        onChange={handleNameChange}
+        onFocus={() => { updatePos(); if (searchResults.length > 0) setShowResults(true); }}
+        onBlur={() => setTimeout(() => setShowResults(false), 180)}
+        placeholder="Name (type to search)"
+        style={boxInput}
+      />
+      {showResults && dropdownPos && (searching || searchResults.length > 0) && createPortal(
+        <div style={{
+          position: "fixed",
+          left: dropdownPos.left, top: dropdownPos.top, width: dropdownPos.width,
+          zIndex: 9999,
+          background: "#fff", border: "1px solid #c9b89e", borderRadius: 4,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.18)", maxHeight: 240, overflowY: "auto",
+        }}>
+          {searching && (
+            <div style={{ padding: "6px 10px", fontSize: 11, color: "#8b7355" }}>Searching…</div>
+          )}
+          {!searching && searchResults.length === 0 && (
+            <div style={{ padding: "6px 10px", fontSize: 11, color: "#8b7355" }}>No matches</div>
+          )}
+          {searchResults.map(hit => (
+            <div
+              key={hit.animal_id}
+              onMouseDown={e => { e.preventDefault(); pickAncestor(hit); }}
+              style={{ padding: "6px 10px", cursor: "pointer", borderBottom: "1px solid #f0ebe2", fontSize: 11, color: "#2c1a0e" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#faf7f4"}
+              onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+            >
+              <div style={{ fontWeight: 600 }}>{hit.full_name}</div>
+              {hit.colors && <div style={{ fontSize: 10, color: "#7a6a5a" }}>{hit.colors}</div>}
+              {hit.reg_number && <div style={{ fontSize: 10, color: "#7a6a5a" }}>Reg# {hit.reg_number}</div>}
+            </div>
+          ))}
+        </div>,
+        document.body
+      )}
+      {colors.length > 0 ? (
+        <div style={{
+          ...boxInput,
+          padding: "4px 6px",
+          maxHeight: 90,
+          overflowY: "auto",
+          background: "rgba(255,255,255,0.85)",
+          marginBottom: 4,
+        }}>
+          {colors.map(c => (
+            <label key={c} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, lineHeight: "14px", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={selectedColors.includes(c)}
+                onChange={() => toggleColor(c)}
+                style={{ margin: 0 }}
+              />
+              <span>{c}</span>
+            </label>
+          ))}
+        </div>
+      ) : (
+        <input value={form[colorKey] || ""} onChange={e => set(colorKey, e.target.value)} placeholder="Colors (comma-separated)" style={boxInput} />
+      )}
+      {ariKey && (
+        <input value={form[ariKey] || ""} onChange={e => set(ariKey, e.target.value)} placeholder="Reg #" style={boxInput} />
+      )}
+      <input value={form[linkKey] || ""} onChange={e => set(linkKey, e.target.value)} placeholder="Link (optional)" style={{ ...boxInput, fontSize: 11, marginBottom: 0 }} />
+    </div>
+  );
+}
+
+function ColHead({ children }) {
+  return (
+    <th style={{ fontWeight: 700, fontSize: 12, color: "#5a3e2b", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 10, textAlign: "left", whiteSpace: "nowrap" }}>
+      {children}
+    </th>
+  );
+}
+
+function LineCell({ top, bottom }) {
+  return (
+    <td style={{ width: 20, padding: 0, borderRight: "2px solid #d5c9bc", borderTop: top ? "2px solid #d5c9bc" : "none", borderBottom: bottom ? "2px solid #d5c9bc" : "none" }} />
+  );
+}
+
+function AncPad({ children }) {
+  return <td style={{ padding: "4px 6px 4px 0", verticalAlign: "middle" }}>{children}</td>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+function convertToWebP(file, quality = 0.88) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width  = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(
+        (blob) => resolve(blob || file),
+        "image/webp",
+        quality
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
+// ─── RICH TEXT EDITOR ────────────────────────────────────────────────────────
+const _WEB_FONTS = [
+  { label: "Arial",            value: "Arial, sans-serif" },
+  { label: "Georgia",          value: "Georgia, serif" },
+  { label: "Lora",             value: "Lora, serif" },
+  { label: "Merriweather",     value: "Merriweather, serif" },
+  { label: "Montserrat",       value: "Montserrat, sans-serif" },
+  { label: "Open Sans",        value: "Open Sans, sans-serif" },
+  { label: "Playfair Display", value: "Playfair Display, serif" },
+  { label: "Poppins",          value: "Poppins, sans-serif" },
+  { label: "Roboto",           value: "Roboto, sans-serif" },
+  { label: "Times New Roman",  value: "Times New Roman, serif" },
+];
+
+const _esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+const _pasteAsPlain = e => {
+  e.preventDefault();
+  const text = (e.clipboardData || window.clipboardData).getData("text/plain");
+  if (!text) return;
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length === 0) return;
+  if (lines.length === 1) { document.execCommand("formatBlock",false,"p"); document.execCommand("insertText",false,lines[0]); }
+  else document.execCommand("insertHTML",false,lines.map(l=>`<p>${_esc(l)}</p>`).join(""));
+};
+
+function RichTextEditor({ value, onChange }) {
+  const editorRef = useRef(null);
+  const htmlRef   = useRef(null);
+  const [htmlMode, setHtmlMode]   = useState(false);
+  const [imgPanel, setImgPanel]   = useState(false);
+  const [imgUrl,   setImgUrl]     = useState("");
+  const [imgAlign, setImgAlign]   = useState("center");
+  const [uploading, setUploading] = useState(false);
+  const [draggingOver, setDraggingOver]     = useState(false);
+  const [panelDragging, setPanelDragging]   = useState(false);
+  const [selectedImg, setSelectedImg]       = useState(null);
+  const [imgToolbarPos, setImgToolbarPos]   = useState({ top: 0, left: 0 });
+  const [imgRect, setImgRect]               = useState(null);
+  const savedRangeRef = useRef(null);
+  const fileInputRef  = useRef(null);
+  const resizingRef   = useRef(null);
+
+  useEffect(() => {
+    if (editorRef.current) editorRef.current.innerHTML = value || "";
+    if (htmlRef.current)   htmlRef.current.value       = value || "";
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (htmlMode) { if (htmlRef.current && editorRef.current) htmlRef.current.value = editorRef.current.innerHTML; }
+    else          { if (editorRef.current && htmlRef.current) editorRef.current.innerHTML = htmlRef.current.value; }
+  }, [htmlMode]);
+
+  const exec = (cmd, val = null) => { editorRef.current?.focus(); document.execCommand(cmd, false, val); };
+  const applyBlock = tag => { editorRef.current?.focus(); document.execCommand("formatBlock", false, tag); };
+  const applyFont  = f => {
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { document.execCommand("fontName",false,f); return; }
+    const range = sel.getRangeAt(0);
+    const span  = document.createElement("span");
+    span.style.fontFamily = f;
+    try { range.surroundContents(span); } catch { document.execCommand("fontName",false,f); }
+  };
+  const insertLink = () => {
+    const input = window.prompt("Enter a URL:");
+    if (!input) return;
+    const val = input.trim();
+    const href = /^https?:\/\//i.test(val) ? val : /^mailto:/i.test(val) ? val : `https://${val}`;
+    exec("createLink", href);
+    editorRef.current?.querySelectorAll("a").forEach(a => { a.target="_blank"; a.rel="noopener noreferrer"; });
+  };
+  const clearFormatting = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand("selectAll",false,null);
+    document.execCommand("removeFormat",false,null);
+    editorRef.current.querySelectorAll("[style]").forEach(el => el.removeAttribute("style"));
+    onChange(editorRef.current.innerHTML);
+  };
+  const handleBlur = () => { if (!htmlMode) onChange(editorRef.current?.innerHTML || ""); };
+
+  const selectImg = img => {
+    if (selectedImg) selectedImg.style.outline = "";
+    img.style.outline = "2px solid #3b82f6";
+    setSelectedImg(img);
+    const r = img.getBoundingClientRect();
+    setImgRect(r);
+    setImgToolbarPos({ top: r.top - 72, left: r.left });
+  };
+  const clearSelectedImg = () => { if (selectedImg) selectedImg.style.outline = ""; setSelectedImg(null); setImgRect(null); };
+
+  const startResize = (e, dir) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!selectedImg) return;
+    resizingRef.current = { dir, startX: e.clientX, startWidth: selectedImg.getBoundingClientRect().width };
+    const onMove = ev => {
+      const { startX, startWidth, dir } = resizingRef.current;
+      const dx = dir === "right" ? ev.clientX - startX : startX - ev.clientX;
+      selectedImg.style.width = Math.max(40, startWidth + dx) + "px";
+      selectedImg.style.maxWidth = "none";
+      setImgRect(selectedImg.getBoundingClientRect());
+    };
+    const onUp = () => {
+      onChange(editorRef.current?.innerHTML || "");
+      resizingRef.current = null;
+      setImgRect(selectedImg ? selectedImg.getBoundingClientRect() : null);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  const _rootEl = img => {
+    if (!img) return null;
+    if (img.parentElement === editorRef.current) return img;
+    if (img.parentElement?.tagName === "FIGURE" && img.parentElement?.parentElement === editorRef.current) return img.parentElement;
+    return null;
+  };
+  const _liftToEditor = img => {
+    let node = img;
+    while (node.parentElement && node.parentElement !== editorRef.current) node = node.parentElement;
+    if (node !== img && node.parentElement === editorRef.current) {
+      editorRef.current.insertBefore(img, node);
+      if (!node.textContent.trim() && node.children.length === 0) node.remove();
+    }
+  };
+  const moveImg = dir => {
+    if (!selectedImg) return;
+    const root = _rootEl(selectedImg);
+    if (!root) return;
+    if (dir < 0) { const prev = root.previousElementSibling; if (prev) editorRef.current.insertBefore(root, prev); }
+    else         { const next = root.nextElementSibling;     if (next) editorRef.current.insertBefore(next, root); }
+    onChange(editorRef.current?.innerHTML || "");
+    setTimeout(() => { const r = selectedImg.getBoundingClientRect(); setImgRect(r); setImgToolbarPos({ top: r.top - 72, left: r.left }); }, 0);
+  };
+  const applyImgAlign = align => {
+    if (!selectedImg) return;
+    const img = selectedImg;
+    if (align === "center") {
+      if (img.parentElement?.tagName === "FIGURE") { img.parentElement.style.cssText = "text-align:center;margin:1em 0;clear:both;"; img.style.cssText = "max-width:100%;border-radius:4px;float:none;"; }
+      else { _liftToEditor(img); const fig = document.createElement("figure"); fig.style.cssText="text-align:center;margin:1em 0;clear:both;"; editorRef.current.insertBefore(fig,img); fig.appendChild(img); img.style.cssText="max-width:100%;border-radius:4px;float:none;"; }
+    } else {
+      const css = align === "left" ? "float:left;margin:0 1em 0.5em 0;max-width:45%;border-radius:4px;" : "float:right;margin:0 0 0.5em 1em;max-width:45%;border-radius:4px;";
+      if (img.parentElement?.tagName === "FIGURE") { img.parentElement.parentElement.insertBefore(img, img.parentElement); img.parentElement.remove(); }
+      _liftToEditor(img);
+      img.style.cssText = css;
+    }
+    onChange(editorRef.current?.innerHTML || "");
+    setSelectedImg(null);
+  };
+
+  useEffect(() => {
+    if (!selectedImg) return;
+    const hide = () => clearSelectedImg();
+    const onKey = e => { if (e.key === "Escape") clearSelectedImg(); };
+    window.addEventListener("scroll", hide, true);
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("scroll", hide, true); window.removeEventListener("keydown", onKey); };
+  }, [selectedImg]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handlePanelFile = async file => {
+    if (!file || !file.type.startsWith("image/")) return;
+    setUploading(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await fetch(`${apiBase}/api/blog/upload-image`, { method: "POST", body: fd });
+      if (!res.ok) throw new Error();
+      const { url } = await res.json();
+      setImgUrl(url);
+    } catch { /* silent */ } finally { setUploading(false); }
+  };
+  const handleDrop = async e => {
+    e.preventDefault(); e.stopPropagation(); setDraggingOver(false);
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    editorRef.current?.focus();
+    let range;
+    if (document.caretRangeFromPoint) range = document.caretRangeFromPoint(e.clientX, e.clientY);
+    else if (document.caretPositionFromPoint) { const pos = document.caretPositionFromPoint(e.clientX, e.clientY); if (pos) { range = document.createRange(); range.setStart(pos.offsetNode, pos.offset); } }
+    if (range) { const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
+    setUploading(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await fetch(`${apiBase}/api/blog/upload-image`, { method: "POST", body: fd });
+      if (!res.ok) throw new Error();
+      const { url } = await res.json();
+      document.execCommand("insertHTML", false, `<figure style="text-align:center;margin:1em 0;"><img src="${url}" style="max-width:100%;border-radius:4px;" /></figure>`);
+      onChange(editorRef.current?.innerHTML || "");
+    } catch { /* silent */ } finally { setUploading(false); }
+  };
+  const openImgPanel = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+    setImgUrl(""); setImgAlign("center"); setImgPanel(p => !p);
+  };
+  const insertImage = () => {
+    if (!imgUrl.trim()) return;
+    const url = imgUrl.trim();
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (savedRangeRef.current) { sel.removeAllRanges(); sel.addRange(savedRangeRef.current); }
+    if (imgAlign === "center") {
+      document.execCommand("insertHTML", false, `<figure style="text-align:center;margin:1em 0;clear:both;"><img src="${url}" style="max-width:100%;border-radius:4px;" /></figure>`);
+    } else {
+      const css = imgAlign === "left" ? "float:left;margin:0 1em 0.5em 0;max-width:45%;border-radius:4px;" : "float:right;margin:0 0 0.5em 1em;max-width:45%;border-radius:4px;";
+      const img = document.createElement("img"); img.src = url; img.style.cssText = css;
+      const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+      let refBlock = null;
+      if (range) {
+        let node = range.commonAncestorContainer;
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+        if (node === editorRef.current) { refBlock = editorRef.current.children[range.startOffset] || null; }
+        else { while (node && node.parentElement !== editorRef.current) node = node.parentElement; if (node && node !== editorRef.current) refBlock = node; }
+      }
+      if (refBlock) { editorRef.current.insertBefore(img, refBlock); }
+      else { editorRef.current.appendChild(img); const p = document.createElement("p"); p.innerHTML = "<br>"; editorRef.current.appendChild(p); }
+    }
+    onChange(editorRef.current?.innerHTML || "");
+    setImgPanel(false);
+  };
+
+  const _btn = { display:"inline-flex", alignItems:"center", justifyContent:"center", padding:"3px 7px", borderRadius:4, fontSize:12, cursor:"pointer", border:"1px solid #d1d5db", background:"#fff", color:"#374151", lineHeight:1 };
+  const _sel = { fontSize:11, border:"1px solid #d1d5db", borderRadius:4, padding:"3px 5px", background:"#fff", cursor:"pointer", color:"#374151" };
+  const _div = <div style={{ width:1, background:"#e5e7eb", alignSelf:"stretch", margin:"0 2px" }} />;
+
+  return (
+    <div style={{ border:"1px solid #d1d5db", borderRadius:8, overflow:"hidden" }}>
+      {/* ── toolbar ── */}
+      <div style={{ display:"flex", flexWrap:"wrap", gap:4, padding:"6px 8px", background:"#f9fafb", borderBottom:"1px solid #e5e7eb", alignItems:"center" }}>
+        {!htmlMode && <>
+          <select style={_sel} defaultValue="" onChange={e => { applyBlock(e.target.value); e.target.value = ""; }}>
+            <option value="" disabled>Style</option>
+            <option value="p">Body</option><option value="h1">H1</option><option value="h2">H2</option>
+            <option value="h3">H3</option><option value="h4">H4</option>
+          </select>
+          <select style={{ ..._sel, maxWidth:110 }} defaultValue="" onChange={e => { applyFont(e.target.value); e.target.value = ""; }}>
+            <option value="" disabled>Font</option>
+            {_WEB_FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+          </select>
+          {_div}
+          <button style={{ ..._btn, fontWeight:700 }} title="Bold" onMouseDown={e=>{e.preventDefault();exec("bold");}}>B</button>
+          <button style={{ ..._btn, fontStyle:"italic" }} title="Italic" onMouseDown={e=>{e.preventDefault();exec("italic");}}>I</button>
+          <button style={{ ..._btn, textDecoration:"underline" }} title="Underline" onMouseDown={e=>{e.preventDefault();exec("underline");}}>U</button>
+          <button style={{ ..._btn, textDecoration:"line-through" }} title="Strikethrough" onMouseDown={e=>{e.preventDefault();exec("strikeThrough");}}>S</button>
+          {_div}
+          <button style={_btn} title="Align Left" onMouseDown={e=>{e.preventDefault();exec("justifyLeft");}}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="0" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="0" y="11.5" width="9" height="1.5"/></svg>
+          </button>
+          <button style={_btn} title="Center" onMouseDown={e=>{e.preventDefault();exec("justifyCenter");}}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="2" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="2" y="11.5" width="9" height="1.5"/></svg>
+          </button>
+          <button style={_btn} title="Align Right" onMouseDown={e=>{e.preventDefault();exec("justifyRight");}}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="4" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="4" y="11.5" width="9" height="1.5"/></svg>
+          </button>
+          {_div}
+          <button style={_btn} title="Bullet List" onMouseDown={e=>{e.preventDefault();exec("insertUnorderedList");}}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><circle cx="1.5" cy="2.5" r="1.2"/><rect x="4" y="1.8" width="9" height="1.4"/><circle cx="1.5" cy="6.5" r="1.2"/><rect x="4" y="5.8" width="9" height="1.4"/><circle cx="1.5" cy="10.5" r="1.2"/><rect x="4" y="9.8" width="9" height="1.4"/></svg>
+          </button>
+          <button style={_btn} title="Numbered List" onMouseDown={e=>{e.preventDefault();exec("insertOrderedList");}}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><text x="0" y="4" fontSize="4.5" fontFamily="monospace">1.</text><rect x="4" y="1.8" width="9" height="1.4"/><text x="0" y="8" fontSize="4.5" fontFamily="monospace">2.</text><rect x="4" y="5.8" width="9" height="1.4"/><text x="0" y="12" fontSize="4.5" fontFamily="monospace">3.</text><rect x="4" y="9.8" width="9" height="1.4"/></svg>
+          </button>
+          {_div}
+          <button style={_btn} title="Insert Link" onMouseDown={e=>{e.preventDefault();insertLink();}}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          </button>
+          <button style={{ ..._btn, fontSize:10 }} title="Remove Link" onMouseDown={e=>{e.preventDefault();exec("unlink");}}>✕🔗</button>
+          {_div}
+          <button style={{ ..._btn, fontSize:10, color:"#b91c1c" }} title="Clear formatting" onMouseDown={e=>{e.preventDefault();clearFormatting();}}>Tx</button>
+          {_div}
+          <button style={{ ..._btn, background:imgPanel?"#e0f2fe":"#fff", borderColor:imgPanel?"#7dd3fc":"#d1d5db" }} title="Insert Image" onMouseDown={e=>{e.preventDefault();openImgPanel();}}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </button>
+          {_div}
+        </>}
+        <button onClick={() => setHtmlMode(m => !m)}
+          style={{ ..._btn, fontFamily:"monospace", fontSize:11, background:htmlMode?"#1e293b":"#fff", color:htmlMode?"#7dd3fc":"#374151", border:`1px solid ${htmlMode?"#334155":"#d1d5db"}` }}
+          title={htmlMode ? "Back to rich text" : "View/edit HTML"}>&lt;/&gt;</button>
+      </div>
+
+      {/* ── image insert panel ── */}
+      {imgPanel && !htmlMode && (
+        <div style={{ padding:"10px", background:"#f0f9ff", borderBottom:"1px solid #bae6fd", display:"flex", flexDirection:"column", gap:"0.5rem" }}>
+          <div style={{ display:"flex", gap:"0.5rem", alignItems:"center" }}>
+            <input value={imgUrl} onChange={e => setImgUrl(e.target.value)} placeholder="Paste image URL…" autoFocus
+              style={{ flex:1, minWidth:160, padding:"4px 8px", border:"1px solid #d1d5db", borderRadius:5, fontSize:12 }}
+              onKeyDown={e => { if (e.key==="Enter"){e.preventDefault();insertImage();} if(e.key==="Escape") setImgPanel(false); }} />
+            <button onClick={() => fileInputRef.current?.click()}
+              style={{ padding:"4px 10px", border:"1px solid #d1d5db", borderRadius:5, fontSize:11, cursor:"pointer", background:"#fff", color:"#374151", whiteSpace:"nowrap" }}>Browse…</button>
+            <input ref={fileInputRef} type="file" accept="image/*,.jfif" style={{ display:"none" }}
+              onChange={e => { const f = e.target.files[0]; if (f) handlePanelFile(f); e.target.value=""; }} />
+          </div>
+          <div onDragOver={e=>{e.preventDefault();setPanelDragging(true);}} onDragLeave={()=>setPanelDragging(false)}
+            onDrop={e=>{e.preventDefault();setPanelDragging(false);handlePanelFile(e.dataTransfer.files[0]);}}
+            onClick={() => fileInputRef.current?.click()}
+            style={{ border:`2px dashed ${panelDragging?"#3b82f6":"#bae6fd"}`, borderRadius:6, padding:"10px 8px", textAlign:"center", fontSize:11, color:panelDragging?"#2563eb":"#0891b2", cursor:"pointer", background:panelDragging?"#eff6ff":"transparent" }}>
+            {uploading ? "Uploading…" : "Drop image here or click to browse"}
+          </div>
+          <div style={{ display:"flex", gap:"0.5rem", alignItems:"center", flexWrap:"wrap" }}>
+            <div style={{ display:"flex", gap:3 }}>
+              {["left","center","right"].map(a => (
+                <button key={a} onClick={() => setImgAlign(a)}
+                  style={{ padding:"3px 9px", borderRadius:4, border:"1px solid", fontSize:11, cursor:"pointer", background:imgAlign===a?"#0891b2":"#fff", color:imgAlign===a?"#fff":"#374151", borderColor:imgAlign===a?"#0891b2":"#d1d5db" }}>
+                  {a[0].toUpperCase()+a.slice(1)}
+                </button>
+              ))}
+            </div>
+            <button onClick={insertImage} disabled={!imgUrl.trim()||uploading}
+              style={{ padding:"3px 12px", borderRadius:4, border:"1px solid #0891b2", background:imgUrl.trim()&&!uploading?"#0891b2":"#94a3b8", color:"#fff", fontSize:11, cursor:imgUrl.trim()&&!uploading?"pointer":"default", fontWeight:600 }}>Insert</button>
+            <button onClick={() => setImgPanel(false)}
+              style={{ padding:"3px 8px", borderRadius:4, border:"1px solid #d1d5db", background:"#fff", color:"#6b7280", fontSize:11, cursor:"pointer" }}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {uploading && (
+        <div style={{ padding:"8px 12px", background:"#fefce8", borderBottom:"1px solid #fde68a", fontSize:12, color:"#92400e" }}>Uploading image…</div>
+      )}
+
+      {/* ── editable area ── */}
+      <div ref={editorRef} contentEditable suppressContentEditableWarning
+        onBlur={handleBlur} onPaste={_pasteAsPlain} onClick={e => { if(e.target.tagName==="IMG") selectImg(e.target); else clearSelectedImg(); }}
+        onDragOver={e=>{e.preventDefault();setDraggingOver(true);}} onDragLeave={()=>setDraggingOver(false)} onDrop={handleDrop}
+        style={{ display:htmlMode?"none":"block", minHeight:280, padding:"10px 12px", fontSize:14, lineHeight:1.75, color:"#111827", outline:"none", background:draggingOver?"#eff6ff":"#fff", overflowY:"auto" }} />
+      <textarea ref={htmlRef} onBlur={e => onChange(e.target.value)}
+        style={{ display:htmlMode?"block":"none", width:"100%", minHeight:280, padding:"10px 12px", fontSize:11, fontFamily:"monospace", lineHeight:1.6, color:"#0f172a", background:"#f8fafc", border:"none", outline:"none", resize:"vertical", boxSizing:"border-box" }} />
+
+      {/* ── selected-image overlay ── */}
+      {selectedImg && imgRect && createPortal(
+        <>
+          <div style={{ position:"fixed", top:imgRect.top-1, left:imgRect.left-1, width:imgRect.width+2, height:imgRect.height+2, border:"2px solid #3b82f6", pointerEvents:"none", zIndex:9998 }} />
+          {[{cursor:"ew-resize",dir:"left",top:imgRect.top+imgRect.height/2-6,left:imgRect.left-6},{cursor:"ew-resize",dir:"right",top:imgRect.top+imgRect.height/2-6,left:imgRect.right-6},{cursor:"nw-resize",dir:"left",top:imgRect.top-6,left:imgRect.left-6},{cursor:"ne-resize",dir:"right",top:imgRect.top-6,left:imgRect.right-6},{cursor:"sw-resize",dir:"left",top:imgRect.bottom-6,left:imgRect.left-6},{cursor:"se-resize",dir:"right",top:imgRect.bottom-6,left:imgRect.right-6}].map(({cursor,dir,top,left},i) => (
+            <div key={i} onMouseDown={e=>startResize(e,dir)} style={{ position:"fixed", top, left, width:12, height:12, background:"#fff", border:"2px solid #3b82f6", borderRadius:2, cursor, zIndex:9999 }} />
+          ))}
+          <div style={{ position:"fixed", top:imgRect.bottom+4, left:imgRect.left, fontSize:10, color:"#3b82f6", background:"rgba(255,255,255,0.9)", padding:"1px 5px", borderRadius:3, pointerEvents:"none", zIndex:9999 }}>
+            {Math.round(imgRect.width)} × {Math.round(imgRect.height)}px
+          </div>
+          <div style={{ position:"fixed", top:imgToolbarPos.top, left:imgRect.left, zIndex:10000, background:"#1e293b", borderRadius:6, padding:"5px 7px", display:"flex", gap:5, boxShadow:"0 2px 10px rgba(0,0,0,0.25)" }}>
+            <div style={{ display:"flex", gap:3, alignItems:"center" }}>
+              <span style={{ fontSize:10, color:"#94a3b8", paddingRight:2 }}>Move:</span>
+              {[[-1,"↑"],[1,"↓"]].map(([d,icon]) => (
+                <button key={d} onMouseDown={e=>{e.preventDefault();moveImg(d);}} style={{ padding:"3px 7px", borderRadius:4, border:"none", fontSize:12, cursor:"pointer", background:"#334155", color:"#e2e8f0" }}>{icon}</button>
+              ))}
+              <div style={{ width:1, background:"#475569", alignSelf:"stretch", margin:"0 3px" }} />
+              <span style={{ fontSize:10, color:"#94a3b8", paddingRight:2 }}>Align:</span>
+              {[["left","← L"],["center","↔ C"],["right","R →"]].map(([a,icon]) => (
+                <button key={a} onMouseDown={e=>{e.preventDefault();applyImgAlign(a);}} style={{ padding:"3px 9px", borderRadius:4, border:"none", fontSize:11, cursor:"pointer", background:"#334155", color:"#e2e8f0" }}>{icon}</button>
+              ))}
+              <button onMouseDown={e=>{e.preventDefault();clearSelectedImg();}} style={{ padding:"3px 8px", borderRadius:4, border:"none", fontSize:12, cursor:"pointer", background:"#334155", color:"#e2e8f0" }}>✕</button>
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SaveBar({ saving, saved, onSave, label = "Save Changes", error }) {
+  const isSessionExpired = error && (error.includes("401") || error.toLowerCase().includes("credentials") || error.toLowerCase().includes("unauthorized"));
+  return (
+    <div style={{ display:"flex", justifyContent:"flex-end", alignItems:"center", gap:12, marginTop:24, flexWrap:"wrap" }}>
+      {saved && <span style={{ color:"rgb(115,131,85)", fontWeight:600, fontSize:14 }}>✓ Saved!</span>}
+      {error && (
+        <span style={{ color:"#dc2626", fontWeight:600, fontSize:13 }}>
+          ⚠ {isSessionExpired ? <>Session expired — <a href="/login" style={{ color:"#dc2626" }}>please log in again</a></> : error}
+        </span>
+      )}
       <button
         onClick={onSave}
         disabled={saving}
         style={{
-          background: saving ? "#9ab" : "#5a3e2b",
+          background: saving ? "#a0aa8a" : "rgb(115, 131, 85)",
           color: "#fff",
           border: "none",
           borderRadius: 6,
@@ -54,20 +730,42 @@ function SaveBar({ saving, saved, onSave, label = "Save Changes" }) {
 // ─── BASICS TAB ──────────────────────────────────────────────────────────────
 function BasicsTab({ animalID, businessID }) {
   const [animal, setAnimal] = useState(null);
+  const [allSpecies, setAllSpecies] = useState([]);
   const [breeds, setBreeds] = useState([]);
   const [colors, setColors] = useState([]);
   const [categories, setCategories] = useState([]);
   const [registrations, setRegistrations] = useState([]);
+  const [registrationTypes, setRegistrationTypes] = useState([]);
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Load species list once
+  useEffect(() => {
+    fetch(`${apiBase}/auth/species`)
+      .then(r => r.json()).then(d => setAllSpecies(Array.isArray(d) ? d : [])).catch(() => {});
+  }, []);
+
+  // Reload breeds / colors / categories when species changes
+  const loadSpeciesData = (speciesID) => {
+    if (!speciesID) return;
+    fetch(`${apiBase}/api/animals/species/${speciesID}/breeds`)
+      .then(r => r.json()).then(setBreeds).catch(() => setBreeds([]));
+    fetch(`${apiBase}/api/livestock/species-colors/${speciesID}`)
+      .then(r => r.json()).then(d => setColors(Array.isArray(d) ? d : [])).catch(() => setColors([]));
+    fetch(`${apiBase}/api/animals/species/${speciesID}/categories`)
+      .then(r => r.json()).then(d => setCategories(Array.isArray(d) ? d : [])).catch(() => setCategories([]));
+    fetch(`${apiBase}/auth/species/${speciesID}/registration-types`)
+      .then(r => r.ok ? r.json() : []).then(d => setRegistrationTypes(Array.isArray(d) ? d : [])).catch(() => setRegistrationTypes([]));
+  };
 
   useEffect(() => {
     if (!animalID) return;
     setLoading(true);
     fetch(`${apiBase}/api/animals/${animalID}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
     })
       .then(r => r.json())
       .then(data => {
@@ -77,6 +775,7 @@ function BasicsTab({ animalID, businessID }) {
           : "";
         setForm({
           Name: data.FullName || "",
+          SpeciesID: data.SpeciesID || "",
           DOB: dobStr,
           Category: data.Category || "",
           BreedID: data.BreedID || "",
@@ -92,20 +791,15 @@ function BasicsTab({ animalID, businessID }) {
           Height: data.Height || "",
           Weight: data.Weight || "",
           Gaited: data.Gaited || "",
-          Warmblood: data.Warmblood || "",
+          Warmblood: data.Warmblooded || "",
           Horns: data.Horns || "",
           Vaccinations: data.Vaccinations || "",
           AncestryDescription: data.AncestryDescription || "",
         });
         if (data.SpeciesID) {
-          fetch(`${apiBase}/api/animals/species/${data.SpeciesID}/breeds`)
-            .then(r => r.json()).then(setBreeds).catch(() => setBreeds([]));
-          fetch(`${apiBase}/api/livestock/species-colors/${data.SpeciesID}`)
-            .then(r => r.json()).then(d => setColors(Array.isArray(d) ? d : [])).catch(() => setColors([]));
-          fetch(`${apiBase}/api/animals/species/${data.SpeciesID}/categories`)
-            .then(r => r.json()).then(d => setCategories(Array.isArray(d) ? d : [])).catch(() => setCategories([]));
+          loadSpeciesData(data.SpeciesID);
           fetch(`${apiBase}/api/animals/${animalID}/registrations`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+            headers: { Authorization: `Bearer ${getToken()}` },
           })
             .then(r => r.json()).then(d => setRegistrations(Array.isArray(d) ? d : [])).catch(() => setRegistrations([]));
         }
@@ -119,6 +813,8 @@ function BasicsTab({ animalID, businessID }) {
   const save = async () => {
     setSaving(true);
     setSaved(false);
+    setSaveError(null);
+    if (!getToken()) { setSaveError("401 — session expired"); setSaving(false); return; }
     const [dobYear, dobMonth, dobDay] = (form.DOB || "").split("-");
     const body = new URLSearchParams({
       ...form,
@@ -126,204 +822,236 @@ function BasicsTab({ animalID, businessID }) {
       DOBYear: dobYear || "", DOBMonth: dobMonth || "", DOBDay: dobDay || "",
     });
     try {
-      await fetch(`${apiBase}/api/animals/${animalID}/update-basics`, {
+      const res = await fetch(`${apiBase}/api/animals/${animalID}/update-basics`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${getToken()}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body,
       });
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("401 — session expired");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error ${res.status}`);
+      }
+      // Save registrations — merge stored rows with species-level types
+      // so newly-typed numbers for previously-empty types get inserted.
+      const mergedRegs = registrationTypes.map(rt => {
+        const existing = registrations.find(r => r.RegType === rt.type);
+        return existing || { RegType: rt.type, RegNumber: "" };
+      });
+      // Keep any stored registrations whose type isn't in the lookup (legacy data)
+      registrations.forEach(r => {
+        if (r.RegType && !mergedRegs.find(m => m.RegType === r.RegType)) {
+          mergedRegs.push(r);
+        }
+      });
+      if (mergedRegs.length > 0) {
+        await fetch(`${apiBase}/api/animals/${animalID}/update-registrations`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(mergedRegs),
+        });
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch {}
+    } catch (err) {
+      setSaveError(err.message || "Save failed. Please try again.");
+    }
     setSaving(false);
   };
 
   if (loading) return <div style={styles.loadingBox}>Loading animal details…</div>;
   if (!animal) return <div style={styles.loadingBox}>Animal not found.</div>;
 
-  const sid = animal.SpeciesID;
+  const sid = Number(form.SpeciesID) || animal.SpeciesID;
   const isFowl = FOWL_IDS.includes(sid);
   const showTemperament = !NO_TEMPERAMENT_IDS.includes(sid) && animal.NumberofAnimals < 2;
   const showColors = !NO_COLOR_IDS.includes(sid);
   const showExtraBreeds = !SINGLE_BREED_IDS.includes(sid);
   const maxColors = sid === 9 ? 3 : 5;
 
-  const Field = ({ label, children, hint }) => (
-    <div style={styles.field}>
-      <label style={styles.label}>{label}</label>
-      {children}
-      {hint && <div style={styles.hint}>{hint}</div>}
-    </div>
-  );
-
-  const Input = ({ fkey, type = "text", ...rest }) => (
-    <input
-      type={type}
-      value={form[fkey] ?? ""}
-      onChange={e => set(fkey, e.target.value)}
-      style={styles.input}
-      {...rest}
-    />
-  );
-
-  const Select = ({ fkey, children, ...rest }) => (
-    <select value={form[fkey] ?? ""} onChange={e => set(fkey, e.target.value)} style={styles.select} {...rest}>
-      {children}
-    </select>
-  );
-
   return (
     <div>
       <div style={styles.sectionHead}>Basic Facts</div>
 
-      <Field label="Name / Title" hint="This can be a full name like XYZ Ranch's MagaStud">
-        <Input fkey="Name" style={{ ...styles.input, maxWidth: 420 }} />
-      </Field>
+      <FormField label="Name / Title" hint="This can be a full name like XYZ Ranch's MagaStud">
+        <FormInput value={form.Name} onChange={v => set("Name", v)} style={styles.input} />
+      </FormField>
 
-      <div style={{ display:"flex", gap:32, marginBottom:16 }}>
-        <div>
-          <div style={styles.label}>Species</div>
-          <div style={styles.staticVal}>{SPECIES_MAP[sid] || "Unknown"}</div>
-        </div>
-        <div>
+      <div style={styles.formGrid}>
+        <FormField label="Species">
+          <FormSelect
+            value={form.SpeciesID}
+            onChange={v => {
+              setForm(f => ({ ...f, SpeciesID: v, Category: "", BreedID: "", BreedID2: "", BreedID3: "", BreedID4: "", Color1: "", Color2: "", Color3: "", Color4: "", Color5: "" }));
+              setBreeds([]); setColors([]); setCategories([]);
+              if (v) loadSpeciesData(Number(v));
+            }}
+          >
+            <option value="">Select species…</option>
+            {allSpecies.map(s => (
+              <option key={s.id} value={s.id}>{s.singular || s.plural}</option>
+            ))}
+          </FormSelect>
+        </FormField>
+        <div style={{ marginBottom:14 }}>
           <div style={styles.label}># Animals in Listing</div>
           <div style={styles.staticVal}>{animal.NumberofAnimals || 1}</div>
         </div>
-      </div>
 
-      {animal.NumberofAnimals === 1 && sid !== 33 && (
-        <Field label="Date of Birth">
-          <Input fkey="DOB" type="date" style={{ ...styles.input, maxWidth: 200 }} />
-        </Field>
-      )}
+        {(animal.NumberofAnimals == null || animal.NumberofAnimals === 1) && sid !== 33 && (
+          <FormField label="Date of Birth">
+            <FormInput value={form.DOB} onChange={v => set("DOB", v)} type="date" style={styles.input} />
+          </FormField>
+        )}
 
-      {showTemperament && (
-        <Field label="Temperament" hint="1 = Very Calm, 10 = Very High-Spirited">
-          <Select fkey="Temperment" style={{ ...styles.select, maxWidth: 120 }}>
-            <option value="">-</option>
-            {[...Array(10)].map((_,i) => (
-              <option key={i+1} value={String(i+1)}>{i+1}</option>
-            ))}
-          </Select>
-        </Field>
-      )}
+        {showTemperament && (
+          <FormField label="Temperament" hint="1 = Very Calm, 10 = Very High-Spirited">
+            <FormSelect value={form.Temperment} onChange={v => set("Temperment", v)} style={styles.select}>
+              <option value="">-</option>
+              {[...Array(10)].map((_,i) => (
+                <option key={i+1} value={String(i+1)}>{i+1}</option>
+              ))}
+            </FormSelect>
+          </FormField>
+        )}
 
-      {!isFowl && (
-        <>
-          <Field label="Height (hands/inches)">
-            <Input fkey="Height" type="number" style={{ ...styles.input, maxWidth: 140 }} />
-          </Field>
-          <Field label="Weight (lbs)">
-            <Input fkey="Weight" type="number" style={{ ...styles.input, maxWidth: 140 }} />
-          </Field>
-          {[5,7].includes(sid) && (
-            <Field label="Gaited?">
-              <Select fkey="Gaited" style={{ ...styles.select, maxWidth: 140 }}>
-                <option value="">-</option>
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-              </Select>
-            </Field>
-          )}
-          {![23,33,34].includes(sid) && (
-            <Field label="Horns?">
-              <Select fkey="Horns" style={{ ...styles.select, maxWidth: 140 }}>
-                <option value="">-</option>
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-                <option value="Polled">Polled</option>
-              </Select>
-            </Field>
-          )}
-        </>
-      )}
+        {!isFowl && (
+          <>
+            <FormField label="Height (hands/inches)">
+              <FormInput value={form.Height} onChange={v => set("Height", v)} type="number" style={styles.input} />
+            </FormField>
+            <FormField label="Weight (lbs)">
+              <FormInput value={form.Weight} onChange={v => set("Weight", v)} type="number" style={styles.input} />
+            </FormField>
+            {[5,7].includes(sid) && (
+              <FormField label="Gaited?">
+                <FormSelect value={form.Gaited} onChange={v => set("Gaited", v)} style={styles.select}>
+                  <option value="">-</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </FormSelect>
+              </FormField>
+            )}
+            {HORNS_IDS.includes(sid) && (
+              <FormField label="Horns?">
+                <FormSelect value={form.Horns} onChange={v => set("Horns", v)} style={styles.select}>
+                  <option value="">-</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                  <option value="Polled">Polled</option>
+                </FormSelect>
+              </FormField>
+            )}
+          </>
+        )}
 
-      {categories.length > 0 && !([23,33].includes(sid)) && (
-        <Field label="Category">
-          <Select fkey="Category">
-            <option value="">Select…</option>
-            {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </Select>
-        </Field>
-      )}
+        {categories.length > 0 && !([23,33].includes(sid)) && (
+          <FormField label="Category">
+            <FormSelect value={form.Category} onChange={v => set("Category", v)}>
+              <option value="">Select…</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.name}>{c.name}</option>
+              ))}
+            </FormSelect>
+          </FormField>
+        )}
 
-      {breeds.length > 0 && (
-        <>
-          <Field label={sid === 4 || sid === 23 ? "Type" : "Breed (Primary)"}>
-            <Select fkey="BreedID">
-              <option value="">Select a breed…</option>
-              {breeds.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </Select>
-          </Field>
-          {showExtraBreeds && [2,3,4].map(n => (
-            <Field key={n} label={`Breed ${n+1}`}>
-              <Select fkey={`BreedID${n+1}`}>
-                <option value="">-</option>
+        {breeds.length > 0 && (
+          <>
+            <FormField label={sid === 4 || sid === 23 ? "Type" : "Breed (Primary)"}>
+              <FormSelect value={form.BreedID} onChange={v => set("BreedID", v)}>
+                <option value="">Select a breed…</option>
                 {breeds.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </Select>
-            </Field>
-          ))}
-        </>
-      )}
+              </FormSelect>
+            </FormField>
+            {showExtraBreeds && [2,3,4].map(n => (
+              <FormField key={n} label={`Breed ${n+1}`}>
+                <FormSelect value={form[`BreedID${n+1}`]} onChange={v => set(`BreedID${n+1}`, v)}>
+                  <option value="">-</option>
+                  {breeds.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </FormSelect>
+              </FormField>
+            ))}
+          </>
+        )}
+      </div>
 
       {showColors && (
         <>
           <div style={styles.sectionHead}>Colors</div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(180px, 1fr))", gap:12, marginBottom:16 }}>
             {[...Array(maxColors)].map((_,i) => {
               const k = `Color${i+1}`;
               return (
-                <Field key={k} label={`Color ${i+1}`}>
-                  {colors.length > 0 ? (
-                    <Select fkey={k}>
-                      <option value="">--</option>
-                      {colors.map(c => <option key={c} value={c}>{c}</option>)}
-                    </Select>
-                  ) : (
-                    <Input fkey={k} />
-                  )}
-                </Field>
+                <FormField key={k} label={`Color ${i+1}`}>
+                  <FormSelect value={form[k]} onChange={v => set(k, v)}>
+                    <option value="">--</option>
+                    {colors.map(c => <option key={c} value={c}>{c}</option>)}
+                  </FormSelect>
+                </FormField>
               );
             })}
           </div>
         </>
       )}
 
-      {registrations.length > 0 && (
-        <>
-          <div style={styles.sectionHead}>Registrations</div>
-          {registrations.map((reg, i) => (
-            <Field key={i} label={reg.RegType}>
-              <input
-                value={reg.RegNumber || ""}
-                onChange={e => {
-                  const updated = [...registrations];
-                  updated[i] = { ...updated[i], RegNumber: e.target.value };
-                  setRegistrations(updated);
-                }}
-                style={styles.input}
-              />
-            </Field>
-          ))}
-        </>
-      )}
+      {(() => {
+        // Merge stored registrations with all species-level registration types
+        // so empty types still render as input fields.
+        const byType = new Map(registrations.map(r => [r.RegType, r]));
+        const rows = registrationTypes.map(rt =>
+          byType.get(rt.type) || { RegType: rt.type, RegNumber: "" }
+        );
+        // Include any stored legacy types not in the lookup
+        registrations.forEach(r => {
+          if (r.RegType && !rows.find(x => x.RegType === r.RegType)) rows.push(r);
+        });
+        if (rows.length === 0) return null;
+        return (
+          <>
+            <div style={styles.sectionHead}>Registrations</div>
+            <div style={styles.formGrid}>
+              {rows.map((reg, i) => (
+                <FormField key={reg.RegType || i} label={reg.RegType}>
+                  <input
+                    value={reg.RegNumber || ""}
+                    onChange={e => {
+                      const next = [...registrations];
+                      const idx = next.findIndex(r => r.RegType === reg.RegType);
+                      if (idx >= 0) {
+                        next[idx] = { ...next[idx], RegNumber: e.target.value };
+                      } else {
+                        next.push({ RegType: reg.RegType, RegNumber: e.target.value });
+                      }
+                      setRegistrations(next);
+                    }}
+                    style={styles.input}
+                  />
+                </FormField>
+              ))}
+            </div>
+          </>
+        );
+      })()}
 
       {sid !== 23 && (
-        <Field label="Vaccinations">
+        <FormField label="Vaccinations">
           <textarea
             value={form.Vaccinations}
             onChange={e => set("Vaccinations", e.target.value)}
             rows={5}
             style={{ ...styles.input, resize:"vertical", fontFamily:"inherit" }}
           />
-        </Field>
+        </FormField>
       )}
 
-      <SaveBar saving={saving} saved={saved} onSave={save} />
+      <SaveBar saving={saving} saved={saved} onSave={save} error={saveError} />
     </div>
   );
 }
@@ -339,20 +1067,26 @@ function PricingTab({ animalID }) {
     CoOwnerName3:"", CoOwnerLink3:"", CoOwnerBusiness3:"",
   });
   const [animal, setAnimal] = useState(null);
+  const [speciesCategories, setSpeciesCategories] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   useEffect(() => {
     if (!animalID) return;
     Promise.all([
       fetch(`${apiBase}/api/animals/${animalID}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+        headers: { Authorization: `Bearer ${getToken()}` },
       }).then(r => r.json()),
       fetch(`${apiBase}/api/animals/${animalID}/pricing`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+        headers: { Authorization: `Bearer ${getToken()}` },
       }).then(r => r.json()).catch(() => ({})),
     ]).then(([a, p]) => {
       setAnimal(a);
+      if (a?.SpeciesID) {
+        fetch(`${apiBase}/api/animals/species/${a.SpeciesID}/categories`)
+          .then(r => r.json()).then(d => setSpeciesCategories(Array.isArray(d) ? d : [])).catch(() => {});
+      }
       setForm(f => ({
         ...f,
         ForSale: String(p.ForSale ?? a.PublishForSale ?? 0),
@@ -382,78 +1116,78 @@ function PricingTab({ animalID }) {
   const save = async () => {
     setSaving(true);
     setSaved(false);
+    setSaveError(null);
+    if (!getToken()) { setSaveError("401 — session expired"); setSaving(false); return; }
     const body = new URLSearchParams({ ...form, AnimalID: animalID });
     try {
-      await fetch(`${apiBase}/api/animals/${animalID}/update-pricing`, {
+      const res = await fetch(`${apiBase}/api/animals/${animalID}/update-pricing`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${getToken()}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body,
       });
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("401 — session expired");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error ${res.status}`);
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch {}
+    } catch (err) {
+      setSaveError(err.message || "Save failed. Please try again.");
+    }
     setSaving(false);
   };
 
   const isFowl = animal && FOWL_IDS.includes(animal.SpeciesID);
-  const isMale = animal && (String(animal.Category).toLowerCase().includes("male"));
-
-  const RadioGroup = ({ label, fkey }) => (
-    <div style={styles.field}>
-      <label style={styles.label}>{label}</label>
-      <div style={{ display:"flex", gap:20 }}>
-        {["Yes","No"].map(v => (
-          <label key={v} style={{ display:"flex", alignItems:"center", gap:6, cursor:"pointer" }}>
-            <input
-              type="radio"
-              name={fkey}
-              value={v === "Yes" ? "1" : "0"}
-              checked={form[fkey] === (v === "Yes" ? "1" : "0")}
-              onChange={() => set(fkey, v === "Yes" ? "1" : "0")}
-            />
-            {v}
-          </label>
-        ))}
-      </div>
-    </div>
-  );
+  // Category may be stored as a name ("Herdsire") or a numeric ID — resolve to name
+  const _catEntry = speciesCategories.find(c => String(c.id) === String(animal?.Category));
+  const _catName = _catEntry ? _catEntry.name : String(animal?.Category || "");
+  const _cat = _catName.toLowerCase();
+  const isMale = ["male","herdsire","stud","sire","stallion","bull","buck","ram","boar","tom","gander","rooster","drake"].some(kw => _cat.includes(kw));
+  // Species where embryo / semen pricing makes sense (excludes camelids and fowl)
+  const EMBRYO_SEMEN_SPECIES = [5, 6, 8, 9, 10, 17, 21, 27, 34]; // Horse, Goat, Cattle, Bison, Sheep, Yak, Deer, Musk Ox, Buffalo
+  const showEmbryoSemen = animal && EMBRYO_SEMEN_SPECIES.includes(animal.SpeciesID);
 
   return (
     <div>
       <div style={styles.sectionHead}>Sale Status</div>
-      <RadioGroup label="For Sale?" fkey="ForSale" />
-      <RadioGroup label="Sold?" fkey="Sold" />
-      <RadioGroup label="Free?" fkey="Free" />
+      <div style={{ display:"flex", gap:48, flexWrap:"wrap", marginBottom:8 }}>
+        <RadioGroup label="For Sale?" value={form.ForSale} onChange={v => set("ForSale", v)} />
+        <RadioGroup label="Sold?" value={form.Sold} onChange={v => set("Sold", v)} />
+        <RadioGroup label="Free?" value={form.Free} onChange={v => set("Free", v)} />
+      </div>
 
       {!isFowl && (
         <>
           <div style={styles.sectionHead}>Pricing</div>
-          <div style={styles.field}>
-            <label style={styles.label}>Price ($)</label>
-            <input type="number" value={form.Price} onChange={e => set("Price", e.target.value)} style={{ ...styles.input, maxWidth:160 }} />
-          </div>
-          {isMale && (
+          <div style={styles.formGrid}>
             <div style={styles.field}>
-              <label style={styles.label}>Stud Fee ($)</label>
-              <input type="number" value={form.StudFee} onChange={e => set("StudFee", e.target.value)} style={{ ...styles.input, maxWidth:160 }} />
-              <div style={styles.hint}>Set to 0 to show "Call For Price"</div>
+              <label style={styles.label}>Price ($)</label>
+              <input type="number" value={form.Price} onChange={e => set("Price", e.target.value)} style={styles.input} />
             </div>
-          )}
-          {[2,4,10].includes(animal?.SpeciesID) && (
-            <>
+            {isMale && (
+              <div style={styles.field}>
+                <label style={styles.label}>Stud Fee ($)</label>
+                <input type="number" value={form.StudFee} onChange={e => set("StudFee", e.target.value)} style={styles.input} />
+                <div style={styles.hint}>Set to 0 to show "Call For Price"</div>
+              </div>
+            )}
+            {showEmbryoSemen && !isMale && (
               <div style={styles.field}>
                 <label style={styles.label}>Embryo Price ($)</label>
-                <input type="number" value={form.EmbryoPrice} onChange={e => set("EmbryoPrice", e.target.value)} style={{ ...styles.input, maxWidth:160 }} />
+                <input type="number" value={form.EmbryoPrice} onChange={e => set("EmbryoPrice", e.target.value)} style={styles.input} />
               </div>
+            )}
+            {showEmbryoSemen && isMale && (
               <div style={styles.field}>
                 <label style={styles.label}>Semen Price ($)</label>
-                <input type="number" value={form.SemenPrice} onChange={e => set("SemenPrice", e.target.value)} style={{ ...styles.input, maxWidth:160 }} />
+                <input type="number" value={form.SemenPrice} onChange={e => set("SemenPrice", e.target.value)} style={styles.input} />
               </div>
-            </>
-          )}
+            )}
+          </div>
           <div style={styles.field}>
             <label style={styles.label}>Finance Terms</label>
             <textarea value={form.Financeterms} onChange={e => set("Financeterms", e.target.value)} rows={4} style={{ ...styles.input, resize:"vertical", fontFamily:"inherit" }} />
@@ -470,6 +1204,7 @@ function PricingTab({ animalID }) {
       {animal?.NumberofAnimals < 2 && (
         <>
           <div style={styles.sectionHead}>Co-Owners</div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:16 }}>
           {[1,2,3].map(n => (
             <div key={n} style={{ marginBottom:16, padding:"12px 16px", background:"#f9f6f2", borderRadius:8, border:"1px solid #e8e0d5" }}>
               <div style={{ fontWeight:600, marginBottom:8, color:"#5a3e2b" }}>Co-Owner {n}</div>
@@ -485,10 +1220,11 @@ function PricingTab({ animalID }) {
               ))}
             </div>
           ))}
+          </div>
         </>
       )}
 
-      <SaveBar saving={saving} saved={saved} onSave={save} />
+      <SaveBar saving={saving} saved={saved} onSave={save} error={saveError} />
     </div>
   );
 }
@@ -498,12 +1234,13 @@ function DescriptionTab({ animalID }) {
   const [desc, setDesc] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!animalID) return;
     fetch(`${apiBase}/api/animals/${animalID}/description`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
     })
       .then(r => r.json())
       .then(d => { setDesc(d.Description || ""); setLoading(false); })
@@ -512,18 +1249,28 @@ function DescriptionTab({ animalID }) {
 
   const save = async () => {
     setSaving(true);
+    setSaved(false);
+    setSaveError(null);
+    if (!getToken()) { setSaveError("401 — session expired"); setSaving(false); return; }
     try {
-      await fetch(`${apiBase}/api/animals/${animalID}/update-description`, {
+      const res = await fetch(`${apiBase}/api/animals/${animalID}/update-description`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${getToken()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ Description: desc }),
       });
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("401 — session expired");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error ${res.status}`);
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch {}
+    } catch (err) {
+      setSaveError(err.message || "Save failed. Please try again.");
+    }
     setSaving(false);
   };
 
@@ -535,53 +1282,55 @@ function DescriptionTab({ animalID }) {
       <p style={{ color:"#7a6a5a", fontSize:14, marginBottom:16 }}>
         Describe your animal for potential buyers. Include personality traits, notable accomplishments, and any other relevant information.
       </p>
-      <textarea
-        value={desc}
-        onChange={e => setDesc(e.target.value)}
-        rows={16}
-        placeholder="Describe your animal…"
-        style={{ ...styles.input, width:"100%", resize:"vertical", fontFamily:"inherit", fontSize:15, lineHeight:1.6 }}
-      />
-      <SaveBar saving={saving} saved={saved} onSave={save} />
+      <RichTextEditor value={desc} onChange={setDesc} />
+      <SaveBar saving={saving} saved={saved} onSave={save} error={saveError} />
     </div>
   );
 }
 
 // ─── ANCESTRY TAB ────────────────────────────────────────────────────────────
+const ALPACA_FRACTIONS = ["Full","7/8","3/4","5/8","1/2","3/8","1/4","1/8","1/16","1/32","1/64","Unknown"];
+
 function AncestryTab({ animalID }) {
   const ANCESTOR_FIELDS = [
-    "Sire","SireColor","SireLink",
-    "SireSire","SireSireColor","SireSireLink",
-    "SireSireSire","SireSireSireColor","SireSireSireLink",
-    "SireSireDam","SireSireDamColor","SireSireDamLink",
-    "SireDam","SireDamColor","SireDamLink",
-    "SireDamSire","SireDamSireColor","SireDamSireLink",
-    "SireDamDam","SireDamDamColor","SireDamDamLink",
-    "Dam","DamColor","DamLink",
-    "DamSire","DamSireColor","DamSireLink",
-    "DamSireSire","DamSireSireColor","DamSireSireLink",
-    "DamSireDam","DamSireDamColor","DamSireDamLink",
-    "DamDam","DamDamColor","DamDamLink",
-    "DamDamSire","DamDamSireColor","DamDamSireLink",
-    "DamDamDam","DamDamDamColor","DamDamDamLink",
+    "Sire","SireColor","SireLink","SireARI",
+    "SireSire","SireSireColor","SireSireLink","SireSireARI",
+    "SireSireSire","SireSireSireColor","SireSireSireLink","SireSireSireARI",
+    "SireSireDam","SireSireDamColor","SireSireDamLink","SireSireDamARI",
+    "SireDam","SireDamColor","SireDamLink","SireDamARI",
+    "SireDamSire","SireDamSireColor","SireDamSireLink","SireDamSireARI",
+    "SireDamDam","SireDamDamColor","SireDamDamLink","SireDamDamARI",
+    "Dam","DamColor","DamLink","DamARI",
+    "DamSire","DamSireColor","DamSireLink","DamSireARI",
+    "DamSireSire","DamSireSireColor","DamSireSireLink","DamSireSireARI",
+    "DamSireDam","DamSireDamColor","DamSireDamLink","DamSireDamARI",
+    "DamDam","DamDamColor","DamDamLink","DamDamARI",
+    "DamDamSire","DamDamSireColor","DamDamSireLink","DamDamSireARI",
+    "DamDamDam","DamDamDamColor","DamDamDamLink","DamDamDamARI",
   ];
 
+  const PCT_FIELDS = ["PercentPeruvian","PercentChilean","PercentBolivian","PercentUnknownOther","PercentAccoyo"];
+
   const [form, setForm] = useState({});
+  const [speciesID, setSpeciesID] = useState(null);
   const [colors, setColors] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!animalID) return;
     fetch(`${apiBase}/api/animals/${animalID}/ancestry`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
     })
       .then(r => r.json())
       .then(d => {
         const init = {};
         ANCESTOR_FIELDS.forEach(f => { init[f] = d[f] || ""; });
+        PCT_FIELDS.forEach(f => { init[f] = d[f] || ""; });
         setForm(init);
+        setSpeciesID(d.SpeciesID || null);
         if (d.SpeciesID) {
           fetch(`${apiBase}/api/livestock/species-colors/${d.SpeciesID}`)
             .then(r => r.json()).then(c => setColors(Array.isArray(c) ? c : [])).catch(() => {});
@@ -592,129 +1341,77 @@ function AncestryTab({ animalID }) {
   }, [animalID]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const setMany = (patch) => setForm(f => ({ ...f, ...patch }));
 
   const save = async () => {
     setSaving(true);
+    setSaved(false);
+    setSaveError(null);
+    if (!getToken()) { setSaveError("401 — session expired"); setSaving(false); return; }
     try {
-      await fetch(`${apiBase}/api/animals/${animalID}/update-ancestry`, {
+      const res = await fetch(`${apiBase}/api/animals/${animalID}/update-ancestry`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${getToken()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(form),
       });
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("401 — session expired");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error ${res.status}`);
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch {}
+    } catch (err) {
+      setSaveError(err.message || "Save failed. Please try again.");
+    }
     setSaving(false);
   };
 
   const boxInput = {
-    display: "block",
-    width: "100%",
-    padding: "5px 8px",
-    border: "1px solid #d5c9bc",
-    borderRadius: 4,
-    fontSize: 12,
-    background: "rgba(255,255,255,0.75)",
-    boxSizing: "border-box",
-    fontFamily: "inherit",
-    marginBottom: 4,
+    display: "block", width: "100%", padding: "5px 8px",
+    border: "1px solid #d5c9bc", borderRadius: 4, fontSize: 12,
+    background: "rgba(255,255,255,0.75)", boxSizing: "border-box",
+    fontFamily: "inherit", marginBottom: 4,
   };
 
-  const AncestorBox = ({ label, nameKey, colorKey, linkKey, gender }) => {
-    const isMale = gender === "male";
-    return (
-      <div style={{
-        background: isMale ? "#dbeafe" : "#fce7f3",
-        border: `1px solid ${isMale ? "#93c5fd" : "#f9a8d4"}`,
-        borderRadius: 6,
-        padding: "8px 10px",
-        width: "100%",
-        boxSizing: "border-box",
-      }}>
-        <div style={{
-          fontWeight: 700, fontSize: 11, color: "#5a3e2b",
-          textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6,
-        }}>
-          {label}
-        </div>
-        <input
-          value={form[nameKey] || ""}
-          onChange={e => set(nameKey, e.target.value)}
-          placeholder="Name"
-          style={boxInput}
-        />
-        {colors.length > 0 ? (
-          <select
-            value={form[colorKey] || ""}
-            onChange={e => set(colorKey, e.target.value)}
-            style={{ ...boxInput, marginBottom: 4 }}
-          >
-            <option value="">-- Color --</option>
-            {colors.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        ) : (
-          <input
-            value={form[colorKey] || ""}
-            onChange={e => set(colorKey, e.target.value)}
-            placeholder="Color"
-            style={boxInput}
-          />
-        )}
-        <input
-          value={form[linkKey] || ""}
-          onChange={e => set(linkKey, e.target.value)}
-          placeholder="Link (optional)"
-          style={{ ...boxInput, fontSize: 11, marginBottom: 0 }}
-        />
-      </div>
-    );
-  };
+  const commonAncProps = { form, set, setMany, colors, boxInput, speciesID };
 
   if (loading) return <div style={styles.loadingBox}>Loading ancestry…</div>;
 
-  // Each "slot" in the pedigree tree is one of 8 rows.
-  // The layout is a 4-column table:
-  //   [Parents] [connector] [Grandparents] [connector] [Great-Grandparents]
-  // Parents span 4 rows each, Grandparents span 2 rows each.
-
-  const ColHead = ({ children }) => (
-    <th style={{
-      fontWeight: 700, fontSize: 12, color: "#5a3e2b",
-      textTransform: "uppercase", letterSpacing: "0.05em",
-      paddingBottom: 10, textAlign: "left", whiteSpace: "nowrap",
-    }}>
-      {children}
-    </th>
-  );
-
-  const connectorV = {
-    width: 20,
-    padding: 0,
-    position: "relative",
-  };
-
-  // Vertical + horizontal connector lines using borders
-  const LineCell = ({ top, bottom }) => (
-    <td style={{
-      width: 20, padding: 0,
-      borderRight: "2px solid #d5c9bc",
-      borderTop: top ? "2px solid #d5c9bc" : "none",
-      borderBottom: bottom ? "2px solid #d5c9bc" : "none",
-    }} />
-  );
-
-  const Pad = ({ children }) => (
-    <td style={{ padding: "4px 6px 4px 0", verticalAlign: "middle" }}>
-      {children}
-    </td>
-  );
+  const isAlpaca = Number(speciesID) === 2;
 
   return (
     <div>
-      <div style={styles.sectionHead}>Pedigree</div>
+      {isAlpaca && (
+        <div style={{ marginBottom: 32 }}>
+          <div style={styles.sectionHead}>Bloodline Percentages</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0 40px" }}>
+            {[
+              { key: "PercentPeruvian",    label: "% Peruvian" },
+              { key: "PercentChilean",     label: "% Chilean" },
+              { key: "PercentBolivian",    label: "% Bolivian" },
+              { key: "PercentUnknownOther",label: "% Other / Unknown" },
+              { key: "PercentAccoyo",      label: "% Accoyo" },
+            ].map(({ key, label }) => (
+              <FormField key={key} label={label}>
+                <select
+                  style={{ display:"block", width:"100%", padding:"6px 8px", border:"1px solid #d5c9bc", borderRadius:4, fontSize:13, background:"rgba(255,255,255,0.75)", boxSizing:"border-box", fontFamily:"inherit" }}
+                  value={form[key] || ""}
+                  onChange={e => set(key, e.target.value)}
+                >
+                  <option value="">--</option>
+                  {ALPACA_FRACTIONS.map(fr => <option key={fr} value={fr}>{fr}</option>)}
+                </select>
+              </FormField>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={styles.sectionHead}>Ancestry</div>
       <p style={{ color: "#7a6a5a", fontSize: 13, marginBottom: 20 }}>
         Blue = male &nbsp;·&nbsp; Pink = female
       </p>
@@ -734,35 +1431,35 @@ function AncestryTab({ animalID }) {
             {/* Row 1 of 8 — SireSireSire */}
             <tr>
               <td rowSpan={4} style={{ verticalAlign: "middle", paddingRight: 0, paddingBottom: 4 }}>
-                <AncestorBox label="Sire" nameKey="Sire" colorKey="SireColor" linkKey="SireLink" gender="male" />
+                <AncestorBox label="Sire" nameKey="Sire" colorKey="SireColor" linkKey="SireLink" ariKey="SireARI" gender="male" {...commonAncProps} />
               </td>
               <LineCell top={false} bottom={true} />
               <td rowSpan={2} style={{ verticalAlign: "middle", paddingRight: 0, paddingBottom: 4 }}>
-                <AncestorBox label="Sire's Sire" nameKey="SireSire" colorKey="SireSireColor" linkKey="SireSireLink" gender="male" />
+                <AncestorBox label="Sire's Sire" nameKey="SireSire" colorKey="SireSireColor" linkKey="SireSireLink" ariKey="SireSireARI" gender="male" {...commonAncProps} />
               </td>
               <LineCell top={false} bottom={true} />
-              <Pad><AncestorBox label="Sire's Sire's Sire" nameKey="SireSireSire" colorKey="SireSireSireColor" linkKey="SireSireSireLink" gender="male" /></Pad>
+              <AncPad><AncestorBox label="Sire's Sire's Sire" nameKey="SireSireSire" colorKey="SireSireSireColor" linkKey="SireSireSireLink" ariKey="SireSireSireARI" gender="male" {...commonAncProps} /></AncPad>
             </tr>
             {/* Row 2 — SireSireDam */}
             <tr>
               <td style={{ width: 20, padding: 0, borderRight: "2px solid #d5c9bc" }} />
               <LineCell top={true} bottom={false} />
-              <Pad><AncestorBox label="Sire's Sire's Dam" nameKey="SireSireDam" colorKey="SireSireDamColor" linkKey="SireSireDamLink" gender="female" /></Pad>
+              <AncPad><AncestorBox label="Sire's Sire's Dam" nameKey="SireSireDam" colorKey="SireSireDamColor" linkKey="SireSireDamLink" ariKey="SireSireDamARI" gender="female" {...commonAncProps} /></AncPad>
             </tr>
             {/* Row 3 — SireDamSire */}
             <tr>
               <td style={{ width: 20, padding: 0, borderRight: "2px solid #d5c9bc" }} />
               <td rowSpan={2} style={{ verticalAlign: "middle", paddingRight: 0, paddingBottom: 4 }}>
-                <AncestorBox label="Sire's Dam" nameKey="SireDam" colorKey="SireDamColor" linkKey="SireDamLink" gender="female" />
+                <AncestorBox label="Sire's Dam" nameKey="SireDam" colorKey="SireDamColor" linkKey="SireDamLink" ariKey="SireDamARI" gender="female" {...commonAncProps} />
               </td>
               <LineCell top={false} bottom={true} />
-              <Pad><AncestorBox label="Sire's Dam's Sire" nameKey="SireDamSire" colorKey="SireDamSireColor" linkKey="SireDamSireLink" gender="male" /></Pad>
+              <AncPad><AncestorBox label="Sire's Dam's Sire" nameKey="SireDamSire" colorKey="SireDamSireColor" linkKey="SireDamSireLink" ariKey="SireDamSireARI" gender="male" {...commonAncProps} /></AncPad>
             </tr>
             {/* Row 4 — SireDamDam */}
             <tr>
               <td style={{ width: 20, padding: 0 }} />
               <LineCell top={true} bottom={false} />
-              <Pad><AncestorBox label="Sire's Dam's Dam" nameKey="SireDamDam" colorKey="SireDamDamColor" linkKey="SireDamDamLink" gender="female" /></Pad>
+              <AncPad><AncestorBox label="Sire's Dam's Dam" nameKey="SireDamDam" colorKey="SireDamDamColor" linkKey="SireDamDamLink" ariKey="SireDamDamARI" gender="female" {...commonAncProps} /></AncPad>
             </tr>
 
             {/* Spacer row */}
@@ -771,47 +1468,47 @@ function AncestryTab({ animalID }) {
             {/* Row 5 — DamSireSire */}
             <tr>
               <td rowSpan={4} style={{ verticalAlign: "middle", paddingRight: 0, paddingBottom: 4 }}>
-                <AncestorBox label="Dam" nameKey="Dam" colorKey="DamColor" linkKey="DamLink" gender="female" />
+                <AncestorBox label="Dam" nameKey="Dam" colorKey="DamColor" linkKey="DamLink" ariKey="DamARI" gender="female" {...commonAncProps} />
               </td>
               <LineCell top={false} bottom={true} />
               <td rowSpan={2} style={{ verticalAlign: "middle", paddingRight: 0, paddingBottom: 4 }}>
-                <AncestorBox label="Dam's Sire" nameKey="DamSire" colorKey="DamSireColor" linkKey="DamSireLink" gender="male" />
+                <AncestorBox label="Dam's Sire" nameKey="DamSire" colorKey="DamSireColor" linkKey="DamSireLink" ariKey="DamSireARI" gender="male" {...commonAncProps} />
               </td>
               <LineCell top={false} bottom={true} />
-              <Pad><AncestorBox label="Dam's Sire's Sire" nameKey="DamSireSire" colorKey="DamSireSireColor" linkKey="DamSireSireLink" gender="male" /></Pad>
+              <AncPad><AncestorBox label="Dam's Sire's Sire" nameKey="DamSireSire" colorKey="DamSireSireColor" linkKey="DamSireSireLink" ariKey="DamSireSireARI" gender="male" {...commonAncProps} /></AncPad>
             </tr>
             {/* Row 6 — DamSireDam */}
             <tr>
               <td style={{ width: 20, padding: 0, borderRight: "2px solid #d5c9bc" }} />
               <LineCell top={true} bottom={false} />
-              <Pad><AncestorBox label="Dam's Sire's Dam" nameKey="DamSireDam" colorKey="DamSireDamColor" linkKey="DamSireDamLink" gender="female" /></Pad>
+              <AncPad><AncestorBox label="Dam's Sire's Dam" nameKey="DamSireDam" colorKey="DamSireDamColor" linkKey="DamSireDamLink" ariKey="DamSireDamARI" gender="female" {...commonAncProps} /></AncPad>
             </tr>
             {/* Row 7 — DamDamSire */}
             <tr>
               <td style={{ width: 20, padding: 0, borderRight: "2px solid #d5c9bc" }} />
               <td rowSpan={2} style={{ verticalAlign: "middle", paddingRight: 0, paddingBottom: 4 }}>
-                <AncestorBox label="Dam's Dam" nameKey="DamDam" colorKey="DamDamColor" linkKey="DamDamLink" gender="female" />
+                <AncestorBox label="Dam's Dam" nameKey="DamDam" colorKey="DamDamColor" linkKey="DamDamLink" ariKey="DamDamARI" gender="female" {...commonAncProps} />
               </td>
               <LineCell top={false} bottom={true} />
-              <Pad><AncestorBox label="Dam's Dam's Sire" nameKey="DamDamSire" colorKey="DamDamSireColor" linkKey="DamDamSireLink" gender="male" /></Pad>
+              <AncPad><AncestorBox label="Dam's Dam's Sire" nameKey="DamDamSire" colorKey="DamDamSireColor" linkKey="DamDamSireLink" ariKey="DamDamSireARI" gender="male" {...commonAncProps} /></AncPad>
             </tr>
             {/* Row 8 — DamDamDam */}
             <tr>
               <td style={{ width: 20, padding: 0 }} />
               <LineCell top={true} bottom={false} />
-              <Pad><AncestorBox label="Dam's Dam's Dam" nameKey="DamDamDam" colorKey="DamDamDamColor" linkKey="DamDamDamLink" gender="female" /></Pad>
+              <AncPad><AncestorBox label="Dam's Dam's Dam" nameKey="DamDamDam" colorKey="DamDamDamColor" linkKey="DamDamDamLink" ariKey="DamDamDamARI" gender="female" {...commonAncProps} /></AncPad>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <SaveBar saving={saving} saved={saved} onSave={save} />
+      <SaveBar saving={saving} saved={saved} onSave={save} error={saveError} />
     </div>
   );
 }
 
 // ─── FIBER TAB ───────────────────────────────────────────────────────────────
-function FiberTab({ animalID }) {
+function FiberTab({ animalID, speciesID }) {
   const EMPTY_ROW = () => ({
     FiberID: null, SampleDateYear:"", Average:"", CF:"",
     StandardDev:"", CrimpPerInch:"", COV:"", Length:"",
@@ -821,6 +1518,7 @@ function FiberTab({ animalID }) {
   const [rows, setRows] = useState([EMPTY_ROW()]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const currentYear = new Date().getFullYear();
@@ -829,7 +1527,7 @@ function FiberTab({ animalID }) {
   useEffect(() => {
     if (!animalID) return;
     fetch(`${apiBase}/api/animals/${animalID}/fiber`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
     })
       .then(r => r.json())
       .then(d => {
@@ -845,44 +1543,56 @@ function FiberTab({ animalID }) {
 
   const save = async () => {
     setSaving(true);
+    setSaved(false);
+    setSaveError(null);
+    if (!getToken()) { setSaveError("401 — session expired"); setSaving(false); return; }
     try {
-      await fetch(`${apiBase}/api/animals/${animalID}/update-fiber`, {
+      const res = await fetch(`${apiBase}/api/animals/${animalID}/update-fiber`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${getToken()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(rows),
       });
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("401 — session expired");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error ${res.status}`);
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch {}
+    } catch (err) {
+      setSaveError(err.message || "Save failed. Please try again.");
+    }
     setSaving(false);
   };
 
   const COLS = [
     { key:"Average", label:"AFD" },
-    { key:"CF", label:"CF" },
     { key:"StandardDev", label:"SD" },
-    { key:"CrimpPerInch", label:"Crimps/In" },
     { key:"COV", label:"COV" },
-    { key:"Length", label:"Staple Len" },
     { key:"GreaterThan30", label:">30%" },
-    { key:"ShearWeight", label:"Shear Wt" },
     { key:"Curve", label:"Curve" },
+    { key:"CF", label:"CF" },
+    { key:"CrimpPerInch", label:"Crimps/In" },
+    { key:"Length", label:"Staple Len" },
+    { key:"ShearWeight", label:"Shear Wt" },
     { key:"BlanketWeight", label:"Blanket Wt" },
   ];
 
-  if (loading) return <div style={styles.loadingBox}>Loading fiber data…</div>;
+  if (loading) return <div style={styles.loadingBox}>Loading…</div>;
 
   return (
     <div>
-      <div style={styles.sectionHead}>Fiber / Wool Test Results</div>
+      <div style={styles.sectionHead}>
+        {FIBER_SPECIES.includes(speciesID) ? "Fiber Test Results" : "Wool Test Results"}
+      </div>
       <div style={{ overflowX:"auto", marginBottom:16 }}>
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
           <thead>
             <tr style={{ background:"#f2ebe3" }}>
-              <th style={styles.th}>Year</th>
+              <th style={{ ...styles.th, minWidth: 90 }}>Year</th>
               {COLS.map(c => <th key={c.key} style={styles.th}>{c.label}</th>)}
             </tr>
           </thead>
@@ -893,7 +1603,7 @@ function FiberTab({ animalID }) {
                   <select
                     value={row.SampleDateYear || ""}
                     onChange={e => setCell(i, "SampleDateYear", e.target.value)}
-                    style={{ ...styles.select, fontSize:12, padding:"4px 6px", width:"100%" }}
+                    style={{ ...styles.select, fontSize:12, padding:"4px 6px", width:88, minWidth:88 }}
                   >
                     <option value="">--</option>
                     {years.map(y => <option key={y} value={y}>{y}</option>)}
@@ -917,7 +1627,7 @@ function FiberTab({ animalID }) {
       <button onClick={() => setRows(rs => [...rs, EMPTY_ROW()])} style={styles.addRowBtn}>
         + Add Row
       </button>
-      <SaveBar saving={saving} saved={saved} onSave={save} />
+      <SaveBar saving={saving} saved={saved} onSave={save} error={saveError} />
     </div>
   );
 }
@@ -928,6 +1638,7 @@ function AwardsTab({ animalID }) {
   const [rows, setRows] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const currentYear = new Date().getFullYear();
@@ -936,7 +1647,7 @@ function AwardsTab({ animalID }) {
   useEffect(() => {
     if (!animalID) return;
     fetch(`${apiBase}/api/animals/${animalID}/awards`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
     })
       .then(r => r.json())
       .then(d => { setRows([...(Array.isArray(d) ? d : []), EMPTY()]); setLoading(false); })
@@ -947,19 +1658,29 @@ function AwardsTab({ animalID }) {
 
   const save = async () => {
     setSaving(true);
+    setSaved(false);
+    setSaveError(null);
+    if (!getToken()) { setSaveError("401 — session expired"); setSaving(false); return; }
     try {
-      await fetch(`${apiBase}/api/animals/${animalID}/update-awards`, {
+      const res = await fetch(`${apiBase}/api/animals/${animalID}/update-awards`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${getToken()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(rows.filter(r => r.AwardYear || r.ShowName || r.Placing)),
       });
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("401 — session expired");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error ${res.status}`);
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
       setRows(rs => [...rs.filter(r => r.AwardYear || r.ShowName || r.Placing), EMPTY()]);
-    } catch {}
+    } catch (err) {
+      setSaveError(err.message || "Save failed. Please try again.");
+    }
     setSaving(false);
   };
 
@@ -1016,7 +1737,515 @@ function AwardsTab({ animalID }) {
       <button onClick={() => setRows(rs => [...rs, EMPTY()])} style={styles.addRowBtn}>
         + Add Award
       </button>
-      <SaveBar saving={saving} saved={saved} onSave={save} />
+      <SaveBar saving={saving} saved={saved} onSave={save} error={saveError} />
+    </div>
+  );
+}
+
+// ─── PHOTOS TAB ──────────────────────────────────────────────────────────────
+function PhotosTab({ animalID }) {
+  const MAX_PHOTOS = 8;
+  const [photos, setPhotos]       = useState(Array(MAX_PHOTOS).fill(null));
+  const [captions, setCaptions]   = useState(Array(MAX_PHOTOS).fill(""));
+  const [cover, setCover]         = useState(null);
+  const [registrationUrl, setRegistrationUrl] = useState(null);
+  const [histogramUrl, setHistogramUrl]       = useState(null);
+  const [docUploading, setDocUploading]       = useState({});
+  const [docDragOver, setDocDragOver]         = useState(null);
+  const [loading, setLoading]     = useState(true);
+  const [uploading, setUploading] = useState({});
+  const [deleting, setDeleting]   = useState({});
+  const [coverSaving, setCoverSaving] = useState(false);
+  const [captionSaving, setCaptionSaving] = useState(false);
+  const [savedMsg, setSavedMsg]   = useState("");
+  const [dragOver, setDragOver]   = useState(null); // slot index being hovered
+  const dragSrc = useRef(null); // slot index being dragged (reorder), null when dragging a file
+
+  const token = () => getToken();
+
+  useEffect(() => {
+    if (!animalID) return;
+    fetch(`${apiBase}/api/animals/${animalID}/photos`, {
+      headers: { Authorization: `Bearer ${token()}` },
+    })
+      .then(r => r.json())
+      .then(data => {
+        const slots = (data.photos || []).slice(0, MAX_PHOTOS);
+        while (slots.length < MAX_PHOTOS) slots.push(null);
+        setPhotos(slots);
+        const caps = (data.captions || []).slice(0, MAX_PHOTOS);
+        while (caps.length < MAX_PHOTOS) caps.push("");
+        setCaptions(caps.map(c => c || ""));
+        setCover(data.list_page_image || null);
+        setRegistrationUrl(data.registration_url || null);
+        setHistogramUrl(data.histogram_url || null);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [animalID]);
+
+  const uploadDocument = async (kind, file) => {
+    setDocUploading(d => ({ ...d, [kind]: true }));
+    try {
+      const fd = new FormData();
+      fd.append("file", file, file.name);
+      const res = await fetch(
+        `${apiBase}/api/animals/${animalID}/documents/upload?kind=${kind}`,
+        { method: "POST", headers: { Authorization: `Bearer ${token()}` }, body: fd }
+      );
+      if (!res.ok) throw new Error("upload failed");
+      const data = await res.json();
+      if (kind === "registration") setRegistrationUrl(data.url);
+      else setHistogramUrl(data.url);
+      setSavedMsg(kind === "registration" ? "Registration certificate uploaded!" : "Histogram uploaded!");
+      setTimeout(() => setSavedMsg(""), 3000);
+    } catch {}
+    setDocUploading(d => ({ ...d, [kind]: false }));
+  };
+
+  const deleteDocument = async (kind) => {
+    setDocUploading(d => ({ ...d, [kind]: true }));
+    try {
+      const res = await fetch(
+        `${apiBase}/api/animals/${animalID}/documents/delete`,
+        { method: "POST",
+          headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ kind }) }
+      );
+      if (!res.ok) throw new Error("delete failed");
+      if (kind === "registration") setRegistrationUrl(null);
+      else setHistogramUrl(null);
+    } catch {}
+    setDocUploading(d => ({ ...d, [kind]: false }));
+  };
+
+  // ── shared upload helper ──────────────────────────────────────────────────
+  const uploadFile = async (slotIndex, file, currentPhotos, currentCover) => {
+    setUploading(u => ({ ...u, [slotIndex]: true }));
+    try {
+      const webpBlob = await convertToWebP(file);
+      const formData = new FormData();
+      formData.append("file", webpBlob, `photo_${slotIndex + 1}.webp`);
+      const res = await fetch(
+        `${apiBase}/api/animals/${animalID}/photos/upload?slot=${slotIndex + 1}`,
+        { method: "POST", headers: { Authorization: `Bearer ${token()}` }, body: formData }
+      );
+      const data = await res.json();
+      setPhotos(prev => {
+        const next = [...prev];
+        next[slotIndex] = data.url;
+        return next;
+      });
+      if (!currentCover && slotIndex === 0) await saveCover(data.url);
+    } catch {}
+    setUploading(u => ({ ...u, [slotIndex]: false }));
+  };
+
+  const handleFileSelect = async (slotIndex, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFile(slotIndex, file, photos, cover);
+    e.target.value = "";
+  };
+
+  // ── reorder ───────────────────────────────────────────────────────────────
+  const saveReorder = async (newPhotos, newCaptions) => {
+    try {
+      await fetch(`${apiBase}/api/animals/${animalID}/photos/reorder`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ urls: newPhotos, captions: newCaptions }),
+      });
+      setSavedMsg("Order saved!");
+      setTimeout(() => setSavedMsg(""), 2500);
+    } catch {}
+  };
+
+  const saveCaptions = async (newCaptions) => {
+    setCaptionSaving(true);
+    try {
+      await fetch(`${apiBase}/api/animals/${animalID}/photos/captions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ captions: newCaptions }),
+      });
+      setSavedMsg("Captions saved!");
+      setTimeout(() => setSavedMsg(""), 2500);
+    } catch {}
+    setCaptionSaving(false);
+  };
+
+  // ── drag handlers ─────────────────────────────────────────────────────────
+  const onCardDragStart = (e, i) => {
+    dragSrc.current = i;
+    e.dataTransfer.effectAllowed = "move";
+    // Transparent drag image so the card itself shows as dragged
+    e.dataTransfer.setData("text/plain", String(i));
+  };
+
+  const onCardDragOver = (e, i) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = dragSrc.current !== null ? "move" : "copy";
+    if (dragOver !== i) setDragOver(i);
+  };
+
+  const onCardDragLeave = (e) => {
+    // Only clear if we've truly left the card (not entered a child)
+    if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(null);
+  };
+
+  const onCardDrop = async (e, i) => {
+    e.preventDefault();
+    setDragOver(null);
+
+    // File dragged from desktop/OS
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      const isImage = file.type.startsWith("image/") || file.name.toLowerCase().endsWith(".jfif");
+      if (isImage) await uploadFile(i, file, photos, cover);
+      dragSrc.current = null;
+      return;
+    }
+
+    // Card reorder
+    const src = dragSrc.current;
+    dragSrc.current = null;
+    if (src === null || src === i) return;
+    setPhotos(prev => {
+      const nextPhotos = [...prev];
+      [nextPhotos[src], nextPhotos[i]] = [nextPhotos[i], nextPhotos[src]];
+      setCaptions(prevCaps => {
+        const nextCaps = [...prevCaps];
+        [nextCaps[src], nextCaps[i]] = [nextCaps[i], nextCaps[src]];
+        saveReorder(nextPhotos, nextCaps);
+        return nextCaps;
+      });
+      return nextPhotos;
+    });
+  };
+
+  const onCardDragEnd = () => {
+    dragSrc.current = null;
+    setDragOver(null);
+  };
+
+  // ── delete / cover ────────────────────────────────────────────────────────
+  const handleDelete = async (slotIndex) => {
+    setDeleting(d => ({ ...d, [slotIndex]: true }));
+    try {
+      await fetch(`${apiBase}/api/animals/${animalID}/photos/delete-slot`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ slot: slotIndex + 1 }),
+      });
+      setPhotos(prev => {
+        const next = [...prev];
+        next[slotIndex] = null;
+        return next;
+      });
+      if (cover === photos[slotIndex]) setCover(null);
+    } catch {}
+    setDeleting(d => ({ ...d, [slotIndex]: false }));
+  };
+
+  const saveCover = async (url) => {
+    setCoverSaving(true);
+    try {
+      await fetch(`${apiBase}/api/animals/${animalID}/photos/set-cover`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      setCover(url);
+      setSavedMsg("Cover photo updated!");
+      setTimeout(() => setSavedMsg(""), 3000);
+    } catch {}
+    setCoverSaving(false);
+  };
+
+  if (loading) return <div style={styles.loadingBox}>Loading photos…</div>;
+
+  return (
+    <div>
+      <div style={styles.sectionHead}>Photos and Documents</div>
+      <p style={{ fontSize: 13, color: "#7a6a5a", marginBottom: 20 }}>
+        Upload up to 8 photos. Drag photos to reorder or drop image files directly onto a slot.
+        Images are automatically converted to WebP format.
+      </p>
+
+      {savedMsg && (
+        <div style={{ color: "#4a7c3f", fontWeight: 600, fontSize: 13, marginBottom: 12 }}>
+          ✓ {savedMsg}
+        </div>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16 }}>
+        {photos.map((url, i) => {
+          const isCover     = url && url === cover;
+          const isUploading = uploading[i];
+          const isDeleting  = deleting[i];
+          const isDragOver  = dragOver === i;
+          const isDragging  = dragSrc.current === i;
+
+          return (
+            <div key={i} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div
+              draggable={!!url}
+              onDragStart={e => onCardDragStart(e, i)}
+              onDragOver={e => onCardDragOver(e, i)}
+              onDragLeave={onCardDragLeave}
+              onDrop={e => onCardDrop(e, i)}
+              onDragEnd={onCardDragEnd}
+              style={{
+                border: isDragOver
+                  ? "2px solid #7c5cbf"
+                  : isCover
+                    ? "2px solid #4a7c3f"
+                    : "2px dashed #d0c4b8",
+                borderRadius: 10,
+                overflow: "hidden",
+                background: isDragOver ? "#f3eeff" : url ? "#fff" : "#faf7f4",
+                position: "relative",
+                aspectRatio: "1",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: isDragging ? 0.45 : 1,
+                cursor: url ? "grab" : "default",
+                transition: "border-color 0.15s, background 0.15s, opacity 0.15s",
+              }}
+            >
+              {/* slot number badge */}
+              <div style={{
+                position: "absolute", top: 6, right: 6,
+                background: "rgba(0,0,0,0.28)", color: "#fff",
+                fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 8,
+                zIndex: 2, pointerEvents: "none",
+              }}>
+                {i + 1}
+              </div>
+
+              {isCover && (
+                <div style={{
+                  position: "absolute", top: 6, left: 6,
+                  background: "#4a7c3f", color: "#fff",
+                  fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 10,
+                  zIndex: 2,
+                }}>
+                  COVER
+                </div>
+              )}
+
+              {/* drag-over overlay */}
+              {isDragOver && (
+                <div style={{
+                  position: "absolute", inset: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 13, fontWeight: 700, color: "#7c5cbf",
+                  pointerEvents: "none", zIndex: 3,
+                }}>
+                  {dragSrc.current !== null ? "Move here" : "Drop to upload"}
+                </div>
+              )}
+
+              {url ? (
+                <>
+                  <img
+                    src={url}
+                    alt={`Photo ${i + 1}`}
+                    style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+                    onError={e => { e.target.style.display = "none"; }}
+                  />
+                  <div style={{
+                    position: "absolute", bottom: 0, left: 0, right: 0,
+                    background: "rgba(0,0,0,0.55)",
+                    display: "flex", gap: 6, justifyContent: "center", padding: "6px 4px",
+                  }}>
+                    {!isCover && (
+                      <button
+                        onClick={() => saveCover(url)}
+                        disabled={coverSaving}
+                        title="Set as cover"
+                        style={{ background: "rgb(115, 131, 85)", color: "#fff", border: "none", borderRadius: 5, fontSize: 11, padding: "3px 8px", cursor: "pointer", fontWeight: 600 }}
+                      >
+                        {coverSaving ? "…" : "Set Cover"}
+                      </button>
+                    )}
+                    <label
+                      title="Replace photo"
+                      style={{ background: "rgb(115, 131, 85)", color: "#fff", border: "none", borderRadius: 5, fontSize: 11, padding: "3px 8px", cursor: "pointer", fontWeight: 600 }}
+                    >
+                      {isUploading ? "…" : "Replace"}
+                      <input
+                        type="file" accept="image/*,.jfif"
+                        style={{ display: "none" }}
+                        onChange={e => handleFileSelect(i, e)}
+                      />
+                    </label>
+                    <button
+                      onClick={() => handleDelete(i)}
+                      disabled={isDeleting}
+                      title="Remove photo"
+                      style={{ background: "#c0392b", color: "#fff", border: "none", borderRadius: 5, fontSize: 11, padding: "3px 8px", cursor: "pointer", fontWeight: 600 }}
+                    >
+                      {isDeleting ? "…" : "×"}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <label style={{ cursor: "pointer", textAlign: "center", padding: 12, width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  {isUploading ? (
+                    <div style={{ color: "#8b7355", fontSize: 13 }}>Uploading…</div>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: 32, color: isDragOver ? "#7c5cbf" : "#c8bfb5", marginBottom: 6 }}>+</div>
+                      <div style={{ fontSize: 12, color: "#8b7355" }}>Click or drop</div>
+                    </>
+                  )}
+                  <input
+                    type="file" accept="image/*,.jfif"
+                    style={{ display: "none" }}
+                    onChange={e => handleFileSelect(i, e)}
+                  />
+                </label>
+              )}
+            </div>
+            {/* Caption input — shown for all slots */}
+            <input
+              type="text"
+              value={captions[i]}
+              onChange={e => setCaptions(prev => {
+                const next = [...prev];
+                next[i] = e.target.value;
+                return next;
+              })}
+              placeholder="Add a caption…"
+              maxLength={500}
+              style={{
+                width: "100%", boxSizing: "border-box",
+                padding: "5px 8px", fontSize: 12,
+                border: "1px solid #d5c9bc", borderRadius: 6,
+                fontFamily: "inherit", color: "#2c1a0e",
+                background: "#fff", outline: "none",
+              }}
+            />
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
+        <button
+          onClick={() => saveCaptions(captions)}
+          disabled={captionSaving}
+          style={{
+            background: captionSaving ? "#a0aa8a" : "rgb(115,131,85)",
+            color: "#fff", border: "none", borderRadius: 6,
+            padding: "8px 22px", fontWeight: 700, fontSize: 14,
+            cursor: captionSaving ? "not-allowed" : "pointer",
+          }}
+        >
+          {captionSaving ? "Saving…" : "Save Changes"}
+        </button>
+      </div>
+
+      <div style={{ ...styles.sectionHead, marginTop: 36 }}>Documents</div>
+      <p style={{ fontSize: 13, color: "#7a6a5a", marginBottom: 16 }}>
+        Upload a PDF or image for this animal. These will be available for download on the public detail page.
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+        {[
+          { kind: "registration", label: "Registration Certificate", url: registrationUrl },
+          { kind: "histogram",    label: "Histogram",                url: histogramUrl },
+        ].map(doc => {
+          const isDragOver = docDragOver === doc.kind;
+          const onDocDragOver = e => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = "copy";
+            if (docDragOver !== doc.kind) setDocDragOver(doc.kind);
+          };
+          const onDocDragLeave = e => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDocDragOver(null);
+          };
+          const onDocDrop = e => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDocDragOver(null);
+            const file = e.dataTransfer.files && e.dataTransfer.files[0];
+            if (file) uploadDocument(doc.kind, file);
+          };
+          return (
+          <div key={doc.kind}
+               onDragOver={onDocDragOver}
+               onDragEnter={onDocDragOver}
+               onDragLeave={onDocDragLeave}
+               onDrop={onDocDrop}
+               style={{
+                 border: isDragOver ? "2px solid #7c5cbf" : "2px dashed #d0c4b8",
+                 borderRadius: 10, padding: 16,
+                 background: isDragOver ? "#f3eeff" : "#faf7f4",
+                 display: "flex", flexDirection: "column", gap: 10,
+                 position: "relative",
+                 transition: "border-color 0.15s, background 0.15s",
+               }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: "#2c1a0e" }}>{doc.label}</div>
+            {isDragOver && (
+              <div style={{
+                position: "absolute", inset: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 14, fontWeight: 700, color: "#7c5cbf",
+                pointerEvents: "none", borderRadius: 10,
+              }}>
+                Drop PDF or image to upload
+              </div>
+            )}
+            {doc.url ? (
+              <>
+                <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                   style={{ color: "#4a7c3f", fontSize: 13, fontWeight: 600, wordBreak: "break-all" }}>
+                  📄 View / Download current file
+                </a>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <label style={{
+                    background: "rgb(115,131,85)", color: "#fff", border: "none", borderRadius: 5,
+                    fontSize: 12, padding: "6px 12px", cursor: "pointer", fontWeight: 600,
+                  }}>
+                    {docUploading[doc.kind] ? "…" : "Replace"}
+                    <input type="file" accept="application/pdf,image/*"
+                           style={{ display: "none" }}
+                           onChange={e => e.target.files[0] && uploadDocument(doc.kind, e.target.files[0])} />
+                  </label>
+                  <button
+                    onClick={() => deleteDocument(doc.kind)}
+                    disabled={docUploading[doc.kind]}
+                    style={{
+                      background: "#c0392b", color: "#fff", border: "none", borderRadius: 5,
+                      fontSize: 12, padding: "6px 12px", cursor: "pointer", fontWeight: 600,
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </>
+            ) : (
+              <label style={{
+                background: "rgb(115,131,85)", color: "#fff", border: "none", borderRadius: 5,
+                fontSize: 13, padding: "8px 14px", cursor: "pointer", fontWeight: 600,
+                alignSelf: "flex-start",
+              }}>
+                {docUploading[doc.kind] ? "Uploading…" : "Upload PDF or image, or drop here"}
+                <input type="file" accept="application/pdf,image/*"
+                       style={{ display: "none" }}
+                       onChange={e => e.target.files[0] && uploadDocument(doc.kind, e.target.files[0])} />
+              </label>
+            )}
+          </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -1031,7 +2260,7 @@ function PublishBanner({ animalID, animalName, published, onToggle }) {
       await fetch(`${apiBase}/api/animals/${animalID}/publish`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${getToken()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ publish: !published }),
@@ -1071,7 +2300,7 @@ function PublishBanner({ animalID, animalName, published, onToggle }) {
           onClick={toggle}
           disabled={toggling}
           style={{
-            background: published ? "#8b7355" : "#4a7c3f",
+            background: "rgb(115, 131, 85)",
             color: "#fff",
             border: "none",
             borderRadius: 6,
@@ -1098,7 +2327,8 @@ export default function AnimalEdit() {
   const [activeTab, setActiveTab] = useState("basics");
   const [animalName, setAnimalName] = useState("Animal");
   const [published, setPublished] = useState(false);
-  const { Business, LoadBusiness } = useAccount?.() ?? { Business: null, LoadBusiness: () => {} };
+  const [speciesID, setSpeciesID] = useState(null);
+  const { Business, LoadBusiness } = useAccount();
 
   useEffect(() => {
     if (businessID) LoadBusiness(businessID);
@@ -1107,15 +2337,25 @@ export default function AnimalEdit() {
   useEffect(() => {
     if (!animalID) return;
     fetch(`${apiBase}/api/animals/${animalID}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
     })
       .then(r => r.json())
       .then(d => {
         setAnimalName(d.FullName || "Animal");
         setPublished(d.PublishForSale === 1 || d.PublishForSale === true);
+        setSpeciesID(d.SpeciesID || null);
       })
       .catch(() => {});
   }, [animalID]);
+
+  // Compute fiber tab label — null means hide the tab entirely
+  const fiberTabLabel = FIBER_SPECIES.includes(speciesID) ? "Fiber Test Results"
+    : WOOL_SPECIES.includes(speciesID) ? "Wool Test Results"
+    : null;
+
+  const visibleTabs = TABS.map(t =>
+    t.id === "fiber" ? (fiberTabLabel ? { ...t, label: fiberTabLabel } : null) : t
+  ).filter(Boolean);
 
   if (!animalID) return (
     <div style={{ padding:40, textAlign:"center", color:"#7a6a5a" }}>
@@ -1124,16 +2364,17 @@ export default function AnimalEdit() {
   );
 
   const tabComponents = {
-    basics: <BasicsTab animalID={animalID} businessID={businessID} />,
-    pricing: <PricingTab animalID={animalID} />,
+    basics:      <BasicsTab animalID={animalID} businessID={businessID} />,
+    pricing:     <PricingTab animalID={animalID} />,
     description: <DescriptionTab animalID={animalID} />,
-    ancestry: <AncestryTab animalID={animalID} />,
-    fiber: <FiberTab animalID={animalID} />,
-    awards: <AwardsTab animalID={animalID} />,
+    ancestry:    <AncestryTab animalID={animalID} />,
+    fiber:       <FiberTab animalID={animalID} speciesID={speciesID} />,
+    awards:      <AwardsTab animalID={animalID} />,
+    photos:      <PhotosTab animalID={animalID} />,
   };
 
   const content = (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 16px 60px" }}>
+    <div style={{ maxWidth: "100%", padding: "0 32px 60px" }}>
       {/* Breadcrumb */}
       <div style={{ fontSize:13, color:"#8b7355", marginBottom:14 }}>
         <span style={{ cursor:"pointer", textDecoration:"underline" }} onClick={() => navigate("/dashboard")}>Dashboard</span>
@@ -1155,7 +2396,7 @@ export default function AnimalEdit() {
         display:"flex", gap:0, borderBottom:"2px solid #e8e0d5",
         marginBottom:28, overflowX:"auto",
       }}>
-        {TABS.map(tab => (
+        {visibleTabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -1191,26 +2432,11 @@ export default function AnimalEdit() {
     </div>
   );
 
-  // Try to render inside AccountLayout if available, fall back to plain div
-  try {
-    return (
-      <AccountLayout Business={Business} BusinessID={businessID} PeopleID={localStorage.getItem("people_id")}>
-        {content}
-      </AccountLayout>
-    );
-  } catch {
-    return <div style={{ fontFamily:"Georgia, serif", minHeight:"100vh", background:"#faf7f4" }}>{content}</div>;
-  }
-}
-
-// Try to import useAccount gracefully
-function useAccount() {
-  try {
-    const mod = require("./AccountContext");
-    return mod.useAccount();
-  } catch {
-    return { Business: null, LoadBusiness: () => {} };
-  }
+  return (
+    <AccountLayout Business={Business} BusinessID={businessID} PeopleID={localStorage.getItem("people_id")}>
+      {content}
+    </AccountLayout>
+  );
 }
 
 // ─── SHARED STYLES ───────────────────────────────────────────────────────────
@@ -1226,6 +2452,11 @@ const styles = {
     marginTop:24,
   },
   field: { marginBottom:14 },
+  formGrid: {
+    display:"grid",
+    gridTemplateColumns:"repeat(2, 1fr)",
+    gap:"0 40px",
+  },
   label: {
     display:"block",
     fontSize:13,

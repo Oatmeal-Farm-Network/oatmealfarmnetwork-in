@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 import { useAccount } from './AccountContext';
 import { FaFacebookF, FaPinterestP, FaXTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaGlobe, FaBlog } from 'react-icons/fa6';
 
@@ -352,8 +353,43 @@ export default function OrgProfile() {
     return val.startsWith('http') ? val : `${s.base}${val}`;
   };
 
+  const metaDesc = (ranch.description || ranch.home_text || `${ranch.business_name}${location ? ' in ' + location : ''} — a ranch or farm on Oatmeal Farm Network.`)
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 200);
+  const metaImage = ranch.header_image || ranch.logo || undefined;
+  const metaCanonical = businessId ? `https://oatmealfarmnetwork.com/marketplaces/livestock/ranch/${businessId}` : undefined;
+  const orgJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: ranch.business_name,
+    ...(metaImage ? { image: metaImage, logo: ranch.logo || metaImage } : {}),
+    ...(ranch.website ? { url: ranch.website } : metaCanonical ? { url: metaCanonical } : {}),
+    ...(ranch.phone ? { telephone: ranch.phone } : {}),
+    ...(metaDesc ? { description: metaDesc } : {}),
+    ...(ranch.address_street || ranch.address_city || ranch.address_state ? {
+      address: {
+        '@type': 'PostalAddress',
+        ...(ranch.address_street ? { streetAddress: ranch.address_street } : {}),
+        ...(ranch.address_city ? { addressLocality: ranch.address_city } : {}),
+        ...(ranch.address_state ? { addressRegion: ranch.address_state } : {}),
+        ...(ranch.address_zip ? { postalCode: ranch.address_zip } : {}),
+        ...(ranch.address_country ? { addressCountry: ranch.address_country } : {}),
+      },
+    } : {}),
+  };
+
   return (
     <div className="min-h-screen font-sans">
+      <PageMeta
+        title={`${ranch.business_name}${location ? ' · ' + location : ''}`}
+        description={metaDesc}
+        image={metaImage}
+        canonical={metaCanonical}
+        ogType="profile"
+        jsonLd={orgJsonLd}
+      />
       <Header />
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 16px 60px' }}>

@@ -1,8 +1,511 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useAccount } from "./AccountContext";
 import { useSearchParams } from "react-router-dom";
 import AccountLayout from "./AccountLayout";
 import "./AnimalAddWizard.css";
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+const ANCESTOR_CASCADE = {
+  sire: {
+    Sire: "sireSire", Dam: "sireDam",
+    SireSire: "sireSireSire", SireDam: "sireSireDam",
+    DamSire: "sireDamSire",   DamDam: "sireDamDam",
+  },
+  dam: {
+    Sire: "damSire", Dam: "damDam",
+    SireSire: "damSireSire", SireDam: "damSireDam",
+    DamSire: "damDamSire",   DamDam: "damDamDam",
+  },
+  sireSire: { Sire: "sireSireSire", Dam: "sireSireDam" },
+  sireDam:  { Sire: "sireDamSire",  Dam: "sireDamDam"  },
+  damSire:  { Sire: "damSireSire",  Dam: "damSireDam"  },
+  damDam:   { Sire: "damDamSire",   Dam: "damDamDam"   },
+};
+
+// ── Rich text editor ──────────────────────────────────────────────────────────
+const WEB_FONTS = [
+  { label: 'Arial',            value: 'Arial, sans-serif' },
+  { label: 'Georgia',          value: 'Georgia, serif' },
+  { label: 'Inter',            value: 'Inter, sans-serif' },
+  { label: 'Lato',             value: 'Lato, sans-serif' },
+  { label: 'Lora',             value: 'Lora, serif' },
+  { label: 'Merriweather',     value: 'Merriweather, serif' },
+  { label: 'Montserrat',       value: 'Montserrat, sans-serif' },
+  { label: 'Open Sans',        value: 'Open Sans, sans-serif' },
+  { label: 'Playfair Display', value: 'Playfair Display, serif' },
+  { label: 'Poppins',          value: 'Poppins, sans-serif' },
+  { label: 'Roboto',           value: 'Roboto, sans-serif' },
+  { label: 'Times New Roman',  value: 'Times New Roman, serif' },
+];
+
+const _esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+const _pasteAsPlainText = e => {
+  e.preventDefault();
+  const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+  if (!text) return;
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length === 0) return;
+  if (lines.length === 1) {
+    document.execCommand('formatBlock', false, 'p');
+    document.execCommand('insertText', false, lines[0]);
+  } else {
+    document.execCommand('insertHTML', false, lines.map(l => `<p>${_esc(l)}</p>`).join(''));
+  }
+};
+
+function AnimalRichTextEditor({ value, onChange }) {
+  const editorRef = useRef(null);
+  const htmlRef   = useRef(null);
+  const [htmlMode, setHtmlMode] = useState(false);
+
+  useEffect(() => {
+    if (editorRef.current) editorRef.current.innerHTML = value || '';
+    if (htmlRef.current)   htmlRef.current.value       = value || '';
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (htmlMode) {
+      if (htmlRef.current && editorRef.current)
+        htmlRef.current.value = editorRef.current.innerHTML;
+    } else {
+      if (editorRef.current && htmlRef.current)
+        editorRef.current.innerHTML = htmlRef.current.value;
+    }
+  }, [htmlMode]);
+
+  const exec = (cmd, val = null) => { editorRef.current?.focus(); document.execCommand(cmd, false, val); };
+  const applyBlock = tag => { editorRef.current?.focus(); document.execCommand('formatBlock', false, tag); };
+
+  const applyFont = fontFamily => {
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { document.execCommand('fontName', false, fontFamily); return; }
+    const range = sel.getRangeAt(0);
+    const span = document.createElement('span');
+    span.style.fontFamily = fontFamily;
+    try { range.surroundContents(span); } catch { document.execCommand('fontName', false, fontFamily); }
+  };
+
+  const insertLink = () => {
+    const input = window.prompt('Enter a URL:');
+    if (!input) return;
+    const val = input.trim();
+    const href = /^https?:\/\//i.test(val) ? val : /^mailto:/i.test(val) ? val : `https://${val}`;
+    exec('createLink', href);
+    editorRef.current?.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
+  };
+
+  const clearFormatting = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand('selectAll', false, null);
+    document.execCommand('removeFormat', false, null);
+    editorRef.current.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
+    onChange(editorRef.current.innerHTML);
+  };
+
+  const handleBlur = () => { if (!htmlMode) onChange(editorRef.current?.innerHTML || ''); };
+
+  const savedRangeRef  = useRef(null);
+  const fileInputRef   = useRef(null);
+  const [imgPanel, setImgPanel]           = useState(false);
+  const [imgUrl, setImgUrl]               = useState('');
+  const [imgAlign, setImgAlign]           = useState('center');
+  const [draggingOver, setDraggingOver]   = useState(false);
+  const [panelDragging, setPanelDragging] = useState(false);
+  const [uploading, setUploading]         = useState(false);
+  const [selectedImg, setSelectedImg]     = useState(null);
+  const [imgToolbarPos, setImgToolbarPos] = useState({ top: 0, left: 0 });
+  const [imgCaption, setImgCaption]       = useState('');
+  const [imgRect, setImgRect]             = useState(null);
+  const resizingRef = useRef(null);
+
+  const selectImg = (img) => {
+    if (selectedImg) selectedImg.style.outline = '';
+    img.style.outline = '2px solid #3b82f6';
+    setSelectedImg(img);
+    const fig = img.closest('figure');
+    setImgCaption(fig ? (fig.querySelector('figcaption')?.textContent || '') : '');
+    const r = img.getBoundingClientRect();
+    setImgRect(r);
+    setImgToolbarPos({ top: r.top - 72, left: r.left });
+  };
+
+  const clearSelectedImg = () => {
+    if (selectedImg) selectedImg.style.outline = '';
+    setSelectedImg(null);
+    setImgRect(null);
+  };
+
+  const startResize = (e, dir) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!selectedImg) return;
+    resizingRef.current = { dir, startX: e.clientX, startWidth: selectedImg.getBoundingClientRect().width };
+    const onMove = (ev) => {
+      const { startX, startWidth, dir } = resizingRef.current;
+      const dx = dir === 'right' ? ev.clientX - startX : startX - ev.clientX;
+      selectedImg.style.width    = Math.max(40, startWidth + dx) + 'px';
+      selectedImg.style.maxWidth = 'none';
+      setImgRect(selectedImg.getBoundingClientRect());
+    };
+    const onUp = () => {
+      onChange(editorRef.current?.innerHTML || '');
+      resizingRef.current = null;
+      setImgRect(selectedImg ? selectedImg.getBoundingClientRect() : null);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  const applyCaption = (text) => {
+    if (!selectedImg) return;
+    const fig = selectedImg.closest('figure');
+    if (!fig) {
+      const wrapper = document.createElement('figure');
+      wrapper.style.cssText = selectedImg.style.cssText || 'text-align:center;margin:1em 0;clear:both;';
+      selectedImg.style.cssText = 'max-width:100%;border-radius:4px;display:block;';
+      selectedImg.parentElement.insertBefore(wrapper, selectedImg);
+      wrapper.appendChild(selectedImg);
+      const fc = document.createElement('figcaption');
+      fc.style.cssText = 'font-size:0.82em;color:#6b7280;text-align:center;font-style:italic;margin-top:0.3em;';
+      fc.textContent = text;
+      wrapper.appendChild(fc);
+    } else {
+      let fc = fig.querySelector('figcaption');
+      if (!fc) {
+        fc = document.createElement('figcaption');
+        fc.style.cssText = 'font-size:0.82em;color:#6b7280;text-align:center;font-style:italic;margin-top:0.3em;';
+        fig.appendChild(fc);
+      }
+      fc.textContent = text;
+    }
+    onChange(editorRef.current?.innerHTML || '');
+  };
+
+  const handleEditorClick = (e) => {
+    if (e.target.tagName === 'IMG') selectImg(e.target);
+    else clearSelectedImg();
+  };
+
+  const _rootEl = (img) => {
+    if (!img) return null;
+    if (img.parentElement === editorRef.current) return img;
+    if (img.parentElement?.tagName === 'FIGURE' && img.parentElement?.parentElement === editorRef.current) return img.parentElement;
+    return null;
+  };
+
+  const moveImg = (dir) => {
+    if (!selectedImg) return;
+    const root = _rootEl(selectedImg);
+    if (!root) return;
+    if (dir < 0) { const prev = root.previousElementSibling; if (prev) editorRef.current.insertBefore(root, prev); }
+    else         { const next = root.nextElementSibling;     if (next) editorRef.current.insertBefore(next, root); }
+    onChange(editorRef.current?.innerHTML || '');
+    setTimeout(() => {
+      const r = selectedImg.getBoundingClientRect();
+      setImgRect(r);
+      setImgToolbarPos({ top: r.top - 72, left: r.left });
+    }, 0);
+  };
+
+  const _liftToEditor = (img) => {
+    let node = img;
+    while (node.parentElement && node.parentElement !== editorRef.current) node = node.parentElement;
+    if (node !== img && node.parentElement === editorRef.current) {
+      editorRef.current.insertBefore(img, node);
+      if (!node.textContent.trim() && node.children.length === 0) node.remove();
+    }
+  };
+
+  const applyImgAlign = (align) => {
+    if (!selectedImg) return;
+    const img = selectedImg;
+    const parent = img.parentElement;
+    if (align === 'center') {
+      if (parent.tagName === 'FIGURE') {
+        parent.style.cssText = 'text-align:center;margin:1em 0;clear:both;';
+        img.style.cssText = 'max-width:100%;border-radius:4px;float:none;';
+      } else {
+        _liftToEditor(img);
+        const fig = document.createElement('figure');
+        fig.style.cssText = 'text-align:center;margin:1em 0;clear:both;';
+        editorRef.current.insertBefore(fig, img);
+        fig.appendChild(img);
+        img.style.cssText = 'max-width:100%;border-radius:4px;float:none;';
+      }
+    } else {
+      const cssText = align === 'left'
+        ? 'float:left;margin:0 1em 0.5em 0;max-width:45%;border-radius:4px;'
+        : 'float:right;margin:0 0 0.5em 1em;max-width:45%;border-radius:4px;';
+      if (parent.tagName === 'FIGURE') { parent.parentElement.insertBefore(img, parent); parent.remove(); }
+      _liftToEditor(img);
+      img.style.cssText = cssText;
+    }
+    onChange(editorRef.current?.innerHTML || '');
+    setSelectedImg(null);
+  };
+
+  useEffect(() => {
+    if (!selectedImg) return;
+    const hide = () => clearSelectedImg();
+    const onKey = (e) => { if (e.key === 'Escape') clearSelectedImg(); };
+    window.addEventListener('scroll', hide, true);
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('scroll', hide, true); window.removeEventListener('keydown', onKey); };
+  }, [selectedImg]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handlePanelFile = async (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${API_URL}/api/blog/upload-image`, { method: 'POST', body: fd });
+      if (!res.ok) throw new Error();
+      const { url } = await res.json();
+      setImgUrl(url);
+    } catch { /* silent */ } finally { setUploading(false); }
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault(); e.stopPropagation();
+    setDraggingOver(false);
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    editorRef.current?.focus();
+    const x = e.clientX, y = e.clientY;
+    let range;
+    if (document.caretRangeFromPoint) { range = document.caretRangeFromPoint(x, y); }
+    else if (document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(x, y);
+      if (pos) { range = document.createRange(); range.setStart(pos.offsetNode, pos.offset); }
+    }
+    if (range) { const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${API_URL}/api/blog/upload-image`, { method: 'POST', body: fd });
+      if (!res.ok) throw new Error();
+      const { url } = await res.json();
+      document.execCommand('insertHTML', false,
+        `<figure style="text-align:center;margin:1em 0;"><img src="${url}" style="max-width:100%;border-radius:4px;" /></figure>`);
+      onChange(editorRef.current?.innerHTML || '');
+    } catch { /* silent */ } finally { setUploading(false); }
+  };
+
+  const openImgPanel = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+    setImgUrl(''); setImgAlign('center'); setImgPanel(p => !p);
+  };
+
+  const insertImage = () => {
+    if (!imgUrl.trim()) return;
+    const url = imgUrl.trim();
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (savedRangeRef.current) { sel.removeAllRanges(); sel.addRange(savedRangeRef.current); }
+    if (imgAlign === 'center') {
+      document.execCommand('insertHTML', false,
+        `<figure style="text-align:center;margin:1em 0;clear:both;"><img src="${url}" style="max-width:100%;border-radius:4px;" /></figure>`);
+    } else {
+      const cssText = imgAlign === 'left'
+        ? 'float:left;margin:0 1em 0.5em 0;max-width:45%;border-radius:4px;'
+        : 'float:right;margin:0 0 0.5em 1em;max-width:45%;border-radius:4px;';
+      const img = document.createElement('img');
+      img.src = url; img.style.cssText = cssText;
+      const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+      let refBlock = null;
+      if (range) {
+        let node = range.commonAncestorContainer;
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+        if (node === editorRef.current) { refBlock = editorRef.current.children[range.startOffset] || null; }
+        else { while (node && node.parentElement !== editorRef.current) node = node.parentElement; if (node && node !== editorRef.current) refBlock = node; }
+      }
+      if (refBlock) { editorRef.current.insertBefore(img, refBlock); }
+      else {
+        editorRef.current.appendChild(img);
+        const p = document.createElement('p'); p.innerHTML = '<br>'; editorRef.current.appendChild(p);
+      }
+    }
+    onChange(editorRef.current?.innerHTML || '');
+    setImgPanel(false);
+  };
+
+  const btn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '3px 7px', borderRadius: 4, fontSize: 12, cursor: 'pointer', border: '1px solid #d1d5db', background: '#fff', color: '#374151', lineHeight: 1 };
+  const selStyle = { fontSize: 11, border: '1px solid #d1d5db', borderRadius: 4, padding: '3px 5px', background: '#fff', cursor: 'pointer', color: '#374151' };
+  const divider = <div style={{ width: 1, background: '#e5e7eb', alignSelf: 'stretch', margin: '0 2px' }} />;
+
+  return (
+    <div style={{ border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '6px 8px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', alignItems: 'center' }}>
+        {!htmlMode && <>
+          <select style={selStyle} defaultValue="" onChange={e => { applyBlock(e.target.value); e.target.value = ''; }}>
+            <option value="" disabled>Style</option>
+            <option value="p">Body</option>
+            <option value="h1">H1</option><option value="h2">H2</option>
+            <option value="h3">H3</option><option value="h4">H4</option>
+          </select>
+          <select style={{ ...selStyle, maxWidth: 110 }} defaultValue="" onChange={e => { applyFont(e.target.value); e.target.value = ''; }}>
+            <option value="" disabled>Font</option>
+            {WEB_FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+          </select>
+          {divider}
+          <button style={{ ...btn, fontWeight: 700 }} title="Bold" onMouseDown={e => { e.preventDefault(); exec('bold'); }}>B</button>
+          <button style={{ ...btn, fontStyle: 'italic' }} title="Italic" onMouseDown={e => { e.preventDefault(); exec('italic'); }}>I</button>
+          <button style={{ ...btn, textDecoration: 'underline' }} title="Underline" onMouseDown={e => { e.preventDefault(); exec('underline'); }}>U</button>
+          <button style={{ ...btn, textDecoration: 'line-through' }} title="Strikethrough" onMouseDown={e => { e.preventDefault(); exec('strikeThrough'); }}>S</button>
+          {divider}
+          <button style={btn} title="Align Left" onMouseDown={e => { e.preventDefault(); exec('justifyLeft'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="0" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="0" y="11.5" width="9" height="1.5"/></svg>
+          </button>
+          <button style={btn} title="Center" onMouseDown={e => { e.preventDefault(); exec('justifyCenter'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="2" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="2" y="11.5" width="9" height="1.5"/></svg>
+          </button>
+          <button style={btn} title="Align Right" onMouseDown={e => { e.preventDefault(); exec('justifyRight'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="4" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="4" y="11.5" width="9" height="1.5"/></svg>
+          </button>
+          {divider}
+          <button style={btn} title="Bullet List" onMouseDown={e => { e.preventDefault(); exec('insertUnorderedList'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><circle cx="1.5" cy="2.5" r="1.2"/><rect x="4" y="1.8" width="9" height="1.4"/><circle cx="1.5" cy="6.5" r="1.2"/><rect x="4" y="5.8" width="9" height="1.4"/><circle cx="1.5" cy="10.5" r="1.2"/><rect x="4" y="9.8" width="9" height="1.4"/></svg>
+          </button>
+          <button style={btn} title="Numbered List" onMouseDown={e => { e.preventDefault(); exec('insertOrderedList'); }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><text x="0" y="4" fontSize="4.5" fontFamily="monospace">1.</text><rect x="4" y="1.8" width="9" height="1.4"/><text x="0" y="8" fontSize="4.5" fontFamily="monospace">2.</text><rect x="4" y="5.8" width="9" height="1.4"/><text x="0" y="12" fontSize="4.5" fontFamily="monospace">3.</text><rect x="4" y="9.8" width="9" height="1.4"/></svg>
+          </button>
+          {divider}
+          <button style={btn} title="Insert Link" onMouseDown={e => { e.preventDefault(); insertLink(); }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          </button>
+          <button style={{ ...btn, fontSize: 10 }} title="Remove Link" onMouseDown={e => { e.preventDefault(); exec('unlink'); }}>✕🔗</button>
+          {divider}
+          <button style={{ ...btn, fontSize: 10, color: '#b91c1c' }} title="Clear all formatting" onMouseDown={e => { e.preventDefault(); clearFormatting(); }}>Tx</button>
+          {divider}
+          <button style={{ ...btn, background: imgPanel ? '#e0f2fe' : '#fff', borderColor: imgPanel ? '#7dd3fc' : '#d1d5db' }} title="Insert Image" onMouseDown={e => { e.preventDefault(); openImgPanel(); }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </button>
+          {divider}
+        </>}
+        <button onClick={() => setHtmlMode(m => !m)}
+          style={{ ...btn, fontFamily: 'monospace', fontSize: 11, background: htmlMode ? '#1e293b' : '#fff', color: htmlMode ? '#7dd3fc' : '#374151', border: `1px solid ${htmlMode ? '#334155' : '#d1d5db'}` }}
+          title={htmlMode ? 'Back to rich text' : 'View/edit HTML'}>&lt;/&gt;</button>
+      </div>
+
+      {imgPanel && !htmlMode && (
+        <div style={{ padding: '10px', background: '#f0f9ff', borderBottom: '1px solid #bae6fd', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <input value={imgUrl} onChange={e => setImgUrl(e.target.value)} placeholder="Paste image URL…" autoFocus
+              style={{ flex: 1, minWidth: 160, padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: 5, fontSize: 12 }}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); insertImage(); } if (e.key === 'Escape') setImgPanel(false); }} />
+            <button onClick={() => fileInputRef.current?.click()}
+              style={{ padding: '4px 10px', border: '1px solid #d1d5db', borderRadius: 5, fontSize: 11, cursor: 'pointer', background: '#fff', color: '#374151', whiteSpace: 'nowrap' }}>
+              Browse…
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+              onChange={e => { const f = e.target.files[0]; if (f) handlePanelFile(f); e.target.value = ''; }} />
+          </div>
+          <div onDragOver={e => { e.preventDefault(); setPanelDragging(true); }}
+            onDragLeave={() => setPanelDragging(false)}
+            onDrop={e => { e.preventDefault(); setPanelDragging(false); handlePanelFile(e.dataTransfer.files[0]); }}
+            onClick={() => fileInputRef.current?.click()}
+            style={{ border: `2px dashed ${panelDragging ? '#3b82f6' : '#bae6fd'}`, borderRadius: 6, padding: '10px 8px', textAlign: 'center', fontSize: 11, color: panelDragging ? '#2563eb' : '#0891b2', cursor: 'pointer', background: panelDragging ? '#eff6ff' : 'transparent', transition: 'all 0.15s' }}>
+            {uploading ? 'Uploading…' : 'Drop image here or click to browse'}
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 3 }}>
+              {['left', 'center', 'right'].map(a => (
+                <button key={a} onClick={() => setImgAlign(a)}
+                  style={{ padding: '3px 9px', borderRadius: 4, border: '1px solid', fontSize: 11, cursor: 'pointer',
+                    background: imgAlign === a ? '#0891b2' : '#fff', color: imgAlign === a ? '#fff' : '#374151', borderColor: imgAlign === a ? '#0891b2' : '#d1d5db' }}>
+                  {a.charAt(0).toUpperCase() + a.slice(1)}
+                </button>
+              ))}
+            </div>
+            <button onClick={insertImage} disabled={!imgUrl.trim() || uploading}
+              style={{ padding: '3px 12px', borderRadius: 4, border: '1px solid #0891b2', background: imgUrl.trim() && !uploading ? '#0891b2' : '#94a3b8', color: '#fff', fontSize: 11, cursor: imgUrl.trim() && !uploading ? 'pointer' : 'default', fontWeight: 600 }}>
+              Insert
+            </button>
+            <button onClick={() => setImgPanel(false)}
+              style={{ padding: '3px 8px', borderRadius: 4, border: '1px solid #d1d5db', background: '#fff', color: '#6b7280', fontSize: 11, cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {uploading && (
+        <div style={{ padding: '8px 12px', background: '#fefce8', borderBottom: '1px solid #fde68a', fontSize: 12, color: '#92400e', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".2"/><path d="M21 12a9 9 0 00-9-9"/></svg>
+          Uploading image…
+        </div>
+      )}
+
+      <div ref={editorRef} contentEditable suppressContentEditableWarning
+        onBlur={handleBlur} onPaste={_pasteAsPlainText} onClick={handleEditorClick}
+        onDragOver={e => { e.preventDefault(); setDraggingOver(true); }}
+        onDragLeave={() => setDraggingOver(false)}
+        onDrop={handleDrop}
+        style={{ display: htmlMode ? 'none' : 'block', minHeight: 320, padding: '10px 12px', fontSize: 14, lineHeight: 1.75, color: '#111827', outline: 'none', background: draggingOver ? '#eff6ff' : '#fff', overflowY: 'auto', border: draggingOver ? '2px dashed #3b82f6' : 'none', transition: 'background 0.15s' }} />
+      <textarea ref={htmlRef} onBlur={e => { onChange(e.target.value); }}
+        style={{ display: htmlMode ? 'block' : 'none', width: '100%', minHeight: 320, padding: '10px 12px', fontSize: 11, fontFamily: 'monospace', lineHeight: 1.6, color: '#0f172a', background: '#f8fafc', border: 'none', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
+
+      {selectedImg && imgRect && createPortal(
+        <>
+          <div style={{ position: 'fixed', top: imgRect.top - 1, left: imgRect.left - 1, width: imgRect.width + 2, height: imgRect.height + 2, border: '2px solid #3b82f6', pointerEvents: 'none', zIndex: 9998 }} />
+          {[
+            { cursor: 'ew-resize', dir: 'left',  top: imgRect.top  + imgRect.height / 2 - 6, left: imgRect.left  - 6 },
+            { cursor: 'ew-resize', dir: 'right', top: imgRect.top  + imgRect.height / 2 - 6, left: imgRect.right - 6 },
+            { cursor: 'nw-resize', dir: 'left',  top: imgRect.top  - 6, left: imgRect.left  - 6 },
+            { cursor: 'ne-resize', dir: 'right', top: imgRect.top  - 6, left: imgRect.right - 6 },
+            { cursor: 'sw-resize', dir: 'left',  top: imgRect.bottom - 6, left: imgRect.left  - 6 },
+            { cursor: 'se-resize', dir: 'right', top: imgRect.bottom - 6, left: imgRect.right - 6 },
+          ].map(({ cursor, dir, top, left }, i) => (
+            <div key={i} onMouseDown={e => startResize(e, dir)}
+              style={{ position: 'fixed', top, left, width: 12, height: 12, background: '#fff', border: '2px solid #3b82f6', borderRadius: 2, cursor, zIndex: 9999 }} />
+          ))}
+          <div style={{ position: 'fixed', top: imgRect.bottom + 4, left: imgRect.left, fontSize: 10, color: '#3b82f6', background: 'rgba(255,255,255,0.9)', padding: '1px 5px', borderRadius: 3, pointerEvents: 'none', zIndex: 9999 }}>
+            {Math.round(imgRect.width)} × {Math.round(imgRect.height)}px
+          </div>
+          <div style={{ position: 'fixed', top: imgToolbarPos.top, left: imgRect.left, zIndex: 10000, background: '#1e293b', borderRadius: 6, padding: '5px 7px', display: 'flex', flexDirection: 'column', gap: 5, boxShadow: '0 2px 10px rgba(0,0,0,0.25)' }}>
+            <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>Position:</span>
+              {[[-1,'↑'],[1,'↓']].map(([d, icon]) => (
+                <button key={d} onMouseDown={e => { e.preventDefault(); moveImg(d); }}
+                  style={{ padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 12, cursor: 'pointer', background: '#334155', color: '#e2e8f0' }}>
+                  {icon}
+                </button>
+              ))}
+              <div style={{ width: 1, background: '#475569', alignSelf: 'stretch', margin: '0 3px' }} />
+              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>Align:</span>
+              {[['left','←'],['center','↔'],['right','→']].map(([a, icon]) => (
+                <button key={a} onMouseDown={e => { e.preventDefault(); applyImgAlign(a); }}
+                  style={{ padding: '3px 9px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#334155', color: '#e2e8f0', fontWeight: 500 }}>
+                  {icon} {a.charAt(0).toUpperCase() + a.slice(1)}
+                </button>
+              ))}
+              <button onMouseDown={e => { e.preventDefault(); clearSelectedImg(); }}
+                style={{ padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#334155', color: '#94a3b8', marginLeft: 2 }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ fontSize: 10, color: '#94a3b8', whiteSpace: 'nowrap' }}>Caption:</span>
+              <input value={imgCaption} onChange={e => setImgCaption(e.target.value)}
+                onBlur={() => applyCaption(imgCaption)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCaption(imgCaption); } }}
+                placeholder="Add a caption…"
+                style={{ flex: 1, minWidth: 180, padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 11, background: '#334155', color: '#e2e8f0', outline: 'none' }} />
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
+    </div>
+  );
+}
 
 const SPECIES_LIST = [
   { id: 2,  name: "Alpacas" },
@@ -42,13 +545,13 @@ const NO_DOB_IDS           = [23, 33];
 const NO_COLOR_IDS         = [15, 22, 23, 25, 26, 27, 28, 29, 30, 31, 33, 18, 19, 21];
 const HAS_HEIGHT_WEIGHT    = [5, 8, 9, 17, 34];
 const HAS_GAITED_WARMBLOOD = [5];
-const HAS_HORNS            = [8, 9, 17, 34];
+const HAS_HORNS            = [6, 8, 9, 10, 17, 21, 27, 34]; // Goat, Cattle, Bison, Sheep, Yak, Deer, Musk Ox, Buffalo
 const NO_TEMPERAMENT       = FOWL_IDS;
-const HAS_FIBER            = [2];
+const HAS_FIBER            = [2, 4]; // alpacas (2) and llamas (4)
 const NO_AWARDS            = [...FOWL_IDS, 19, 23];
 const HAS_ALPACA_PERCENTS  = [2];
 const LLAMA_IDS            = [4];
-const ALPACA_FRACTIONS     = ["Full","1/2","1/4","1/8","1/16","1/32","1/64","Unknown"];
+const ALPACA_FRACTIONS     = ["Full","7/8","3/4","5/8","1/2","3/8","1/4","1/8","1/16","1/32","1/64","Unknown"];
 
 const STEPS = [
   { id: 1, label: "Basics",        icon: "🐾" },
@@ -82,8 +585,30 @@ const INITIAL_FORM_DATA = {
   coOwnerBusiness1: "", coOwnerName1: "", coOwnerLink1: "",
   coOwnerBusiness2: "", coOwnerName2: "", coOwnerLink2: "",
   coOwnerBusiness3: "", coOwnerName3: "", coOwnerLink3: "",
-  photos: [], ariDoc: null, histogramDoc: null, fiberDoc: null, videoEmbed: "",
+  photos: [], coverPhotoIndex: 0,
+  ariDoc: null, histogramDoc: null, videoEmbed: "",
 };
+
+// ── Draft persistence (sessionStorage) ───────────────────────────────────────
+const DRAFT_KEY = (businessID) => `animal_wizard_draft_${businessID || 'new'}`;
+
+function serializeDraft(formData, stepId) {
+  // Photos: keep preview (data URL) + caption; drop the File object (not serializable)
+  const photos = (formData.photos || []).map(p =>
+    p ? { preview: p.preview || null, caption: p.caption || '' } : null
+  );
+  return JSON.stringify({ formData: { ...formData, photos, ariDoc: null, histogramDoc: null }, stepId });
+}
+
+function deserializeDraft(json) {
+  try { return JSON.parse(json); } catch { return null; }
+}
+
+async function dataUrlToFile(dataUrl, name) {
+  const res  = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], name, { type: blob.type });
+}
 
 function getVisibleSteps(formData) {
   const sid      = Number(formData.speciesID);
@@ -134,7 +659,7 @@ function CategoryOptions({ speciesID, isMultiple }) {
 }
 
 // ── Step 1 ────────────────────────────────────────────────────────────────────
-function Step1Basics({ formData, onChange, errors, subscriptionLevel }) {
+function Step1Basics({ formData, onChange, errors, subscriptionLevel, speciesList }) {
   return (
     <div className="step-content">
       <StepHeader title="Basics" subtitle="Tell us about your animal listing" />
@@ -152,7 +677,11 @@ function Step1Basics({ formData, onChange, errors, subscriptionLevel }) {
       <FormField label="Species" required error={errors.speciesID}>
         <select className={`form-select ${errors.speciesID ? "input-error" : ""}`} value={formData.speciesID} onChange={(e) => onChange("speciesID", e.target.value)}>
           <option value="">-- Select Species --</option>
-          {SPECIES_LIST.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          {(speciesList.length > 0 ? speciesList : SPECIES_LIST.map(s => ({ id: s.id, singular: s.name, plural: s.name }))).map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.singular} / {s.plural}
+            </option>
+          ))}
         </select>
       </FormField>
     </div>
@@ -160,7 +689,7 @@ function Step1Basics({ formData, onChange, errors, subscriptionLevel }) {
 }
 
 // ── Step 2 ────────────────────────────────────────────────────────────────────
-function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registrationTypes }) {
+function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registrationTypes, categories }) {
   const sid        = Number(formData.speciesID);
   const isMultiple = Number(formData.numberOfAnimals) > 1;
   const today      = new Date().toISOString().split("T")[0];
@@ -194,7 +723,10 @@ function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registr
         <FormField label="Category" required error={errors.category}>
           <select className={`form-select ${errors.category?"input-error":""}`} value={formData.category||""} onChange={(e)=>onChange("category",e.target.value)}>
             <option value="">-- Select Category --</option>
-            <CategoryOptions speciesID={sid} isMultiple={isMultiple} />
+            {categories && categories.length > 0
+              ? categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)
+              : <CategoryOptions speciesID={sid} isMultiple={isMultiple} />
+            }
           </select>
         </FormField>
       )}
@@ -290,43 +822,129 @@ function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registr
         </FormField>
       )}
 
-      {HAS_ALPACA_PERCENTS.includes(sid) && (
-        <div className="section-group">
-          <h3 className="section-group-title">Bloodline Percentages</h3>
-          <div className="alpaca-percents">
-            {[{key:"percentPeruvian",label:"Peruvian"},{key:"percentChilean",label:"Chilean"},{key:"percentBolivian",label:"Bolivian"},{key:"percentUnknownOther",label:"Unknown / Other"},{key:"percentAccoyo",label:"Accoyo"}].map(({key,label})=>(
-              <FormField key={key} label={label}>
-                <select className="form-select" value={formData[key]||""} onChange={(e)=>onChange(key,e.target.value)}>
-                  <option value="">--</option>{ALPACA_FRACTIONS.map((f)=><option key={f} value={f}>{f}</option>)}
-                </select>
-              </FormField>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
 // ── Step 3 ────────────────────────────────────────────────────────────────────
-function AncestorBox({ label, value, onChange, isMale, isAlpaca, colors }) {
+function AncestorBox({ label, value, onChange, onPick, isMale, isAlpaca, colors, speciesID }) {
   const bg     = isMale ? '#EBF3FF' : '#FFF0F3';
   const border = isMale ? '#93C5FD' : '#FBCFE8';
   const inp = { border: '1px solid #D1D5DB', borderRadius: '4px', padding: '3px 6px', fontSize: '12px', width: '100%', boxSizing: 'border-box' };
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState(null);
+  const timer = useRef(null);
+  const inputRef = useRef(null);
+
+  const updatePos = () => {
+    if (inputRef.current) {
+      const r = inputRef.current.getBoundingClientRect();
+      setDropdownPos({ left: r.left, top: r.bottom + 2, width: r.width });
+    }
+  };
+
+  const runSearch = (q) => {
+    if (timer.current) clearTimeout(timer.current);
+    if (!q || q.trim().length < 2) { setResults([]); setShowResults(false); return; }
+    timer.current = setTimeout(async () => {
+      setSearching(true);
+      updatePos();
+      setShowResults(true);
+      try {
+        const params = new URLSearchParams({ q });
+        if (speciesID) params.append("species_id", String(speciesID));
+        params.append("gender", isMale ? "male" : "female");
+        const res = await fetch(`${API_URL}/api/animals/search/ancestors?${params}`);
+        if (res.ok) {
+          const data = await res.json();
+          setResults(Array.isArray(data) ? data : []);
+        }
+      } catch {}
+      setSearching(false);
+    }, 220);
+  };
+
+  const pick = (hit) => {
+    onPick(hit);
+    setShowResults(false);
+    setResults([]);
+  };
+
+  const handleNameChange = (e) => {
+    onChange('name', e.target.value);
+    runSearch(e.target.value);
+  };
+
   return (
-    <div style={{ backgroundColor: bg, border: `1px solid ${border}`, borderRadius: '6px', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, width: '100%' }}>
+    <div style={{ backgroundColor: bg, border: `1px solid ${border}`, borderRadius: '6px', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, width: '100%', position: 'relative' }}>
       <div style={{ fontSize: '10px', fontWeight: 600, color: '#6B7280', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
-      <input type="text" placeholder="Name" value={value?.name||''} onChange={e=>onChange('name',e.target.value)} style={inp} />
+      <div style={{ position: 'relative' }}>
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="Name (type to search)"
+          value={value?.name||''}
+          onChange={handleNameChange}
+          onFocus={() => { if (results.length > 0) { updatePos(); setShowResults(true); } }}
+          onBlur={() => setTimeout(() => setShowResults(false), 180)}
+          style={inp}
+        />
+        {showResults && dropdownPos && (searching || results.length > 0) && createPortal(
+          <div style={{
+            position: 'fixed', left: dropdownPos.left, top: dropdownPos.top, width: dropdownPos.width,
+            zIndex: 9999, background: '#fff', border: '1px solid #c9b89e', borderRadius: 4,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.12)', maxHeight: 220, overflowY: 'auto',
+          }}>
+            {searching && <div style={{ padding: '6px 10px', fontSize: 11, color: '#6B7280' }}>Searching…</div>}
+            {!searching && results.length === 0 && <div style={{ padding: '6px 10px', fontSize: 11, color: '#6B7280' }}>No matches</div>}
+            {results.map(hit => (
+              <div key={hit.animal_id}
+                   onMouseDown={e => { e.preventDefault(); pick(hit); }}
+                   style={{ padding: '6px 10px', cursor: 'pointer', borderBottom: '1px solid #f0ebe2', fontSize: 11, color: '#2c1a0e' }}
+                   onMouseEnter={e => e.currentTarget.style.background = '#faf7f4'}
+                   onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+                <div style={{ fontWeight: 600 }}>{hit.full_name}</div>
+                {hit.colors && <div style={{ fontSize: 10, color: '#6B7280' }}>{hit.colors}</div>}
+                {hit.reg_number && <div style={{ fontSize: 10, color: '#6B7280' }}>Reg# {hit.reg_number}</div>}
+              </div>
+            ))}
+          </div>,
+          document.body
+        )}
+      </div>
       {colors && colors.length > 0 ? (
-        <select value={value?.color||''} onChange={e=>onChange('color',e.target.value)} style={inp}>
-          <option value="">-- Color --</option>
-          {colors.map((c,i) => <option key={i} value={c}>{c}</option>)}
-        </select>
+        (() => {
+          const selected = (value?.color || '').split(',').map(s => s.trim()).filter(Boolean);
+          const toggle = (c) => {
+            const next = selected.includes(c) ? selected.filter(x => x !== c) : [...selected, c];
+            onChange('color', next.join(', '));
+          };
+          return (
+            <div style={{
+              ...inp, padding: '4px 6px', maxHeight: 90, overflowY: 'auto',
+              background: 'rgba(255,255,255,0.85)',
+            }}>
+              {colors.map((c, i) => (
+                <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, lineHeight: '14px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(c)}
+                    onChange={() => toggle(c)}
+                    style={{ margin: 0 }}
+                  />
+                  <span>{c}</span>
+                </label>
+              ))}
+            </div>
+          );
+        })()
       ) : (
-        <input type="text" placeholder="Color" value={value?.color||''} onChange={e=>onChange('color',e.target.value)} style={inp} />
+        <input type="text" placeholder="Colors (comma-separated)" value={value?.color||''} onChange={e=>onChange('color',e.target.value)} style={inp} />
       )}
       {isAlpaca && <>
-        <input type="text" placeholder="ARI #"  value={value?.ari||''}  onChange={e=>onChange('ari',e.target.value)}  style={inp} />
+        <input type="text" placeholder="AOA #"  value={value?.ari||''}  onChange={e=>onChange('ari',e.target.value)}  style={inp} />
         <input type="text" placeholder="CLAA #" value={value?.claa||''} onChange={e=>onChange('claa',e.target.value)} style={inp} />
       </>}
     </div>
@@ -336,14 +954,68 @@ function AncestorBox({ label, value, onChange, isMale, isAlpaca, colors }) {
 function Step3Ancestry({ formData, onChange, colors }) {
   const isAlpaca = Number(formData.speciesID) === 2;
   const anc = formData.ancestry || {};
-  const upd = (key, field, val) => onChange('ancestry', { ...anc, [key]: { ...(anc[key]||{}), [field]: val } });
+  const upd = (key, field, val) => onChange('ancestry', { ...(formData.ancestry || {}), [key]: { ...((formData.ancestry || {})[key] || {}), [field]: val } });
+
+  const pickAncestor = (key, hit) => {
+    const base = formData.ancestry || {};
+    const firstPatch = { ...base };
+    firstPatch[key] = {
+      ...(base[key] || {}),
+      name:  hit.full_name,
+      color: hit.colors || '',
+      ari:   hit.reg_number || '',
+      link:  `/marketplaces/livestock/animal/${hit.animal_id}`,
+    };
+    onChange('ancestry', firstPatch);
+
+    const cascade = ANCESTOR_CASCADE[key];
+    if (!cascade) return;
+
+    fetch(`${API_URL}/api/animals/${hit.animal_id}/ancestry`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(a => {
+        if (!a) return;
+        const next = { ...firstPatch };
+        let changed = false;
+        for (const [srcPrefix, destKey] of Object.entries(cascade)) {
+          if (a[srcPrefix]) {
+            next[destKey] = {
+              ...(firstPatch[destKey] || {}),
+              name:  a[srcPrefix] || '',
+              color: a[`${srcPrefix}Color`] || '',
+              link:  a[`${srcPrefix}Link`] || '',
+              ari:   a[`${srcPrefix}ARI`] || '',
+            };
+            changed = true;
+          }
+        }
+        if (changed) onChange('ancestry', next);
+      })
+      .catch(() => {});
+  };
+
   const box = (key, label, isMale) => (
-    <AncestorBox label={label} value={anc[key]} onChange={(f,v)=>upd(key,f,v)} isMale={isMale} isAlpaca={isAlpaca} colors={colors} />
+    <AncestorBox label={label} value={anc[key]} onChange={(f,v)=>upd(key,f,v)} onPick={(hit)=>pickAncestor(key,hit)} isMale={isMale} isAlpaca={isAlpaca} colors={colors} speciesID={formData.speciesID} />
   );
 
   return (
     <div className="step-content">
       <StepHeader title="Ancestry / Pedigree" subtitle="Enter up to 3 generations of lineage" />
+
+      {HAS_ALPACA_PERCENTS.includes(Number(formData.speciesID)) && (
+        <div className="section-group">
+          <h3 className="section-group-title">Bloodline Percentages</h3>
+          <div className="alpaca-percents">
+            {[{key:"percentPeruvian",label:"% Peruvian"},{key:"percentChilean",label:"% Chilean"},{key:"percentBolivian",label:"% Bolivian"},{key:"percentUnknownOther",label:"% Other / Unknown"},{key:"percentAccoyo",label:"% Accoyo"}].map(({key,label})=>(
+              <FormField key={key} label={label}>
+                <select className="form-select" value={formData[key]||""} onChange={(e)=>onChange(key,e.target.value)}>
+                  <option value="">--</option>{ALPACA_FRACTIONS.map((f)=><option key={f} value={f}>{f}</option>)}
+                </select>
+              </FormField>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={{ overflowX: 'auto', paddingBottom: '8px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: 'repeat(8, auto)', gap: '8px 20px', minWidth: '680px', alignItems: 'stretch' }}>
@@ -385,6 +1057,7 @@ function Step4FiberFacts({ formData, onChange }) {
   const samples = formData.fiberSamples || Array(10).fill({});
   const upd = (i,field,val) => { const u=[...samples]; u[i]={...u[i],[field]:val}; onChange("fiberSamples",u); };
   const fields = [{key:"afd",label:"AFD (Avg Fiber Diameter)"},{key:"sd",label:"SD (Std Deviation)"},{key:"cov",label:"COV (%)"},{key:"cf",label:"CF (Comfort Factor %)"},{key:"gt30",label:"% > 30 Microns"},{key:"curve",label:"Curve"},{key:"crimpsPerInch",label:"Crimps / Inch"},{key:"stapleLength",label:"Staple Length (in)"},{key:"shearWeight",label:"Shear Weight (lbs)"},{key:"blanketWeight",label:"Blanket Weight (lbs)"}];
+  const currentYear = new Date().getFullYear();
 
   return (
     <div className="step-content">
@@ -392,9 +1065,19 @@ function Step4FiberFacts({ formData, onChange }) {
       <div className="fiber-samples">
         {samples.map((sample,i) => (
           <details key={i} className="fiber-sample">
-            <summary className="fiber-sample-title">Sample {i+1}{sample.sampleDate?` — ${sample.sampleDate}`:""}</summary>
+            <summary className="fiber-sample-title">Sample {i+1}{sample.sampleYear ? ` — ${sample.sampleYear}` : ""}</summary>
             <div className="fiber-sample-fields">
-              <FormField label="Sample Date"><input type="date" className="form-input" value={sample.sampleDate||""} onChange={(e)=>upd(i,"sampleDate",e.target.value)} /></FormField>
+              <FormField label="Year">
+                <input
+                  type="number"
+                  className="form-input"
+                  placeholder={String(currentYear)}
+                  min="1990"
+                  max={currentYear}
+                  value={sample.sampleYear || ""}
+                  onChange={(e) => upd(i, "sampleYear", e.target.value)}
+                />
+              </FormField>
               <div className="fiber-grid">
                 {fields.map(({key,label})=>(
                   <FormField key={key} label={label}><input type="number" step="0.01" className="form-input" value={sample[key]||""} onChange={(e)=>upd(i,key,e.target.value)} /></FormField>
@@ -414,9 +1097,11 @@ function Step5Description({ formData, onChange }) {
     <div className="step-content">
       <StepHeader title="Description" subtitle="Write a detailed description of your animal or listing" />
       <FormField label="Description">
-        <textarea className="form-textarea description-textarea" rows={14} value={formData.description||""} onChange={(e)=>onChange("description",e.target.value)} placeholder="Describe your animal — temperament, history, health records, special qualities..." />
+        <AnimalRichTextEditor
+          value={formData.description || ""}
+          onChange={v => onChange("description", v)}
+        />
       </FormField>
-      <p className="field-hint">HTML formatting is supported. Use &lt;b&gt;, &lt;i&gt;, &lt;br /&gt;, and &lt;p&gt; tags for styling.</p>
     </div>
   );
 }
@@ -548,48 +1233,400 @@ function Step7Pricing({ formData, onChange, errors }) {
   );
 }
 
+// Convert any image File to WebP using the browser Canvas API.
+function convertToWebP(file, quality = 0.88) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      canvas.width  = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      canvas.toBlob(blob => {
+        if (!blob) { reject(new Error('WebP conversion failed')); return; }
+        const baseName = file.name.replace(/\.[^.]+$/, '');
+        resolve(new File([blob], `${baseName}.webp`, { type: 'image/webp' }));
+      }, 'image/webp', quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
+    img.src = url;
+  });
+}
+
 // ── Step 8 ────────────────────────────────────────────────────────────────────
 function Step8Photos({ formData, onChange, subscriptionLevel }) {
-  const sid      = Number(formData.speciesID);
-  const hasDocs  = [2,4,6,10,11].includes(sid);
-  const hasVideo = subscriptionLevel >= 3;
-  const maxPhotos = subscriptionLevel<=1 ? 1 : subscriptionLevel===2 ? 3 : 16;
-  const photos   = formData.photos||[];
+  const sid       = Number(formData.speciesID);
+  const hasDocs   = [2,4,6,10,11].includes(sid);
+  const hasVideo  = subscriptionLevel >= 3;
+  const MAX_PHOTOS = 8;
 
-  const handlePhoto = (i,file) => {
-    if (!file) return;
-    if (file.size > 1024*1024) { alert("Photo must be under 1MB"); return; }
-    const r = new FileReader();
-    r.onload = (e) => { const u=[...photos]; u[i]={file,preview:e.target.result,caption:photos[i]?.caption||""}; onChange("photos",u); };
-    r.readAsDataURL(file);
+  // Normalize: always work with a length-8 array (null = empty slot)
+  const photos = Array.from({ length: MAX_PHOTOS }, (_, i) => (formData.photos || [])[i] || null);
+  const coverIdx = typeof formData.coverPhotoIndex === 'number' ? formData.coverPhotoIndex : 0;
+
+  const [dragOver, setDragOver] = useState(null);
+  const [docDragOver, setDocDragOver] = useState(null);
+  const dragSrc = useRef(null);
+
+  const isValidImage = file => /\.(jpe?g|png|webp|jfif)$/i.test(file.name) && (file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.jfif'));
+
+  const readFile = async (file, existingCaption = '') => {
+    let webpFile = file;
+    try {
+      if (file.type !== 'image/webp') webpFile = await convertToWebP(file);
+    } catch { /* keep original if conversion fails */ }
+    return new Promise(resolve => {
+      const r = new FileReader();
+      r.onload = e => resolve({ file: webpFile, preview: e.target.result, caption: existingCaption });
+      r.readAsDataURL(webpFile);
+    });
+  };
+
+  const commitPhotos = (next, nextCover = coverIdx) => {
+    onChange('photos', next);
+    if (nextCover !== coverIdx) onChange('coverPhotoIndex', nextCover);
+  };
+
+  const handleSlotFile = async (i, file) => {
+    if (!file || !isValidImage(file)) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Photo must be under 5 MB'); return; }
+    const entry = await readFile(file, photos[i]?.caption || '');
+    const next = [...photos];
+    next[i] = entry;
+    // If no cover set yet, adopt the first filled slot
+    let nextCover = coverIdx;
+    const anyFilled = next.some(Boolean);
+    if (!photos.some(Boolean) && anyFilled) nextCover = i;
+    commitPhotos(next, nextCover);
+  };
+
+  const handleDelete = (i) => {
+    const next = [...photos];
+    next[i] = null;
+    let nextCover = coverIdx;
+    if (coverIdx === i) {
+      const firstFilled = next.findIndex(Boolean);
+      nextCover = firstFilled >= 0 ? firstFilled : 0;
+    }
+    commitPhotos(next, nextCover);
+  };
+
+  const handleSetCover = (i) => {
+    if (!photos[i]) return;
+    onChange('coverPhotoIndex', i);
+  };
+
+  // ── drag handlers (reorder or desktop-drop upload) ─────────────────────────
+  const onCardDragStart = (e, i) => {
+    if (!photos[i]) return;
+    dragSrc.current = i;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(i));
+  };
+
+  const onCardDragOver = (e, i) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = dragSrc.current !== null ? 'move' : 'copy';
+    if (dragOver !== i) setDragOver(i);
+  };
+
+  const onCardDragLeave = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(null);
+  };
+
+  const onCardDrop = async (e, i) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(null);
+
+    // File dropped from OS
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (isValidImage(file)) await handleSlotFile(i, file);
+      dragSrc.current = null;
+      return;
+    }
+
+    // Card reorder (swap src and i)
+    const src = dragSrc.current;
+    dragSrc.current = null;
+    if (src === null || src === i) return;
+    const next = [...photos];
+    [next[src], next[i]] = [next[i], next[src]];
+    let nextCover = coverIdx;
+    if (coverIdx === src) nextCover = i;
+    else if (coverIdx === i) nextCover = src;
+    commitPhotos(next, nextCover);
+  };
+
+  const onCardDragEnd = () => {
+    dragSrc.current = null;
+    setDragOver(null);
   };
 
   return (
     <div className="step-content">
-      <StepHeader title="Photos & Documents" subtitle={`Upload up to ${maxPhotos} photo${maxPhotos>1?"s":""} (JPG/PNG, under 1MB each)`} />
-      <div className="photo-grid">
-        {Array.from({length:maxPhotos}).map((_,i)=>{
-          const photo=photos[i];
+      <StepHeader
+        title="Photos & Documents"
+        subtitle={`Upload up to ${MAX_PHOTOS} photos. Drag photos to reorder or drop image files directly onto a slot. Images are automatically converted to WebP format.`}
+      />
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
+        {photos.map((photo, i) => {
+          const url          = photo?.preview || null;
+          const isCover      = url && i === coverIdx;
+          const isDragOver   = dragOver === i;
+          const isDragging   = dragSrc.current === i;
+
           return (
-            <div key={i} className="photo-slot">
-              <div className={`photo-drop ${photo?"has-photo":""}`} onClick={()=>document.getElementById(`pi-${i}`).click()}>
-                {photo?.preview ? <img src={photo.preview} alt={`Photo ${i+1}`} className="photo-preview" />
-                  : <div className="photo-placeholder"><span className="photo-icon">📷</span><span className="photo-num">Photo {i+1}</span></div>}
-                <input id={`pi-${i}`} type="file" accept=".jpg,.jpeg,.png" style={{display:"none"}} onChange={(e)=>handlePhoto(i,e.target.files[0])} />
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div
+                draggable={!!url}
+                onDragStart={e => onCardDragStart(e, i)}
+                onDragOver={e => onCardDragOver(e, i)}
+                onDragLeave={onCardDragLeave}
+                onDrop={e => onCardDrop(e, i)}
+                onDragEnd={onCardDragEnd}
+                style={{
+                  border: isDragOver
+                    ? '2px solid #7c5cbf'
+                    : isCover
+                      ? '2px solid #4a7c3f'
+                      : '2px dashed #d0c4b8',
+                  borderRadius: 10,
+                  overflow: 'hidden',
+                  background: isDragOver ? '#f3eeff' : url ? '#fff' : '#faf7f4',
+                  position: 'relative',
+                  aspectRatio: '1',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: isDragging ? 0.45 : 1,
+                  cursor: url ? 'grab' : 'default',
+                  transition: 'border-color 0.15s, background 0.15s, opacity 0.15s',
+                }}
+              >
+                {/* slot badge */}
+                <div style={{
+                  position: 'absolute', top: 6, right: 6,
+                  background: 'rgba(0,0,0,0.28)', color: '#fff',
+                  fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 8,
+                  zIndex: 2, pointerEvents: 'none',
+                }}>{i + 1}</div>
+
+                {isCover && (
+                  <div style={{
+                    position: 'absolute', top: 6, left: 6,
+                    background: '#4a7c3f', color: '#fff',
+                    fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10,
+                    zIndex: 2,
+                  }}>COVER</div>
+                )}
+
+                {isDragOver && (
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontWeight: 700, color: '#7c5cbf',
+                    pointerEvents: 'none', zIndex: 3,
+                  }}>
+                    {dragSrc.current !== null ? 'Move here' : 'Drop to upload'}
+                  </div>
+                )}
+
+                {url ? (
+                  <>
+                    <img
+                      src={url}
+                      alt={`Photo ${i + 1}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                      onError={e => { e.target.style.display = 'none'; }}
+                    />
+                    <div style={{
+                      position: 'absolute', bottom: 0, left: 0, right: 0,
+                      background: 'rgba(0,0,0,0.55)',
+                      display: 'flex', gap: 6, justifyContent: 'center', padding: '6px 4px',
+                    }}>
+                      {!isCover && (
+                        <button
+                          type="button"
+                          onClick={() => handleSetCover(i)}
+                          title="Set as cover"
+                          style={{ background: 'rgb(115, 131, 85)', color: '#fff', border: 'none', borderRadius: 5, fontSize: 11, padding: '3px 8px', cursor: 'pointer', fontWeight: 600 }}
+                        >Set Cover</button>
+                      )}
+                      <label
+                        title="Replace photo"
+                        style={{ background: 'rgb(115, 131, 85)', color: '#fff', border: 'none', borderRadius: 5, fontSize: 11, padding: '3px 8px', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        Replace
+                        <input
+                          type="file" accept="image/*,.jfif"
+                          style={{ display: 'none' }}
+                          onChange={e => { handleSlotFile(i, e.target.files?.[0]); e.target.value = ''; }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(i)}
+                        title="Remove photo"
+                        style={{ background: '#c0392b', color: '#fff', border: 'none', borderRadius: 5, fontSize: 11, padding: '3px 8px', cursor: 'pointer', fontWeight: 600 }}
+                      >×</button>
+                    </div>
+                  </>
+                ) : (
+                  <label style={{ cursor: 'pointer', textAlign: 'center', padding: 12, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ fontSize: 32, color: isDragOver ? '#7c5cbf' : '#c8bfb5', marginBottom: 6 }}>+</div>
+                    <div style={{ fontSize: 12, color: '#8b7355' }}>Click or drop</div>
+                    <input
+                      type="file" accept="image/*,.jfif"
+                      style={{ display: 'none' }}
+                      onChange={e => { handleSlotFile(i, e.target.files?.[0]); e.target.value = ''; }}
+                    />
+                  </label>
+                )}
               </div>
-              {photo && <input type="text" className="form-input caption-input" placeholder="Caption (optional)" value={photo.caption||""} onChange={(e)=>{ const u=photos.map((p,idx)=>idx===i?{...p,caption:e.target.value}:p); onChange("photos",u); }} />}
+
+              {/* Caption input — shown for all slots */}
+              <input
+                type="text"
+                value={photo?.caption || ''}
+                placeholder="Add a caption…"
+                maxLength={500}
+                onChange={e => {
+                  const val = e.target.value;
+                  const next = [...photos];
+                  if (next[i]) {
+                    next[i] = { ...next[i], caption: val };
+                  } else {
+                    next[i] = { caption: val };
+                  }
+                  commitPhotos(next);
+                }}
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  padding: '5px 8px', fontSize: 12,
+                  border: '1px solid #d5c9bc', borderRadius: 6,
+                  fontFamily: 'inherit', color: '#2c1a0e',
+                  background: '#fff', outline: 'none',
+                }}
+              />
             </div>
           );
         })}
       </div>
-      <div className="section-group">
+
+      <div className="section-group" style={{ marginTop: 24 }}>
         <h3 className="section-group-title">Documents</h3>
-        <div className="doc-uploads">
-          <FormField label="Registration Certificate" hint="PDF or JPG, under 1MB"><input type="file" accept=".pdf,.jpg,.jpeg" className="form-file" onChange={(e)=>onChange("ariDoc",e.target.files[0])} /></FormField>
-          {hasDocs && <FormField label="Histogram" hint="PDF or JPG, under 1MB"><input type="file" accept=".pdf,.jpg,.jpeg" className="form-file" onChange={(e)=>onChange("histogramDoc",e.target.files[0])} /></FormField>}
-          {hasDocs && <FormField label="Fiber Analysis" hint="PDF or JPG, under 1MB"><input type="file" accept=".pdf,.jpg,.jpeg" className="form-file" onChange={(e)=>onChange("fiberDoc",e.target.files[0])} /></FormField>}
-          {hasVideo && <FormField label="Video (YouTube Embed Code)"><textarea className="form-textarea" rows={3} value={formData.videoEmbed||""} onChange={(e)=>onChange("videoEmbed",e.target.value)} placeholder='<iframe src="https://www.youtube.com/embed/..." ...>' /></FormField>}
+        <p style={{ fontSize: 13, color: "#7a6a5a", marginBottom: 16 }}>
+          Upload a PDF or image for this animal. These will be available for download on the public detail page.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+          {[
+            { kind: "ariDoc",       label: "Registration Certificate", show: true },
+            { kind: "histogramDoc", label: "Histogram / Fiber Analysis", show: hasDocs },
+          ].filter(d => d.show).map(doc => {
+            const file = formData[doc.kind];
+            const isDragOver = docDragOver === doc.kind;
+            const onDocDragOver = e => {
+              e.preventDefault();
+              e.stopPropagation();
+              e.dataTransfer.dropEffect = "copy";
+              if (docDragOver !== doc.kind) setDocDragOver(doc.kind);
+            };
+            const onDocDragLeave = e => {
+              e.preventDefault();
+              e.stopPropagation();
+              setDocDragOver(null);
+            };
+            const onDocDrop = e => {
+              e.preventDefault();
+              e.stopPropagation();
+              setDocDragOver(null);
+              const f = e.dataTransfer.files && e.dataTransfer.files[0];
+              if (f) onChange(doc.kind, f);
+            };
+            return (
+              <div key={doc.kind}
+                   onDragOver={onDocDragOver}
+                   onDragEnter={onDocDragOver}
+                   onDragLeave={onDocDragLeave}
+                   onDrop={onDocDrop}
+                   style={{
+                     border: isDragOver ? "2px solid #7c5cbf" : "2px dashed #d0c4b8",
+                     borderRadius: 10, padding: 16,
+                     background: isDragOver ? "#f3eeff" : "#faf7f4",
+                     display: "flex", flexDirection: "column", gap: 10,
+                     position: "relative",
+                     transition: "border-color 0.15s, background 0.15s",
+                   }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#2c1a0e" }}>{doc.label}</div>
+                {isDragOver && (
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 14, fontWeight: 700, color: "#7c5cbf",
+                    pointerEvents: "none", borderRadius: 10,
+                  }}>
+                    Drop PDF or image to upload
+                  </div>
+                )}
+                {file ? (
+                  <>
+                    <div style={{ color: "#4a7c3f", fontSize: 13, fontWeight: 600, wordBreak: "break-all" }}>
+                      📄 {file.name}
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <label style={{
+                        background: "rgb(115,131,85)", color: "#fff", border: "none", borderRadius: 5,
+                        fontSize: 12, padding: "6px 12px", cursor: "pointer", fontWeight: 600,
+                      }}>
+                        Replace
+                        <input type="file" accept="application/pdf,image/*"
+                               style={{ display: "none" }}
+                               onChange={e => e.target.files[0] && onChange(doc.kind, e.target.files[0])} />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => onChange(doc.kind, null)}
+                        style={{
+                          background: "#c0392b", color: "#fff", border: "none", borderRadius: 5,
+                          fontSize: 12, padding: "6px 12px", cursor: "pointer", fontWeight: 600,
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <label style={{
+                    background: "rgb(115,131,85)", color: "#fff", border: "none", borderRadius: 5,
+                    fontSize: 13, padding: "8px 14px", cursor: "pointer", fontWeight: 600,
+                    alignSelf: "flex-start",
+                  }}>
+                    Upload PDF or image, or drop here
+                    <input type="file" accept="application/pdf,image/*"
+                           style={{ display: "none" }}
+                           onChange={e => e.target.files[0] && onChange(doc.kind, e.target.files[0])} />
+                  </label>
+                )}
+              </div>
+            );
+          })}
         </div>
+        {hasVideo && (
+          <div style={{ marginTop: 20 }}>
+            <FormField label="Video (YouTube Embed Code)">
+              <textarea className="form-textarea" rows={3}
+                        value={formData.videoEmbed||""}
+                        onChange={(e)=>onChange("videoEmbed",e.target.value)}
+                        placeholder='<iframe src="https://www.youtube.com/embed/..." ...>' />
+            </FormField>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -604,36 +1641,69 @@ export default function AnimalAddWizard() {
   const { Business, LoadBusiness } = useAccount();
   const PeopleID = localStorage.getItem('people_id');
 
-  const [formData,          setFormData]          = useState(INITIAL_FORM_DATA);
-  const [currentStepId,     setCurrentStepId]     = useState(1);
+  const draftKey = DRAFT_KEY(businessID);
+
+  // Restore draft from sessionStorage on first render
+  const [formData, setFormData] = useState(() => {
+    const saved = deserializeDraft(sessionStorage.getItem(draftKey));
+    return saved?.formData ?? INITIAL_FORM_DATA;
+  });
+  const [currentStepId, setCurrentStepId] = useState(() => {
+    const saved = deserializeDraft(sessionStorage.getItem(draftKey));
+    return saved?.stepId ?? 1;
+  });
+
   const [errors,            setErrors]            = useState({});
+  const [speciesList,       setSpeciesList]       = useState([]);
   const [breeds,            setBreeds]            = useState([]);
   const [colors,            setColors]            = useState([]);
+  const [categories,        setCategories]        = useState([]);
   const [registrationTypes, setRegistrationTypes] = useState([]);
   const [isSubmitting,      setIsSubmitting]      = useState(false);
   const [submitSuccess,     setSubmitSuccess]     = useState(false);
+  const [draftRestored,     setDraftRestored]     = useState(() =>
+    !!sessionStorage.getItem(draftKey)
+  );
 
   const visibleSteps     = getVisibleSteps(formData);
   const currentStepIndex = visibleSteps.findIndex((s)=>s.id===currentStepId);
   const isFirstStep      = currentStepIndex===0;
   const isLastStep       = currentStepIndex===visibleSteps.length-1;
 
+  // Load species list once on mount
+  useEffect(() => {
+    const h = { Authorization: `Bearer ${localStorage.getItem("access_token")}` };
+    fetch(`${apiBase}/auth/species`, { headers: h })
+      .then(r => r.json())
+      .then(data => setSpeciesList(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
   useEffect(()=>{
-    if (!formData.speciesID) { setBreeds([]); setColors([]); setRegistrationTypes([]); return; }
+    if (!formData.speciesID) { setBreeds([]); setColors([]); setCategories([]); setRegistrationTypes([]); return; }
     const sid = formData.speciesID;
     const h   = { Authorization: `Bearer ${localStorage.getItem("access_token")}` };
     fetch(`${apiBase}/auth/species/${sid}/breeds`,          {headers:h}).then(r=>r.json()).then(setBreeds).catch(()=>setBreeds([]));
     fetch(`${apiBase}/api/livestock/species-colors/${sid}`, {headers:h}).then(r=>r.json()).then(setColors).catch(()=>setColors([]));
+    fetch(`${apiBase}/api/animals/species/${sid}/categories`).then(r=>r.json()).then(setCategories).catch(()=>setCategories([]));
+    fetch(`${apiBase}/auth/species/${sid}/registration-types`, {headers:h})
+      .then(r=>r.ok?r.json():[]).then(d=>setRegistrationTypes(Array.isArray(d)?d:[])).catch(()=>setRegistrationTypes([]));
   },[formData.speciesID]);
 
   useEffect(() => {
     LoadBusiness(businessID);
   }, [businessID]);
 
-  const handleChange = useCallback((field,value)=>{
-    setFormData(p=>({...p,[field]:value}));
-    setErrors(p=>({...p,[field]:undefined}));
-  },[]);
+  // Persist draft whenever formData or step changes
+  useEffect(() => {
+    sessionStorage.setItem(draftKey, serializeDraft(formData, currentStepId));
+  }, [formData, currentStepId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleChange = useCallback((field, value) => {
+    setFormData(p => ({ ...p, [field]: value }));
+    setErrors(p => ({ ...p, [field]: undefined }));
+    setDraftRestored(false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const validateStep = (stepId) => {
     const e={};
@@ -664,6 +1734,22 @@ export default function AnimalAddWizard() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      // Photos restored from sessionStorage have a preview data-URL but no File.
+      // Convert them back to File objects before submitting.
+      const resolvedPhotos = await Promise.all(
+        (formData.photos || []).map(async (ph, i) => {
+          if (!ph) return null;
+          if (ph.file) return ph; // already a File
+          if (ph.preview?.startsWith('data:')) {
+            try {
+              const file = await dataUrlToFile(ph.preview, `photo${i + 1}.jpg`);
+              return { ...ph, file };
+            } catch { return ph; }
+          }
+          return ph;
+        })
+      );
+
       const p   = new FormData();
       const a   = (k,v) => p.append(k, v ?? '');
       const tok = localStorage.getItem("access_token");
@@ -720,13 +1806,40 @@ export default function AnimalAddWizard() {
       a("CoOwnerLink3",        formData.coOwnerLink3);
       a("VideoEmbed",          formData.videoEmbed);
 
-      formData.photos.forEach((ph,i)=>{
+      // Colors
+      a("Color1", formData.color1);
+      a("Color2", formData.color2);
+      a("Color3", formData.color3);
+      a("Color4", formData.color4);
+
+      // Ancestry grid (sent as JSON; backend maps to flat Ancestors table columns)
+      const ancData = formData.ancestry || {};
+      const hasAnc  = Object.values(ancData).some(v => v?.name || v?.color || v?.ari);
+      if (hasAnc) p.append("AncestryJSON", JSON.stringify(ancData));
+
+      // Awards
+      const validAwards = (formData.awards || []).filter(
+        aw => aw.year || aw.show || aw.placing || aw.description
+      );
+      if (validAwards.length > 0) p.append("AwardsJSON", JSON.stringify(validAwards));
+
+      // Registrations
+      const validRegs = (formData.registrations || []).filter(r => (r.number || "").trim());
+      if (validRegs.length > 0) p.append("RegistrationsJSON", JSON.stringify(validRegs));
+
+      resolvedPhotos.forEach((ph, i) => {
         if (ph?.file)    p.append(`Photo${i+1}`,   ph.file);
         if (ph?.caption) p.append(`Caption${i+1}`, ph.caption);
       });
+      if (typeof formData.coverPhotoIndex === 'number') {
+        p.append("CoverPhotoSlot", String(formData.coverPhotoIndex + 1));
+      }
+      // Serialize non-empty fiber samples as JSON
+      const validFiber = (formData.fiberSamples || []).filter(s => s.sampleYear || s.afd);
+      if (validFiber.length > 0) p.append("FiberSamples", JSON.stringify(validFiber));
+
       if (formData.ariDoc)       p.append("AriDoc",       formData.ariDoc);
       if (formData.histogramDoc) p.append("HistogramDoc", formData.histogramDoc);
-      if (formData.fiberDoc)     p.append("FiberDoc",     formData.fiberDoc);
 
       const res = await fetch(`${apiBase}/auth/animals/add`, {
         method:  "POST",
@@ -739,8 +1852,10 @@ export default function AnimalAddWizard() {
         throw new Error(err.detail || "Failed to save animal");
       }
 
+      sessionStorage.removeItem(draftKey);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       setSubmitSuccess(true);
-      setTimeout(()=>{ window.location.href = `/animals?BusinessID=${businessID}`; }, 1500);
+      setTimeout(()=>{ window.location.href = `/animals?BusinessID=${businessID}`; }, 2000);
     } catch(err) {
       setErrors({ submit: err.message });
     } finally {
@@ -783,9 +1898,24 @@ export default function AnimalAddWizard() {
           </div>
         </div>
 
+        {draftRestored && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            padding: '10px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0',
+            borderRadius: 8, marginBottom: 12, fontSize: '0.82rem', color: '#166534' }}>
+            <span>✅ Your progress has been restored from your last session.</span>
+            <button
+              type="button"
+              onClick={() => { setFormData(INITIAL_FORM_DATA); setCurrentStepId(1); sessionStorage.removeItem(draftKey); setDraftRestored(false); }}
+              style={{ background: 'none', border: '1px solid #86efac', borderRadius: 5, padding: '2px 10px',
+                fontSize: '0.78rem', color: '#166534', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              Start over
+            </button>
+          </div>
+        )}
+
         <div className="wizard-body">
-          {step?.id===1 && <Step1Basics       formData={formData} onChange={handleChange} errors={errors} subscriptionLevel={subscriptionLevel} />}
-          {step?.id===2 && <Step2GeneralFacts formData={formData} onChange={handleChange} errors={errors} breeds={breeds} colors={colors} registrationTypes={registrationTypes} />}
+          {step?.id===1 && <Step1Basics       formData={formData} onChange={handleChange} errors={errors} subscriptionLevel={subscriptionLevel} speciesList={speciesList} />}
+          {step?.id===2 && <Step2GeneralFacts formData={formData} onChange={handleChange} errors={errors} breeds={breeds} colors={colors} registrationTypes={registrationTypes} categories={categories} />}
           {step?.id===3 && <Step3Ancestry     formData={formData} onChange={handleChange} colors={colors} />}
           {step?.id===4 && <Step4FiberFacts   formData={formData} onChange={handleChange} />}
           {step?.id===5 && <Step5Description  formData={formData} onChange={handleChange} />}
