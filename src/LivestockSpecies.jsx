@@ -31,13 +31,13 @@ const FALLBACK_IMAGES = {
   'ostriches':    '/images/OstrichetHeader.webp',
   'pheasants':    '/images/PheasantHeader.webp',
   'pigs':         '/images/PigHeader.webp',
-  'pigeons':      '/images/Pigeon.webp',
+  'pigeons':      '/images/PigeonHeader.webp',
   'quails':       '/images/Quail.webp',
   'rabbits':      '/images/Rabitts.webp',
   'sheep':        '/images/Sheepbreeds.webp',
   'snails':       '/images/Snail.webp',
-  'turkeys':      '/images/Turkey.webp',
-  'yaks':         '/images/Yak.webp',
+  'turkeys':      '/images/TurkeyHeader.webp',
+  'yaks':         '/images/YakHeader.webp',
 };
 
 const getImageSrc = (image) => {
@@ -48,8 +48,9 @@ const getImageSrc = (image) => {
 };
 
 const resolveHeroSrc = (speciesInfo, species) => {
+  if (FALLBACK_IMAGES[species]) return FALLBACK_IMAGES[species];
   if (speciesInfo?.main_image) return getImageSrc(speciesInfo.main_image);
-  return FALLBACK_IMAGES[species] || '/images/HomepageLivestockDB.webp';
+  return '/images/HomepageLivestockDB.webp';
 };
 
 const EAGER_COUNT = 4;
