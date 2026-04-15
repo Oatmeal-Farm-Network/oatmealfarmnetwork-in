@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -222,12 +223,25 @@ export default function FarmToTableMarketplace() {
       <PageMeta
         title="Farm-to-Table Marketplace | Local Produce, Meat & Farm Products"
         description="Connect with local farms selling fresh produce, pasture-raised meat, dairy, and value-added products directly to restaurants, food hubs, and buyers."
+        keywords="farm to table, local produce, pasture raised meat, farm marketplace, organic produce, direct from farm, wholesale produce"
         canonical="https://oatmealfarmnetwork.com/marketplaces/farm-to-table"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Farm-to-Table Marketplace',
+          url: 'https://oatmealfarmnetwork.com/marketplaces/farm-to-table',
+          description: 'Local produce, meat, and value-added farm products for restaurants and buyers.'
+        }}
       />
       <Header />
 
       {/* ── Hero ── */}
       <div className="mx-auto px-4 pt-2 md:pt-6" style={{ maxWidth: '1300px' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Marketplaces', to: '/marketplaces' },
+          { label: 'Farm-to-Table' },
+        ]} />
 
         {/* Image — shorter on mobile, taller on desktop */}
         <div className="relative w-full overflow-hidden rounded-xl rounded-b-none md:rounded-b-xl">

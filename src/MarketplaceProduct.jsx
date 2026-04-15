@@ -1,6 +1,10 @@
 // src/MarketplaceProduct.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Header from './Header';
+import Footer from './Footer';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -53,9 +57,40 @@ export default function MarketplaceProduct() {
   const typeEmoji = l.ProductType === 'meat' ? '🥩' : l.ProductType === 'processed_food' ? '🫙' : '🥬';
   const avgRating = l.reviews?.length ? (l.reviews.reduce((s, r) => s + r.Rating, 0) / l.reviews.length).toFixed(1) : null;
 
+  const descText = l.Description ? l.Description.replace(/<[^>]+>/g, '').slice(0, 155) : `${l.Title} from ${l.SellerName || 'a local farm'} on Oatmeal Farm Network.`;
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <PageMeta
+        title={`${l.Title} | Farm-to-Table Marketplace`}
+        description={descText}
+        keywords={`${l.Title}, ${l.SellerName || 'local farm'}, ${l.CategoryName || l.ProductType || 'farm product'}, farm to table, buy direct`}
+        canonical={`https://oatmealfarmnetwork.com/marketplace/${id}`}
+        image={l.ImageURL || undefined}
+        ogType="product"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: l.Title,
+          description: l.Description || descText,
+          image: l.ImageURL || undefined,
+          ...(l.SellerName ? { brand: { '@type': 'Brand', name: l.SellerName } } : {}),
+          offers: {
+            '@type': 'Offer',
+            price: l.UnitPrice,
+            priceCurrency: 'USD',
+            availability: l.QuantityAvailable > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+          }
+        }}
+      />
+      <Header />
       <div className="max-w-5xl mx-auto px-4 py-8">
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Marketplaces', to: '/marketplaces' },
+          { label: 'Farm-to-Table', to: '/marketplaces/farm-to-table' },
+          { label: l.Title },
+        ]} />
         <button onClick={() => navigate('/marketplaces/farm-to-table')} className="text-sm text-[#819360] font-semibold mb-6 inline-block hover:underline">
           ← Back to Marketplace
         </button>
@@ -179,6 +214,7 @@ export default function MarketplaceProduct() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

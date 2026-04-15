@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 export default function ForgotPassword() {
   const [email, setEmail]                   = useState('');
@@ -55,6 +56,11 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen font-sans">
+      <PageMeta
+        title="Forgot Password | Oatmeal Farm Network"
+        description="Recover your Oatmeal Farm Network account password by email."
+        noIndex
+      />
       <Header />
 
       <section className="py-16 px-4">

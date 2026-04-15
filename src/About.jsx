@@ -3,19 +3,29 @@ import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const About = () => {
   return (
     <div className="min-h-screen font-sans">
       <PageMeta
         title="About Oatmeal Farm Network | Our Mission & Vision"
-        description="Learn how Oatmeal Farm Network connects farmers, buyers, and food businesses using AI-powered tools, comprehensive knowledgebases, and a direct-to-market platform."
+        description="Learn how Oatmeal Farm Network connects farmers, ranchers, buyers, and food businesses using Oatmeal AI, comprehensive livestock and plant knowledgebases, and a direct-to-market platform."
+        keywords="about oatmeal farm network, farming technology, agricultural AI, farm marketplace, farm to table platform"
         canonical="https://oatmealfarmnetwork.com/about"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'AboutPage',
+          name: 'About Oatmeal Farm Network',
+          url: 'https://oatmealfarmnetwork.com/about',
+          description: 'Learn how Oatmeal Farm Network connects farmers, ranchers, buyers, and food businesses using AI-powered tools.'
+        }}
       />
       <Header />
-      
+
       {/* Container with correct JSX style object and className */}
       <div className="container-fluid mx-auto px-4" style={{ maxWidth: '1300px', minHeight: '67px', backgroundColor: 'white' }}>
+        <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'About' }]} />
         <div className="py-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-6">Supporting Agriculture</h1>

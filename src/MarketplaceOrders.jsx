@@ -112,7 +112,7 @@ export default function MarketplaceOrders() {
   );
 
   if (businessId) {
-    return <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId}>{content}</AccountLayout>;
+    return <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId} pageTitle="My Orders" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Marketplace' }, { label: 'My Orders' }]}>{content}</AccountLayout>;
   }
   return content;
 }

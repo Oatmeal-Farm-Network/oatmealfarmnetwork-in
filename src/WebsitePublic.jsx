@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -986,8 +987,28 @@ export default function WebsitePublic() {
 
   const typographyCss = buildSiteRteBodyCss() + '\n' + buildPublicRteTypoCss(site);
 
+  const pageName = activePage?.page_name || 'Home';
+  const metaTitle = `${pageName} | ${site.site_name}`;
+  const metaDesc = activePage?.meta_description || site.tagline || `Visit ${site.site_name} on Oatmeal Farm Network.`;
+  const socialImage = site.og_image_url || site.logo_url || undefined;
+
   return (
     <div style={{ minHeight: '100vh', background: pageBg, fontFamily: site.font_family }}>
+      <PageMeta
+        title={metaTitle}
+        description={metaDesc}
+        image={socialImage}
+        noIndex={!siteData.is_published || isPreview}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'LocalBusiness',
+          name: site.site_name,
+          description: metaDesc,
+          ...(site.phone ? { telephone: site.phone } : {}),
+          ...(site.email ? { email: site.email } : {}),
+          ...(site.logo_url ? { image: site.logo_url } : {}),
+        }}
+      />
       <style dangerouslySetInnerHTML={{ __html: typographyCss }} />
       {/* Preview banner */}
       {isPreview && (

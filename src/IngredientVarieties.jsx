@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -30,10 +31,19 @@ export default function IngredientVarieties() {
       <PageMeta
         title={ingredientName ? `${ingredientName} Varieties | Ingredient Knowledgebase` : 'Ingredient Varieties | Ingredient Knowledgebase'}
         description={ingredientName ? `Browse all known varieties of ${ingredientName} including flavor profiles, sourcing information, and nutritional data.` : 'Browse ingredient varieties in the Oatmeal Farm Network knowledgebase.'}
+        keywords={ingredientName ? `${ingredientName} varieties, ${ingredientName} types, ingredient varieties, ingredient knowledgebase` : 'ingredient varieties'}
+        canonical={`https://oatmealfarmnetwork.com/ingredient-knowledgebase/${category}/varieties/${ingredientId}`}
       />
      <Header />
 
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '1rem 1rem 3rem' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Knowledgebases', to: '/knowledgebases' },
+          { label: 'Ingredient Knowledgebase', to: '/ingredient-knowledgebase' },
+          { label: category ? category.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '', to: `/ingredient-knowledgebase/${category}` },
+          { label: ingredientName ? `${ingredientName} Varieties` : 'Varieties' },
+        ]} />
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{ingredientName} Varieties</h1>
         <p className="text-gray-700 mb-6">
           Below is a list of all known varieties for {ingredientName}. Click on a variety name to view more detailed nutrient and sourcing information.

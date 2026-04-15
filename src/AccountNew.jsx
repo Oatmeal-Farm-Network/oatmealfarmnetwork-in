@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -113,9 +115,15 @@ export default function AccountNew() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
+      <PageMeta
+        title="Add an Account | Oatmeal Farm Network"
+        description="Create a new farm, ranch, or business account on Oatmeal Farm Network."
+        noIndex
+      />
       <Header />
 
       <div style={{ maxWidth: '500px', margin: '2rem auto', padding: '0 1rem 3rem' }}>
+        <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'My Accounts', to: '/accounts' }, { label: 'Add Account' }]} />
         <div className="bg-white rounded-xl shadow border border-gray-100 p-8">
 
           <h1 className="text-2xl font-bold text-gray-800 mb-2">

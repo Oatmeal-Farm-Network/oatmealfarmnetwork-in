@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -43,7 +44,15 @@ export default function EventsList() {
       <PageMeta
         title="Farm Events & Agricultural Workshops"
         description="Discover upcoming farm events, agricultural workshops, farm tours, and food industry conferences near you. Browse and register for events on Oatmeal Farm Network."
+        keywords="farm events, agricultural workshops, farm tours, farmers market events, livestock shows, harvest festivals, ag conferences, food industry events"
         canonical="https://oatmealfarmnetwork.com/events"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Farm Events & Agricultural Workshops',
+          description: 'Upcoming farm events, workshops, tours, and agricultural gatherings.',
+          url: 'https://oatmealfarmnetwork.com/events',
+        }}
       />
       <Header />
 
@@ -56,6 +65,10 @@ export default function EventsList() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-8 flex-grow w-full">
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Events' },
+        ]} />
 
         {/* Search */}
         <div className="mb-6">

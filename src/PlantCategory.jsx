@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -76,11 +77,26 @@ export default function PlantCategory() {
       <PageMeta
         title={`${cat.label} Plants | Plant Knowledgebase`}
         description={`Browse ${cat.label.toLowerCase()} plant varieties in the Oatmeal Farm Network plant knowledgebase. Find growing guides, soil requirements, and nutritional data for each variety.`}
+        keywords={`${cat.label.toLowerCase()}, ${cat.label.toLowerCase()} varieties, food plants, plant knowledgebase`}
+        canonical={`https://oatmealfarmnetwork.com/plant-knowledgebase/${category}`}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: `${cat.label} Plants`,
+          url: `https://oatmealfarmnetwork.com/plant-knowledgebase/${category}`,
+          description: `Browse ${cat.label.toLowerCase()} plant varieties.`
+        }}
       />
       <Header />
 
       {/* ── Hero: same max-width as body content ── */}
       <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Knowledgebases', to: '/knowledgebases' },
+          { label: 'Plant Knowledgebase', to: '/plant-knowledgebase' },
+          { label: cat.label },
+        ]} />
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
             src={cat.header}

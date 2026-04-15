@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 function buildExcerpt(content, max = 160) {
   if (!content) return '';
@@ -143,7 +144,12 @@ export default function BlogDetail() {
         />
       )}
       <Header />
-      <div style={{ maxWidth: '780px', margin: '0 auto', padding: '2rem 1.5rem', flex: 1, width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: '780px', margin: '0 auto', padding: '1rem 1.5rem 2rem', flex: 1, width: '100%', boxSizing: 'border-box' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Blog', to: '/blog' },
+          { label: post?.title || 'Post' },
+        ]} />
         <Link to="/blog" style={{ color: '#7C5CBF', textDecoration: 'none', fontSize: '0.85rem', display: 'inline-block', marginBottom: '1.5rem' }}>
           ← Back to Blogs
         </Link>

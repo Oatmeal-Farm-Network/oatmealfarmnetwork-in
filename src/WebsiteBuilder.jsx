@@ -3918,14 +3918,14 @@ export default function WebsiteBuilder() {
   const PeopleID = localStorage.getItem('people_id');
 
   if (loading) return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Website Builder" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Website Builder' }]}>
       <div className="p-8 text-gray-400">Loading website builder…</div>
     </AccountLayout>
   );
 
   // ── Setup wizard ───────────────────────────────────────────────
   if (setupMode) return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Website Builder" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Website Builder' }]}>
       <div style={{ maxWidth: 700, margin: '0 auto' }}>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Create Your Website</h1>
         <p className="text-gray-500 text-sm mb-6">Set up your public business website. You can change everything later.</p>
@@ -3986,7 +3986,7 @@ export default function WebsiteBuilder() {
   // ── CANVAS PAGE EDITOR ─────────────────────────────────────────
   if (isPage) return (
     <>
-      <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+      <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Website Builder" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Website Builder' }]}>
         <div className="-m-6 flex flex-col" style={{ height: 'calc(100vh - 72px)', overflow: 'hidden' }}>
 
           {/* ── Top bar ── */}
@@ -4299,7 +4299,7 @@ export default function WebsiteBuilder() {
   // ── Design / Settings / Delete / No-page views ─────────────────
   return (
     <>
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Website Builder" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Website Builder' }]}>
 
       {/* ── Top bar ── */}
       <div className="flex items-center justify-between mb-5 flex-wrap gap-3">

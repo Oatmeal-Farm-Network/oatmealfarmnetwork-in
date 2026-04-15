@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -35,10 +36,18 @@ export default function PlantVarietals() {
       <PageMeta
         title={plantName ? `${plantName} Varietals | Plant Knowledgebase` : 'Plant Varietals | Plant Knowledgebase'}
         description={plantName ? `Browse all known varietals of ${plantName} including growing requirements, soil preferences, water needs, and nutritional profiles.` : 'Browse plant varietals in the Oatmeal Farm Network plant knowledgebase.'}
+        keywords={plantName ? `${plantName} varietals, ${plantName} varieties, ${plantName} growing guide, plant database` : 'plant varietals'}
+        canonical={`https://oatmealfarmnetwork.com/plant-knowledgebase/varietals/${plantId}`}
       />
      <Header />
 
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '1rem 1rem 3rem' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Knowledgebases', to: '/knowledgebases' },
+          { label: 'Plant Knowledgebase', to: '/plant-knowledgebase' },
+          { label: plantName ? `${plantName} Varietals` : 'Varietals' },
+        ]} />
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{plantName} Varietals</h1>
         <p className="text-gray-700 mb-6">
           Below is a list of all known varietals for {plantName}. Click on a varietal name to view more detailed information.

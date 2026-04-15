@@ -3,6 +3,7 @@ import { useParams, Link, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -391,8 +392,25 @@ export default function LivestockForSale() {
         description={metaDesc}
         keywords={`${label.toLowerCase()} for sale, ${label.toLowerCase()} breeders, livestock marketplace, ${isStuds ? 'stud services, ' : ''}farm animals, ranchers`}
         canonical={metaCanonical}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: pageTitle,
+          url: metaCanonical,
+          description: metaDesc
+        }}
       />
       <Header />
+
+      <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '0.5rem 1rem 0' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Marketplaces', to: '/marketplaces' },
+          { label: 'Livestock', to: '/marketplaces/livestock' },
+          ...(isStuds ? [{ label: 'Stud Services' }] : []),
+          { label: pageTitle },
+        ]} />
+      </div>
 
       {/* Sidebar + content directly under header */}
       <div style={{ display: 'flex', alignItems: 'flex-start' }}>

@@ -156,7 +156,7 @@ export default function MeatInventory() {
   const labelCls = "block text-xs font-medium text-gray-500 mb-1";
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Meat Inventory" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Inventory' }, { label: 'Meat' }]}>
       <div className="max-w-full mx-auto space-y-6">
 
         {/* ── ADD FORM ── */}

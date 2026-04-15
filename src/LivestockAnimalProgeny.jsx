@@ -5,6 +5,7 @@ import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -65,18 +66,20 @@ export default function LivestockAnimalProgeny() {
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title={`Progeny of ${parent_name} | OatmealFarmNetwork`}
-        description={`All offspring of ${parent_name} on OatmealFarmNetwork.`}
+        description={`All offspring of ${parent_name} on OatmealFarmNetwork. Browse recorded progeny and bloodline information.`}
+        keywords={`${parent_name} progeny, ${parent_name} offspring, livestock bloodline, animal genetics`}
+        canonical={`https://oatmealfarmnetwork.com/marketplaces/livestock/animal/${parent_id}/progeny`}
       />
       <Header />
 
       <div className="mx-auto px-4 py-6" style={{ maxWidth: '1200px' }}>
-        <nav className="text-xs text-gray-500 mb-2 flex gap-1 flex-wrap">
-          <Link to="/marketplaces/livestock" style={{ color: '#3D6B34' }}>Livestock Marketplace</Link>
-          <span>›</span>
-          <Link to={`/marketplaces/livestock/animal/${parent_id}`} style={{ color: '#3D6B34' }}>{parent_name}</Link>
-          <span>›</span>
-          <span>Progeny</span>
-        </nav>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Marketplaces', to: '/marketplaces' },
+          { label: 'Livestock', to: '/marketplaces/livestock' },
+          { label: parent_name, to: `/marketplaces/livestock/animal/${parent_id}` },
+          { label: 'Progeny' },
+        ]} />
 
         <h1 className="text-2xl font-bold mb-1" style={{ color: '#3D6B34' }}>
           Progeny of {parent_name}

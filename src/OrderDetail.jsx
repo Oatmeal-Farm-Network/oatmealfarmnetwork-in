@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -66,10 +68,16 @@ export default function OrderDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
+      <PageMeta
+        title={`Order #${order.order_id || orderId} | Oatmeal Farm Network`}
+        description="View order details and status."
+        noIndex
+      />
       <Header />
 
       <div className="flex-grow py-8">
         <div className="max-w-3xl mx-auto px-4 space-y-6">
+          <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'My Orders', to: '/orders' }, { label: `Order #${order.order_id || orderId}` }]} />
           <button onClick={() => navigate('/orders')} className="text-sm text-[#819360] font-semibold hover:underline">← All Orders</button>
 
           {isNew && (

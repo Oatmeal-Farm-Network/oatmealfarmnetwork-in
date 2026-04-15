@@ -362,7 +362,7 @@ export default function AccountSettings() {
   const [tab, setTab] = useState('Login & Account');
 
   return (
-    <AccountLayout Business={Business} BusinessID={null} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={null} PeopleID={PeopleID} pageTitle="Settings" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Settings' }]}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
 
         <div className="mb-6">

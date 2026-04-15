@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -321,8 +322,16 @@ export default function LivestockMarketplace() {
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title="Livestock Marketplace | Buy & Sell Farm Animals"
-        description="Browse livestock for sale including cattle, pigs, sheep, goats, chickens, alpacas, and more. Connect directly with farmers and breeders on Oatmeal Farm Network."
+        description="Browse livestock for sale across 28 species including cattle, pigs, sheep, goats, chickens, alpacas, and more. Connect directly with farmers, ranchers, and breeders on Oatmeal Farm Network."
+        keywords="livestock marketplace, farm animals for sale, cattle for sale, sheep for sale, alpacas for sale, buy livestock, sell livestock"
         canonical="https://oatmealfarmnetwork.com/marketplaces/livestock"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Livestock Marketplace',
+          url: 'https://oatmealfarmnetwork.com/marketplaces/livestock',
+          description: 'Livestock of America marketplace — buy and sell farm animals directly from ranchers and breeders.'
+        }}
       />
       <Header />
 
@@ -348,6 +357,7 @@ export default function LivestockMarketplace() {
 
           {/* Intro */}
           <div style={{ padding: '1.5rem 1.5rem 1rem' }}>
+            <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Marketplaces', to: '/marketplaces' }, { label: 'Livestock' }]} />
             <h1 style={{ textAlign: 'center', fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
               Connecting Ranches Across The United States
             </h1>

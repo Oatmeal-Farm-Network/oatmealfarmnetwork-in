@@ -1252,7 +1252,7 @@ export default function PrecisionAgAnalyses() {
   if (!Business) return <div className="p-8 text-gray-500 font-mont">Loading…</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Field Analyses" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Precision Ag' }, { label: 'Fields', to: `/precision-ag/fields?BusinessID=${BusinessID}` }, { label: 'Analyses' }]}>
       <div className="max-w-full mx-auto">
         {field ? (
           <FieldDetail

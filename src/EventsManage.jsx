@@ -585,7 +585,7 @@ export default function EventsManage() {
   const setTab = (eventId, tab) => setActiveTab(prev => ({ ...prev, [eventId]: tab }));
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="My Events" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Events' }, { label: 'Manage' }]}>
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* Header */}

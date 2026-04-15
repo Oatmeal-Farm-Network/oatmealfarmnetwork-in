@@ -345,7 +345,7 @@ export default function ServicesEdit() {
   };
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Edit Service" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Services' }, { label: 'My Services', to: `/services?BusinessID=${BusinessID}` }, { label: 'Edit' }]}>
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 0 60px' }}>
 
         {/* Breadcrumb */}

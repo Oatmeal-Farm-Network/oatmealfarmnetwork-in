@@ -181,7 +181,7 @@ export default function AccountHome() {
   ].filter(Boolean);
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Account Home">
       <div className="max-w-full mx-auto space-y-6">
 
         {/* Account Info Card */}

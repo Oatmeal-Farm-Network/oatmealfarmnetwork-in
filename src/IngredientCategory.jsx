@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -160,11 +161,26 @@ export default function IngredientCategory() {
       <PageMeta
         title={`${displayName} Ingredients | Ingredient Knowledgebase`}
         description={`Browse ${displayName.toLowerCase()} ingredients in the Oatmeal Farm Network knowledgebase. Find flavor profiles, processing methods, varieties, and culinary uses.`}
+        keywords={`${displayName.toLowerCase()}, ${displayName.toLowerCase()} ingredients, ${displayName.toLowerCase()} varieties, ingredient knowledgebase`}
+        canonical={`https://oatmealfarmnetwork.com/ingredient-knowledgebase/${category}`}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: `${displayName} Ingredients`,
+          url: `https://oatmealfarmnetwork.com/ingredient-knowledgebase/${category}`,
+          description: `Browse ${displayName.toLowerCase()} ingredients.`
+        }}
       />
       <Header />
 
       {/* ── Hero ── */}
       <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Knowledgebases', to: '/knowledgebases' },
+          { label: 'Ingredient Knowledgebase', to: '/ingredient-knowledgebase' },
+          { label: displayName },
+        ]} />
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
             src={heroImg}

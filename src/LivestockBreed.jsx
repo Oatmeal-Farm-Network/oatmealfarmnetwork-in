@@ -3,40 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
-
-const SPECIES_IMAGES = {
-  'alpacas':      '/images/AlpacasHeader.webp',
-  'bison':        '/images/BisonHeader.webp',
-  'buffalo':      '/images/BuffaloHeader.webp',
-  'camels':       '/images/camelHeader.webp',
-  'cattle':       '/images/CattleHeader.webp',
-  'chickens':     '/images/ChickenHeader.webp',
-  'crocodiles':   '/images/CrocodileHeader.webp',
-  'deer':         '/images/DeerHeader.webp',
-  'dogs':         '/images/WorkingDogsHeader.webp',
-  'donkeys':      '/images/DonkeysHeader.webp',
-  'ducks':        '/images/DucksHeader.webp',
-  'emus':         '/images/Emus.webp',
-  'geese':        '/images/Geese.webp',
-  'goats':        '/images/Goats.webp',
-  'guinea-fowl':  '/images/Guineafowl.webp',
-  'honey-bees':   '/images/HoneyBees.webp',
-  'horses':       '/images/cowboy2.webp',
-  'llamas':       '/images/Llama2.webp',
-  'musk-ox':      '/images/muskox.webp',
-  'ostriches':    '/images/Ostrich.webp',
-  'pheasants':    '/images/Pheasant.webp',
-  'pigs':         '/images/Pig.webp',
-  'pigeons':      '/images/Pigeon.webp',
-  'quails':       '/images/Quail.webp',
-  'rabbits':      '/images/Rabitts.webp',
-  'sheep':        '/images/Sheepbreeds.webp',
-  'snails':       '/images/Snail.webp',
-  'turkeys':      '/images/Turkey.webp',
-  'yaks':         '/images/Yak.webp',
-};
 
 export default function LivestockBreed() {
   const { species, breedId } = useParams();
@@ -60,87 +29,86 @@ export default function LivestockBreed() {
     ? (breed.image.startsWith('http') ? breed.image : `/images/${breed.image.replace(/^.*[\\/]/, '')}`)
     : null;
 
-  const heroSrc = SPECIES_IMAGES[species] || '/images/HomepageLivestockDB.webp';
-
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title={breed ? `${breed.breed} ${label} | Livestock Breed` : `${label} Breed | Livestock Database`}
         description={breed
-          ? `Learn about the ${breed.breed} ${label.toLowerCase()} breed — origin, characteristics, and farming uses.`
+          ? `Learn about the ${breed.breed} ${label.toLowerCase()} breed — origin, characteristics, and farming uses on Oatmeal Farm Network.`
           : `${label} breed information in the Oatmeal Farm Network livestock database.`}
+        keywords={breed ? `${breed.breed}, ${breed.breed} ${label.toLowerCase()}, ${label.toLowerCase()} breed, livestock` : `${label.toLowerCase()} breeds`}
+        canonical={`https://oatmealfarmnetwork.com/livestock/${species}/breed/${breedId}`}
         image={breedImgUrl}
         ogType="article"
+        jsonLd={breed ? {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: `${breed.breed} ${label}`,
+          description: `Learn about the ${breed.breed} ${label.toLowerCase()} breed.`,
+          image: breedImgUrl || undefined,
+          mainEntityOfPage: `https://oatmealfarmnetwork.com/livestock/${species}/breed/${breedId}`,
+        } : undefined}
       />
       <Header />
 
       {/* ── Hero ── */}
       <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
-        <div className="relative w-full overflow-hidden rounded-xl">
-          <img
-            src={heroSrc}
-            alt={label}
-            className="w-full object-cover"
-            style={{ height: '250px', display: 'block' }}
-            loading="eager"
-            onError={e => { e.target.src = '/images/HomepageLivestockDB.webp'; }}
-          />
-          {/* Gradient overlay */}
-          <div
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }}
-          />
-          {/* Text */}
-          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
-            {loading ? (
-              <div className="bg-gray-200 animate-pulse h-8 rounded w-64" />
-            ) : (
-              <>
-                <p
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Knowledgebases', to: '/knowledgebases' },
+          { label: 'Livestock Database', to: '/livestock' },
+          { label, to: `/livestock/${species}` },
+          { label: breed?.breed || 'Breed' },
+        ]} />
+        <div style={{ padding: '1rem 0 0.5rem' }}>
+          {loading ? (
+            <div className="bg-gray-200 animate-pulse h-8 rounded w-64" />
+          ) : (
+            <>
+              <p
+                style={{
+                  color: '#3D6B34',
+                  fontFamily: "'Lora','Times New Roman',serif",
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  margin: '0 0 6px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {label}
+              </p>
+              <h1
+                style={{
+                  color: '#000000',
+                  fontFamily: "'Lora','Times New Roman',serif",
+                  fontSize: '2rem',
+                  fontWeight: 'bold',
+                  margin: '0 0 14px',
+                  lineHeight: 1.2,
+                }}
+              >
+                {breed?.breed || '…'}
+              </h1>
+              <div>
+                <Link
+                  to={`/livestock/${species}`}
                   style={{
-                    color: '#3D6B34',
-                    fontFamily: "'Lora','Times New Roman',serif",
-                    fontSize: '0.95rem',
-                    fontWeight: '600',
-                    margin: '0 0 6px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  {label}
-                </p>
-                <h1
-                  style={{
-                    color: '#000000',
-                    fontFamily: "'Lora','Times New Roman',serif",
-                    fontSize: '2rem',
+                    display: 'inline-block',
+                    backgroundColor: '#3D6B34',
+                    color: '#fff',
+                    fontSize: '0.8rem',
                     fontWeight: 'bold',
-                    margin: '0 0 14px',
-                    lineHeight: 1.2,
+                    padding: '7px 18px',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
                   }}
                 >
-                  {breed?.breed || '…'}
-                </h1>
-                <div>
-                  <Link
-                    to={`/livestock/${species}`}
-                    style={{
-                      display: 'inline-block',
-                      backgroundColor: '#3D6B34',
-                      color: '#fff',
-                      fontSize: '0.8rem',
-                      fontWeight: 'bold',
-                      padding: '7px 18px',
-                      borderRadius: '6px',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    ← All {label} Breeds
-                  </Link>
-                </div>
-              </>
-            )}
-          </div>
+                  ← All {label} Breeds
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

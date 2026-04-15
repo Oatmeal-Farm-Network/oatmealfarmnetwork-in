@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -56,7 +58,7 @@ function NavSection({ icon, label, expanded, isOpen, onToggle, children }) {
   );
 }
 
-export default function AccountLayout({ children, Business, BusinessID, PeopleID }) {
+export default function AccountLayout({ children, Business, BusinessID, PeopleID, pageTitle, breadcrumbs }) {
   const { Expanded, setExpanded, OpenSections, setOpenSections } = useAccount();
   const BT = Business?.BusinessTypeID;
   const [fields, setFields] = useState([]);
@@ -125,6 +127,11 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
+      <PageMeta
+        title={pageTitle ? `${pageTitle} | Oatmeal Farm Network` : 'My Account | Oatmeal Farm Network'}
+        description="Manage your farm business on Oatmeal Farm Network."
+        noIndex
+      />
       <Header />
 
       <div className="flex flex-grow">
@@ -380,6 +387,9 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
         </div>
 
         <div className={`flex-grow p-6 transition-all duration-300 ${Expanded ? 'ml-52' : 'ml-16'}`}>
+          {breadcrumbs && breadcrumbs.length > 0 && (
+            <Breadcrumbs items={breadcrumbs} />
+          )}
           {children}
         </div>
       </div>

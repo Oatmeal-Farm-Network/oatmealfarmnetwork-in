@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -45,38 +46,62 @@ export default function ServiceDetail() {
   );
 
   const location = [svc.AddressCity, svc.AddressState].filter(Boolean).join(', ');
+  const svcDesc = svc.ServiceDescription
+    ? svc.ServiceDescription.replace(/<[^>]+>/g, '').slice(0, 155)
+    : (svc.ServicesDescription
+      ? svc.ServicesDescription.replace(/<[^>]+>/g, '').slice(0, 155)
+      : `${svc.ServiceTitle}${location ? ` in ${location}` : ''}${svc.ServicesCategory ? ` — ${svc.ServicesCategory}` : ''}. Find agricultural services on Oatmeal Farm Network.`);
+  const svcCanonical = `https://oatmealfarmnetwork.com/services/public/${servicesId}`;
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <PageMeta
         title={`${svc.ServiceTitle} | Agricultural Services`}
-        description={svc.ServiceDescription
-          ? svc.ServiceDescription.replace(/<[^>]+>/g, '').slice(0, 155)
-          : `${svc.ServiceTitle}${location ? ` in ${location}` : ''}${svc.ServicesCategory ? ` — ${svc.ServicesCategory}` : ''}. Find agricultural services on Oatmeal Farm Network.`}
+        description={svcDesc}
+        keywords={`${svc.ServiceTitle}, ${svc.ServicesCategory || 'farm service'}, ${svc.BusinessName || ''}, ${location}, agricultural services`}
         image={mainPhoto || undefined}
+        canonical={svcCanonical}
         ogType="article"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Service',
+          name: svc.ServiceTitle,
+          description: svcDesc,
+          ...(mainPhoto ? { image: mainPhoto } : {}),
+          ...(svc.ServicesCategory ? { category: svc.ServicesCategory } : {}),
+          provider: {
+            '@type': 'LocalBusiness',
+            name: svc.BusinessName,
+            ...(location || svc.AddressCity ? {
+              address: {
+                '@type': 'PostalAddress',
+                ...(svc.AddressCity ? { addressLocality: svc.AddressCity } : {}),
+                ...(svc.AddressState ? { addressRegion: svc.AddressState } : {}),
+              },
+            } : {}),
+            ...(svc.ServicePhone ? { telephone: svc.ServicePhone } : {}),
+          },
+          ...(svc.ServicePrice && !svc.ServiceContactForPrice ? {
+            offers: {
+              '@type': 'Offer',
+              price: svc.ServicePrice,
+              priceCurrency: 'USD',
+            }
+          } : {}),
+        }}
       />
       <Header />
 
       <div className="max-w-5xl mx-auto px-4 py-8">
-
-        {/* Breadcrumb */}
-        <div className="text-sm text-gray-500 mb-6 flex items-center gap-1 flex-wrap">
-          <Link to="/services/directory" className="hover:text-[#3D6B34] hover:underline no-underline text-gray-500">
-            Services Directory
-          </Link>
-          {svc.ServicesCategory && (
-            <>
-              <span>/</span>
-              <Link to={`/services/directory/${svc.ServiceCategoryID}`}
-                className="hover:text-[#3D6B34] hover:underline no-underline text-gray-500">
-                {svc.ServicesCategory}
-              </Link>
-            </>
-          )}
-          <span>/</span>
-          <span className="text-gray-700 font-medium">{svc.ServiceTitle}</span>
-        </div>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Services Directory', to: '/services/directory' },
+          ...(svc.ServicesCategory ? [{
+            label: svc.ServicesCategory,
+            to: `/services/directory/${svc.ServiceCategoryID}`,
+          }] : []),
+          { label: svc.ServiceTitle },
+        ]} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 

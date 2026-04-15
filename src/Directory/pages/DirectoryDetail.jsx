@@ -6,6 +6,7 @@ import photoNotAvailable from '../images/photo not available .jpg';
 import Header from '../../Header';
 import Footer from '../../Footer';
 import PageMeta from '../../PageMeta';
+import Breadcrumbs from '../../Breadcrumbs';
 
 const DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID = {
     'agricultural-associations': '1',
@@ -269,11 +270,28 @@ const DirectoryDetail = function () {
             <PageMeta
                 title={`${pageTitle} Directory | Farm & Food Business Listings`}
                 description={`Find ${pageTitle.toLowerCase()} businesses near you. Browse verified listings with contact information, location, and details on Oatmeal Farm Network.`}
+                keywords={`${pageTitle}, ${pageTitle.toLowerCase()} directory, local ${pageTitle.toLowerCase()}, farm directory, food business listings`}
+                canonical={`https://oatmealfarmnetwork.com/directory/${directoryType}`}
+                jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@type': 'CollectionPage',
+                    name: `${pageTitle} Directory`,
+                    description: `Directory of ${pageTitle.toLowerCase()} on Oatmeal Farm Network.`,
+                    url: `https://oatmealfarmnetwork.com/directory/${directoryType}`,
+                }}
             />
             <Header />
 
+            <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
+                <Breadcrumbs items={[
+                    { label: 'Home', to: '/' },
+                    { label: 'Directory', to: '/directory' },
+                    { label: pageTitle },
+                ]} />
+            </div>
+
             {/* ── Hero ── */}
-            <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
+            <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
                 <div className="relative w-full overflow-hidden rounded-xl">
                     <img
                         src="/images/DirectoryHeader.webp"
