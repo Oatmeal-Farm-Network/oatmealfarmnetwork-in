@@ -143,7 +143,7 @@ export default function AudioSettings() {
   );
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Audio Settings" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Settings' }, { label: 'Audio' }]}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Audio Settings</h1>

@@ -1264,7 +1264,7 @@ export default function BlogManage() {
 
   if (view === 'new' || view === 'edit') {
     return (
-      <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+      <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={editPost ? 'Edit Post' : 'New Post'} breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Blog' }, { label: 'Manage', to: `/blog/manage?BusinessID=${BusinessID}` }, { label: editPost ? 'Edit Post' : 'New Post' }]}>
         <div style={{ maxWidth: '800px' }}>
           <button onClick={() => { setView('list'); setEditPost(null); }}
             style={{ background: 'none', border: 'none', color: '#819360', cursor: 'pointer', fontSize: '0.85rem', marginBottom: '1rem', padding: 0 }}>
@@ -1285,7 +1285,7 @@ export default function BlogManage() {
   }
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Manage Blog" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Blog' }, { label: 'Manage' }]}>
       <div style={{ maxWidth: '960px' }}>
 
         {/* ── Header row ── */}

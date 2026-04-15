@@ -319,7 +319,7 @@ export default function SellerListings() {
   };
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="My Listings" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Marketplace' }, { label: 'My Listings' }]}>
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* Header */}

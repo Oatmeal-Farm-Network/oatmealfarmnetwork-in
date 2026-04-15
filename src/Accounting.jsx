@@ -203,13 +203,13 @@ export default function Accounting() {
   // ── renders ───────────────────────────────────────────────
 
   if (loading) return (
-    <AccountLayout BusinessID={businessId} PeopleID={peopleId}>
+    <AccountLayout BusinessID={businessId} PeopleID={peopleId} pageTitle="Accounting">
       <div className="p-8 text-gray-500">Loading accounting...</div>
     </AccountLayout>
   );
 
   if (error) return (
-    <AccountLayout BusinessID={businessId} PeopleID={peopleId}>
+    <AccountLayout BusinessID={businessId} PeopleID={peopleId} pageTitle="Accounting">
       <div className="p-8 text-red-600">Error: {error}<br />
         <span className="text-sm text-gray-500">Make sure you have AccessLevelID &ge; 3 for this business.</span>
       </div>
@@ -217,7 +217,7 @@ export default function Accounting() {
   );
 
   if (!isSetup) return (
-    <AccountLayout BusinessID={businessId} PeopleID={peopleId}>
+    <AccountLayout BusinessID={businessId} PeopleID={peopleId} pageTitle="Accounting">
       <div className="max-w-lg mx-auto mt-16 text-center">
         <div className="text-6xl mb-4">📊</div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Set up Accounting</h2>
@@ -231,7 +231,7 @@ export default function Accounting() {
   );
 
   return (
-    <AccountLayout BusinessID={businessId} PeopleID={peopleId}>
+    <AccountLayout BusinessID={businessId} PeopleID={peopleId} pageTitle="Accounting">
       <div className="max-w-full space-y-4">
 
         {/* Header */}

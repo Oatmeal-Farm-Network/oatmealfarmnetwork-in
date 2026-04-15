@@ -6,6 +6,7 @@ import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -480,19 +481,36 @@ export default function LivestockAnimalDetail() {
       <PageMeta
         title={`${animal.full_name} — ${animal.species_singular} For Sale | OatmealFarmNetwork`}
         description={metaDesc}
+        keywords={`${animal.full_name}, ${animal.species_singular} for sale, ${backLabel || ''}, livestock marketplace`}
         canonical={`https://oatmealfarmnetwork.com/marketplaces/livestock/animal/${id}`}
+        ogType="product"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: animal.full_name,
+          description: metaDesc,
+          url: `https://oatmealfarmnetwork.com/marketplaces/livestock/animal/${id}`,
+          ...(pricing.price ? {
+            offers: {
+              '@type': 'Offer',
+              price: pricing.price,
+              priceCurrency: 'USD',
+              availability: animal.sold ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
+            }
+          } : {})
+        }}
       />
       <Header />
 
       <div className="mx-auto px-4 py-6" style={{ maxWidth: '1200px' }}>
 
-        {/* Breadcrumb */}
-        <nav className="text-xs text-gray-500 mb-2 flex gap-1 flex-wrap">
-          <Link to="/marketplaces/livestock" style={{ color: '#3D6B34' }}>Livestock Marketplace</Link>
-          {backSlug && <><span>›</span><Link to={`/marketplaces/livestock/${backSlug}`} style={{ color: '#3D6B34' }}>{backLabel}</Link></>}
-          <span>›</span>
-          <span className="text-gray-700">{animal.full_name}</span>
-        </nav>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Marketplaces', to: '/marketplaces' },
+          { label: 'Livestock', to: '/marketplaces/livestock' },
+          ...(backSlug ? [{ label: backLabel, to: `/marketplaces/livestock/${backSlug}` }] : []),
+          { label: animal.full_name },
+        ]} />
 
         {/* Last updated */}
         {animal.last_updated && (

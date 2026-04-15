@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const CONTACT_RECIPIENT_EMAIL =
   import.meta.env.VITE_CONTACT_RECIPIENT_EMAIL || 'livestockoftheworld@gmail.com';
@@ -111,10 +112,21 @@ export default function ContactUs() {
       <PageMeta
         title="Contact Us | Oatmeal Farm Network"
         description="Get in touch with the Oatmeal Farm Network team. We're here to help with questions about your farm listing, marketplace, or platform features."
+        keywords="contact oatmeal farm network, support, farm platform help, get listed, farm directory contact"
         canonical="https://oatmealfarmnetwork.com/contact-us"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'ContactPage',
+          name: 'Contact Oatmeal Farm Network',
+          url: 'https://oatmealfarmnetwork.com/contact-us',
+        }}
       />
        <Header />
       <main className="max-w-3xl mx-auto px-4 py-8 md:py-12">
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Contact Us' },
+        ]} />
         <section className="bg-white p-6 md:p-10 rounded-2xl shadow-[0_10px_25px_rgba(74,92,67,0.08)]">
           <header className="mb-6">
             <h1 className="text-3xl md:text-4xl font-bold text-[#4A5C43] mb-2">

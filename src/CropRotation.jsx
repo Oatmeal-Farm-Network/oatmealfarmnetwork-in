@@ -414,7 +414,7 @@ export default function CropRotation() {
   if (!Business) return <div className="p-8 text-gray-500 font-mont">Loading…</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID} pageTitle="Crop Rotation" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Crops' }, { label: 'Rotation' }]}>
       <div className="max-w-5xl mx-auto pb-20">
 
         {/* Header */}

@@ -5,6 +5,7 @@ import Footer from './Footer';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -123,7 +124,11 @@ function BlogListContent() {
     : posts;
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem', width: '100%', boxSizing: 'border-box' }}>
+    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '1rem 1.5rem 2rem', width: '100%', boxSizing: 'border-box' }}>
+      <Breadcrumbs items={[
+        { label: 'Home', to: '/' },
+        { label: 'Blog' },
+      ]} />
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#111827', margin: '0 0 0.5rem' }}>Blogs</h1>
         <p style={{ color: '#6b7280', fontSize: '0.95rem', margin: 0 }}>Stories, tips, and updates from food lovers across the network</p>
@@ -183,7 +188,7 @@ export default function BlogList() {
 
   if (isLoggedIn && BusinessID) {
     return (
-      <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+      <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Blog" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Blog' }]}>
         <BlogListContent />
       </AccountLayout>
     );
@@ -196,6 +201,13 @@ export default function BlogList() {
         description="Read the latest blog posts from farmers, ranchers, and food producers on Oatmeal Farm Network — farm news, recipes, seasonal updates, market insights, and community stories."
         keywords="farm blog, ranch blog, farmer stories, farm recipes, agricultural news, food producer blog, seasonal farming, market updates"
         canonical="https://oatmealfarmnetwork.com/blog"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Blog',
+          name: 'Oatmeal Farm Network Blog',
+          url: 'https://oatmealfarmnetwork.com/blog',
+          description: 'Stories from farmers, ranchers, and food producers.'
+        }}
       />
       <Header />
       <div style={{ flex: 1 }}>

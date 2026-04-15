@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -81,12 +82,25 @@ export default function IngredientKnowledgebase() {
       <PageMeta
         title="Ingredient Knowledgebase | 1,400+ Agricultural Ingredients"
         description="Browse 1,400+ agricultural ingredients and 14,000+ varieties. Search by category for flavor profiles, nutritional data, processing methods, and culinary uses."
+        keywords="ingredient database, agricultural ingredients, food ingredients, flavor profiles, culinary ingredients, ingredient knowledgebase"
         canonical="https://oatmealfarmnetwork.com/ingredient-knowledgebase"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Ingredient Knowledgebase',
+          url: 'https://oatmealfarmnetwork.com/ingredient-knowledgebase',
+          description: 'Comprehensive database of agricultural ingredients and varieties.'
+        }}
       />
       <Header />
 
       {/* ── Hero ── */}
       <div className="mx-auto px-4 pt-2 md:pt-6" style={{ maxWidth: '1300px' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Knowledgebases', to: '/knowledgebases' },
+          { label: 'Ingredient Knowledgebase' },
+        ]} />
 
         {/* Image — shorter on mobile, taller on desktop */}
         <div className="relative w-full overflow-hidden rounded-xl rounded-b-none md:rounded-b-xl">

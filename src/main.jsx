@@ -196,8 +196,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           {/* Legacy ASP redirect */}
           <Route path="/livestockmarketplace/Animals/Details.asp" element={<LegacyAnimalRedirect />} />
           <Route path="/produce/meat" element={<MeatInventory />} />
-          <Route path="/app/news" element={<AccountLayout><NewsFeed /></AccountLayout>} />
-          <Route path="/app/news/:id" element={<AccountLayout><ArticleDetail /></AccountLayout>} />
+          <Route path="/app/news" element={<AccountLayout pageTitle="News Feed" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'News Feed' }]}><NewsFeed /></AccountLayout>} />
+          <Route path="/app/news/:id" element={<AccountLayout pageTitle="News Article" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'News Feed', to: '/app/news' }, { label: 'Article' }]}><ArticleDetail /></AccountLayout>} />
           <Route path="/blog/authors/manage" element={<BlogAuthors />} />
           <Route path="/blog/authors/:authorId" element={<BlogAuthorDetail />} />
           <Route path="/blog/manage" element={<BlogManage />} />

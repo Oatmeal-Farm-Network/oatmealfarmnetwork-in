@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -112,18 +114,21 @@ export default function EventRegister() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
+      <PageMeta
+        title={`Register for ${ev.EventName}`}
+        description={`Register for ${ev.EventName} on Oatmeal Farm Network.`}
+        canonical={`https://oatmealfarmnetwork.com/events/${eventId}/register`}
+        noIndex
+      />
       <Header />
 
       <div className="max-w-2xl mx-auto px-4 py-8">
-
-        {/* Breadcrumb */}
-        <div className="text-sm text-gray-500 mb-5 flex items-center gap-1">
-          <Link to="/events" className="hover:text-[#3D6B34] hover:underline no-underline text-gray-500">Events</Link>
-          <span>/</span>
-          <Link to={`/events/${eventId}`} className="hover:text-[#3D6B34] hover:underline no-underline text-gray-500">{ev.EventName}</Link>
-          <span>/</span>
-          <span className="text-gray-700">Register</span>
-        </div>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Events', to: '/events' },
+          { label: ev.EventName, to: `/events/${eventId}` },
+          { label: 'Register' },
+        ]} />
 
         {/* Step indicator */}
         <div className="flex items-center gap-2 mb-6">

@@ -35,8 +35,26 @@ export default function App() {
     <div className="min-h-screen bg-gray-100 font-sans">
       <PageMeta
         title="Oatmeal Farm Network | AI-Powered Farm & Food Network"
-        description="Connect farms, buyers, and food businesses with AI-powered tools. Browse livestock, plants, ingredients, and local food markets on Oatmeal Farm Network."
+        description="Connect farms, buyers, and food businesses with AI-powered tools. Browse 3,000+ livestock breeds, 4,000+ plant varieties, 14,000+ ingredients, and a local food marketplace on Oatmeal Farm Network."
+        keywords="farm network, livestock marketplace, plant database, food system directory, AI farming, agriculture, livestock breeds, farm to table"
         canonical="https://oatmealfarmnetwork.com"
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Oatmeal Farm Network',
+            url: 'https://oatmealfarmnetwork.com',
+            logo: 'https://oatmealfarmnetwork.com/images/Oatmeal-Farm-Network-og-default.jpg',
+            sameAs: [],
+            description: 'AI-powered farm and food system network connecting farms, buyers, and food businesses.'
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'Oatmeal Farm Network',
+            url: 'https://oatmealfarmnetwork.com'
+          }
+        ]}
       />
       <Header />
 

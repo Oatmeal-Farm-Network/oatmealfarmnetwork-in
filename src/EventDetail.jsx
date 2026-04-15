@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -49,26 +50,66 @@ export default function EventDetail() {
     .filter(Boolean);
 
   const locationStr = [ev.EventLocationCity, ev.EventLocationState].filter(Boolean).join(', ');
+  const evDesc = ev.EventDescription
+    ? ev.EventDescription.replace(/<[^>]+>/g, '').slice(0, 155)
+    : `${ev.EventName}${locationStr ? ` in ${locationStr}` : ''}. Register for this farm event on Oatmeal Farm Network.`;
+  const evCanonical = `https://oatmealfarmnetwork.com/events/${eventId}`;
+  const startIso = ev.EventStartDate ? new Date(ev.EventStartDate).toISOString() : undefined;
+  const endIso = ev.EventEndDate ? new Date(ev.EventEndDate).toISOString() : startIso;
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <PageMeta
         title={`${ev.EventName} | Farm Events`}
-        description={ev.EventDescription
-          ? ev.EventDescription.slice(0, 155)
-          : `${ev.EventName}${locationStr ? ` in ${locationStr}` : ''}. Register for this farm event on Oatmeal Farm Network.`}
+        description={evDesc}
+        keywords={`${ev.EventName}, ${ev.EventType || 'farm event'}, ${ev.BusinessName || ''}, ${locationStr}, farm events, agricultural workshops`}
         image={ev.EventImage || undefined}
+        canonical={evCanonical}
         ogType="event"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Event',
+          name: ev.EventName,
+          description: evDesc,
+          ...(startIso ? { startDate: startIso } : {}),
+          ...(endIso ? { endDate: endIso } : {}),
+          ...(ev.EventImage ? { image: ev.EventImage } : {}),
+          eventStatus: 'https://schema.org/EventScheduled',
+          eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+          location: {
+            '@type': 'Place',
+            name: ev.EventLocationName || locationStr || 'TBD',
+            ...(ev.EventLocationStreet || ev.EventLocationCity ? {
+              address: {
+                '@type': 'PostalAddress',
+                ...(ev.EventLocationStreet ? { streetAddress: ev.EventLocationStreet } : {}),
+                ...(ev.EventLocationCity ? { addressLocality: ev.EventLocationCity } : {}),
+                ...(ev.EventLocationState ? { addressRegion: ev.EventLocationState } : {}),
+                ...(ev.EventLocationZip ? { postalCode: ev.EventLocationZip } : {}),
+              },
+            } : {}),
+          },
+          ...(ev.BusinessName ? {
+            organizer: { '@type': 'Organization', name: ev.BusinessName },
+          } : {}),
+          ...(ev.IsFree ? {
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD',
+              availability: 'https://schema.org/InStock',
+              url: evCanonical,
+            }
+          } : {}),
+        }}
       />
       <Header />
 
       <div className="max-w-5xl mx-auto px-4 py-8">
-
-        {/* Breadcrumb */}
-        <div className="text-sm text-gray-500 mb-6 flex items-center gap-1">
-          <Link to="/events" className="hover:text-[#3D6B34] hover:underline no-underline text-gray-500">Events</Link>
-          <span>/</span>
-          <span className="text-gray-700 font-medium">{ev.EventName}</span>
-        </div>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Events', to: '/events' },
+          { label: ev.EventName },
+        ]} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 

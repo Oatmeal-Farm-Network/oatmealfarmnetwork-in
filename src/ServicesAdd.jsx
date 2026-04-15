@@ -100,7 +100,7 @@ export default function ServicesAdd() {
   };
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Add Service" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Services' }, { label: 'My Services', to: `/services?BusinessID=${BusinessID}` }, { label: 'Add' }]}>
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6" style={{ maxWidth: 600 }}>
 
         <div style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 22, color: '#2c1a0e', marginBottom: 6 }}>

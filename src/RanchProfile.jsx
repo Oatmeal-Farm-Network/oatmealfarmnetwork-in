@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const GCP_BUCKET_URL = 'https://storage.googleapis.com/oatmeal-farm-network-images/Animals';
@@ -213,11 +215,51 @@ export default function RanchProfile() {
     { key: 'contact', label: 'About / Contact', always: true },
   ].filter(t => t.always || t.show);
 
+  const ranchLocation = [ranch.address_city, ranch.address_state].filter(Boolean).join(', ');
+  const ranchDesc = ranch.description
+    ? ranch.description.replace(/<[^>]+>/g, '').slice(0, 155)
+    : `${ranch.business_name}${ranchLocation ? ' in ' + ranchLocation : ''} — livestock ranch and breeder on Oatmeal Farm Network.`;
+
   return (
     <div className="min-h-screen font-sans">
+      <PageMeta
+        title={`${ranch.business_name}${ranchLocation ? ' — ' + ranchLocation : ''} | Ranch Profile`}
+        description={ranchDesc}
+        keywords={`${ranch.business_name}, ${ranchLocation}, livestock ranch, breeder, farm, ranch profile`}
+        canonical={`https://oatmealfarmnetwork.com/marketplaces/livestock/ranch/${businessId}`}
+        ogType="profile"
+        image={ranch.header_image || ranch.logo || undefined}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'LocalBusiness',
+          name: ranch.business_name,
+          description: ranchDesc,
+          url: `https://oatmealfarmnetwork.com/marketplaces/livestock/ranch/${businessId}`,
+          ...(ranch.address_city ? {
+            address: {
+              '@type': 'PostalAddress',
+              streetAddress: ranch.address_street || undefined,
+              addressLocality: ranch.address_city || undefined,
+              addressRegion: ranch.address_state || undefined,
+              postalCode: ranch.address_zip || undefined,
+              addressCountry: ranch.address_country || undefined,
+            }
+          } : {}),
+          ...(ranch.email ? { email: ranch.email } : {}),
+        }}
+      />
       <Header />
 
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 16px 3rem' }}>
+        <div style={{ paddingTop: '0.5rem' }}>
+          <Breadcrumbs items={[
+            { label: 'Home', to: '/' },
+            { label: 'Marketplaces', to: '/marketplaces' },
+            { label: 'Livestock', to: '/marketplaces/livestock' },
+            { label: 'Ranches' },
+            { label: ranch.business_name },
+          ]} />
+        </div>
 
         {/* Ranch header — logo or name */}
         <div style={{ textAlign: 'center', padding: '24px 0 16px', borderBottom: '1px solid #eee' }}>

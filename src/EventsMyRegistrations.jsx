@@ -28,7 +28,7 @@ export default function EventsMyRegistrations() {
   }, [PeopleID]);
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="My Registrations" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Events' }, { label: 'My Registrations' }]}>
       <div className="max-w-4xl mx-auto space-y-6">
 
         <div className="flex items-center justify-between flex-wrap gap-3">

@@ -746,7 +746,7 @@ function PrecisionAgFields({ businessId: propBusinessId }) {
   if (loadError || !Business) return <div className="p-8 text-red-500">Could not load account. Please go back and try again.</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID} pageTitle="Fields" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Precision Ag' }, { label: 'Fields' }]}>
       <div className="max-w-5xl mx-auto">
         {view === 'list' && (
           <FieldList

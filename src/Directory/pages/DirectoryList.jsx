@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Header from '../../Header';
 import Footer from '../../Footer';
 import PageMeta from '../../PageMeta';
+import Breadcrumbs from '../../Breadcrumbs';
 
 import agriAssociaImg from '../Icons/Agricultural Associations.jpg';
 import artisianImg     from '../Icons/Artisan Producers.jpg';
@@ -191,12 +192,27 @@ export default function DirectoryList() {
       <PageMeta
         title="Farm & Food Business Directory | Find Local Farms & Producers"
         description="Find farms, food hubs, farmers markets, restaurants, processors, artisan producers, and more in our comprehensive farm and food business directory."
+        keywords="farm directory, food business directory, local farms, farmers markets, food hubs, restaurants, artisan producers, agricultural businesses, farm listings"
         canonical="https://oatmealfarmnetwork.com/directory"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Farm & Food Business Directory',
+          description: 'Comprehensive directory of farms, food producers, markets, and agricultural businesses.',
+          url: 'https://oatmealfarmnetwork.com/directory',
+        }}
       />
       <Header />
 
+      <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Directory' },
+        ]} />
+      </div>
+
       {/* ── Hero ── */}
-      <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
+      <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
             src="/images/DirectoryHeader.webp"

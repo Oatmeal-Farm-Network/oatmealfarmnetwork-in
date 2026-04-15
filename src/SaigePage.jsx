@@ -655,7 +655,7 @@ export default function SaigePage() {
   if (!isLoggedIn) return <AboutSaige />;
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={userId}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={userId} pageTitle="Saige AI" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Saige' }]}>
       <div style={{ margin: '-24px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
 
         <div style={{

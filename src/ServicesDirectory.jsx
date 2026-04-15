@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -48,26 +49,34 @@ export default function ServicesDirectory() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
       <PageMeta
-        title="Agricultural Services Directory | Find Farm Services"
-        description="Find agricultural services including veterinary care, farm consulting, equipment rental, shearing, farriery, and more. Browse service providers near you."
-        canonical="https://oatmealfarmnetwork.com/services/directory"
+        title={catName ? `${catName} Services | Agricultural Services Directory` : 'Agricultural Services Directory | Find Farm Services'}
+        description={catName
+          ? `Find ${catName.toLowerCase()} services from farmers, ranchers, and agricultural professionals on Oatmeal Farm Network.`
+          : 'Find agricultural services including veterinary care, farm consulting, equipment rental, shearing, farriery, and more. Browse service providers near you.'}
+        keywords={catName
+          ? `${catName}, ${catName} services, farm services, agricultural ${catName.toLowerCase()}, service providers`
+          : 'agricultural services, farm services, veterinary, farriery, shearing, farm consulting, equipment rental, livestock services'}
+        canonical={categoryId
+          ? `https://oatmealfarmnetwork.com/services/directory/${categoryId}`
+          : 'https://oatmealfarmnetwork.com/services/directory'}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: catName ? `${catName} Services` : 'Agricultural Services Directory',
+          description: 'Browse farm and agricultural services by category.',
+          url: categoryId
+            ? `https://oatmealfarmnetwork.com/services/directory/${categoryId}`
+            : 'https://oatmealfarmnetwork.com/services/directory',
+        }}
       />
       <Header />
 
       <div className="max-w-6xl mx-auto px-4 py-10 flex-grow w-full">
-
-        {/* Breadcrumb */}
-        <div className="text-sm text-gray-500 mb-6 flex items-center gap-1">
-          <button onClick={() => navigate('/services/directory')} className="hover:text-[#3D6B34] hover:underline">
-            Services Directory
-          </button>
-          {catName && (
-            <>
-              <span>/</span>
-              <span className="text-gray-700 font-medium">{catName}</span>
-            </>
-          )}
-        </div>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Services Directory', to: categoryId ? '/services/directory' : undefined },
+          ...(catName ? [{ label: catName }] : []),
+        ]} />
 
         {/* If no category selected — show category grid */}
         {!categoryId ? (

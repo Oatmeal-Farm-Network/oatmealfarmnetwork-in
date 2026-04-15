@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -60,12 +61,21 @@ export default function LivestockDB() {
       <PageMeta
         title="Livestock Database | 2,000+ Breeds Across 28 Species"
         description="Explore over 2,000 livestock breeds across 28 species including cattle, pigs, sheep, goats, chickens, alpacas, and more. Find breed characteristics, origins, and farming information."
+        keywords="livestock database, livestock breeds, cattle breeds, sheep breeds, alpaca breeds, farm animal encyclopedia"
         canonical="https://oatmealfarmnetwork.com/livestock"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Livestock Database',
+          url: 'https://oatmealfarmnetwork.com/livestock',
+          description: 'Comprehensive livestock breed database covering 28 species.'
+        }}
       />
       <Header />
 
       {/* ── Hero ── */}
       <div className="mx-auto px-4 pt-2 md:pt-6" style={{ maxWidth: '1300px' }}>
+        <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Knowledgebases', to: '/knowledgebases' }, { label: 'Livestock Database' }]} />
 
         {/* Image — shorter on mobile, taller on desktop */}
         <div className="relative w-full overflow-hidden rounded-xl rounded-b-none md:rounded-b-xl">

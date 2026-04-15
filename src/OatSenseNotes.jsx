@@ -299,7 +299,7 @@ export default function OatSenseNotes() {
   if (!Business) return <div className="p-8 text-gray-500 font-mont">Loading…</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID} pageTitle="Field Journal" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'OatSense' }, { label: 'Field Journal' }]}>
       <div className="max-w-4xl mx-auto pb-20">
 
         {/* Page header */}

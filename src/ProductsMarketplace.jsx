@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -175,9 +176,25 @@ export default function ProductsMarketplace() {
       <PageMeta
         title="Farm Products Marketplace | Shop Local Farm Goods"
         description="Shop farm-fresh products including produce, meat, dairy, fiber, and value-added goods. Buy directly from local farmers and small food businesses on Oatmeal Farm Network."
+        keywords="farm products, farm marketplace, shop local farms, farm goods, handcrafted products, farm direct"
         canonical="https://oatmealfarmnetwork.com/marketplace/products"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Farm Products Marketplace',
+          url: 'https://oatmealfarmnetwork.com/marketplace/products',
+          description: 'Farm-fresh products and handcrafted goods from local farmers.'
+        }}
       />
       <Header />
+
+      <div className="max-w-6xl mx-auto w-full px-4 pt-3">
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Marketplaces', to: '/marketplaces' },
+          { label: 'Products' },
+        ]} />
+      </div>
 
       {/* Hero */}
       <div className="bg-[#3D6B34] text-white py-10 px-4">

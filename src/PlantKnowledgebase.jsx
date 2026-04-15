@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -52,12 +53,25 @@ export default function PlantKnowledgebase() {
       <PageMeta
         title="Online Plant Database | 4,000+ Food Plant Varieties"
         description="Browse over 4,000 food plant varieties across 22 categories including grains, berries, legumes, and herbs. Find growing guides, soil requirements, and nutritional data."
+        keywords="plant database, food plants, edible plant varieties, vegetables, grains, herbs, fruits, berries, legumes"
         canonical="https://oatmealfarmnetwork.com/plant-knowledgebase"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Online Plant Knowledgebase',
+          url: 'https://oatmealfarmnetwork.com/plant-knowledgebase',
+          description: 'Comprehensive database of food plant varieties across 22 categories.'
+        }}
       />
       <Header />
 
       {/* ── Hero ── */}
       <div className="mx-auto px-4 pt-2 md:pt-6" style={{ maxWidth: '1300px' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Knowledgebases', to: '/knowledgebases' },
+          { label: 'Plant Knowledgebase' },
+        ]} />
 
         {/* Image — shorter on mobile, taller on desktop */}
         <div className="relative w-full overflow-hidden rounded-xl rounded-b-none md:rounded-b-xl">

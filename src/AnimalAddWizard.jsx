@@ -1865,7 +1865,7 @@ export default function AnimalAddWizard() {
 
   if (submitSuccess) {
     return (
-      <AccountLayout Business={Business} BusinessID={businessID} PeopleID={PeopleID}>
+      <AccountLayout Business={Business} BusinessID={businessID} PeopleID={PeopleID} pageTitle="Add Animal" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Livestock' }, { label: 'My Animals', to: `/animals?BusinessID=${businessID}` }, { label: 'Add Animal' }]}>
         <div className="wizard-success">
           <div className="success-icon"></div>
           <h2>Animal Added Successfully!</h2>
@@ -1878,7 +1878,7 @@ export default function AnimalAddWizard() {
   const step = visibleSteps[currentStepIndex];
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={businessID} PeopleID={PeopleID} pageTitle="Add Animal" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Livestock' }, { label: 'My Animals', to: `/animals?BusinessID=${businessID}` }, { label: 'Add Animal' }]}>
       <div className="animal-wizard">
         <div className="wizard-progress">
           <div className="progress-steps">

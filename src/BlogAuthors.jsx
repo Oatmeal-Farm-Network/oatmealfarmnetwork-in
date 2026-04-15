@@ -667,7 +667,7 @@ export default function BlogAuthors() {
 
   if (view === 'new' || view === 'edit') {
     return (
-      <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+      <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={editAuthor ? 'Edit Author' : 'New Author'} breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Blog' }, { label: 'Authors', to: `/blog/authors?BusinessID=${BusinessID}` }, { label: editAuthor ? 'Edit' : 'New' }]}>
         <div style={{ maxWidth: '800px' }}>
           <button onClick={() => { setView('list'); setEditAuthor(null); }}
             style={{ background: 'none', border: 'none', color: '#819360', cursor: 'pointer', fontSize: '0.85rem', marginBottom: '1rem', padding: 0 }}>
@@ -685,7 +685,7 @@ export default function BlogAuthors() {
   }
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Blog Authors" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Blog' }, { label: 'Authors' }]}>
       <div style={{ maxWidth: '800px' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', gap: '0.75rem' }}>

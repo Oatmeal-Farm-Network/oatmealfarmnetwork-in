@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -78,11 +79,27 @@ export default function PlantVarietalDetail() {
         description={detail.plant_variety_description
           ? detail.plant_variety_description.slice(0, 155)
           : `Detailed growing information for ${detail.plant_variety_name}, a variety of ${detail.plant_name}. Includes soil, water, pH, nutrient, and climate requirements.`}
+        keywords={`${detail.plant_variety_name}, ${detail.plant_name}, ${detail.plant_name} variety, growing guide, soil requirements, nutrient profile`}
+        canonical={`https://oatmealfarmnetwork.com/plant-knowledgebase/varietal-detail/${varietyId}`}
         ogType="article"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: `${detail.plant_variety_name} (${detail.plant_name})`,
+          description: detail.plant_variety_description || `Growing information for ${detail.plant_variety_name}.`,
+          mainEntityOfPage: `https://oatmealfarmnetwork.com/plant-knowledgebase/varietal-detail/${varietyId}`,
+        }}
       />
      <Header />
 
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Knowledgebases', to: '/knowledgebases' },
+          { label: 'Plant Knowledgebase', to: '/plant-knowledgebase' },
+          { label: detail.plant_name, to: `/plant-knowledgebase/varietals/${detail.plant_id || ''}` },
+          { label: detail.plant_variety_name },
+        ]} />
 
         {/* Variety title + plant name + description */}
         <h1 className="font-bold text-gray-900 mb-1" style={{ fontSize: '2rem' }}>

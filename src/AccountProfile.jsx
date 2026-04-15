@@ -554,13 +554,13 @@ export default function AccountProfile() {
   const sectionCard = 'bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4';
 
   if (!form || !Business) return (
-    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId}>
+    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId} pageTitle="Account Profile" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Account Settings' }, { label: 'Profile' }]}>
       <div className="text-center py-20 text-gray-400">Loading...</div>
     </AccountLayout>
   );
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId}>
+    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId} pageTitle="Account Profile" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Account Settings' }, { label: 'Profile' }]}>
       <div className="space-y-6 max-w-3xl">
 
         <h1 className="text-2xl font-bold text-gray-800">Account Profile</h1>

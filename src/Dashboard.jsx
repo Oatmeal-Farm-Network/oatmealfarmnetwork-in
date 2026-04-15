@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 import { useAccount } from './AccountContext';
 
 export default function Dashboard() {
@@ -141,6 +142,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
+      <PageMeta
+        title="Dashboard | Oatmeal Farm Network"
+        description="Your Oatmeal Farm Network dashboard — manage your farm businesses, orders, livestock, and more."
+        noIndex
+      />
       <Header />
 
       <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>

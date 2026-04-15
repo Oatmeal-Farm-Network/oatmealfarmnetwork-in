@@ -44,7 +44,7 @@ export default function AccountChangeType() {
   if (!Business || Loading) return <div className="p-8 text-gray-500">Loading...</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Change Account Type" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Account Settings' }, { label: 'Change Account Type' }]}>
 
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6 mx-w-full" >
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Change Account Type</h1>

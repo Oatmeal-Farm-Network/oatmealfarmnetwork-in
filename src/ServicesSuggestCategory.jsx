@@ -58,7 +58,7 @@ export default function ServicesSuggestCategory() {
   };
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Suggest Category" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Services' }, { label: 'Suggest Category' }]}>
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6" style={{ maxWidth: 1300 }}>
 
         <div style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 22, color: '#2c1a0e', marginBottom: 6 }}>

@@ -6,6 +6,8 @@ import { DIRECTORY_TYPE_TO_IMAGE, DIRECTORY_TYPE_TO_BUSINESS_TYPE } from './dire
 import { FaFacebookF, FaPinterestP, FaXTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaGlobe } from 'react-icons/fa6';
 import Header from '../../Header';
 import Footer from '../../Footer';
+import PageMeta from '../../PageMeta';
+import Breadcrumbs from '../../Breadcrumbs';
 
 const BLOG_API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -200,13 +202,53 @@ const BusinessProfile = () => {
     }
 
     const fullAddress = [business.AddressStreet, business.AddressCity, business.AddressState, business.AddressZip, business.AddressCountry].filter(Boolean).join(', ');
+    const bizLocation = [business.AddressCity, business.AddressState].filter(Boolean).join(', ');
+    const bizDesc = business.BusinessDescription
+      ? business.BusinessDescription.replace(/<[^>]+>/g, '').slice(0, 155)
+      : `${business.BusinessName}${bizLocation ? ' in ' + bizLocation : ''} — ${DIRECTORY_TYPE_TO_BUSINESS_TYPE[directoryType] || 'food business'} on Oatmeal Farm Network.`;
+    const bizTypeLabel = DIRECTORY_TYPE_TO_BUSINESS_TYPE[directoryType] || 'Business';
 
     return (
         <div className="min-h-screen font-sans">
+            <PageMeta
+                title={`${business.BusinessName}${bizLocation ? ' · ' + bizLocation : ''} | ${bizTypeLabel}`}
+                description={bizDesc}
+                keywords={`${business.BusinessName}, ${bizTypeLabel}, ${bizLocation}, farm directory, local food business`}
+                image={business.ProfileImage || undefined}
+                ogType="business.business"
+                jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@type': 'LocalBusiness',
+                    name: business.BusinessName,
+                    description: bizDesc,
+                    ...(business.ProfileImage ? { image: business.ProfileImage } : {}),
+                    ...(business.BusinessWebsite ? { url: business.BusinessWebsite } : {}),
+                    ...(business.BusinessPhone ? { telephone: business.BusinessPhone } : {}),
+                    ...(business.AddressCity || business.AddressStreet ? {
+                        address: {
+                            '@type': 'PostalAddress',
+                            ...(business.AddressStreet ? { streetAddress: business.AddressStreet } : {}),
+                            ...(business.AddressCity ? { addressLocality: business.AddressCity } : {}),
+                            ...(business.AddressState ? { addressRegion: business.AddressState } : {}),
+                            ...(business.AddressZip ? { postalCode: business.AddressZip } : {}),
+                            ...(business.AddressCountry ? { addressCountry: business.AddressCountry } : {}),
+                        },
+                    } : {}),
+                }}
+            />
             <Header />
 
             {/* Main container */}
-            <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+            <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1rem 1rem 3rem' }}>
+                <Breadcrumbs items={[
+                    { label: 'Home', to: '/' },
+                    { label: 'Directory', to: '/directory' },
+                    ...(directoryType ? [{
+                        label: bizTypeLabel,
+                        to: `/directory/${directoryType}`,
+                    }] : []),
+                    { label: business.BusinessName },
+                ]} />
 
                 {/* Back button */}
                 <button onClick={backToListings} className="text-[#4d734d] font-semibold hover:underline mb-3 inline-flex items-center gap-1">

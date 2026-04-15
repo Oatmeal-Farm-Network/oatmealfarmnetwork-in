@@ -55,7 +55,7 @@ export default function OatSense() {
   if (!Business) return <div className="p-8 text-gray-500">Loading...</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="OatSense" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'OatSense' }]}>
       <h1 className="text-3xl font-bold text-gray-900 mb-6">OatSense Dashboard</h1>
 
       {/* Summary Cards */}

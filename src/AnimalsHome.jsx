@@ -46,7 +46,7 @@ export default function AnimalsHome() {
   if (Error) return <div className="p-8 text-red-600">Error loading animals.</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="My Animals" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Livestock' }, { label: 'My Animals' }]}>
 
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">

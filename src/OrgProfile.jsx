@@ -3,6 +3,7 @@ import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'reac
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
 import { FaFacebookF, FaPinterestP, FaXTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaGlobe, FaBlog } from 'react-icons/fa6';
 
@@ -393,6 +394,13 @@ export default function OrgProfile() {
       <Header />
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 16px 60px' }}>
+        <div style={{ paddingTop: '0.75rem' }}>
+          <Breadcrumbs items={[
+            { label: 'Home', to: '/' },
+            { label: 'Directory', to: '/directory' },
+            { label: ranch.business_name },
+          ]} />
+        </div>
 
         {/* ── Ranch header ── */}
         <div style={{ textAlign: 'center', padding: '32px 0 20px', borderBottom: '1px solid #eee' }}>

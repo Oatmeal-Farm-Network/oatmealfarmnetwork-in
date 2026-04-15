@@ -868,7 +868,7 @@ export default function CropDetection() {
   };
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Crop Detection" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Crops' }, { label: 'Detection' }]}>
       <div style={{ margin: '-24px', display: 'flex', flexDirection: 'column' }}>
 
         {/* Title bar */}

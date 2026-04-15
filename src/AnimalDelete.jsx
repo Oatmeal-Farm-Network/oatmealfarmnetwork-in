@@ -72,14 +72,14 @@ export default function AnimalDelete() {
 
   if (loading) {
     return (
-      <AccountLayout Business={Business} BusinessID={businessID} PeopleID={peopleID}>
+      <AccountLayout Business={Business} BusinessID={businessID} PeopleID={peopleID} pageTitle="Delete Animal" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Livestock' }, { label: 'My Animals', to: `/animals?BusinessID=${businessID}` }, { label: 'Delete' }]}>
         <div style={{ padding: 40, textAlign: "center", color: "#8b7355" }}>Loading…</div>
       </AccountLayout>
     );
   }
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessID} PeopleID={peopleID}>
+    <AccountLayout Business={Business} BusinessID={businessID} PeopleID={peopleID} pageTitle="Delete Animal" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Livestock' }, { label: 'My Animals', to: `/animals?BusinessID=${businessID}` }, { label: 'Delete' }]}>
       <div style={{ maxWidth: 620, margin: "40px auto", padding: "0 16px 60px" }}>
         <h1 style={{ fontFamily: "Georgia, serif", fontSize: 24, color: "#2c1a0e", marginBottom: 20 }}>
           Delete Animal

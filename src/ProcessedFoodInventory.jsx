@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -148,6 +149,11 @@ export default function ProcessedFoodInventory() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#f7f5f0] font-sans">
+      <PageMeta
+        title="Processed Food Inventory | Oatmeal Farm Network"
+        description="Manage your value-added and processed food listings."
+        noIndex
+      />
 
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-5">

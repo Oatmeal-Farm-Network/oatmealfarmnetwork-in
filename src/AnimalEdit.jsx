@@ -2433,7 +2433,7 @@ export default function AnimalEdit() {
   );
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessID} PeopleID={localStorage.getItem("people_id")}>
+    <AccountLayout Business={Business} BusinessID={businessID} PeopleID={localStorage.getItem("people_id")} pageTitle="Edit Animal" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Livestock' }, { label: 'My Animals', to: `/animals?BusinessID=${businessID}` }, { label: 'Edit' }]}>
       {content}
     </AccountLayout>
   );

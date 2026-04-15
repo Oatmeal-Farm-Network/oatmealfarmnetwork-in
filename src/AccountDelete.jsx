@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -63,9 +65,15 @@ export default function AccountDelete() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
+      <PageMeta
+        title="Delete Account | Oatmeal Farm Network"
+        description="Permanently delete your business account on Oatmeal Farm Network."
+        noIndex
+      />
       <Header />
 
       <div style={{ maxWidth: '550px', margin: '2rem auto', padding: '0 1rem 3rem' }}>
+        <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'My Accounts', to: '/accounts' }, { label: 'Delete Account' }]} />
 
         {/* Back link */}
         <Link

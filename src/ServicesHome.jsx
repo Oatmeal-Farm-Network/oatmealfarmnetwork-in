@@ -42,7 +42,7 @@ export default function ServicesHome() {
   if (hasError) return <div className="p-8 text-red-600">Error loading services.</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="My Services" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Services' }, { label: 'My Services' }]}>
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
 
         {/* Header */}

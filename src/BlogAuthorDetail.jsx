@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -94,10 +96,55 @@ export default function BlogAuthorDetail() {
     ? new Date(dt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : '';
 
+  const authorBioText = author?.bio ? (() => {
+    let text = author.bio;
+    try {
+      const blocks = JSON.parse(author.bio);
+      if (Array.isArray(blocks))
+        text = blocks.filter(b => b.type === 'text').map(b => b.content || '').join(' ');
+    } catch {}
+    return text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  })() : '';
+  const authorDesc = author
+    ? (authorBioText ? authorBioText.slice(0, 155) : `Read blog posts by ${author.name} on Oatmeal Farm Network.`)
+    : '';
+  const canonical = `https://oatmealfarmnetwork.com/blog/authors/${authorId}`;
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      {author && (
+        <PageMeta
+          title={`${author.name} | Blog Author`}
+          description={authorDesc}
+          keywords={`${author.name}, blog author, farm blog, ${author.name} posts, Oatmeal Farm Network`}
+          canonical={canonical}
+          image={author.avatar_url || undefined}
+          jsonLd={{
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            name: author.name,
+            description: authorDesc,
+            url: canonical,
+            ...(author.avatar_url ? { image: author.avatar_url } : {}),
+            ...(author.author_link ? { sameAs: [author.author_link] } : {}),
+          }}
+        />
+      )}
+      {!author && !loading && notFound && (
+        <PageMeta
+          title="Author Not Found"
+          description="The blog author you're looking for is no longer available on Oatmeal Farm Network."
+          canonical={canonical}
+          noIndex
+        />
+      )}
       <Header />
-      <div style={{ maxWidth: '820px', margin: '0 auto', padding: '2rem 1.5rem', flex: 1, width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: '820px', margin: '0 auto', padding: '1rem 1.5rem 2rem', flex: 1, width: '100%', boxSizing: 'border-box' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Blog', to: '/blog' },
+          { label: author?.name || 'Author' },
+        ]} />
         <Link to="/blog" style={{ color: '#7C5CBF', textDecoration: 'none', fontSize: '0.85rem', display: 'inline-block', marginBottom: '1.5rem' }}>
           ← Back to Blog
         </Link>

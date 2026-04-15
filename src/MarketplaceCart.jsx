@@ -172,7 +172,7 @@ export default function MarketplaceCart() {
 
   // Wrap in AccountLayout if BusinessID is present
   if (businessId) {
-    return <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId}>{content}</AccountLayout>;
+    return <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId} pageTitle="Cart" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Marketplace' }, { label: 'Cart' }]}>{content}</AccountLayout>;
   }
   return content;
 }

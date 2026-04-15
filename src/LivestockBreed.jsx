@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -67,15 +68,32 @@ export default function LivestockBreed() {
       <PageMeta
         title={breed ? `${breed.breed} ${label} | Livestock Breed` : `${label} Breed | Livestock Database`}
         description={breed
-          ? `Learn about the ${breed.breed} ${label.toLowerCase()} breed — origin, characteristics, and farming uses.`
+          ? `Learn about the ${breed.breed} ${label.toLowerCase()} breed — origin, characteristics, and farming uses on Oatmeal Farm Network.`
           : `${label} breed information in the Oatmeal Farm Network livestock database.`}
+        keywords={breed ? `${breed.breed}, ${breed.breed} ${label.toLowerCase()}, ${label.toLowerCase()} breed, livestock` : `${label.toLowerCase()} breeds`}
+        canonical={`https://oatmealfarmnetwork.com/livestock/${species}/breed/${breedId}`}
         image={breedImgUrl}
         ogType="article"
+        jsonLd={breed ? {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: `${breed.breed} ${label}`,
+          description: `Learn about the ${breed.breed} ${label.toLowerCase()} breed.`,
+          image: breedImgUrl || undefined,
+          mainEntityOfPage: `https://oatmealfarmnetwork.com/livestock/${species}/breed/${breedId}`,
+        } : undefined}
       />
       <Header />
 
       {/* ── Hero ── */}
       <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Knowledgebases', to: '/knowledgebases' },
+          { label: 'Livestock Database', to: '/livestock' },
+          { label, to: `/livestock/${species}` },
+          { label: breed?.breed || 'Breed' },
+        ]} />
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
             src={heroSrc}

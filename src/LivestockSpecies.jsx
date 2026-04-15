@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -27,9 +28,9 @@ const FALLBACK_IMAGES = {
   'horses':       '/images/cowboy2.webp',
   'llamas':       '/images/Llama2.webp',
   'musk-ox':      '/images/muskox.webp',
-  'ostriches':    '/images/Ostrich.webp',
-  'pheasants':    '/images/Pheasant.webp',
-  'pigs':         '/images/Pig.webp',
+  'ostriches':    '/images/OstrichetHeader.webp',
+  'pheasants':    '/images/PheasantHeader.webp',
+  'pigs':         '/images/PigHeader.webp',
   'pigeons':      '/images/Pigeon.webp',
   'quails':       '/images/Quail.webp',
   'rabbits':      '/images/Rabitts.webp',
@@ -127,11 +128,26 @@ export default function LivestockSpecies() {
       <PageMeta
         title={`${pluralTerm} Breeds | Livestock Database`}
         description={`Browse all ${pluralTerm.toLowerCase()} breeds in the Oatmeal Farm Network livestock database. Find breed characteristics, origins, uses, and farming information.`}
+        keywords={`${pluralTerm.toLowerCase()} breeds, ${pluralTerm.toLowerCase()} farming, ${pluralTerm.toLowerCase()} database, livestock`}
+        canonical={`https://oatmealfarmnetwork.com/livestock/${species}`}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: `${pluralTerm} Breeds`,
+          url: `https://oatmealfarmnetwork.com/livestock/${species}`,
+          description: `Breeds of ${pluralTerm.toLowerCase()} in the Oatmeal Farm Network livestock database.`
+        }}
       />
       <Header />
 
       {/* ── Hero ── */}
       <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Knowledgebases', to: '/knowledgebases' },
+          { label: 'Livestock Database', to: '/livestock' },
+          { label: pluralTerm },
+        ]} />
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
             src={heroSrc}

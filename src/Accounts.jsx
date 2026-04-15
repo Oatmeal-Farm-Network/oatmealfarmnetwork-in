@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const FARM_RANCH_TYPE_ID = 8;
 
@@ -26,9 +28,16 @@ export default function Accounts() {
 
   return (
     <div className="min-h-screen font-sans">
+      <PageMeta
+        title="My Accounts | Oatmeal Farm Network"
+        description="Manage your farm and ranch business accounts on Oatmeal Farm Network."
+        noIndex
+      />
       <Header />
 
       <div className="container mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
+
+        <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'My Accounts' }]} />
 
         <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-3 border-b-2 border-gray-200">
           Accounts

@@ -3,6 +3,7 @@ import { useParams, Link, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -306,8 +307,24 @@ export default function RanchList() {
         description={`Browse ${label.toLowerCase()} ranches and farms across the United States. Find breeders, contact ranchers directly, and discover quality livestock operations on Oatmeal Farm Network.`}
         keywords={`${label.toLowerCase()} ranches, ${label.toLowerCase()} farms, ${label.toLowerCase()} breeders directory, livestock ranchers, ranch directory`}
         canonical={`https://oatmealfarmnetwork.com/marketplaces/livestock/ranches/${slug}`}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: `${label} Ranches & Farms Directory`,
+          url: `https://oatmealfarmnetwork.com/marketplaces/livestock/ranches/${slug}`,
+          description: `Directory of ${label.toLowerCase()} ranches and farms.`
+        }}
       />
       <Header />
+      <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '0.5rem 1rem 0' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Marketplaces', to: '/marketplaces' },
+          { label: 'Livestock', to: '/marketplaces/livestock' },
+          { label: 'Ranches' },
+          { label: `${label} Ranches` },
+        ]} />
+      </div>
       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
         <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(p => !p)} />
         <div style={{ flex: 1, minWidth: 0 }}>

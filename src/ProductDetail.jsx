@@ -5,6 +5,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -153,22 +154,36 @@ export default function ProductDetail() {
         description={productDesc
           ? productDesc.replace(/<[^>]+>/g, '').slice(0, 155)
           : `Shop ${productName} from ${product.SellerName || 'a local farm'} on Oatmeal Farm Network. Buy farm-fresh products directly from farmers.`}
+        keywords={`${productName}, ${product.SellerName || 'farm products'}, ${product.CategoryName || 'local farm goods'}, buy direct from farm`}
         image={mainImg || undefined}
         ogType="product"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: productName,
+          description: productDesc ? productDesc.replace(/<[^>]+>/g, '').slice(0, 500) : undefined,
+          image: mainImg || undefined,
+          ...(product.SellerName ? { brand: { '@type': 'Brand', name: product.SellerName } } : {}),
+          ...(product.prodPrice ? {
+            offers: {
+              '@type': 'Offer',
+              price: product.prodPrice,
+              priceCurrency: 'USD',
+              availability: 'https://schema.org/InStock',
+            }
+          } : {})
+        }}
       />
       <Header />
 
-      {/* Breadcrumb */}
-      <div className="max-w-6xl mx-auto w-full px-4 pt-4 pb-1 text-xs text-gray-400 flex gap-2">
-        <Link to="/marketplace/products" className="hover:text-[#3D6B34]">Products</Link>
-        {product.CategoryName && (
-          <>
-            <span>/</span>
-            <span>{product.CategoryName}</span>
-          </>
-        )}
-        <span>/</span>
-        <span className="text-gray-600">{product.prodName || product.Title}</span>
+      <div className="max-w-6xl mx-auto w-full px-4 pt-4">
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Marketplaces', to: '/marketplaces' },
+          { label: 'Products', to: '/marketplace/products' },
+          ...(product.CategoryName ? [{ label: product.CategoryName }] : []),
+          { label: productName },
+        ]} />
       </div>
 
       <div className="max-w-6xl mx-auto w-full px-4 py-6 flex-grow">

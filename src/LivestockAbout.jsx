@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -32,10 +33,19 @@ export default function LivestockAbout() {
       <PageMeta
         title={`About ${label} | Livestock Species Overview`}
         description={`Learn about ${label.toLowerCase()} — history, characteristics, colors, uses, and farming considerations. Part of the Oatmeal Farm Network livestock knowledgebase.`}
+        keywords={`${label.toLowerCase()}, ${label.toLowerCase()} farming, ${label.toLowerCase()} history, livestock species`}
+        canonical={`https://oatmealfarmnetwork.com/livestock/${species}/about`}
       />
      <Header />
 
       <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Knowledgebases', to: '/knowledgebases' },
+          { label: 'Livestock Database', to: '/livestock' },
+          { label, to: `/livestock/${species}` },
+          { label: 'About' },
+        ]} />
         {loading ? (
           <div className="text-gray-400 py-12 text-center">Loading...</div>
         ) : !info ? (

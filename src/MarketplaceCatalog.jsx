@@ -2,6 +2,8 @@
 // Public page - anyone can browse, only logged-in users can order
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -80,8 +82,30 @@ export default function MarketplaceCatalog() {
 
   const typeLabels = { produce: 'Produce', meat: 'Meat', processed_food: 'Value Added' };
 
+  const catTitle = category ? `${category} — ` : '';
+  const typeTitle = productType ? `${typeLabels[productType] || productType} — ` : '';
+  const metaTitle = `${catTitle}${typeTitle}Farm to Restaurant Marketplace | Oatmeal Farm Network`;
+  const metaDesc = search
+    ? `Search results for "${search}" in the Oatmeal Farm Network marketplace.`
+    : 'Browse fresh produce, meats, and artisan foods direct from local farms on Oatmeal Farm Network.';
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <PageMeta
+        title={metaTitle}
+        description={metaDesc}
+        keywords="farm to table, local produce, farm direct, marketplace, organic, meat, artisan food"
+        canonical="/marketplace/catalog"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Farm to Restaurant Marketplace',
+          description: metaDesc,
+        }}
+      />
+      <div className="max-w-7xl mx-auto px-4 pt-4">
+        <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Marketplace', to: '/marketplace/catalog' }, ...(productType ? [{ label: typeLabels[productType] || productType }] : []), ...(category ? [{ label: category }] : [])]} />
+      </div>
       {/* Hero */}
       <div className="bg-gradient-to-r from-[#819360] to-[#5a6b3e] text-white py-12 px-6 text-center">
         <h1 className="text-3xl font-bold mb-2">Farm to Restaurant Marketplace</h1>
