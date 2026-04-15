@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -190,6 +191,12 @@ export default function BlogList() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      <PageMeta
+        title="Farm Blog | Stories from Farmers, Ranchers & Food Producers"
+        description="Read the latest blog posts from farmers, ranchers, and food producers on Oatmeal Farm Network — farm news, recipes, seasonal updates, market insights, and community stories."
+        keywords="farm blog, ranch blog, farmer stories, farm recipes, agricultural news, food producer blog, seasonal farming, market updates"
+        canonical="https://oatmealfarmnetwork.com/blog"
+      />
       <Header />
       <div style={{ flex: 1 }}>
         <BlogListContent />

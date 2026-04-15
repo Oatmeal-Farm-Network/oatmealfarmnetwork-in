@@ -68,8 +68,8 @@ export default function AccountHome() {
       ],
     },
 
-    // Livestock — Farm/Ranch only
-    on('livestock') && BT === 8 && {
+    // Livestock
+    on('livestock') && {
       icon: '/icons/Livestock.svg',
       label: 'Livestock',
       links: [
@@ -162,6 +162,19 @@ export default function AccountHome() {
       links: [
         { to: `/website/builder?BusinessID=${BusinessID}&view=design`, label: 'Design' },
         { to: `/website/builder?BusinessID=${BusinessID}&view=settings`, label: 'Settings (& Delete)' },
+      ],
+    },
+
+    // Accounting — all businesses with AccessLevelID >= 3
+    {
+      icon: '/icons/accounting.svg',
+      label: 'Accounting',
+      links: [
+        { to: `/accounting?BusinessID=${BusinessID}`, label: 'Dashboard' },
+        { to: `/accounting?BusinessID=${BusinessID}#invoices`, label: 'Invoices' },
+        { to: `/accounting?BusinessID=${BusinessID}#customers`, label: 'Customers' },
+        { to: `/accounting?BusinessID=${BusinessID}#vendors`, label: 'Vendors' },
+        { to: `/accounting?BusinessID=${BusinessID}#reports`, label: 'Reports' },
       ],
     },
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -10,6 +11,20 @@ const ANCESTRY_OPTIONS = [
   'Full Chilean', 'Partial Chilean',
   'Full Bolivian', 'Partial Bolivian',
 ];
+
+const US_STATE_ABBR = {
+  AL:'Alabama', AK:'Alaska', AZ:'Arizona', AR:'Arkansas', CA:'California',
+  CO:'Colorado', CT:'Connecticut', DE:'Delaware', FL:'Florida', GA:'Georgia',
+  HI:'Hawaii', ID:'Idaho', IL:'Illinois', IN:'Indiana', IA:'Iowa', KS:'Kansas',
+  KY:'Kentucky', LA:'Louisiana', ME:'Maine', MD:'Maryland', MA:'Massachusetts',
+  MI:'Michigan', MN:'Minnesota', MS:'Mississippi', MO:'Missouri', MT:'Montana',
+  NE:'Nebraska', NV:'Nevada', NH:'New Hampshire', NJ:'New Jersey', NM:'New Mexico',
+  NY:'New York', NC:'North Carolina', ND:'North Dakota', OH:'Ohio', OK:'Oklahoma',
+  OR:'Oregon', PA:'Pennsylvania', RI:'Rhode Island', SC:'South Carolina',
+  SD:'South Dakota', TN:'Tennessee', TX:'Texas', UT:'Utah', VT:'Vermont',
+  VA:'Virginia', WA:'Washington', WV:'West Virginia', WI:'Wisconsin', WY:'Wyoming',
+  DC:'District of Columbia',
+};
 
 const SIDEBAR_SECTIONS = [
   {
@@ -274,12 +289,14 @@ export default function LivestockForSale() {
   const isStuds = pathname.includes('/studs/');
 
   const [data, setData] = useState(null);
-  const [filters, setFilters] = useState({ breeds: [], states: [] });
+  const [filters, setFilters] = useState({ breeds: [], states: [], ranches: [] });
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const [breedId, setBreedId] = useState(Number(searchParams.get('breed_id')) || 0);
   const [stateIndex, setStateIndex] = useState(Number(searchParams.get('state_index')) || 0);
+  const [businessId, setBusinessId] = useState(Number(searchParams.get('business_id')) || 0);
+  const [ranchSearch, setRanchSearch] = useState('');
   const [minPrice, setMinPrice] = useState(searchParams.get('min_price') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('max_price') || '');
   const [ancestry, setAncestry] = useState(searchParams.get('ancestry') || 'Any');
@@ -295,6 +312,8 @@ export default function LivestockForSale() {
   useEffect(() => {
     setBreedId(0);
     setStateIndex(0);
+    setBusinessId(0);
+    setRanchSearch('');
     setMinPrice('');
     setMaxPrice('');
     setAncestry('Any');
@@ -306,9 +325,9 @@ export default function LivestockForSale() {
 
   useEffect(() => {
     fetch(`${API_URL}/api/marketplace/filters/${slug}`)
-      .then(r => r.ok ? r.json() : { breeds: [], states: [] })
-      .then(d => setFilters({ breeds: d.breeds || [], states: d.states || [] }))
-      .catch(() => setFilters({ breeds: [], states: [] }));
+      .then(r => r.ok ? r.json() : { breeds: [], states: [], ranches: [] })
+      .then(d => setFilters({ breeds: d.breeds || [], states: d.states || [], ranches: d.ranches || [] }))
+      .catch(() => setFilters({ breeds: [], states: [], ranches: [] }));
   }, [slug]);
 
   const [singularTerm, setSingularTerm] = useState('');
@@ -327,6 +346,7 @@ export default function LivestockForSale() {
       page,
       breed_id: breedId,
       state_index: stateIndex,
+      business_id: businessId,
       [`min_${priceParam}`]: minPrice || 0,
       [`max_${priceParam}`]: maxPrice || 100000000,
       ancestry,
@@ -343,7 +363,7 @@ export default function LivestockForSale() {
         setData({ total: 0, page: 1, per_page: 10, total_pages: 1, animals: [] });
         setLoading(false);
       });
-  }, [slug, page, breedId, stateIndex, minPrice, maxPrice, ancestry, sortBy, orderBy, isStuds]);
+  }, [slug, page, breedId, stateIndex, businessId, minPrice, maxPrice, ancestry, sortBy, orderBy, isStuds]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -357,8 +377,21 @@ export default function LivestockForSale() {
   const otherLabel = isStuds ? `${label} For Sale` : `${label} Stud Services`;
   const priceLabel = isStuds ? 'Stud Fee' : 'Price';
 
+  const metaDesc = isStuds
+    ? `Browse ${label.toLowerCase()} stud services from ranchers and breeders across the US. Compare fees, genetics, and connect with breeders on Oatmeal Farm Network.`
+    : `Browse ${label.toLowerCase()} for sale from ranchers and breeders across the US. Filter by breed, state, price, and ancestry on Oatmeal Farm Network.`;
+  const metaCanonical = isStuds
+    ? `https://oatmealfarmnetwork.com/marketplaces/livestock/studs/${slug}`
+    : `https://oatmealfarmnetwork.com/marketplaces/livestock/${slug}`;
+
   return (
     <div className="min-h-screen font-sans">
+      <PageMeta
+        title={`${pageTitle} | Livestock Marketplace`}
+        description={metaDesc}
+        keywords={`${label.toLowerCase()} for sale, ${label.toLowerCase()} breeders, livestock marketplace, ${isStuds ? 'stud services, ' : ''}farm animals, ranchers`}
+        canonical={metaCanonical}
+      />
       <Header />
 
       {/* Sidebar + content directly under header */}
@@ -396,14 +429,57 @@ export default function LivestockForSale() {
                   </select>
                 </div>
 
-                {filters.states.length > 0 && (
+                {(() => {
+                  const cleanStates = (() => {
+                    const byName = new Map();
+                    filters.states.forEach(s => {
+                      const idx = Number(s.state_index);
+                      const name = (s.state || '').trim();
+                      if (!idx || idx <= 0 || !name || /^\d+$/.test(name) || name.length < 2) return;
+                      const upper = name.toUpperCase();
+                      const pretty = US_STATE_ABBR[upper]
+                        || (name.length <= 2 ? upper : name.charAt(0).toUpperCase() + name.slice(1).toLowerCase());
+                      const existing = byName.get(pretty);
+                      if (!existing || idx < existing) byName.set(pretty, idx);
+                    });
+                    return Array.from(byName.entries())
+                      .map(([name, index]) => ({ index, name }))
+                      .sort((a, b) => a.name.localeCompare(b.name));
+                  })();
+                  return cleanStates.length > 0 && (
+                    <div style={filterBox}>
+                      <label style={filterLabel}>State</label>
+                      <select value={stateIndex} onChange={e => { setStateIndex(Number(e.target.value)); setPage(1); }} style={selectStyle}>
+                        <option value={0}>All States</option>
+                        {cleanStates.map(s => (
+                          <option key={s.index} value={s.index}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })()}
+
+                {filters.ranches.length > 0 && (
                   <div style={filterBox}>
-                    <label style={filterLabel}>State</label>
-                    <select value={stateIndex} onChange={e => { setStateIndex(Number(e.target.value)); setPage(1); }} style={selectStyle}>
-                      <option value={0}>All States</option>
-                      {filters.states.map(s => (
-                        <option key={s.index} value={s.index}>{s.name}</option>
-                      ))}
+                    <label style={filterLabel}>Ranch</label>
+                    <input
+                      type="text"
+                      value={ranchSearch}
+                      onChange={e => setRanchSearch(e.target.value)}
+                      placeholder="Search ranches…"
+                      style={inputStyle}
+                    />
+                    <select
+                      value={businessId}
+                      onChange={e => { setBusinessId(Number(e.target.value)); setPage(1); }}
+                      style={{ ...selectStyle, marginTop: 6 }}
+                    >
+                      <option value={0}>All Ranches</option>
+                      {filters.ranches
+                        .filter(r => !ranchSearch.trim() || (r.name || '').toLowerCase().includes(ranchSearch.trim().toLowerCase()))
+                        .map(r => (
+                          <option key={r.id} value={r.id}>{r.name}</option>
+                        ))}
                     </select>
                   </div>
                 )}

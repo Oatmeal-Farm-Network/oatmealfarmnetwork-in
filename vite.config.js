@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
@@ -15,6 +16,14 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+    },
+    // Don't watch the large static images folder — it has 33k+ files and
+    // kills dev server startup and HMR performance.
+    watch: {
+      ignored: [
+        '**/public/images/**',
+        '**/node_modules/**',
+      ],
     },
   },
 });

@@ -535,6 +535,7 @@
   justify-content: center;
   cursor: pointer;
   overflow: hidden;
+  position: relative;
   transition: border-color 0.15s, background 0.15s;
   background: #f9fafb;
 }
@@ -618,21 +619,21 @@
 }
 
 .next-btn {
-  background: #2d6a2d;
+  background: rgb(115, 131, 85);
   color: #fff;
 }
 
 .next-btn:hover {
-  background: #1a5c1a;
+  background: rgb(93, 106, 68);
 }
 
 .submit-btn {
-  background: #15803d;
+  background: rgb(115, 131, 85);
   color: #fff;
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #0f6631;
+  background: rgb(93, 106, 68);
 }
 
 .submit-btn:disabled {
@@ -670,7 +671,7 @@
 
 .wizard-success h2 {
   font-size: 1.6rem;
-  color: #15803d;
+  color: rgb(115, 131, 85);
   margin-bottom: 8px;
 }
 

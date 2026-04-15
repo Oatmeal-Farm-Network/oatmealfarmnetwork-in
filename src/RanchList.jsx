@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -300,6 +301,12 @@ export default function RanchList() {
 
   return (
     <div className="min-h-screen font-sans">
+      <PageMeta
+        title={`${label} Ranches & Farms Directory`}
+        description={`Browse ${label.toLowerCase()} ranches and farms across the United States. Find breeders, contact ranchers directly, and discover quality livestock operations on Oatmeal Farm Network.`}
+        keywords={`${label.toLowerCase()} ranches, ${label.toLowerCase()} farms, ${label.toLowerCase()} breeders directory, livestock ranchers, ranch directory`}
+        canonical={`https://oatmealfarmnetwork.com/marketplaces/livestock/ranches/${slug}`}
+      />
       <Header />
       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
         <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(p => !p)} />

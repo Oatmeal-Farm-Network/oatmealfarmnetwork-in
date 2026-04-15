@@ -249,7 +249,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
-            {on('livestock') && BT === 8 && (
+            {on('livestock') && (
               <NavSection
                 icon="/icons/Livestock.svg"
                 label="Livestock"
@@ -361,6 +361,20 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
                 )}
               </NavSection>
             )}
+
+            <NavSection
+              icon="/icons/Subscription.png"
+              label="Account Settings"
+              expanded={Expanded}
+              isOpen={OpenSections['Account Settings'] || false}
+              onToggle={() => toggleSection('Account Settings')}
+            >
+              <NavChild to={`/account/change-type?BusinessID=${BusinessID}`} label="Change Account Type" />
+              <NavChild to={`/account/associations?BusinessID=${BusinessID}`} label="Favorite Association" />
+              <NavChild to={`/account/profile?BusinessID=${BusinessID}`} label="Account Profile" />
+              <NavChild to={`/account/renew?BusinessID=${BusinessID}`} label="Renew / Upgrade Membership" />
+              <NavChild to={`/account/delete?BusinessID=${BusinessID}`} label="Delete Account" />
+            </NavSection>
 
           </nav>
         </div>
