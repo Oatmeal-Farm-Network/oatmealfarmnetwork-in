@@ -778,7 +778,7 @@ function BasicsTab({ animalID, businessID }) {
           Name: data.FullName || "",
           SpeciesID: data.SpeciesID || "",
           DOB: dobStr,
-          Category: data.Category || "",
+          Category: data.SpeciesCategoryID || "",
           BreedID: data.BreedID || "",
           BreedID2: data.BreedID2 || "",
           BreedID3: data.BreedID3 || "",
@@ -957,7 +957,7 @@ function BasicsTab({ animalID, businessID }) {
             <FormSelect value={form.Category} onChange={v => set("Category", v)}>
               <option value="">Select…</option>
               {categories.map(c => (
-                <option key={c.id} value={c.name}>{c.name}</option>
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </FormSelect>
           </FormField>

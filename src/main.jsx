@@ -90,6 +90,8 @@ const LivestockAnimalProgeny = lazy(() => import('./LivestockAnimalProgeny.jsx')
 const RanchList = lazy(() => import('./RanchList.jsx'))
 const OrgProfile = lazy(() => import('./OrgProfile.jsx'))
 const Accounting = lazy(() => import('./Accounting.jsx'))
+const TestimonialsManage = lazy(() => import('./TestimonialsManage.jsx'))
+const TestimonialsRequest = lazy(() => import('./TestimonialsRequest.jsx'))
 
 function RequireAuth({ children }) {
   const token = localStorage.getItem('access_token');
@@ -180,6 +182,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/events/:eventId/register" element={<EventRegister />} />
           <Route path="/events/:eventId" element={<EventDetail />} />
           <Route path="/events" element={<EventsList />} />
+
+          <Route path="/testimonials/manage" element={<TestimonialsManage />} />
+          <Route path="/testimonials/request" element={<TestimonialsRequest />} />
 
           <Route path="/forgot-password" element={<ForgotPassword />} />
 

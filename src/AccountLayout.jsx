@@ -318,6 +318,17 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
+            <NavSection
+              icon="/images/handshake.webp"
+              label="Testimonials"
+              expanded={Expanded}
+              isOpen={OpenSections.Testimonials || false}
+              onToggle={() => toggleSection('Testimonials')}
+            >
+              <NavChild to={`/testimonials/manage?BusinessID=${BusinessID}`} label="Manage Testimonials" />
+              <NavChild to={`/testimonials/request?BusinessID=${BusinessID}`} label="Request Testimonials" />
+            </NavSection>
+
             {on('properties') && [8, 30].includes(BT) && (
               <NavSection
                 icon="/icons/Real-Estate.svg"

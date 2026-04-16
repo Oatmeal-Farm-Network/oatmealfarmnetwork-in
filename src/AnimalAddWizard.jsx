@@ -725,7 +725,7 @@ function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registr
           <select className={`form-select ${errors.category?"input-error":""}`} value={formData.category||""} onChange={(e)=>onChange("category",e.target.value)}>
             <option value="">-- Select Category --</option>
             {categories && categories.length > 0
-              ? categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)
+              ? categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)
               : <CategoryOptions speciesID={sid} isMultiple={isMultiple} />
             }
           </select>
@@ -1765,7 +1765,7 @@ export default function AnimalAddWizard() {
       a("Name",                formData.name);
       a("SpeciesID",           formData.speciesID);
       a("NumberOfAnimals",     formData.numberOfAnimals);
-      a("Category",            formData.category);
+      a("SpeciesCategoryID",   formData.category);
       a("BreedID",             formData.breedID);
       a("BreedID2",            formData.breedID2);
       a("BreedID3",            formData.breedID3);
