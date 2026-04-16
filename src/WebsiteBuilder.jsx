@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import WebsiteAIAgent from './WebsiteAIAgent';
+import { LivestockAnimalDetailContent } from './LivestockAnimalDetail';
 
 const API = import.meta.env.VITE_API_URL;
 const SITE_BASE_URL = 'https://www.OatmealFarmNetwork.com';
@@ -2207,7 +2208,7 @@ function normLinksGroups(d) {
 }
 
 // ── SimpleBlockPreview: read-only canvas preview of each block ────
-function SimpleBlockPreview({ block, site, businessId }) {
+function SimpleBlockPreview({ block, site, businessId, onFieldSave }) {
   const d   = block.block_data || {};
   const bt  = block.block_type;
   const primary    = site?.primary_color  || '#3D6B34';
@@ -2377,6 +2378,10 @@ function SimpleBlockPreview({ block, site, businessId }) {
 
   // Blog block — shows live posts in a table with refresh
   if (bt === 'blog') return <BlogBlockCanvas block={block} site={site} businessId={businessId} />;
+
+  // Livestock block — live listing with views / sort / search
+  if (bt === 'livestock') return <LivestockBlockCanvas block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />;
+  if (bt === 'studs') return <LivestockBlockCanvas block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} mode="stud" />;
 
   // Contact block — show actual form preview
   if (bt === 'contact') {
@@ -2823,7 +2828,8 @@ function InlineLinksEditor({ block, site, onFieldSave }) {
 // ── CanvasBlock: click-to-select with ↑↓ + delete controls ────────
 function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onDragStart, onDragOver, onDrop, isDragging, site, onFieldSave, businessId, pages }) {
   const meta = BLOCK_TYPES.find(b => b.type === block.block_type);
-  const INLINE_TYPES = ['about', 'content', 'content_2col', 'content_4col', 'links'];
+  // Blocks that edit in-place on the canvas — disable drag so text selection works.
+  const INLINE_TYPES = ['about', 'content', 'content_2col', 'content_4col', 'links', 'livestock', 'studs'];
   const isInlineEditable = isSelected && INLINE_TYPES.includes(block.block_type);
   return (
     <div
@@ -2849,9 +2855,11 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
           ? <MultiColumnInlineEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} columnCount={2} pages={pages} />
           : isInlineEditable && block.block_type === 'content_4col'
             ? <MultiColumnInlineEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} columnCount={4} pages={pages} />
-            : isInlineEditable
-              ? <InlineContentEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} pages={pages} />
-              : <SimpleBlockPreview block={block} site={site} businessId={businessId} />}
+            : isInlineEditable && (block.block_type === 'livestock' || block.block_type === 'studs')
+              ? <SimpleBlockPreview block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />
+              : isInlineEditable
+                ? <InlineContentEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} pages={pages} />
+                : <SimpleBlockPreview block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />}
 
       {/* Controls — always visible when selected, shown on hover via CSS */}
       <div className="block-controls" style={{
@@ -2861,6 +2869,46 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
         <span style={{ background: '#3b82f6', color: '#fff', fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 4, alignSelf: 'center', marginRight: 4 }}>
           {meta?.label || block.block_type}
         </span>
+        {(block.block_type === 'livestock' || block.block_type === 'studs') && onFieldSave && (
+          <>
+            <label
+              onClick={e => e.stopPropagation()}
+              onMouseDown={e => e.stopPropagation()}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '2px 6px', fontSize: 11, color: '#374151' }}
+            >
+              <span style={{ fontWeight: 600, color: '#64748b' }}>Heading:</span>
+              <select
+                value={block.block_data?.heading_style || 'h1'}
+                onClick={e => e.stopPropagation()}
+                onMouseDown={e => e.stopPropagation()}
+                onChange={e => { e.stopPropagation(); onFieldSave('heading_style', e.target.value); }}
+                style={{ border: 'none', background: 'transparent', fontSize: 11, color: '#374151', cursor: 'pointer', outline: 'none' }}
+              >
+                <option value="h1">H1</option>
+                <option value="h2">H2</option>
+                <option value="h3">H3</option>
+              </select>
+            </label>
+            <label
+              onClick={e => e.stopPropagation()}
+              onMouseDown={e => e.stopPropagation()}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '2px 6px', fontSize: 11, color: '#374151' }}
+            >
+              <span style={{ fontWeight: 600, color: '#64748b' }}>Default Layout:</span>
+              <select
+                value={block.block_data?.default_view || 'grid'}
+                onClick={e => e.stopPropagation()}
+                onMouseDown={e => e.stopPropagation()}
+                onChange={e => { e.stopPropagation(); onFieldSave('default_view', e.target.value); }}
+                style={{ border: 'none', background: 'transparent', fontSize: 11, color: '#374151', cursor: 'pointer', outline: 'none' }}
+              >
+                <option value="grid">▦ Grid</option>
+                <option value="list">☰ List</option>
+                <option value="table">▤ Table</option>
+              </select>
+            </label>
+          </>
+        )}
         <button onClick={e => { e.stopPropagation(); onMoveUp(); }} disabled={isFirst}
           style={{ padding: '3px 8px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, cursor: isFirst ? 'default' : 'pointer', fontSize: 12, opacity: isFirst ? 0.35 : 1 }}>↑</button>
         <button onClick={e => { e.stopPropagation(); onMoveDown(); }} disabled={isLast}
@@ -3249,6 +3297,452 @@ function BlogBlockCanvas({ block, site, businessId }) {
   );
 }
 
+// ── LivestockBlockCanvas: live "for sale" or "stud" animals, grouped by category ──
+// mode='sale' (default) shows PublishForSale animals; mode='stud' shows PublishStud animals.
+function LivestockBlockCanvas({ block, site, businessId, onFieldSave, mode = 'sale' }) {
+  const isStud = mode === 'stud';
+  const d = block.block_data || {};
+  const [animals, setAnimals] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedIdx, setSelectedIdx] = useState(null);
+  const [viewMode, setViewMode] = useState(d.default_view || 'grid'); // grid | list | table
+  const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState('name');
+  const [detailAnimal, setDetailAnimal] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  // Keep viewMode in sync when default_view is edited in the right panel
+  useEffect(() => { setViewMode(d.default_view || 'grid'); }, [d.default_view]);
+
+
+  const primary    = site?.primary_color  || '#3D6B34';
+  const textColor  = site?.text_color     || '#111827';
+  const fontFamily = site?.font_family    || 'inherit';
+  const bgWidth    = site?.body_bg_width  || '100%';
+  const bgColor    = d.bg_color || site?.bg_color || '#fff';
+  const bodySize   = site?.body_size  || '1rem';
+  // Match the public `BodyText` style so inline editor shows the site body typography
+  const bodyBaseStyle = {
+    fontFamily: site?.body_font  || site?.font_family || 'inherit',
+    fontSize:   site?.body_size  || '1rem',
+    color:      site?.body_color || site?.text_color  || '#4B5563',
+    lineHeight: site?.body_line_height || 1.75,
+    fontStyle:  site?.body_italic ? 'italic' : 'normal',
+  };
+
+  // Strip HTML tags from descriptions (backend stores rich text in Animals.Description)
+  const stripHtml = (s) => {
+    if (!s) return '';
+    try {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = s;
+      return (tmp.textContent || tmp.innerText || '').replace(/\s+/g, ' ').trim();
+    } catch {
+      return String(s).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    }
+  };
+
+  const fmtPrice = (n) => {
+    if (n === null || n === undefined || n === '' || Number(n) === 0) return '';
+    const num = Number(n);
+    if (Number.isNaN(num)) return '';
+    return num.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  };
+
+  // Whether to show StudFee for this animal
+  const showStud = (a) => a.PublishStud && Number(a.StudFee || 0) > 0;
+
+  const fetchAnimals = useCallback(() => {
+    if (!businessId) return;
+    setLoading(true);
+    fetch(`${API}/api/website/content/livestock?business_id=${businessId}`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => setAnimals(Array.isArray(data) ? data : []))
+      .catch(() => setAnimals([]))
+      .finally(() => setLoading(false));
+  }, [businessId]);
+
+  useEffect(() => { fetchAnimals(); setSelectedIdx(null); }, [fetchAnimals]);
+
+  const defaultHeading = isStud ? 'Stud Services' : 'Animals For Sale';
+  const heading = d.heading || defaultHeading;
+
+  // Map livestock field names to InlineContentEditor's expected shape
+  const inlineData = { heading: d.heading, heading_style: d.heading_style, body: d.intro_body, bg_color: d.bg_color };
+  const inlineFieldSave = onFieldSave
+    ? (field, val) => onFieldSave(field === 'body' ? 'intro_body' : field, val)
+    : null;
+
+  // Filter animals by mode
+  const forSale = useMemo(
+    () => animals.filter(a => isStud ? (a.PublishStud || Number(a.StudFee || 0) > 0) : a.PublishForSale),
+    [animals, isStud]
+  );
+
+  // Apply search filter
+  const visible = useMemo(() => {
+    let list = forSale;
+    const q = search.trim().toLowerCase();
+    if (q) {
+      list = list.filter(a =>
+        (a.FullName || '').toLowerCase().includes(q) ||
+        (a.Breed || '').toLowerCase().includes(q) ||
+        (a.CategoryName || '').toLowerCase().includes(q) ||
+        (a.Description || '').toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [forSale, search]);
+
+  // Group by category, sorted by CategoryOrder → name
+  const groups = useMemo(() => {
+    const map = new Map();
+    for (const a of visible) {
+      const key = a.CategoryName || 'Other';
+      if (!map.has(key)) {
+        map.set(key, {
+          name: a.CategoryName || 'Other',
+          plural: a.CategoryPlural || (a.CategoryName ? `${a.CategoryName}s` : 'Other'),
+          order: a.CategoryOrder ?? 9999,
+          items: [],
+        });
+      }
+      map.get(key).items.push(a);
+    }
+    const arr = [...map.values()];
+    arr.sort((a, b) => (a.order - b.order) || a.name.localeCompare(b.name));
+    // Sort items within each group by selected key
+    const priceOf = (a) => {
+      const s = Number(a.SalePrice || 0);
+      const p = Number(a.Price || 0);
+      return s > 0 ? s : p;
+    };
+    for (const g of arr) {
+      g.items.sort((x, y) => {
+        if (sortKey === 'name')       return (x.FullName || '').localeCompare(y.FullName || '');
+        if (sortKey === 'breed')      return (x.Breed || '').localeCompare(y.Breed || '');
+        if (sortKey === 'price_asc')  return priceOf(x) - priceOf(y);
+        if (sortKey === 'price_desc') return priceOf(y) - priceOf(x);
+        return 0;
+      });
+    }
+    return arr;
+  }, [visible, sortKey]);
+
+  // Flat list of visible animals for prev/next in detail view
+  const flat = useMemo(() => groups.flatMap(g => g.items), [groups]);
+
+  // Distinct breeds across the visible set — used to hide "Sort: Breed" when only one breed exists
+  const breedCount = useMemo(() => {
+    const s = new Set();
+    for (const a of forSale) {
+      if (a.Breed) s.add(a.Breed);
+    }
+    return s.size;
+  }, [forSale]);
+
+  // If user previously picked "breed" but there's now only one breed, fall back to "name"
+  useEffect(() => {
+    if (sortKey === 'breed' && breedCount < 2) setSortKey('name');
+  }, [breedCount, sortKey]);
+
+  // ── Detail view ──────────────────────────────────────────────────
+  // When an animal is selected, fetch the full marketplace detail payload so
+  // we can render the same rich layout as the public page.
+  const selectedStub = selectedIdx !== null ? flat[selectedIdx] : null;
+  useEffect(() => {
+    if (!selectedStub) { setDetailAnimal(null); return; }
+    setDetailLoading(true);
+    fetch(`${API}/api/marketplace/animal/${selectedStub.AnimalID}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setDetailAnimal(data))
+      .catch(() => setDetailAnimal(null))
+      .finally(() => setDetailLoading(false));
+  }, [selectedStub?.AnimalID]);
+
+  if (selectedIdx !== null && selectedStub) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center' }} onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+        <div style={{ width: '100%', maxWidth: bgWidth, background: bgColor, fontFamily }}>
+          {detailLoading && !detailAnimal ? (
+            <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Loading animal details…</div>
+          ) : detailAnimal ? (
+            <LivestockAnimalDetailContent
+              animal={detailAnimal}
+              siteMode
+              onBack={() => setSelectedIdx(null)}
+              backLabel={heading}
+              onPrev={() => setSelectedIdx(selectedIdx - 1)}
+              onNext={() => setSelectedIdx(selectedIdx + 1)}
+              hasPrev={selectedIdx > 0}
+              hasNext={selectedIdx < flat.length - 1}
+              primaryColor={primary}
+              fontFamily={fontFamily}
+            />
+          ) : (
+            <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#ef4444', fontSize: 13 }}>
+              Could not load animal details.
+              <div style={{ marginTop: 12 }}>
+                <button onClick={() => setSelectedIdx(null)} style={{ background: 'none', border: 'none', color: primary, cursor: 'pointer', fontSize: 13 }}>← Back to {heading}</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Toolbar controls (stopPropagation so they don't select block) ──
+  const stop = e => e.stopPropagation();
+  const ctrlBtn = active => ({
+    padding: '5px 10px',
+    background: active ? primary : '#fff',
+    color: active ? '#fff' : '#64748b',
+    border: `1px solid ${active ? primary : '#e2e8f0'}`,
+    borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+  });
+
+  // Compute the flat index for a given animal so detail view shows the right one
+  const indexOf = (animal) => flat.findIndex(x => x.AnimalID === animal.AnimalID);
+
+  // Card renderer (grid view) — full-height uncropped image
+  const renderGridCard = (a) => (
+    <div key={a.AnimalID}
+      onClick={e => { e.stopPropagation(); setSelectedIdx(indexOf(a)); }}
+      style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', cursor: 'pointer', transition: 'box-shadow 0.15s', display: 'flex', flexDirection: 'column' }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.11)'}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'}
+    >
+      {a.Photo1
+        ? <img src={a.Photo1} alt={a.FullName || ''} style={{ width: '100%', height: 'auto', display: 'block' }} onError={e => e.target.style.display = 'none'} />
+        : <div style={{ aspectRatio: '4 / 3', background: `${primary}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem' }}>🐄</div>}
+      <div style={{ padding: '0.75rem 0.9rem', display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+        <div style={{ fontWeight: 700, fontSize: '0.92rem', color: textColor, lineHeight: 1.3 }}>{a.FullName}</div>
+        {(a.Breed || a.CategoryName) && <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>{a.Breed}{a.Breed && a.CategoryName ? ' · ' : ''}{a.CategoryName}</div>}
+        {isStud ? (
+          fmtPrice(a.StudFee) && (
+            <div style={{ fontSize: '0.8rem', marginTop: 2 }}>
+              <span style={{ color: primary, fontWeight: 700 }}>Stud Fee: {fmtPrice(a.StudFee)}</span>
+            </div>
+          )
+        ) : (fmtPrice(a.Price) || showStud(a)) && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: '0.8rem', marginTop: 2 }}>
+            {fmtPrice(a.Price) && (
+              <span style={{ color: primary, fontWeight: 700 }}>
+                {fmtPrice(a.Price)}
+                {fmtPrice(a.SalePrice) && <span style={{ color: '#ef4444', marginLeft: 4 }}>({fmtPrice(a.SalePrice)})</span>}
+              </span>
+            )}
+            {showStud(a) && <span style={{ color: '#6B7280' }}>Stud {fmtPrice(a.StudFee)}</span>}
+          </div>
+        )}
+        {a.PriceComments && <div style={{ fontSize: '0.72rem', color: '#9ca3af', fontStyle: 'italic' }}>{stripHtml(a.PriceComments)}</div>}
+      </div>
+    </div>
+  );
+
+  const renderListCard = (a) => (
+    <div key={a.AnimalID}
+      onClick={e => { e.stopPropagation(); setSelectedIdx(indexOf(a)); }}
+      style={{ background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', cursor: 'pointer', transition: 'box-shadow 0.15s', alignItems: 'stretch' }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.11)'}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'}
+    >
+      {a.Photo1
+        ? <img src={a.Photo1} alt={a.FullName || ''} style={{ width: 200, minWidth: 200, height: 'auto', objectFit: 'contain', alignSelf: 'flex-start', flexShrink: 0, display: 'block', background: '#f8fafc' }} onError={e => e.target.style.display = 'none'} />
+        : <div style={{ width: 200, minWidth: 200, background: `${primary}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', flexShrink: 0 }}>🐄</div>}
+      <div style={{ padding: '0.85rem 1.1rem', display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: '1rem', color: textColor, lineHeight: 1.3 }}>{a.FullName}</div>
+        {(a.Breed || a.CategoryName) && <div style={{ fontSize: '0.8rem', color: '#6B7280' }}>{a.Breed}{a.Breed && a.CategoryName ? ' · ' : ''}{a.CategoryName}</div>}
+        {isStud ? (
+          fmtPrice(a.StudFee) && (
+            <div style={{ fontSize: '0.88rem', marginTop: 2 }}>
+              <span style={{ color: primary, fontWeight: 700 }}>Stud Fee: {fmtPrice(a.StudFee)}</span>
+            </div>
+          )
+        ) : (fmtPrice(a.Price) || showStud(a)) && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: '0.88rem', marginTop: 2 }}>
+            {fmtPrice(a.Price) && (
+              <span style={{ color: primary, fontWeight: 700 }}>
+                {fmtPrice(a.Price)}
+                {fmtPrice(a.SalePrice) && <span style={{ color: '#ef4444', marginLeft: 4 }}>({fmtPrice(a.SalePrice)})</span>}
+              </span>
+            )}
+            {showStud(a) && <span style={{ color: '#6B7280' }}>Stud: <strong style={{ color: textColor }}>{fmtPrice(a.StudFee)}</strong></span>}
+          </div>
+        )}
+        {a.PriceComments && <div style={{ fontSize: '0.75rem', color: '#9ca3af', fontStyle: 'italic' }}>{stripHtml(a.PriceComments)}</div>}
+        {a.Description && <p style={{ margin: 0, fontSize: '0.82rem', color: '#4b5563', lineHeight: 1.6, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{stripHtml(a.Description)}</p>}
+      </div>
+    </div>
+  );
+
+  const groupHeading = (g) => g.plural || g.name;
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: bgWidth, background: bgColor, fontFamily }}>
+        {/* Heading + intro text — same inline editor as the 1-column content block */}
+        {onFieldSave ? (
+          <div
+            draggable={false}
+            onDragStart={e => { e.preventDefault(); e.stopPropagation(); }}
+            onMouseDown={e => e.stopPropagation()}
+          >
+            <InlineContentEditor
+              key={block.block_id}
+              block={block}
+              site={site}
+              onFieldSave={inlineFieldSave}
+              data={inlineData}
+            />
+          </div>
+        ) : (
+          <div style={{ padding: '1.75rem 2.5rem' }}>
+            <div className="rte-body">
+              <HeadTag style={headingTypoStyle(d.heading_style || 'h1', site)} dangerouslySetInnerHTML={{ __html: d.heading || defaultHeading }} />
+              {d.intro_body && (
+                <div style={{ ...bodyBaseStyle, marginTop: 6 }} dangerouslySetInnerHTML={{ __html: d.intro_body }} />
+              )}
+            </div>
+          </div>
+        )}
+
+        <div style={{ padding: '0 2.5rem 1.75rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+          <button
+            onClick={e => { e.stopPropagation(); fetchAnimals(); }}
+            style={{ padding: '4px 10px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 6, cursor: 'pointer', fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}
+            title="Refresh animals"
+          >
+            {loading ? '…' : '↺'} Refresh
+          </button>
+        </div>
+
+        {/* Toolbar: search + sort + view mode */}
+        <div
+          onMouseDown={stop} onClick={stop}
+          style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.25rem', padding: '0.6rem 0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8 }}
+        >
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search name, breed, description…"
+            style={{ flex: '1 1 200px', minWidth: 160, padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13, background: '#fff' }}
+          />
+          <select value={sortKey} onChange={e => setSortKey(e.target.value)}
+            style={{ padding: '6px 8px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12, background: '#fff', color: '#374151' }}>
+            <option value="name">Sort: Name</option>
+            {breedCount > 1 && <option value="breed">Sort: Breed</option>}
+            <option value="price_asc">Sort: Price (low → high)</option>
+            <option value="price_desc">Sort: Price (high → low)</option>
+          </select>
+          <div style={{ display: 'flex', gap: 0, border: '1px solid #e2e8f0', borderRadius: 6, overflow: 'hidden', marginLeft: 'auto' }}>
+            <button onClick={() => setViewMode('grid')}  title="Grid view"  style={{ ...ctrlBtn(viewMode === 'grid'),  borderRadius: 0, border: 'none', borderRight: '1px solid #e2e8f0' }}>▦ Grid</button>
+            <button onClick={() => setViewMode('list')}  title="List view"  style={{ ...ctrlBtn(viewMode === 'list'),  borderRadius: 0, border: 'none', borderRight: '1px solid #e2e8f0' }}>☰ List</button>
+            <button onClick={() => setViewMode('table')} title="Table view" style={{ ...ctrlBtn(viewMode === 'table'), borderRadius: 0, border: 'none' }}>▤ Table</button>
+          </div>
+        </div>
+
+        {loading && animals.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem', fontSize: 13 }}>Loading animals…</div>
+        ) : forSale.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#6b7280', padding: '2rem', fontSize: 13, border: '1px dashed #e2e8f0', borderRadius: 8, background: '#fff' }}>
+            <div style={{ fontSize: '2rem', marginBottom: 8 }}>{isStud ? '🐂' : '🐄'}</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>{isStud ? 'No stud animals published' : 'No animals marked for sale'}</div>
+            <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 10 }}>Open an animal from your Animals List and mark it {isStud ? '"Publish Stud"' : '"Published"'} to show it here.</div>
+            <a href={`/animals?BusinessID=${businessId}`} target="_blank" rel="noreferrer"
+              onClick={e => e.stopPropagation()}
+              style={{ display: 'inline-block', padding: '6px 14px', background: primary, color: '#fff', borderRadius: 6, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+              Manage Animals →
+            </a>
+          </div>
+        ) : visible.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#6b7280', padding: '2rem', fontSize: 13, border: '1px dashed #e2e8f0', borderRadius: 8, background: '#fff' }}>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>No animals match your search</div>
+            <div style={{ fontSize: 12, color: '#9ca3af' }}>Try clearing the search box above.</div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+            {groups.map(g => (
+              <section key={g.name}>
+                <h2 style={{ ...headingTypoStyle('h2', site), marginBottom: '0.75rem' }}>{groupHeading(g)}</h2>
+                {viewMode === 'grid' ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem', alignItems: 'start' }}>
+                    {g.items.map(renderGridCard)}
+                  </div>
+                ) : viewMode === 'list' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {g.items.map(renderListCard)}
+                  </div>
+                ) : (
+                  <div style={{ background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
+                          <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Photo</th>
+                          <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Name</th>
+                          <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Breed</th>
+                          {isStud
+                            ? <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Stud Fee</th>
+                            : <>
+                                <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Price</th>
+                                <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Stud Fee</th>
+                              </>
+                          }
+                          <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {g.items.map(a => (
+                          <tr key={a.AnimalID}
+                            onClick={e => { e.stopPropagation(); setSelectedIdx(indexOf(a)); }}
+                            style={{ cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                            onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                          >
+                            <td style={{ padding: '0.5rem 0.8rem' }}>
+                              {a.Photo1
+                                ? <img src={a.Photo1} alt="" style={{ width: 64, height: 'auto', borderRadius: 6, display: 'block' }} onError={e => e.target.style.display = 'none'} />
+                                : <div style={{ width: 64, height: 48, borderRadius: 6, background: `${primary}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🐄</div>}
+                            </td>
+                            <td style={{ padding: '0.5rem 0.8rem', fontWeight: 600, color: textColor }}>{a.FullName}</td>
+                            <td style={{ padding: '0.5rem 0.8rem', color: '#6B7280' }}>{a.Breed || '—'}</td>
+                            {isStud ? (
+                              <td style={{ padding: '0.5rem 0.8rem', textAlign: 'right', color: primary, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                {fmtPrice(a.StudFee) || '—'}
+                              </td>
+                            ) : (
+                              <>
+                                <td style={{ padding: '0.5rem 0.8rem', textAlign: 'right', color: primary, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                  {fmtPrice(a.Price) || '—'}
+                                  {fmtPrice(a.SalePrice) && <span style={{ color: '#ef4444', fontWeight: 600, marginLeft: 4 }}>({fmtPrice(a.SalePrice)})</span>}
+                                </td>
+                                <td style={{ padding: '0.5rem 0.8rem', textAlign: 'right', color: '#6B7280', whiteSpace: 'nowrap' }}>
+                                  {showStud(a) ? fmtPrice(a.StudFee) : '—'}
+                                </td>
+                              </>
+                            )}
+                            <td style={{ padding: '0.5rem 0.8rem', color: '#6B7280', maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {stripHtml(a.Description) || (a.PriceComments ? stripHtml(a.PriceComments) : '—')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+        )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── BlogBlockEditor: right-panel editor for blog blocks with category picker ──
 function BlogBlockEditor({ block, site, businessId, onFieldSave }) {
   const d = block.block_data || {};
@@ -3440,6 +3934,9 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }
   if (bt === 'blog') return (
     <BlogBlockEditor block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />
   );
+
+  // ── Livestock / Studs — editing lives on the canvas (heading + intro inline, default view in block toolbar) ──
+  if (bt === 'livestock' || bt === 'studs') return null;
 
   // ── Hero ──
   if (bt === 'hero') return (
@@ -3830,7 +4327,7 @@ function CanvasSiteFooter({ site }) {
     <div style={{ background: footerBg }}>
       <div style={{ maxWidth: cW, margin: '0 auto' }}>
         {site.footer_html ? (
-          <div style={{ padding: '1.5rem 1rem', color: '#fff', fontSize: '0.9rem', lineHeight: 1.6 }}
+          <div style={{ padding: '0.5rem 1rem', color: '#fff', fontSize: '0.9rem', lineHeight: 1.6 }}
             dangerouslySetInnerHTML={{ __html: site.footer_html }} />
         ) : null}
       </div>
@@ -3851,10 +4348,12 @@ function CanvasSiteFooter({ site }) {
     </div>
   );
 
+  const bottomRadius = Number(site.footer_bottom_radius) || 0;
+
   return (
     <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family }}>
       {/* Outer band — no background; footer content and copyright each carry their own */}
-      <div style={{ width: '100%', maxWidth: bgW }}>
+      <div style={{ width: '100%', maxWidth: bgW, borderRadius: bottomRadius ? `0 0 ${bottomRadius}px ${bottomRadius}px` : undefined, overflow: bottomRadius ? 'hidden' : undefined }}>
         {hasBgImg ? (
           /* Image case: image as bg, footer content overlaid, copyright below */
           <div style={{ position: 'relative' }}>
@@ -4857,8 +5356,8 @@ export default function WebsiteBuilder() {
               </div>
             </main>
 
-            {/* ── Right block editor panel (not shown for about/content — editing is inline) ── */}
-            {selectedBlock && !['about', 'content'].includes(selectedBlock.block_type) && (
+            {/* ── Right block editor panel (not shown for about/content/livestock — editing is inline on canvas) ── */}
+            {selectedBlock && !['about', 'content', 'livestock', 'studs'].includes(selectedBlock.block_type) && (
               <div key={selectedBlock.block_id} style={{ width: 280, flexShrink: 0, background: '#fff', borderLeft: '1px solid #e5e7eb', overflowY: 'auto' }}>
                 <BlockEditorPanel
                   block={selectedBlock}
@@ -4931,7 +5430,7 @@ export default function WebsiteBuilder() {
 
       <div style={{ minHeight: 'calc(100vh - 230px)' }}>
         <div className={`transition-all mx-auto ${previewMode === 'tablet' ? 'max-w-[768px]' : previewMode === 'mobile' ? 'max-w-[390px]' : 'max-w-none'}`}>
-          {isDesign && <DesignView site={site} onSave={saveSite} saving={saving} onDelete={deleteSite} />}
+          {isDesign && <DesignView site={site} onSave={saveSite} saving={saving} onDelete={deleteSite} pages={pages} />}
           {isSettings && <SettingsView site={site} onSave={saveSite} saving={saving} onDelete={deleteSite} />}
           {isManagePages && (
             <PageManagementView
@@ -4999,13 +5498,15 @@ export default function WebsiteBuilder() {
 }
 
 // ── TopBarEditor: mini WYSIWYG for the top bar HTML content ──────
-function TopBarEditor({ value, onChange, bgColor, paletteColors = [] }) {
+function TopBarEditor({ value, onChange, bgColor, paletteColors = [], pages = [] }) {
   const ref = useRef(null);
   const editing = useRef(false);
   const savedRange = useRef(null);
   const [showLink, setShowLink] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
+  const [linkMode, setLinkMode] = useState('url'); // 'url' | 'page'
+  const [linkPageSlug, setLinkPageSlug] = useState('');
 
   useEffect(() => {
     if (ref.current && !editing.current) {
@@ -5037,20 +5538,34 @@ function TopBarEditor({ value, onChange, bgColor, paletteColors = [] }) {
     restoreSelection();
     const sel = window.getSelection();
     if (!sel || !savedRange.current || sel.isCollapsed) return;
-    const span = document.createElement('span');
-    Object.assign(span.style, style);
-    try { savedRange.current.surroundContents(span); } catch { /* partial selection — skip */ }
+    // Use execCommand for color and fontSize — more reliable than surroundContents
+    if (style.color) {
+      document.execCommand('foreColor', false, style.color);
+    }
+    if (style.fontSize) {
+      // execCommand fontSize only accepts 1-7; use a sentinel then fix the elements
+      document.execCommand('fontSize', false, '7');
+      ref.current?.querySelectorAll('font[size="7"]').forEach(f => {
+        const span = document.createElement('span');
+        span.style.fontSize = style.fontSize;
+        span.innerHTML = f.innerHTML;
+        f.replaceWith(span);
+      });
+    }
+    if (style.fontFamily) {
+      document.execCommand('fontName', false, style.fontFamily);
+    }
     emit();
   };
 
   const insertLink = () => {
+    if (linkMode === 'page') { insertPageLink(); return; }
     restoreSelection();
     let href = linkUrl.trim();
     if (!href) return;
     if (!href.startsWith('http') && !href.startsWith('mailto:')) {
       href = href.includes('@') ? `mailto:${href}` : `https://${href}`;
     }
-    const sel = window.getSelection();
     const displayText = linkText.trim() || (savedRange.current && !savedRange.current.collapsed ? savedRange.current.toString() : href);
     const a = document.createElement('a');
     a.href = href;
@@ -5065,6 +5580,29 @@ function TopBarEditor({ value, onChange, bgColor, paletteColors = [] }) {
     emit();
     setShowLink(false);
     setLinkUrl('');
+    setLinkText('');
+  };
+
+  const insertPageLink = () => {
+    if (!linkPageSlug) return;
+    restoreSelection();
+    const sel = window.getSelection();
+    const page = pages.find(p => p.slug === linkPageSlug);
+    const displayText = linkText.trim() || (savedRange.current && !savedRange.current.collapsed ? savedRange.current.toString() : (page?.page_name || linkPageSlug));
+    const a = document.createElement('a');
+    a.href = '#';
+    a.setAttribute('data-page-slug', linkPageSlug);
+    a.textContent = displayText;
+    if (savedRange.current && !savedRange.current.collapsed) {
+      savedRange.current.deleteContents();
+      savedRange.current.insertNode(a);
+    } else {
+      ref.current?.focus();
+      document.execCommand('insertHTML', false, a.outerHTML);
+    }
+    emit();
+    setShowLink(false);
+    setLinkPageSlug('');
     setLinkText('');
   };
 
@@ -5099,7 +5637,7 @@ function TopBarEditor({ value, onChange, bgColor, paletteColors = [] }) {
           defaultValue=""
           style={{ fontSize: 11, border: '1px solid #e5e7eb', borderRadius: 4, padding: '2px 4px', background: '#fff', width: 64, height: 26 }}>
           <option value="">Size…</option>
-          {['10px','11px','12px','13px','14px','15px','16px','18px','20px','22px','24px','28px','32px'].map(s => (
+          {['8px','9px','10px','11px','12px','13px','14px','15px','16px','18px','20px','22px','24px','28px','32px'].map(s => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
@@ -5129,16 +5667,63 @@ function TopBarEditor({ value, onChange, bgColor, paletteColors = [] }) {
             🔗
           </ToolBtn>
           {showLink && (
-            <div style={{ position: 'absolute', top: 30, left: 0, zIndex: 200, background: '#fff', border: '1px solid #d1d5db', borderRadius: 10, padding: 14, boxShadow: '0 6px 24px rgba(0,0,0,0.15)', width: 280 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: '#111827' }}>Insert Link or Email</div>
-              <input
-                placeholder="URL (https://…) or email address"
-                value={linkUrl}
-                onChange={e => setLinkUrl(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && insertLink()}
-                style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 6, padding: '6px 8px', fontSize: 12, marginBottom: 6, boxSizing: 'border-box' }}
-                autoFocus
-              />
+            <div style={{ position: 'absolute', top: 30, left: 0, zIndex: 200, background: '#fff', border: '1px solid #d1d5db', borderRadius: 10, padding: 14, boxShadow: '0 6px 24px rgba(0,0,0,0.15)', width: 300 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8, color: '#111827' }}>Insert Link</div>
+              <div style={{ display: 'flex', gap: 0, marginBottom: 10, borderRadius: 6, overflow: 'hidden', border: '1px solid #d1d5db' }}>
+                <button onClick={() => setLinkMode('url')}
+                  style={{ flex: 1, padding: '5px 0', fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer',
+                    background: linkMode === 'url' ? '#3D6B34' : '#f9fafb', color: linkMode === 'url' ? '#fff' : '#6b7280' }}>
+                  URL / Email
+                </button>
+                <button onClick={() => setLinkMode('page')}
+                  style={{ flex: 1, padding: '5px 0', fontSize: 11, fontWeight: 600, border: 'none', borderLeft: '1px solid #d1d5db', cursor: 'pointer',
+                    background: linkMode === 'page' ? '#3D6B34' : '#f9fafb', color: linkMode === 'page' ? '#fff' : '#6b7280' }}>
+                  Site Page
+                </button>
+              </div>
+              {linkMode === 'url' ? (
+                <>
+                  <input
+                    placeholder="URL (https://…) or email address"
+                    value={linkUrl}
+                    onChange={e => setLinkUrl(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && insertLink()}
+                    style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 6, padding: '6px 8px', fontSize: 12, marginBottom: 6, boxSizing: 'border-box' }}
+                    autoFocus
+                  />
+                  <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 6 }}>
+                    Tip: entering an email address automatically creates a mailto: link.
+                  </div>
+                </>
+              ) : (
+                <select
+                  value={linkPageSlug}
+                  onChange={e => setLinkPageSlug(e.target.value)}
+                  style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 6, padding: '6px 8px', fontSize: 12, marginBottom: 6, boxSizing: 'border-box' }}>
+                  <option value="">— Choose a page —</option>
+                  {(() => {
+                    const all = pages || [];
+                    const byOrder = (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0);
+                    const tops = all.filter(p => !p.parent_page_id).sort(byOrder);
+                    const childrenOf = (id) => all.filter(p => p.parent_page_id === id).sort(byOrder);
+                    const rows = [];
+                    tops.forEach(p => {
+                      const kids = childrenOf(p.page_id);
+                      const isHeading = p.is_nav_heading || (kids.length > 0 && !p.slug);
+                      if (isHeading) {
+                        rows.push(<option key={`h-${p.page_id}`} value="" disabled style={{ color: '#94a3b8', fontWeight: 700 }}>{p.page_name}</option>);
+                      } else if (p.slug) {
+                        rows.push(<option key={p.page_id} value={p.slug}>{p.page_name}</option>);
+                      }
+                      kids.forEach(c => {
+                        if (!c.slug) return;
+                        rows.push(<option key={c.page_id} value={c.slug}>{`\u00A0\u00A0\u00A0\u00A0— ${c.page_name}`}</option>);
+                      });
+                    });
+                    return rows;
+                  })()}
+                </select>
+              )}
               <input
                 placeholder="Display text (optional — uses selection)"
                 value={linkText}
@@ -5146,15 +5731,13 @@ function TopBarEditor({ value, onChange, bgColor, paletteColors = [] }) {
                 onKeyDown={e => e.key === 'Enter' && insertLink()}
                 style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 6, padding: '6px 8px', fontSize: 12, marginBottom: 10, boxSizing: 'border-box' }}
               />
-              <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 8 }}>
-                Tip: entering an email address (e.g. you@farm.com) automatically creates a mailto: link.
-              </div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={insertLink}
-                  style={{ flex: 1, padding: '6px 0', background: '#3D6B34', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                  disabled={linkMode === 'url' ? !linkUrl.trim() : !linkPageSlug}
+                  style={{ flex: 1, padding: '6px 0', background: (linkMode === 'url' ? linkUrl.trim() : linkPageSlug) ? '#3D6B34' : '#9ca3af', color: '#fff', border: 'none', borderRadius: 6, cursor: (linkMode === 'url' ? linkUrl.trim() : linkPageSlug) ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: 600 }}>
                   Insert
                 </button>
-                <button onClick={() => { setShowLink(false); setLinkUrl(''); setLinkText(''); }}
+                <button onClick={() => { setShowLink(false); setLinkUrl(''); setLinkText(''); setLinkPageSlug(''); setLinkMode('url'); }}
                   style={{ flex: 1, padding: '6px 0', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>
                   Cancel
                 </button>
@@ -5162,6 +5745,15 @@ function TopBarEditor({ value, onChange, bgColor, paletteColors = [] }) {
             </div>
           )}
         </div>
+
+        <div style={{ width: 1, height: 20, background: '#e5e7eb' }} />
+
+        {/* Text alignment */}
+        <ToolBtn onMD={() => cmd('justifyLeft')} title="Align left" style={{ fontSize: 11 }}>⫷</ToolBtn>
+        <ToolBtn onMD={() => cmd('justifyCenter')} title="Align center" style={{ fontSize: 11 }}>⫿</ToolBtn>
+        <ToolBtn onMD={() => cmd('justifyRight')} title="Align right" style={{ fontSize: 11 }}>⫸</ToolBtn>
+
+        <div style={{ width: 1, height: 20, background: '#e5e7eb' }} />
 
         {/* Remove formatting */}
         <ToolBtn onMD={() => cmd('removeFormat')} title="Clear formatting" style={{ color: '#6b7280', fontSize: 11 }}>
@@ -5654,7 +6246,7 @@ function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublish
 }
 
 // ── Design full view ──────────────────────────────────────────────
-function DesignView({ site, onSave, saving }) {
+function DesignView({ site, onSave, saving, pages = [] }) {
   const [local, setLocal] = useState({
     primary_color:      site.primary_color      || '#3D6B34',
     secondary_color:    site.secondary_color    || '#819360',
@@ -5696,6 +6288,7 @@ function DesignView({ site, onSave, saving }) {
     footer_bg_image_url:   site.footer_bg_image_url   || '',
     footer_html:           site.footer_html           || '',
     footer_height:         Number(site.footer_height)  || 200,
+    footer_bottom_radius:  Number(site.footer_bottom_radius) || 0,
     copyright_bar_bg_color: site.copyright_bar_bg_color || '',
     // Header banner background (blank = use primary_color)
     header_banner_bg_color: site.header_banner_bg_color || '',
@@ -5955,9 +6548,9 @@ function DesignView({ site, onSave, saving }) {
     );
 
     return (
-      <div style={{ borderRadius: 8, overflow: 'hidden', marginTop: '0.75rem', display: 'flex', justifyContent: 'center', fontFamily: local.font_family, border: '1px solid #e5e7eb' }}>
+      <div style={{ borderRadius: `8px 8px ${Math.max(8, local.footer_bottom_radius || 0)}px ${Math.max(8, local.footer_bottom_radius || 0)}px`, overflow: 'hidden', marginTop: '0.75rem', display: 'flex', justifyContent: 'center', fontFamily: local.font_family, border: '1px solid #e5e7eb' }}>
         {/* Outer band — no background; footer content and copyright each carry their own */}
-        <div style={{ width: '100%', maxWidth: bgW }}>
+        <div style={{ width: '100%', maxWidth: bgW, borderRadius: (local.footer_bottom_radius || 0) ? `0 0 ${local.footer_bottom_radius}px ${local.footer_bottom_radius}px` : undefined, overflow: (local.footer_bottom_radius || 0) ? 'hidden' : undefined }}>
           {hasBgImage ? (
             /* Image case: image as bg, copyright below */
             <>
@@ -5970,7 +6563,7 @@ function DesignView({ site, onSave, saving }) {
               <div style={{ minHeight: footerHeight, ...footerContentStyle }}>
                 <div style={{ maxWidth: cW, margin: '0 auto' }}>
                   {local.footer_html ? (
-                    <div style={{ padding: '1rem', color: isTranspFooter ? '#374151' : '#fff', fontSize: '0.82rem', lineHeight: 1.6 }}
+                    <div style={{ padding: '0.5rem 1rem', color: isTranspFooter ? '#374151' : '#fff', fontSize: '0.82rem', lineHeight: 1.6 }}
                       dangerouslySetInnerHTML={{ __html: local.footer_html }} />
                   ) : (
                     <div style={{ padding: '1rem', color: isTranspFooter ? '#9ca3af' : 'rgba(255,255,255,0.35)', fontSize: '0.75rem', fontStyle: 'italic' }}>
@@ -6513,7 +7106,8 @@ function DesignView({ site, onSave, saving }) {
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
                   <TopBarEditor value={local.top_bar_html} onChange={v => set('top_bar_html', v)} bgColor={local.top_bar_bg_color}
-                    paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color, local.nav_text_color, local.footer_bg_color, local.top_bar_bg_color, local.top_bar_text_color].filter(Boolean)} />
+                    paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color, local.nav_text_color, local.footer_bg_color, local.top_bar_bg_color, local.top_bar_text_color].filter(Boolean)}
+                    pages={pages} />
                   <p className="text-xs text-gray-400 mt-1">Highlight text to apply formatting. Use 🔗 to insert a link or email address.</p>
                 </div>
                 <div>
@@ -6651,6 +7245,13 @@ function DesignView({ site, onSave, saving }) {
                     <span className="text-sm font-mono text-gray-600 w-12">{local.footer_height || 200}px</span>
                   </div>
                 </div>
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Bottom Corner Radius (px)</label>
+                  <div className="flex items-center gap-3">
+                    <input type="range" min={0} max={60} value={local.footer_bottom_radius || 0} onChange={e => set('footer_bottom_radius', Number(e.target.value))} className="flex-1 accent-green-600" />
+                    <span className="text-sm font-mono text-gray-600 w-12">{local.footer_bottom_radius || 0}px</span>
+                  </div>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Copyright Text</label>
@@ -6675,7 +7276,8 @@ function DesignView({ site, onSave, saving }) {
               </div>
               <TopBarEditor value={local.footer_html} onChange={v => set('footer_html', v)}
                 bgColor={local.footer_bg_image_url ? undefined : local.footer_bg_color}
-                paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color, local.nav_text_color, local.footer_bg_color].filter(Boolean)} />
+                paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color, local.nav_text_color, local.footer_bg_color].filter(Boolean)}
+                pages={pages} />
             </div>
             <div className="mt-4">
               <p className="text-xs text-gray-400 mb-2 font-medium">Preview</p>

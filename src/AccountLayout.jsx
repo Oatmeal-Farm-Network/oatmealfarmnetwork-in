@@ -264,7 +264,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
                 isOpen={OpenSections.Livestock || false}
                 onToggle={() => toggleSection('Livestock')}
               >
-                <NavChild to={`/animals?BusinessID=${BusinessID}`} label="List Animals" />
+                <NavChild to={`/animals?BusinessID=${BusinessID}`} label="Animals List" />
                 <NavChild to={`/animals/add?BusinessID=${BusinessID}`} label="Add" />
                 <NavChild to={`/animals/delete?BusinessID=${BusinessID}`} label="Delete" />
                 <NavChild to={`/animals/transfer?BusinessID=${BusinessID}`} label="Transfer" />

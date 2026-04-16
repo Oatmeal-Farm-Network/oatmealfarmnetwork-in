@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import PageMeta from './PageMeta';
+import { LivestockAnimalDetailContent } from './LivestockAnimalDetail';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -420,40 +421,343 @@ function MultiColumnBlock({ data, site, columnCount }) {
   );
 }
 
-function LivestockBlock({ data, site, businessId }) {
-  const [items, setItems] = useState([]);
+function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
+  const isStud = mode === 'stud';
+  const [animals, setAnimals] = useState([]);
+  const [selectedIdx, setSelectedIdx] = useState(null);
+  const [viewMode, setViewMode] = useState(data.default_view || 'grid');
+  const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState('name');
+  const [detailAnimal, setDetailAnimal] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  useEffect(() => { setViewMode(data.default_view || 'grid'); }, [data.default_view]);
+
   useEffect(() => {
     fetchContent(`${API}/api/website/content/livestock?business_id=${businessId}`)
-      .then(all => {
-        let filtered = all;
-        if (data.show_for_sale && !data.show_studs) filtered = all.filter(a => a.PublishForSale);
-        if (data.show_studs && !data.show_for_sale) filtered = all.filter(a => a.PublishStud);
-        setItems(filtered.slice(0, data.max_items || 6));
-      });
+      .then(all => setAnimals(Array.isArray(all) ? all : []))
+      .catch(() => setAnimals([]));
   }, [businessId]);
 
-  if (items.length === 0) return null;
-  return (
-    <SectionWrap site={site} alt>
-      <SectionHeading site={site}>{data.heading || 'Animals'}</SectionHeading>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
-        {items.map(a => (
-          <div key={a.AnimalID} style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-            {a.Photo1 && <img src={a.Photo1} alt={a.FullName} style={{ width: '100%', height: 180, objectFit: 'cover' }} />}
-            {!a.Photo1 && <div style={{ height: 140, background: `${site.primary_color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem' }}>🐄</div>}
-            <div style={{ padding: '1rem' }}>
-              <div style={{ fontWeight: 700, fontSize: '1rem', color: site.text_color, fontFamily: site.font_family }}>{a.FullName || a.ShortName}</div>
-              {a.Breed && <div style={{ fontSize: '0.82rem', color: '#6B7280', marginTop: 2 }}>{a.Breed} {a.Category ? `· ${a.Category}` : ''}</div>}
-              {a.Description && <p style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: 6, lineHeight: 1.5 }}>{a.Description?.slice(0, 120)}{a.Description?.length > 120 ? '…' : ''}</p>}
-              <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
-                {a.PublishForSale === 1 && <span style={{ background: site.primary_color + '22', color: site.primary_color, borderRadius: 20, padding: '2px 10px', fontSize: '0.72rem', fontWeight: 600 }}>For Sale</span>}
-                {a.PublishStud === 1 && <span style={{ background: site.accent_color + '44', color: '#92400E', borderRadius: 20, padding: '2px 10px', fontSize: '0.72rem', fontWeight: 600 }}>Stud</span>}
-              </div>
-              {a.Financeterms && <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: 4 }}>{a.Financeterms}</p>}
+  const primary    = site.primary_color  || '#3D6B34';
+  const textColor  = site.text_color     || '#111827';
+  const fontFamily = site.font_family    || 'inherit';
+  const bodySize   = site.body_size      || '1rem';
+
+  const stripHtml = (s) => {
+    if (!s) return '';
+    try {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = s;
+      return (tmp.textContent || tmp.innerText || '').replace(/\s+/g, ' ').trim();
+    } catch {
+      return String(s).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    }
+  };
+  const fmtPrice = (n) => {
+    if (n === null || n === undefined || n === '' || Number(n) === 0) return '';
+    const num = Number(n);
+    if (Number.isNaN(num)) return '';
+    return num.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  };
+  const showStud = (a) => a.PublishStud && Number(a.StudFee || 0) > 0;
+
+  // Only "For Sale" animals
+  const forSale = useMemo(() => animals.filter(a => isStud ? (a.PublishStud || Number(a.StudFee || 0) > 0) : a.PublishForSale), [animals, isStud]);
+
+  const visible = useMemo(() => {
+    let list = forSale;
+    const q = search.trim().toLowerCase();
+    if (q) {
+      list = list.filter(a =>
+        (a.FullName || '').toLowerCase().includes(q) ||
+        (a.Breed || '').toLowerCase().includes(q) ||
+        (a.CategoryName || '').toLowerCase().includes(q) ||
+        (a.Description || '').toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [forSale, search]);
+
+  const groups = useMemo(() => {
+    const map = new Map();
+    for (const a of visible) {
+      const key = a.CategoryName || 'Other';
+      if (!map.has(key)) {
+        map.set(key, {
+          name: a.CategoryName || 'Other',
+          plural: a.CategoryPlural || (a.CategoryName ? `${a.CategoryName}s` : 'Other'),
+          order: a.CategoryOrder ?? 9999,
+          items: [],
+        });
+      }
+      map.get(key).items.push(a);
+    }
+    const arr = [...map.values()];
+    arr.sort((a, b) => (a.order - b.order) || a.name.localeCompare(b.name));
+    const priceOf = (a) => {
+      const s = Number(a.SalePrice || 0);
+      const p = Number(a.Price || 0);
+      return s > 0 ? s : p;
+    };
+    for (const g of arr) {
+      g.items.sort((x, y) => {
+        if (sortKey === 'name')       return (x.FullName || '').localeCompare(y.FullName || '');
+        if (sortKey === 'breed')      return (x.Breed || '').localeCompare(y.Breed || '');
+        if (sortKey === 'price_asc')  return priceOf(x) - priceOf(y);
+        if (sortKey === 'price_desc') return priceOf(y) - priceOf(x);
+        return 0;
+      });
+    }
+    return arr;
+  }, [visible, sortKey]);
+
+  const flat = useMemo(() => groups.flatMap(g => g.items), [groups]);
+  const indexOf = (animal) => flat.findIndex(x => x.AnimalID === animal.AnimalID);
+  const defaultHeading = isStud ? 'Stud Services' : 'Animals For Sale';
+  const groupHeading = (g) => g.plural || g.name;
+
+  const breedCount = useMemo(() => {
+    const s = new Set();
+    for (const a of forSale) if (a.Breed) s.add(a.Breed);
+    return s.size;
+  }, [forSale]);
+  useEffect(() => {
+    if (sortKey === 'breed' && breedCount < 2) setSortKey('name');
+  }, [breedCount, sortKey]);
+
+  // ── Detail view ──
+  // Fetch the full marketplace detail payload whenever the selected animal changes.
+  const selectedStub = selectedIdx !== null ? flat[selectedIdx] : null;
+  useEffect(() => {
+    if (!selectedStub) { setDetailAnimal(null); return; }
+    setDetailLoading(true);
+    fetch(`${API}/api/marketplace/animal/${selectedStub.AnimalID}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setDetailAnimal(d))
+      .catch(() => setDetailAnimal(null))
+      .finally(() => setDetailLoading(false));
+  }, [selectedStub?.AnimalID]);
+
+  if (forSale.length === 0) return null;
+
+  const ctrlBtn = (active) => ({
+    padding: '6px 12px',
+    background: active ? primary : '#fff',
+    color: active ? '#fff' : '#64748b',
+    border: `1px solid ${active ? primary : '#e2e8f0'}`,
+    borderRadius: 0, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+  });
+
+  if (selectedIdx !== null && selectedStub) {
+    return (
+      <SectionWrap site={site} blockBgColor={data.bg_color}>
+        {detailLoading && !detailAnimal ? (
+          <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#9ca3af' }}>Loading animal details…</div>
+        ) : detailAnimal ? (
+          <LivestockAnimalDetailContent
+            animal={detailAnimal}
+            siteMode
+            onBack={() => setSelectedIdx(null)}
+            backLabel={data.heading || defaultHeading}
+            onPrev={() => setSelectedIdx(selectedIdx - 1)}
+            onNext={() => setSelectedIdx(selectedIdx + 1)}
+            hasPrev={selectedIdx > 0}
+            hasNext={selectedIdx < flat.length - 1}
+            primaryColor={primary}
+            fontFamily={fontFamily}
+          />
+        ) : (
+          <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#ef4444' }}>
+            Could not load animal details.
+            <div style={{ marginTop: 12 }}>
+              <button onClick={() => setSelectedIdx(null)} style={{ background: 'none', border: 'none', color: primary, cursor: 'pointer', fontSize: bodySize }}>← Back to {data.heading || defaultHeading}</button>
             </div>
           </div>
-        ))}
+        )}
+      </SectionWrap>
+    );
+  }
+
+  // ── Card renderers ──
+  const renderGridCard = (a) => (
+    <div key={a.AnimalID}
+      onClick={() => setSelectedIdx(indexOf(a))}
+      style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', cursor: 'pointer', transition: 'box-shadow 0.15s', display: 'flex', flexDirection: 'column' }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.11)'}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'}
+    >
+      {a.Photo1
+        ? <img src={a.Photo1} alt={a.FullName || ''} style={{ width: '100%', height: 'auto', display: 'block' }} onError={e => e.target.style.display = 'none'} />
+        : <div style={{ aspectRatio: '4 / 3', background: `${primary}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem' }}>🐄</div>}
+      <div style={{ padding: '0.75rem 0.9rem', display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+        <div style={{ fontWeight: 700, fontSize: '0.98rem', color: textColor, lineHeight: 1.3, fontFamily }}>{a.FullName}</div>
+        {(a.Breed || a.CategoryName) && <div style={{ fontSize: '0.78rem', color: '#6B7280' }}>{a.Breed}{a.Breed && a.CategoryName ? ' · ' : ''}{a.CategoryName}</div>}
+        {isStud ? (
+          fmtPrice(a.StudFee) && (
+            <div style={{ fontSize: '0.85rem', marginTop: 2 }}>
+              <span style={{ color: primary, fontWeight: 700 }}>Stud Fee: {fmtPrice(a.StudFee)}</span>
+            </div>
+          )
+        ) : (fmtPrice(a.Price) || showStud(a)) && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, fontSize: '0.85rem', marginTop: 2 }}>
+            {fmtPrice(a.Price) && (
+              <span style={{ color: primary, fontWeight: 700 }}>
+                {fmtPrice(a.Price)}
+                {fmtPrice(a.SalePrice) && <span style={{ color: '#ef4444', marginLeft: 4 }}>({fmtPrice(a.SalePrice)})</span>}
+              </span>
+            )}
+            {showStud(a) && <span style={{ color: '#6B7280' }}>Stud {fmtPrice(a.StudFee)}</span>}
+          </div>
+        )}
+        {a.PriceComments && <div style={{ fontSize: '0.74rem', color: '#9ca3af', fontStyle: 'italic' }}>{stripHtml(a.PriceComments)}</div>}
       </div>
+    </div>
+  );
+
+  const renderListCard = (a) => (
+    <div key={a.AnimalID}
+      onClick={() => setSelectedIdx(indexOf(a))}
+      style={{ background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', cursor: 'pointer', transition: 'box-shadow 0.15s', alignItems: 'stretch' }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.11)'}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'}
+    >
+      {a.Photo1
+        ? <img src={a.Photo1} alt={a.FullName || ''} style={{ width: 220, minWidth: 220, height: 'auto', objectFit: 'contain', alignSelf: 'flex-start', flexShrink: 0, display: 'block', background: '#f8fafc' }} onError={e => e.target.style.display = 'none'} />
+        : <div style={{ width: 220, minWidth: 220, background: `${primary}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', flexShrink: 0 }}>🐄</div>}
+      <div style={{ padding: '1rem 1.2rem', display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: '1.05rem', color: textColor, lineHeight: 1.3, fontFamily }}>{a.FullName}</div>
+        {(a.Breed || a.CategoryName) && <div style={{ fontSize: '0.85rem', color: '#6B7280' }}>{a.Breed}{a.Breed && a.CategoryName ? ' · ' : ''}{a.CategoryName}</div>}
+        {isStud ? (
+          fmtPrice(a.StudFee) && (
+            <div style={{ fontSize: '0.92rem', marginTop: 2 }}>
+              <span style={{ color: primary, fontWeight: 700 }}>Stud Fee: {fmtPrice(a.StudFee)}</span>
+            </div>
+          )
+        ) : (fmtPrice(a.Price) || showStud(a)) && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: '0.92rem', marginTop: 2 }}>
+            {fmtPrice(a.Price) && (
+              <span style={{ color: primary, fontWeight: 700 }}>
+                {fmtPrice(a.Price)}
+                {fmtPrice(a.SalePrice) && <span style={{ color: '#ef4444', marginLeft: 4 }}>({fmtPrice(a.SalePrice)})</span>}
+              </span>
+            )}
+            {showStud(a) && <span style={{ color: '#6B7280' }}>Stud: <strong style={{ color: textColor }}>{fmtPrice(a.StudFee)}</strong></span>}
+          </div>
+        )}
+        {a.PriceComments && <div style={{ fontSize: '0.78rem', color: '#9ca3af', fontStyle: 'italic' }}>{stripHtml(a.PriceComments)}</div>}
+        {a.Description && <p style={{ margin: 0, fontSize: '0.88rem', color: '#4b5563', lineHeight: 1.6, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{stripHtml(a.Description)}</p>}
+      </div>
+    </div>
+  );
+
+  return (
+    <SectionWrap site={site} blockBgColor={data.bg_color}>
+      <SectionHeading site={site} headingStyle={data.heading_style || 'h1'} html={data.heading || defaultHeading} />
+      {data.intro_body && <BodyText site={site} html={data.intro_body} />}
+
+      {/* Toolbar: search + sort + view mode */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.25rem', padding: '0.6rem 0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8 }}>
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search name, breed, description…"
+          style={{ flex: '1 1 200px', minWidth: 160, padding: '7px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 14, background: '#fff' }}
+        />
+        <select value={sortKey} onChange={e => setSortKey(e.target.value)}
+          style={{ padding: '7px 8px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13, background: '#fff', color: '#374151' }}>
+          <option value="name">Sort: Name</option>
+          {breedCount > 1 && <option value="breed">Sort: Breed</option>}
+          <option value="price_asc">Sort: Price (low → high)</option>
+          <option value="price_desc">Sort: Price (high → low)</option>
+        </select>
+        <div style={{ display: 'flex', gap: 0, border: '1px solid #e2e8f0', borderRadius: 6, overflow: 'hidden', marginLeft: 'auto' }}>
+          <button onClick={() => setViewMode('grid')}  title="Grid view"  style={{ ...ctrlBtn(viewMode === 'grid'),  borderRadius: 0, border: 'none', borderRight: '1px solid #e2e8f0' }}>▦ Grid</button>
+          <button onClick={() => setViewMode('list')}  title="List view"  style={{ ...ctrlBtn(viewMode === 'list'),  borderRadius: 0, border: 'none', borderRight: '1px solid #e2e8f0' }}>☰ List</button>
+          <button onClick={() => setViewMode('table')} title="Table view" style={{ ...ctrlBtn(viewMode === 'table'), borderRadius: 0, border: 'none' }}>▤ Table</button>
+        </div>
+      </div>
+
+      {visible.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#6b7280', padding: '2rem', fontSize: 14, border: '1px dashed #e2e8f0', borderRadius: 8, background: '#fff' }}>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>No animals match your search</div>
+          <div style={{ fontSize: 12, color: '#9ca3af' }}>Try clearing the search box above.</div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {groups.map(g => (
+            <section key={g.name}>
+              <SectionHeading site={site} headingStyle="h2">{groupHeading(g)}</SectionHeading>
+              {viewMode === 'grid' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem', alignItems: 'start' }}>
+                  {g.items.map(renderGridCard)}
+                </div>
+              ) : viewMode === 'list' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  {g.items.map(renderListCard)}
+                </div>
+              ) : (
+                <div style={{ background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
+                        <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Photo</th>
+                        <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Name</th>
+                        <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Breed</th>
+                        {isStud
+                          ? <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Stud Fee</th>
+                          : <>
+                              <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Price</th>
+                              <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Stud Fee</th>
+                            </>
+                        }
+                        <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {g.items.map(a => (
+                        <tr key={a.AnimalID}
+                          onClick={() => setSelectedIdx(indexOf(a))}
+                          style={{ cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                          onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                        >
+                          <td style={{ padding: '0.6rem 0.9rem' }}>
+                            {a.Photo1
+                              ? <img src={a.Photo1} alt="" style={{ width: 72, height: 'auto', borderRadius: 6, display: 'block' }} onError={e => e.target.style.display = 'none'} />
+                              : <div style={{ width: 72, height: 54, borderRadius: 6, background: `${primary}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>🐄</div>}
+                          </td>
+                          <td style={{ padding: '0.6rem 0.9rem', fontWeight: 600, color: textColor }}>{a.FullName}</td>
+                          <td style={{ padding: '0.6rem 0.9rem', color: '#6B7280' }}>{a.Breed || '—'}</td>
+                          {isStud ? (
+                            <td style={{ padding: '0.6rem 0.9rem', textAlign: 'right', color: primary, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                              {fmtPrice(a.StudFee) || '—'}
+                            </td>
+                          ) : (
+                            <>
+                              <td style={{ padding: '0.6rem 0.9rem', textAlign: 'right', color: primary, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                {fmtPrice(a.Price) || '—'}
+                                {fmtPrice(a.SalePrice) && <span style={{ color: '#ef4444', fontWeight: 600, marginLeft: 4 }}>({fmtPrice(a.SalePrice)})</span>}
+                              </td>
+                              <td style={{ padding: '0.6rem 0.9rem', textAlign: 'right', color: '#6B7280', whiteSpace: 'nowrap' }}>
+                                {showStud(a) ? fmtPrice(a.StudFee) : '—'}
+                              </td>
+                            </>
+                          )}
+                          <td style={{ padding: '0.6rem 0.9rem', color: '#6B7280', maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {stripHtml(a.Description) || (a.PriceComments ? stripHtml(a.PriceComments) : '—')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          ))}
+        </div>
+      )}
     </SectionWrap>
   );
 }
@@ -971,8 +1275,8 @@ function RenderBlock({ block, site, businessId }) {
     case 'content':        return <ContentBlock data={data} site={site} />;
     case 'content_2col':   return <MultiColumnBlock data={data} site={site} columnCount={2} />;
     case 'content_4col':   return <MultiColumnBlock data={data} site={site} columnCount={4} />;
-    case 'livestock':
-    case 'studs':          return <LivestockBlock data={data} site={site} businessId={businessId} />;
+    case 'livestock':      return <LivestockBlock data={data} site={site} businessId={businessId} />;
+    case 'studs':          return <LivestockBlock data={data} site={site} businessId={businessId} mode="stud" />;
     case 'produce':        return <ProduceBlock data={data} site={site} businessId={businessId} />;
     case 'meat':           return <MeatBlock data={data} site={site} businessId={businessId} />;
     case 'processed_food': return <ProcessedFoodBlock data={data} site={site} businessId={businessId} />;
@@ -1029,7 +1333,7 @@ export default function WebsitePublic() {
   useEffect(() => {
     if (!siteData?.pages) return;
     const onClick = (e) => {
-      const a = e.target.closest?.('.site-rte a[data-page-slug]');
+      const a = e.target.closest?.('a[data-page-slug]');
       if (!a) return;
       const slug = a.getAttribute('data-page-slug');
       const target = siteData.pages.find(p => p.slug === slug);
@@ -1364,9 +1668,9 @@ export default function WebsitePublic() {
       </div>
 
       {/* Footer — outer band at footer_bg_width, inner content at footer_content_width */}
-      <footer style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family }}>
+      <footer style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family, paddingBottom: Number(site.footer_bottom_radius) || 0 }}>
         {/* Outer band — no background; footer content and copyright each carry their own */}
-        <div style={{ width: '100%', maxWidth: site.footer_bg_width || '100%' }}>
+        <div style={{ width: '100%', maxWidth: site.footer_bg_width || '100%', borderRadius: Number(site.footer_bottom_radius) ? `0 0 ${site.footer_bottom_radius}px ${site.footer_bottom_radius}px` : undefined, overflow: Number(site.footer_bottom_radius) ? 'hidden' : undefined }}>
           {site.footer_bg_image_url ? (
             /* Image case: image as bg, footer content overlaid, copyright below */
             <div style={{ position: 'relative' }}>
@@ -1374,7 +1678,7 @@ export default function WebsitePublic() {
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
                 <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto' }}>
                   {site.footer_html ? (
-                    <div style={{ padding: '2rem 1.5rem', color: '#fff', lineHeight: 1.7 }}
+                    <div style={{ padding: '0.5rem 1rem', color: '#fff', lineHeight: 1.7 }}
                       dangerouslySetInnerHTML={{ __html: site.footer_html }} />
                   ) : null}
                 </div>
@@ -1399,7 +1703,7 @@ export default function WebsitePublic() {
               <div style={{ minHeight: Number(site.footer_height) || 200, background: site.footer_bg_color || site.primary_color }}>
                 <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto' }}>
                   {site.footer_html ? (
-                    <div style={{ padding: '2rem 1.5rem', color: '#fff', lineHeight: 1.7 }}
+                    <div style={{ padding: '0.5rem 1rem', color: '#fff', lineHeight: 1.7 }}
                       dangerouslySetInnerHTML={{ __html: site.footer_html }} />
                   ) : null}
                 </div>

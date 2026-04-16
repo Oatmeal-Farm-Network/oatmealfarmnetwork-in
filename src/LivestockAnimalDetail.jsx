@@ -411,6 +411,354 @@ function Awards({ rows }) {
   );
 }
 
+// ── Reusable inner content (used by both the public detail page and the
+//    website-builder LivestockBlock detail view). In `siteMode`, the
+//    "Listed By" card is swapped for an "About {animal}" card that shows
+//    the animal's description inline, and the full-width description card
+//    at the bottom is hidden.
+export function LivestockAnimalDetailContent({
+  animal,
+  siteMode = false,
+  onBack,
+  backLabel = 'Listings',
+  onPrev,
+  onNext,
+  hasPrev = false,
+  hasNext = false,
+  primaryColor = '#3D6B34',
+  fontFamily,
+}) {
+  if (!animal) return null;
+  const { pricing, owner, ancestry, photos, awards, fiber_stats, registrations } = animal;
+  const dob = formatDOB(animal.dob || {});
+
+  const priceDisplay = pricing.free
+    ? 'Free'
+    : pricing.sold
+    ? null
+    : pricing.price
+    ? formatPrice(pricing.price)
+    : null;
+
+  const studFeeDisplay = !animal.sold && (animal.publish_stud || pricing.stud_fee)
+    ? (pricing.stud_fee ? formatPrice(pricing.stud_fee) : 'Call for Fee')
+    : null;
+
+  const backSlug = animal.species_slug;
+  const backCrumbLabel = animal.species_singular ? `${animal.species_singular}s` : 'Livestock';
+
+  return (
+    <div className="mx-auto px-4 py-6" style={{ maxWidth: '1200px', fontFamily }}>
+
+      {!siteMode && (
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: 'Marketplaces', to: '/marketplaces' },
+          { label: 'Livestock', to: '/marketplaces/livestock' },
+          ...(backSlug ? [{ label: backCrumbLabel, to: `/marketplaces/livestock/${backSlug}` }] : []),
+          { label: animal.full_name },
+        ]} />
+      )}
+
+      {siteMode && onBack && (
+        <button
+          onClick={onBack}
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: primaryColor, fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.75rem' }}
+        >
+          ← Back to {backLabel}
+        </button>
+      )}
+
+      {animal.last_updated && (
+        <p className="text-xs text-gray-400 mb-4">
+          Last updated: {new Date(animal.last_updated).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+        </p>
+      )}
+
+      <h1 className="text-2xl font-bold text-gray-900 mb-6" style={{ fontFamily: fontFamily || "'Lora','Times New Roman',serif" }}>
+        {animal.full_name}
+      </h1>
+
+      <div className="flex flex-wrap gap-2 mb-6">
+        {animal.sold && (
+          <span className="inline-block bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">SOLD</span>
+        )}
+        {animal.sale_pending && !animal.sold && (
+          <span className="inline-block bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-1 rounded-full">Sale Pending</span>
+        )}
+        {animal.publish_stud && !animal.sold && (
+          <span className="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">Stud Available</span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* ── Left column: combined info card ── */}
+        <div className="space-y-5">
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-5">
+
+            {/* Pricing / key stats */}
+            <div>
+              {pricing.price_comments && (
+                <p className="text-sm font-semibold text-gray-700 mb-3">{pricing.price_comments}</p>
+              )}
+              <table className="w-full text-sm">
+                <tbody>
+                  {priceDisplay && (
+                    <StatRow label="Price">
+                      <span className="font-bold text-lg" style={{ color: primaryColor }}>{priceDisplay}</span>
+                      {pricing.obo && <span className="ml-2 text-xs text-gray-500">OBO</span>}
+                    </StatRow>
+                  )}
+                  {pricing.discount > 0 && priceDisplay && (
+                    <StatRow label="Discount">
+                      <span className="text-red-600 font-bold">{pricing.discount}% off</span>
+                      <span className="ml-2 text-gray-500 line-through">{priceDisplay}</span>
+                      <span className="ml-2 font-bold text-red-600">
+                        {formatPrice(pricing.price * (1 - pricing.discount / 100))}
+                      </span>
+                    </StatRow>
+                  )}
+                  {studFeeDisplay && (
+                    <StatRow label="Stud Fee">
+                      <span className="font-bold" style={{ color: primaryColor }}>{studFeeDisplay}</span>
+                    </StatRow>
+                  )}
+                  {dob && <StatRow label="DOB" value={dob} />}
+                  {(() => {
+                    const seen = new Set();
+                    return (registrations || [])
+                      .filter(r => {
+                        const key = `${r.type}|${r.number}`;
+                        if (seen.has(key)) return false;
+                        seen.add(key);
+                        return true;
+                      })
+                      .map((r, i) => (
+                        <StatRow key={i} label={r.type} value={r.number} />
+                      ));
+                  })()}
+                  <StatRow label="Species" value={animal.species_singular} />
+                  {animal.breeds && animal.breeds.length > 0 && (
+                    <StatRow label={animal.breeds.length > 1 ? 'Breeds' : 'Breed'} value={animal.breeds.join(', ')} />
+                  )}
+                  {animal.category && String(animal.category) !== '0' && (
+                    <StatRow label="Category" value={animal.category} />
+                  )}
+                  {animal.colors && animal.colors.length > 0 && (
+                    <StatRow label="Color" value={animal.colors.join(' / ')} />
+                  )}
+                  {animal.height && <StatRow label="Height" value={animal.height} />}
+                  {animal.weight && <StatRow label="Weight" value={animal.weight} />}
+                  {animal.horns  && <StatRow label="Horns"  value={animal.horns}  />}
+                  {animal.temperament && animal.temperament !== '0' && (
+                    <StatRow label="Temperament">
+                      {animal.temperament} <span className="text-xs text-gray-400 ml-1">(1=calm, 10=spirited)</span>
+                    </StatRow>
+                  )}
+                  {animal.vaccinations && (
+                    <StatRow label="Vaccinations" value={animal.vaccinations} />
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* siteMode: About this animal card instead of Listed By (owner info is on the ranch page) */}
+            {siteMode ? (
+              animal.description && (
+                <>
+                  <hr className="border-gray-100" />
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                      About {animal.full_name}
+                    </p>
+                    <div
+                      className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: animal.description }}
+                    />
+                  </div>
+                </>
+              )
+            ) : (
+              (owner?.business_name || owner?.city || owner?.state) && (
+                <>
+                  <hr className="border-gray-100" />
+                  <div className="text-center">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Listed By</p>
+                    {owner.logo && (
+                      <img
+                        src={owner.logo}
+                        alt={owner.business_name}
+                        className="mb-2 object-contain rounded mx-auto"
+                        style={{ maxHeight: '56px', maxWidth: '160px' }}
+                        onError={e => { e.target.style.display = 'none'; }}
+                      />
+                    )}
+                    {owner.business_name && (
+                      <p className="font-bold text-sm text-gray-800">{owner.business_name}</p>
+                    )}
+                    {(owner.city || owner.state) && (
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        {[owner.city, owner.state].filter(Boolean).join(', ')}
+                      </p>
+                    )}
+                    {owner.business_id && (
+                      <div>
+                        <Link
+                          to={`/marketplaces/livestock/ranch/${owner.business_id}`}
+                          className="inline-block mt-2 text-xs font-bold"
+                          style={{ color: primaryColor }}
+                        >
+                          View Ranch Page →
+                        </Link>
+                      </div>
+                    )}
+                    {owner.business_id && (
+                      <div className="mt-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Contact Seller</p>
+                        <Link
+                          to={`/marketplaces/livestock/ranch/${owner.business_id}`}
+                          className="inline-block px-4 py-1.5 rounded-lg font-bold text-xs text-white transition-all hover:opacity-90"
+                          style={{ backgroundColor: 'rgb(123, 141, 92)', color: '#ffffff' }}
+                        >
+                          Contact Seller
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )
+            )}
+
+            {/* Finance terms */}
+            {animal.finance_terms && animal.finance_terms.trim().length > 6 && (
+              <>
+                <hr className="border-gray-100" />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Financial Terms</p>
+                  <p className="text-sm text-gray-700 leading-relaxed">{animal.finance_terms}</p>
+                </div>
+              </>
+            )}
+
+          </div>
+
+          {/* Co-owners */}
+          {animal.co_owners && animal.co_owners.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-sm font-bold mb-2 text-gray-700">Co-Owned By</h2>
+              {animal.co_owners.map((co, i) => (
+                <div key={i} className="text-sm text-gray-700 mb-1">
+                  {co.link && co.link.length > 3
+                    ? <a href={`http://${co.link}`} target="_blank" rel="noopener noreferrer" style={{ color: primaryColor }}>{co.business || co.name}</a>
+                    : <span>{co.business || co.name}</span>}
+                  {co.business && co.name && co.business !== co.name && (
+                    <span className="text-gray-500">, {co.name}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+        </div>
+
+        {/* ── Right column: photos ── */}
+        <div className="space-y-6">
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+            <PhotoGallery photos={photos} />
+            {animal.video_url && (
+              <div className="mt-3">
+                <a href={animal.video_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold" style={{ color: primaryColor }}>
+                  ▶ Watch Video
+                </a>
+              </div>
+            )}
+            {(animal.registration_url || animal.histogram_url) && (
+              <div className="mt-3 flex flex-col gap-1">
+                {animal.registration_url && (
+                  <a href={animal.registration_url} target="_blank" rel="noopener noreferrer" download
+                     className="text-xs font-bold" style={{ color: primaryColor }}>
+                    📄 Download Registration Certificate
+                  </a>
+                )}
+                {animal.histogram_url && (
+                  <a href={animal.histogram_url} target="_blank" rel="noopener noreferrer" download
+                     className="text-xs font-bold" style={{ color: primaryColor }}>
+                    📄 Download Histogram
+                  </a>
+                )}
+              </div>
+            )}
+            {!siteMode && (
+              <div className="mt-3">
+                <Link to={`/marketplaces/livestock/animal/${animal.animal_id}/progeny`}
+                      className="text-xs font-bold" style={{ color: primaryColor }}>
+                  👶 View Progeny
+                </Link>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+
+      {/* ── Full-width awards ── */}
+      {awards && awards.length > 0 && (
+        <div className="mt-6">
+          <Awards rows={awards} />
+        </div>
+      )}
+
+      {/* ── Full-width description (hidden in siteMode — shown inside the pricing card instead) ── */}
+      {!siteMode && animal.description && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mt-6">
+          <h2 className="text-base font-bold mb-3" style={{ color: '#507033' }}>
+            About {animal.full_name}
+          </h2>
+          <div
+            className="text-sm text-gray-700 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: animal.description }}
+          />
+        </div>
+      )}
+
+      {/* ── Full-width fiber stats ── */}
+      {fiber_stats && fiber_stats.length > 0 && (
+        <div className="mt-6">
+          <FiberStats rows={fiber_stats} />
+        </div>
+      )}
+
+      {/* ── Full-width ancestry (bloodline + pedigree tree) ── */}
+      {ancestry && (
+        <AncestrySection ancestry={ancestry} species={animal.species_singular} />
+      )}
+
+      {/* Prev / Next navigation (siteMode) */}
+      {siteMode && (onPrev || onNext) && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.75rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+          <button
+            onClick={hasPrev ? onPrev : undefined}
+            disabled={!hasPrev}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: hasPrev ? 'pointer' : 'default', color: hasPrev ? primaryColor : 'transparent', fontSize: '0.9rem', fontWeight: 600, opacity: hasPrev ? 1 : 0, pointerEvents: hasPrev ? 'auto' : 'none' }}
+          >
+            ← Previous
+          </button>
+          <button
+            onClick={hasNext ? onNext : undefined}
+            disabled={!hasNext}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: hasNext ? 'pointer' : 'default', color: hasNext ? primaryColor : 'transparent', fontSize: '0.9rem', fontWeight: 600, opacity: hasNext ? 1 : 0, pointerEvents: hasNext ? 'auto' : 'none' }}
+          >
+            Next →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function LivestockAnimalDetail() {
   const { id } = useParams();
@@ -456,24 +804,8 @@ export default function LivestockAnimalDetail() {
     </div>
   );
 
-  const { pricing, owner, ancestry, photos, awards, fiber_stats, registrations } = animal;
-  const dob = formatDOB(animal.dob || {});
-
-  const priceDisplay = pricing.free
-    ? 'Free'
-    : pricing.sold
-    ? null
-    : pricing.price
-    ? formatPrice(pricing.price)
-    : null;
-
-  const studFeeDisplay = !animal.sold && (animal.publish_stud || pricing.stud_fee)
-    ? (pricing.stud_fee ? formatPrice(pricing.stud_fee) : 'Call for Fee')
-    : null;
-
-  const backSlug = animal.species_slug;
+  const { owner, pricing } = animal;
   const backLabel = animal.species_singular ? `${animal.species_singular}s` : 'Livestock';
-
   const metaDesc = `${animal.full_name} — ${animal.species_singular} for sale at ${owner?.business_name || 'OatmealFarmNetwork'}${owner?.state ? `, ${owner.state}` : ''}. ${(animal.description || '').slice(0, 120)}`;
 
   return (
@@ -501,275 +833,7 @@ export default function LivestockAnimalDetail() {
         }}
       />
       <Header />
-
-      <div className="mx-auto px-4 py-6" style={{ maxWidth: '1200px' }}>
-
-        <Breadcrumbs items={[
-          { label: 'Home', to: '/' },
-          { label: 'Marketplaces', to: '/marketplaces' },
-          { label: 'Livestock', to: '/marketplaces/livestock' },
-          ...(backSlug ? [{ label: backLabel, to: `/marketplaces/livestock/${backSlug}` }] : []),
-          { label: animal.full_name },
-        ]} />
-
-        {/* Last updated */}
-        {animal.last_updated && (
-          <p className="text-xs text-gray-400 mb-4">
-            Last updated: {new Date(animal.last_updated).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-          </p>
-        )}
-
-        {/* Page title */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-6" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-          {animal.full_name}
-        </h1>
-
-        {/* Status badges */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {animal.sold && (
-            <span className="inline-block bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">SOLD</span>
-          )}
-          {animal.sale_pending && !animal.sold && (
-            <span className="inline-block bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-1 rounded-full">Sale Pending</span>
-          )}
-          {animal.publish_stud && !animal.sold && (
-            <span className="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">Stud Available</span>
-          )}
-        </div>
-
-        {/* Two-column layout — equal width: left info, right photos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-          {/* ── Left column: combined info card ── */}
-          <div className="space-y-5">
-
-            {/* Combined: pricing + listed by + description */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-5">
-
-              {/* Pricing / key stats */}
-              <div>
-                {pricing.price_comments && (
-                  <p className="text-sm font-semibold text-gray-700 mb-3">{pricing.price_comments}</p>
-                )}
-                <table className="w-full text-sm">
-                  <tbody>
-                    {priceDisplay && (
-                      <StatRow label="Price">
-                        <span className="font-bold text-lg" style={{ color: '#3D6B34' }}>{priceDisplay}</span>
-                        {pricing.obo && <span className="ml-2 text-xs text-gray-500">OBO</span>}
-                      </StatRow>
-                    )}
-                    {pricing.discount > 0 && priceDisplay && (
-                      <StatRow label="Discount">
-                        <span className="text-red-600 font-bold">{pricing.discount}% off</span>
-                        <span className="ml-2 text-gray-500 line-through">{priceDisplay}</span>
-                        <span className="ml-2 font-bold text-red-600">
-                          {formatPrice(pricing.price * (1 - pricing.discount / 100))}
-                        </span>
-                      </StatRow>
-                    )}
-                    {studFeeDisplay && (
-                      <StatRow label="Stud Fee">
-                        <span className="font-bold" style={{ color: '#3D6B34' }}>{studFeeDisplay}</span>
-                      </StatRow>
-                    )}
-                    {dob && <StatRow label="DOB" value={dob} />}
-                    {(() => {
-                      const seen = new Set();
-                      return registrations
-                        .filter(r => {
-                          const key = `${r.type}|${r.number}`;
-                          if (seen.has(key)) return false;
-                          seen.add(key);
-                          return true;
-                        })
-                        .map((r, i) => (
-                          <StatRow key={i} label={r.type} value={r.number} />
-                        ));
-                    })()}
-                    <StatRow label="Species" value={animal.species_singular} />
-                    {animal.breeds.length > 0 && (
-                      <StatRow label={animal.breeds.length > 1 ? 'Breeds' : 'Breed'} value={animal.breeds.join(', ')} />
-                    )}
-                    {animal.category && String(animal.category) !== '0' && (
-                      <StatRow label="Category" value={animal.category} />
-                    )}
-                    {animal.colors.length > 0 && (
-                      <StatRow label="Color" value={animal.colors.join(' / ')} />
-                    )}
-                    {animal.height && <StatRow label="Height" value={animal.height} />}
-                    {animal.weight && <StatRow label="Weight" value={animal.weight} />}
-                    {animal.horns  && <StatRow label="Horns"  value={animal.horns}  />}
-                    {animal.temperament && animal.temperament !== '0' && (
-                      <StatRow label="Temperament">
-                        {animal.temperament} <span className="text-xs text-gray-400 ml-1">(1=calm, 10=spirited)</span>
-                      </StatRow>
-                    )}
-                    {animal.vaccinations && (
-                      <StatRow label="Vaccinations" value={animal.vaccinations} />
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Divider */}
-              {(owner.business_name || owner.city || owner.state) && (
-                <hr className="border-gray-100" />
-              )}
-
-              {/* Listed By */}
-              {(owner.business_name || owner.city || owner.state) && (
-                <div className="text-center">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Listed By</p>
-                  {owner.logo && (
-                    <img
-                      src={owner.logo}
-                      alt={owner.business_name}
-                      className="mb-2 object-contain rounded mx-auto"
-                      style={{ maxHeight: '56px', maxWidth: '160px' }}
-                      onError={e => { e.target.style.display = 'none'; }}
-                    />
-                  )}
-                  {owner.business_name && (
-                    <p className="font-bold text-sm text-gray-800">{owner.business_name}</p>
-                  )}
-                  {(owner.city || owner.state) && (
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      {[owner.city, owner.state].filter(Boolean).join(', ')}
-                    </p>
-                  )}
-                  {owner.business_id && (
-                    <div>
-                      <Link
-                        to={`/marketplaces/livestock/ranch/${owner.business_id}`}
-                        className="inline-block mt-2 text-xs font-bold"
-                        style={{ color: '#3D6B34' }}
-                      >
-                        View Ranch Page →
-                      </Link>
-                    </div>
-                  )}
-                  {owner.business_id && (
-                    <div className="mt-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Contact Seller</p>
-                      <Link
-                        to={`/marketplaces/livestock/ranch/${owner.business_id}`}
-                        className="inline-block px-4 py-1.5 rounded-lg font-bold text-xs text-white transition-all hover:opacity-90"
-                        style={{ backgroundColor: 'rgb(123, 141, 92)', color: '#ffffff' }}
-                      >
-                        Contact Seller
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
-
-
-              {/* Finance terms */}
-              {animal.finance_terms && animal.finance_terms.trim().length > 6 && (
-                <>
-                  <hr className="border-gray-100" />
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Financial Terms</p>
-                    <p className="text-sm text-gray-700 leading-relaxed">{animal.finance_terms}</p>
-                  </div>
-                </>
-              )}
-
-            </div>
-
-            {/* Co-owners */}
-            {animal.co_owners && animal.co_owners.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-sm font-bold mb-2 text-gray-700">Co-Owned By</h2>
-                {animal.co_owners.map((co, i) => (
-                  <div key={i} className="text-sm text-gray-700 mb-1">
-                    {co.link && co.link.length > 3
-                      ? <a href={`http://${co.link}`} target="_blank" rel="noopener noreferrer" style={{ color: '#3D6B34' }}>{co.business || co.name}</a>
-                      : <span>{co.business || co.name}</span>}
-                    {co.business && co.name && co.business !== co.name && (
-                      <span className="text-gray-500">, {co.name}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-          </div>
-
-          {/* ── Right column: photos ── */}
-          <div className="space-y-6">
-
-            {/* Photos */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-              <PhotoGallery photos={photos} />
-              {animal.video_url && (
-                <div className="mt-3">
-                  <a href={animal.video_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold" style={{ color: '#3D6B34' }}>
-                    ▶ Watch Video
-                  </a>
-                </div>
-              )}
-              {(animal.registration_url || animal.histogram_url) && (
-                <div className="mt-3 flex flex-col gap-1">
-                  {animal.registration_url && (
-                    <a href={animal.registration_url} target="_blank" rel="noopener noreferrer" download
-                       className="text-xs font-bold" style={{ color: '#3D6B34' }}>
-                      📄 Download Registration Certificate
-                    </a>
-                  )}
-                  {animal.histogram_url && (
-                    <a href={animal.histogram_url} target="_blank" rel="noopener noreferrer" download
-                       className="text-xs font-bold" style={{ color: '#3D6B34' }}>
-                      📄 Download Histogram
-                    </a>
-                  )}
-                </div>
-              )}
-              <div className="mt-3">
-                <Link to={`/marketplaces/livestock/animal/${animal.animal_id}/progeny`}
-                      className="text-xs font-bold" style={{ color: '#3D6B34' }}>
-                  👶 View Progeny
-                </Link>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* ── Full-width awards ── */}
-        {awards && awards.length > 0 && (
-          <div className="mt-6">
-            <Awards rows={awards} />
-          </div>
-        )}
-
-        {/* ── Full-width description ── */}
-        {animal.description && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mt-6">
-            <h2 className="text-base font-bold mb-3" style={{ color: '#507033' }}>
-              About {animal.full_name}
-            </h2>
-            <div
-              className="text-sm text-gray-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: animal.description }}
-            />
-          </div>
-        )}
-
-        {/* ── Full-width fiber stats ── */}
-        {fiber_stats && fiber_stats.length > 0 && (
-          <div className="mt-6">
-            <FiberStats rows={fiber_stats} />
-          </div>
-        )}
-
-        {/* ── Full-width ancestry (bloodline + pedigree tree) ── */}
-        {ancestry && (
-          <AncestrySection ancestry={ancestry} species={animal.species_singular} />
-        )}
-      </div>
-
+      <LivestockAnimalDetailContent animal={animal} />
       <Footer />
     </div>
   );

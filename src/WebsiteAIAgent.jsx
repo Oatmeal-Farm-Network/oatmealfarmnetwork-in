@@ -9,23 +9,13 @@ const HEADER_H = 72; // px — matches AccountLayout header height
 // ── Lavendir branch icon ──────────────────────────────────────────
 function LavenderBranchIcon({ size = 24 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="16" cy="16" r="15" fill="rgba(255,255,255,0.22)" />
-      <path d="M16 27 Q15.5 20 16 8" stroke="#E8D5FF" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M16 22 Q13 20 11 18" stroke="#E8D5FF" strokeWidth="1.3" strokeLinecap="round" />
-      <path d="M16 18 Q13 16 11 14" stroke="#E8D5FF" strokeWidth="1.3" strokeLinecap="round" />
-      <path d="M16 14 Q13.5 12 12 10" stroke="#E8D5FF" strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M16 22 Q19 20 21 18" stroke="#E8D5FF" strokeWidth="1.3" strokeLinecap="round" />
-      <path d="M16 18 Q19 16 21 14" stroke="#E8D5FF" strokeWidth="1.3" strokeLinecap="round" />
-      <path d="M16 14 Q18.5 12 20 10" stroke="#E8D5FF" strokeWidth="1.2" strokeLinecap="round" />
-      <ellipse cx="11" cy="17.5" rx="1.8" ry="2.4" fill="#D4AAFF" transform="rotate(-20 11 17.5)" />
-      <ellipse cx="11" cy="13.5" rx="1.8" ry="2.4" fill="#C496FF" transform="rotate(-25 11 13.5)" />
-      <ellipse cx="12" cy="9.5"  rx="1.6" ry="2.2" fill="#B882FF" transform="rotate(-30 12 9.5)" />
-      <ellipse cx="21" cy="17.5" rx="1.8" ry="2.4" fill="#D4AAFF" transform="rotate(20 21 17.5)" />
-      <ellipse cx="21" cy="13.5" rx="1.8" ry="2.4" fill="#C496FF" transform="rotate(25 21 13.5)" />
-      <ellipse cx="20" cy="9.5"  rx="1.6" ry="2.2" fill="#B882FF" transform="rotate(30 20 9.5)" />
-      <ellipse cx="16" cy="7.5" rx="1.5" ry="2.2" fill="#A86EFF" />
-    </svg>
+    <img
+      src="/images/AI-agent-logo-lavendair.svg"
+      alt="Lavendir"
+      width={size}
+      height={size}
+      style={{ display: 'block', flexShrink: 0 }}
+    />
   );
 }
 
@@ -402,10 +392,10 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
       <button
         onClick={() => setOpen(true)}
         title={`Chat with ${AGENT_NAME}`}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-        style={{ background: AVATAR_COLOR }}
+        className="fixed bottom-6 right-6 z-50 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+        style={{ background: 'transparent', border: 'none', padding: 0 }}
       >
-        <LavenderBranchIcon size={32} />
+        <LavenderBranchIcon size={64} />
       </button>
     );
   }
@@ -423,9 +413,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 shrink-0" style={{ background: AVATAR_COLOR }}>
-        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(255,255,255,0.18)' }}>
-          <LavenderBranchIcon size={20} />
-        </div>
+        <LavenderBranchIcon size={28} />
         <div className="flex-1 min-w-0">
           <p className="text-white font-bold text-sm leading-none">{AGENT_NAME}</p>
           <p className="text-purple-200 text-xs mt-0.5">
@@ -483,9 +471,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
             {msg.role === 'assistant' && (
-              <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mb-0.5" style={{ background: AVATAR_COLOR }}>
-                <LavenderBranchIcon size={16} />
-              </div>
+              <LavenderBranchIcon size={22} />
             )}
             <div
               className={`rounded-2xl px-3 py-2 text-sm leading-relaxed ${panelExpanded ? 'max-w-[55%]' : 'max-w-[80%]'} ${
@@ -501,9 +487,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
 
         {loading && (
           <div className="flex items-end gap-2 justify-start">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: AVATAR_COLOR }}>
-              <LavenderBranchIcon size={16} />
-            </div>
+            <LavenderBranchIcon size={22} />
             <div className="bg-white border border-purple-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
               <div className="flex gap-1 items-center">
                 <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: AVATAR_COLOR, animationDelay: '0ms' }} />

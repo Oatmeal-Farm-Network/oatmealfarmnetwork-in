@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [businesses, setBusinesses] = useState([]);
   const [businessFieldsMap, setBusinessFieldsMap] = useState({});
+  const [businessFeaturesMap, setBusinessFeaturesMap] = useState({});
   const [expandedBusiness, setExpandedBusiness] = useState(null);
   const [weather, setWeather] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
@@ -29,7 +30,7 @@ export default function Dashboard() {
     };
     setUser(userData);
 
-    // Fetch businesses then fetch fields for each
+    // Fetch businesses then fetch fields + features for each
     if (peopleId) {
       fetch(`${API_URL}/auth/my-businesses?PeopleID=${peopleId}`)
         .then(r => r.json())
@@ -39,18 +40,34 @@ export default function Dashboard() {
           setContextBusinesses(list);
           // Auto-expand the first business
           if (list.length > 0) setExpandedBusiness(list[0].BusinessID);
-          // Fetch fields only for Precision Ag businesses (BusinessTypeID 8)
-          const map = {};
+          // Fetch fields only for Farm / Ranch businesses (BusinessTypeID 8)
+          const fieldsMap = {};
           await Promise.all(list.filter(b => b.BusinessTypeID === 8).map(async b => {
             try {
               const r = await fetch(`${API_URL}/api/fields?business_id=${b.BusinessID}`);
               if (r.ok) {
                 const fields = await r.json();
-                if (Array.isArray(fields)) map[b.BusinessID] = fields;
+                if (Array.isArray(fields)) fieldsMap[b.BusinessID] = fields;
               }
             } catch {}
           }));
-          setBusinessFieldsMap(map);
+          setBusinessFieldsMap(fieldsMap);
+          // Fetch subscription-aware feature flags for every business
+          const featuresMap = {};
+          await Promise.all(list.map(async b => {
+            try {
+              const r = await fetch(`${API_URL}/api/company/features?business_id=${b.BusinessID}`);
+              if (r.ok) {
+                const rows = await r.json();
+                const map = {};
+                if (Array.isArray(rows)) rows.forEach(f => { map[f.feature_key] = f.is_enabled; });
+                featuresMap[b.BusinessID] = map;
+              } else {
+                featuresMap[b.BusinessID] = {};
+              }
+            } catch { featuresMap[b.BusinessID] = {}; }
+          }));
+          setBusinessFeaturesMap(featuresMap);
         })
         .catch(() => setBusinesses([]));
     }
@@ -85,46 +102,68 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  const getQuickLinks = (bt, bid) => {
-    const acct = { label: 'Account Settings', to: `/account?PeopleID=${user.peopleId}&BusinessID=${bid}` };
-    const website = { label: '🌐 Website', to: `/website/builder?BusinessID=${bid}` };
-    const orders = { label: '📦 Orders', to: `/seller/orders?BusinessID=${bid}` };
-    const services = { label: '🔧 My Services', to: `/services?BusinessID=${bid}` };
-    const products = { label: '🛍️ Products', to: `/products/settings?BusinessID=${bid}` };
-    const produce = { label: '🥬 Produce', to: `/produce/inventory?BusinessID=${bid}` };
-    const processedFood = { label: '🍯 Processed Foods', to: `/produce/processed-food?BusinessID=${bid}` };
-    const meat = { label: '🥩 Meat', to: `/produce/meat?BusinessID=${bid}` };
-    const events = { label: '🎪 Events', to: `/events/manage?BusinessID=${bid}` };
-    const properties = { label: '🏡 Properties', to: `/properties?BusinessID=${bid}` };
+  // BusinessTypeID gating — mirror AccountLayout.jsx so Dashboard and sidebar stay in sync.
+  const FARM_TO_TABLE_BTS   = [8, 9, 10, 11, 14, 19, 22, 23, 26, 29, 31, 33, 34];
+  const PRODUCE_BTS         = [8, 10, 14, 26, 29, 31, 34];
+  const PROCESSED_FOOD_BTS  = [8, 10, 11, 14, 26, 29, 31, 33, 34];
+  const MEAT_BTS            = [8, 10, 14, 19, 22, 23, 26, 29];
+  const PRODUCTS_BTS        = [8, 10, 11, 14, 15, 16, 18, 19, 24, 25, 26, 29, 31, 33, 34];
+  const SERVICES_PROVIDER_BTS = [1, 8, 9, 10, 17, 18, 20, 21, 27, 28, 32];
+  const PROPERTIES_BTS      = [8, 30];
 
-    const map = {
-      1:  [acct, events, services, website],
-      9:  [acct, orders, services, website],
-      10: [acct, orders, produce, processedFood, website],
-      11: [acct, orders, processedFood, products, website],
-      14: [acct, orders, produce, processedFood, website],
-      15: [acct, products, website],
-      16: [acct, products, services, website],
-      17: [acct, services, website],
-      18: [acct, products, services, website],
-      19: [acct, orders, meat, products, website],
-      20: [acct, services, website],
-      21: [acct, services, website],
-      22: [acct, orders, meat, website],
-      23: [acct, orders, meat, website],
-      24: [acct, products, website],
-      25: [acct, products, website],
-      26: [acct, orders, produce, processedFood, products, website],
-      27: [acct, events, services, website],
-      28: [acct, services, website],
-      29: [acct, orders, produce, website],
-      30: [acct, properties, services, website],
-      31: [acct, orders, produce, processedFood, website],
-      32: [acct, services, website],
-      33: [acct, orders, processedFood, products, website],
-      34: [acct, orders, produce, products, website],
-    };
-    return map[bt] || [acct, website];
+  // Return a flat, ordered list of quick links for a business card.
+  // Each section is only included when the feature is enabled in the business's
+  // subscription (fail-closed when features haven't loaded yet) AND the
+  // BusinessType gating allows it.
+  const buildQuickLinks = (bt, bid, features) => {
+    const feats = features || {};
+    const on = (key) => feats[key] === true;
+    const links = [];
+
+    if (on('blog')) {
+      links.push({ label: '📝 Blog', to: `/blog/manage?BusinessID=${bid}` });
+    }
+
+    if (on('livestock')) {
+      links.push({ label: '🐄 Animals', to: `/animals?BusinessID=${bid}` });
+    }
+
+    if (on('farm_2_table') && FARM_TO_TABLE_BTS.includes(bt)) {
+      links.push({ label: '📦 Incoming Orders', to: `/seller/orders?BusinessID=${bid}` });
+      if (PRODUCE_BTS.includes(bt))        links.push({ label: '🥬 Produce',        to: `/produce/inventory?BusinessID=${bid}` });
+      if (PROCESSED_FOOD_BTS.includes(bt)) links.push({ label: '🍯 Processed Foods', to: `/produce/processed-food?BusinessID=${bid}` });
+      if (MEAT_BTS.includes(bt))           links.push({ label: '🥩 Meat',           to: `/produce/meat?BusinessID=${bid}` });
+    }
+
+    if (on('products') && PRODUCTS_BTS.includes(bt)) {
+      links.push({ label: '🛍️ Products', to: `/products/settings?BusinessID=${bid}` });
+    }
+
+    if (on('services')) {
+      if (SERVICES_PROVIDER_BTS.includes(bt)) {
+        links.push({ label: '🔧 My Services', to: `/services?BusinessID=${bid}` });
+      } else {
+        links.push({ label: '🔧 Browse Services', to: '/services/directory' });
+      }
+    }
+
+    if (on('events')) {
+      links.push({ label: '🎪 Events', to: `/events/manage?BusinessID=${bid}` });
+    }
+
+    if (on('properties') && PROPERTIES_BTS.includes(bt)) {
+      links.push({ label: '🏡 Properties', to: `/properties?BusinessID=${bid}` });
+    }
+
+    if (on('associations') && bt === 1) {
+      links.push({ label: '🏛️ Association', to: `/association/create?BusinessID=${bid}` });
+    }
+
+    if (on('my_website')) {
+      links.push({ label: '🌐 My Website', to: `/website/builder?BusinessID=${bid}` });
+    }
+
+    return links;
   };
 
   const formatHour = (timeStr) => {
@@ -183,10 +222,12 @@ export default function Dashboard() {
                 <p className="text-gray-400 text-sm">No accounts found.</p>
               ) : (
                 businesses.map(b => {
-                  const isPrecisionAg = b.BusinessTypeID === 8;
-                  const fields = isPrecisionAg ? (businessFieldsMap[b.BusinessID] || []) : [];
+                  const isFarmRanch = b.BusinessTypeID === 8;
+                  const fields = isFarmRanch ? (businessFieldsMap[b.BusinessID] || []) : [];
                   const activeFields = fields.filter(f => f.monitoring_enabled);
                   const isExpanded = expandedBusiness === b.BusinessID;
+                  const features = businessFeaturesMap[b.BusinessID];
+                  const quickLinks = buildQuickLinks(b.BusinessTypeID, b.BusinessID, features);
 
                   return (
                     <div key={b.BusinessID} className="mb-4 rounded-xl border border-gray-100 overflow-hidden shadow-sm">
@@ -226,7 +267,7 @@ export default function Dashboard() {
                       {/* Expanded content */}
                       {isExpanded && (
                         <div className="px-5 pb-4 pt-3 border-t border-gray-100">
-                          {isPrecisionAg ? (
+                          {isFarmRanch && features?.precision_ag && (
                             <>
                               {/* Summary stats row */}
                               {fields.length > 0 && (
@@ -296,7 +337,7 @@ export default function Dashboard() {
                               )}
 
                               {/* Precision Ag action links */}
-                              <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+                              <div className="flex flex-wrap gap-2 pb-3 mb-3 border-b border-gray-100">
                                 <Link
                                   to={`/precision-ag/fields?BusinessID=${b.BusinessID}&view=create-field`}
                                   className="text-xs font-medium text-white bg-[#3D6B34] hover:bg-[#2d5226] px-3 py-1.5 rounded-lg transition-colors"
@@ -307,7 +348,7 @@ export default function Dashboard() {
                                   to={`/precision-ag/fields?BusinessID=${b.BusinessID}`}
                                   className="text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
                                 >
-                                  Manage Fields
+                                  🗺️ Manage Fields
                                 </Link>
                                 <Link
                                   to={`/oatsense/crop-rotation?BusinessID=${b.BusinessID}`}
@@ -327,30 +368,26 @@ export default function Dashboard() {
                                 >
                                   🔍 Crop Detection
                                 </Link>
-                                <Link
-                                  to={`/website/builder?BusinessID=${b.BusinessID}`}
-                                  className="text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
-                                >
-                                  🌐 Website Builder
-                                </Link>
-                              <Link
-                                  to={`/account?PeopleID=${user.peopleId}&BusinessID=${b.BusinessID}`}
-                                  className="text-xs font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors"
-                                >
-                                  Account Settings
-                                </Link>
                               </div>
                             </>
-                          ) : (
-                            /* Type-aware quick links for all non-farm accounts */
-                            <div className="flex flex-wrap gap-2">
-                              <Link
-                                to={`/account?PeopleID=${user.peopleId}&BusinessID=${b.BusinessID}`}
-                                className="text-xs font-medium text-white bg-[#3D6B34] hover:bg-[#2d5226] px-3 py-1.5 rounded-lg transition-colors"
-                              >
-                                Go to Account
-                              </Link>
-                              {getQuickLinks(b.BusinessTypeID, b.BusinessID).slice(1).map(link => (
+                          )}
+
+                          {/* Subscription- and type-aware quick links for every business */}
+                          <div className="flex flex-wrap gap-2">
+                            <Link
+                              to={`/account?PeopleID=${user.peopleId}&BusinessID=${b.BusinessID}`}
+                              className="text-xs font-medium text-white bg-[#3D6B34] hover:bg-[#2d5226] px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              Go to Account
+                            </Link>
+                            {features === undefined ? (
+                              <span className="text-xs text-gray-400 italic px-1 py-1.5">Loading…</span>
+                            ) : quickLinks.length === 0 ? (
+                              <span className="text-xs text-gray-400 italic px-1 py-1.5">
+                                No features available on this subscription.
+                              </span>
+                            ) : (
+                              quickLinks.map(link => (
                                 <Link
                                   key={link.to}
                                   to={link.to}
@@ -358,9 +395,9 @@ export default function Dashboard() {
                                 >
                                   {link.label}
                                 </Link>
-                              ))}
-                            </div>
-                          )}
+                              ))
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>

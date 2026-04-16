@@ -73,7 +73,7 @@ export default function AccountHome() {
       icon: '/icons/Livestock.svg',
       label: 'Livestock',
       links: [
-        { to: `/animals?BusinessID=${BusinessID}`, label: 'List Animals' },
+        { to: `/animals?BusinessID=${BusinessID}`, label: 'Animals List' },
         { to: `/animals/add?BusinessID=${BusinessID}`, label: 'Add' },
         { to: `/animals/transfer?BusinessID=${BusinessID}`, label: 'Transfer' },
         { to: `/animals/stats?BusinessID=${BusinessID}`, label: 'Statistics' },
