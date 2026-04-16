@@ -1017,6 +1017,102 @@ function BlogBlock({ data, site, businessId }) {
   );
 }
 
+// ── Testimonials blocks ──────────────────────────────────────────
+function wrapTestimonialHtml(html, font, size) {
+  if (!html) return html;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const txt = (tmp.textContent || '').trim();
+  const hasQuote = /^[\u201C\u201D\u2018\u2019"']/.test(txt);
+  if (!hasQuote) {
+    const walker = document.createTreeWalker(tmp, NodeFilter.SHOW_TEXT);
+    const first = walker.nextNode();
+    if (first) first.textContent = '\u201C' + first.textContent;
+    let last = first;
+    while (walker.nextNode()) last = walker.currentNode;
+    if (last) last.textContent = last.textContent + '\u201D';
+  }
+  if (font || size) {
+    for (const child of tmp.querySelectorAll('*')) {
+      if (font) child.style.fontFamily = font;
+      if (size) child.style.fontSize = size;
+    }
+  }
+  return `<em>${tmp.innerHTML}</em>`;
+}
+
+function TestimonialsBlock({ data, site, businessId }) {
+  const [items, setItems] = useState([]);
+  useEffect(() => {
+    fetchContent(`${API}/api/testimonials?BusinessID=${businessId}`)
+      .then(d => setItems(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, [businessId]);
+
+  const maxItems = data.max_items || 0;
+  const visible = maxItems > 0 ? items.slice(0, maxItems) : items;
+  if (visible.length === 0) return null;
+
+  const textColor = site.text_color || '#1f2937';
+  const tFont = data.testimonial_font || site.body_font || site.font_family || 'inherit';
+  const tSize = data.testimonial_size || site.body_size || '1rem';
+
+  return (
+    <SectionWrap site={site} blockBgColor={data.bg_color || undefined}>
+      {data.heading && <SectionHeading site={site} headingStyle={data.heading_style || 'h1'} html={data.heading} />}
+      {data.intro_body && <BodyText site={site} html={data.intro_body} />}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: (data.heading || data.intro_body) ? '1.5rem' : 0 }}>
+        {visible.map((t, i) => (
+          <div key={t.TestimonialsID || i} style={{ background: '#f9fafb', borderRadius: 12, padding: '1.25rem', border: '1px solid #e5e7eb' }}>
+            <div style={{ fontFamily: tFont, fontSize: tSize, color: textColor, lineHeight: 1.6, margin: 0 }} dangerouslySetInnerHTML={{ __html: wrapTestimonialHtml(t.Content, tFont, tSize) }} />
+            <div style={{ marginTop: '0.75rem', textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, color: textColor }}>
+                — {(() => { const firstName = (t.AuthorName || 'Anonymous').split(' ')[0]; const loc = [t.City, t.State].filter(Boolean).join(' '); return loc ? `${firstName}, ${loc}` : firstName; })()}
+              </p>
+              {t.Rating > 0 && <span style={{ fontSize: '0.82rem', color: '#f59e0b' }}>{'★'.repeat(t.Rating)}{'☆'.repeat(5 - t.Rating)}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </SectionWrap>
+  );
+}
+
+function TestimonialRandomBlock({ data, site, businessId }) {
+  const [item, setItem] = useState(null);
+  useEffect(() => {
+    fetchContent(`${API}/api/testimonials?BusinessID=${businessId}`)
+      .then(d => {
+        const arr = Array.isArray(d) ? d : [];
+        if (arr.length > 0) setItem(arr[Math.floor(Math.random() * arr.length)]);
+      })
+      .catch(() => {});
+  }, [businessId]);
+
+  if (!item) return null;
+
+  const tFont = data.testimonial_font || site.body_font || site.font_family || 'inherit';
+  const tSize = data.testimonial_size || site.body_size || '1rem';
+  const tColor = site.body_color || site.text_color || '#4B5563';
+  const tLineHeight = site.body_line_height || 1.75;
+
+  return (
+    <SectionWrap site={site} blockBgColor={data.bg_color || undefined}>
+      {data.heading && <SectionHeading site={site} headingStyle={data.heading_style || 'h1'} html={data.heading} />}
+      {data.intro_body && <BodyText site={site} html={data.intro_body} />}
+      <div style={{ marginTop: (data.heading || data.intro_body) ? '1rem' : 0, textAlign: data.align || 'left' }}>
+        <div className="site-rte" style={{ fontFamily: tFont, fontSize: tSize, color: tColor, lineHeight: tLineHeight }} dangerouslySetInnerHTML={{ __html: wrapTestimonialHtml(item.Content, tFont, tSize) }} />
+        <div style={{ textAlign: data.align || 'left', marginTop: '0.75rem' }}>
+          <p style={{ margin: 0, fontWeight: 600, fontFamily: tFont, fontSize: tSize, color: tColor }}>
+            — {(() => { const firstName = (item.AuthorName || 'Anonymous').split(' ')[0]; const loc = [item.City, item.State].filter(Boolean).join(' '); return loc ? `${firstName}, ${loc}` : firstName; })()}
+          </p>
+          {item.Rating > 0 && <div style={{ fontSize: '1rem', color: '#f59e0b', marginTop: '0.25rem' }}>{'★'.repeat(item.Rating)}{'☆'.repeat(5 - item.Rating)}</div>}
+        </div>
+      </div>
+    </SectionWrap>
+  );
+}
+
 const CONTACT_API = import.meta.env.VITE_API_URL;
 
 const contactInp = { border: '1px solid #E5E7EB', borderRadius: 8, padding: '0.6rem 0.9rem', fontSize: '0.9rem', width: '100%', boxSizing: 'border-box' };
@@ -1284,6 +1380,8 @@ function RenderBlock({ block, site, businessId }) {
     case 'marketplace':    return <MarketplaceBlock data={data} site={site} businessId={businessId} />;
     case 'gallery':        return <GalleryBlock data={data} site={site} businessId={businessId} />;
     case 'blog':           return <BlogBlock data={data} site={site} businessId={businessId} />;
+    case 'testimonials':   return <TestimonialsBlock data={data} site={site} businessId={businessId} />;
+    case 'testimonial_random': return <TestimonialRandomBlock data={data} site={site} businessId={businessId} />;
     case 'contact':        return <ContactBlock data={data} site={site} />;
     case 'links':          return <LinksBlock data={data} site={site} />;
     case 'divider':        return <DividerBlock data={data} />;
@@ -1668,12 +1766,21 @@ export default function WebsitePublic() {
       </div>
 
       {/* Footer — outer band at footer_bg_width, inner content at footer_content_width */}
-      <footer style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family, paddingBottom: Number(site.footer_bottom_radius) || 0 }}>
-        {/* Outer band — no background; footer content and copyright each carry their own */}
-        <div style={{ width: '100%', maxWidth: site.footer_bg_width || '100%', borderRadius: Number(site.footer_bottom_radius) ? `0 0 ${site.footer_bottom_radius}px ${site.footer_bottom_radius}px` : undefined, overflow: Number(site.footer_bottom_radius) ? 'hidden' : undefined }}>
+      {(() => {
+        const fRadius = Number(site.footer_bottom_radius) || 0;
+        const fRadiusCss = fRadius ? `0 0 ${fRadius}px ${fRadius}px` : undefined;
+        const copyrightBg = site.copyright_bar_bg_color || 'rgba(0,0,0,0.18)';
+        const copyrightIsTransparent = !copyrightBg || copyrightBg === 'transparent';
+        // If the copyright bar is transparent, the footer content div is the visual bottom
+        // and needs the border-radius directly; otherwise the copyright bar is the visual bottom.
+        const footerContentRadius = copyrightIsTransparent ? fRadiusCss : undefined;
+        const copyrightRadius = copyrightIsTransparent ? undefined : fRadiusCss;
+        return (
+      <footer style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family, paddingBottom: fRadius }}>
+        <div style={{ width: '100%', maxWidth: site.footer_bg_width || '100%', borderRadius: fRadiusCss, overflow: fRadius ? 'hidden' : undefined }}>
           {site.footer_bg_image_url ? (
             /* Image case: image as bg, footer content overlaid, copyright below */
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', borderRadius: fRadiusCss, overflow: fRadius ? 'hidden' : undefined }}>
               <img src={site.footer_bg_image_url} alt="" style={{ width: '100%', display: 'block' }} />
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
                 <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto' }}>
@@ -1684,7 +1791,7 @@ export default function WebsitePublic() {
                 </div>
               </div>
               {/* Copyright bar — its own background, below the image */}
-              <div style={{ background: site.copyright_bar_bg_color || 'rgba(0,0,0,0.18)' }}>
+              <div style={{ background: copyrightBg, borderRadius: copyrightRadius }}>
                 <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto', padding: '0.5rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
                     {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
@@ -1697,10 +1804,10 @@ export default function WebsitePublic() {
               </div>
             </div>
           ) : (
-            /* No image: footer content and copyright are plain block siblings — no flex needed */
+            /* No image: footer content and copyright are plain block siblings */
             <>
-              {/* Footer content area — minHeight drives the height slider */}
-              <div style={{ minHeight: Number(site.footer_height) || 200, background: site.footer_bg_color || site.primary_color }}>
+              {/* Footer content area */}
+              <div style={{ minHeight: Number(site.footer_height) || 200, background: site.footer_bg_color || site.primary_color, borderRadius: footerContentRadius }}>
                 <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto' }}>
                   {site.footer_html ? (
                     <div style={{ padding: '0.5rem 1rem', color: '#fff', lineHeight: 1.7 }}
@@ -1709,7 +1816,7 @@ export default function WebsitePublic() {
                 </div>
               </div>
               {/* Copyright bar — its own independent background, always below footer content */}
-              <div style={{ background: site.copyright_bar_bg_color || 'rgba(0,0,0,0.18)' }}>
+              <div style={{ background: copyrightBg, borderRadius: copyrightRadius }}>
                 <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto', padding: '0.5rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
                     {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
@@ -1724,6 +1831,8 @@ export default function WebsitePublic() {
           )}
         </div>
       </footer>
+        );
+      })()}
     </div>
   );
 }

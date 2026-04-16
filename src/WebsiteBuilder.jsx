@@ -27,6 +27,8 @@ const BLOCK_TYPES = [
   { type: 'blog',           icon: '📝',  label: 'Blog Posts',         desc: 'Latest blog posts' },
   { type: 'contact',        icon: '📬',  label: 'Contact',            desc: 'Contact information and form' },
   { type: 'links',          icon: '🔗',  label: 'Links',              desc: 'Icon links with title and description' },
+  { type: 'testimonials',    icon: '🤝',  label: 'All Testimonials',   desc: 'Display all testimonials from your customers' },
+  { type: 'testimonial_random', icon: '💬', label: 'Random Testimonial', desc: 'Show a single random testimonial' },
   { type: 'divider',        icon: '➖',  label: 'Spacer / Divider',   desc: 'Visual separator between sections' },
 ];
 
@@ -58,6 +60,8 @@ const defaultBlockData = {
     { heading: 'Social Media', items: [{ icon_url: '', label: 'Link Title', url: '', description: 'Short description of this link' }] },
     { heading: 'Link Heading 2', items: [{ icon_url: '', label: 'Link Title', url: '', description: 'Short description of this link' }] },
   ]},
+  testimonials:       { heading: '', heading_style: 'h1', intro_body: '', max_items: 0 },
+  testimonial_random: { heading: '', heading_style: 'h1', intro_body: '', align: 'left' },
   divider:        { height: 40 },
 };
 
@@ -2378,6 +2382,8 @@ function SimpleBlockPreview({ block, site, businessId, onFieldSave }) {
 
   // Blog block — shows live posts in a table with refresh
   if (bt === 'blog') return <BlogBlockCanvas block={block} site={site} businessId={businessId} />;
+  if (bt === 'testimonials') return <TestimonialsBlockCanvas block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />;
+  if (bt === 'testimonial_random') return <TestimonialRandomBlockCanvas block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />;
 
   // Livestock block — live listing with views / sort / search
   if (bt === 'livestock') return <LivestockBlockCanvas block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />;
@@ -2829,13 +2835,14 @@ function InlineLinksEditor({ block, site, onFieldSave }) {
 function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onDragStart, onDragOver, onDrop, isDragging, site, onFieldSave, businessId, pages }) {
   const meta = BLOCK_TYPES.find(b => b.type === block.block_type);
   // Blocks that edit in-place on the canvas — disable drag so text selection works.
-  const INLINE_TYPES = ['about', 'content', 'content_2col', 'content_4col', 'links', 'livestock', 'studs'];
-  const isInlineEditable = isSelected && INLINE_TYPES.includes(block.block_type);
+  const INLINE_TYPES = ['about', 'content', 'content_2col', 'content_4col', 'links', 'livestock', 'studs', 'testimonials', 'testimonial_random'];
+  const isInlineType = INLINE_TYPES.includes(block.block_type);
+  const isInlineEditable = isSelected && isInlineType;
   return (
     <div
       onClick={e => { e.stopPropagation(); onSelect(block); }}
-      draggable={!isInlineEditable}
-      onDragStart={e => !isInlineEditable && onDragStart(e, index)}
+      draggable={!isInlineType}
+      onDragStart={e => { if (isInlineType) { e.preventDefault(); return; } onDragStart(e, index); }}
       onDragOver={e => { e.preventDefault(); onDragOver(e, index); }}
       onDrop={e => { e.preventDefault(); onDrop(e, index); }}
       style={{
@@ -2843,7 +2850,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
         marginTop: 5,
         outline: isSelected ? '2px solid #3b82f6' : '2px solid transparent',
         outlineOffset: -2,
-        cursor: isInlineEditable ? 'default' : 'pointer',
+        cursor: isInlineType ? 'default' : 'pointer',
         opacity: isDragging ? 0.35 : 1,
         transition: 'outline 0.1s, opacity 0.1s',
       }}
@@ -2855,7 +2862,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
           ? <MultiColumnInlineEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} columnCount={2} pages={pages} />
           : isInlineEditable && block.block_type === 'content_4col'
             ? <MultiColumnInlineEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} columnCount={4} pages={pages} />
-            : isInlineEditable && (block.block_type === 'livestock' || block.block_type === 'studs')
+            : isInlineEditable && (block.block_type === 'livestock' || block.block_type === 'studs' || block.block_type === 'testimonials' || block.block_type === 'testimonial_random')
               ? <SimpleBlockPreview block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />
               : isInlineEditable
                 ? <InlineContentEditor key={block.block_id} block={block} site={site} onFieldSave={onFieldSave} pages={pages} />
@@ -2869,7 +2876,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
         <span style={{ background: '#3b82f6', color: '#fff', fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 4, alignSelf: 'center', marginRight: 4 }}>
           {meta?.label || block.block_type}
         </span>
-        {(block.block_type === 'livestock' || block.block_type === 'studs') && onFieldSave && (
+        {(block.block_type === 'livestock' || block.block_type === 'studs' || block.block_type === 'testimonials' || block.block_type === 'testimonial_random') && onFieldSave && (
           <>
             <label
               onClick={e => e.stopPropagation()}
@@ -2889,6 +2896,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
                 <option value="h3">H3</option>
               </select>
             </label>
+            {(block.block_type === 'livestock' || block.block_type === 'studs') && (
             <label
               onClick={e => e.stopPropagation()}
               onMouseDown={e => e.stopPropagation()}
@@ -2907,6 +2915,82 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
                 <option value="table">▤ Table</option>
               </select>
             </label>
+            )}
+            {(block.block_type === 'testimonials' || block.block_type === 'testimonial_random') && (
+            <>
+              <label
+                onClick={e => e.stopPropagation()}
+                onMouseDown={e => e.stopPropagation()}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '2px 6px', fontSize: 11, color: '#374151' }}
+              >
+                <span style={{ fontWeight: 600, color: '#64748b' }}>Font:</span>
+                <select
+                  value={block.block_data?.testimonial_font || ''}
+                  onClick={e => e.stopPropagation()}
+                  onMouseDown={e => e.stopPropagation()}
+                  onChange={e => { e.stopPropagation(); onFieldSave('testimonial_font', e.target.value); }}
+                  style={{ border: 'none', background: 'transparent', fontSize: 11, color: '#374151', cursor: 'pointer', outline: 'none', maxWidth: 100 }}
+                >
+                  <option value="">Site default</option>
+                  <option value="Arial, sans-serif">Arial</option>
+                  <option value="Georgia, serif">Georgia</option>
+                  <option value="Inter, sans-serif">Inter</option>
+                  <option value="Lato, sans-serif">Lato</option>
+                  <option value="Lora, serif">Lora</option>
+                  <option value="Merriweather, serif">Merriweather</option>
+                  <option value="Montserrat, sans-serif">Montserrat</option>
+                  <option value="Open Sans, sans-serif">Open Sans</option>
+                  <option value="Playfair Display, serif">Playfair Display</option>
+                  <option value="Poppins, sans-serif">Poppins</option>
+                  <option value="Roboto, sans-serif">Roboto</option>
+                  <option value="'Tempus Sans ITC', sans-serif">Tempus Sans ITC</option>
+                  <option value="Times New Roman, serif">Times New Roman</option>
+                </select>
+              </label>
+              <label
+                onClick={e => e.stopPropagation()}
+                onMouseDown={e => e.stopPropagation()}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '2px 6px', fontSize: 11, color: '#374151' }}
+              >
+                <span style={{ fontWeight: 600, color: '#64748b' }}>Size:</span>
+                <select
+                  value={block.block_data?.testimonial_size || ''}
+                  onClick={e => e.stopPropagation()}
+                  onMouseDown={e => e.stopPropagation()}
+                  onChange={e => { e.stopPropagation(); onFieldSave('testimonial_size', e.target.value); }}
+                  style={{ border: 'none', background: 'transparent', fontSize: 11, color: '#374151', cursor: 'pointer', outline: 'none' }}
+                >
+                  <option value="">Site default</option>
+                  <option value="0.75rem">XS</option>
+                  <option value="0.875rem">S</option>
+                  <option value="1rem">M</option>
+                  <option value="1.125rem">L</option>
+                  <option value="1.25rem">XL</option>
+                  <option value="1.5rem">2XL</option>
+                </select>
+              </label>
+            </>
+            )}
+            {block.block_type === 'testimonial_random' && (
+              <label
+                onClick={e => e.stopPropagation()}
+                onMouseDown={e => e.stopPropagation()}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '2px 6px', fontSize: 11, color: '#374151' }}
+              >
+                <span style={{ fontWeight: 600, color: '#64748b' }}>Align:</span>
+                <select
+                  value={block.block_data?.align || 'left'}
+                  onClick={e => e.stopPropagation()}
+                  onMouseDown={e => e.stopPropagation()}
+                  onChange={e => { e.stopPropagation(); onFieldSave('align', e.target.value); }}
+                  style={{ border: 'none', background: 'transparent', fontSize: 11, color: '#374151', cursor: 'pointer', outline: 'none' }}
+                >
+                  <option value="left">Left</option>
+                  <option value="center">Center</option>
+                  <option value="right">Right</option>
+                </select>
+              </label>
+            )}
           </>
         )}
         <button onClick={e => { e.stopPropagation(); onMoveUp(); }} disabled={isFirst}
@@ -3154,6 +3238,211 @@ function renderBlogPostContent(content) {
         return <div key={i} style={{ fontSize: '0.9rem', color: '#1f2937', lineHeight: 1.8, wordBreak: 'break-word', marginBottom: '0.4rem' }} dangerouslySetInnerHTML={{ __html: block.content || '' }} />;
       })}
     </>
+  );
+}
+
+// Wrap testimonial HTML in curly quotes + italic, unless it already starts with a quote character.
+// Inserts quotes inside the first/last block-level elements so they don't appear on separate lines.
+// Optional font/size params are applied inline so they override any inner element styles.
+function wrapTestimonialHtml(html, font, size) {
+  if (!html) return html;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const txt = (tmp.textContent || '').trim();
+  const hasQuote = /^[\u201C\u201D\u2018\u2019"']/.test(txt);
+  if (!hasQuote) {
+    const walker = document.createTreeWalker(tmp, NodeFilter.SHOW_TEXT);
+    const first = walker.nextNode();
+    if (first) first.textContent = '\u201C' + first.textContent;
+    let last = first;
+    while (walker.nextNode()) last = walker.currentNode;
+    if (last) last.textContent = last.textContent + '\u201D';
+  }
+  // Apply font/size to all direct child elements so they override any inner inline styles
+  if (font || size) {
+    for (const child of tmp.querySelectorAll('*')) {
+      if (font) child.style.fontFamily = font;
+      if (size) child.style.fontSize = size;
+    }
+  }
+  return `<em>${tmp.innerHTML}</em>`;
+}
+
+function TestimonialsBlockCanvas({ block, site, businessId, onFieldSave }) {
+  const d = block.block_data || {};
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const textColor  = site?.text_color    || '#111827';
+  const fontFamily = site?.font_family   || 'inherit';
+  const bgWidth    = site?.body_bg_width || '100%';
+  const bgColor    = d.bg_color || site?.bg_color || '#fff';
+  const cWidth     = site?.body_content_width || '100%';
+  const bodyBaseStyle = {
+    fontFamily: site?.body_font  || site?.font_family || 'inherit',
+    fontSize:   site?.body_size  || '1rem',
+    color:      site?.body_color || site?.text_color  || '#4B5563',
+    lineHeight: site?.body_line_height || 1.75,
+    fontStyle:  site?.body_italic ? 'italic' : 'normal',
+  };
+
+  useEffect(() => {
+    if (!businessId) return;
+    setLoading(true);
+    fetch(`${API}/api/testimonials?BusinessID=${businessId}`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => setItems(Array.isArray(data) ? data : []))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [businessId]);
+
+  const maxItems = d.max_items || 0;
+  const visible = maxItems > 0 ? items.slice(0, maxItems) : items;
+  const tFont = d.testimonial_font || bodyBaseStyle.fontFamily;
+  const tSize = d.testimonial_size || bodyBaseStyle.fontSize;
+  // Map fields for InlineContentEditor (same pattern as livestock)
+  const inlineData = { heading: d.heading || '', heading_style: d.heading_style, body: d.intro_body, bg_color: d.bg_color };
+  const inlineFieldSave = onFieldSave
+    ? (field, val) => onFieldSave(field === 'body' ? 'intro_body' : field, val)
+    : null;
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: bgWidth, background: bgColor, fontFamily }}>
+        {/* Inline-editable heading + intro */}
+        {onFieldSave ? (
+          <div
+            draggable={false}
+            onDragStart={e => { e.preventDefault(); e.stopPropagation(); }}
+            onMouseDown={e => e.stopPropagation()}
+          >
+            <InlineContentEditor
+              key={block.block_id}
+              block={block}
+              site={site}
+              onFieldSave={inlineFieldSave}
+              data={inlineData}
+            />
+          </div>
+        ) : (d.heading || d.intro_body) ? (
+          <div style={{ padding: '1.75rem 2.5rem' }}>
+            <div className="rte-body">
+              {d.heading && <HeadTag style={headingTypoStyle(d.heading_style || 'h1', site)} dangerouslySetInnerHTML={{ __html: d.heading }} />}
+              {d.intro_body && (
+                <div style={{ ...bodyBaseStyle, marginTop: 6 }} dangerouslySetInnerHTML={{ __html: d.intro_body }} />
+              )}
+            </div>
+          </div>
+        ) : null}
+
+        <div style={{ padding: (d.heading || d.intro_body || onFieldSave) ? '0 2.5rem 1.75rem' : '1.75rem 2.5rem', maxWidth: cWidth, margin: '0 auto' }}>
+          {loading ? <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Loading testimonials...</p>
+           : visible.length === 0 ? <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No testimonials yet.</p>
+           : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {visible.map((t, i) => (
+                <div key={t.TestimonialsID || i} style={{ background: '#f9fafb', borderRadius: 12, padding: '1.25rem', border: '1px solid #e5e7eb' }}>
+                  <div style={{ fontFamily: tFont, fontSize: tSize, color: textColor, lineHeight: 1.6, margin: 0 }} dangerouslySetInnerHTML={{ __html: wrapTestimonialHtml(t.Content, tFont, tSize) }} />
+                  <div style={{ marginTop: '0.75rem', textAlign: 'right' }}>
+                    <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, color: textColor }}>
+                      — {(t.AuthorName || 'Anonymous').split(' ')[0]}{(t.City || t.State) ? ', ' + [t.City, t.State].filter(Boolean).join(' ') : ''}
+                    </p>
+                    {t.Rating > 0 && <span style={{ fontSize: '0.82rem', color: '#f59e0b' }}>{'★'.repeat(t.Rating)}{'☆'.repeat(5 - t.Rating)}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TestimonialRandomBlockCanvas({ block, site, businessId, onFieldSave }) {
+  const d = block.block_data || {};
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const fontFamily = site?.font_family   || 'inherit';
+  const bgWidth    = site?.body_bg_width || '100%';
+  const bgColor    = d.bg_color || site?.bg_color || '#fff';
+  const cWidth     = site?.body_content_width || '100%';
+  const bodyBaseStyle = {
+    fontFamily: site?.body_font  || site?.font_family || 'inherit',
+    fontSize:   site?.body_size  || '1rem',
+    color:      site?.body_color || site?.text_color  || '#4B5563',
+    lineHeight: site?.body_line_height || 1.75,
+    fontStyle:  site?.body_italic ? 'italic' : 'normal',
+  };
+
+  useEffect(() => {
+    if (!businessId) return;
+    setLoading(true);
+    fetch(`${API}/api/testimonials?BusinessID=${businessId}`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => {
+        const arr = Array.isArray(data) ? data : [];
+        if (arr.length > 0) setItem(arr[Math.floor(Math.random() * arr.length)]);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [businessId]);
+
+  const tFont = d.testimonial_font || bodyBaseStyle.fontFamily;
+  const tSize = d.testimonial_size || bodyBaseStyle.fontSize;
+  const tStyle = { ...bodyBaseStyle, fontFamily: tFont, fontSize: tSize };
+
+  // Map fields for InlineContentEditor (same pattern as livestock/testimonials)
+  const inlineData = { heading: d.heading || '', heading_style: d.heading_style, body: d.intro_body, bg_color: d.bg_color };
+  const inlineFieldSave = onFieldSave
+    ? (field, val) => onFieldSave(field === 'body' ? 'intro_body' : field, val)
+    : null;
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: bgWidth, background: bgColor, fontFamily }}>
+        {/* Inline-editable heading + intro */}
+        {onFieldSave ? (
+          <div
+            draggable={false}
+            onDragStart={e => { e.preventDefault(); e.stopPropagation(); }}
+            onMouseDown={e => e.stopPropagation()}
+          >
+            <InlineContentEditor
+              key={block.block_id}
+              block={block}
+              site={site}
+              onFieldSave={inlineFieldSave}
+              data={inlineData}
+            />
+          </div>
+        ) : (d.heading || d.intro_body) ? (
+          <div style={{ padding: '1.75rem 2.5rem' }}>
+            <div className="rte-body">
+              {d.heading && <HeadTag style={headingTypoStyle(d.heading_style || 'h1', site)} dangerouslySetInnerHTML={{ __html: d.heading }} />}
+              {d.intro_body && (
+                <div style={{ ...bodyBaseStyle, marginTop: 6 }} dangerouslySetInnerHTML={{ __html: d.intro_body }} />
+              )}
+            </div>
+          </div>
+        ) : null}
+
+        <div style={{ padding: (d.heading || d.intro_body || onFieldSave) ? '0 2.5rem 1.75rem' : '1.75rem 2.5rem', maxWidth: cWidth, margin: '0 auto', textAlign: d.align || 'left' }}>
+          {loading ? <p style={{ color: '#9ca3af', fontSize: 13 }}>Loading...</p>
+           : !item ? <p style={{ color: '#9ca3af', fontSize: 13 }}>No testimonials yet.</p>
+           : (
+            <div>
+              <div style={{ ...tStyle, margin: 0 }} dangerouslySetInnerHTML={{ __html: wrapTestimonialHtml(item.Content, tStyle.fontFamily, tStyle.fontSize) }} />
+              <div style={{ textAlign: d.align || 'left', marginTop: '0.75rem' }}>
+                <p style={{ ...tStyle, margin: 0, fontWeight: 600 }}>
+                  — {(item.AuthorName || 'Anonymous').split(' ')[0]}{(item.City || item.State) ? ', ' + [item.City, item.State].filter(Boolean).join(' ') : ''}
+                </p>
+                {item.Rating > 0 && <div style={{ fontSize: '1rem', color: '#f59e0b', marginTop: '0.25rem' }}>{'★'.repeat(item.Rating)}{'☆'.repeat(5 - item.Rating)}</div>}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -3935,6 +4224,12 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }
     <BlogBlockEditor block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />
   );
 
+  // ── Testimonials — heading + intro editing lives on the canvas (inline) ──
+  if (bt === 'testimonials') return null;
+
+  // ── Random Testimonial — heading + intro editing lives on the canvas (inline) ──
+  if (bt === 'testimonial_random') return null;
+
   // ── Livestock / Studs — editing lives on the canvas (heading + intro inline, default view in block toolbar) ──
   if (bt === 'livestock' || bt === 'studs') return null;
 
@@ -4322,6 +4617,11 @@ function CanvasSiteFooter({ site }) {
   const hasBgImg = !!site.footer_bg_image_url;
   const footerBg    = site.footer_bg_color    || site.primary_color || '#3D6B34';
   const copyrightBg = site.copyright_bar_bg_color || 'rgba(0,0,0,0.18)';
+  const bottomRadius = Number(site.footer_bottom_radius) || 0;
+  const fRadiusCss = bottomRadius ? `0 0 ${bottomRadius}px ${bottomRadius}px` : undefined;
+  const copyrightIsTransparent = !copyrightBg || copyrightBg === 'transparent';
+  const footerContentRadius = copyrightIsTransparent ? fRadiusCss : undefined;
+  const copyrightRadius = copyrightIsTransparent ? undefined : fRadiusCss;
 
   const FooterContent = () => (
     <div style={{ background: footerBg }}>
@@ -4335,7 +4635,7 @@ function CanvasSiteFooter({ site }) {
   );
 
   const CopyrightStrip = () => (
-    <div style={{ background: copyrightBg }}>
+    <div style={{ background: copyrightBg, borderRadius: copyrightRadius }}>
       <div style={{ maxWidth: cW, margin: '0 auto', padding: '0.6rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
           {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
@@ -4348,15 +4648,12 @@ function CanvasSiteFooter({ site }) {
     </div>
   );
 
-  const bottomRadius = Number(site.footer_bottom_radius) || 0;
-
   return (
     <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family }}>
-      {/* Outer band — no background; footer content and copyright each carry their own */}
-      <div style={{ width: '100%', maxWidth: bgW, borderRadius: bottomRadius ? `0 0 ${bottomRadius}px ${bottomRadius}px` : undefined, overflow: bottomRadius ? 'hidden' : undefined }}>
+      <div style={{ width: '100%', maxWidth: bgW, borderRadius: fRadiusCss, overflow: bottomRadius ? 'hidden' : undefined }}>
         {hasBgImg ? (
           /* Image case: image as bg, footer content overlaid, copyright below */
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', borderRadius: fRadiusCss, overflow: bottomRadius ? 'hidden' : undefined }}>
             <img src={site.footer_bg_image_url} alt="" style={{ width: '100%', display: 'block' }} />
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
               <FooterContent />
@@ -4366,7 +4663,7 @@ function CanvasSiteFooter({ site }) {
         ) : (
           /* No image: plain block siblings — minHeight on footer content drives the height slider */
           <>
-            <div style={{ minHeight: footerHeight, background: footerBg }}>
+            <div style={{ minHeight: footerHeight, background: footerBg, borderRadius: footerContentRadius }}>
               <div style={{ maxWidth: cW, margin: '0 auto' }}>
                 {site.footer_html ? (
                   <div style={{ padding: '1.5rem 1rem', color: '#fff', fontSize: '0.9rem', lineHeight: 1.6 }}
@@ -5168,8 +5465,9 @@ export default function WebsiteBuilder() {
                             <input autoFocus value={editingPageName}
                               onChange={e => setEditingPageName(e.target.value)}
                               onKeyDown={e => { if (e.key === 'Enter') renamePage(page.page_id); if (e.key === 'Escape') setEditingPageId(null); }}
+                              onBlur={() => renamePage(page.page_id)}
                               style={{ flex: 1, border: '1px solid #3b82f6', borderRadius: 6, padding: '3px 6px', fontSize: 12 }} />
-                            <button onClick={() => renamePage(page.page_id)} style={{ fontSize: 11, padding: '2px 6px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>✓</button>
+                            <button onMouseDown={e => e.preventDefault()} onClick={() => renamePage(page.page_id)} style={{ fontSize: 11, padding: '2px 6px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>✓</button>
                           </div>
                         ) : (
                           <div
@@ -5357,7 +5655,7 @@ export default function WebsiteBuilder() {
             </main>
 
             {/* ── Right block editor panel (not shown for about/content/livestock — editing is inline on canvas) ── */}
-            {selectedBlock && !['about', 'content', 'livestock', 'studs'].includes(selectedBlock.block_type) && (
+            {selectedBlock && !['about', 'content', 'livestock', 'studs', 'testimonials', 'testimonial_random'].includes(selectedBlock.block_type) && (
               <div key={selectedBlock.block_id} style={{ width: 280, flexShrink: 0, background: '#fff', borderLeft: '1px solid #e5e7eb', overflowY: 'auto' }}>
                 <BlockEditorPanel
                   block={selectedBlock}
@@ -6051,8 +6349,9 @@ function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublish
   };
   const handleDragEnd = () => { setDragSrcId(null); setDragOverId(null); };
 
-  const commitRename = (pageId) => {
-    onRename(pageId, editingName);
+  const commitRename = async (pageId) => {
+    if (!editingName.trim()) return;
+    await onRename(pageId, editingName);
     setEditingId(null);
   };
 
@@ -6171,9 +6470,10 @@ function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublish
                   <input autoFocus value={editingName}
                     onChange={e => setEditingName(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') commitRename(page.page_id); if (e.key === 'Escape') setEditingId(null); }}
+                    onBlur={() => commitRename(page.page_id)}
                     style={{ flex: 1, border: '1px solid #3b82f6', borderRadius: 5, padding: '3px 7px', fontSize: 13 }} />
-                  <button onClick={() => commitRename(page.page_id)} style={{ ...btnBase, background: '#3b82f6', color: '#fff', border: 'none' }}>✓</button>
-                  <button onClick={() => setEditingId(null)} style={{ ...btnBase, color: '#9ca3af' }}>✕</button>
+                  <button onMouseDown={e => e.preventDefault()} onClick={() => commitRename(page.page_id)} style={{ ...btnBase, background: '#3b82f6', color: '#fff', border: 'none' }}>✓</button>
+                  <button onMouseDown={e => e.preventDefault()} onClick={() => setEditingId(null)} style={{ ...btnBase, color: '#9ca3af' }}>✕</button>
                 </div>
               ) : (
                 <button onClick={() => { setEditingId(page.page_id); setEditingName(page.page_name); }}
@@ -6533,8 +6833,14 @@ function DesignView({ site, onSave, saving, pages = [] }) {
       ? transpStyle
       : { background: copyrightBg || 'rgba(0,0,0,0.15)' };
 
+    const fRadius = local.footer_bottom_radius || 0;
+    const fRadiusCss = fRadius ? `0 0 ${fRadius}px ${fRadius}px` : undefined;
+    // If copyright bar is transparent, the footer content is the visual bottom — it gets the radius
+    const footerContentRadius = isTranspCopyright ? fRadiusCss : undefined;
+    const copyrightBarRadius = isTranspCopyright ? undefined : fRadiusCss;
+
     const copyrightStrip = (
-      <div style={{ ...copyrightStripStyle }}>
+      <div style={{ ...copyrightStripStyle, borderRadius: copyrightBarRadius }}>
         <div style={{ maxWidth: cW, margin: '0 auto', padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '0.68rem', color: isTranspCopyright ? '#374151' : 'rgba(255,255,255,0.65)' }}>
             {local.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
@@ -6548,9 +6854,8 @@ function DesignView({ site, onSave, saving, pages = [] }) {
     );
 
     return (
-      <div style={{ borderRadius: `8px 8px ${Math.max(8, local.footer_bottom_radius || 0)}px ${Math.max(8, local.footer_bottom_radius || 0)}px`, overflow: 'hidden', marginTop: '0.75rem', display: 'flex', justifyContent: 'center', fontFamily: local.font_family, border: '1px solid #e5e7eb' }}>
-        {/* Outer band — no background; footer content and copyright each carry their own */}
-        <div style={{ width: '100%', maxWidth: bgW, borderRadius: (local.footer_bottom_radius || 0) ? `0 0 ${local.footer_bottom_radius}px ${local.footer_bottom_radius}px` : undefined, overflow: (local.footer_bottom_radius || 0) ? 'hidden' : undefined }}>
+      <div style={{ borderRadius: `8px 8px ${Math.max(8, fRadius)}px ${Math.max(8, fRadius)}px`, overflow: 'hidden', marginTop: '0.75rem', display: 'flex', justifyContent: 'center', fontFamily: local.font_family, border: '1px solid #e5e7eb' }}>
+        <div style={{ width: '100%', maxWidth: bgW, borderRadius: fRadiusCss, overflow: fRadius ? 'hidden' : undefined }}>
           {hasBgImage ? (
             /* Image case: image as bg, copyright below */
             <>
@@ -6560,7 +6865,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
           ) : (
             /* No image: plain block siblings — minHeight on footer content drives the height slider */
             <>
-              <div style={{ minHeight: footerHeight, ...footerContentStyle }}>
+              <div style={{ minHeight: footerHeight, ...footerContentStyle, borderRadius: footerContentRadius }}>
                 <div style={{ maxWidth: cW, margin: '0 auto' }}>
                   {local.footer_html ? (
                     <div style={{ padding: '0.5rem 1rem', color: isTranspFooter ? '#374151' : '#fff', fontSize: '0.82rem', lineHeight: 1.6 }}

@@ -50,6 +50,7 @@ const AccountSettings = lazy(() => import('./AccountSettings.jsx'))
 const SaigePage = lazy(() => import('./SaigePage.jsx'))
 const AnimalsHome = lazy(() => import('./AnimalsHome.jsx'))
 const AnimalDelete = lazy(() => import('./AnimalDelete.jsx'))
+const AnimalPackages = lazy(() => import('./AnimalPackages.jsx'))
 const AccountChangeType = lazy(() => import('./AccountChangeType.jsx'))
 const AnimalAddWizard = lazy(() => import('./AnimalAddWizard'))
 const DirectoryList = lazy(() => import('./Directory/pages/DirectoryList'))
@@ -137,6 +138,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/animals/add" element={<AnimalAddWizard />} />
           <Route path="/animals/edit" element={<AnimalEdit />} />
           <Route path="/animals/delete" element={<AnimalDelete />} />
+          <Route path="/animals/packages" element={<AnimalPackages />} />
           <Route path="/saige" element={<SaigePage />} />
           <Route path="/oatsense" element={<OatSense />} />
           <Route path="/oatsense/crop-rotation" element={<CropRotation />} />

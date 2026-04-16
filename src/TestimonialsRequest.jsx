@@ -83,13 +83,15 @@ export default function TestimonialsRequest() {
               placeholder="customer@example.com"
             />
           </div>
-          <button
-            type="submit"
-            disabled={sending}
-            className="regsubmit2"
-          >
-            {sending ? 'Sending...' : 'Send Request'}
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={sending}
+              className="regsubmit2"
+            >
+              {sending ? 'Sending...' : 'Send Request'}
+            </button>
+          </div>
         </form>
       </div>
     </AccountLayout>

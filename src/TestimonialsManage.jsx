@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
+import RichTextEditor from './RichTextEditor';
 
 export default function TestimonialsManage() {
   const [searchParams] = useSearchParams();
@@ -11,17 +12,23 @@ export default function TestimonialsManage() {
   const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const today = new Date().toISOString().split('T')[0];
+
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [authorName, setAuthorName] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [organization, setOrganization] = useState('');
   const [website, setWebsite] = useState('');
+  const [testimonialDate, setTestimonialDate] = useState(today);
   const [content, setContent] = useState('');
   const [rating, setRating] = useState('');
   const [selectedPeopleID, setSelectedPeopleID] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  // Key to force re-mount RichTextEditor when editing different testimonials
+  const [editorKey, setEditorKey] = useState(0);
 
   // People search
   const [peopleQuery, setPeopleQuery] = useState('');
@@ -101,22 +108,48 @@ export default function TestimonialsManage() {
     setState('');
     setOrganization('');
     setWebsite('');
+    setTestimonialDate(today);
     setContent('');
     setRating('');
     setSelectedPeopleID(null);
     setPeopleQuery('');
     setPeopleResults([]);
+    setEditingId(null);
+    setSaveError(null);
+    setEditorKey(k => k + 1);
   };
 
-  const handleAdd = async (e) => {
+  const startEdit = (t) => {
+    setEditingId(t.TestimonialsID);
+    setAuthorName(t.AuthorName || '');
+    setCity(t.City || '');
+    setState(t.State || '');
+    setOrganization(t.Organization || '');
+    setWebsite(t.Website || '');
+    setTestimonialDate(t.TestimonialDate ? t.TestimonialDate.split('T')[0] : today);
+    setContent(t.Content || '');
+    setRating(t.Rating ? String(t.Rating) : '');
+    setSelectedPeopleID(t.PeopleID || null);
+    setPeopleQuery('');
+    setSaveError(null);
+    setShowForm(true);
+    setEditorKey(k => k + 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
     setSaveError(null);
+    const url = editingId
+      ? `${apiBase}/auth/testimonials/update`
+      : `${apiBase}/auth/testimonials/add`;
     try {
-      const res = await fetch(`${apiBase}/auth/testimonials/add`, {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
+          TestimonialsID: editingId,
           BusinessID,
           AuthorName: authorName,
           City: city,
@@ -124,6 +157,7 @@ export default function TestimonialsManage() {
           Organization: organization,
           Website: website,
           Content: content,
+          TestimonialDate: testimonialDate,
           Rating: rating ? Number(rating) : null,
           PeopleID: selectedPeopleID,
         }),
@@ -146,21 +180,23 @@ export default function TestimonialsManage() {
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-green-700">Manage Testimonials</h2>
-          <button onClick={() => { setShowForm(f => !f); if (showForm) clearForm(); }} className="regsubmit2">
+          <button onClick={() => { if (showForm) { clearForm(); setShowForm(false); } else { clearForm(); setShowForm(true); } }} className="regsubmit2">
             {showForm ? 'Cancel' : 'Add Testimonial'}
           </button>
         </div>
 
         {showForm && (
-          <form onSubmit={handleAdd} className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-4 max-w-lg">
-            <h3 className="text-lg font-semibold text-[#5a3e2b]">New Testimonial</h3>
+          <form onSubmit={handleSave} className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-4">
+            <h3 className="text-lg font-semibold text-[#5a3e2b]">
+              {editingId ? 'Edit Testimonial' : 'New Testimonial'}
+            </h3>
 
             {saveError && (
               <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{saveError}</div>
             )}
 
             {/* People search */}
-            <div ref={dropdownRef} className="relative">
+            <div ref={dropdownRef} className="relative max-w-lg">
               <label className="block text-sm font-medium text-gray-700 mb-1">Search People in Database</label>
               <input
                 type="text"
@@ -193,7 +229,7 @@ export default function TestimonialsManage() {
 
             <hr className="border-gray-200" />
 
-            <div>
+            <div className="max-w-lg">
               <label className="block text-sm font-medium text-gray-700 mb-1">Author Name</label>
               <input
                 type="text"
@@ -205,7 +241,7 @@ export default function TestimonialsManage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 max-w-lg">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
                 <input
@@ -228,7 +264,7 @@ export default function TestimonialsManage() {
               </div>
             </div>
 
-            <div>
+            <div className="max-w-lg">
               <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
               <input
                 type="text"
@@ -239,7 +275,7 @@ export default function TestimonialsManage() {
               />
             </div>
 
-            <div>
+            <div className="max-w-lg">
               <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
               <input
                 type="url"
@@ -250,19 +286,22 @@ export default function TestimonialsManage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Testimonial</label>
-              <textarea
-                value={content}
-                onChange={e => setContent(e.target.value)}
-                required
-                rows={4}
+            <div className="max-w-lg">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <input
+                type="date"
+                value={testimonialDate}
+                onChange={e => setTestimonialDate(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-600"
-                placeholder="Write the testimonial here..."
               />
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Testimonial</label>
+              <RichTextEditor key={editorKey} value={content} onChange={setContent} minHeight={180} />
+            </div>
+
+            <div className="max-w-lg">
               <label className="block text-sm font-medium text-gray-700 mb-1">Rating (optional)</label>
               <select
                 value={rating}
@@ -278,9 +317,11 @@ export default function TestimonialsManage() {
               </select>
             </div>
 
-            <button type="submit" disabled={saving} className="regsubmit2">
-              {saving ? 'Saving...' : 'Save Testimonial'}
-            </button>
+            <div className="flex justify-end">
+              <button type="submit" disabled={saving} className="regsubmit2">
+                {saving ? 'Saving...' : editingId ? 'Update Testimonial' : 'Save Testimonial'}
+              </button>
+            </div>
           </form>
         )}
 
@@ -289,8 +330,8 @@ export default function TestimonialsManage() {
         ) : (
           <div className="space-y-4">
             {testimonials.map((t, i) => (
-              <div key={t.TestimonialID || i} className="border border-gray-100 rounded-lg p-4">
-                <p className="text-gray-700 italic">"{t.Content}"</p>
+              <div key={t.TestimonialsID || i} className="border border-gray-100 rounded-lg p-4">
+                <div className="text-gray-700" dangerouslySetInnerHTML={{ __html: t.Content }} />
                 <div className="flex items-center justify-between mt-2">
                   <div>
                     <p className="text-sm text-gray-500">— {t.AuthorName || 'Anonymous'}</p>
@@ -299,12 +340,23 @@ export default function TestimonialsManage() {
                         {[t.Organization, [t.City, t.State].filter(Boolean).join(', ')].filter(Boolean).join(' | ')}
                       </p>
                     )}
+                    {t.TestimonialDate && (
+                      <p className="text-xs text-gray-400">{new Date(t.TestimonialDate).toLocaleDateString()}</p>
+                    )}
                   </div>
-                  {t.Rating && (
-                    <span className="text-sm text-yellow-500">
-                      {'★'.repeat(t.Rating)}{'☆'.repeat(5 - t.Rating)}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {t.Rating > 0 && (
+                      <span className="text-sm text-yellow-500">
+                        {'★'.repeat(t.Rating)}{'☆'.repeat(5 - t.Rating)}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => startEdit(t)}
+                      className="text-xs text-[#5a3e2b] hover:underline font-medium"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

@@ -268,6 +268,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
                 <NavChild to={`/animals/add?BusinessID=${BusinessID}`} label="Add" />
                 <NavChild to={`/animals/delete?BusinessID=${BusinessID}`} label="Delete" />
                 <NavChild to={`/animals/transfer?BusinessID=${BusinessID}`} label="Transfer" />
+                <NavChild to={`/animals/packages?BusinessID=${BusinessID}`} label="Packages" />
                 <NavChild to={`/animals/stats?BusinessID=${BusinessID}`} label="Statistics" />
               </NavSection>
             )}
@@ -319,7 +320,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
             )}
 
             <NavSection
-              icon="/images/handshake.webp"
+              icon="/images/Handshake.webp"
               label="Testimonials"
               expanded={Expanded}
               isOpen={OpenSections.Testimonials || false}
