@@ -389,7 +389,9 @@ function FiberStats({ rows }) {
 // ── Awards table ──────────────────────────────────────────────────────────────
 function Awards({ rows }) {
   if (!rows || rows.length === 0) return null;
-  const filtered = rows.filter(r => r.ShowName || r.Placing || r.AwardClass);
+  // Treat '0', 0, '', null, undefined as empty
+  const hasVal = (v) => v != null && v !== '' && String(v) !== '0';
+  const filtered = rows.filter(r => hasVal(r.ShowName) || hasVal(r.Placing) || hasVal(r.AwardClass));
   if (filtered.length === 0) return null;
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
@@ -398,12 +400,12 @@ function Awards({ rows }) {
         {filtered.map((r, i) => (
           <div key={i} className={`rounded-lg px-4 py-2 text-sm ${i % 2 === 0 ? 'bg-gray-50' : 'bg-white border border-gray-100'}`}>
             <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-              {r.Placing    && <span className="font-semibold text-[#3D6B34]">{r.Placing}</span>}
-              {r.AwardClass && <span className="text-gray-600">{r.AwardClass}</span>}
-              {r.AwardYear && r.AwardYear !== '0' && <span className="text-gray-500">{r.AwardYear}</span>}
-              {r.ShowName   && <span className="text-gray-700">{r.ShowName}</span>}
+              {hasVal(r.Placing)    && <span className="font-semibold text-[#3D6B34]">{r.Placing}</span>}
+              {hasVal(r.AwardClass) && <span className="text-gray-600">{r.AwardClass}</span>}
+              {hasVal(r.AwardYear)  && <span className="text-gray-500">{r.AwardYear}</span>}
+              {hasVal(r.ShowName)   && <span className="text-gray-700">{r.ShowName}</span>}
             </div>
-            {r.AwardComments && <p className="text-gray-500 text-xs mt-0.5">{r.AwardComments}</p>}
+            {hasVal(r.AwardComments) && <p className="text-gray-500 text-xs mt-0.5">{r.AwardComments}</p>}
           </div>
         ))}
       </div>
@@ -427,7 +429,20 @@ export function LivestockAnimalDetailContent({
   hasNext = false,
   primaryColor = '#3D6B34',
   fontFamily,
+  animalPackages: passedPackages,
+  onPackageClick,
 }) {
+  // Fetch packages this animal belongs to (if not passed as prop)
+  const [fetchedPackages, setFetchedPackages] = useState([]);
+  useEffect(() => {
+    if (passedPackages || !animal?.animal_id) return;
+    fetch(`${API_URL}/api/website/content/animal-packages?animal_id=${animal.animal_id}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setFetchedPackages(Array.isArray(d) ? d : []))
+      .catch(() => setFetchedPackages([]));
+  }, [animal?.animal_id, passedPackages]);
+  const animalPackages = passedPackages || fetchedPackages;
+
   if (!animal) return null;
   const { pricing, owner, ancestry, photos, awards, fiber_stats, registrations } = animal;
   const dob = formatDOB(animal.dob || {});
@@ -549,9 +564,28 @@ export function LivestockAnimalDetailContent({
                   {animal.colors && animal.colors.length > 0 && (
                     <StatRow label="Color" value={animal.colors.join(' / ')} />
                   )}
+                  {animalPackages.length > 0 && (
+                    <StatRow label={animalPackages.length === 1 ? 'Package' : 'Packages'}>
+                      {animalPackages.map((pkg, i) => (
+                        <span key={pkg.PackageID}>
+                          {onPackageClick ? (
+                            <a onClick={() => onPackageClick(pkg.PackageID)}
+                              style={{ color: primaryColor, cursor: 'pointer', fontWeight: 600, textDecoration: 'underline', textDecorationColor: primaryColor + '44' }}>
+                              {pkg.Title}{pkg.PackagePrice ? ` (${formatPrice(Number(pkg.PackagePrice))})` : ''}
+                            </a>
+                          ) : (
+                            <span style={{ fontWeight: 600 }}>
+                              {pkg.Title}{pkg.PackagePrice ? ` (${formatPrice(Number(pkg.PackagePrice))})` : ''}
+                            </span>
+                          )}
+                          {i < animalPackages.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
+                    </StatRow>
+                  )}
                   {animal.height && <StatRow label="Height" value={animal.height} />}
                   {animal.weight && <StatRow label="Weight" value={animal.weight} />}
-                  {animal.horns  && <StatRow label="Horns"  value={animal.horns}  />}
+                  {animal.horns && String(animal.horns) !== '0' && <StatRow label="Horns" value={animal.horns} />}
                   {animal.temperament && animal.temperament !== '0' && (
                     <StatRow label="Temperament">
                       {animal.temperament} <span className="text-xs text-gray-400 ml-1">(1=calm, 10=spirited)</span>

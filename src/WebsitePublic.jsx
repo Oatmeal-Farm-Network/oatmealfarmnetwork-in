@@ -147,7 +147,7 @@ function DropdownItem({ label, active, navColor, hoverColor, fontFamily, onClick
         display: 'block', width: '100%', textAlign: 'left',
         background: active || hovered ? hoverColor : 'none',
         border: 0, borderBottom: '1px solid rgba(255,255,255,0.08)',
-        color: navColor, padding: '0.65rem 1rem',
+        color: navColor, padding: '0.2rem 1rem',
         fontWeight: active ? 700 : 400, cursor: 'pointer',
         fontSize: '0.87rem', fontFamily,
         transition: 'background 0.15s',
@@ -1251,36 +1251,44 @@ function LinksBlock({ data, site }) {
             </h2>
           )}
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '0.75rem' }}>
-            {(group.items || []).map((item, i) => (
-              <a
-                key={i}
-                href={item.url || '#'}
-                target={item.url ? '_blank' : undefined}
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex', gap: '0.6rem', alignItems: 'flex-start',
-                  color: linkColor,
-                  textDecoration: linkUline ? 'underline' : 'none',
-                  fontFamily: bodyFont,
-                  fontSize: bodySize,
-                }}
-              >
-                {item.icon_url && (
-                  <div style={{ flexShrink: 0 }}>
-                    <img src={item.icon_url} alt="" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 4 }} />
-                  </div>
-                )}
-                <div>
-                  <div dangerouslySetInnerHTML={{ __html: item.label || '' }} style={{ fontWeight: 600 }} />
-                  {item.description && (
-                    <div
-                      dangerouslySetInnerHTML={{ __html: item.description }}
-                      style={{ color: bodyColor, fontWeight: 400, marginTop: 3, lineHeight: 1.4, textDecoration: 'none' }}
-                    />
+            {(group.items || []).map((item, i) => {
+              const labelHtml = item.label || '';
+              const hasInnerLink = /<a\b/i.test(labelHtml);
+              const linkCss = `color:${linkColor};${linkUline ? 'text-decoration:underline;' : 'text-decoration:none;'}`;
+              // Inject link_color into any <a> tags embedded in label/description HTML
+              const colorizeLinks = (html) => html ? html.replace(/<a\b/gi, `<a style="${linkCss}"`) : html;
+              const itemUrl = item.url || (!hasInnerLink ? '#' : undefined);
+              const Wrapper = itemUrl ? 'a' : 'div';
+              const wrapperProps = itemUrl ? { href: itemUrl, target: '_blank', rel: 'noopener noreferrer' } : {};
+              return (
+                <Wrapper
+                  key={i}
+                  {...wrapperProps}
+                  style={{
+                    display: 'flex', gap: '0.6rem', alignItems: 'flex-start',
+                    color: linkColor,
+                    textDecoration: linkUline ? 'underline' : 'none',
+                    fontFamily: bodyFont,
+                    fontSize: bodySize,
+                  }}
+                >
+                  {item.icon_url && (
+                    <div style={{ flexShrink: 0 }}>
+                      <img src={item.icon_url} alt="" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 4 }} />
+                    </div>
                   )}
-                </div>
-              </a>
-            ))}
+                  <div>
+                    <div dangerouslySetInnerHTML={{ __html: colorizeLinks(labelHtml) }} style={{ fontWeight: 600 }} />
+                    {item.description && (
+                      <div
+                        dangerouslySetInnerHTML={{ __html: colorizeLinks(item.description) }}
+                        style={{ color: bodyColor, fontWeight: 400, marginTop: 3, lineHeight: 1.4, textDecoration: 'none' }}
+                      />
+                    )}
+                  </div>
+                </Wrapper>
+              );
+            })}
           </div>
         </div>
       ))}
@@ -1362,6 +1370,146 @@ function PriceCard({ icon, name, price, unit, image, desc, tags, site }) {
   );
 }
 
+// ── PackagesBlock: package deals with clickable animals ───────────
+function PackagesBlock({ data, site, businessId }) {
+  const [packages, setPackages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAnimal, setSelectedAnimal] = useState(null);
+  const [detailData, setDetailData] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [animalPackages, setAnimalPackages] = useState([]);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchContent(`${API}/api/website/content/packages?business_id=${businessId}`)
+      .then(d => setPackages(Array.isArray(d) ? d : []))
+      .catch(() => setPackages([]))
+      .finally(() => setLoading(false));
+  }, [businessId]);
+
+  // Fetch animal detail + that animal's packages when one is clicked
+  useEffect(() => {
+    if (!selectedAnimal) { setDetailData(null); setAnimalPackages([]); return; }
+    setDetailLoading(true);
+    Promise.all([
+      fetch(`${API}/api/marketplace/animal/${selectedAnimal}`).then(r => r.ok ? r.json() : null),
+      fetch(`${API}/api/website/content/animal-packages?animal_id=${selectedAnimal}`).then(r => r.ok ? r.json() : []),
+    ])
+      .then(([animal, pkgs]) => { setDetailData(animal); setAnimalPackages(Array.isArray(pkgs) ? pkgs : []); })
+      .catch(() => { setDetailData(null); setAnimalPackages([]); })
+      .finally(() => setDetailLoading(false));
+  }, [selectedAnimal]);
+
+  const primary    = site.primary_color || '#3D6B34';
+  const textColor  = site.text_color    || '#111827';
+  const fontFamily = site.font_family   || 'inherit';
+  const fmtPrice = (n) => {
+    if (!n || Number(n) === 0) return '';
+    return Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  };
+
+  if (loading) return <SectionWrap site={site}><div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>Loading packages…</div></SectionWrap>;
+
+  // If an animal detail is open, render it
+  if (selectedAnimal && (detailLoading || detailData)) {
+    return (
+      <SectionWrap site={site}>
+        <button onClick={() => setSelectedAnimal(null)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: primary, fontWeight: 600, fontSize: 14, marginBottom: 12, fontFamily }}>
+          ← Back to Packages
+        </button>
+        {detailLoading ? (
+          <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#9ca3af' }}>Loading animal details…</div>
+        ) : detailData ? (
+          <>
+            <LivestockAnimalDetailContent animal={detailData} siteMode onBack={() => setSelectedAnimal(null)} backLabel="Packages" primaryColor={primary} fontFamily={fontFamily} animalPackages={animalPackages} onPackageClick={() => setSelectedAnimal(null)} />
+          </>
+        ) : (
+          <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#ef4444' }}>
+            Could not load animal details.
+            <div style={{ marginTop: 12 }}>
+              <button onClick={() => setSelectedAnimal(null)} style={{ background: 'none', border: 'none', color: primary, cursor: 'pointer', fontSize: 14 }}>← Back to Packages</button>
+            </div>
+          </div>
+        )}
+      </SectionWrap>
+    );
+  }
+
+  return (
+    <SectionWrap site={site}>
+      {data.heading && <SectionHeading site={site} headingStyle={data.heading_style || 'h1'} html={data.heading} />}
+      {data.intro_body && <BodyText site={site} html={data.intro_body} />}
+      {packages.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af', fontFamily }}>No packages available right now.</div>
+      ) : (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem', fontFamily }}>
+        {packages.map(pkg => {
+          const pkgPrice = Number(pkg.PackagePrice || 0);
+          const totalVal = Number(pkg.total_value || 0);
+          const savings = totalVal > 0 && pkgPrice > 0 && pkgPrice < totalVal ? totalVal - pkgPrice : 0;
+          const pct = savings > 0 ? Math.round((savings / totalVal) * 100) : 0;
+          return (
+            <div key={pkg.PackageID} style={{ borderRadius: 12, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
+              {/* Animal images */}
+              {pkg.items?.length > 0 && (
+                <div style={{ display: 'flex', gap: 6, padding: '10px 12px 0', background: '#f9fafb' }}>
+                  {pkg.items.map((it, i) => (
+                    <div key={it.PackageItemID || i}
+                      onClick={() => setSelectedAnimal(it.AnimalID)}
+                      style={{ flex: 1, position: 'relative', minWidth: 0, cursor: 'pointer', textAlign: 'center', transition: 'transform 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                      title={`View ${it.FullName}`}>
+                      {it.Photo1 ? (
+                        <img src={it.Photo1} alt={it.FullName} style={{ width: '100%', height: 170, objectFit: 'contain', display: 'block', borderRadius: 8 }} />
+                      ) : (
+                        <div style={{ width: '100%', height: 170, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d1d5db', fontSize: 32, borderRadius: 8 }}>🐄</div>
+                      )}
+                      <div style={{ fontSize: 11, color: '#374151', marginTop: 3, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 2px' }}>{it.FullName}</div>
+                      {it.IncludeType === 'stud' && (
+                        <span style={{ position: 'absolute', top: 2, right: 2, background: '#7C5CBF', color: '#fff', fontSize: 9, padding: '1px 5px', borderRadius: 4, fontWeight: 700 }}>STUD</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ padding: '1rem 1.25rem' }}>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: textColor }}>{pkg.Title}</h3>
+                {pkg.Description && <p style={{ margin: '6px 0 10px', fontSize: 14, color: '#6b7280', lineHeight: 1.5 }}>{pkg.Description}</p>}
+                {/* Per-animal detail links */}
+                <div style={{ fontSize: 13, marginBottom: 10, lineHeight: 1.8 }}>
+                  {pkg.items?.map((it, i) => (
+                    <div key={it.PackageItemID || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <span style={{ color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {it.FullName}{it.Breed ? ` (${it.Breed})` : ''}{it.IncludeType === 'stud' ? ' — Stud' : ''}
+                      </span>
+                      <a onClick={() => setSelectedAnimal(it.AnimalID)}
+                        style={{ color: primary, cursor: 'pointer', fontSize: 12, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        Learn More →
+                      </a>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 24, fontWeight: 800, color: primary }}>{fmtPrice(pkgPrice)}</span>
+                  {savings > 0 && (
+                    <>
+                      <span style={{ fontSize: 14, color: '#9ca3af', textDecoration: 'line-through' }}>{fmtPrice(totalVal)}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#16a34a', background: '#dcfce7', padding: '2px 8px', borderRadius: 6 }}>Save {pct}%</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      )}
+    </SectionWrap>
+  );
+}
+
 // ── Block dispatcher ──────────────────────────────────────────────
 function RenderBlock({ block, site, businessId }) {
   const { block_type: type, block_data: data } = block;
@@ -1382,6 +1530,7 @@ function RenderBlock({ block, site, businessId }) {
     case 'blog':           return <BlogBlock data={data} site={site} businessId={businessId} />;
     case 'testimonials':   return <TestimonialsBlock data={data} site={site} businessId={businessId} />;
     case 'testimonial_random': return <TestimonialRandomBlock data={data} site={site} businessId={businessId} />;
+    case 'packages':       return <PackagesBlock data={data} site={site} businessId={businessId} />;
     case 'contact':        return <ContactBlock data={data} site={site} />;
     case 'links':          return <LinksBlock data={data} site={site} />;
     case 'divider':        return <DividerBlock data={data} />;
@@ -1693,18 +1842,18 @@ export default function WebsitePublic() {
                       return (
                         <React.Fragment key={p.page_id}>
                           {isHeading ? (
-                            <div style={{ display: 'block', width: '100%', color: navColor, padding: '0.6rem 0 0.2rem', fontWeight: 600, fontSize: '0.75rem', fontFamily: site.font_family, opacity: 0.65, textTransform: 'uppercase', letterSpacing: '0.07em', userSelect: 'none' }}>
+                            <div style={{ display: 'block', width: '100%', color: navColor, padding: '0.2rem 0 0.1rem', fontWeight: 600, fontSize: '0.75rem', fontFamily: site.font_family, opacity: 0.65, textTransform: 'uppercase', letterSpacing: '0.07em', userSelect: 'none' }}>
                               {p.page_name}
                             </div>
                           ) : (
                           <button onClick={() => { setActivePage(p); setMobileMenu(false); }}
-                            style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 0, color: navColor, padding: '0.6rem 0', fontWeight: isActiveOrChild(p) ? 700 : 400, cursor: 'pointer', fontSize: '1rem', fontFamily: site.font_family, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                            style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 0, color: navColor, padding: '0.18rem 0', fontWeight: isActiveOrChild(p) ? 700 : 400, cursor: 'pointer', fontSize: '1rem', fontFamily: site.font_family, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                             {p.page_name}
                           </button>
                           )}
                           {children.map((child, ci) => (
                             <button key={child.page_id} onClick={() => { setActivePage(child); setMobileMenu(false); }}
-                              style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 0, color: navColor, padding: '0.45rem 0 0.45rem 1.2rem', fontWeight: activePage?.page_id === child.page_id ? 700 : 400, cursor: 'pointer', fontSize: '0.9rem', fontFamily: site.font_family, opacity: 0.85, borderBottom: ci === children.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
+                              style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 0, color: navColor, padding: '0.15rem 0 0.15rem 1.2rem', fontWeight: activePage?.page_id === child.page_id ? 700 : 400, cursor: 'pointer', fontSize: '0.9rem', fontFamily: site.font_family, opacity: 0.85, borderBottom: ci === children.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
                               {child.page_name}
                             </button>
                           ))}

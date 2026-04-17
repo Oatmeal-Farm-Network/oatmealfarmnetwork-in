@@ -13,9 +13,9 @@ const SITE_BASE_URL = 'https://www.OatmealFarmNetwork.com';
 const BLOCK_TYPES = [
   { type: 'hero',           icon: '🖼️',  label: 'Hero Banner',        desc: 'Full-width hero with image, headline & CTA' },
   { type: 'about',          icon: '🏡',  label: 'About Us',           desc: 'About section with text and image' },
-  { type: 'content',        icon: '📄',  label: '1 Column Block',     desc: 'Heading, text, and optional image' },
-  { type: 'content_2col',   icon: '📰',  label: '2 Column Block',     desc: 'Two side-by-side content columns (stack on mobile)' },
-  { type: 'content_4col',   icon: '🗂️',  label: '4 Column Block',     desc: 'Four side-by-side content columns (stack on mobile)' },
+  { type: 'content',        icon: '📄',  label: '1 Column Widget',    desc: 'Heading, text, and optional image' },
+  { type: 'content_2col',   icon: '📰',  label: '2 Column Widget',    desc: 'Two side-by-side content columns (stack on mobile)' },
+  { type: 'content_4col',   icon: '🗂️',  label: '4 Column Widget',    desc: 'Four side-by-side content columns (stack on mobile)' },
   { type: 'livestock',      icon: '🐄',  label: 'Livestock For Sale', desc: 'Animals listed for sale from your inventory' },
   { type: 'studs',          icon: '🐂',  label: 'Stud Services',      desc: 'Stud animals available for breeding' },
   { type: 'produce',        icon: '🥕',  label: 'Produce',            desc: 'Fresh produce from your inventory' },
@@ -29,6 +29,7 @@ const BLOCK_TYPES = [
   { type: 'links',          icon: '🔗',  label: 'Links',              desc: 'Icon links with title and description' },
   { type: 'testimonials',    icon: '🤝',  label: 'All Testimonials',   desc: 'Display all testimonials from your customers' },
   { type: 'testimonial_random', icon: '💬', label: 'Random Testimonial', desc: 'Show a single random testimonial' },
+  { type: 'packages',       icon: '📦',  label: 'Package Deals',      desc: 'Bundled animal packages with pricing & savings' },
   { type: 'divider',        icon: '➖',  label: 'Spacer / Divider',   desc: 'Visual separator between sections' },
 ];
 
@@ -62,6 +63,7 @@ const defaultBlockData = {
   ]},
   testimonials:       { heading: '', heading_style: 'h1', intro_body: '', max_items: 0 },
   testimonial_random: { heading: '', heading_style: 'h1', intro_body: '', align: 'left' },
+  packages:       { heading: 'Package Deals', heading_style: 'h1', intro_body: '' },
   divider:        { height: 40 },
 };
 
@@ -2385,6 +2387,9 @@ function SimpleBlockPreview({ block, site, businessId, onFieldSave }) {
   if (bt === 'testimonials') return <TestimonialsBlockCanvas block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />;
   if (bt === 'testimonial_random') return <TestimonialRandomBlockCanvas block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />;
 
+  // Packages block — package deals with animal thumbnails
+  if (bt === 'packages') return <PackagesBlockCanvas block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />;
+
   // Livestock block — live listing with views / sort / search
   if (bt === 'livestock') return <LivestockBlockCanvas block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />;
   if (bt === 'studs') return <LivestockBlockCanvas block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} mode="stud" />;
@@ -2835,7 +2840,7 @@ function InlineLinksEditor({ block, site, onFieldSave }) {
 function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onDragStart, onDragOver, onDrop, isDragging, site, onFieldSave, businessId, pages }) {
   const meta = BLOCK_TYPES.find(b => b.type === block.block_type);
   // Blocks that edit in-place on the canvas — disable drag so text selection works.
-  const INLINE_TYPES = ['about', 'content', 'content_2col', 'content_4col', 'links', 'livestock', 'studs', 'testimonials', 'testimonial_random'];
+  const INLINE_TYPES = ['about', 'content', 'content_2col', 'content_4col', 'links', 'livestock', 'studs', 'testimonials', 'testimonial_random', 'packages'];
   const isInlineType = INLINE_TYPES.includes(block.block_type);
   const isInlineEditable = isSelected && isInlineType;
   return (
@@ -2997,7 +3002,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
           style={{ padding: '3px 8px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, cursor: isFirst ? 'default' : 'pointer', fontSize: 12, opacity: isFirst ? 0.35 : 1 }}>↑</button>
         <button onClick={e => { e.stopPropagation(); onMoveDown(); }} disabled={isLast}
           style={{ padding: '3px 8px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, cursor: isLast ? 'default' : 'pointer', fontSize: 12, opacity: isLast ? 0.35 : 1 }}>↓</button>
-        <button onClick={e => { e.stopPropagation(); if (window.confirm('Delete this block?')) onDelete(block.block_id); }}
+        <button onClick={e => { e.stopPropagation(); if (window.confirm('Delete this widget?')) onDelete(block.block_id); }}
           style={{ padding: '3px 8px', background: '#C0382B', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>🗑</button>
       </div>
       <style>{`.canvas-block:hover .block-controls { opacity: 1 !important; }`}</style>
@@ -3581,6 +3586,139 @@ function BlogBlockCanvas({ block, site, businessId }) {
             })}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ── PackagesBlockCanvas: package deals with animal thumbnails ──
+function PackagesBlockCanvas({ block, site, businessId, onFieldSave }) {
+  const d = block.block_data || {};
+  const [packages, setPackages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const primary   = site?.primary_color || '#3D6B34';
+  const textColor = site?.text_color    || '#111827';
+  const fontFamily = site?.font_family  || 'inherit';
+
+  // Map fields for InlineContentEditor (same pattern as livestock)
+  const inlineData = { heading: d.heading, heading_style: d.heading_style, body: d.intro_body, bg_color: d.bg_color };
+  const inlineFieldSave = onFieldSave
+    ? (field, val) => onFieldSave(field === 'body' ? 'intro_body' : field, val)
+    : null;
+  const HeadTag = d.heading_style || 'h1';
+  const bodyBaseStyle = {
+    fontFamily: site?.body_font  || site?.font_family || 'inherit',
+    fontSize:   site?.body_size  || '1rem',
+    color:      site?.body_color || site?.text_color  || '#4B5563',
+    lineHeight: site?.body_line_height || 1.75,
+  };
+
+  const load = () => {
+    setLoading(true);
+    fetch(`${API}/api/website/content/packages?business_id=${businessId}`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => setPackages(Array.isArray(data) ? data : []))
+      .catch(() => setPackages([]))
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => { load(); }, [businessId]);
+
+  const fmtPrice = (n) => {
+    if (!n || Number(n) === 0) return '';
+    return Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  };
+
+  return (
+    <div style={{ fontFamily }}>
+      {/* Heading + intro text — same inline editor as other widgets */}
+      {onFieldSave ? (
+        <div
+          draggable={false}
+          onDragStart={e => { e.preventDefault(); e.stopPropagation(); }}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <InlineContentEditor
+            key={block.block_id}
+            block={block}
+            site={site}
+            onFieldSave={inlineFieldSave}
+            data={inlineData}
+          />
+        </div>
+      ) : (
+        <div style={{ padding: '1.75rem 2.5rem' }}>
+          <div className="rte-body">
+            {d.heading && <HeadTag style={headingTypoStyle(d.heading_style || 'h1', site)} dangerouslySetInnerHTML={{ __html: d.heading }} />}
+            {d.intro_body && <div style={{ ...bodyBaseStyle, marginTop: 6 }} dangerouslySetInnerHTML={{ __html: d.intro_body }} />}
+          </div>
+        </div>
+      )}
+      <div style={{ padding: '0 1.5rem 1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <button onClick={load} style={{ fontSize: 11, padding: '3px 10px', border: '1px solid #e5e7eb', borderRadius: 6, background: '#fff', cursor: 'pointer', color: '#6b7280' }}>
+          {loading ? '...' : '↺ Refresh'}
+        </button>
+      </div>
+      {packages.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af', fontSize: 13 }}>
+          {loading ? 'Loading packages...' : 'No packages yet. Create packages in the Livestock > Packages tab.'}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+          {packages.map(pkg => {
+            const pkgPrice = Number(pkg.PackagePrice || 0);
+            const totalVal = Number(pkg.total_value || 0);
+            const savings = totalVal > 0 && pkgPrice > 0 && pkgPrice < totalVal ? totalVal - pkgPrice : 0;
+            const pct = savings > 0 ? Math.round((savings / totalVal) * 100) : 0;
+            return (
+              <div key={pkg.PackageID} style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', background: '#fff' }}>
+                {/* Animal thumbnails row */}
+                {pkg.items?.length > 0 && (
+                  <div style={{ display: 'flex', gap: 2, padding: '8px 8px 0', background: '#f9fafb' }}>
+                    {pkg.items.map((it, i) => (
+                      <div key={it.PackageItemID || i} style={{ flex: 1, position: 'relative', minWidth: 0, textAlign: 'center' }}>
+                        {it.Photo1 ? (
+                          <img src={it.Photo1} alt={it.FullName} style={{ width: '100%', height: 130, objectFit: 'contain', display: 'block', borderRadius: 6 }} />
+                        ) : (
+                          <div style={{ width: '100%', height: 130, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d1d5db', fontSize: 28, borderRadius: 6 }}>🐄</div>
+                        )}
+                        <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 2px' }}>{it.FullName}</div>
+                        {it.IncludeType === 'stud' && (
+                          <span style={{ position: 'absolute', top: 2, right: 2, background: '#7C5CBF', color: '#fff', fontSize: 9, padding: '1px 5px', borderRadius: 4, fontWeight: 700 }}>STUD</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{ padding: '0.75rem 1rem' }}>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: textColor }}>{pkg.Title}</h3>
+                  {pkg.Description && <p style={{ margin: '4px 0 8px', fontSize: 13, color: '#6b7280', lineHeight: 1.4 }}>{pkg.Description}</p>}
+                  {/* Per-animal detail links */}
+                  <div style={{ fontSize: 11, marginBottom: 8, lineHeight: 1.8 }}>
+                    {pkg.items?.map((it, i) => (
+                      <div key={it.PackageItemID || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                        <span style={{ color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {it.FullName}{it.Breed ? ` (${it.Breed})` : ''}{it.IncludeType === 'stud' ? ' — Stud' : ''}
+                        </span>
+                        <span style={{ color: primary, fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>Learn More →</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: primary }}>{fmtPrice(pkgPrice)}</span>
+                    {savings > 0 && (
+                      <>
+                        <span style={{ fontSize: 13, color: '#9ca3af', textDecoration: 'line-through' }}>{fmtPrice(totalVal)}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: 4 }}>Save {pct}%</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
       </div>
     </div>
   );
@@ -4233,6 +4371,9 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }
   // ── Livestock / Studs — editing lives on the canvas (heading + intro inline, default view in block toolbar) ──
   if (bt === 'livestock' || bt === 'studs') return null;
 
+  // ── Packages — heading + intro editing lives on the canvas (inline) ──
+  if (bt === 'packages') return null;
+
   // ── Hero ──
   if (bt === 'hero') return (
     <div style={{ padding: 16 }}>
@@ -4288,7 +4429,7 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }
     return (
       <div style={{ padding: 16 }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
-          {bt === 'about' ? 'About Block' : 'Content Block'}
+          {bt === 'about' ? 'About Widget' : 'Content Widget'}
         </div>
         <Field label="Image">
           <ImageUploadField value={imgUrl} onChange={setImg} />
@@ -5179,7 +5320,7 @@ export default function WebsiteBuilder() {
   };
 
   const deleteBlock = async (blockId) => {
-    if (!confirm('Delete this block?')) return;
+    if (!confirm('Delete this widget?')) return;
     try {
       await apiFetch(`/api/website/blocks/${blockId}`, { method: 'DELETE' });
       setBlocks(prev => prev.filter(b => b.block_id !== blockId));
@@ -5544,7 +5685,7 @@ export default function WebsiteBuilder() {
               {activeTab === 'blocks' && (
                 <div style={{ flex: 1, overflowY: 'auto', padding: 8, minWidth: 240 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px 8px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>Add Block</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>Add Widget</span>
                     <button onClick={() => setSidebarOpen(false)} title="Close panel" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16, lineHeight: 1, padding: '0 2px' }}>×</button>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
@@ -5614,11 +5755,11 @@ export default function WebsiteBuilder() {
                 {blocks.length === 0 ? (
                   <div style={{ padding: '4rem', textAlign: 'center', color: '#9ca3af', background: site?.page_background_color || site?.screen_background_color || site?.bg_color || '#fff' }}>
                     <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>📄</div>
-                    <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, color: '#374151' }}>This page has no blocks yet</div>
-                    <div style={{ fontSize: 13, marginBottom: 20 }}>Click the ➕ tab on the left to add blocks</div>
+                    <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, color: '#374151' }}>This page has no widgets yet</div>
+                    <div style={{ fontSize: 13, marginBottom: 20 }}>Click the ➕ tab on the left to add widgets</div>
                     <button onClick={() => { setActiveTab('blocks'); setSidebarOpen(true); }}
                       style={{ padding: '8px 20px', background: site?.primary_color || '#3D6B34', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 14 }}>
-                      + Add First Block
+                      + Add First Widget
                     </button>
                   </div>
                 ) : (
@@ -7045,7 +7186,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                 </div>
                 <div className="border-l-4 pl-3" style={{ borderColor: local.secondary_color }}>
                   <p className="text-xs font-semibold text-gray-500 mb-1">Body</p>
-                  <WidthControl label="Body Background Width" hint="Width of the color band behind each content block." value={local.body_bg_width} onChange={v => set('body_bg_width', v)} />
+                  <WidthControl label="Body Background Width" hint="Width of the color band behind each content widget." value={local.body_bg_width} onChange={v => set('body_bg_width', v)} />
                   <WidthControl label="Body Text Width" hint="Width of the text/content inside each block (must be ≤ background width)." value={local.body_content_width} onChange={v => set('body_content_width', v)} />
                 </div>
                 <div className="border-l-4 pl-3" style={{ borderColor: local.footer_bg_color }}>
@@ -7279,7 +7420,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
         <div>
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
             <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Image Styling</h3>
-            <p className="text-xs text-gray-400 mb-4">These styles apply to every image added inside content blocks across all pages of your site.</p>
+            <p className="text-xs text-gray-400 mb-4">These styles apply to every image added inside content widgets across all pages of your site.</p>
 
             {/* Live preview */}
             {(() => {
