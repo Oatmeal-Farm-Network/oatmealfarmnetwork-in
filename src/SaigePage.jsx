@@ -482,6 +482,19 @@ export default function SaigePage() {
   useEffect(() => { if (!activeThreadId) setActiveThreadId(generateThreadId()); }, [activeThreadId]);
   useEffect(() => { if (window.innerWidth < 900) setSidebarCollapsed(true); }, []);
 
+  // Feature-bridge: when another Saige page hands off (e.g. pest detection
+  // → "Ask Saige about this"), it navigates here with ?prompt=... and we
+  // prefill the input so the user can tweak before sending.
+  const bridgedRef = useRef(false);
+  useEffect(() => {
+    if (bridgedRef.current) return;
+    const incoming = searchParams.get('prompt');
+    if (incoming) {
+      setInput(incoming);
+      bridgedRef.current = true;
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     if (activeThreadId && activeChat.length > 0 && userId) {
       saveThread(userId, activeThreadId, activeChat, 'active', advisoryTypeRef.current);

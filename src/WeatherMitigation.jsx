@@ -1,0 +1,109 @@
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+
+const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001';
+
+const PHASES = [
+  { key: 'planning', label: 'Planning (before season)' },
+  { key: 'imminent', label: 'Imminent (forecast 0–72h)' },
+  { key: 'active',   label: 'Active (happening now)' },
+  { key: 'recovery', label: 'Recovery (after event)' },
+];
+
+export default function WeatherMitigation() {
+  const [hazards, setHazards] = useState([]);
+  const [hazard, setHazard] = useState('');
+  const [phase, setPhase] = useState('imminent');
+  const [plan, setPlan] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    fetch(`${SAIGE_API}/mitigation/hazards`)
+      .then(r => r.json())
+      .then(j => setHazards(j?.hazards || []))
+      .catch(() => setErr('Could not reach service.'));
+  }, []);
+
+  const fetchPlan = async (h, p) => {
+    if (!h) return;
+    setLoading(true);
+    setPlan(null);
+    setErr('');
+    try {
+      const r = await fetch(`${SAIGE_API}/mitigation/${encodeURIComponent(h)}?phase=${encodeURIComponent(p)}`);
+      const j = await r.json();
+      if (j?.status === 'ok') setPlan(j.plan);
+      else setErr('No plan available.');
+    } catch {
+      setErr('Lookup failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px 20px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+        <img src="/images/AI-agent-logo-saige.svg" alt="" style={{ width: 36, height: 36 }} />
+        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#14532d' }}>Weather Mitigation Plans</h1>
+      </div>
+      <p style={{ color: '#4b5563', marginTop: 4, marginBottom: 18 }}>
+        Step-by-step playbook for extreme weather: frost, drought, heat wave, flood,
+        hail, wind, wildfire smoke, cold snap. Pick the hazard and the phase you're
+        in. For crop-specific recovery questions, <Link to="/saige">ask Saige</Link>.
+      </p>
+
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
+        <div style={{ flex: '1 1 240px' }}>
+          <label style={{ fontSize: 13, color: '#374151' }}>Hazard</label>
+          <select
+            value={hazard}
+            onChange={(e) => { setHazard(e.target.value); fetchPlan(e.target.value, phase); }}
+            style={{ display: 'block', width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 8, marginTop: 4, textTransform: 'capitalize' }}
+          >
+            <option value="">— Select —</option>
+            {hazards.map(h => (
+              <option key={h} value={h}>{h.replace(/_/g, ' ')}</option>
+            ))}
+          </select>
+        </div>
+        <div style={{ flex: '1 1 240px' }}>
+          <label style={{ fontSize: 13, color: '#374151' }}>Phase</label>
+          <select
+            value={phase}
+            onChange={(e) => { setPhase(e.target.value); if (hazard) fetchPlan(hazard, e.target.value); }}
+            style={{ display: 'block', width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 8, marginTop: 4 }}
+          >
+            {PHASES.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {err && <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', color: '#991b1b', padding: 10, borderRadius: 8, marginBottom: 12 }}>{err}</div>}
+      {loading && <div style={{ color: '#6b7280' }}>Loading plan…</div>}
+
+      {plan && !loading && (
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 18 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, textTransform: 'capitalize', marginBottom: 2 }}>
+            {plan.hazard.replace(/_/g, ' ')} — {plan.phase} phase
+          </div>
+          {plan.steps.length === 0 ? (
+            <div style={{ color: '#6b7280', marginTop: 10 }}>
+              No steps listed for this phase. Try another phase:{' '}
+              {plan.all_phases.filter(p => p !== plan.phase).map(p => (
+                <button key={p} onClick={() => { setPhase(p); fetchPlan(plan.hazard, p); }} style={{ marginLeft: 4, background: '#e2e8f0', border: 'none', padding: '3px 10px', borderRadius: 999, cursor: 'pointer', fontSize: 12 }}>{p}</button>
+              ))}
+            </div>
+          ) : (
+            <ol style={{ margin: '12px 0 0 0', paddingLeft: 22, lineHeight: 1.55 }}>
+              {plan.steps.map((s, i) => (
+                <li key={i} style={{ marginBottom: 6 }}>{s}</li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

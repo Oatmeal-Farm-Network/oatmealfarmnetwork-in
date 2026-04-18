@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import RichTextEditor from './RichTextEditor';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -185,8 +186,8 @@ export default function EventRegister() {
                 </div>
                 <div>
                   <label className={lbl}>Notes / Special Requests <span className="text-gray-400 font-normal">(Optional)</span></label>
-                  <textarea value={form.Notes} onChange={set('Notes')} className={inp} rows={3}
-                    placeholder="Dietary restrictions, accessibility needs, etc." />
+                  <RichTextEditor value={form.Notes || ''}
+                    onChange={(v) => setForm(f => ({ ...f, Notes: v }))} minHeight={120} />
                 </div>
               </div>
 
@@ -331,10 +332,19 @@ export default function EventRegister() {
             {done.TotalAmount > 0 && (
               <p className="text-lg font-bold text-[#3D6B34] mb-4">Total: ${parseFloat(done.TotalAmount).toFixed(2)}</p>
             )}
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-gray-500 mb-4">
               A confirmation has been noted for <strong>{form.AttendeeEmail}</strong>.
               {done.TotalAmount > 0 && ' The organizer will contact you with payment details.'}
             </p>
+            <div className="flex flex-col items-center mb-6">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(String(done.RegID))}`}
+                alt="Check-in QR code"
+                width="180" height="180"
+                className="border border-gray-200 rounded-lg p-2 bg-white"
+              />
+              <div className="text-xs text-gray-500 mt-2">Show this at check-in</div>
+            </div>
             <div className="flex gap-3 justify-center">
               <Link to={`/events/${eventId}`} className="text-[#3D6B34] hover:underline text-sm">← Back to Event</Link>
               <Link to="/events" className="text-[#3D6B34] hover:underline text-sm">All Events</Link>

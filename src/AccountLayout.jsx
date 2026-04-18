@@ -315,7 +315,8 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               >
                 <NavChild to="/events" label="Browse Events" />
                 <NavChild to={`/events/manage?BusinessID=${BusinessID}`} label="My Events" />
-                <NavChild to={`/events/my-registrations?BusinessID=${BusinessID}`} label="My Registrations" />
+                <NavChild to={`/events/add?BusinessID=${BusinessID}`} label="Add Event" />
+                <NavChild to="/my-registrations" label="My Registrations" />
               </NavSection>
             )}
 

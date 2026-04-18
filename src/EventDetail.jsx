@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useAccount } from './AccountContext';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -12,17 +13,155 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 }
 
+// Per-event-type admin module (matches the route-map in main.jsx).
+// Returns { path, label } or null if the type has no dedicated admin module.
+function typeAdminModule(evType) {
+  if (!evType) return null;
+  if (evType === 'Alpaca Cottage Industry Fleece Show') return { path: 'admin/fiber-arts', label: 'Fiber Arts Admin' };
+  if (['Halter Show', 'Basic Animal or Fleece Show', 'Spin-Off'].includes(evType))
+    return { path: 'admin/halter', label: `${evType} Admin` };
+  if (evType === 'Auction')              return { path: 'admin/auction',      label: 'Auction Admin' };
+  if (evType === 'Market/Vendor Fair')   return { path: 'admin/vendor-fair',  label: 'Vendor Fair Admin' };
+  if (evType === 'Dining Event')         return { path: 'admin/dining',       label: 'Dining Admin' };
+  if (evType === 'Farm Tour/Open House') return { path: 'admin/tour',         label: 'Farm Tour Admin' };
+  if (evType === 'Conference')           return { path: 'admin/conference',   label: 'Conference Admin' };
+  if (evType === 'Competition/Judging')  return { path: 'admin/competition',  label: 'Competition Admin' };
+  if (['Seminar', 'Free Event', 'Basic Event', 'Workshop/Clinic', 'Webinar/Online Class', 'Networking Event'].includes(evType))
+    return { path: 'admin/simple', label: `${evType} Admin` };
+  return null;
+}
+
+function AdminSidebar({ ev, eventId, businessId }) {
+  const typeModule = typeAdminModule(ev.EventType);
+  const itemCls = "block text-sm px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700 no-underline border border-transparent hover:border-gray-200";
+  const bizQs = businessId ? `?BusinessID=${businessId}` : '';
+  return (
+    <aside className="bg-white rounded-xl border border-purple-200 p-4 lg:sticky lg:top-4 self-start">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-lg">🛠️</span>
+        <div>
+          <div className="text-[11px] uppercase tracking-wide text-purple-700 font-semibold">Organizer</div>
+          <div className="text-xs text-gray-500">Admin tools</div>
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <Link to={`/events/${eventId}/dashboard`}
+          className="block text-sm font-semibold px-3 py-2 rounded-lg bg-[#3D6B34] text-white hover:bg-[#2d5226] no-underline text-center">
+          🏠 Admin dashboard
+        </Link>
+      </div>
+
+      {typeModule && (
+        <div className="mb-3">
+          <div className="text-[11px] uppercase tracking-wide text-gray-400 mb-1 px-2">Event module</div>
+          <Link to={`/events/${eventId}/${typeModule.path}${bizQs}`}
+            className="block text-sm font-semibold px-3 py-2 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 no-underline">
+            {typeModule.label}
+          </Link>
+        </div>
+      )}
+
+      <div className="text-[11px] uppercase tracking-wide text-gray-400 mb-1 px-2">Attendees</div>
+      <Link to={`/events/${eventId}/checkin`} className={itemCls}>✅ Check-in</Link>
+      <Link to={`/events/${eventId}/broadcast`} className={itemCls}>📣 Broadcast email</Link>
+      <Link to={`/events/${eventId}/analytics`} className={itemCls}>📊 Analytics</Link>
+      <a href={`${API}/api/events/${eventId}/attendees.csv`} className={itemCls}>⬇️ Attendees CSV</a>
+
+      <div className="text-[11px] uppercase tracking-wide text-gray-400 mt-3 mb-1 px-2">Calendar</div>
+      <a href={`${API}/api/events/${eventId}/calendar.ics`} className={itemCls}>📅 Export .ics</a>
+
+      <div className="text-[11px] uppercase tracking-wide text-gray-400 mt-3 mb-1 px-2">Event</div>
+      <Link to={`/account/events?edit=${eventId}`} className={itemCls}>✏️ Edit details</Link>
+      <Link to="/account/events" className={itemCls}>↩ All my events</Link>
+    </aside>
+  );
+}
+
+function PublicFeatureCTAs({ features, ev, eventId }) {
+  const publics = (features || []).filter(f => f.PublicPath);
+  if (publics.length === 0 && !ev.RegistrationRequired && !ev.EventStartDate) return null;
+
+  const isExternal = (p) => /^https?:\/\//.test(p) || p.startsWith('/api/');
+  const core = publics.find(f => f.IsCoreModule);
+  const calendar = publics.find(f => f.FeatureKey === 'calendar_ics');
+  const extras = publics.filter(f =>
+    !f.IsCoreModule && f.FeatureKey !== 'calendar_ics' && !isExternal(f.PublicPath));
+
+  return (
+    <>
+      {core && (
+        <a
+          href={core.PublicPath}
+          className="w-full block text-center bg-[#3D6B34] text-white font-bold py-3 rounded-xl hover:bg-[#2d5226] transition-colors text-base no-underline"
+        >
+          {core.Icon && <span className="mr-2">{core.Icon}</span>}
+          {core.FeatureName} →
+        </a>
+      )}
+
+      {!core && ev.RegistrationRequired && (
+        <a
+          href={`/events/${eventId}/register`}
+          className="w-full block text-center bg-[#3D6B34] text-white font-bold py-3 rounded-xl hover:bg-[#2d5226] transition-colors text-base no-underline"
+        >
+          Register for This Event
+        </a>
+      )}
+
+      {calendar && ev.EventStartDate && (
+        <a
+          href={`${API}${calendar.PublicPath}`}
+          className="w-full block text-center border border-gray-300 text-gray-700 text-sm py-2 rounded-lg hover:bg-gray-50 no-underline"
+        >
+          📅 Add to Calendar (.ics)
+        </a>
+      )}
+      {!calendar && ev.EventStartDate && (
+        <a
+          href={`${API}/api/events/${eventId}/calendar.ics`}
+          className="w-full block text-center border border-gray-300 text-gray-700 text-sm py-2 rounded-lg hover:bg-gray-50 no-underline"
+        >
+          Add to Calendar (.ics)
+        </a>
+      )}
+
+      {extras.map(f => (
+        <a
+          key={f.FeatureID}
+          href={f.PublicPath}
+          title={f.FeatureDescription || ''}
+          className="w-full block text-center border border-[#3D6B34] text-[#3D6B34] font-medium py-2 rounded-xl hover:bg-[#3D6B34]/5 transition-colors text-sm no-underline"
+        >
+          {f.Icon && <span className="mr-1">{f.Icon}</span>}
+          {f.FeatureName} →
+        </a>
+      ))}
+    </>
+  );
+}
+
 export default function EventDetail() {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const [ev, setEv] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [features, setFeatures] = useState([]);
+  const accountCtx = useAccount() || {};
+  const myBusinesses = accountCtx.businesses || [];
 
   useEffect(() => {
     fetch(`${API}/api/events/${eventId}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { setEv(d); setLoading(false); })
       .catch(() => setLoading(false));
+  }, [eventId]);
+
+  useEffect(() => {
+    fetch(`${API}/api/events/${eventId}/features`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setFeatures(Array.isArray(d?.features) ? d.features : []))
+      .catch(() => setFeatures([]));
   }, [eventId]);
 
   if (loading) return (
@@ -45,6 +184,8 @@ export default function EventDetail() {
   );
 
   const hasOptions = ev.options?.length > 0;
+  const isAdmin = !!myBusinesses.find(b => Number(b.BusinessID) === Number(ev.BusinessID));
+  const adminBusinessId = isAdmin ? ev.BusinessID : null;
   const location = [ev.EventLocationName, ev.EventLocationStreet,
     [ev.EventLocationCity, ev.EventLocationState, ev.EventLocationZip].filter(Boolean).join(', ')]
     .filter(Boolean);
@@ -111,10 +252,17 @@ export default function EventDetail() {
           { label: ev.EventName },
         ]} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className={`grid grid-cols-1 gap-8 ${isAdmin ? 'lg:grid-cols-5' : 'lg:grid-cols-3'}`}>
+
+          {/* ── Admin sidebar (organizers only) ── */}
+          {isAdmin && (
+            <div className="lg:col-span-1 order-first">
+              <AdminSidebar ev={ev} eventId={eventId} businessId={adminBusinessId} />
+            </div>
+          )}
 
           {/* ── Left: main content ── */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className={`${isAdmin ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-6`}>
 
             {/* Hero image */}
             {ev.EventImage && (
@@ -259,15 +407,8 @@ export default function EventDetail() {
               )}
             </div>
 
-            {/* Register CTA */}
-            {ev.RegistrationRequired && (
-              <button
-                onClick={() => navigate(`/events/${eventId}/register`)}
-                className="w-full bg-[#3D6B34] text-white font-bold py-3 rounded-xl hover:bg-[#2d5226] transition-colors text-base"
-              >
-                Register for This Event
-              </button>
-            )}
+            {/* Public feature CTAs — driven by OFNEventFeatures catalog */}
+            <PublicFeatureCTAs features={features} ev={ev} eventId={eventId} />
 
             {/* Organizer card */}
             <div className="bg-white rounded-xl border border-gray-200 p-5">

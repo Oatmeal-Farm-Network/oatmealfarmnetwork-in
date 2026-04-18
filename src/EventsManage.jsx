@@ -2,12 +2,11 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
+import RichTextEditor from './RichTextEditor';
 
 const API = import.meta.env.VITE_API_URL || '';
 const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-[#819360]";
 const lbl = "block text-xs font-medium text-gray-500 mb-1";
-
-const EVENT_TYPES = ['Workshop', 'Farm Tour', 'Market', 'Fair', 'Show', 'Festival', 'Class', 'Meeting', 'Auction', 'Other'];
 
 const EMPTY = {
   EventName: '', EventDescription: '', EventType: '', EventStartDate: '', EventEndDate: '',
@@ -16,32 +15,140 @@ const EMPTY = {
   EventWebsite: '', IsPublished: true, IsFree: true, RegistrationRequired: false, MaxAttendees: '',
 };
 
+// Rough descriptions for common event types — anything not listed falls back to a generic blurb.
+const EVENT_TYPE_META = {
+  'Free Event':                        { icon: '🎉', desc: 'Open, no-cost gathering — no registration fees.' },
+  'Basic Event':                       { icon: '📋', desc: 'General event with optional registration and ticket tiers.' },
+  'Conference':                        { icon: '🎤', desc: 'Multi-session professional gathering with a schedule.' },
+  'Seminar':                           { icon: '🎓', desc: 'Focused educational talk or class, often single-session.' },
+  'Webinar/Online Class':              { icon: '💻', desc: 'Virtual event streamed to remote attendees.' },
+  'Workshop/Clinic':                   { icon: '🛠️', desc: 'Hands-on, skills-based training session.' },
+  'Networking Event':                  { icon: '🤝', desc: 'Informal gathering for connection and introductions.' },
+  'Dining Event':                      { icon: '🍽️', desc: 'Meal-centric event — dinners, tastings, luncheons.' },
+  'Farm Tour/Open House':              { icon: '🚜', desc: 'Guided tour or open day at a farm or ranch.' },
+  'Competition/Judging':               { icon: '🏆', desc: 'Generic competition or contest with judged results.' },
+  'Halter Show':                       { icon: '🦙', desc: 'Livestock halter show — animals, pens, classes, judging.' },
+  'Basic Animal or Fleece Show':       { icon: '🐑', desc: 'Lightweight animal or fleece show — uses halter module.' },
+  'Spin-Off':                          { icon: '🧶', desc: 'Fleece-only spin-off competition.' },
+  'Alpaca Cottage Industry Fleece Show': { icon: '✂️', desc: 'Cottage industry fiber arts show with handmade entries.' },
+  'Auction':                           { icon: '💰', desc: 'Live, silent, online, or stud-service auction with bidding.' },
+  'Market/Vendor Fair':                { icon: '🛍️', desc: 'Vendor fair — booth applications, fees, and approvals.' },
+};
+const DEFAULT_META = { icon: '📅', desc: 'Event with optional registration and ticket tiers.' };
+
+// ── Event Type Picker (step 1 of create flow) ─────────────────────────────────
+function EventTypePicker({ onSelect, onCancel }) {
+  const [eventTypes, setEventTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    fetch(`${API}/api/events/types`)
+      .then(r => r.ok ? r.json() : [])
+      .then(d => { setEventTypes(Array.isArray(d) ? d : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const filtered = eventTypes.filter(t =>
+    !filter || t.EventType.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="font-bold text-gray-700 text-lg mb-1">What kind of event are you creating?</h2>
+          <p className="text-sm text-gray-500">Pick a type to unlock the right fields and admin tools.</p>
+        </div>
+        <div className="text-xs text-gray-400">
+          <span className="text-[#3D6B34] font-semibold">Step 1 of 2</span> · Choose type
+        </div>
+      </div>
+
+      <input
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        placeholder="Search event types…"
+        className={inp + " max-w-md"}
+      />
+
+      {loading ? (
+        <div className="text-gray-400 text-sm py-8 text-center">Loading event types…</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map(t => {
+            const meta = EVENT_TYPE_META[t.EventType] || DEFAULT_META;
+            return (
+              <button
+                key={t.EventTypeID}
+                type="button"
+                onClick={() => onSelect(t.EventType)}
+                className="text-left bg-white border border-gray-200 rounded-xl p-4 hover:border-[#3D6B34] hover:shadow-sm transition-all group"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl shrink-0">{meta.icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-gray-800 group-hover:text-[#3D6B34]">{t.EventType}</div>
+                    <div className="text-xs text-gray-500 mt-1 leading-snug">{meta.desc}</div>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div className="col-span-full text-sm text-gray-400 text-center py-8">No matching event types.</div>
+          )}
+        </div>
+      )}
+
+      <div className="flex justify-start pt-2">
+        <button type="button" onClick={onCancel}
+          className="px-5 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function formatDate(d) {
   if (!d) return '';
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // ── Event Form ────────────────────────────────────────────────────────────────
-function EventForm({ initial, onSave, onCancel, saving }) {
+function EventForm({ initial, onSave, onCancel, onChangeType, saving }) {
   const [form, setForm] = useState(initial || EMPTY);
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
   const setB = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.checked }));
 
+  const meta = EVENT_TYPE_META[form.EventType] || DEFAULT_META;
+
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(form); }} className="space-y-5">
+      {/* Selected type banner */}
+      {form.EventType && (
+        <div className="bg-[#f6f8f3] border border-[#3D6B34]/20 rounded-lg px-4 py-3 flex items-center gap-3">
+          <div className="text-2xl">{meta.icon}</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-gray-500 uppercase tracking-wide">Event Type</div>
+            <div className="font-semibold text-gray-800">{form.EventType}</div>
+          </div>
+          {onChangeType && (
+            <button type="button" onClick={onChangeType}
+              className="text-xs text-[#3D6B34] hover:underline font-semibold shrink-0">
+              Change type
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
           <label className={lbl}>Event Name</label>
           <input value={form.EventName} onChange={set('EventName')} className={inp} required placeholder="e.g. Summer Farm Tour" />
         </div>
-        <div>
-          <label className={lbl}>Event Type</label>
-          <select value={form.EventType} onChange={set('EventType')} className={inp}>
-            <option value="">-- Select Type --</option>
-            {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
-        <div>
+        <div className="md:col-span-2">
           <label className={lbl}>Event Image URL</label>
           <input value={form.EventImage} onChange={set('EventImage')} className={inp} placeholder="https://…" />
         </div>
@@ -55,7 +162,8 @@ function EventForm({ initial, onSave, onCancel, saving }) {
         </div>
         <div className="md:col-span-2">
           <label className={lbl}>Description</label>
-          <textarea value={form.EventDescription} onChange={set('EventDescription')} className={inp} rows={4} placeholder="Describe your event…" />
+          <RichTextEditor value={form.EventDescription}
+            onChange={(v) => setForm(f => ({ ...f, EventDescription: v }))} minHeight={180} />
         </div>
       </div>
 
@@ -128,14 +236,14 @@ function EventForm({ initial, onSave, onCancel, saving }) {
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 pt-2">
-        <button type="button" onClick={onCancel}
-          className="px-5 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
-          Cancel
-        </button>
+      <div className="flex justify-start gap-3 pt-2">
         <button type="submit" disabled={saving}
           className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
           {saving ? 'Saving…' : 'Save Event'}
+        </button>
+        <button type="button" onClick={onCancel}
+          className="px-5 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+          Cancel
         </button>
       </div>
     </form>
@@ -525,11 +633,13 @@ export default function EventsManage() {
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [formStep, setFormStep] = useState(null); // null | 'type' | 'details'
   const [editingEvent, setEditingEvent] = useState(null);
+  const [draftType, setDraftType] = useState(''); // holds type between step 1 and step 2
   const [expandedEvent, setExpandedEvent] = useState(null);
   const [activeTab, setActiveTab] = useState({}); // eventId → 'dates' | 'options' | 'registrations'
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   useEffect(() => {
     if (!BusinessID) return;
@@ -544,13 +654,28 @@ export default function EventsManage() {
       .catch(() => setLoading(false));
   };
 
-  const openAdd = () => { setEditingEvent(null); setShowForm(true); };
+  const openAdd = () => {
+    setEditingEvent(null);
+    setDraftType('');
+    setFormStep('type');
+  };
 
   const openEdit = async (ev) => {
     const res = await fetch(`${API}/api/events/${ev.EventID}`);
     const d = await res.json();
     setEditingEvent(d);
-    setShowForm(true);
+    setFormStep('details');
+  };
+
+  const closeForm = () => {
+    setFormStep(null);
+    setEditingEvent(null);
+    setDraftType('');
+  };
+
+  const pickType = (type) => {
+    setDraftType(type);
+    setFormStep('details');
   };
 
   const save = async (form) => {
@@ -568,17 +693,31 @@ export default function EventsManage() {
         const data = await res.json();
         setExpandedEvent(data.EventID);
       }
-      setShowForm(false);
-      setEditingEvent(null);
+      closeForm();
       loadEvents();
     } catch (err) { alert(err.message); }
     setSaving(false);
   };
 
-  const deleteEvent = async (ev) => {
-    if (!confirm(`Delete "${ev.EventName}"?`)) return;
+  const deleteEvent = (ev) => setConfirmDelete(ev);
+
+  const doDelete = async () => {
+    const ev = confirmDelete;
+    setConfirmDelete(null);
+    if (!ev) return;
     await fetch(`${API}/api/events/${ev.EventID}`, { method: 'DELETE' });
     loadEvents();
+  };
+
+  const cloneEvent = async (ev) => {
+    const name = prompt(`Clone event as:`, `${ev.EventName} (Copy)`);
+    if (!name) return;
+    const res = await fetch(`${API}/api/events/${ev.EventID}/clone`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ EventName: name }),
+    });
+    if (res.ok) loadEvents();
+    else alert('Clone failed');
   };
 
   const getTab = (eventId) => activeTab[eventId] || 'registrations';
@@ -595,6 +734,9 @@ export default function EventsManage() {
             <Link to="/events" className="border border-gray-200 text-sm text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 no-underline">
               Browse Events
             </Link>
+            <Link to="/events/analytics" className="border border-indigo-200 text-sm text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-50 no-underline">
+              Analytics
+            </Link>
             <button onClick={openAdd}
               className="bg-[#3D6B34] text-white font-semibold px-5 py-2 rounded-lg hover:bg-[#2d5226]">
               + Create Event
@@ -602,14 +744,34 @@ export default function EventsManage() {
           </div>
         </div>
 
-        {/* Create / Edit form */}
-        {showForm && (
+        {/* Step 1 — type picker (create flow only) */}
+        {formStep === 'type' && !editingEvent && (
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="font-bold text-gray-700 mb-5 text-lg">{editingEvent ? `Edit: ${editingEvent.EventName}` : 'New Event'}</h2>
+            <EventTypePicker
+              onSelect={pickType}
+              onCancel={closeForm}
+            />
+          </div>
+        )}
+
+        {/* Step 2 — event details */}
+        {formStep === 'details' && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
+              <h2 className="font-bold text-gray-700 text-lg">
+                {editingEvent ? `Edit: ${editingEvent.EventName}` : 'New Event — Details'}
+              </h2>
+              {!editingEvent && (
+                <div className="text-xs text-gray-400">
+                  <span className="text-[#3D6B34] font-semibold">Step 2 of 2</span> · Enter details
+                </div>
+              )}
+            </div>
             <EventForm
-              initial={editingEvent}
+              initial={editingEvent || { ...EMPTY, EventType: draftType }}
               onSave={save}
-              onCancel={() => { setShowForm(false); setEditingEvent(null); }}
+              onCancel={closeForm}
+              onChangeType={editingEvent ? null : () => setFormStep('type')}
               saving={saving}
             />
           </div>
@@ -646,10 +808,88 @@ export default function EventsManage() {
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
+                    <Link to={`/events/${ev.EventID}/dashboard`}
+                      className="text-xs text-white bg-[#3D6B34] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#2d5226] no-underline">
+                      🏠 Dashboard
+                    </Link>
                     <Link to={`/events/${ev.EventID}`} target="_blank"
                       className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 no-underline">
                       Preview ↗
                     </Link>
+                    {ev.EventType === 'Alpaca Cottage Industry Fleece Show' && (
+                      <Link to={`/events/${ev.EventID}/admin/fiber-arts?BusinessID=${BusinessID}`}
+                        className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
+                        Fiber Arts Admin
+                      </Link>
+                    )}
+                    {['Halter Show', 'Basic Animal or Fleece Show', 'Spin-Off'].includes(ev.EventType) && (
+                      <Link to={`/events/${ev.EventID}/admin/halter?BusinessID=${BusinessID}`}
+                        className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
+                        {ev.EventType === 'Halter Show' ? 'Halter Show Admin' : `${ev.EventType} Admin`}
+                      </Link>
+                    )}
+                    {ev.EventType === 'Auction' && (
+                      <Link to={`/events/${ev.EventID}/admin/auction?BusinessID=${BusinessID}`}
+                        className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
+                        Auction Admin
+                      </Link>
+                    )}
+                    {ev.EventType === 'Market/Vendor Fair' && (
+                      <Link to={`/events/${ev.EventID}/admin/vendor-fair?BusinessID=${BusinessID}`}
+                        className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
+                        Vendor Fair Admin
+                      </Link>
+                    )}
+                    {ev.EventType === 'Dining Event' && (
+                      <Link to={`/events/${ev.EventID}/admin/dining?BusinessID=${BusinessID}`}
+                        className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
+                        Dining Admin
+                      </Link>
+                    )}
+                    {ev.EventType === 'Farm Tour/Open House' && (
+                      <Link to={`/events/${ev.EventID}/admin/tour?BusinessID=${BusinessID}`}
+                        className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
+                        Farm Tour Admin
+                      </Link>
+                    )}
+                    {['Seminar', 'Free Event', 'Basic Event', 'Workshop/Clinic', 'Webinar/Online Class', 'Networking Event'].includes(ev.EventType) && (
+                      <Link to={`/events/${ev.EventID}/admin/simple?BusinessID=${BusinessID}`}
+                        className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
+                        {ev.EventType} Admin
+                      </Link>
+                    )}
+                    {ev.EventType === 'Conference' && (
+                      <Link to={`/events/${ev.EventID}/admin/conference?BusinessID=${BusinessID}`}
+                        className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
+                        Conference Admin
+                      </Link>
+                    )}
+                    {ev.EventType === 'Competition/Judging' && (
+                      <Link to={`/events/${ev.EventID}/admin/competition?BusinessID=${BusinessID}`}
+                        className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
+                        Competition Admin
+                      </Link>
+                    )}
+                    <Link to={`/events/${ev.EventID}/checkin`}
+                      className="text-xs text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg hover:bg-emerald-50 no-underline">
+                      Check-In
+                    </Link>
+                    <Link to={`/events/${ev.EventID}/broadcast`}
+                      className="text-xs text-amber-700 border border-amber-200 px-3 py-1.5 rounded-lg hover:bg-amber-50 no-underline">
+                      Broadcast
+                    </Link>
+                    <Link to={`/events/${ev.EventID}/analytics`}
+                      className="text-xs text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50 no-underline">
+                      Analytics
+                    </Link>
+                    <a href={`${API}/api/events/${ev.EventID}/attendees.csv`}
+                      className="text-xs text-gray-700 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 no-underline">
+                      CSV
+                    </a>
+                    <button onClick={() => cloneEvent(ev)}
+                      className="text-xs text-gray-700 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+                      Clone
+                    </button>
                     <button onClick={() => openEdit(ev)}
                       className="text-xs text-blue-600 border border-blue-100 px-3 py-1.5 rounded-lg hover:bg-blue-50">
                       Edit
@@ -701,6 +941,30 @@ export default function EventsManage() {
           </div>
         )}
       </div>
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+             onClick={() => setConfirmDelete(null)}>
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-5"
+               onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-bold text-gray-900 mb-2">Delete event?</h3>
+            <p className="text-sm text-gray-600 mb-5">
+              Are you sure you want to delete <span className="font-semibold">"{confirmDelete.EventName}"</span>?
+              This cannot be undone.
+            </p>
+            <div className="flex justify-end items-center gap-3">
+              <button onClick={() => setConfirmDelete(null)}
+                      className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                Cancel
+              </button>
+              <button onClick={doDelete}
+                      className="bg-red-600 text-white font-semibold px-5 py-2 rounded-lg text-sm hover:bg-red-700">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AccountLayout>
   );
 }

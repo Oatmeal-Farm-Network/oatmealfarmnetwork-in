@@ -14,7 +14,11 @@
       "PowerShell(try { Get-Content 'f:\\\\Oatmeal AI\\\\OatmealFarmNetwork Repo\\\\.vscode\\\\tasks.json' -Raw | ConvertFrom-Json | Out-Null; 'JSON OK' } catch { \"JSON INVALID: $_\" })",
       "Bash(xxd \"f:/Oatmeal AI/OatmealFarmNetwork Repo/.vscode/tasks.json\")",
       "PowerShell(Get-Command wt.exe -ErrorAction SilentlyContinue)",
-      "PowerShell(if \\(-not $?\\) { 'wt.exe not found' })"
+      "PowerShell(if \\(-not $?\\) { 'wt.exe not found' })",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('nodes.py', encoding='utf-8-sig'\\).read\\(\\)\\); print\\('nodes.py OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('api.py', encoding='utf-8-sig'\\).read\\(\\)\\); print\\('api.py OK'\\)\")",
+      "Bash(python -c \"import ast,io; ast.parse\\(io.open\\('history_store.py',encoding='utf-8-sig'\\).read\\(\\)\\); ast.parse\\(io.open\\('api.py',encoding='utf-8-sig'\\).read\\(\\)\\); print\\('ok'\\)\")",
+      "Bash(venv/Scripts/python.exe -c ' *)"
     ]
   }
 }
