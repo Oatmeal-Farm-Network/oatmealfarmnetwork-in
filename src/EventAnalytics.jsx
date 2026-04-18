@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
+import EventAdminLayout from './EventAdminLayout';
 import { useAccount } from './AccountContext';
 
 const API = import.meta.env.VITE_API_URL || '';
@@ -190,8 +191,11 @@ export default function EventAnalytics() {
   const { account } = useAccount() || {};
   const businessId = account?.BusinessID || localStorage.getItem('business_id');
 
+  const Wrapper = eventId ? EventAdminLayout : AccountLayout;
+  const wrapperProps = eventId ? { eventId } : {};
+
   return (
-    <AccountLayout>
+    <Wrapper {...wrapperProps}>
       <div className="max-w-6xl mx-auto px-4 py-6">
         {eventId
           ? <EventView eventId={eventId} />
@@ -200,6 +204,6 @@ export default function EventAnalytics() {
               : <div className="p-6 text-gray-500">Sign in as an organizer to see analytics.</div>)
         }
       </div>
-    </AccountLayout>
+    </Wrapper>
   );
 }

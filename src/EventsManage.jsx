@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
+import EventAdminLayout from './EventAdminLayout';
 import { useAccount } from './AccountContext';
 import RichTextEditor from './RichTextEditor';
 
@@ -28,7 +29,7 @@ const EVENT_TYPE_META = {
   'Farm Tour/Open House':              { icon: '🚜', desc: 'Guided tour or open day at a farm or ranch.' },
   'Competition/Judging':               { icon: '🏆', desc: 'Generic competition or contest with judged results.' },
   'Halter Show':                       { icon: '🦙', desc: 'Livestock halter show — animals, pens, classes, judging.' },
-  'Basic Animal or Fleece Show':       { icon: '🐑', desc: 'Lightweight animal or fleece show — uses halter module.' },
+  'Basic Animal or Fleece Show':       { icon: '🐑', desc: 'Per-fleece entries with breed/color/micron, fee window, judging.' },
   'Spin-Off':                          { icon: '🧶', desc: 'Fleece-only spin-off competition.' },
   'Alpaca Cottage Industry Fleece Show': { icon: '✂️', desc: 'Cottage industry fiber arts show with handmade entries.' },
   'Auction':                           { icon: '💰', desc: 'Live, silent, online, or stud-service auction with bidding.' },
@@ -86,7 +87,6 @@ function EventTypePicker({ onSelect, onCancel }) {
                 className="text-left bg-white border border-gray-200 rounded-xl p-4 hover:border-[#3D6B34] hover:shadow-sm transition-all group"
               >
                 <div className="flex items-start gap-3">
-                  <div className="text-2xl shrink-0">{meta.icon}</div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-gray-800 group-hover:text-[#3D6B34]">{t.EventType}</div>
                     <div className="text-xs text-gray-500 mt-1 leading-snug">{meta.desc}</div>
@@ -118,7 +118,15 @@ function formatDate(d) {
 
 // ── Event Form ────────────────────────────────────────────────────────────────
 function EventForm({ initial, onSave, onCancel, onChangeType, saving }) {
-  const [form, setForm] = useState(initial || EMPTY);
+  // Backend returns NULL for unset text columns — coerce to '' so inputs stay controlled.
+  const hydrate = (src) => {
+    const merged = { ...EMPTY, ...(src || {}) };
+    for (const k of Object.keys(EMPTY)) {
+      if (merged[k] == null && typeof EMPTY[k] === 'string') merged[k] = '';
+    }
+    return merged;
+  };
+  const [form, setForm] = useState(() => hydrate(initial));
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
   const setB = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.checked }));
 
@@ -129,7 +137,6 @@ function EventForm({ initial, onSave, onCancel, onChangeType, saving }) {
       {/* Selected type banner */}
       {form.EventType && (
         <div className="bg-[#f6f8f3] border border-[#3D6B34]/20 rounded-lg px-4 py-3 flex items-center gap-3">
-          <div className="text-2xl">{meta.icon}</div>
           <div className="flex-1 min-w-0">
             <div className="text-xs text-gray-500 uppercase tracking-wide">Event Type</div>
             <div className="font-semibold text-gray-800">{form.EventType}</div>
@@ -236,14 +243,14 @@ function EventForm({ initial, onSave, onCancel, onChangeType, saving }) {
         </div>
       </div>
 
-      <div className="flex justify-start gap-3 pt-2">
-        <button type="submit" disabled={saving}
-          className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save Event'}
-        </button>
+      <div className="flex justify-end items-center gap-3 pt-2">
         <button type="button" onClick={onCancel}
           className="px-5 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
           Cancel
+        </button>
+        <button type="submit" disabled={saving}
+          className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
+          {saving ? 'Saving…' : (initial?.EventID ? 'Save Changes' : 'Save Event')}
         </button>
       </div>
     </form>
@@ -502,7 +509,7 @@ function RegistrationsList({ eventId }) {
             Show contact details
           </label>
           <button onClick={printList} className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 px-2 py-1 rounded hover:bg-gray-50">
-            🖨 Print / Export
+            Print / Export
           </button>
         </div>
       </div>
@@ -642,10 +649,19 @@ export default function EventsManage() {
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   useEffect(() => {
-    if (!BusinessID) return;
+    if (!BusinessID) { setLoading(false); return; }
     LoadBusiness(BusinessID);
     loadEvents();
   }, [BusinessID]);
+
+  const editId = searchParams.get('edit');
+  useEffect(() => {
+    if (!editId) return;
+    fetch(`${API}/api/events/${editId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) { setEditingEvent(d); setFormStep('details'); } })
+      .catch(() => {});
+  }, [editId]);
 
   const loadEvents = () => {
     setLoading(true);
@@ -723,25 +739,42 @@ export default function EventsManage() {
   const getTab = (eventId) => activeTab[eventId] || 'registrations';
   const setTab = (eventId, tab) => setActiveTab(prev => ({ ...prev, [eventId]: tab }));
 
+  const editingId = editingEvent?.EventID || editId;
+  const Wrapper = editingId ? EventAdminLayout : AccountLayout;
+  const wrapperProps = editingId
+    ? { eventId: String(editingId) }
+    : { Business, BusinessID, PeopleID, pageTitle: 'My Events', breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Events' }, { label: 'Manage' }] };
+
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="My Events" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Events' }, { label: 'Manage' }]}>
+    <Wrapper {...wrapperProps}>
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <h1 className="text-2xl font-bold text-gray-800">My Events</h1>
-          <div className="flex gap-2">
-            <Link to="/events" className="border border-gray-200 text-sm text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 no-underline">
-              Browse Events
+          <h1 className="text-2xl font-bold text-gray-800">
+            {editingEvent ? `Edit: ${editingEvent.EventName}` : 'My Events'}
+          </h1>
+          {!editingEvent && (
+            <div className="flex gap-2">
+              <Link to="/events" className="border border-gray-200 text-sm text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 no-underline">
+                Browse Events
+              </Link>
+              <Link to="/events/analytics" className="border border-indigo-200 text-sm text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-50 no-underline">
+                Analytics
+              </Link>
+              <Link to={`/events/add?BusinessID=${BusinessID || ''}`}
+                style={{ color: '#fff' }}
+                className="bg-[#3D6B34] font-semibold px-5 py-2 rounded-lg hover:bg-[#2d5226] no-underline">
+                + Create Event
+              </Link>
+            </div>
+          )}
+          {editingEvent && (
+            <Link to={`/events/${editingEvent.EventID}/dashboard`}
+              className="text-sm text-gray-500 hover:text-gray-700 no-underline">
+              ← Back to event dashboard
             </Link>
-            <Link to="/events/analytics" className="border border-indigo-200 text-sm text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-50 no-underline">
-              Analytics
-            </Link>
-            <button onClick={openAdd}
-              className="bg-[#3D6B34] text-white font-semibold px-5 py-2 rounded-lg hover:bg-[#2d5226]">
-              + Create Event
-            </button>
-          </div>
+          )}
         </div>
 
         {/* Step 1 — type picker (create flow only) */}
@@ -777,12 +810,12 @@ export default function EventsManage() {
           </div>
         )}
 
-        {/* Events list */}
-        {loading ? (
+        {/* Events list — hidden when editing a specific event */}
+        {!editingEvent && (
+        loading ? (
           <div className="text-center py-12 text-gray-400">Loading…</div>
         ) : events.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
-            <div className="text-4xl mb-3">🎪</div>
             <p className="mb-4">No events yet. Create your first event to get started.</p>
           </div>
         ) : (
@@ -801,16 +834,17 @@ export default function EventsManage() {
                     </div>
                     <div className="text-xs text-gray-500 flex gap-3 flex-wrap">
                       {ev.EventStartDate && (
-                        <span>📅 {formatDate(ev.EventStartDate)}{ev.EventEndDate && ev.EventEndDate !== ev.EventStartDate ? ` – ${formatDate(ev.EventEndDate)}` : ''}</span>
+                        <span>{formatDate(ev.EventStartDate)}{ev.EventEndDate && ev.EventEndDate !== ev.EventStartDate ? ` – ${formatDate(ev.EventEndDate)}` : ''}</span>
                       )}
-                      {ev.EventLocationCity && <span>📍 {[ev.EventLocationCity, ev.EventLocationState].filter(Boolean).join(', ')}</span>}
-                      <span>👥 {ev.AttendeeCount || 0} registered</span>
+                      {ev.EventLocationCity && <span>{[ev.EventLocationCity, ev.EventLocationState].filter(Boolean).join(', ')}</span>}
+                      <span>{ev.AttendeeCount || 0} registered</span>
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <Link to={`/events/${ev.EventID}/dashboard`}
-                      className="text-xs text-white bg-[#3D6B34] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#2d5226] no-underline">
-                      🏠 Dashboard
+                      style={{ color: '#fff' }}
+                      className="text-xs bg-[#3D6B34] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#2d5226] no-underline">
+                      Dashboard
                     </Link>
                     <Link to={`/events/${ev.EventID}`} target="_blank"
                       className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 no-underline">
@@ -822,10 +856,22 @@ export default function EventsManage() {
                         Fiber Arts Admin
                       </Link>
                     )}
-                    {['Halter Show', 'Basic Animal or Fleece Show', 'Spin-Off'].includes(ev.EventType) && (
+                    {ev.EventType === 'Halter Show' && (
                       <Link to={`/events/${ev.EventID}/admin/halter?BusinessID=${BusinessID}`}
                         className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
-                        {ev.EventType === 'Halter Show' ? 'Halter Show Admin' : `${ev.EventType} Admin`}
+                        Halter Show Admin
+                      </Link>
+                    )}
+                    {ev.EventType === 'Basic Animal or Fleece Show' && (
+                      <Link to={`/events/${ev.EventID}/admin/fleece?BusinessID=${BusinessID}`}
+                        className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
+                        Fleece Show Admin
+                      </Link>
+                    )}
+                    {ev.EventType === 'Spin-Off' && (
+                      <Link to={`/events/${ev.EventID}/admin/spinoff?BusinessID=${BusinessID}`}
+                        className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
+                        Spin-Off Admin
                       </Link>
                     )}
                     {ev.EventType === 'Auction' && (
@@ -939,6 +985,7 @@ export default function EventsManage() {
               </div>
             ))}
           </div>
+        )
         )}
       </div>
 
@@ -965,6 +1012,6 @@ export default function EventsManage() {
           </div>
         </div>
       )}
-    </AccountLayout>
+    </Wrapper>
   );
 }

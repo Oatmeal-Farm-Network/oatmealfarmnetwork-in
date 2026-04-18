@@ -23,12 +23,29 @@ import ServiceDetail from './ServiceDetail';
 import EventsList from './EventsList';
 import EventDetail from './EventDetail';
 import EventRegister from './EventRegister';
+import EventRegisterWizard from './EventRegisterWizard';
+import EventRegistrationsAdmin from './EventRegistrationsAdmin';
+import EventMealsAdmin from './EventMealsAdmin';
+import EventCartReceipt from './EventCartReceipt';
+import EventExportsHub from './EventExportsHub';
+import EventMailingListAdmin from './EventMailingListAdmin';
+import PromoCodesAdmin from './PromoCodesAdmin';
+import WaitlistAdmin from './WaitlistAdmin';
+import AbandonedCartsAdmin from './AbandonedCartsAdmin';
+import EventPrintHub from './EventPrintHub';
+import EventPrintNametags from './EventPrintNametags';
+import EventPrintBarnCards from './EventPrintBarnCards';
+import EventPrintClassSheets from './EventPrintClassSheets';
 import EventsManage from './EventsManage';
 import EventAdd from './EventAdd';
 import EventAddDetails from './EventAddDetails';
 import EventsMyRegistrations from './EventsMyRegistrations';
 import FiberArtsAdmin from './FiberArtsAdmin';
 import FiberArtsRegister from './FiberArtsRegister';
+import FleeceAdmin from './FleeceAdmin';
+import FleeceRegister from './FleeceRegister';
+import SpinOffAdmin from './SpinOffAdmin';
+import SpinOffRegister from './SpinOffRegister';
 import HalterAdmin from './HalterAdmin';
 import HalterRegister from './HalterRegister';
 import AuctionAdmin from './AuctionAdmin';
@@ -150,6 +167,13 @@ function LegacyAnimalRedirect() {
   return <Navigate to={id ? `/marketplaces/livestock/animal/${id}` : '/marketplaces/livestock'} replace />;
 }
 
+// Legacy alias: /account/events → /events/manage (preserve query string)
+function AccountEventsRedirect() {
+  const [params] = useSearchParams();
+  const qs = params.toString();
+  return <Navigate to={`/events/manage${qs ? `?${qs}` : ''}`} replace />;
+}
+
 // Custom domains (not OFN or localhost) get the full public site renderer for every path.
 const OFN_HOSTS = ['oatmealfarmnetwork.com', 'www.oatmealfarmnetwork.com', 'localhost', '127.0.0.1'];
 const isCustomDomain = !OFN_HOSTS.some(
@@ -235,12 +259,17 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/services/directory" element={<ServicesDirectory />} />
 
           {/* Events routes — specific before generic */}
+          <Route path="/account/events" element={<AccountEventsRedirect />} />
           <Route path="/events/manage" element={<EventsManage />} />
           <Route path="/events/add" element={<EventAdd />} />
           <Route path="/events/add/details" element={<EventAddDetails />} />
           <Route path="/events/my-registrations" element={<EventsMyRegistrations />} />
           <Route path="/events/:eventId/admin/fiber-arts" element={<FiberArtsAdmin />} />
           <Route path="/events/:eventId/register/fiber-arts" element={<FiberArtsRegister />} />
+          <Route path="/events/:eventId/admin/fleece" element={<FleeceAdmin />} />
+          <Route path="/events/:eventId/register/fleece" element={<FleeceRegister />} />
+          <Route path="/events/:eventId/admin/spinoff" element={<SpinOffAdmin />} />
+          <Route path="/events/:eventId/register/spinoff" element={<SpinOffRegister />} />
           <Route path="/events/:eventId/admin/halter" element={<HalterAdmin />} />
           <Route path="/events/:eventId/register/halter" element={<HalterRegister />} />
           <Route path="/events/:eventId/admin/auction" element={<AuctionAdmin />} />
@@ -270,6 +299,19 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/admin/events/features" element={<EventFeaturesAdmin />} />
           <Route path="/events/:eventId/clone" element={<EventClone />} />
           <Route path="/speaker/:accessCode" element={<SpeakerPortal />} />
+          <Route path="/events/:eventId/register/wizard" element={<EventRegisterWizard />} />
+          <Route path="/events/:eventId/admin/registrations" element={<EventRegistrationsAdmin />} />
+          <Route path="/events/:eventId/admin/meals" element={<EventMealsAdmin />} />
+          <Route path="/events/:eventId/admin/exports" element={<EventExportsHub />} />
+          <Route path="/events/:eventId/admin/mailing-list" element={<EventMailingListAdmin />} />
+          <Route path="/events/:eventId/admin/promo-codes" element={<PromoCodesAdmin />} />
+          <Route path="/events/:eventId/admin/waitlist" element={<WaitlistAdmin />} />
+          <Route path="/events/:eventId/admin/abandoned-carts" element={<AbandonedCartsAdmin />} />
+          <Route path="/events/:eventId/admin/print" element={<EventPrintHub />} />
+          <Route path="/events/:eventId/admin/print/nametags" element={<EventPrintNametags />} />
+          <Route path="/events/:eventId/admin/print/barn-cards" element={<EventPrintBarnCards />} />
+          <Route path="/events/:eventId/admin/print/class-sheets" element={<EventPrintClassSheets />} />
+          <Route path="/events/cart/:cartId/receipt" element={<EventCartReceipt />} />
           <Route path="/events/:eventId/register" element={<EventRegister />} />
           <Route path="/events/:eventId" element={<EventDetail />} />
           <Route path="/events" element={<EventsList />} />

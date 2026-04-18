@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import AccountLayout from './AccountLayout';
+import EventAdminLayout from './EventAdminLayout';
 import RichTextEditor from './RichTextEditor';
 
 const API = import.meta.env.VITE_API_URL || '';
@@ -699,7 +699,7 @@ export default function CompetitionAdmin() {
   const setTab = (t) => setSp({ tab: t });
 
   return (
-    <AccountLayout>
+    <EventAdminLayout eventId={eventId}>
       <div className="max-w-6xl mx-auto p-4 md:p-6">
         <div className="mb-4">
           <Link to="/account/events" className="text-xs text-gray-500 hover:text-[#3D6B34]">← Events</Link>
@@ -729,6 +729,6 @@ export default function CompetitionAdmin() {
         {tab === 'entries'     && <EntriesTab eventId={eventId} />}
         {tab === 'leaderboard' && <LeaderboardTab eventId={eventId} />}
       </div>
-    </AccountLayout>
+    </EventAdminLayout>
   );
 }

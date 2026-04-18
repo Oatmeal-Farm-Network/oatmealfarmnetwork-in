@@ -161,12 +161,66 @@ function ContactTab({ ranch }) {
   );
 }
 
+function EventsTab({ events }) {
+  const fmtDate = (d) => {
+    if (!d) return '';
+    try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+    catch { return String(d); }
+  };
+  const daysUntil = (d) => {
+    if (!d) return null;
+    const t = new Date(d);
+    if (isNaN(t)) return null;
+    return Math.ceil((t - new Date()) / (1000 * 60 * 60 * 24));
+  };
+
+  if (!events || events.length === 0) return (
+    <div style={{ padding: '20px', color: '#888' }}>No upcoming events.</div>
+  );
+
+  return (
+    <div>
+      <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '12px' }}>
+        {events.length} upcoming event{events.length !== 1 ? 's' : ''}
+      </p>
+      {events.map(e => {
+        const days = daysUntil(e.EventStartDate);
+        const loc = [e.EventLocationCity, e.EventLocationState].filter(Boolean).join(', ');
+        return (
+          <div key={e.EventID} style={{ border: '1px solid #e0e0e0', borderRadius: '6px', padding: '14px', marginBottom: '12px', backgroundColor: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <Link to={`/events/${e.EventID}`} style={{ fontWeight: 'bold', color: '#333', textDecoration: 'none', fontSize: '1rem', display: 'block', marginBottom: '4px' }}>
+                {e.EventName}
+              </Link>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>
+                {fmtDate(e.EventStartDate)}
+                {e.EventEndDate && e.EventEndDate !== e.EventStartDate && ` – ${fmtDate(e.EventEndDate)}`}
+                {loc && ` · ${loc}`}
+              </p>
+              {days != null && days >= 0 && days <= 30 && (
+                <span style={{ display: 'inline-block', marginTop: '6px', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '999px', backgroundColor: '#eef3e7', color: '#3D6B34', fontWeight: 600 }}>
+                  in {days} day{days !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+            <Link to={`/events/${e.EventID}`}
+              style={{ backgroundColor: '#507033', color: '#fff', padding: '8px 16px', borderRadius: '4px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+              Register →
+            </Link>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function RanchProfile() {
   const { businessId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const [ranch, setRanch] = useState(null);
   const [loading, setLoading] = useState(true);
   const [animalCounts, setAnimalCounts] = useState({ for_sale: 0, studs: 0 });
+  const [events, setEvents] = useState([]);
 
   const activeTab = searchParams.get('tab') || 'home';
   const setTab = (tab) => setSearchParams({ tab });
@@ -185,6 +239,14 @@ export default function RanchProfile() {
     fetch(`${API_URL}/api/ranches/profile/${businessId}/animals?per_page=1&studs_only=true`)
       .then(r => r.ok ? r.json() : null)
       .then(d => d && setAnimalCounts(prev => ({ ...prev, studs: d.total })))
+      .catch(() => {});
+    fetch(`${API_URL}/api/my-events?business_id=${businessId}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(rows => {
+        const upcoming = (Array.isArray(rows) ? rows : [])
+          .filter(e => e.IsPublished && (!e.EventEndDate || new Date(e.EventEndDate) >= new Date()));
+        setEvents(upcoming);
+      })
       .catch(() => {});
   }, [businessId]);
 
@@ -212,6 +274,7 @@ export default function RanchProfile() {
     { key: 'home', label: 'Home', always: true },
     { key: 'animals', label: `Animals For Sale (${animalCounts.for_sale})`, show: animalCounts.for_sale > 0 },
     { key: 'studs', label: `Stud Services (${animalCounts.studs})`, show: animalCounts.studs > 0 },
+    { key: 'events', label: `Upcoming Events (${events.length})`, show: events.length > 0 },
     { key: 'contact', label: 'About / Contact', always: true },
   ].filter(t => t.always || t.show);
 
@@ -338,6 +401,7 @@ export default function RanchProfile() {
 
         {activeTab === 'animals' && <AnimalsTab businessId={businessId} isStuds={false} />}
         {activeTab === 'studs' && <AnimalsTab businessId={businessId} isStuds={true} />}
+        {activeTab === 'events' && <EventsTab events={events} />}
         {activeTab === 'contact' && <ContactTab ranch={ranch} />}
       </div>
 

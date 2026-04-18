@@ -28,11 +28,35 @@ function fmtDate(iso) {
   return dt.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+const CART_STATUS_COLORS = {
+  draft:              'text-gray-500',
+  pending_payment:    'text-amber-700',
+  pending_capture:    'text-blue-700',
+  paid:               'text-green-700',
+  refunded:           'text-red-600',
+  partially_refunded: 'text-orange-700',
+  cancelled:          'text-gray-500',
+};
+
+function authHeaders() {
+  const t = localStorage.getItem('access_token');
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
+
 export default function MyRegistrations() {
   const peopleId = localStorage.getItem('people_id');
   const [rows, setRows] = useState([]);
+  const [carts, setCarts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('upcoming');
+
+  const loadCarts = () => {
+    if (!peopleId) return;
+    fetch(`${API}/api/people/${peopleId}/event-carts`, { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setCarts(Array.isArray(d) ? d : []))
+      .catch(() => setCarts([]));
+  };
 
   useEffect(() => {
     if (!peopleId) { setLoading(false); return; }
@@ -41,7 +65,27 @@ export default function MyRegistrations() {
       .then(d => setRows(Array.isArray(d) ? d : []))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
+    loadCarts();
   }, [peopleId]);
+
+  const requestCartRefund = async (cart) => {
+    if (!confirm(`Request a refund for "${cart.EventName}"? (${cart.Status === 'pending_capture' ? 'pre-auth will be cancelled' : 'full refund'})`)) return;
+    try {
+      const res = await fetch(`${API}/api/events/cart/${cart.CartID}/refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        alert(`Refund failed: ${t}`);
+        return;
+      }
+      loadCarts();
+    } catch (e) {
+      alert(`Refund failed: ${e.message || e}`);
+    }
+  };
 
   const cancel = async (r, refund = false) => {
     const msg = refund
@@ -91,6 +135,49 @@ export default function MyRegistrations() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-semibold text-[#3D6B34] mb-1">My Registrations</h1>
         <p className="text-sm text-gray-500 mb-6">Everything you've signed up for across all events.</p>
+
+        {carts.length > 0 && (
+          <div className="mb-6">
+            <div className="text-xs uppercase tracking-wide text-gray-500 mb-2 font-medium">Event Carts & Payments</div>
+            <div className="bg-white rounded-xl shadow divide-y divide-gray-100">
+              {carts.map(c => {
+                const canRefund = c.Status === 'paid' || c.Status === 'pending_capture' || c.Status === 'partially_refunded';
+                const hasReceipt = ['paid', 'pending_capture', 'refunded', 'partially_refunded'].includes(c.Status);
+                return (
+                  <div key={c.CartID} className="p-4 flex items-start justify-between gap-3">
+                    <Link to={`/events/${c.EventID}`} className="min-w-0 flex-1 block no-underline">
+                      <div className="font-medium text-gray-800 truncate">{c.EventName || `Event #${c.EventID}`}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {fmtDate(c.EventStartDate)} · {c.ItemCount} item{c.ItemCount === 1 ? '' : 's'}
+                      </div>
+                    </Link>
+                    <div className="text-right shrink-0">
+                      <div className={`text-xs font-medium ${CART_STATUS_COLORS[c.Status] || 'text-gray-600'}`}>
+                        {c.Status}
+                      </div>
+                      <div className="text-sm text-gray-800 mt-0.5">${Number(c.Total || 0).toFixed(2)}</div>
+                      {Number(c.AmountRefunded || 0) > 0 && (
+                        <div className="text-xs text-red-600">-${Number(c.AmountRefunded).toFixed(2)} refunded</div>
+                      )}
+                      <div className="flex gap-2 justify-end mt-1">
+                        {hasReceipt && (
+                          <Link to={`/events/cart/${c.CartID}/receipt`} className="text-xs text-[#3D6B34] hover:underline">
+                            View receipt
+                          </Link>
+                        )}
+                        {canRefund && (
+                          <button onClick={() => requestCartRefund(c)} className="text-xs text-amber-600 hover:underline">
+                            Request refund
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-2 mb-4">
           {[

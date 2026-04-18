@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import EventAdminLayout from './EventAdminLayout';
 
 const API = import.meta.env.VITE_API_URL || '';
 const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-[#819360]";
@@ -10,7 +11,14 @@ export default function EventCheckIn() {
   const [q, setQ] = useState('');
   const [rows, setRows] = useState([]);
   const [toast, setToast] = useState('');
+  const [kiosk, setKiosk] = useState(() =>
+    localStorage.getItem('event_checkin_kiosk') === 'true'
+  );
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    localStorage.setItem('event_checkin_kiosk', String(kiosk));
+  }, [kiosk]);
 
   useEffect(() => {
     fetch(`${API}/api/events/${eventId}`).then(r => r.json()).then(setEvent).catch(() => {});
@@ -39,10 +47,18 @@ export default function EventCheckIn() {
     setTimeout(() => setToast(''), 1500);
   };
 
-  return (
-    <div className="min-h-screen bg-[#FAF7EE] py-6 px-4">
+  const body = (
+    <div className={kiosk ? 'min-h-screen bg-[#FAF7EE] py-6 px-4' : 'py-6 px-4'}>
       <div className="max-w-2xl mx-auto">
-        <Link to={`/events/${eventId}`} className="text-xs text-gray-500 hover:text-[#3D6B34]">← Back to event</Link>
+        <div className="flex items-center justify-between mb-1">
+          <Link to={`/events/${eventId}`} className="text-xs text-gray-500 hover:text-[#3D6B34]">← Back to event</Link>
+          <button
+            onClick={() => setKiosk(k => !k)}
+            className="text-xs px-3 py-1 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50"
+            title={kiosk ? 'Show header, footer, and sidebar' : 'Hide chrome for kiosk / scanning mode'}>
+            {kiosk ? 'Exit kiosk mode' : 'Kiosk mode'}
+          </button>
+        </div>
         <h1 className="text-2xl font-semibold text-[#3D6B34] mt-1">Check-In</h1>
         <div className="text-sm text-gray-500 mb-4">{event?.EventName}</div>
 
@@ -104,4 +120,7 @@ export default function EventCheckIn() {
       </div>
     </div>
   );
+
+  if (kiosk) return body;
+  return <EventAdminLayout eventId={eventId}>{body}</EventAdminLayout>;
 }

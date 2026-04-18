@@ -7,6 +7,57 @@ import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+// Kept in sync with FALLBACK_IMAGES in LivestockSpecies.jsx so the /about
+// hero matches the /livestock/:slug hero when the user lands here directly
+// (e.g. emus, which skips the breed-list page because it only has one breed).
+const FALLBACK_IMAGES = {
+  'alpacas':      '/images/AlpacasHeader.webp',
+  'bison':        '/images/BisonHeader.png',
+  'buffalo':      '/images/BuffaloHeader.webp',
+  'camels':       '/images/camelHeader.webp',
+  'cattle':       '/images/CattleHeader.webp',
+  'chickens':     '/images/ChickenHeader.webp',
+  'crocodiles':   '/images/CrocodileHeader.webp',
+  'deer':         '/images/DeerHeader.webp',
+  'dogs':         '/images/WorkingDogsHeader.webp',
+  'donkeys':      '/images/DonkeysHeader.webp',
+  'ducks':        '/images/DucksHeader.webp',
+  'emus':         '/images/Emus.webp',
+  'geese':        '/images/Geese.webp',
+  'goats':        '/images/Goats.webp',
+  'guinea-fowl':  '/images/GuineaFowlHeader.webp',
+  'honey-bees':   '/images/BeesHeader.webp',
+  'horses':       '/images/HorsesHeader.webp',
+  'llamas':       '/images/Llama2.webp',
+  'musk-ox':      '/images/muskox.webp',
+  'ostriches':    '/images/OstrichetHeader.webp',
+  'pheasants':    '/images/PheasantHeader.webp',
+  'pigs':         '/images/PigHeader.webp',
+  'pigeons':      '/images/PigeonHeader.webp',
+  'quails':       '/images/QualsHeader.jpg',
+  'rabbits':      '/images/Rabitts.webp',
+  'sheep':        '/images/Sheepbreeds.webp',
+  'snails':       '/images/Snail.webp',
+  'turkeys':      '/images/TurkeyHeader.webp',
+  'yaks':         '/images/YakHeader.webp',
+};
+
+const getImageSrc = (image) => {
+  if (!image) return null;
+  if (image.startsWith('http')) return image;
+  const filename = image.replace(/^.*[\\/]/, '');
+  return `/images/${filename}`;
+};
+
+const resolveHeroSrc = (info, species) => {
+  if (FALLBACK_IMAGES[species]) return FALLBACK_IMAGES[species];
+  if (info?.main_image) return getImageSrc(info.main_image);
+  return '/images/HomepageLivestockDB.webp';
+};
+
+// Species with a single breed — skip the breed-list page and its cross-links.
+const SINGLE_BREED_SLUGS = new Set(['emus', 'ostriches']);
+
 export default function LivestockAbout() {
   const { species } = useParams();
   const [info, setInfo] = useState(null);
@@ -27,6 +78,16 @@ export default function LivestockAbout() {
   }, [species]);
 
   const label = species ? species.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '';
+  const pluralTerm = info?.plural || label;
+  const heroSrc    = resolveHeroSrc(info, species);
+  const isSingleBreed = SINGLE_BREED_SLUGS.has(species);
+
+  const heroSnippet = info?.about_html
+    ? (() => {
+        const plain = info.about_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        return plain.length > 180 ? plain.substring(0, 180).replace(/\s\S+$/, '') + '…' : plain;
+      })()
+    : null;
 
   return (
     <div className="min-h-screen font-sans">
@@ -38,14 +99,51 @@ export default function LivestockAbout() {
       />
      <Header />
 
-      <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+      <div className="mx-auto px-4 pt-6" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
           { label: 'Knowledgebases', to: '/knowledgebases' },
           { label: 'Livestock Database', to: '/livestock' },
-          { label, to: `/livestock/${species}` },
-          { label: 'About' },
+          ...(isSingleBreed
+            ? [{ label: pluralTerm }]
+            : [{ label: pluralTerm, to: `/livestock/${species}` }, { label: 'About' }]),
         ]} />
+        <div className="relative w-full overflow-hidden rounded-xl">
+          <img
+            src={heroSrc}
+            alt={pluralTerm}
+            className="w-full object-cover"
+            style={{ height: '250px', display: 'block' }}
+            loading="eager"
+            onError={e => { e.target.src = FALLBACK_IMAGES[species] || '/images/HomepageLivestockDB.webp'; }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }}
+          />
+          <div className="absolute inset-0 flex flex-col justify-center px-8 py-4" style={{ maxWidth: '780px' }}>
+            <h1
+              style={{
+                color: '#000000',
+                fontFamily: "'Lora','Times New Roman',serif",
+                fontSize: '1.6rem',
+                fontWeight: 'bold',
+                margin: '0 0 8px',
+                lineHeight: 1.2,
+              }}
+            >
+              About {pluralTerm}
+            </h1>
+            {heroSnippet && (
+              <p style={{ color: '#111111', fontSize: '0.82rem', margin: 0, lineHeight: 1.5 }}>
+                {heroSnippet}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
         {loading ? (
           <div className="text-gray-400 py-12 text-center">Loading...</div>
         ) : !info ? (
@@ -53,23 +151,25 @@ export default function LivestockAbout() {
         ) : (
           <div className="bg-white rounded-lg shadow p-8">
 
-            {/* Page header */}
-            <div className="text-center mb-6 pb-4 border-b-2 border-gray-200">
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-3">
-                <img
-                  src={`/images/${label.replace(/ /g,'')}.webp`}
-                  alt={label}
-                  loading="lazy"  
-                  style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
-                  onError={e => { e.target.style.display = 'none'; }}
-                />
-                About {label}
-              </h1>
-            </div>
-
-            <Link to={`/livestock/${species}`} className="text-sm font-bold hover:underline block mb-4" style={{ color: '#3D6B34' }}>
-              About {label} Breeds
-            </Link>
+            {!isSingleBreed && (
+              <>
+                <div className="text-center mb-6 pb-4 border-b-2 border-gray-200">
+                  <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-3">
+                    <img
+                      src={`/images/${label.replace(/ /g,'')}.webp`}
+                      alt={label}
+                      loading="lazy"
+                      style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
+                      onError={e => { e.target.style.display = 'none'; }}
+                    />
+                    About {label}
+                  </h1>
+                </div>
+                <Link to={`/livestock/${species}`} className="text-sm font-bold hover:underline block mb-4" style={{ color: '#3D6B34' }}>
+                  About {label} Breeds
+                </Link>
+              </>
+            )}
 
             {/* Main content with floated image */}
             <div className="overflow-hidden mb-6">

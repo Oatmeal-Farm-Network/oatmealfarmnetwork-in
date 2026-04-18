@@ -5,6 +5,7 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import MoonPhase from './MoonPhase';
 import WeatherCompact from './WeatherCompact';
+import DashboardEventsCard from './DashboardEventsCard';
 import { useAccount } from './AccountContext';
 
 export default function Dashboard() {
@@ -156,6 +157,8 @@ export default function Dashboard() {
 
           {/* LEFT (2/3) — Accounts + Fields */}
           <div className="lg:col-span-2 flex flex-col gap-4">
+
+            <DashboardEventsCard peopleId={user.peopleId} />
 
             <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
               <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-green-300">

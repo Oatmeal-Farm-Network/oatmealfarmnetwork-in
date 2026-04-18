@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import AccountLayout from './AccountLayout';
+import EventAdminLayout from './EventAdminLayout';
 
 const API = import.meta.env.VITE_API_URL || '';
 const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-[#819360]";
@@ -52,7 +52,7 @@ export default function EventClone() {
   };
 
   return (
-    <AccountLayout>
+    <EventAdminLayout eventId={eventId}>
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
@@ -118,6 +118,6 @@ export default function EventClone() {
           </section>
         )}
       </div>
-    </AccountLayout>
+    </EventAdminLayout>
   );
 }

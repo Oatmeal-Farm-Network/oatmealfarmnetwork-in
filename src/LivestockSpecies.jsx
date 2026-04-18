@@ -10,7 +10,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 // Fallback card images (same as LivestockDB index) keyed by slug
 const FALLBACK_IMAGES = {
   'alpacas':      '/images/AlpacasHeader.webp',
-  'bison':        '/images/BisonHeader.webp',
+  'bison':        '/images/BisonHeader.png',
   'buffalo':      '/images/BuffaloHeader.webp',
   'camels':       '/images/camelHeader.webp',
   'cattle':       '/images/CattleHeader.webp',
@@ -23,9 +23,9 @@ const FALLBACK_IMAGES = {
   'emus':         '/images/Emus.webp',
   'geese':        '/images/Geese.webp',
   'goats':        '/images/Goats.webp',
-  'guinea-fowl':  '/images/Guineafowl.webp',
-  'honey-bees':   '/images/HoneyBees.webp',
-  'horses':       '/images/cowboy2.webp',
+  'guinea-fowl':  '/images/GuineaFowlHeader.webp',
+  'honey-bees':   '/images/BeesHeader.webp',
+  'horses':       '/images/HorsesHeader.webp',
   'llamas':       '/images/Llama2.webp',
   'musk-ox':      '/images/muskox.webp',
   'ostriches':    '/images/OstrichetHeader.webp',

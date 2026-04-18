@@ -204,6 +204,11 @@ function AnimalCard({ animal, type }) {
   const detailUrl = `/livestockmarketplace/Animals/Details.asp?ID=${animal.animal_id}`;
   const priceLabel = type === 'studs' ? 'Stud Fee' : 'Price';
   const priceVal = type === 'studs' ? animal.stud_fee : animal.price;
+  const ev = animal.upcoming_event;
+  const evDate = ev?.EventStartDate ? new Date(ev.EventStartDate) : null;
+  const evDateStr = evDate && !isNaN(evDate)
+    ? evDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : '';
 
   return (
     <div className="card mb-3" style={{ border: 'none', boxShadow: '0 1px 4px rgba(0,0,0,0.12)' }}>
@@ -244,10 +249,18 @@ function AnimalCard({ animal, type }) {
           <p style={{ margin: '0 0 10px', fontSize: '0.9rem' }}>
             <strong>Seller:</strong> {animal.seller || 'N/A'}
           </p>
-          <a href={detailUrl}
-            style={{ backgroundColor: '#6c757d', color: '#fff', padding: '5px 14px', borderRadius: '4px', textDecoration: 'none', fontSize: '0.85rem' }}>
-            View Details
-          </a>
+          {ev && (
+            <Link to={`/events/${ev.EventID}`}
+              style={{ display: 'inline-block', marginBottom: '8px', backgroundColor: '#eef3e7', color: '#3D6B34', padding: '4px 10px', borderRadius: '999px', textDecoration: 'none', fontSize: '0.78rem', fontWeight: 600 }}>
+              🎪 See in person at {ev.EventName}{evDateStr ? ` · ${evDateStr}` : ''}
+            </Link>
+          )}
+          <div>
+            <a href={detailUrl}
+              style={{ backgroundColor: '#6c757d', color: '#fff', padding: '5px 14px', borderRadius: '4px', textDecoration: 'none', fontSize: '0.85rem' }}>
+              View Details
+            </a>
+          </div>
         </div>
       </div>
     </div>

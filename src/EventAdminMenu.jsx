@@ -60,6 +60,16 @@ const MODULE_TABS = {
     ['config',        'Configuration'],
     ['registrations', 'Registrations'],
   ],
+  fleece_module: [
+    ['config',        'Configuration'],
+    ['entries',       'Fleece Entries'],
+    ['judging',       'Judging & Results'],
+  ],
+  spinoff_module: [
+    ['config',        'Configuration'],
+    ['entries',       'Spin-Off Entries'],
+    ['judging',       'Judging & Results'],
+  ],
 };
 
 export const EVENT_MENU_WIDTH_EXPANDED = 208; // w-52
@@ -71,14 +81,15 @@ function Row({ to, href, icon, label, expanded, active }) {
       ? 'bg-[#3D6B34] text-white font-semibold'
       : 'text-gray-700 hover:bg-white/50'
   }`;
+  const style = active ? { color: '#fff' } : undefined;
   const content = (
     <>
       <span className="w-5 text-center shrink-0 text-base leading-none">{icon}</span>
       {expanded && <span className="text-sm whitespace-nowrap truncate">{label}</span>}
     </>
   );
-  if (href) return <a href={href} className={cls} title={!expanded ? label : undefined}>{content}</a>;
-  return <Link to={to} className={cls} title={!expanded ? label : undefined}>{content}</Link>;
+  if (href) return <a href={href} className={cls} style={style} title={!expanded ? label : undefined}>{content}</a>;
+  return <Link to={to} className={cls} style={style} title={!expanded ? label : undefined}>{content}</Link>;
 }
 
 function SubRow({ to, label, expanded, active }) {
@@ -228,15 +239,51 @@ export default function EventAdminMenu({
           </div>
         )}
 
+        <div className="mt-2">
+          {menuExpanded && (
+            <div className="text-[10px] uppercase tracking-wide text-gray-400 px-3 pt-2 pb-1">Money</div>
+          )}
+          <Row to={`/events/${eventId}/admin/registrations`} icon="💳" label="Registrations & Carts"
+            expanded={menuExpanded}
+            active={loc.pathname === `/events/${eventId}/admin/registrations`} />
+          <Row to={`/events/${eventId}/admin/meals`} icon="🍽️" label="Meal Tickets"
+            expanded={menuExpanded}
+            active={loc.pathname === `/events/${eventId}/admin/meals`} />
+          <Row to={`/events/${eventId}/admin/promo-codes`} icon="🏷️" label="Promo Codes"
+            expanded={menuExpanded}
+            active={loc.pathname === `/events/${eventId}/admin/promo-codes`} />
+          <Row to={`/events/${eventId}/admin/waitlist`} icon="⏳" label="Waitlist"
+            expanded={menuExpanded}
+            active={loc.pathname === `/events/${eventId}/admin/waitlist`} />
+          <Row to={`/events/${eventId}/admin/abandoned-carts`} icon="🛒" label="Abandoned Carts"
+            expanded={menuExpanded}
+            active={loc.pathname === `/events/${eventId}/admin/abandoned-carts`} />
+        </div>
+
+        <div className="mt-2">
+          {menuExpanded && (
+            <div className="text-[10px] uppercase tracking-wide text-gray-400 px-3 pt-2 pb-1">Communications</div>
+          )}
+          <Row to={`/events/${eventId}/admin/mailing-list`} icon="📧" label="Mailing List"
+            expanded={menuExpanded}
+            active={loc.pathname === `/events/${eventId}/admin/mailing-list`} />
+          <Row to={`/events/${eventId}/admin/exports`} icon="⬇️" label="Exports & Schedules"
+            expanded={menuExpanded}
+            active={loc.pathname === `/events/${eventId}/admin/exports`} />
+          <Row to={`/events/${eventId}/admin/print`} icon="🖨️" label="Printouts"
+            expanded={menuExpanded}
+            active={loc.pathname.startsWith(`/events/${eventId}/admin/print`)} />
+        </div>
+
         <div className="mt-2 pb-4">
           {menuExpanded && (
             <div className="text-[10px] uppercase tracking-wide text-gray-400 px-3 pt-2 pb-1">Event</div>
           )}
-          <Row to={`/events/${eventId}`} icon="👁️" label="Public page"
+          <Row to={`/events/${eventId}`} icon="👁️" label="Public Page"
             expanded={menuExpanded} />
-          <Row to={`/account/events?edit=${eventId}`} icon="✏️" label="Edit details"
+          <Row to={appendBiz(`/events/manage?edit=${eventId}`, businessId)} icon="✏️" label="Edit details"
             expanded={menuExpanded} />
-          <Row to="/account/events" icon="↩" label="All my events"
+          <Row to={appendBiz('/events/manage', businessId)} icon="↩" label="All my events"
             expanded={menuExpanded} />
         </div>
 

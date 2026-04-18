@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import RichTextEditor from './RichTextEditor';
+import EventAdminLayout from './EventAdminLayout';
 
 const API = import.meta.env.VITE_API_URL || '';
 const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-[#819360]";
@@ -10,9 +11,17 @@ const btnGhost = "px-4 py-1.5 text-sm border border-gray-300 rounded-lg";
 
 const PLACEMENTS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th',
   'Champion', 'Reserve Champion', 'Honorable Mention', 'Disqualified'];
-const BREEDS = ['Huacaya', 'Suri', 'Paco-Vicuna', 'Llama', 'Sheep', 'Goat', 'Other'];
+const BREEDS = ['Huacaya', 'Suri', 'Paco-Vicuna', 'Llama', 'Sheep', 'Goat', 'Horse', 'Other'];
 const GENDERS = ['Female', 'Male', 'Gelding', 'Unknown'];
-const CLASS_TYPES = ['Halter', 'Production', 'Get of Sire', 'Produce of Dam', 'Color Championship'];
+const CLASS_TYPES = [
+  'Halter', 'Production', 'Get of Sire', 'Produce of Dam', 'Color Championship',
+  // Horse disciplines
+  'Western Pleasure', 'Reining', 'Cutting', 'Working Cow Horse', 'Trail',
+  'Dressage', 'Show Jumping', 'Hunters',
+  'Barrel Racing', 'Pole Bending', 'Keyhole Race',
+  'Versatility', 'Equitation', 'Horsemanship',
+  'Showmanship', 'In-Hand',
+];
 
 function ConfigTab({ eventId }) {
   const [cfg, setCfg] = useState(null);
@@ -88,7 +97,6 @@ function ClassesTab({ eventId }) {
   const [classes, setClasses] = useState([]);
   const [editing, setEditing] = useState(null);
   const [adding, setAdding] = useState(false);
-  const [seedBreed, setSeedBreed] = useState('Huacaya');
   const [seeding, setSeeding] = useState(false);
   const [err, setErr] = useState('');
   const load = () => fetch(`${API}/api/events/${eventId}/halter/classes`)
@@ -114,13 +122,24 @@ function ClassesTab({ eventId }) {
     load();
   };
 
+  const SEED_OPTIONS = [
+    { breed: 'Huacaya',      template: 'alpaca-standard', label: 'Huacaya alpaca (136)',       desc: '17 colors × 4 ages × 2 genders' },
+    { breed: 'Suri',          template: 'alpaca-standard', label: 'Suri alpaca (136)',          desc: '17 colors × 4 ages × 2 genders' },
+    { breed: 'Paco-Vicuna',   template: 'alpaca-standard', label: 'Paco-Vicuna (136)',          desc: '17 colors × 4 ages × 2 genders' },
+    { breed: 'Horse',         template: 'horse-standard',  label: 'Horse (25)',                 desc: '5 ages × 3 genders + 10 disciplines' },
+    { breed: 'Sheep',         template: 'sheep-standard',  label: 'Sheep (6)',                  desc: 'Ram & ewe by age' },
+    { breed: 'Goat',          template: 'goat-standard',   label: 'Goat (7)',                   desc: 'Buck, doe & wether by age' },
+  ];
+  const [seedChoice, setSeedChoice] = useState(SEED_OPTIONS[0].breed);
+  const chosen = SEED_OPTIONS.find(o => o.breed === seedChoice) || SEED_OPTIONS[0];
+
   const seed = async () => {
-    if (!confirm(`Seed standard ${seedBreed} halter classes (17 colors × 4 ages × 2 genders = 136 classes)?`)) return;
+    if (!confirm(`Seed standard ${chosen.label}? (${chosen.desc})`)) return;
     setSeeding(true); setErr('');
     try {
       const r = await fetch(`${API}/api/events/${eventId}/halter/classes/bulk-seed`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Breed: seedBreed, Template: 'alpaca-standard' }),
+        body: JSON.stringify({ Breed: chosen.breed, Template: chosen.template }),
       });
       if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.detail || 'seed failed'); }
       load();
@@ -139,11 +158,12 @@ function ClassesTab({ eventId }) {
       {err && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{err}</div>}
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex flex-wrap items-center gap-2">
-        <span className="text-sm text-blue-800 mr-2">Quick seed standard alpaca classes:</span>
-        <select value={seedBreed} onChange={(e) => setSeedBreed(e.target.value)} className={inp + " max-w-[160px]"}>
-          {['Huacaya', 'Suri', 'Paco-Vicuna'].map(b => <option key={b} value={b}>{b}</option>)}
+        <span className="text-sm text-blue-800 mr-2">Quick seed standard classes:</span>
+        <select value={seedChoice} onChange={(e) => setSeedChoice(e.target.value)} className={inp + " max-w-[220px]"}>
+          {SEED_OPTIONS.map(o => <option key={o.breed} value={o.breed}>{o.label}</option>)}
         </select>
-        <button onClick={seed} disabled={seeding} className={btn}>{seeding ? 'Seeding…' : `Seed ${seedBreed}`}</button>
+        <button onClick={seed} disabled={seeding} className={btn}>{seeding ? 'Seeding…' : `Seed`}</button>
+        <span className="text-[11px] text-gray-500 ml-1">{chosen.desc}</span>
       </div>
 
       <div className="flex justify-between items-center">
@@ -425,29 +445,31 @@ export default function HalterAdmin() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Halter Show Admin</h1>
-          <p className="text-sm text-gray-500 mt-1">{event?.EventName || 'Event'}</p>
+    <EventAdminLayout eventId={eventId}>
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Halter Show Admin</h1>
+            <p className="text-sm text-gray-500 mt-1">{event?.EventName || 'Event'}</p>
+          </div>
+          <Link to={`/events/manage${BusinessID ? `?BusinessID=${BusinessID}` : ''}`}
+            className="text-sm text-gray-500 hover:text-gray-700">← Back</Link>
         </div>
-        <Link to={`/events/manage${BusinessID ? `?BusinessID=${BusinessID}` : ''}`}
-          className="text-sm text-gray-500 hover:text-gray-700">← Back</Link>
-      </div>
 
-      <div className="flex gap-1 border-b border-gray-200 mb-5">
-        {tabs.map(([k, label]) => (
-          <button key={k} onClick={() => setTab(k)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === k ? 'border-[#3D6B34] text-[#3D6B34]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-            {label}
-          </button>
-        ))}
-      </div>
+        <div className="flex gap-1 border-b border-gray-200 mb-5">
+          {tabs.map(([k, label]) => (
+            <button key={k} onClick={() => setTab(k)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === k ? 'border-[#3D6B34] text-[#3D6B34]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
 
-      {tab === 'config' && <ConfigTab eventId={eventId} />}
-      {tab === 'classes' && <ClassesTab eventId={eventId} />}
-      {tab === 'registrations' && <RegistrationsTab eventId={eventId} />}
-      {tab === 'judging' && <JudgingTab eventId={eventId} />}
-    </div>
+        {tab === 'config' && <ConfigTab eventId={eventId} />}
+        {tab === 'classes' && <ClassesTab eventId={eventId} />}
+        {tab === 'registrations' && <RegistrationsTab eventId={eventId} />}
+        {tab === 'judging' && <JudgingTab eventId={eventId} />}
+      </div>
+    </EventAdminLayout>
   );
 }

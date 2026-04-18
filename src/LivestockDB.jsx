@@ -132,13 +132,16 @@ export default function LivestockDB() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {SPECIES.map((s, index) => {
             const count = counts[s.slug] || 0;
+            // Single-breed species — skip the breed-list page and go straight to About
+            const SINGLE_BREED_SLUGS = new Set(['emus', 'ostriches']);
+            const target = SINGLE_BREED_SLUGS.has(s.slug) ? `/livestock/${s.slug}/about` : `/livestock/${s.slug}`;
             return (
               <div
                 key={s.slug}
                 className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200"
               >
                 {/* Left: square image */}
-                <Link to={`/livestock/${s.slug}`} className="shrink-0 overflow-hidden" style={{ width: '155px', height: '155px' }}>
+                <Link to={target} className="shrink-0 overflow-hidden" style={{ width: '155px', height: '155px' }}>
                   <img
                     src={s.img}
                     alt={s.label}
@@ -155,7 +158,7 @@ export default function LivestockDB() {
                 <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
                   <div>
                     <Link
-                      to={`/livestock/${s.slug}`}
+                      to={target}
                       className="font-bold text-sm hover:underline"
                       style={{ color: '#3D6B34' }}
                     >
@@ -171,7 +174,7 @@ export default function LivestockDB() {
                   </div>
                   <div className="mt-3">
                     <Link
-                      to={`/livestock/${s.slug}`}
+                      to={target}
                       className="text-xs font-bold hover:underline"
                       style={{ color: '#3D6B34' }}
                     >

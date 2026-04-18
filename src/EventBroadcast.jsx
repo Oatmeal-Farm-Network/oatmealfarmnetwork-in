@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import EventAdminLayout from './EventAdminLayout';
 
 const API = import.meta.env.VITE_API_URL || '';
 const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-[#819360]";
@@ -39,8 +40,8 @@ export default function EventBroadcast() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7EE] py-8 px-4">
-      <div className="max-w-3xl mx-auto">
+    <EventAdminLayout eventId={eventId}>
+      <div className="max-w-3xl mx-auto py-8 px-4">
         <Link to={`/events/${eventId}/manage`} className="text-xs text-gray-500 hover:text-[#3D6B34]">← Back to manage</Link>
         <h1 className="text-3xl font-semibold text-[#3D6B34] mt-2 mb-1">Broadcast</h1>
         <div className="text-sm text-gray-500 mb-6">{event?.EventName}</div>
@@ -94,6 +95,6 @@ export default function EventBroadcast() {
           )}
         </div>
       </div>
-    </div>
+    </EventAdminLayout>
   );
 }

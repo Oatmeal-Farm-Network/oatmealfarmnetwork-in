@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import AccountLayout from './AccountLayout';
+import EventAdminLayout from './EventAdminLayout';
 import RichTextEditor from './RichTextEditor';
 
 const API = import.meta.env.VITE_API_URL || '';
@@ -159,15 +159,28 @@ function CategoriesTab({ eventId }) {
     setAdding(true);
   };
 
+  const seedDefaults = async () => {
+    if (!confirm('Seed 9 standard cottage-industry categories (Handspun Yarn, Knitted Garment, Woven, Felted, etc.)? Existing categories with the same names are skipped.')) return;
+    const r = await fetch(`${API}/api/events/${eventId}/fiber-arts/categories/bulk-seed`, { method: 'POST' });
+    if (r.ok) load();
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <p className="text-sm text-gray-600">Define judging categories (e.g., "Handspun Yarn", "Felted Goods", "Finished Garments").</p>
-        {!adding && (
-          <button onClick={() => setAdding(true)} className="text-sm bg-[#3D6B34] text-white px-4 py-1.5 rounded-lg hover:bg-[#2d5226]">
-            + Add Category
-          </button>
-        )}
+        <div className="flex gap-2">
+          {cats.length === 0 && (
+            <button onClick={seedDefaults} className="text-sm border border-[#3D6B34] text-[#3D6B34] px-4 py-1.5 rounded-lg hover:bg-green-50">
+              Seed defaults
+            </button>
+          )}
+          {!adding && (
+            <button onClick={() => setAdding(true)} className="text-sm bg-[#3D6B34] text-white px-4 py-1.5 rounded-lg hover:bg-[#2d5226]">
+              + Add Category
+            </button>
+          )}
+        </div>
       </div>
 
       {adding && (
@@ -324,7 +337,7 @@ export default function FiberArtsAdmin() {
   }, [eventId]);
 
   return (
-    <AccountLayout>
+    <EventAdminLayout eventId={eventId}>
       <div className="max-w-5xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -356,6 +369,6 @@ export default function FiberArtsAdmin() {
         {tab === 'categories' && <CategoriesTab eventId={eventId} />}
         {tab === 'entries' && <EntriesTab eventId={eventId} />}
       </div>
-    </AccountLayout>
+    </EventAdminLayout>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import AccountLayout from './AccountLayout';
+import EventAdminLayout from './EventAdminLayout';
 import RichTextEditor from './RichTextEditor';
 
 const API = import.meta.env.VITE_API_URL || '';
@@ -594,7 +594,7 @@ export default function FarmTourAdmin() {
   ];
 
   return (
-    <AccountLayout>
+    <EventAdminLayout eventId={eventId}>
       <div className="max-w-5xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
@@ -625,6 +625,6 @@ export default function FarmTourAdmin() {
         {tab === 'addons' && <AddOnsTab eventId={eventId} />}
         {tab === 'registrations' && <RegistrationsTab eventId={eventId} />}
       </div>
-    </AccountLayout>
+    </EventAdminLayout>
   );
 }

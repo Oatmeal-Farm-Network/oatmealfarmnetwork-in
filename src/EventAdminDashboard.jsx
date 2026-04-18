@@ -1,31 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import AccountLayout from './AccountLayout';
+import EventAdminLayout from './EventAdminLayout';
 import { useAccount } from './AccountContext';
-import EventAdminMenu, { EVENT_MENU_WIDTH_EXPANDED, EVENT_MENU_WIDTH_COLLAPSED } from './EventAdminMenu';
+import { typeAdminModule } from './eventTypeAdminMap';
 
 const API = import.meta.env.VITE_API_URL || '';
 
 const fmtMoney = (n) => `$${(Number(n) || 0).toFixed(2)}`;
 const fmtDate  = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 const fmtDateTime = (d) => d ? new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
-
-// Matches the event-type → admin-module map in EventDetail.jsx / EventsManage.jsx.
-function typeAdminModule(evType) {
-  if (!evType) return null;
-  if (evType === 'Alpaca Cottage Industry Fleece Show') return { path: 'admin/fiber-arts', label: 'Fiber Arts Admin' };
-  if (['Halter Show', 'Basic Animal or Fleece Show', 'Spin-Off'].includes(evType))
-    return { path: 'admin/halter', label: `${evType} Admin` };
-  if (evType === 'Auction')              return { path: 'admin/auction',      label: 'Auction Admin' };
-  if (evType === 'Market/Vendor Fair')   return { path: 'admin/vendor-fair',  label: 'Vendor Fair Admin' };
-  if (evType === 'Dining Event')         return { path: 'admin/dining',       label: 'Dining Admin' };
-  if (evType === 'Farm Tour/Open House') return { path: 'admin/tour',         label: 'Farm Tour Admin' };
-  if (evType === 'Conference')           return { path: 'admin/conference',   label: 'Conference Admin' };
-  if (evType === 'Competition/Judging')  return { path: 'admin/competition',  label: 'Competition Admin' };
-  if (['Seminar', 'Free Event', 'Basic Event', 'Workshop/Clinic', 'Webinar/Online Class', 'Networking Event'].includes(evType))
-    return { path: 'admin/simple', label: `${evType} Admin` };
-  return null;
-}
 
 function Stat({ label, value, hint, tone }) {
   const toneCls = {
@@ -87,13 +70,24 @@ export default function EventAdminDashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [attendees, setAttendees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [menuExpanded, setMenuExpanded] = useState(() =>
-    localStorage.getItem('event_admin_menu_expanded') !== 'false'
-  );
-  useEffect(() => {
-    localStorage.setItem('event_admin_menu_expanded', String(menuExpanded));
-  }, [menuExpanded]);
-  const menuWidth = menuExpanded ? EVENT_MENU_WIDTH_EXPANDED : EVENT_MENU_WIDTH_COLLAPSED;
+  const [testRequest, setTestRequest] = useState({ sending: false, result: null });
+
+  const sendTestimonialRequests = async () => {
+    if (!window.confirm('Send a testimonial request email to every paid attendee who hasn\'t already been asked?')) return;
+    setTestRequest({ sending: true, result: null });
+    try {
+      const token = localStorage.getItem('access_token');
+      const r = await fetch(`${API}/api/events/${eventId}/request-testimonials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({}),
+      });
+      const j = r.ok ? await r.json() : { error: await r.text() };
+      setTestRequest({ sending: false, result: j });
+    } catch (e) {
+      setTestRequest({ sending: false, result: { error: String(e) } });
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -114,17 +108,17 @@ export default function EventAdminDashboard() {
   const adminBizQs = ev?.BusinessID ? `?BusinessID=${ev.BusinessID}` : '';
   const typeModule = typeAdminModule(ev?.EventType);
 
-  if (loading) return <AccountLayout><div className="p-8 text-gray-500">Loading dashboard…</div></AccountLayout>;
-  if (!ev)     return <AccountLayout><div className="p-8 text-gray-500">Event not found.</div></AccountLayout>;
+  if (loading) return <EventAdminLayout eventId={eventId}><div className="p-8 text-gray-500">Loading dashboard…</div></EventAdminLayout>;
+  if (!ev)     return <EventAdminLayout eventId={eventId}><div className="p-8 text-gray-500">Event not found.</div></EventAdminLayout>;
 
   if (myBusinesses.length > 0 && !isAdmin) {
     return (
-      <AccountLayout>
+      <EventAdminLayout eventId={eventId}>
         <div className="p-8 text-gray-600">
           You don't have organizer access to this event.
           <div className="mt-3"><Link to={`/events/${eventId}`} className="text-[#3D6B34] hover:underline">View public page →</Link></div>
         </div>
-      </AccountLayout>
+      </EventAdminLayout>
     );
   }
 
@@ -138,19 +132,12 @@ export default function EventAdminDashboard() {
   const byKind = Object.entries(analytics?.byKind || {});
   const recent = attendees.slice(0, 10);
 
+  const eventEndDate = ev.EventEndDate || ev.EventStartDate;
+  const isPastEvent = eventEndDate && new Date(eventEndDate) < new Date();
+
   return (
-    <AccountLayout>
-      <EventAdminMenu
-        eventId={eventId}
-        eventType={ev.EventType}
-        businessId={ev.BusinessID}
-        menuExpanded={menuExpanded}
-        setMenuExpanded={setMenuExpanded}
-      />
-      <div
-        className="transition-all duration-300 space-y-6"
-        style={{ marginLeft: menuWidth }}
-      >
+    <EventAdminLayout eventId={eventId}>
+      <div className="space-y-6">
 
         {/* Header */}
         <div className="flex items-start justify-between flex-wrap gap-3">
@@ -169,11 +156,11 @@ export default function EventAdminDashboard() {
           <div className="flex gap-2">
             <Link to={`/events/${eventId}`} target="_blank"
               className="text-sm border border-gray-200 text-gray-600 px-3 py-2 rounded-lg hover:bg-gray-50 no-underline">
-              Public page ↗
+              Public Page ↗
             </Link>
             <Link to={`/account/events?edit=${eventId}`}
               className="text-sm border border-blue-200 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-50 no-underline">
-              ✏️ Edit event
+              ✏️ Edit Event
             </Link>
           </div>
         </div>
@@ -211,6 +198,35 @@ export default function EventAdminDashboard() {
               color="border-yellow-200 bg-white text-yellow-700 hover:bg-yellow-50" />
           </div>
         </div>
+
+        {isPastEvent && (
+          <div className="bg-white border border-gray-200 rounded-xl p-5">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <h3 className="font-bold text-gray-700 mb-1">Post-event follow-up</h3>
+                <p className="text-sm text-gray-600">
+                  Ask every paid attendee for a quick testimonial. We skip anyone
+                  already asked, so this is safe to run more than once.
+                </p>
+              </div>
+              <button onClick={sendTestimonialRequests} disabled={testRequest.sending}
+                className="text-sm px-4 py-2 rounded-lg bg-[#3D6B34] text-white hover:bg-[#2f5226] disabled:opacity-50 whitespace-nowrap">
+                {testRequest.sending ? 'Sending…' : '✉️ Request testimonials'}
+              </button>
+            </div>
+            {testRequest.result && !testRequest.result.error && (
+              <div className="mt-3 text-xs text-green-700 bg-green-50 border border-green-200 rounded p-2">
+                Sent {testRequest.result.sent ?? 0} · skipped {testRequest.result.skipped ?? 0}
+                {testRequest.result.attendees != null && ` · of ${testRequest.result.attendees} paid attendees`}
+              </div>
+            )}
+            {testRequest.result?.error && (
+              <div className="mt-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">
+                {testRequest.result.error}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Registration breakdown + recent registrations */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -277,6 +293,6 @@ export default function EventAdminDashboard() {
         </div>
 
       </div>
-    </AccountLayout>
+    </EventAdminLayout>
   );
 }

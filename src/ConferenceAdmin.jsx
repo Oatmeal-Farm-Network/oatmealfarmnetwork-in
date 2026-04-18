@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import AccountLayout from './AccountLayout';
+import EventAdminLayout from './EventAdminLayout';
 import RichTextEditor from './RichTextEditor';
 
 const API = import.meta.env.VITE_API_URL || '';
@@ -602,7 +602,7 @@ export default function ConferenceAdmin() {
   const setTab = (t) => setSp({ tab: t });
 
   return (
-    <AccountLayout>
+    <EventAdminLayout eventId={eventId}>
       <div className="max-w-6xl mx-auto p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -646,6 +646,6 @@ export default function ConferenceAdmin() {
         {tab === 'sessions' && <SessionsTab eventId={eventId} />}
         {tab === 'regs'     && <RegistrationsTab eventId={eventId} />}
       </div>
-    </AccountLayout>
+    </EventAdminLayout>
   );
 }

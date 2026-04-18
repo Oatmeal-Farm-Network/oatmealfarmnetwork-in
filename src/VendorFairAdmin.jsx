@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import RichTextEditor from './RichTextEditor';
+import EventAdminLayout from './EventAdminLayout';
 
 const API = import.meta.env.VITE_API_URL || '';
 const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-[#819360]";
@@ -172,25 +173,27 @@ export default function VendorFairAdmin() {
   }, [eventId]);
   const tabs = [['config', 'Config'], ['apps', 'Applications']];
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vendor Fair Admin</h1>
-          <p className="text-sm text-gray-500 mt-1">{event?.EventName || 'Event'}</p>
+    <EventAdminLayout eventId={eventId}>
+      <div className="max-w-5xl mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Vendor Fair Admin</h1>
+            <p className="text-sm text-gray-500 mt-1">{event?.EventName || 'Event'}</p>
+          </div>
+          <Link to={`/events/manage${BusinessID ? `?BusinessID=${BusinessID}` : ''}`}
+            className="text-sm text-gray-500 hover:text-gray-700">← Back</Link>
         </div>
-        <Link to={`/events/manage${BusinessID ? `?BusinessID=${BusinessID}` : ''}`}
-          className="text-sm text-gray-500 hover:text-gray-700">← Back</Link>
+        <div className="flex gap-1 border-b border-gray-200 mb-5">
+          {tabs.map(([k, label]) => (
+            <button key={k} onClick={() => setTab(k)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === k ? 'border-[#3D6B34] text-[#3D6B34]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {tab === 'config' && <ConfigTab eventId={eventId} />}
+        {tab === 'apps' && <AppsTab eventId={eventId} />}
       </div>
-      <div className="flex gap-1 border-b border-gray-200 mb-5">
-        {tabs.map(([k, label]) => (
-          <button key={k} onClick={() => setTab(k)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === k ? 'border-[#3D6B34] text-[#3D6B34]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-            {label}
-          </button>
-        ))}
-      </div>
-      {tab === 'config' && <ConfigTab eventId={eventId} />}
-      {tab === 'apps' && <AppsTab eventId={eventId} />}
-    </div>
+    </EventAdminLayout>
   );
 }

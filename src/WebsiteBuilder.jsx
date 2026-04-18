@@ -25,6 +25,7 @@ const BLOCK_TYPES = [
   { type: 'marketplace',    icon: '🛒',  label: 'Marketplace',        desc: 'All active marketplace listings' },
   { type: 'gallery',        icon: '🖼️',  label: 'Photo Gallery',      desc: 'Photo gallery from your albums' },
   { type: 'blog',           icon: '📝',  label: 'Blog Posts',         desc: 'Latest blog posts' },
+  { type: 'events',         icon: '🎪',  label: 'Upcoming Events',    desc: 'Your published upcoming events with dates and Register CTAs' },
   { type: 'contact',        icon: '📬',  label: 'Contact',            desc: 'Contact information and form' },
   { type: 'links',          icon: '🔗',  label: 'Links',              desc: 'Icon links with title and description' },
   { type: 'testimonials',    icon: '🤝',  label: 'All Testimonials',   desc: 'Display all testimonials from your customers' },
@@ -56,6 +57,7 @@ const defaultBlockData = {
   marketplace:    { heading: 'Shop Our Store', max_items: 12 },
   gallery:        { heading: 'Photo Gallery', columns: 3 },
   blog:           { heading: 'From the Blog', heading_style: 'h1', max_posts: 0, category: '' },
+  events:         { heading: 'Upcoming Events', heading_style: 'h1', max_items: 6, layout: 'cards' },
   contact:        { heading: 'Get In Touch', sub_heading: 'Have a question about our products, want to place a bulk order, or just want to say hello? Fill out the form below and we\'ll get back to you as soon as possible.', show_form: true, contact_email: '' },
   links:          { heading: 'Links', columns: 3, groups: [
     { heading: 'Social Media', items: [{ icon_url: '', label: 'Link Title', url: '', description: 'Short description of this link' }] },

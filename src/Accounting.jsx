@@ -22,7 +22,7 @@ function fmtDate(d) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-const TABS = ['Dashboard', 'Invoices', 'Customers', 'Vendors', 'Bills', 'Expenses', 'Accounts', 'Reports'];
+const TABS = ['Dashboard', 'Invoices', 'Customers', 'Vendors', 'Bills', 'Expenses', 'Accounts', 'Reports', 'Payments'];
 
 const statusColor = {
   Draft: 'bg-gray-100 text-gray-700',
@@ -63,6 +63,158 @@ const input = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:
 const btn   = 'px-4 py-2 rounded-lg text-sm font-semibold transition';
 const btnGreen  = `${btn} bg-green-700 text-white hover:bg-green-800`;
 const btnWhite  = `${btn} border border-gray-300 text-gray-700 hover:bg-gray-50`;
+
+// ─── PAYMENTS (Stripe + refund model) ──────────────────────────
+
+function PaymentsTab() {
+  const [cfg, setCfg] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const authFetch = useCallback(async (path, opts = {}) => {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...opts,
+      headers: { ...authHeaders(), ...(opts.headers || {}) },
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error(t || res.statusText);
+    }
+    return res.json();
+  }, []);
+
+  useEffect(() => {
+    authFetch('/api/platform/settings')
+      .then(d => { setCfg(d); setLoading(false); })
+      .catch(e => { setMsg(e.message); setLoading(false); });
+  }, [authFetch]);
+
+  const save = async () => {
+    setSaving(true); setMsg('');
+    try {
+      await authFetch('/api/platform/settings', {
+        method: 'PUT',
+        body: JSON.stringify(cfg),
+      });
+      const fresh = await authFetch('/api/platform/settings');
+      setCfg(fresh);
+      setMsg('Saved');
+    } catch (e) {
+      setMsg(e.message || 'Save failed');
+    } finally {
+      setSaving(false);
+      setTimeout(() => setMsg(''), 4000);
+    }
+  };
+
+  if (loading) return <div className="text-sm text-gray-400 p-6">Loading payments settings…</div>;
+  if (!cfg) return <div className="text-sm text-red-600 p-6">Could not load settings. {msg}</div>;
+
+  const set = (k) => (e) => setCfg(c => ({ ...c, [k]: e.target.value }));
+  const setB = (k) => (e) => setCfg(c => ({ ...c, [k]: e.target.checked }));
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className="font-semibold text-gray-900">Stripe Payment Processing</h2>
+            <p className="text-xs text-gray-500 mt-1">
+              These credentials power event registration checkout, farm-to-table orders, and refunds.
+              {cfg.StripeConfigured ? ' Stripe is configured.' : ' Stripe is NOT configured — checkout is disabled.'}
+            </p>
+          </div>
+          <div className={`text-xs px-2 py-1 rounded ${cfg.StripeConfigured ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            {cfg.StripeConfigured ? 'Connected' : 'Not configured'}
+          </div>
+        </div>
+
+        {!cfg.IsAdmin && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs rounded-lg p-3 mb-4">
+            You can view these settings but only a platform administrator can modify them. Ask an admin to set <code>PLATFORM_ADMIN_IDS</code> in the backend environment.
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Publishable Key (pk_...)">
+            <input className={input} value={cfg.StripePublishableKey || ''} onChange={set('StripePublishableKey')} placeholder="pk_test_..." disabled={!cfg.IsAdmin} />
+          </Field>
+          <Field label="Secret Key (sk_...)">
+            <input className={input} value={cfg.StripeSecretKey || cfg.StripeSecretKeyMasked || ''}
+              onChange={e => setCfg(c => ({ ...c, StripeSecretKey: e.target.value }))}
+              placeholder={cfg.StripeSecretKeyMasked || 'sk_test_...'} disabled={!cfg.IsAdmin} />
+            <div className="text-[11px] text-gray-400 mt-1">Leave as shown (masked) to keep existing value.</div>
+          </Field>
+          <Field label="Webhook Signing Secret (whsec_...)">
+            <input className={input} value={cfg.StripeWebhookSecret || cfg.StripeWebhookSecretMasked || ''}
+              onChange={e => setCfg(c => ({ ...c, StripeWebhookSecret: e.target.value }))}
+              placeholder={cfg.StripeWebhookSecretMasked || 'whsec_...'} disabled={!cfg.IsAdmin} />
+          </Field>
+          <Field label="Mode">
+            <label className="flex items-center gap-2 text-sm mt-2">
+              <input type="checkbox" checked={!!cfg.StripeTestMode} onChange={setB('StripeTestMode')} disabled={!cfg.IsAdmin} />
+              <span>Test mode</span>
+            </label>
+          </Field>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 className="font-semibold text-gray-900 mb-1">Refund Model</h2>
+        <p className="text-xs text-gray-500 mb-4">Controls when funds are captured from attendees and when refunds can be issued.</p>
+
+        <div className="space-y-3 mb-4">
+          <label className={`flex items-start gap-3 border rounded-lg p-3 cursor-pointer ${cfg.RefundModel === 'immediate_charge' ? 'border-green-600 bg-green-50' : 'border-gray-200'}`}>
+            <input type="radio" name="refundModel" value="immediate_charge"
+              checked={cfg.RefundModel === 'immediate_charge'}
+              onChange={e => setCfg(c => ({ ...c, RefundModel: e.target.value }))}
+              disabled={!cfg.IsAdmin} className="mt-1" />
+            <div>
+              <div className="font-medium text-sm">Immediate charge + refund window</div>
+              <div className="text-xs text-gray-500 mt-0.5">Charge the attendee's card at registration. Allow full refunds until the event date (or configurable deadline). Simplest; works past Stripe's 7-day auth hold.</div>
+            </div>
+          </label>
+          <label className={`flex items-start gap-3 border rounded-lg p-3 cursor-pointer ${cfg.RefundModel === 'manual_capture' ? 'border-green-600 bg-green-50' : 'border-gray-200'}`}>
+            <input type="radio" name="refundModel" value="manual_capture"
+              checked={cfg.RefundModel === 'manual_capture'}
+              onChange={e => setCfg(c => ({ ...c, RefundModel: e.target.value }))}
+              disabled={!cfg.IsAdmin} className="mt-1" />
+            <div>
+              <div className="font-medium text-sm">Authorize at registration, capture after event</div>
+              <div className="text-xs text-gray-500 mt-0.5">Card is authorized (held) at registration and only charged when the organizer captures after the event. Cancellations cost $0 (no refund needed). Capped at 7 days by Stripe — good for short-horizon events only.</div>
+            </div>
+          </label>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Field label="Refund deadline (days before event)">
+            <input type="number" className={input} value={cfg.RefundDeadlineDays || 0}
+              onChange={e => setCfg(c => ({ ...c, RefundDeadlineDays: Number(e.target.value) || 0 }))}
+              disabled={!cfg.IsAdmin} />
+            <div className="text-[11px] text-gray-400 mt-1">0 = allow refunds up to event start date.</div>
+          </Field>
+          <Field label="Platform fee %">
+            <input type="number" step="0.01" className={input} value={cfg.PlatformFeePercent || 0}
+              onChange={e => setCfg(c => ({ ...c, PlatformFeePercent: Number(e.target.value) || 0 }))}
+              disabled={!cfg.IsAdmin} />
+          </Field>
+          <Field label="Currency">
+            <input className={input} value={cfg.CurrencyCode || 'USD'} onChange={set('CurrencyCode')} disabled={!cfg.IsAdmin} />
+          </Field>
+        </div>
+      </div>
+
+      {cfg.IsAdmin && (
+        <div className="flex items-center justify-end gap-3">
+          {msg && <span className="text-sm text-gray-500 mr-auto">{msg}</span>}
+          <button onClick={save} disabled={saving} className={btnGreen}>{saving ? 'Saving…' : 'Save Payment Settings'}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 // ─── main component ────────────────────────────────────────────
 
@@ -750,6 +902,9 @@ export default function Accounting() {
             )}
           </div>
         )}
+
+        {/* ── PAYMENTS / STRIPE SETTINGS ── */}
+        {tab === 'Payments' && <PaymentsTab apiFetch={apiFetch} />}
       </div>
 
       {/* ── MODALS ── */}

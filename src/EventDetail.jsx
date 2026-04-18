@@ -5,30 +5,13 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
+import { typeAdminModule } from './eventTypeAdminMap';
 
 const API = import.meta.env.VITE_API_URL || '';
 
 function formatDate(d) {
   if (!d) return '';
   return new Date(d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-}
-
-// Per-event-type admin module (matches the route-map in main.jsx).
-// Returns { path, label } or null if the type has no dedicated admin module.
-function typeAdminModule(evType) {
-  if (!evType) return null;
-  if (evType === 'Alpaca Cottage Industry Fleece Show') return { path: 'admin/fiber-arts', label: 'Fiber Arts Admin' };
-  if (['Halter Show', 'Basic Animal or Fleece Show', 'Spin-Off'].includes(evType))
-    return { path: 'admin/halter', label: `${evType} Admin` };
-  if (evType === 'Auction')              return { path: 'admin/auction',      label: 'Auction Admin' };
-  if (evType === 'Market/Vendor Fair')   return { path: 'admin/vendor-fair',  label: 'Vendor Fair Admin' };
-  if (evType === 'Dining Event')         return { path: 'admin/dining',       label: 'Dining Admin' };
-  if (evType === 'Farm Tour/Open House') return { path: 'admin/tour',         label: 'Farm Tour Admin' };
-  if (evType === 'Conference')           return { path: 'admin/conference',   label: 'Conference Admin' };
-  if (evType === 'Competition/Judging')  return { path: 'admin/competition',  label: 'Competition Admin' };
-  if (['Seminar', 'Free Event', 'Basic Event', 'Workshop/Clinic', 'Webinar/Online Class', 'Networking Event'].includes(evType))
-    return { path: 'admin/simple', label: `${evType} Admin` };
-  return null;
 }
 
 function AdminSidebar({ ev, eventId, businessId }) {
@@ -88,9 +71,25 @@ function PublicFeatureCTAs({ features, ev, eventId }) {
   const extras = publics.filter(f =>
     !f.IsCoreModule && f.FeatureKey !== 'calendar_ics' && !isExternal(f.PublicPath));
 
+  // Feature keys that the unified registration wizard handles
+  const WIZARD_KEYS = new Set([
+    'halter_module', 'fleece_module', 'spinoff_module',
+    'fiber_arts_module', 'vendor_fair_module',
+  ]);
+  const hasWizardFeature = publics.some(f => WIZARD_KEYS.has(f.FeatureKey));
+
   return (
     <>
-      {core && (
+      {hasWizardFeature && (
+        <a
+          href={`/events/${eventId}/register/wizard`}
+          className="w-full block text-center bg-[#3D6B34] text-white font-bold py-3 rounded-xl hover:bg-[#2d5226] transition-colors text-base no-underline"
+        >
+          Register for This Event →
+        </a>
+      )}
+
+      {!hasWizardFeature && core && (
         <a
           href={core.PublicPath}
           className="w-full block text-center bg-[#3D6B34] text-white font-bold py-3 rounded-xl hover:bg-[#2d5226] transition-colors text-base no-underline"
@@ -100,7 +99,7 @@ function PublicFeatureCTAs({ features, ev, eventId }) {
         </a>
       )}
 
-      {!core && ev.RegistrationRequired && (
+      {!hasWizardFeature && !core && ev.RegistrationRequired && (
         <a
           href={`/events/${eventId}/register`}
           className="w-full block text-center bg-[#3D6B34] text-white font-bold py-3 rounded-xl hover:bg-[#2d5226] transition-colors text-base no-underline"

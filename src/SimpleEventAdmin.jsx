@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import AccountLayout from './AccountLayout';
+import EventAdminLayout from './EventAdminLayout';
 import RichTextEditor from './RichTextEditor';
 
 const API = import.meta.env.VITE_API_URL || '';
@@ -280,16 +280,16 @@ function ConfigTab({ eventId, eventType }) {
         <span>Event active (accepting registrations)</span>
       </label>
 
-      <div className="flex items-center gap-3 justify-start">
-        <button type="submit" disabled={saving}
-          className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-5 py-2 rounded-lg disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save configuration'}
-        </button>
+      <div className="flex items-center gap-3 justify-end">
+        {msg && <span className="text-sm text-[#3D6B34] mr-auto">{msg}</span>}
         <Link to="/account/events"
           className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
           Cancel
         </Link>
-        {msg && <span className="text-sm text-[#3D6B34]">{msg}</span>}
+        <button type="submit" disabled={saving}
+          className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-5 py-2 rounded-lg disabled:opacity-50">
+          {saving ? 'Saving…' : 'Save configuration'}
+        </button>
       </div>
     </form>
   );
@@ -419,7 +419,7 @@ export default function SimpleEventAdmin() {
   const eventType = ev?.EventType || '';
 
   return (
-    <AccountLayout>
+    <EventAdminLayout eventId={eventId}>
       <div className="max-w-5xl mx-auto p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -445,6 +445,6 @@ export default function SimpleEventAdmin() {
         {tab === 'config' && <ConfigTab eventId={eventId} eventType={eventType} />}
         {tab === 'regs'   && <RegistrationsTab eventId={eventId} eventType={eventType} />}
       </div>
-    </AccountLayout>
+    </EventAdminLayout>
   );
 }
