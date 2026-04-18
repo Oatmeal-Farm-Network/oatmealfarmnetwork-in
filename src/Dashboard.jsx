@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import MoonPhase from './MoonPhase';
+import WeatherCompact from './WeatherCompact';
 import { useAccount } from './AccountContext';
 
 export default function Dashboard() {
@@ -14,8 +16,6 @@ export default function Dashboard() {
   const [businessFieldsMap, setBusinessFieldsMap] = useState({});
   const [businessFeaturesMap, setBusinessFeaturesMap] = useState({});
   const [expandedBusiness, setExpandedBusiness] = useState(null);
-  const [weather, setWeather] = useState(null);
-  const [weatherLoading, setWeatherLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -72,33 +72,7 @@ export default function Dashboard() {
         .catch(() => setBusinesses([]));
     }
 
-    // Fetch weather based on user location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          fetch(`${API_URL}/api/weather?lat=${latitude}&lon=${longitude}`)
-            .then(r => r.json())
-            .then(data => setWeather(data))
-            .catch(() => setWeather(null))
-            .finally(() => setWeatherLoading(false));
-        },
-        () => setWeatherLoading(false)
-      );
-    } else {
-      setWeatherLoading(false);
-    }
   }, [navigate]);
-
-  const handleLogout = () => {
-    ['access_token', 'people_id', 'first_name', 'last_name', 'access_level',
-     'AccessToken', 'PeopleID', 'PeopleFirstName', 'PeopleLastName', 'AccessLevel']
-      .forEach(k => localStorage.removeItem(k));
-    Object.keys(localStorage)
-      .filter(k => k.startsWith('saige_'))
-      .forEach(k => localStorage.removeItem(k));
-    navigate('/login');
-  };
 
   if (!user) return null;
 
@@ -166,19 +140,6 @@ export default function Dashboard() {
     return links;
   };
 
-  const formatHour = (timeStr) => {
-    const d = new Date(timeStr);
-    const h = d.getHours();
-    if (h === 0) return '12a';
-    if (h === 12) return 'Noon';
-    return h < 12 ? `${h}am` : `${h - 12}pm`;
-  };
-
-  const dayName = (dateStr) => {
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    return days[new Date(dateStr).getDay()];
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <PageMeta
@@ -189,19 +150,6 @@ export default function Dashboard() {
       <Header />
 
       <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
-
-        {/* Welcome Banner */}
-        <div className="rounded-xl px-8 py-6 mb-8 flex flex-col md:flex-row md:items-center md:justify-between shadow"
-             style={{ background: 'linear-gradient(to right, #4d734d, #819360)' }}>
-          <div>
-            <h1 className="text-white text-2xl font-bold m-0">Welcome back, {user.firstName}!</h1>
-            <p className="text-white/80 mt-1 text-sm">{user.firstName} {user.lastName} · Account #{user.peopleId}</p>
-          </div>
-          <button onClick={handleLogout}
-            className="mt-4 md:mt-0 bg-white text-[#A3301E] font-bold py-2 px-6 rounded-xl text-sm hover:bg-red-50 transition-colors uppercase tracking-wider">
-            Log Out
-          </button>
-        </div>
 
         {/* Two column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -267,6 +215,23 @@ export default function Dashboard() {
                       {/* Expanded content */}
                       {isExpanded && (
                         <div className="px-5 pb-4 pt-3 border-t border-gray-100">
+                          {/* Per-business weather — use first field's coords if available, else geocode address */}
+                          {(() => {
+                            const firstGps = fields.find(f => f.latitude && f.longitude);
+                            const addr = [b.AddressCity, b.AddressState, b.AddressZip, b.AddressCountry].filter(Boolean).join(', ');
+                            if (!firstGps && !addr) return null;
+                            return (
+                              <div className="mb-4 pb-3 border-b border-gray-100">
+                                <WeatherCompact
+                                  lat={firstGps?.latitude}
+                                  lon={firstGps?.longitude}
+                                  address={firstGps ? undefined : addr}
+                                  label={`Weather${addr ? ` — ${addr}` : ''}`}
+                                />
+                              </div>
+                            );
+                          })()}
+
                           {isFarmRanch && features?.precision_ag && (
                             <>
                               {/* Summary stats row */}
@@ -294,7 +259,7 @@ export default function Dashboard() {
                                 <div className="text-center py-6 text-gray-400 text-sm">
                                   <p className="mb-2">No fields yet.</p>
                                   <Link
-                                    to={`/precision-ag/fields?BusinessID=${b.BusinessID}&view=create-field`}
+                                    to={`/precision-ag/crop-detection?BusinessID=${b.BusinessID}&mode=add-field`}
                                     className="regsubmit2 text-xs"
                                   >
                                     + Add First Field
@@ -339,7 +304,7 @@ export default function Dashboard() {
                               {/* Precision Ag action links */}
                               <div className="flex flex-wrap gap-2 pb-3 mb-3 border-b border-gray-100">
                                 <Link
-                                  to={`/precision-ag/fields?BusinessID=${b.BusinessID}&view=create-field`}
+                                  to={`/precision-ag/crop-detection?BusinessID=${b.BusinessID}&mode=add-field`}
                                   className="text-xs font-medium text-white bg-[#3D6B34] hover:bg-[#2d5226] px-3 py-1.5 rounded-lg transition-colors"
                                 >
                                   + Add Field
@@ -408,99 +373,13 @@ export default function Dashboard() {
           </div>
           {/* END LEFT column */}
 
-          {/* RIGHT (1/3) — Weather */}
-          <div className="bg-white rounded-xl shadow border border-gray-100 p-6 h-fit sticky top-4">
-            <h2 className="text-2xl font-bold mb-4 pb-3 border-b-2 border-green-300" style={{ color: '#3D6B34' }}>
-              Weather
-            </h2>
-
-            {weatherLoading ? (
-              <p className="text-gray-400 text-sm">Loading weather…</p>
-            ) : !weather ? (
-              <p className="text-gray-400 text-sm">
-                Weather unavailable. Allow location access to see your local forecast.
-              </p>
-            ) : (
-              <div>
-                {/* Location */}
-                {weather.location?.city && (
-                  <p className="text-center text-gray-500 text-sm mb-3">
-                    📍 {weather.location.city}, {weather.location.state}
-                  </p>
-                )}
-
-                {/* Current conditions */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-5xl font-light text-gray-800">
-                      {Math.round(weather.current?.temp_f ?? 0)}°F
-                    </span>
-                    {weather.current?.icon && (
-                      <img src={weather.current.icon} alt="weather" style={{ width: '3.5rem', height: '3.5rem' }} />
-                    )}
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">{weather.current?.condition}</p>
-                      {weather.today?.high_f != null && (
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          H: {Math.round(weather.today.high_f)}°F &nbsp;·&nbsp; L: {Math.round(weather.today.low_f ?? 0)}°F
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right text-xs text-gray-500 space-y-0.5">
-                    {weather.current?.feelslike_f != null && (
-                      <p>Feels like: {Math.round(weather.current.feelslike_f)}°F</p>
-                    )}
-                    <p>Wind: {Math.round(weather.current?.wind_mph ?? 0)} mph{weather.current?.wind_dir ? ` ${weather.current.wind_dir}` : ''}</p>
-                    {weather.current?.humidity != null && (
-                      <p>Humidity: {Math.round(weather.current.humidity)}%</p>
-                    )}
-                  </div>
-                </div>
-
-                <hr className="my-2 border-gray-100" />
-
-                {/* Hourly forecast */}
-                {weather.hourly?.length > 0 && (
-                  <>
-                    <p className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">Hourly</p>
-                    <div style={{ display: 'flex', overflowX: 'auto', gap: '0.25rem', marginBottom: '0.5rem' }}>
-                      {weather.hourly.map((h, i) => (
-                        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '0 0 auto', minWidth: '48px', padding: '0.2rem' }}>
-                          <span style={{ fontSize: '0.65rem', color: '#9CA3AF' }}>{formatHour(h.time)}</span>
-                          {h.icon && <img src={h.icon} alt="" style={{ width: '2.2rem', height: '2.2rem' }} />}
-                          <span style={{ fontSize: '0.7rem', fontWeight: 600 }}>{Math.round(h.temp_f)}°</span>
-                        </div>
-                      ))}
-                    </div>
-                    <hr className="my-2 border-gray-100" />
-                  </>
-                )}
-
-                {/* Daily forecast */}
-                {weather.daily?.length > 0 && (
-                  <>
-                    <p className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">7-Day</p>
-                    <div style={{ display: 'flex', overflowX: 'auto', gap: '0.25rem' }}>
-                      {weather.daily.map((d, i) => (
-                        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '0 0 auto', minWidth: '52px', padding: '0.25rem', background: i === 0 ? '#f0f5e8' : 'transparent', borderRadius: '0.5rem' }}>
-                          <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#6B7280' }}>{i === 0 ? 'Today' : dayName(d.date)}</span>
-                          {d.icon && <img src={d.icon} alt="" style={{ width: '2rem', height: '2rem' }} />}
-                          <span style={{ fontSize: '0.68rem', color: '#EF4444', fontWeight: 600 }}>
-                            {d.high_f != null ? `${Math.round(d.high_f)}°` : '—'}
-                          </span>
-                          <span style={{ fontSize: '0.68rem', color: '#3B82F6' }}>
-                            {d.low_f != null ? `${Math.round(d.low_f)}°` : '—'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+          {/* RIGHT (1/3) — Moon phase */}
+          <div className="flex flex-col gap-4 h-fit sticky top-4">
+            <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
+              <MoonPhase />
+            </div>
           </div>
-          {/* END RIGHT weather card */}
+          {/* END RIGHT column */}
 
         </div>
         {/* END grid */}

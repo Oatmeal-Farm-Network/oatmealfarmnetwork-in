@@ -394,8 +394,8 @@ function BlogRichTextEditor({ value, onChange }) {
   const div = <div style={{ width: 1, background: '#e5e7eb', alignSelf: 'stretch', margin: '0 2px' }} />;
 
   return (
-    <div style={{ border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '6px 8px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', alignItems: 'center' }}>
+    <div style={{ border: '1px solid #d1d5db', borderRadius: 8 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '6px 8px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', alignItems: 'center', position: 'sticky', top: 0, zIndex: 20, borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
         {!htmlMode && <>
           <select style={selStyle} defaultValue="" onChange={e => { applyBlock(e.target.value); e.target.value = ''; }}>
             <option value="" disabled>Style</option>
@@ -1266,7 +1266,7 @@ export default function BlogManage() {
   if (view === 'new' || view === 'edit') {
     return (
       <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={editPost ? 'Edit Post' : 'New Post'} breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Blog' }, { label: 'Manage', to: `/blog/manage?BusinessID=${BusinessID}` }, { label: editPost ? 'Edit Post' : 'New Post' }]}>
-        <div style={{ maxWidth: '800px' }}>
+        <div style={{ width: '100%' }}>
           <button onClick={() => { setView('list'); setEditPost(null); }}
             style={{ background: 'none', border: 'none', color: '#819360', cursor: 'pointer', fontSize: '0.85rem', marginBottom: '1rem', padding: 0 }}>
             ← Back to Posts

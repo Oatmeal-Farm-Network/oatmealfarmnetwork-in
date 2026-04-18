@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
+import BiomassPanel from './BiomassPanel';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const CROP_API_URL = window.location.hostname === 'localhost'
@@ -1191,6 +1192,11 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal }) {
                   </div>
                 </div>
               )}
+
+              <div>
+                <h3 className="font-lora font-bold text-gray-900 text-lg mb-3">Biomass Estimate</h3>
+                <BiomassPanel fieldId={fieldId} />
+              </div>
 
               {recommendations.length > 0 && (
                 <div>

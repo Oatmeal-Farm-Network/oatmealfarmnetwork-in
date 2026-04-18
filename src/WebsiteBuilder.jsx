@@ -3465,7 +3465,7 @@ function BlogBlockCanvas({ block, site, businessId }) {
   const fetchPosts = useCallback(() => {
     if (!businessId) return;
     setLoading(true);
-    const params = new URLSearchParams({ business_id: businessId, limit: d.max_posts || 100 });
+    const params = new URLSearchParams({ business_id: businessId, limit: d.max_posts || 100, show_on_website: 'true' });
     if (d.category) params.set('category_name', d.category);
     fetch(`${API}/api/blog/posts?${params}`, { headers: authHeaders() })
       .then(r => r.json())
@@ -3553,18 +3553,43 @@ function BlogBlockCanvas({ block, site, businessId }) {
               const dateStr = (p.published_at || p.created_at)
                 ? new Date(p.published_at || p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                 : '';
-              const cover = p.cover_image || (p.content ? (p.content.match(/<img[^>]+src="([^"]+)"/)?.[1]) : null);
-              const rawText = (() => {
-                if (!p.content) return '';
+              const cover = (() => {
+                if (p.cover_image) return p.cover_image;
+                if (!p.content) return null;
                 try {
                   const blocks = JSON.parse(p.content);
-                  if (Array.isArray(blocks)) return blocks.filter(b => b.type === 'text').map(b => b.content || '').join(' ');
+                  if (Array.isArray(blocks)) {
+                    const img = blocks.find(b => b.type === 'image' && b.url);
+                    if (img) return img.url;
+                    for (const b of blocks) {
+                      if (b.type === 'text' && b.content) {
+                        const m = b.content.match(/<img[^>]+src="([^"]+)"/i);
+                        if (m) return m[1];
+                      }
+                    }
+                  }
                 } catch {}
-                return p.content;
+                return p.content.match(/<img[^>]+src="([^"]+)"/i)?.[1] || null;
               })();
-              const plain = rawText.replace(/<[^>]*>/g, '').trim();
-              const words = plain.split(/\s+/);
-              const excerpt = words.length <= 100 ? plain : words.slice(0, 100).join(' ') + '…';
+              const excerpt = (() => {
+                if (!p.content) return '';
+                let raw = p.content;
+                try {
+                  const blocks = JSON.parse(p.content);
+                  if (Array.isArray(blocks)) {
+                    raw = blocks.filter(b => b.type === 'text').map(b => b.content || '').join(' ');
+                  }
+                } catch {}
+                // Captions can live inline as <figure><img><figcaption>…</figcaption></figure>
+                // inside text blocks — strip whole figures so caption text never leaks.
+                const stripped = raw
+                  .replace(/<figure\b[^>]*>[\s\S]*?<\/figure>/gi, ' ')
+                  .replace(/<figcaption\b[^>]*>[\s\S]*?<\/figcaption>/gi, ' ');
+                const plain = stripped.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                if (!plain) return '';
+                const words = plain.split(' ');
+                return words.length <= 200 ? plain : words.slice(0, 200).join(' ') + '…';
+              })();
               return (
                 <div key={p.post_id || i}
                   onClick={e => { e.stopPropagation(); setSelectedIdx(i); }}
@@ -3573,7 +3598,7 @@ function BlogBlockCanvas({ block, site, businessId }) {
                   onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'}
                 >
                   {cover && (
-                    <img src={cover} alt="" style={{ width: 160, minWidth: 160, objectFit: 'cover', flexShrink: 0, display: 'block' }} onError={e => e.target.style.display = 'none'} />
+                    <img src={cover} alt="" style={{ width: 250, minWidth: 250, objectFit: 'cover', flexShrink: 0, display: 'block' }} onError={e => e.target.style.display = 'none'} />
                   )}
                   <div style={{ padding: '0.9rem 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
                     <div style={{ fontSize: '0.72rem', color: '#9ca3af' }}>{dateStr}</div>

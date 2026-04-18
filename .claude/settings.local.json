@@ -8,7 +8,13 @@
       "Bash(powershell -Command \"Get-WmiObject Win32_Process -Filter 'ProcessId=30864' | Select-Object ProcessId, Name, CommandLine, ExecutablePath\")",
       "Bash(powershell -Command \"Get-CimInstance Win32_Process -Filter 'ProcessId=30864' | Select-Object -ExpandProperty CommandLine\")",
       "Bash(powershell -Command 'Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '\\\\''*uvicorn*'\\\\'' -or $_.CommandLine -like '\\\\''*main:app*'\\\\'' } | Select-Object ProcessId, CommandLine')",
-      "Bash(powershell -Command 'Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '\\\\''*8000*'\\\\'' -or $_.CommandLine -like '\\\\''*uvicorn*'\\\\'' -or $_.Name -like '\\\\''*python*'\\\\'' } | Select-Object ProcessId, Name, CommandLine')"
+      "Bash(powershell -Command 'Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '\\\\''*8000*'\\\\'' -or $_.CommandLine -like '\\\\''*uvicorn*'\\\\'' -or $_.Name -like '\\\\''*python*'\\\\'' } | Select-Object ProcessId, Name, CommandLine')",
+      "PowerShell(Get-ExecutionPolicy -Scope CurrentUser)",
+      "PowerShell(Get-ExecutionPolicy -List)",
+      "PowerShell(try { Get-Content 'f:\\\\Oatmeal AI\\\\OatmealFarmNetwork Repo\\\\.vscode\\\\tasks.json' -Raw | ConvertFrom-Json | Out-Null; 'JSON OK' } catch { \"JSON INVALID: $_\" })",
+      "Bash(xxd \"f:/Oatmeal AI/OatmealFarmNetwork Repo/.vscode/tasks.json\")",
+      "PowerShell(Get-Command wt.exe -ErrorAction SilentlyContinue)",
+      "PowerShell(if \\(-not $?\\) { 'wt.exe not found' })"
     ]
   }
 }

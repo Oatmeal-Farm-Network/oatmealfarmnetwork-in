@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
+import MoonPhase from './MoonPhase';
+import WeatherCompact from './WeatherCompact';
+import BiomassPanel from './BiomassPanel';
 import { useAccount } from './AccountContext';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
@@ -583,7 +586,16 @@ function FieldList({ businessId, onCreateNew }) {
   const [error, setError] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [openBiomass, setOpenBiomass] = useState(() => new Set());
   const navigate = useNavigate();
+
+  const toggleBiomass = (id) => {
+    setOpenBiomass((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!businessId) return;
@@ -647,11 +659,15 @@ function FieldList({ businessId, onCreateNew }) {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Fields</h2>
         <button
-          onClick={onCreateNew}
+          onClick={() => navigate(`/precision-ag/crop-detection?BusinessID=${businessId}&mode=add-field`)}
           className="px-5 py-2 bg-[#819360] hover:bg-[#3D6B35] text-white rounded-lg font-medium text-sm transition-colors"
         >
           + Add Field
         </button>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+        <MoonPhase />
       </div>
 
       {error && (
@@ -688,7 +704,25 @@ function FieldList({ businessId, onCreateNew }) {
                   {field.address && (
                     <p className="text-xs text-gray-400 mt-1 truncate">📍 {field.address}</p>
                   )}
+                  {(field.latitude && field.longitude) && (
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      <WeatherCompact lat={field.latitude} lon={field.longitude} mini />
+                    </div>
+                  )}
                 </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleBiomass(fieldId); }}
+                    className="text-xs px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium border border-emerald-200"
+                  >
+                    {openBiomass.has(fieldId) ? 'Hide biomass' : '🌱 Biomass'}
+                  </button>
+                </div>
+                {openBiomass.has(fieldId) && (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <BiomassPanel fieldId={fieldId} onClose={() => toggleBiomass(fieldId)} />
+                  </div>
+                )}
                 <button
                   onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(fieldId); }}
                   className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full text-gray-300 hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"

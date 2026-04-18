@@ -80,22 +80,39 @@ function blogExcerpt(content, wordLimit = 30) {
     if (Array.isArray(blocks))
       text = blocks.filter(b => b.type === 'text').map(b => b.content || '').join(' ');
   } catch {}
-  const plain = text.replace(/<[^>]*>/g, '').trim();
-  const words = plain.split(/\s+/);
+  // Text blocks may embed images with captions as <figure><img><figcaption>…</figcaption></figure>.
+  // Drop the whole figure so caption text never leaks into the excerpt.
+  const stripped = text
+    .replace(/<figure\b[^>]*>[\s\S]*?<\/figure>/gi, ' ')
+    .replace(/<figcaption\b[^>]*>[\s\S]*?<\/figcaption>/gi, ' ');
+  const plain = stripped.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!plain) return '';
+  const words = plain.split(' ');
   if (words.length <= wordLimit) return plain;
   return words.slice(0, wordLimit).join(' ') + '…';
 }
 
 function blogCoverImage(post) {
   if (post.cover_image) return post.cover_image;
+  const raw = post.content || '';
   try {
-    const blocks = JSON.parse(post.content || '');
+    const blocks = JSON.parse(raw);
     if (Array.isArray(blocks)) {
+      // 1. Dedicated image block
       const img = blocks.find(b => b.type === 'image' && b.url);
       if (img) return img.url;
+      // 2. <img> embedded inside a text block (figure/img markup from RTE)
+      for (const b of blocks) {
+        if (b.type === 'text' && b.content) {
+          const m = b.content.match(/<img[^>]+src="([^"]+)"/i);
+          if (m) return m[1];
+        }
+      }
     }
   } catch {}
-  return null;
+  // 3. Legacy plain-HTML content
+  const m = raw.match(/<img[^>]+src="([^"]+)"/i);
+  return m ? m[1] : null;
 }
 
 function renderBlogContent(content) {
@@ -911,7 +928,7 @@ function BlogBlock({ data, site, businessId }) {
   const filterCategory = data.category || '';
 
   useEffect(() => {
-    const params = new URLSearchParams({ business_id: businessId, limit: maxPosts });
+    const params = new URLSearchParams({ business_id: businessId, limit: maxPosts, show_on_website: 'true' });
     if (filterCategory) params.set('category_name', filterCategory);
     fetchContent(`${API}/api/blog/posts?${params}`)
       .then(d => setPosts(Array.isArray(d) ? d : []))
@@ -988,7 +1005,7 @@ function BlogBlock({ data, site, businessId }) {
         {posts.map((p, i) => {
           const dateStr = (p.published_at || p.created_at) ? new Date(p.published_at || p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
           const cover = blogCoverImage(p);
-          const excerpt = p.excerpt || blogExcerpt(p.content, 100);
+          const excerpt = blogExcerpt(p.content, 200);
           return (
             <div key={p.post_id || i}
               onClick={() => setSelectedIdx(i)}
@@ -997,7 +1014,7 @@ function BlogBlock({ data, site, businessId }) {
               onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.06)'}
             >
               {cover && (
-                <img src={cover} alt="" style={{ width: 180, minWidth: 180, objectFit: 'cover', flexShrink: 0, display: 'block' }} onError={e => e.target.style.display = 'none'} />
+                <img src={cover} alt="" style={{ width: 250, minWidth: 250, objectFit: 'cover', flexShrink: 0, display: 'block' }} onError={e => e.target.style.display = 'none'} />
               )}
               <div style={{ padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', flex: 1 }}>
                 <div style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>

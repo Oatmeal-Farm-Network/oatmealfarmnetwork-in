@@ -495,10 +495,13 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function CropDetection() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const BusinessID = searchParams.get('BusinessID');
+  const addFieldMode = searchParams.get('mode') === 'add-field';
   const PeopleID = localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();
 
+  const [showAddFieldHint, setShowAddFieldHint] = useState(addFieldMode);
   const [address, setAddress] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -530,6 +533,39 @@ export default function CropDetection() {
   const drawLineSourceRef = useRef(null);
 
   useEffect(() => { if (BusinessID) LoadBusiness(BusinessID); }, [BusinessID]);
+
+  // When entering via "Add Field" mode, geocode business zip/city and flyTo once the map is ready.
+  const pendingZoomRef = useRef(null); // stores [lon, lat] until the map can consume it
+  const zoomedToBusinessRef = useRef(false);
+  const tryApplyPendingZoom = useCallback(() => {
+    if (!map.current || !pendingZoomRef.current) return;
+    const [lon, lat] = pendingZoomRef.current;
+    pendingZoomRef.current = null;
+    didFitBounds.current = true; // suppress the PMTiles-bounds fit
+    map.current.flyTo({ center: [lon, lat], zoom: 13, duration: 1500 });
+  }, []);
+  useEffect(() => {
+    if (!addFieldMode || zoomedToBusinessRef.current || !Business) return;
+    // Only zoom when we have a zipcode; otherwise leave the map at the default full-US view.
+    if (!Business.AddressZip) return;
+    const parts = [Business.AddressZip, Business.AddressCity, Business.AddressState, 'USA']
+      .filter(Boolean).join(', ');
+    zoomedToBusinessRef.current = true;
+    (async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(parts)}`,
+          { headers: { 'Accept': 'application/json' } }
+        );
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          pendingZoomRef.current = [parseFloat(data[0].lon), parseFloat(data[0].lat)];
+          if (map.current && map.current.loaded()) tryApplyPendingZoom();
+          else if (map.current) map.current.once('load', tryApplyPendingZoom);
+        }
+      } catch { /* silent */ }
+    })();
+  }, [addFieldMode, Business, tryApplyPendingZoom]);
 
   // ─── Sync drawMode to ref ─────────────────────────────────────────────────
   useEffect(() => {
@@ -690,9 +726,20 @@ export default function CropDetection() {
     btn.onclick = (ev) => { ev.preventDefault(); fetchAnalysis(lat, lon, cropName, props); };
     el.appendChild(btn);
 
+    if (BusinessID) {
+      const addBtn = document.createElement('button');
+      addBtn.innerText = '➕ Add Field';
+      addBtn.style.cssText = 'width:100%;padding:10px 16px;margin-top:8px;background:linear-gradient(135deg,#1a237e,#283593);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px';
+      addBtn.onclick = (ev) => {
+        ev.preventDefault();
+        navigate(`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field&lat=${lat}&lon=${lon}`);
+      };
+      el.appendChild(addBtn);
+    }
+
     popup.current = new maplibregl.Popup({ closeButton: true, maxWidth: '320px', className: 'custom-popup' })
       .setLngLat(e.lngLat).setDOMContent(el).addTo(map.current);
-  }, [fetchAnalysis, updateDrawLayers]);
+  }, [fetchAnalysis, updateDrawLayers, BusinessID, navigate]);
 
   // ─── Address search ───────────────────────────────────────────────────────
   const handleAddressChange = (val) => {
@@ -836,6 +883,8 @@ export default function CropDetection() {
         });
 
         map.current.on('click', handleMapClick);
+        // Apply pending zoom from "Add Field" mode if Business was geocoded before the map was ready.
+        tryApplyPendingZoom();
         map.current.on('mousemove', 'visual-layer', () => {
           if (map.current && !drawModeRef.current) map.current.getCanvas().style.cursor = 'pointer';
         });
@@ -882,6 +931,27 @@ export default function CropDetection() {
 
         {/* Map area */}
         <div style={{ position: 'relative', height: 'calc(100vh - 170px)', minHeight: 480 }}>
+
+          {/* Add-Field mode tooltip */}
+          {showAddFieldHint && (
+            <div style={{
+              position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
+              zIndex: 40, background: 'linear-gradient(135deg,#1a237e,#283593)', color: 'white',
+              padding: '12px 18px', borderRadius: 10, boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+              display: 'flex', alignItems: 'center', gap: 12, maxWidth: 560,
+              fontSize: 13.5, fontWeight: 500,
+            }}>
+              <span style={{ fontSize: 20 }}>👉</span>
+              <span>
+                Click a colored field on the map to select it, then tap <strong>Add Field</strong> in the popup.
+              </span>
+              <button
+                onClick={() => setShowAddFieldHint(false)}
+                style={{ background: 'rgba(255,255,255,0.18)', border: 'none', color: 'white',
+                  borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+              >Got it</button>
+            </div>
+          )}
 
           {/* Left sidebar */}
           <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 300, background: 'white', zIndex: 20, boxShadow: '2px 0 16px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column' }}>
