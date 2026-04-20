@@ -197,10 +197,14 @@ export default function ProductsMarketplace() {
       </div>
 
       {/* Hero */}
-      <div className="bg-[#3D6B34] text-white py-10 px-4">
-        <div className="max-w-6xl mx-auto">
+      <div
+        className="relative text-white py-10 px-4 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/ProductmarketplaceHeader.webp')" }}
+      >
+        <div className="absolute inset-0 bg-[#3D6B34]/70" />
+        <div className="max-w-6xl mx-auto relative">
           <h1 className="text-3xl font-bold mb-1">Products Marketplace</h1>
-          <p className="text-green-200 text-sm mb-5">Farm goods, handcrafted products, and more — shop direct from local sellers.</p>
+          <p className="text-green-100 text-sm mb-5">Farm goods, handcrafted products, and more — shop direct from local sellers.</p>
           <form onSubmit={handleSearch} className="flex gap-2 max-w-xl">
             <input
               value={searchInput} onChange={e => setSearchInput(e.target.value)}
