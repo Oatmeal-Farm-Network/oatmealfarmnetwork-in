@@ -6,31 +6,31 @@ import PageMeta from '../../PageMeta';
 import Breadcrumbs from '../../Breadcrumbs';
 
 // Directory category images — served from /public/images (WebP)
-const agriAssociaImg      = '/Public/images/AgAssociations.webp';
-const artisianImg         = '/Public/images/ArtisanProducers.webp';
-const brImg               = '/Public/images/BusinessResources.webp';
-const crafOrgImg          = '/Public/images/CrafterOrganizations.webp';
-const farmersMarketImg    = '/Public/images/FarmersMarket.webp';
-const farmsRanchesImg     = '/Public/images/Farm.webp';
+const agriAssociaImg      = '/images/AgAssociations.webp';
+const artisianImg         = '/images/ArtisanProducers.webp';
+const brImg               = '/images/BusinessResources.webp';
+const crafOrgImg          = '/images/CrafterOrganizations.webp';
+const farmersMarketImg    = '/images/FarmersMarket.webp';
+const farmsRanchesImg     = '/images/Farm.webp';
 const fiberImg            = '/images/DirectoryHome.webp';      // no FiberCooperatives image in /public/images — fallback
-const fiberMillsImg       = '/Public/images/FiberMill.webp';
-const fisheriesImg        = '/Public/images/Fishery.webp';
-const fishermenImg        = '/Public/images/Fishermen.webp';
-const foodCopImg          = '/Public/images/FoodCooperatives.webp';
-const foodHubImg          = '/Public/images/FoodHubs.webp';
-const groceryStoreImg     = '/Public/images/GroceryStores.webp';
-const hungerReliefImg     = '/Public/images/HumanReleafOrganization.webp';
-const manfacImg           = '/Public/images/Manufacturers.webp';
-const marinasImg          = '/Public/images/Marina.webp';
-const meatImg             = '/Public/images/MeatWholesalers.webp';
-const realEstateImg       = '/Public/images/RealEstateAgents.webp';
-const restaurantsImg      = '/Public/images/Restaurants.webp';
-const retailersImg        = '/Public/images/Retailers.webp';
-const serviceProvidersImg = '/Public/images/ServiceProviders.webp';
-const universitiesImg     = '/Public/images/University.webp';
-const vetImg              = '/Public/images/Vet.webp';
-const vineyardsImg        = '/Public/images/Vineyard.webp';
-const wineriesImg         = '/Public/images/Winery.webp';
+const fiberMillsImg       = '/images/FiberMill.webp';
+const fisheriesImg        = '/images/Fishery.webp';
+const fishermenImg        = '/images/Fishermen.webp';
+const foodCopImg          = '/images/FoodCooperatives.webp';
+const foodHubImg          = '/images/FoodHubs.webp';
+const groceryStoreImg     = '/images/GroceryStores.webp';
+const hungerReliefImg     = '/images/HumanReleafOrganization.webp';
+const manfacImg           = '/images/Manufacturers.webp';
+const marinasImg          = '/images/Marina.webp';
+const meatImg             = '/images/MeatWholesalers.webp';
+const realEstateImg       = '/images/RealEstateAgents.webp';
+const restaurantsImg      = '/images/Restaurants.webp';
+const retailersImg        = '/images/Retailers.webp';
+const serviceProvidersImg = '/images/ServiceProviders.webp';
+const universitiesImg     = '/images/University.webp';
+const vetImg              = '/images/Vet.webp';
+const vineyardsImg        = '/images/Vineyard.webp';
+const wineriesImg         = '/images/Winery.webp';
 const othersImg           = '/Directory/Icons/Other.jpg'; 
 
 const CATEGORIES = [
@@ -223,7 +223,7 @@ export default function DirectoryList() {
       <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
-            src="/Public/images/DirectoryHeaderImage.webp"
+            src="/images/DirectoryHeaderImage.webp"
             alt="Food System & Beyond Directory"
             className="w-full object-cover"
             style={{ height: '250px', display: 'block' }}
