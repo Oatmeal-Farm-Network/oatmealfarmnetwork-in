@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
+const FALLBACK_IMG = '/images/Services.webp';
+const EAGER_COUNT = 4;
 
 export default function ServicesDirectory() {
   const { categoryId } = useParams();
-  const navigate = useNavigate();
 
-  const [categories, setCategories]   = useState([]);
-  const [services,   setServices]     = useState([]);
-  const [catName,    setCatName]      = useState('');
-  const [loading,    setLoading]      = useState(true);
+  const [categories, setCategories] = useState([]);
+  const [services,   setServices]   = useState([]);
+  const [catName,    setCatName]    = useState('');
+  const [loading,    setLoading]    = useState(true);
 
-  // Load categories always
   useEffect(() => {
     fetch(`${API}/api/services/categories`)
       .then(r => r.json())
@@ -24,7 +24,6 @@ export default function ServicesDirectory() {
       .catch(() => {});
   }, []);
 
-  // Load services when category changes
   useEffect(() => {
     setLoading(true);
     const url = categoryId
@@ -36,7 +35,6 @@ export default function ServicesDirectory() {
       .catch(() => { setServices([]); setLoading(false); });
   }, [categoryId]);
 
-  // Set current category name
   useEffect(() => {
     if (categoryId && categories.length) {
       const cat = categories.find(c => String(c.ServiceCategoryID) === String(categoryId));
@@ -47,7 +45,7 @@ export default function ServicesDirectory() {
   }, [categoryId, categories]);
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
+    <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title={catName ? `${catName} Services | Agricultural Services Directory` : 'Agricultural Services Directory | Find Farm Services'}
         description={catName
@@ -71,58 +69,119 @@ export default function ServicesDirectory() {
       />
       <Header />
 
-      {/* Hero */}
-      <div
-        className="relative w-full bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/Services.webp')", height: '220px' }}
-      >
-        <div className="absolute inset-0 bg-linear-to-r from-black/60 via-black/30 to-transparent" />
-        <div className="relative max-w-6xl mx-auto h-full px-4 flex flex-col justify-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">Services Directory</h1>
-          <p className="text-white/90 text-sm md:text-base">Browse farm and agricultural services by category.</p>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 py-10 flex-grow w-full">
+      {/* ── Hero ── */}
+      <div className="mx-auto px-4 pt-2 md:pt-6 w-full" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
           { label: 'Services Directory', to: categoryId ? '/services/directory' : undefined },
           ...(catName ? [{ label: catName }] : []),
         ]} />
 
-        {/* If no category selected — show category grid */}
+        <div className="relative w-full overflow-hidden rounded-xl rounded-b-none md:rounded-b-xl">
+          <img
+            src="/images/ServiceDirectory.webp"
+            alt="Agricultural Services Directory"
+            className="w-full object-cover block h-[160px] md:h-[250px]"
+            loading="eager"
+          />
+          <div className="hidden md:block absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }} />
+          <div className="hidden md:flex absolute inset-0 flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
+            <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 12px', lineHeight: 1.2 }}>
+              {catName || 'Agricultural Services Directory'}
+            </h1>
+            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 8px', lineHeight: 1.6 }}>
+              From veterinarians and farriers to shearing, equipment rental, and farm consulting — connect with{' '}
+              <strong>{categories.length > 0 ? `${categories.length} service categories` : '…'}</strong>{' '}
+              of agricultural professionals serving farms and ranches.
+            </p>
+            <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
+              Listings are added regularly. If you'd like to list a service or help us grow the directory, please{' '}
+              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>Contact Us</Link>.
+            </p>
+          </div>
+        </div>
+
+        <div className="md:hidden bg-white px-5 py-4 rounded-b-xl border border-t-0 border-gray-200">
+          <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.4rem', fontWeight: 'bold', margin: '0 0 8px', lineHeight: 1.2 }}>
+            {catName || 'Agricultural Services Directory'}
+          </h1>
+          <p style={{ color: '#111111', fontSize: '0.85rem', margin: '0 0 6px', lineHeight: 1.6 }}>
+            Connect with <strong>{categories.length > 0 ? `${categories.length} categories` : '…'}</strong> of
+            agricultural professionals serving farms and ranches.
+          </p>
+          <p style={{ color: '#111111', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
+            Want to list a service?{' '}
+            <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>Contact Us</Link>.
+          </p>
+        </div>
+      </div>
+
+      <div className="mx-auto px-4 py-8 w-full flex-grow" style={{ maxWidth: '1300px' }}>
+
         {!categoryId ? (
           <>
+            <h2 className="text-lg font-bold text-gray-900 mb-5">Service Categories</h2>
+
             {categories.length === 0 ? (
               <div className="text-center py-20 text-gray-400">Loading categories…</div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {categories.map(cat => (
-                  <Link
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {categories.map((cat, index) => (
+                  <div
                     key={cat.ServiceCategoryID}
-                    to={`/services/directory/${cat.ServiceCategoryID}`}
-                    className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all flex items-start gap-4 no-underline"
+                    className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200"
                   >
-                    <div className="w-10 h-10 rounded-full bg-[#3D6B34]/10 flex items-center justify-center shrink-0">
-                      <svg className="w-5 h-5 text-[#3D6B34]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
+                    <Link
+                      to={`/services/directory/${cat.ServiceCategoryID}`}
+                      className="shrink-0 overflow-hidden"
+                      style={{ width: '155px', height: '155px' }}
+                    >
+                      <img
+                        src={FALLBACK_IMG}
+                        alt={cat.ServicesCategory}
+                        width="155"
+                        height="155"
+                        loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
+                        decoding={index < EAGER_COUNT ? 'sync' : 'async'}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                    </Link>
+
+                    <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
+                      <div>
+                        <Link
+                          to={`/services/directory/${cat.ServiceCategoryID}`}
+                          className="font-bold text-sm hover:underline"
+                          style={{ color: '#3D6B34' }}
+                        >
+                          {cat.ServicesCategory}
+                        </Link>
+                        <p className="text-xs text-gray-600 leading-relaxed mt-2">
+                          Find {cat.ServicesCategory.toLowerCase()} professionals offering services to farmers, ranchers, and agricultural businesses.
+                        </p>
+                      </div>
+                      <div className="mt-3">
+                        <Link
+                          to={`/services/directory/${cat.ServiceCategoryID}`}
+                          className="text-xs font-bold hover:underline"
+                          style={{ color: '#3D6B34' }}
+                        >
+                          EXPLORE →
+                        </Link>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-800 text-base mb-0.5">{cat.ServicesCategory}</h3>
-                      <p className="text-xs text-gray-500">View all services in this category</p>
-                    </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
           </>
         ) : (
-          /* Category selected — show services list */
           <>
-            <div className="flex items-center gap-4 mb-8 flex-wrap">
-              <h1 className="text-3xl font-bold text-gray-800">{catName || 'Services'}</h1>
-              {/* Category filter chips */}
+            <div className="flex items-center gap-3 flex-wrap mb-5">
+              <Link to="/services/directory" className="text-sm text-[#3D6B34] hover:underline">
+                ← All Categories
+              </Link>
+              <span className="text-gray-300">|</span>
               <div className="flex gap-2 flex-wrap">
                 {categories.map(cat => (
                   <Link
@@ -148,55 +207,71 @@ export default function ServicesDirectory() {
                 <Link to="/services/directory" className="text-[#3D6B34] hover:underline text-sm">← All Categories</Link>
               </div>
             ) : (
-              <div className="space-y-4">
-                {services.map(svc => (
-                  <Link
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {services.map((svc, index) => (
+                  <div
                     key={svc.ServicesID}
-                    to={`/services/public/${svc.ServicesID}`}
-                    className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex gap-5 items-start no-underline group"
+                    className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200"
                   >
-                    {svc.Photo1 ? (
-                      <img src={svc.Photo1} alt={svc.ServiceTitle}
-                        className="w-20 h-20 rounded-lg object-cover shrink-0"
-                        onError={e => e.target.style.display = 'none'} />
-                    ) : (
-                      <div className="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 text-2xl">🔧</div>
-                    )}
-                    <div className="flex-grow min-w-0">
-                      <h3 className="font-bold text-gray-800 text-lg group-hover:text-[#3D6B34] transition-colors mb-0.5">
-                        {svc.ServiceTitle}
-                      </h3>
-                      <p className="text-sm text-gray-500 mb-1">{svc.BusinessName}</p>
-                      {svc.ServicesDescription && (
-                        <p className="text-sm text-gray-600 line-clamp-2">{svc.ServicesDescription}</p>
-                      )}
+                    <Link
+                      to={`/services/public/${svc.ServicesID}`}
+                      className="shrink-0 overflow-hidden"
+                      style={{ width: '155px', height: '155px' }}
+                    >
+                      <img
+                        src={svc.Photo1 || FALLBACK_IMG}
+                        alt={svc.ServiceTitle}
+                        width="155"
+                        height="155"
+                        loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
+                        decoding={index < EAGER_COUNT ? 'sync' : 'async'}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        onError={e => { e.target.onerror = null; e.target.src = FALLBACK_IMG; }}
+                      />
+                    </Link>
+
+                    <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
+                      <div>
+                        <Link
+                          to={`/services/public/${svc.ServicesID}`}
+                          className="font-bold text-sm hover:underline block"
+                          style={{ color: '#3D6B34' }}
+                        >
+                          {svc.ServiceTitle}
+                        </Link>
+                        <p className="text-xs font-semibold mt-0.5" style={{ color: '#819360' }}>
+                          {svc.BusinessName}
+                        </p>
+                        {svc.ServicesDescription && (
+                          <p className="text-xs text-gray-600 leading-relaxed mt-2 line-clamp-3">
+                            {svc.ServicesDescription}
+                          </p>
+                        )}
+                      </div>
+                      <div className="mt-3 flex items-end justify-between gap-2">
+                        <Link
+                          to={`/services/public/${svc.ServicesID}`}
+                          className="text-xs font-bold hover:underline"
+                          style={{ color: '#3D6B34' }}
+                        >
+                          VIEW →
+                        </Link>
+                        <div className="text-right shrink-0">
+                          {svc.ServiceContactForPrice ? (
+                            <span className="text-xs text-gray-500 italic">Contact for Price</span>
+                          ) : svc.ServicePrice ? (
+                            <span className="text-sm font-bold text-[#3D6B34]">
+                              ${parseFloat(svc.ServicePrice).toLocaleString()}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      {svc.ServiceContactForPrice ? (
-                        <span className="text-sm text-gray-500 italic">Contact for Price</span>
-                      ) : svc.ServicePrice ? (
-                        <span className="text-base font-bold text-[#3D6B34]">
-                          ${parseFloat(svc.ServicePrice).toLocaleString()}
-                        </span>
-                      ) : null}
-                      {svc.ServiceAvailable && (
-                        <p className="text-xs text-gray-400 mt-1">{svc.ServiceAvailable}</p>
-                      )}
-                    </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
           </>
-        )}
-
-        {/* Sidebar: all categories when viewing a category */}
-        {categoryId && (
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <Link to="/services/directory" className="text-sm text-[#3D6B34] hover:underline">
-              ← Back to All Categories
-            </Link>
-          </div>
         )}
       </div>
 
