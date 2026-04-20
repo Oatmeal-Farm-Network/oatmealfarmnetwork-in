@@ -80,7 +80,8 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" -m 3 \"http://localhost:8000/api/scraper-knowledge/stats\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" -m 3 -X POST \"http://localhost:8000/api/scraper-knowledge/lookup-bulk\" -H \"Content-Type: application/json\" -d '{\"platform_key\":\"_generic\",\"field_names\":[\"hero_headline\"]}')",
       "Bash(curl -s -X POST \"http://localhost:8000/api/scraper-knowledge/detect\" -H \"Content-Type: application/json\" -d '{\"html\":\"<html><head><meta name=\\\\\"generator\\\\\" content=\\\\\"WordPress\\\\\"></head></html>\",\"url\":\"https://example.com\"}' -m 5)",
-      "Bash(venv/Scripts/python.exe -c ' *)"
+      "Bash(venv/Scripts/python.exe -c ' *)",
+      "WebSearch"
     ]
   }
 }
