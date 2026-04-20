@@ -3,9 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
-import MoonPhase from './MoonPhase';
 import WeatherCompact from './WeatherCompact';
-import DashboardEventsCard from './DashboardEventsCard';
 import { useAccount } from './AccountContext';
 
 export default function Dashboard() {
@@ -16,6 +14,7 @@ export default function Dashboard() {
   const [businesses, setBusinesses] = useState([]);
   const [businessFieldsMap, setBusinessFieldsMap] = useState({});
   const [businessFeaturesMap, setBusinessFeaturesMap] = useState({});
+  const [businessEventsMap, setBusinessEventsMap] = useState({});
   const [expandedBusiness, setExpandedBusiness] = useState(null);
 
   useEffect(() => {
@@ -69,6 +68,24 @@ export default function Dashboard() {
             } catch { featuresMap[b.BusinessID] = {}; }
           }));
           setBusinessFeaturesMap(featuresMap);
+          // Fetch upcoming events for every business
+          const today = new Date(); today.setHours(0, 0, 0, 0);
+          const eventsMap = {};
+          await Promise.all(list.map(async b => {
+            try {
+              const r = await fetch(`${API_URL}/api/my-events?business_id=${b.BusinessID}`);
+              if (r.ok) {
+                const rows = await r.json();
+                const upcoming = (Array.isArray(rows) ? rows : [])
+                  .filter(e => !e.EventEndDate || new Date(e.EventEndDate) >= today)
+                  .sort((a, b) => new Date(a.EventStartDate || 0) - new Date(b.EventStartDate || 0));
+                eventsMap[b.BusinessID] = upcoming;
+              } else {
+                eventsMap[b.BusinessID] = [];
+              }
+            } catch { eventsMap[b.BusinessID] = []; }
+          }));
+          setBusinessEventsMap(eventsMap);
         })
         .catch(() => setBusinesses([]));
     }
@@ -152,13 +169,7 @@ export default function Dashboard() {
 
       <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
 
-        {/* Two column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* LEFT (2/3) — Accounts + Fields */}
-          <div className="lg:col-span-2 flex flex-col gap-4">
-
-            <DashboardEventsCard peopleId={user.peopleId} />
+        <div className="flex flex-col gap-4">
 
             <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
               <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-green-300">
@@ -179,6 +190,7 @@ export default function Dashboard() {
                   const isExpanded = expandedBusiness === b.BusinessID;
                   const features = businessFeaturesMap[b.BusinessID];
                   const quickLinks = buildQuickLinks(b.BusinessTypeID, b.BusinessID, features);
+                  const bizEvents = businessEventsMap[b.BusinessID] || [];
 
                   return (
                     <div key={b.BusinessID} className="mb-4 rounded-xl border border-gray-100 overflow-hidden shadow-sm">
@@ -234,6 +246,41 @@ export default function Dashboard() {
                               </div>
                             );
                           })()}
+
+                          {features?.events === true && (
+                            <div className="mb-4 pb-3 border-b border-gray-100">
+                              <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-sm font-semibold text-gray-700">🎪 Upcoming Events</h3>
+                                <div className="flex items-center gap-3">
+                                  <Link to={`/events/manage?BusinessID=${b.BusinessID}`}
+                                    className="text-xs text-[#3D6B34] hover:underline">Manage</Link>
+                                  <Link to={`/events/add?BusinessID=${b.BusinessID}`}
+                                    className="text-xs font-medium text-white bg-[#3D6B34] hover:bg-[#2d5226] px-2 py-0.5 rounded">
+                                    + Add
+                                  </Link>
+                                </div>
+                              </div>
+                              {bizEvents.length === 0 ? (
+                                <p className="text-xs text-gray-400">No upcoming events.</p>
+                              ) : (
+                                <div className="flex flex-col gap-1.5">
+                                  {bizEvents.slice(0, 5).map(ev => (
+                                    <Link key={ev.EventID}
+                                      to={`/events/${ev.EventID}/dashboard`}
+                                      className="flex items-center justify-between px-3 py-1.5 rounded-lg border border-gray-100 hover:border-green-200 hover:bg-green-50/40 text-sm">
+                                      <div className="min-w-0">
+                                        <span className="font-medium text-gray-800 truncate">{ev.EventName}</span>
+                                        {!ev.IsPublished && <span className="ml-2 text-[10px] text-gray-400 uppercase">draft</span>}
+                                      </div>
+                                      <span className="text-xs text-gray-500 shrink-0 ml-2">
+                                        {ev.EventStartDate ? new Date(ev.EventStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                                      </span>
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
 
                           {isFarmRanch && features?.precision_ag && (
                             <>
@@ -373,19 +420,8 @@ export default function Dashboard() {
                 })
               )}
             </div>
-          </div>
-          {/* END LEFT column */}
-
-          {/* RIGHT (1/3) — Moon phase */}
-          <div className="flex flex-col gap-4 h-fit sticky top-4">
-            <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-              <MoonPhase />
-            </div>
-          </div>
-          {/* END RIGHT column */}
 
         </div>
-        {/* END grid */}
 
       </div>
       {/* END outer container */}

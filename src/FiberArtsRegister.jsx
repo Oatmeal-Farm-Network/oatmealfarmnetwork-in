@@ -49,11 +49,11 @@ function EntryForm({ initial, onSave, onCancel, categories, animals, saving }) {
         <RichTextEditor value={form.Description || ''}
           onChange={(v) => setForm(f => ({ ...f, Description: v }))} minHeight={140} />
       </div>
-      <div className="flex justify-start gap-2">
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={onCancel} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
         <button type="submit" disabled={saving} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg disabled:opacity-50">
           {saving ? 'Saving…' : 'Save Entry'}
         </button>
-        <button type="button" onClick={onCancel} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
       </div>
     </form>
   );

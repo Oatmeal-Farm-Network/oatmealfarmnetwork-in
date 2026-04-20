@@ -71,6 +71,24 @@ export default function EventAdminDashboard() {
   const [attendees, setAttendees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [testRequest, setTestRequest] = useState({ sending: false, result: null });
+  const [recapDraft, setRecapDraft] = useState({ sending: false, blogId: null, error: null });
+
+  const generateRecapDraft = async () => {
+    setRecapDraft({ sending: true, blogId: null, error: null });
+    try {
+      const token = localStorage.getItem('access_token');
+      const r = await fetch(`${API}/api/events/${eventId}/generate-recap-draft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({}),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      const j = await r.json();
+      setRecapDraft({ sending: false, blogId: j.blog_id, error: null });
+    } catch (e) {
+      setRecapDraft({ sending: false, blogId: null, error: String(e.message || e) });
+    }
+  };
 
   const sendTestimonialRequests = async () => {
     if (!window.confirm('Send a testimonial request email to every paid attendee who hasn\'t already been asked?')) return;
@@ -223,6 +241,31 @@ export default function EventAdminDashboard() {
             {testRequest.result?.error && (
               <div className="mt-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">
                 {testRequest.result.error}
+              </div>
+            )}
+
+            <div className="mt-4 pt-4 border-t border-gray-200 flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <h3 className="font-bold text-gray-700 mb-1">Blog recap draft</h3>
+                <p className="text-sm text-gray-600">
+                  Auto-generate a blog draft with attendance numbers and highlights — edit and
+                  publish from your blog when ready.
+                </p>
+              </div>
+              <button onClick={generateRecapDraft} disabled={recapDraft.sending}
+                className="text-sm px-4 py-2 rounded-lg bg-[#3D6B34] text-white hover:bg-[#2f5226] disabled:opacity-50 whitespace-nowrap">
+                {recapDraft.sending ? 'Generating…' : recapDraft.blogId ? '✅ Draft created' : '📝 Generate recap draft'}
+              </button>
+            </div>
+            {recapDraft.blogId && (
+              <div className="mt-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded p-2">
+                Draft saved — <button onClick={() => navigate('/blog/manage')}
+                  className="underline font-medium">open Blog Manager</button> to edit and publish.
+              </div>
+            )}
+            {recapDraft.error && (
+              <div className="mt-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">
+                {recapDraft.error}
               </div>
             )}
           </div>

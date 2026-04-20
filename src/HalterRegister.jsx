@@ -110,9 +110,9 @@ function AnimalRegForm({ animals, classes, onSave, onCancel, saving, reg }) {
         </div>
       </div>
 
-      <div className="flex justify-start gap-2">
-        <button type="submit" disabled={saving} className={btn}>{saving ? 'Saving…' : 'Save Registration'}</button>
+      <div className="flex justify-end gap-2">
         <button type="button" onClick={onCancel} className={btnGhost}>Cancel</button>
+        <button type="submit" disabled={saving} className={btn}>{saving ? 'Saving…' : 'Save Registration'}</button>
       </div>
     </form>
   );

@@ -60,9 +60,9 @@ function ConfigTab({ eventId }) {
         <RichTextEditor value={cfg.PaymentTerms || ''}
           onChange={(v) => setCfg(c => ({ ...c, PaymentTerms: v }))} minHeight={120} />
       </div>
-      <div className="flex justify-start items-center gap-3 pt-2">
+      <div className="flex justify-end items-center gap-3 pt-2">
+        {msg && <span className="text-xs text-gray-500 mr-auto">{msg}</span>}
         <button onClick={save} className={btn}>Save Config</button>
-        {msg && <span className="text-xs text-gray-500">{msg}</span>}
       </div>
     </div>
   );
@@ -115,9 +115,9 @@ function LotForm({ initial, onSave, onCancel }) {
             {LOT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
           </select></div>
       </div>
-      <div className="flex justify-start gap-2">
-        <button type="submit" className={btn}>Save Lot</button>
+      <div className="flex justify-end gap-2">
         <button type="button" onClick={onCancel} className={btnGhost}>Cancel</button>
+        <button type="submit" className={btn}>Save Lot</button>
       </div>
     </form>
   );

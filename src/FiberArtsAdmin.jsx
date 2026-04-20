@@ -115,11 +115,11 @@ function ConfigTab({ eventId }) {
         <input type="checkbox" checked={cfg.IsActive} onChange={setB('IsActive')} className="w-4 h-4 accent-green-600" />
         Show is active (attendees can enter)
       </label>
-      <div className="flex items-center justify-start gap-3 pt-2">
+      <div className="flex items-center justify-end gap-3 pt-2">
+        {msg && <span className="text-sm text-gray-500 mr-auto">{msg}</span>}
         <button type="submit" disabled={saving} className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
           {saving ? 'Saving…' : 'Save Configuration'}
         </button>
-        {msg && <span className="text-sm text-gray-500">{msg}</span>}
       </div>
     </form>
   );
@@ -198,9 +198,9 @@ function CategoriesTab({ eventId }) {
             <label className={lbl}>Display order</label>
             <input type="number" value={draft.DisplayOrder} onChange={e => setDraft(d => ({ ...d, DisplayOrder: Number(e.target.value) || 0 }))} className={`${inp} w-28`} />
           </div>
-          <div className="flex justify-start gap-2">
-            <button onClick={save} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg">{editingId ? 'Update' : 'Add'}</button>
+          <div className="flex justify-end gap-2">
             <button onClick={() => { setAdding(false); setEditingId(null); setDraft({ CategoryName: '', CategoryDescription: '', DisplayOrder: 0 }); }} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
+            <button onClick={save} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg">{editingId ? 'Update' : 'Add'}</button>
           </div>
         </div>
       )}
@@ -289,9 +289,9 @@ function EntriesTab({ eventId }) {
                       <RichTextEditor value={judgeDraft.JudgeNotes || ''}
                         onChange={(v) => setJudgeDraft(d => ({ ...d, JudgeNotes: v }))} minHeight={130} />
                     </div>
-                    <div className="flex justify-start gap-2">
-                      <button onClick={saveJudge} className="px-3 py-1 text-sm bg-[#3D6B34] text-white rounded-lg">Save</button>
+                    <div className="flex justify-end gap-2">
                       <button onClick={() => setJudgingId(null)} className="px-3 py-1 text-sm border border-gray-300 rounded-lg">Cancel</button>
+                      <button onClick={saveJudge} className="px-3 py-1 text-sm bg-[#3D6B34] text-white rounded-lg">Save</button>
                     </div>
                   </div>
                 ) : (

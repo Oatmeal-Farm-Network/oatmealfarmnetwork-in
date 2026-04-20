@@ -187,14 +187,14 @@ export default function ConferenceRegister() {
 
           {err && <div className="text-sm text-red-600">{err}</div>}
 
-          <div className="flex items-center gap-3 justify-start">
+          <div className="flex items-center gap-3 justify-end">
+            <Link to={`/events/${eventId}`} className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+              Cancel
+            </Link>
             <button type="submit" disabled={saving}
               className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-5 py-2 rounded-lg disabled:opacity-50">
               {saving ? 'Registering…' : 'Register'}
             </button>
-            <Link to={`/events/${eventId}`} className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
-              Cancel
-            </Link>
           </div>
         </form>
       </div>

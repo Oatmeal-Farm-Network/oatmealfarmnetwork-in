@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAccount } from './AccountContext';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -25,16 +26,42 @@ function daysUntil(d) {
 }
 
 export default function DashboardEventsCard({ peopleId }) {
+  const { businesses } = useAccount() || {};
   const [data, setData] = useState({ hosting: [], registered: [], pending: [] });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!peopleId) return;
-    fetch(`${API}/api/my-upcoming-events?people_id=${peopleId}`, { headers: authHeaders() })
-      .then(r => r.ok ? r.json() : { hosting: [], registered: [], pending: [] })
-      .then(setData)
+    setLoading(true);
+    const attendeePromise = fetch(`${API}/api/my-upcoming-events?people_id=${peopleId}`, { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : { registered: [], pending: [] })
+      .catch(() => ({ registered: [], pending: [] }));
+
+    const bizIds = (businesses || []).map(b => b.BusinessID).filter(Boolean);
+    const hostingPromise = bizIds.length === 0
+      ? Promise.resolve([])
+      : Promise.all(bizIds.map(id =>
+          fetch(`${API}/api/my-events?business_id=${id}`, { headers: authHeaders() })
+            .then(r => r.ok ? r.json() : [])
+            .catch(() => [])
+        )).then(results => {
+          const merged = [].concat(...results.map(r => Array.isArray(r) ? r : []));
+          const today = new Date(); today.setHours(0, 0, 0, 0);
+          return merged
+            .filter(e => !e.EventEndDate || new Date(e.EventEndDate) >= today)
+            .sort((a, b) => new Date(a.EventStartDate || 0) - new Date(b.EventStartDate || 0));
+        });
+
+    Promise.all([attendeePromise, hostingPromise])
+      .then(([attendee, hosting]) => {
+        setData({
+          hosting,
+          registered: attendee.registered || [],
+          pending: attendee.pending || [],
+        });
+      })
       .finally(() => setLoading(false));
-  }, [peopleId]);
+  }, [peopleId, businesses]);
 
   const total = (data.hosting?.length || 0)
     + (data.registered?.length || 0)

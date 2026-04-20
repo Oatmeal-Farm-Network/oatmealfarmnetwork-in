@@ -85,9 +85,9 @@ function ConfigTab({ eventId }) {
         <input type="checkbox" checked={!!cfg.IsActive} onChange={(e) => setCfg(c => ({ ...c, IsActive: e.target.checked }))} />
         Show is active
       </label>
-      <div className="flex justify-start items-center gap-3 pt-2">
+      <div className="flex justify-end items-center gap-3 pt-2">
+        {msg && <span className="text-xs text-gray-500 mr-auto">{msg}</span>}
         <button onClick={save} disabled={saving} className={btn}>{saving ? 'Saving…' : 'Save Config'}</button>
-        {msg && <span className="text-xs text-gray-500">{msg}</span>}
       </div>
     </div>
   );
@@ -249,9 +249,9 @@ function ClassForm({ initial, onSave, onCancel }) {
         <div><label className={lbl}>Display order</label>
           <input type="number" value={form.DisplayOrder} onChange={set('DisplayOrder')} className={inp} /></div>
       </div>
-      <div className="flex justify-start gap-2">
-        <button type="submit" className={btn}>Save</button>
+      <div className="flex justify-end gap-2">
         <button type="button" onClick={onCancel} className={btnGhost}>Cancel</button>
+        <button type="submit" className={btn}>Save</button>
       </div>
     </form>
   );

@@ -5,31 +5,33 @@ import Footer from '../../Footer';
 import PageMeta from '../../PageMeta';
 import Breadcrumbs from '../../Breadcrumbs';
 
-import agriAssociaImg from '../Icons/Agricultural Associations.jpg';
-import artisianImg     from '../Icons/Artisan Producers.jpg';
-import brImg           from '../Icons/Business Resources.jpg';
-import crafOrgImg      from '../Icons/Crafter-organizations.jpg';
-import farmersMarketImg from '../Icons/Farmers Markets.jpg';
-import farmsRanchesImg from '../Icons/Farms_Ranches.jpg';
-import fiberImg        from '../Icons/Fiber Cooperatives.jpg';
-import fiberMillsImg   from '../Icons/Fiber Mills.jpg';
-import fisheriesImg    from '../Icons/Fisheries.jpg';
-import fishermenImg    from '../Icons/Fishermen.jpg';
-import foodCopImg      from '../Icons/Food Cooperatives.jpg';
-import foodHubImg      from '../Icons/Food Hubs.jpg';
-import groceryStoreImg from '../Icons/Grocery Stores.jpg';
-import manfacImg       from '../Icons/Manufacturers.jpg';
-import marinasImg      from '../Icons/Marinas.jpg';
-import meatImg         from '../Icons/Meat Wholesalers.jpg';
-import realEstateImg   from '../Icons/Real Estate Agents.jpg';
-import restaurantsImg  from '../Icons/Restaurants.jpg';
-import retailersImg    from '../Icons/Retailers.jpg';
-import serviceProvidersImg from '../Icons/Service Providers.jpg';
-import universitiesImg from '../Icons/Universities.jpg';
-import vetImg          from '../Icons/Veterinarians.jpg';
-import vineyardsImg    from '../Icons/Vineyards.jpg';
-import wineriesImg     from '../Icons/Wineries.jpg';
-import othersImg       from '../Icons/Other.jpg';
+// Directory category images — served from /public/images (WebP)
+const agriAssociaImg      = '/Public/images/AgAssociations.webp';
+const artisianImg         = '/Public/images/ArtisanProducers.webp';
+const brImg               = '/Public/images/BusinessResources.webp';
+const crafOrgImg          = '/Public/images/CrafterOrganizations.webp';
+const farmersMarketImg    = '/Public/images/FarmersMarket.webp';
+const farmsRanchesImg     = '/Public/images/Farm.webp';
+const fiberImg            = '/images/DirectoryHome.webp';      // no FiberCooperatives image in /public/images — fallback
+const fiberMillsImg       = '/Public/images/FiberMill.webp';
+const fisheriesImg        = '/Public/images/Fishery.webp';
+const fishermenImg        = '/Public/images/Fishermen.webp';
+const foodCopImg          = '/Public/images/FoodCooperatives.webp';
+const foodHubImg          = '/Public/images/FoodHubs.webp';
+const groceryStoreImg     = '/Public/images/GroceryStores.webp';
+const hungerReliefImg     = '/Public/images/HumanReleafOrganization.webp';
+const manfacImg           = '/Public/images/Manufacturers.webp';
+const marinasImg          = '/Public/images/Marina.webp';
+const meatImg             = '/Public/images/MeatWholesalers.webp';
+const realEstateImg       = '/Public/images/RealEstateAgents.webp';
+const restaurantsImg      = '/Public/images/Restaurants.webp';
+const retailersImg        = '/Public/images/Retailers.webp';
+const serviceProvidersImg = '/Public/images/ServiceProviders.webp';
+const universitiesImg     = '/Public/images/University.webp';
+const vetImg              = '/Public/images/Vet.webp';
+const vineyardsImg        = '/Public/images/Vineyard.webp';
+const wineriesImg         = '/Public/images/Winery.webp';
+const othersImg           = '/Directory/Icons/Other.jpg'; 
 
 const CATEGORIES = [
   {
@@ -109,6 +111,12 @@ const CATEGORIES = [
     slug:  'grocery-stores',
     img:   groceryStoreImg,
     desc:  'Independent and regional grocery retailers committed to stocking local and regional food products alongside everyday staples.',
+  },
+  {
+    title: 'Hunger Relief Organizations',
+    slug:  'hunger-relief-organizations',
+    img:   hungerReliefImg,
+    desc:  'Food banks, pantries, rescue programs, and community kitchens that connect surplus farm and food production with families in need.',
   },
   {
     title: 'Manufacturers',
@@ -215,7 +223,7 @@ export default function DirectoryList() {
       <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
-            src="/images/DirectoryHeader.webp"
+            src="/Public/images/DirectoryHeaderImage.webp"
             alt="Food System & Beyond Directory"
             className="w-full object-cover"
             style={{ height: '250px', display: 'block' }}

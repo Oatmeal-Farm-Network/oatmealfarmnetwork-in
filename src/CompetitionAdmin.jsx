@@ -121,13 +121,13 @@ function ConfigTab({ eventId }) {
         <span>Active</span>
       </label>
 
-      <div className="flex items-center gap-3 justify-start">
+      <div className="flex items-center gap-3 justify-end">
+        {msg && <span className="text-sm text-[#3D6B34] mr-auto">{msg}</span>}
+        <Link to="/account/events" className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Cancel</Link>
         <button type="submit" disabled={saving}
           className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-5 py-2 rounded-lg disabled:opacity-50">
           {saving ? 'Saving…' : 'Save configuration'}
         </button>
-        <Link to="/account/events" className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Cancel</Link>
-        {msg && <span className="text-sm text-[#3D6B34]">{msg}</span>}
       </div>
     </form>
   );
@@ -207,13 +207,13 @@ function CategoriesTab({ eventId }) {
           <input className={inp} type="number" value={catForm.MaxEntries || ''}
             onChange={e => setCatForm(s => ({ ...s, MaxEntries: e.target.value }))} />
         </div>
-        <div className="flex gap-2">
-          <button type="submit" className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-4 py-2 rounded-lg">
-            {catForm.CategoryID ? 'Save' : 'Add category'}
-          </button>
+        <div className="flex justify-end gap-2">
           {catForm.CategoryID && (
             <button type="button" onClick={() => setCatForm({})} className="text-sm px-4 py-2 rounded-lg border border-gray-300">Cancel</button>
           )}
+          <button type="submit" className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-4 py-2 rounded-lg">
+            {catForm.CategoryID ? 'Save' : 'Add category'}
+          </button>
         </div>
       </form>
 
@@ -349,13 +349,13 @@ function JudgesTab({ eventId }) {
           <input className={inp} value={form.Credentials || ''}
             onChange={e => setForm(s => ({ ...s, Credentials: e.target.value }))} />
         </div>
-        <div className="md:col-span-4 flex gap-2">
-          <button type="submit" className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-4 py-2 rounded-lg">
-            {form.JudgeID ? 'Save' : 'Add judge'}
-          </button>
+        <div className="md:col-span-4 flex justify-end gap-2">
           {form.JudgeID && (
             <button type="button" onClick={() => setForm({})} className="text-sm px-4 py-2 rounded-lg border border-gray-300">Cancel</button>
           )}
+          <button type="submit" className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-4 py-2 rounded-lg">
+            {form.JudgeID ? 'Save' : 'Add judge'}
+          </button>
         </div>
       </form>
 
@@ -475,13 +475,13 @@ function EntriesTab({ eventId }) {
           <input className={inp} value={form.EntryTitle || ''}
             onChange={e => setForm(s => ({ ...s, EntryTitle: e.target.value }))} />
         </div>
-        <div className="md:col-span-3 flex gap-2">
-          <button type="submit" className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-4 py-2 rounded-lg">
-            {form.EntryID ? 'Save entry' : 'Add entry'}
-          </button>
+        <div className="md:col-span-3 flex justify-end gap-2">
           {form.EntryID && (
             <button type="button" onClick={() => setForm({})} className="text-sm px-4 py-2 rounded-lg border border-gray-300">Cancel</button>
           )}
+          <button type="submit" className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-4 py-2 rounded-lg">
+            {form.EntryID ? 'Save entry' : 'Add entry'}
+          </button>
         </div>
       </form>
 
@@ -624,7 +624,7 @@ function ScoreModal({ data, onClose }) {
           })}
         </div>
 
-        <div className="flex justify-start mt-4">
+        <div className="flex justify-end mt-4">
           <button onClick={onClose} className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-5 py-2 rounded-lg">Done</button>
         </div>
       </div>

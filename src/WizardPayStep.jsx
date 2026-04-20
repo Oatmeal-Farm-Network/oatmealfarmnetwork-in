@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -27,7 +28,7 @@ function loadStripeJs() {
   });
 }
 
-export default function WizardPayStep({ cartId, total, eventId, onPaid, onBack }) {
+export default function WizardPayStep({ cartId, total, eventId, hostBusinessId, onPaid, onBack }) {
   const cardMountRef = useRef(null);
   const [status, setStatus] = useState('loading'); // loading | ready | submitting | error | done
   const [err, setErr] = useState('');
@@ -38,6 +39,9 @@ export default function WizardPayStep({ cartId, total, eventId, onPaid, onBack }
   const [cardElement, setCardElement] = useState(null);
   const [zero, setZero] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+
+  // Cross-sell state
+  const [crossSell, setCrossSell] = useState([]);
 
   // Promo state
   const [cartTotals, setCartTotals] = useState({ Subtotal: total, DiscountAmount: 0, Total: total, PromoCode: null });
@@ -80,6 +84,22 @@ export default function WizardPayStep({ cartId, total, eventId, onPaid, onBack }
       refreshCart();
     })();
   }, [cartId, eventId]);
+
+  // Load marketplace cross-sell listings from the event host
+  useEffect(() => {
+    if (!hostBusinessId) return;
+    (async () => {
+      try {
+        const r = await fetch(`${API}/api/marketplace/seller/listings?business_id=${hostBusinessId}`);
+        if (!r.ok) return;
+        const data = await r.json();
+        const active = (Array.isArray(data) ? data : [])
+          .filter(x => x && x.IsActive && (x.QuantityAvailable || 0) > 0)
+          .slice(0, 4);
+        setCrossSell(active);
+      } catch {}
+    })();
+  }, [hostBusinessId]);
 
   const applyPromo = async () => {
     if (!promoInput.trim()) return;
@@ -300,6 +320,47 @@ export default function WizardPayStep({ cartId, total, eventId, onPaid, onBack }
 
       {status === 'ready' && err && !zero && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">{err}</div>
+      )}
+
+      {crossSell.length > 0 && (
+        <div className="border border-gray-200 rounded-lg p-4 bg-white">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-semibold text-gray-700">🛒 While you're here — shop from our farm</div>
+            <span className="text-xs text-gray-400">After checkout</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {crossSell.map(item => (
+              <Link
+                key={item.ListingID}
+                to={`/marketplace/${item.ListingID}`}
+                target="_blank"
+                rel="noopener"
+                className="block border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow bg-white"
+              >
+                {item.ImageURL ? (
+                  <img src={item.ImageURL} alt={item.Title}
+                    className="w-full h-24 object-cover"
+                    onError={e => { e.target.style.display = 'none'; }} />
+                ) : (
+                  <div className="w-full h-24 bg-gray-100 flex items-center justify-center text-2xl">
+                    {item.ProductType === 'meat' ? '🥩' : item.ProductType === 'processed_food' ? '🫙' : '🥕'}
+                  </div>
+                )}
+                <div className="p-2">
+                  <div className="text-xs font-medium text-gray-800 line-clamp-2" title={item.Title}>
+                    {item.Title}
+                  </div>
+                  <div className="text-sm font-bold text-[#3D6B34] mt-1">
+                    ${Number(item.UnitPrice || 0).toFixed(2)}<span className="text-xs font-normal text-gray-500">/{item.UnitLabel || 'unit'}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <div className="text-xs text-gray-500 mt-2">
+            Opens in a new tab — your registration will stay here.
+          </div>
+        </div>
       )}
 
       <div className="flex justify-between pt-4 border-t">

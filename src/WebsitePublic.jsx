@@ -202,10 +202,9 @@ function HeroBlock({ data, site }) {
             </h1>
           )}
           {data.subtext && (
-            <p style={{ fontSize: '1.2rem', color: data.image_url ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.85)',
-                         fontFamily: site.font_family }}>
-              {data.subtext}
-            </p>
+            <div className="site-rte" style={{ fontSize: '1.2rem', color: data.image_url ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.85)',
+                         fontFamily: site.font_family }}
+                 dangerouslySetInnerHTML={{ __html: addLinkTargets(data.subtext) }} />
           )}
           {data.cta_text && data.cta_link && (
             <a href={data.cta_link} style={{
@@ -1034,6 +1033,104 @@ function BlogBlock({ data, site, businessId }) {
   );
 }
 
+// ── Upcoming Events block ────────────────────────────────────────
+function EventsBlock({ data, site, businessId }) {
+  const [events, setEvents] = useState([]);
+  const maxItems = data.max_items || 6;
+  const layout = data.layout || 'cards';
+
+  useEffect(() => {
+    if (!businessId) return;
+    fetchContent(`${API}/api/events?business_id=${businessId}&limit=${maxItems}`)
+      .then(d => setEvents(Array.isArray(d) ? d : []))
+      .catch(() => setEvents([]));
+  }, [businessId, maxItems]);
+
+  if (events.length === 0) return null;
+
+  const heading = data.heading || 'Upcoming Events';
+  const headingStyle = data.heading_style || 'h1';
+  const linkColor = site.link_color || site.accent_color || site.primary_color || '#2563eb';
+  const textColor = site.text_color || '#111827';
+  const bodyFont = site.font_family || 'inherit';
+
+  const fmtDate = (d) => {
+    if (!d) return '';
+    const dt = new Date(d);
+    return isNaN(dt) ? '' : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+  const fmtRange = (s, e) => {
+    const sStr = fmtDate(s);
+    if (!e || s === e) return sStr;
+    return `${sStr} – ${fmtDate(e)}`;
+  };
+
+  const isList = layout === 'list';
+
+  return (
+    <SectionWrap site={site} blockBgColor={data.bg_color || undefined}>
+      <SectionHeading site={site} headingStyle={headingStyle}>{heading}</SectionHeading>
+      <div style={{
+        display: isList ? 'flex' : 'grid',
+        flexDirection: isList ? 'column' : undefined,
+        gridTemplateColumns: isList ? undefined : 'repeat(auto-fill, minmax(280px, 1fr))',
+        gap: '1.25rem',
+        marginTop: '1.5rem',
+      }}>
+        {events.map(ev => {
+          const location = [ev.EventLocationCity, ev.EventLocationState].filter(Boolean).join(', ');
+          return (
+            <div key={ev.EventID} style={{
+              background: '#fff', borderRadius: 12, overflow: 'hidden',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
+              display: 'flex', flexDirection: isList ? 'row' : 'column',
+            }}>
+              {ev.EventImage && (
+                <img src={ev.EventImage} alt={ev.EventName}
+                  style={{
+                    width: isList ? 220 : '100%',
+                    height: isList ? 'auto' : 180,
+                    minWidth: isList ? 220 : undefined,
+                    objectFit: 'cover', display: 'block',
+                  }}
+                  onError={e => e.target.style.display = 'none'} />
+              )}
+              <div style={{ padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+                <div style={{ fontSize: '0.78rem', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                  {ev.EventType || 'Event'}
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '1.05rem', color: textColor, fontFamily: bodyFont, lineHeight: 1.3 }}>
+                  {ev.EventName}
+                </div>
+                <div style={{ fontSize: '0.9rem', color: '#4B5563' }}>
+                  📅 {fmtRange(ev.EventStartDate, ev.EventEndDate)}
+                </div>
+                {location && (
+                  <div style={{ fontSize: '0.88rem', color: '#4B5563' }}>📍 {location}</div>
+                )}
+                <div style={{ marginTop: 'auto', paddingTop: '0.75rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <Link to={`/events/${ev.EventID}`} style={{ fontSize: '0.88rem', color: linkColor, fontWeight: 600, textDecoration: 'none' }}>
+                    Details →
+                  </Link>
+                  {ev.RegistrationRequired ? (
+                    <Link to={`/events/${ev.EventID}/register`} style={{
+                      fontSize: '0.85rem', fontWeight: 600,
+                      background: linkColor, color: '#fff',
+                      padding: '0.35rem 0.9rem', borderRadius: 6, textDecoration: 'none',
+                    }}>
+                      Register
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </SectionWrap>
+  );
+}
+
 // ── Testimonials blocks ──────────────────────────────────────────
 function wrapTestimonialHtml(html, font, size) {
   if (!html) return html;
@@ -1160,9 +1257,8 @@ function ContactBlock({ data, site }) {
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         <SectionHeading site={site} centered>{data.heading || 'Get In Touch'}</SectionHeading>
         {data.sub_heading && (
-          <p style={{ color: '#6B7280', textAlign: 'center', marginBottom: '1.5rem', fontFamily: site.font_family, lineHeight: 1.7 }}>
-            {data.sub_heading}
-          </p>
+          <div className="site-rte" style={{ color: '#6B7280', textAlign: 'center', marginBottom: '1.5rem', fontFamily: site.font_family, lineHeight: 1.7 }}
+               dangerouslySetInnerHTML={{ __html: addLinkTargets(data.sub_heading) }} />
         )}
         {/* Contact info */}
         <div className="flex flex-wrap gap-6 justify-center mb-6 text-sm text-gray-600">
@@ -1527,6 +1623,222 @@ function PackagesBlock({ data, site, businessId }) {
   );
 }
 
+// ── Association widgets ──────────────────────────────────────────
+
+function MemberDirectoryBlock({ data, site, businessId }) {
+  const [members, setMembers] = useState(null);
+  const [q, setQ] = useState('');
+  const [state, setState] = useState('');
+  const primary = site.primary_color || '#3D6B34';
+  const cols    = Math.max(1, Math.min(4, Number(data.columns) || 3));
+  const maxN    = Number(data.max_items) || 24;
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const params = new URLSearchParams({ business_id: String(businessId), max_items: String(maxN) });
+        if (q)     params.set('q', q);
+        if (state) params.set('state', state);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/website/content/members?${params}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const rows = await res.json();
+        if (alive) setMembers(Array.isArray(rows) ? rows : []);
+      } catch {
+        if (alive) setMembers([]);
+      }
+    })();
+    return () => { alive = false; };
+  }, [businessId, q, state, maxN]);
+
+  return (
+    <SectionWrap site={site}>
+      {data.heading && <SectionHeading site={site} headingStyle={data.heading_style || 'h1'}>{data.heading}</SectionHeading>}
+      {data.intro_body && <BodyText site={site} html={data.intro_body} />}
+      {(data.show_search || data.show_state_filter) && (
+        <div style={{ display: 'flex', gap: 10, marginBottom: '1rem', flexWrap: 'wrap' }}>
+          {data.show_search && (
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search members…"
+              style={{ flex: '1 1 220px', padding: '0.6rem 0.9rem', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: '0.95rem' }} />
+          )}
+          {data.show_state_filter && (
+            <select value={state} onChange={e => setState(e.target.value)}
+              style={{ padding: '0.6rem 0.9rem', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: '0.95rem', background: '#fff' }}>
+              <option value="">All states</option>
+              {['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'].map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
+      {members === null ? (
+        <p style={{ color: '#9ca3af' }}>Loading members…</p>
+      ) : members.length === 0 ? (
+        <p style={{ color: '#9ca3af', fontStyle: 'italic' }}>No members to display yet.</p>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 14 }}>
+          {members.map(m => (
+            <a key={m.business_id} href={`/ranch/${m.slug || m.business_id}`}
+               style={{ display: 'flex', gap: 10, padding: '0.8rem', border: '1px solid #e5e7eb', borderRadius: 10, background: '#fff', textDecoration: 'none', color: 'inherit' }}>
+              {m.logo_url
+                ? <img src={m.logo_url} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: '50%', flexShrink: 0 }} />
+                : <div style={{ width: 56, height: 56, borderRadius: '50%', background: primary + '22', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: primary, fontWeight: 700 }}>{(m.name || '?').charAt(0)}</div>}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, color: site.text_color || '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name || 'Member'}</div>
+                {(m.city || m.state) && <div style={{ fontSize: '0.82rem', color: '#6b7280' }}>{[m.city, m.state].filter(Boolean).join(', ')}</div>}
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </SectionWrap>
+  );
+}
+
+function PedigreeSearchBlock({ data, site, businessId }) {
+  const [name, setName]   = useState('');
+  const [reg, setReg]     = useState('');
+  const [owner, setOwner] = useState('');
+  const [results, setResults] = useState(null);
+  const [searching, setSearching] = useState(false);
+  const primary = site.primary_color || '#3D6B34';
+  const maxN    = Number(data.max_results) || 20;
+
+  const runSearch = async (e) => {
+    e && e.preventDefault();
+    setSearching(true);
+    try {
+      const params = new URLSearchParams({ business_id: String(businessId), max_results: String(maxN) });
+      if (name)  params.set('name', name);
+      if (reg)   params.set('reg_number', reg);
+      if (owner) params.set('owner', owner);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/website/content/registry?${params}`);
+      setResults(res.ok ? await res.json() : []);
+    } catch {
+      setResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const fields = [];
+  if (data.show_name !== false)       fields.push(['name',       name, setName,   'Animal name']);
+  if (data.show_reg_number !== false) fields.push(['reg_number', reg,  setReg,    'Reg #']);
+  if (data.show_owner !== false)      fields.push(['owner',      owner, setOwner, 'Owner']);
+
+  return (
+    <SectionWrap site={site}>
+      {data.heading && <SectionHeading site={site} headingStyle={data.heading_style || 'h1'}>{data.heading}</SectionHeading>}
+      {data.intro_body && <BodyText site={site} html={data.intro_body} />}
+      <form onSubmit={runSearch} style={{ display: 'grid', gridTemplateColumns: `repeat(${fields.length}, 1fr) auto`, gap: 10, marginBottom: '1.2rem' }}>
+        {fields.map(([key, val, setter, label]) => (
+          <input key={key} value={val} onChange={e => setter(e.target.value)} placeholder={label}
+            style={{ padding: '0.6rem 0.9rem', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: '0.95rem' }} />
+        ))}
+        <button type="submit" disabled={searching}
+          style={{ background: primary, color: '#fff', border: 'none', borderRadius: 8, padding: '0.6rem 1.4rem', fontWeight: 700, cursor: searching ? 'wait' : 'pointer' }}>
+          {searching ? 'Searching…' : 'Search'}
+        </button>
+      </form>
+      {results === null ? (
+        <p style={{ color: '#9ca3af', fontStyle: 'italic' }}>Enter a search above to look up registered animals.</p>
+      ) : results.length === 0 ? (
+        <p style={{ color: '#9ca3af', fontStyle: 'italic' }}>No matching animals found.</p>
+      ) : (
+        <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1.2fr 100px', padding: '0.7rem 1rem', background: '#f9fafb', fontSize: '0.85rem', fontWeight: 700, color: '#374151' }}>
+            <div>Name</div><div>Reg #</div><div>Owner</div><div style={{ textAlign: 'right' }}></div>
+          </div>
+          {results.map(r => (
+            <div key={r.animal_id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1.2fr 100px', padding: '0.7rem 1rem', fontSize: '0.92rem', borderTop: '1px solid #f3f4f6' }}>
+              <div style={{ fontWeight: 600 }}>{r.name || '—'}</div>
+              <div style={{ color: '#6b7280' }}>{r.reg_number || '—'}</div>
+              <div style={{ color: '#6b7280' }}>{r.owner || '—'}</div>
+              <div style={{ textAlign: 'right' }}>
+                {r.detail_url && <a href={r.detail_url} style={{ color: primary, textDecoration: 'none', fontWeight: 600 }}>View ›</a>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionWrap>
+  );
+}
+
+function FeeScheduleBlock({ data, site }) {
+  const primary = site.primary_color || '#3D6B34';
+  const rows    = Array.isArray(data.rows) ? data.rows : [];
+  return (
+    <SectionWrap site={site}>
+      {data.heading && <SectionHeading site={site} headingStyle={data.heading_style || 'h1'}>{data.heading}</SectionHeading>}
+      {data.intro_body && <BodyText site={site} html={data.intro_body} />}
+      <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', padding: '0.7rem 1.1rem', background: '#f9fafb', fontSize: '0.9rem', fontWeight: 700, color: '#374151' }}>
+          <div>Item</div><div style={{ textAlign: 'right' }}>Amount</div><div style={{ paddingLeft: 18 }}>Notes</div>
+        </div>
+        {rows.length === 0 ? (
+          <div style={{ padding: '1rem 1.1rem', color: '#9ca3af', fontStyle: 'italic' }}>No fees listed.</div>
+        ) : rows.map((r, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', padding: '0.7rem 1.1rem', fontSize: '0.95rem', borderTop: '1px solid #f3f4f6', color: '#1f2937' }}>
+            <div>{r.label || '—'}</div>
+            <div style={{ textAlign: 'right', fontWeight: 700, color: primary }}>{r.amount || ''}</div>
+            <div style={{ paddingLeft: 18, color: '#6b7280' }}>{r.notes || ''}</div>
+          </div>
+        ))}
+      </div>
+    </SectionWrap>
+  );
+}
+
+function MapLocationBlock({ data, site }) {
+  const primary = site.primary_color || '#3D6B34';
+  const textColor = site.text_color || '#1f2937';
+  const isGoogleMapsEmbed = typeof data.embed_url === 'string' && /^https:\/\/(www\.)?google\.com\/maps\/embed/.test(data.embed_url);
+  return (
+    <SectionWrap site={site}>
+      {data.heading && <SectionHeading site={site} headingStyle={data.heading_style || 'h1'}>{data.heading}</SectionHeading>}
+      <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+        {isGoogleMapsEmbed && (
+          <iframe src={data.embed_url} style={{ border: 0, width: '100%', height: data.height || 320, display: 'block' }} loading="lazy" title="Location map" />
+        )}
+        {data.address && (
+          <div style={{ padding: '0.9rem 1.1rem', borderTop: isGoogleMapsEmbed ? '1px solid #e5e7eb' : 'none', fontSize: '1rem', color: textColor }}>
+            📍 {data.address}
+            {' '}<a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.address)}`} target="_blank" rel="noreferrer"
+                style={{ color: primary, marginLeft: 8 }}>Get directions ›</a>
+          </div>
+        )}
+      </div>
+    </SectionWrap>
+  );
+}
+
+function HoursOfOperationBlock({ data, site }) {
+  const rows = Array.isArray(data.hours) ? data.hours : [];
+  const textColor = site.text_color || '#1f2937';
+  return (
+    <SectionWrap site={site}>
+      {data.heading && <SectionHeading site={site} headingStyle={data.heading_style || 'h1'}>{data.heading}</SectionHeading>}
+      {data.intro_body && <BodyText site={site} html={data.intro_body} />}
+      <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', background: '#fff', maxWidth: 560 }}>
+        {rows.length === 0 ? (
+          <div style={{ padding: '1rem 1.1rem', color: '#9ca3af', fontStyle: 'italic' }}>Hours not yet listed.</div>
+        ) : rows.map((r, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', padding: '0.75rem 1.1rem', fontSize: '0.98rem', borderTop: i ? '1px solid #f3f4f6' : 'none', color: textColor }}>
+            <div style={{ fontWeight: 600 }}>{r.day || '—'}</div>
+            <div style={{ textAlign: 'right', color: r.closed ? '#9ca3af' : textColor }}>
+              {r.closed ? 'Closed' : (r.open && r.close ? `${r.open} – ${r.close}` : '—')}
+              {r.notes && !r.closed ? <span style={{ color: '#6b7280', fontSize: '0.82rem', marginLeft: 6 }}>({r.notes})</span> : null}
+            </div>
+          </div>
+        ))}
+      </div>
+      {data.timezone ? <p style={{ fontSize: '0.82rem', color: '#9ca3af', marginTop: 8 }}>All times {data.timezone}.</p> : null}
+    </SectionWrap>
+  );
+}
+
 // ── Block dispatcher ──────────────────────────────────────────────
 function RenderBlock({ block, site, businessId }) {
   const { block_type: type, block_data: data } = block;
@@ -1545,12 +1857,18 @@ function RenderBlock({ block, site, businessId }) {
     case 'marketplace':    return <MarketplaceBlock data={data} site={site} businessId={businessId} />;
     case 'gallery':        return <GalleryBlock data={data} site={site} businessId={businessId} />;
     case 'blog':           return <BlogBlock data={data} site={site} businessId={businessId} />;
+    case 'events':         return <EventsBlock data={data} site={site} businessId={businessId} />;
     case 'testimonials':   return <TestimonialsBlock data={data} site={site} businessId={businessId} />;
     case 'testimonial_random': return <TestimonialRandomBlock data={data} site={site} businessId={businessId} />;
     case 'packages':       return <PackagesBlock data={data} site={site} businessId={businessId} />;
     case 'contact':        return <ContactBlock data={data} site={site} />;
     case 'links':          return <LinksBlock data={data} site={site} />;
     case 'divider':        return <DividerBlock data={data} />;
+    case 'member_directory': return <MemberDirectoryBlock data={data} site={site} businessId={businessId} />;
+    case 'pedigree_search':  return <PedigreeSearchBlock  data={data} site={site} businessId={businessId} />;
+    case 'fee_schedule':     return <FeeScheduleBlock     data={data} site={site} />;
+    case 'hours_of_operation': return <HoursOfOperationBlock data={data} site={site} />;
+    case 'map_location':       return <MapLocationBlock       data={data} site={site} />;
     default:               return null;
   }
 }

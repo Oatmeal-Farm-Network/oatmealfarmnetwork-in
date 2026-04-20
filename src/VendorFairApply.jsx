@@ -72,13 +72,13 @@ function ApplyForm({ cfg, initial, onSave, onCancel, saving }) {
             placeholder="Corner spot, near entrance, by spinning demo…" /></div>
       </div>
       <div className="flex justify-between items-center flex-wrap gap-3">
-        <div className="flex gap-2">
+        <div className="text-sm">Estimated booth fee: <span className="font-bold text-[#3D6B34]">${fee.toFixed(2)}</span></div>
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onCancel} className={btnGhost}>Cancel</button>
           <button type="submit" disabled={saving} className={btn}>
             {saving ? 'Submitting…' : 'Submit Application'}
           </button>
-          <button type="button" onClick={onCancel} className={btnGhost}>Cancel</button>
         </div>
-        <div className="text-sm">Estimated booth fee: <span className="font-bold text-[#3D6B34]">${fee.toFixed(2)}</span></div>
       </div>
     </form>
   );

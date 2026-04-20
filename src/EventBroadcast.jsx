@@ -76,15 +76,15 @@ export default function EventBroadcast() {
               placeholder={'Hi {{name}},\n\n...'}
               onChange={e => setBodyHtml(e.target.value)} />
           </div>
-          <div className="flex justify-start gap-2 pt-2">
-            <button onClick={send} disabled={sending || !subject || !bodyHtml || recipients.length === 0}
-              className="px-4 py-2 bg-[#3D6B34] text-white text-sm rounded-lg hover:bg-[#2d5025] disabled:opacity-50">
-              {sending ? 'Sending…' : `Send to ${recipients.length}`}
-            </button>
+          <div className="flex justify-end gap-2 pt-2">
             <Link to={`/events/${eventId}/manage`}
               className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50">
               Cancel
             </Link>
+            <button onClick={send} disabled={sending || !subject || !bodyHtml || recipients.length === 0}
+              className="px-4 py-2 bg-[#3D6B34] text-white text-sm rounded-lg hover:bg-[#2d5025] disabled:opacity-50">
+              {sending ? 'Sending…' : `Send to ${recipients.length}`}
+            </button>
           </div>
           {result && (
             <div className={`text-sm mt-2 ${result.sent > 0 ? 'text-green-700' : 'text-red-600'}`}>

@@ -73,6 +73,7 @@ import SpeakerPortal from './SpeakerPortal';
 import EventAnalytics from './EventAnalytics';
 import EventAdminDashboard from './EventAdminDashboard';
 import EventFeaturesAdmin from './EventFeaturesAdmin';
+import ScraperKnowledgeAdmin from './ScraperKnowledgeAdmin';
 import EventClone from './EventClone';
 import BlogList from './BlogList';
 import BlogDetail from './BlogDetail';
@@ -297,6 +298,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/events/analytics" element={<EventAnalytics />} />
           <Route path="/events/:eventId/dashboard" element={<EventAdminDashboard />} />
           <Route path="/admin/events/features" element={<EventFeaturesAdmin />} />
+          <Route path="/admin/scraper-knowledge" element={<RequireAuth><ScraperKnowledgeAdmin /></RequireAuth>} />
           <Route path="/events/:eventId/clone" element={<EventClone />} />
           <Route path="/speaker/:accessCode" element={<SpeakerPortal />} />
           <Route path="/events/:eventId/register/wizard" element={<EventRegisterWizard />} />
@@ -334,8 +336,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           {/* Legacy ASP redirect */}
           <Route path="/livestockmarketplace/Animals/Details.asp" element={<LegacyAnimalRedirect />} />
           <Route path="/produce/meat" element={<MeatInventory />} />
-          <Route path="/app/news" element={<AccountLayout pageTitle="News Feed" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'News Feed' }]}><NewsFeed /></AccountLayout>} />
-          <Route path="/app/news/:id" element={<AccountLayout pageTitle="News Article" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'News Feed', to: '/app/news' }, { label: 'Article' }]}><ArticleDetail /></AccountLayout>} />
+          <Route path="/app/news" element={<AccountLayout allowAnonymous pageTitle="News Feed" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'News Feed' }]}><NewsFeed /></AccountLayout>} />
+          <Route path="/app/news/:id" element={<AccountLayout allowAnonymous pageTitle="News Article" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'News Feed', to: '/app/news' }, { label: 'Article' }]}><ArticleDetail /></AccountLayout>} />
           <Route path="/blog/authors/manage" element={<BlogAuthors />} />
           <Route path="/blog/authors/:authorId" element={<BlogAuthorDetail />} />
           <Route path="/blog/manage" element={<BlogManage />} />

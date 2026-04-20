@@ -58,7 +58,7 @@ function NavSection({ icon, label, expanded, isOpen, onToggle, children }) {
   );
 }
 
-export default function AccountLayout({ children, Business, BusinessID, PeopleID, pageTitle, breadcrumbs }) {
+export default function AccountLayout({ children, Business, BusinessID, PeopleID, pageTitle, breadcrumbs, allowAnonymous = false }) {
   const { Expanded, setExpanded, OpenSections, setOpenSections } = useAccount();
   const BT = Business?.BusinessTypeID;
   const [fields, setFields] = useState([]);
@@ -68,11 +68,12 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (allowAnonymous) return;
     const token = localStorage.getItem('access_token');
     if (!token) {
       navigate('/login');
     }
-  }, [navigate]);
+  }, [navigate, allowAnonymous]);
 
   useEffect(() => {
     if (BT === 8 && BusinessID) {

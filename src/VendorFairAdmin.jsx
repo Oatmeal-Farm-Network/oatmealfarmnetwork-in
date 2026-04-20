@@ -51,9 +51,9 @@ function ConfigTab({ eventId }) {
           onChange={(e) => setCfg(c => ({ ...c, IsActive: e.target.checked }))} />
         Vendor fair is accepting applications
       </label>
-      <div className="flex justify-start items-center gap-3 pt-2">
+      <div className="flex justify-end items-center gap-3 pt-2">
+        {msg && <span className="text-xs text-gray-500 mr-auto">{msg}</span>}
         <button onClick={save} className={btn}>Save Config</button>
-        {msg && <span className="text-xs text-gray-500">{msg}</span>}
       </div>
     </div>
   );

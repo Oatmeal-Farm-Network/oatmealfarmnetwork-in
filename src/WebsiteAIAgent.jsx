@@ -19,6 +19,19 @@ function LavenderBranchIcon({ size = 24 }) {
   );
 }
 
+function shortHost(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); }
+  catch { return url || ''; }
+}
+
+function relativeAge(storedAtSec) {
+  if (!storedAtSec) return '';
+  const diff = Math.max(0, Math.floor(Date.now() / 1000 - storedAtSec));
+  if (diff < 60)   return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  return `${Math.floor(diff / 3600)}h ago`;
+}
+
 function authHeaders() {
   const token = localStorage.getItem('access_token');
   return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
@@ -210,9 +223,12 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
   const [ttsEnabled, setTtsEnabled]       = useState(false);
   const [suggestions, setSuggestions]     = useState([]);
   const [pendingAction, setPendingAction] = useState(null);
+  const [previewUrl, setPreviewUrl]       = useState('');       // iframe src for design mockups
+  const [previewImageUrl, setPreviewImageUrl] = useState('');   // generated hero image
   const [confirming, setConfirming]       = useState(false);
   const [sttError, setSttError]           = useState('');
   const [conversationMode, setConversationMode] = useState(false);
+  const [lastScrape, setLastScrape]       = useState(null);     // {url, platform_name, stored_at, ttl_sec}
 
   const conversationModeRef = useRef(false);
   const sendMessageRef      = useRef(null);
@@ -259,6 +275,25 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
       .catch(() => {});
   }, [open, websiteId]);
 
+  // ── Last-scrape chip ──────────────────────────────────────────
+  useEffect(() => {
+    if (!open || !websiteId) return;
+    fetch(`${API}/api/lavendir/last-scrape/${websiteId}`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => setLastScrape(data?.last_scrape || null))
+      .catch(() => {});
+  }, [open, websiteId]);
+
+  const clearLastScrape = async () => {
+    setLastScrape(null);
+    try {
+      await fetch(`${API}/api/lavendir/last-scrape/${websiteId}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
+    } catch {}
+  };
+
   // ── Auto-scroll ───────────────────────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -271,6 +306,8 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
     if (!userText || loading) return;
     setInput('');
     setPendingAction(null);
+    setPreviewUrl('');
+    setPreviewImageUrl('');
 
     const newMessages = [...messages, { role: 'user', content: userText }];
     setMessages(newMessages);
@@ -294,6 +331,12 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
       const responseText = data.content;
       setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
       if (data.pending_action) setPendingAction(data.pending_action);
+      if (data.preview_url) {
+        const abs = data.preview_url.startsWith('http') ? data.preview_url : `${API}${data.preview_url}`;
+        setPreviewUrl(abs);
+      }
+      if (data.preview_image_url) setPreviewImageUrl(data.preview_image_url);
+      if (data.last_scrape !== undefined) setLastScrape(data.last_scrape);
 
       if (isConv) {
         // Conversation mode: speak → then restart listening
@@ -323,7 +366,12 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
-  const clearChat = () => { setMessages([]); setPendingAction(null); };
+  const clearChat = () => {
+    setMessages([]);
+    setPendingAction(null);
+    setPreviewUrl('');
+    setPreviewImageUrl('');
+  };
 
   // ── Conversation mode toggle ──────────────────────────────────
   const handleMicClick = async () => {
@@ -348,6 +396,8 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
     setConfirming(true);
     const action = pendingAction;
     setPendingAction(null);
+    setPreviewUrl('');
+    setPreviewImageUrl('');
     const isConv = conversationModeRef.current;
     try {
       const res = await fetch(`${API}/api/lavendir/confirm`, {
@@ -442,6 +492,21 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
               </svg>
             </button>
           )}
+          {/* Knowledge dashboard — only in expanded mode */}
+          {panelExpanded && (
+            <a
+              href="/admin/scraper-knowledge"
+              target="_blank"
+              rel="noreferrer"
+              title="Open learning dashboard"
+              className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/20 transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+            </a>
+          )}
           {/* Expand / collapse */}
           <button
             onClick={() => setPanelExpanded(v => !v)}
@@ -465,6 +530,34 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
           <button onClick={handleClose} className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/20 transition-colors text-lg leading-none">×</button>
         </div>
       </div>
+
+      {/* Last-scrape memory chip */}
+      {lastScrape?.url && (
+        <div className="px-3 py-1.5 border-b border-purple-100 bg-purple-50/60 shrink-0 flex items-center gap-2 text-[11px]">
+          <span className="text-purple-500">📎</span>
+          <span className="text-purple-700">Remembering</span>
+          <a
+            href={lastScrape.url}
+            target="_blank"
+            rel="noreferrer"
+            title={lastScrape.url}
+            className="text-purple-800 font-medium hover:underline truncate max-w-[180px]"
+          >
+            {shortHost(lastScrape.url)}
+          </a>
+          {lastScrape.platform_name && (
+            <span className="text-purple-400">· {lastScrape.platform_name}</span>
+          )}
+          <span className="text-purple-400">· {relativeAge(lastScrape.stored_at)}</span>
+          <button
+            onClick={clearLastScrape}
+            title="Forget this site"
+            className="ml-auto text-purple-400 hover:text-purple-700 px-1.5 py-0.5 rounded hover:bg-purple-100 transition-colors"
+          >
+            clear
+          </button>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3" style={{ background: '#faf9ff' }}>
@@ -512,6 +605,42 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
 
         <div ref={bottomRef} />
       </div>
+
+      {/* Design / hero preview — shows above the confirm banner when Lavendir has something visual to propose */}
+      {(previewImageUrl || previewUrl) && !confirming && (
+        <div className="border-t border-purple-100 bg-white shrink-0">
+          {previewImageUrl && (
+            <div className="p-2">
+              <p className="text-[11px] uppercase tracking-wide text-purple-500 mb-1">Generated hero image</p>
+              <img
+                src={previewImageUrl}
+                alt="Generated hero preview"
+                className="w-full rounded-lg border border-purple-100"
+                style={{ maxHeight: panelExpanded ? 420 : 180, objectFit: 'cover' }}
+              />
+            </div>
+          )}
+          {previewUrl && (
+            <div className="p-2">
+              <p className="text-[11px] uppercase tracking-wide text-purple-500 mb-1">Design preview</p>
+              <iframe
+                src={previewUrl}
+                title="Lavendir design preview"
+                className="w-full rounded-lg border border-purple-100 bg-white"
+                style={{ height: panelExpanded ? 460 : 220 }}
+              />
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-purple-600 hover:underline mt-1 inline-block"
+              >
+                Open preview in new tab ↗
+              </a>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Confirmation banner */}
       {(pendingAction || confirming) && (

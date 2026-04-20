@@ -150,11 +150,11 @@ function ConfigTab({ eventId }) {
         Dinner is active (guests can reserve seats)
       </label>
 
-      <div className="flex justify-start gap-3 pt-2">
+      <div className="flex justify-end gap-3 pt-2">
+        {msg && <span className="text-sm text-gray-500 self-center mr-auto">{msg}</span>}
         <button type="submit" disabled={saving} className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
           {saving ? 'Saving…' : 'Save Configuration'}
         </button>
-        {msg && <span className="text-sm text-gray-500 self-center">{msg}</span>}
       </div>
     </form>
   );
@@ -261,11 +261,11 @@ function MenuTab({ eventId }) {
               <input type="number" value={draft.DisplayOrder} onChange={e => setDraft(d => ({ ...d, DisplayOrder: e.target.value }))} className={inp} />
             </div>
           </div>
-          <div className="flex justify-start gap-2">
+          <div className="flex justify-end gap-2">
+            <button onClick={() => { setEditing(null); setDraft(null); }} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
             <button onClick={save} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg">
               {editing === 'new' ? 'Add' : 'Update'}
             </button>
-            <button onClick={() => { setEditing(null); setDraft(null); }} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
           </div>
         </div>
       )}
@@ -392,11 +392,11 @@ function TablesTab({ eventId }) {
             <label className={lbl}>Notes</label>
             <input value={draft.Notes || ''} onChange={e => setDraft(d => ({ ...d, Notes: e.target.value }))} className={inp} />
           </div>
-          <div className="flex justify-start gap-2">
+          <div className="flex justify-end gap-2">
+            <button onClick={() => { setEditing(null); setDraft(null); }} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
             <button onClick={save} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg">
               {editing === 'new' ? 'Add' : 'Update'}
             </button>
-            <button onClick={() => { setEditing(null); setDraft(null); }} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
           </div>
         </div>
       )}
@@ -658,9 +658,9 @@ function RegistrationsTab({ eventId }) {
                     <RichTextEditor value={draft.OrganizerNotes || ''}
                       onChange={(v) => setDraft(d => ({ ...d, OrganizerNotes: v }))} minHeight={90} />
                   </div>
-                  <div className="flex justify-start gap-2">
-                    <button onClick={save} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg">Save</button>
+                  <div className="flex justify-end gap-2">
                     <button onClick={() => { setEditing(null); setDraft(null); }} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
+                    <button onClick={save} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg">Save</button>
                   </div>
                 </div>
               )}

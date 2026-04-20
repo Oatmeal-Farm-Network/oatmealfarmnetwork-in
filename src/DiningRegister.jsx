@@ -295,13 +295,13 @@ export default function DiningRegister() {
                 <div className="text-lg font-semibold text-[#3D6B34]">Total ${fee.toFixed(2)}</div>
               </div>
 
-              <div className="flex justify-start gap-3">
-                <button type="submit" disabled={saving} className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
-                  {saving ? 'Saving…' : 'Reserve Seats'}
-                </button>
+              <div className="flex justify-end gap-3">
                 <Link to={`/events/${eventId}`} className="px-5 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 no-underline">
                   Cancel
                 </Link>
+                <button type="submit" disabled={saving} className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
+                  {saving ? 'Saving…' : 'Reserve Seats'}
+                </button>
               </div>
             </form>
           )}

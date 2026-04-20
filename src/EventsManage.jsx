@@ -695,6 +695,7 @@ export default function EventsManage() {
   };
 
   const save = async (form) => {
+    if (!BusinessID) { alert('An organization must be selected before saving an event.'); return; }
     setSaving(true);
     try {
       const payload = { ...form, BusinessID: parseInt(BusinessID), PeopleID: PeopleID ? parseInt(PeopleID) : null };

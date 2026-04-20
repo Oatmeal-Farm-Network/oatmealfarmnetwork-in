@@ -141,13 +141,13 @@ function ConfigTab({ eventId }) {
         </label>
       </div>
 
-      <div className="flex items-center gap-3 justify-start">
+      <div className="flex items-center gap-3 justify-end">
+        {msg && <span className="text-sm text-[#3D6B34] mr-auto">{msg}</span>}
+        <Link to="/account/events" className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Cancel</Link>
         <button type="submit" disabled={saving}
           className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-5 py-2 rounded-lg disabled:opacity-50">
           {saving ? 'Saving…' : 'Save configuration'}
         </button>
-        <Link to="/account/events" className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Cancel</Link>
-        {msg && <span className="text-sm text-[#3D6B34]">{msg}</span>}
       </div>
     </form>
   );
@@ -197,14 +197,14 @@ function SimpleListTab({ eventId, kind, fields, label }) {
             )}
           </div>
         ))}
-        <div className="flex gap-2">
-          <button type="submit" className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-4 py-2 rounded-lg">
-            {form[idKey] ? 'Save' : `Add ${label}`}
-          </button>
+        <div className="flex justify-end gap-2">
           {form[idKey] && (
             <button type="button" onClick={() => setForm({})}
               className="text-sm px-4 py-2 rounded-lg border border-gray-300">Cancel</button>
           )}
+          <button type="submit" className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-4 py-2 rounded-lg">
+            {form[idKey] ? 'Save' : `Add ${label}`}
+          </button>
         </div>
       </form>
 
@@ -311,14 +311,14 @@ function SpeakersTab({ eventId }) {
           <textarea className={inp} rows={3} value={form.Bio || ''}
             onChange={e => setForm(s => ({ ...s, Bio: e.target.value }))} />
         </div>
-        <div className="flex gap-2 justify-start">
-          <button type="submit" className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-4 py-2 rounded-lg">
-            {form.SpeakerID ? 'Save speaker' : 'Add speaker'}
-          </button>
+        <div className="flex gap-2 justify-end">
           {form.SpeakerID && (
             <button type="button" onClick={() => setForm({})}
               className="text-sm px-4 py-2 rounded-lg border border-gray-300">Cancel</button>
           )}
+          <button type="submit" className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-4 py-2 rounded-lg">
+            {form.SpeakerID ? 'Save speaker' : 'Add speaker'}
+          </button>
         </div>
       </form>
 
@@ -470,14 +470,14 @@ function SessionsTab({ eventId }) {
             {speakers.length === 0 && <span className="text-xs text-gray-400">Add speakers first</span>}
           </div>
         </div>
-        <div className="flex gap-2 justify-start">
-          <button type="submit" className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-4 py-2 rounded-lg">
-            {form.SessionID ? 'Save session' : 'Add session'}
-          </button>
+        <div className="flex gap-2 justify-end">
           {form.SessionID && (
             <button type="button" onClick={() => setForm({ Title: '', SessionStart: '', DurationMin: 60, SessionType: 'Breakout', SpeakerIDs: [] })}
               className="text-sm px-4 py-2 rounded-lg border border-gray-300">Cancel</button>
           )}
+          <button type="submit" className="bg-[#3D6B34] hover:bg-[#2D5228] text-white text-sm px-4 py-2 rounded-lg">
+            {form.SessionID ? 'Save session' : 'Add session'}
+          </button>
         </div>
       </form>
 

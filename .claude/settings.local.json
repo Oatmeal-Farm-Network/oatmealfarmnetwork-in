@@ -18,7 +18,10 @@
       "Bash(python -c \"import ast; ast.parse\\(open\\('nodes.py', encoding='utf-8-sig'\\).read\\(\\)\\); print\\('nodes.py OK'\\)\")",
       "Bash(python -c \"import ast; ast.parse\\(open\\('api.py', encoding='utf-8-sig'\\).read\\(\\)\\); print\\('api.py OK'\\)\")",
       "Bash(python -c \"import ast,io; ast.parse\\(io.open\\('history_store.py',encoding='utf-8-sig'\\).read\\(\\)\\); ast.parse\\(io.open\\('api.py',encoding='utf-8-sig'\\).read\\(\\)\\); print\\('ok'\\)\")",
-      "Bash(venv/Scripts/python.exe -c ' *)"
+      "Bash(venv/Scripts/python.exe -c ' *)",
+      "Bash(grep -iE \"^\\(AgAssociations|ArtisanProducers|BusinessResources|CrafterOrganizations|FarmersMarket|Farm|FiberCooperatives|FiberMill|Fisheries|Fishermen|FoodCooperatives|FoodHubs|GroceryStores|Manufacturers|Marinas|MeatWholesalers|RealEstateAgents|Restaurants|Retailers|ServiceProviders|Universities|Veterinarians|Vineyards|Wineries|Other|HungerRelief\\)\\\\.webp$\")",
+      "Bash(grep -iE \"\\\\.webp$\")",
+      "Bash([ -f \"$f.webp\" ])"
     ]
   }
 }

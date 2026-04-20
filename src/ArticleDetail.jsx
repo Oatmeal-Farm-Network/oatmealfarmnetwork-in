@@ -4,6 +4,21 @@ import { useParams, useNavigate } from 'react-router-dom';
 
 const NEWS_API = import.meta.env.VITE_NEWS_API_URL || import.meta.env.VITE_API_URL || '';
 
+const CATEGORY_IMAGES = {
+  Markets: '/images/news/news-markets.svg',
+  Weather: '/images/news/news-weather.svg',
+  Policy: '/images/news/news-policy.svg',
+  AgTech: '/images/news/news-agtech.svg',
+  Livestock: '/images/news/news-livestock.svg',
+  General: '/images/news/news-general.svg',
+};
+
+const getHeroImage = (article) => {
+  const img = article?.image?.trim();
+  if (img && img.startsWith('http')) return img;
+  return article?.placeholderImage || CATEGORY_IMAGES[article?.category] || CATEGORY_IMAGES.General;
+};
+
 const ArticleDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -39,11 +54,13 @@ const ArticleDetail = () => {
         ← Back to News
       </button>
 
-      {article.image && article.image.startsWith('http') && (
-        <img src={article.image} alt={article.title}
-          style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '12px', marginBottom: '1.5rem' }}
-          onError={e => { e.target.style.display = 'none'; }} />
-      )}
+      <img src={getHeroImage(article)} alt={article.title}
+        style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '12px', marginBottom: '1.5rem', background: '#f3f4f6' }}
+        onError={(e) => {
+          const fallback = CATEGORY_IMAGES[article.category] || CATEGORY_IMAGES.General;
+          if (e.target.src !== window.location.origin + fallback) e.target.src = fallback;
+        }} />
+
 
       <div style={{ marginBottom: '1rem' }}>
         <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>{article.source}</span>

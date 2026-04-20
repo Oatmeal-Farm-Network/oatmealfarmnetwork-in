@@ -31,6 +31,11 @@ const BLOCK_TYPES = [
   { type: 'testimonials',    icon: '🤝',  label: 'All Testimonials',   desc: 'Display all testimonials from your customers' },
   { type: 'testimonial_random', icon: '💬', label: 'Random Testimonial', desc: 'Show a single random testimonial' },
   { type: 'packages',       icon: '📦',  label: 'Package Deals',      desc: 'Bundled animal packages with pricing & savings' },
+  { type: 'member_directory', icon: '👥', label: 'Member Directory',   desc: 'Searchable directory of association members (association widget)' },
+  { type: 'pedigree_search',  icon: '🧬', label: 'Pedigree / Registry Search', desc: 'Public registry lookup by name or reg number (association widget)' },
+  { type: 'fee_schedule',     icon: '💲', label: 'Fee Schedule',       desc: 'Dues & registration fees in a clean table (association widget)' },
+  { type: 'hours_of_operation', icon: '🕒', label: 'Hours of Operation', desc: 'Weekly hours table — restaurants, vets, markets, tasting rooms' },
+  { type: 'map_location',   icon: '📍',  label: 'Map & Location',     desc: 'Address block with optional embedded map' },
   { type: 'divider',        icon: '➖',  label: 'Spacer / Divider',   desc: 'Visual separator between sections' },
 ];
 
@@ -66,6 +71,25 @@ const defaultBlockData = {
   testimonials:       { heading: '', heading_style: 'h1', intro_body: '', max_items: 0 },
   testimonial_random: { heading: '', heading_style: 'h1', intro_body: '', align: 'left' },
   packages:       { heading: 'Package Deals', heading_style: 'h1', intro_body: '' },
+  member_directory: { heading: 'Member Directory', intro_body: '', show_search: true, show_state_filter: true, max_items: 24, columns: 3 },
+  pedigree_search:  { heading: 'Registry Search', intro_body: 'Search the registry by animal name, registration number, or owner.', show_name: true, show_reg_number: true, show_owner: true, max_results: 20 },
+  fee_schedule:     { heading: 'Fee Schedule', intro_body: '', rows: [
+    { label: 'Membership — Active', amount: '$50', notes: 'Annual; voting rights' },
+    { label: 'Membership — Associate', amount: '$30', notes: 'Annual; no voting' },
+    { label: 'Registration — Member', amount: '$15', notes: 'Per animal' },
+    { label: 'Registration — Non-member', amount: '$40', notes: 'Per animal' },
+    { label: 'Transfer of Ownership', amount: '$10', notes: 'Per transfer' },
+  ]},
+  map_location: { heading: 'Find Us', address: '', embed_url: '', height: 320 },
+  hours_of_operation: { heading: 'Hours', intro_body: '', timezone: '', hours: [
+    { day: 'Monday',    open: '',  close: '', closed: false, notes: '' },
+    { day: 'Tuesday',   open: '',  close: '', closed: false, notes: '' },
+    { day: 'Wednesday', open: '',  close: '', closed: false, notes: '' },
+    { day: 'Thursday',  open: '',  close: '', closed: false, notes: '' },
+    { day: 'Friday',    open: '',  close: '', closed: false, notes: '' },
+    { day: 'Saturday',  open: '',  close: '', closed: false, notes: '' },
+    { day: 'Sunday',    open: '',  close: '', closed: true,  notes: '' },
+  ]},
   divider:        { height: 40 },
 };
 
@@ -887,7 +911,7 @@ function CaptionField({ initial, onSave }) {
 // reads/writes that object instead of block.block_data. `onFieldSave(key, val)`
 // is still called by the editor for every change, but the parent decides where
 // the save goes (top-level vs. nested column).
-function InlineContentEditor({ block, site, onFieldSave, data, compact, pages }) {
+function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, bodyField = 'body', bodyOnly = false }) {
   const d          = data || block.block_data || {};
   const fontFamily = site?.font_family        || 'inherit';
   const bgColor    = d.bg_color || site?.page_background_color || site?.bg_color || '#fff';
@@ -895,7 +919,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
   const cWidth     = compact ? '100%' : (site?.body_content_width || '100%');
   // Compact mode (4-col blocks) shrinks the outer padding so content isn't
   // smothered by ~40px side gutters when the column is already narrow.
-  const outerPad   = compact ? '0.5rem 0.5rem' : '1.75rem 2.5rem';
+  const outerPad   = bodyOnly ? '0.5rem' : compact ? '0.5rem 0.5rem' : '1.75rem 2.5rem';
 
   // Derive image source info first (needed for imgWidth initial state)
   const imgs    = Array.isArray(d.images) && d.images.length > 0 ? d.images : [];
@@ -972,7 +996,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
       headingRef.current.textContent = d.heading || '';
       Object.assign(headingRef.current.style, headingTypoStyle(d.heading_style, site));
     }
-    if (bodyRef.current) bodyRef.current.innerHTML = d.body || '';
+    if (bodyRef.current) bodyRef.current.innerHTML = d[bodyField] || '';
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save selection from whichever editable currently has focus
@@ -1142,7 +1166,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
       a.setAttribute('rel', 'noopener noreferrer');
       a.removeAttribute('data-page-slug');
     });
-    if (bodyRef.current) onFieldSave('body', bodyRef.current.innerHTML);
+    if (bodyRef.current) onFieldSave(bodyField, bodyRef.current.innerHTML);
     setLinkPanel(false);
     setLinkHref('');
   };
@@ -1161,7 +1185,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
       a.removeAttribute('target');
       a.removeAttribute('rel');
     });
-    if (bodyRef.current) onFieldSave('body', bodyRef.current.innerHTML);
+    if (bodyRef.current) onFieldSave(bodyField, bodyRef.current.innerHTML);
     setLinkPanel(false);
     setLinkPageSlug('');
   };
@@ -1254,7 +1278,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
       p.innerHTML = '<br>';
       bodyRef.current.appendChild(p);
     }
-    onFieldSave('body', bodyRef.current.innerHTML);
+    onFieldSave(bodyField, bodyRef.current.innerHTML);
     setImgPanel(false);
     setImgUrl('');
   };
@@ -1379,7 +1403,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
       p.innerHTML = '<br>';
       bodyRef.current.appendChild(p);
     }
-    onFieldSave('body', bodyRef.current.innerHTML);
+    onFieldSave(bodyField, bodyRef.current.innerHTML);
     setVidPanel(false);
     setVidUrl('');
   };
@@ -1464,7 +1488,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       resizingRef.current = false;
-      onFieldSave('body', bodyRef.current.innerHTML);
+      onFieldSave(bodyField, bodyRef.current.innerHTML);
       setImgRect(img.getBoundingClientRect());
       setImgToolbarPos({ top: img.getBoundingClientRect().top - 80, left: img.getBoundingClientRect().left });
     };
@@ -1483,7 +1507,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
       fig.appendChild(fc);
     }
     fc.textContent = text;
-    onFieldSave('body', bodyRef.current.innerHTML);
+    onFieldSave(bodyField, bodyRef.current.innerHTML);
   };
 
   const applyImgAlign = (align) => {
@@ -1496,7 +1520,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
       _liftToBody(selectedImg);
       selectedImg.style.cssText = _figCss(align);
     }
-    onFieldSave('body', bodyRef.current.innerHTML);
+    onFieldSave(bodyField, bodyRef.current.innerHTML);
     const r = selectedImg.getBoundingClientRect();
     setImgRect(r);
     setImgToolbarPos({ top: r.top - 80, left: r.left });
@@ -1507,7 +1531,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
     const fig = selectedImg.parentElement?.tagName === 'FIGURE' ? selectedImg.parentElement : null;
     if (fig) fig.remove();
     else selectedImg.remove();
-    onFieldSave('body', bodyRef.current.innerHTML);
+    onFieldSave(bodyField, bodyRef.current.innerHTML);
     setSelectedImg(null);
     setImgRect(null);
   };
@@ -1521,7 +1545,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
     if (!target) return;
     if (target.hasAttribute('data-no-style')) target.removeAttribute('data-no-style');
     else target.setAttribute('data-no-style', '');
-    onFieldSave('body', bodyRef.current.innerHTML);
+    onFieldSave(bodyField, bodyRef.current.innerHTML);
     // force a rerender of the toolbar so the button reflects the new state
     setImgRect(selectedImg.getBoundingClientRect());
   };
@@ -1532,7 +1556,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
     if (!root) return;
     if (dir < 0) { const prev = root.previousElementSibling; if (prev) bodyRef.current.insertBefore(root, prev); }
     else { const next = root.nextElementSibling; if (next) bodyRef.current.insertBefore(next, root); }
-    onFieldSave('body', bodyRef.current.innerHTML);
+    onFieldSave(bodyField, bodyRef.current.innerHTML);
     setTimeout(() => {
       const r = selectedImg.getBoundingClientRect();
       setImgRect(r);
@@ -1596,7 +1620,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
       // Leaving HTML mode — commit textarea back to body div
       if (htmlTextareaRef.current && bodyRef.current) {
         bodyRef.current.innerHTML = htmlTextareaRef.current.value;
-        onFieldSave('body', htmlTextareaRef.current.value);
+        onFieldSave(bodyField, htmlTextareaRef.current.value);
       }
     }
     setHtmlMode(m => !m);
@@ -1935,7 +1959,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
           <div style={{ background: d.bg_color || site?.bg_color || bgColor, padding: outerPad }}>
             <div style={{ maxWidth: cWidth, margin: '0 auto' }}>
               <div style={{ display: 'flex', flexDirection: isSide ? (isLeft ? 'row' : 'row-reverse') : 'column', gap: '2rem', alignItems: isSide ? 'flex-start' : 'stretch' }}>
-                {rawUrl && (
+                {!bodyOnly && rawUrl && (
                   <div ref={imgWrapRef} style={{ width: pos === 'full' ? '100%' : pos === 'center' ? `${Math.min(imgWidth, 100)}%` : `${imgWidth}%`, flexShrink: 0, position: 'relative', ...(pos === 'center' ? { alignSelf: 'center' } : {}) }}>
                     <img src={rawUrl} alt="" style={{ width: '100%', display: 'block', borderRadius: 8 }} />
                     {/* Resize handle */}
@@ -1965,17 +1989,19 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="rte-body">
                     {/* Heading — plain text; styles applied via headingTypoStyle() */}
-                    <h2
-                      ref={headingRef}
-                      contentEditable
-                      suppressContentEditableWarning
-                      onMouseUp={saveAndDetect}
-                      onKeyUp={saveAndDetect}
-                      onPaste={pastePlainText}
-                      onFocus={() => { activeEl.current = headingRef.current; }}
-                      onBlur={e => onFieldSave('heading', e.currentTarget.textContent)}
-                      style={{ outline: 'none', cursor: 'text', minHeight: '1.8rem', border: '1px dashed #cbd5e1', borderRadius: 4, padding: '4px 6px', marginBottom: 6, ...headingTypoStyle(d.heading_style, site) }}
-                    />
+                    {!bodyOnly && (
+                      <h2
+                        ref={headingRef}
+                        contentEditable
+                        suppressContentEditableWarning
+                        onMouseUp={saveAndDetect}
+                        onKeyUp={saveAndDetect}
+                        onPaste={pastePlainText}
+                        onFocus={() => { activeEl.current = headingRef.current; }}
+                        onBlur={e => onFieldSave('heading', e.currentTarget.textContent)}
+                        style={{ outline: 'none', cursor: 'text', minHeight: '1.8rem', border: '1px dashed #cbd5e1', borderRadius: 4, padding: '4px 6px', marginBottom: 6, ...headingTypoStyle(d.heading_style, site) }}
+                      />
+                    )}
                     {/* Body — rich text (hidden in HTML mode) */}
                     <div
                       ref={bodyRef}
@@ -1985,8 +2011,8 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
                       onKeyUp={saveAndDetect}
                       onPaste={pasteAsBodyText}
                       onFocus={() => { activeEl.current = bodyRef.current; }}
-                      onInput={e => { if (!htmlMode) onFieldSave('body', e.currentTarget.innerHTML); }}
-                      onBlur={e => { if (!htmlMode) onFieldSave('body', e.currentTarget.innerHTML); }}
+                      onInput={e => { if (!htmlMode) onFieldSave(bodyField, e.currentTarget.innerHTML); }}
+                      onBlur={e => { if (!htmlMode) onFieldSave(bodyField, e.currentTarget.innerHTML); }}
                       onClick={handleBodyClick}
                       onDragOver={e => { e.preventDefault(); setDraggingOver(true); }}
                       onDragLeave={() => setDraggingOver(false)}
@@ -2002,7 +2028,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages })
                     {htmlMode && (
                       <textarea
                         ref={htmlTextareaRef}
-                        onBlur={e => onFieldSave('body', e.target.value)}
+                        onBlur={e => onFieldSave(bodyField, e.target.value)}
                         style={{
                           width: '100%', minHeight: '8rem', padding: '8px 10px',
                           fontSize: 11, fontFamily: 'monospace', lineHeight: 1.6,
@@ -2254,7 +2280,7 @@ function SimpleBlockPreview({ block, site, businessId, onFieldSave }) {
             <h1 style={{ color: '#fff', fontSize: '2rem', fontWeight: 800, margin: '0 0 0.5rem', lineHeight: 1.2 }}>
               {d.headline || 'Your Headline'}
             </h1>
-            {d.subtext && <p style={{ color: 'rgba(255,255,255,0.88)', fontSize: '1.05rem', margin: '0 0 1.2rem' }}>{d.subtext}</p>}
+            {d.subtext && <div className="site-rte" style={{ color: 'rgba(255,255,255,0.88)', fontSize: '1.05rem', margin: '0 0 1.2rem' }} dangerouslySetInnerHTML={{ __html: d.subtext }} />}
             {d.cta_text && (
               <span style={{ display: 'inline-block', background: accent, color: '#fff', padding: '0.5rem 1.5rem', borderRadius: 8, fontWeight: 700, fontSize: '0.95rem' }}>
                 {d.cta_text}
@@ -2404,7 +2430,7 @@ function SimpleBlockPreview({ block, site, businessId, onFieldSave }) {
       <BlockWrap>
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
           {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), textAlign: 'center', marginBottom: '0.5rem' }}>{d.heading}</h2>}
-          {d.sub_heading && <p style={{ color: '#6B7280', textAlign: 'center', marginBottom: '1.2rem', fontSize: '0.9rem', lineHeight: 1.6 }}>{d.sub_heading}</p>}
+          {d.sub_heading && <div className="site-rte" style={{ color: '#6B7280', textAlign: 'center', marginBottom: '1.2rem', fontSize: '0.9rem', lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: d.sub_heading }} />}
           <div style={{ background: '#fff', borderRadius: 16, padding: '1.25rem', boxShadow: '0 2px 12px rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
               <div><label style={lbl}>first name</label><div style={inp}>&nbsp;</div></div>
@@ -2421,6 +2447,138 @@ function SimpleBlockPreview({ block, site, businessId, onFieldSave }) {
             </div>
           </div>
         </div>
+      </BlockWrap>
+    );
+  }
+
+  // Member Directory — placeholder card grid preview
+  if (bt === 'member_directory') {
+    const cols = Math.max(1, Math.min(4, Number(d.columns) || 3));
+    return (
+      <BlockWrap>
+        {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), marginBottom: '0.4rem' }}>{d.heading}</h2>}
+        {d.intro_body && <div className="site-rte" style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '0.9rem' }} dangerouslySetInnerHTML={{ __html: d.intro_body }} />}
+        {(d.show_search || d.show_state_filter) && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: '0.8rem' }}>
+            {d.show_search && <div style={{ flex: 1, background: '#f3f4f6', borderRadius: 6, padding: '0.45rem 0.7rem', fontSize: '0.82rem', color: '#9ca3af' }}>🔍 Search members…</div>}
+            {d.show_state_filter && <div style={{ width: 120, background: '#f3f4f6', borderRadius: 6, padding: '0.45rem 0.7rem', fontSize: '0.82rem', color: '#9ca3af' }}>All states ▾</div>}
+          </div>
+        )}
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 12 }}>
+          {[0,1,2,3,4,5].slice(0, cols * 2).map(i => (
+            <div key={i} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '0.7rem', display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#e5e7eb' }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ height: 10, background: '#e5e7eb', borderRadius: 3, marginBottom: 5, width: '70%' }} />
+                <div style={{ height: 8, background: '#f3f4f6', borderRadius: 3, width: '90%' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: 10, textAlign: 'center' }}>Live member data populates here on the published site.</p>
+      </BlockWrap>
+    );
+  }
+
+  // Pedigree / Registry Search — preview form + mock result row
+  if (bt === 'pedigree_search') {
+    return (
+      <BlockWrap>
+        {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), marginBottom: '0.4rem' }}>{d.heading}</h2>}
+        {d.intro_body && <div className="site-rte" style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '0.9rem' }} dangerouslySetInnerHTML={{ __html: d.intro_body }} />}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 8, marginBottom: '0.8rem' }}>
+          {d.show_name !== false && <div style={{ background: '#f3f4f6', borderRadius: 6, padding: '0.5rem 0.7rem', fontSize: '0.82rem', color: '#9ca3af' }}>Animal name</div>}
+          {d.show_reg_number !== false && <div style={{ background: '#f3f4f6', borderRadius: 6, padding: '0.5rem 0.7rem', fontSize: '0.82rem', color: '#9ca3af' }}>Reg #</div>}
+          {d.show_owner !== false && <div style={{ background: '#f3f4f6', borderRadius: 6, padding: '0.5rem 0.7rem', fontSize: '0.82rem', color: '#9ca3af' }}>Owner</div>}
+          <div style={{ background: primary, color: '#fff', borderRadius: 6, padding: '0.5rem 1.1rem', fontSize: '0.85rem', fontWeight: 700 }}>Search</div>
+        </div>
+        <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 90px', padding: '0.6rem 0.8rem', background: '#f9fafb', fontSize: '0.78rem', fontWeight: 700, color: '#374151' }}>
+            <div>Name</div><div>Reg #</div><div>Owner</div><div style={{ textAlign: 'right' }}>Pedigree</div>
+          </div>
+          {[0,1,2].map(i => (
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 90px', padding: '0.55rem 0.8rem', fontSize: '0.82rem', borderTop: '1px solid #f3f4f6', color: '#6b7280' }}>
+              <div>—</div><div>—</div><div>—</div><div style={{ textAlign: 'right', color: primary }}>View ›</div>
+            </div>
+          ))}
+        </div>
+        <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: 10, textAlign: 'center' }}>Registry results appear here when visitors search.</p>
+      </BlockWrap>
+    );
+  }
+
+  // Fee Schedule — clean table of editable rows
+  if (bt === 'fee_schedule') {
+    const rows = Array.isArray(d.rows) ? d.rows : [];
+    return (
+      <BlockWrap>
+        {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), marginBottom: '0.4rem' }}>{d.heading}</h2>}
+        {d.intro_body && <div className="site-rte" style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '0.9rem' }} dangerouslySetInnerHTML={{ __html: d.intro_body }} />}
+        <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', padding: '0.6rem 0.9rem', background: '#f9fafb', fontSize: '0.82rem', fontWeight: 700, color: '#374151' }}>
+            <div>Item</div><div style={{ textAlign: 'right' }}>Amount</div><div style={{ paddingLeft: 16 }}>Notes</div>
+          </div>
+          {rows.length === 0 ? (
+            <div style={{ padding: '0.9rem', color: '#9ca3af', fontStyle: 'italic', fontSize: '0.85rem' }}>Click to edit — add fee rows.</div>
+          ) : rows.map((r, i) => (
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', padding: '0.55rem 0.9rem', fontSize: '0.88rem', borderTop: '1px solid #f3f4f6', color: '#1f2937' }}>
+              <div>{r.label || '—'}</div>
+              <div style={{ textAlign: 'right', fontWeight: 700, color: primary }}>{r.amount || ''}</div>
+              <div style={{ paddingLeft: 16, color: '#6b7280' }}>{r.notes || ''}</div>
+            </div>
+          ))}
+        </div>
+      </BlockWrap>
+    );
+  }
+
+  // Map & Location — address + optional embedded map
+  if (bt === 'map_location') {
+    const isGoogleMapsEmbed = (url) => typeof url === 'string' && /^https:\/\/(www\.)?google\.com\/maps\/embed/.test(url);
+    return (
+      <BlockWrap>
+        {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), marginBottom: '0.4rem' }}>{d.heading}</h2>}
+        <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+          {isGoogleMapsEmbed(d.embed_url) ? (
+            <iframe src={d.embed_url} style={{ border: 0, width: '100%', height: d.height || 320, display: 'block' }} loading="lazy" title="Location map" />
+          ) : (
+            <div style={{ height: d.height || 320, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f3f4f6', color: '#9ca3af', fontSize: 13 }}>
+              🗺️ Map preview — paste a Google Maps embed URL in the editor.
+            </div>
+          )}
+          {d.address && (
+            <div style={{ padding: '0.7rem 1rem', borderTop: '1px solid #e5e7eb', fontSize: '0.92rem', color: '#1f2937' }}>
+              📍 {d.address}
+              {' '}<a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.address)}`} target="_blank" rel="noreferrer"
+                  style={{ color: primary, marginLeft: 6 }}>Get directions ›</a>
+            </div>
+          )}
+        </div>
+      </BlockWrap>
+    );
+  }
+
+  // Hours of Operation — weekly hours table
+  if (bt === 'hours_of_operation') {
+    const rows = Array.isArray(d.hours) ? d.hours : [];
+    return (
+      <BlockWrap>
+        {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), marginBottom: '0.4rem' }}>{d.heading}</h2>}
+        {d.intro_body && <div className="site-rte" style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '0.9rem' }} dangerouslySetInnerHTML={{ __html: d.intro_body }} />}
+        <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden', background: '#fff', maxWidth: 480 }}>
+          {rows.length === 0 ? (
+            <div style={{ padding: '0.9rem', color: '#9ca3af', fontStyle: 'italic', fontSize: '0.85rem' }}>Click to edit — fill in your weekly hours.</div>
+          ) : rows.map((r, i) => (
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', padding: '0.55rem 0.9rem', fontSize: '0.9rem', borderTop: i ? '1px solid #f3f4f6' : 'none', color: '#1f2937' }}>
+              <div style={{ fontWeight: 600 }}>{r.day || '—'}</div>
+              <div style={{ textAlign: 'right', color: r.closed ? '#9ca3af' : '#1f2937' }}>
+                {r.closed ? 'Closed' : (r.open && r.close ? `${r.open} – ${r.close}` : '—')}
+                {r.notes && !r.closed ? <span style={{ color: '#6b7280', fontSize: '0.78rem', marginLeft: 6 }}>({r.notes})</span> : null}
+              </div>
+            </div>
+          ))}
+        </div>
+        {d.timezone ? <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: 8 }}>All times {d.timezone}.</p> : null}
       </BlockWrap>
     );
   }
@@ -4197,6 +4355,174 @@ function LivestockBlockCanvas({ block, site, businessId, onFieldSave, mode = 'sa
   );
 }
 
+// ── EventsBlockEditor: right-panel editor for the Upcoming Events block ──
+function EventsBlockEditor({ block, businessId, onFieldSave, BgField }) {
+  const d = block.block_data || {};
+  const [myEvents, setMyEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [working, setWorking] = useState({});
+
+  const loadEvents = () => {
+    if (!businessId) return;
+    setLoading(true);
+    fetch(`${API}/api/my-events?business_id=${businessId}`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => setMyEvents(Array.isArray(data) ? data : []))
+      .catch(() => setMyEvents([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { loadEvents(); }, [businessId]);
+
+  const togglePublish = async (ev) => {
+    const nextState = ev.IsPublished ? 0 : 1;
+    setWorking(w => ({ ...w, [ev.EventID]: true }));
+    try {
+      const r = await fetch(`${API}/api/events/${ev.EventID}/publish`, {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publish: !!nextState }),
+      });
+      const json = await r.json().catch(() => ({}));
+      if (json.ok) {
+        setMyEvents(evs => evs.map(e => e.EventID === ev.EventID ? { ...e, IsPublished: nextState } : e));
+      } else {
+        alert(json.error || 'Failed to update event.');
+      }
+    } catch (e) {
+      alert('Network error.');
+    } finally {
+      setWorking(w => ({ ...w, [ev.EventID]: false }));
+    }
+  };
+
+  const fmtDate = (iso) => {
+    if (!iso) return 'TBD';
+    try { return new Date(iso).toLocaleDateString(); } catch { return String(iso).split('T')[0]; }
+  };
+
+  const drafts = myEvents.filter(e => !e.IsPublished);
+  const published = myEvents.filter(e => e.IsPublished);
+
+  return (
+    <div style={{ padding: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
+        🎪 Upcoming Events Block
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Section Heading</label>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <select className={inp} style={{ width: 68, flexShrink: 0 }}
+            value={d.heading_style || 'h1'}
+            onChange={e => onFieldSave('heading_style', e.target.value)}>
+            <option value="h1">H1</option>
+            <option value="h2">H2</option>
+            <option value="h3">H3</option>
+          </select>
+          <input className={inp}
+            key={`${block.block_id}-eventsheading`}
+            defaultValue={d.heading || ''}
+            placeholder="Upcoming Events"
+            onBlur={e => onFieldSave('heading', e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Layout</div>
+        <div>
+          {[['cards','Cards'],['list','List']].map(([v,l]) => (
+            <button key={v} onClick={() => onFieldSave('layout', v)}
+              style={{
+                padding: '4px 10px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
+                marginRight: 4, marginBottom: 4,
+                border: '1px solid ' + ((d.layout || 'cards') === v ? '#3b82f6' : '#d1d5db'),
+                background: (d.layout || 'cards') === v ? '#3b82f6' : '#f9fafb',
+                color: (d.layout || 'cards') === v ? '#fff' : '#374151',
+              }}>
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Max Events to Show</label>
+        <input key={`${block.block_id}-maxevents`} type="number" className={inp}
+          defaultValue={d.max_items || 6} min={1} max={50}
+          onBlur={e => onFieldSave('max_items', Number(e.target.value) || 6)} />
+      </div>
+
+      {BgField && <BgField />}
+
+      {/* Your events — publish drafts inline */}
+      <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid #f3f4f6' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>Your Events</div>
+          <button onClick={loadEvents} disabled={loading}
+            style={{ fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+            {loading ? 'Loading…' : 'Refresh'}
+          </button>
+        </div>
+
+        {drafts.length > 0 && (
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#b45309', marginBottom: 4 }}>
+              Drafts ({drafts.length})
+            </div>
+            {drafts.map(ev => (
+              <div key={ev.EventID} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 8px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 6, marginBottom: 4 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.EventName || 'Untitled'}</div>
+                  <div style={{ fontSize: 11, color: '#6b7280' }}>{fmtDate(ev.EventStartDate)}</div>
+                </div>
+                <button onClick={() => togglePublish(ev)} disabled={!!working[ev.EventID]}
+                  style={{ fontSize: 11, padding: '4px 10px', borderRadius: 4, background: '#059669', color: '#fff', border: 'none', cursor: working[ev.EventID] ? 'not-allowed' : 'pointer', opacity: working[ev.EventID] ? 0.6 : 1, whiteSpace: 'nowrap' }}>
+                  {working[ev.EventID] ? '…' : 'Publish'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {published.length > 0 && (
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#047857', marginBottom: 4 }}>
+              Published ({published.length})
+            </div>
+            {published.slice(0, 5).map(ev => (
+              <div key={ev.EventID} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 8px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, marginBottom: 4 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 12, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.EventName || 'Untitled'}</div>
+                  <div style={{ fontSize: 11, color: '#6b7280' }}>{fmtDate(ev.EventStartDate)}</div>
+                </div>
+                <button onClick={() => togglePublish(ev)} disabled={!!working[ev.EventID]}
+                  style={{ fontSize: 11, padding: '4px 8px', borderRadius: 4, background: '#fff', color: '#6b7280', border: '1px solid #d1d5db', cursor: working[ev.EventID] ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
+                  {working[ev.EventID] ? '…' : 'Unpublish'}
+                </button>
+              </div>
+            ))}
+            {published.length > 5 && (
+              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>+ {published.length - 5} more</div>
+            )}
+          </div>
+        )}
+
+        {!loading && myEvents.length === 0 && (
+          <div style={{ fontSize: 11, color: '#9ca3af' }}>
+            No events yet. Create one from the Events dashboard.
+          </div>
+        )}
+      </div>
+
+      <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 12 }}>
+        Shows published events with upcoming end dates. Drafts stay hidden from visitors until you publish.
+      </p>
+    </div>
+  );
+}
+
 // ── BlogBlockEditor: right-panel editor for blog blocks with category picker ──
 function BlogBlockEditor({ block, site, businessId, onFieldSave }) {
   const d = block.block_data || {};
@@ -4316,7 +4642,7 @@ function BlogBlockEditor({ block, site, businessId, onFieldSave }) {
 }
 
 // ── BlockEditorPanel: sidebar form editor for the selected block ───
-function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }) {
+function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, pages = [] }) {
   if (!block) return null;
   const d  = block.block_data || {};
   const bt = block.block_type;
@@ -4348,6 +4674,22 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }
       placeholder={placeholder}
       onBlur={e => { if (e.target.value !== (d[field] || '')) onFieldSave(field, e.target.value); }}
     />
+  );
+
+  // Rich body editor — same WYSIWYG (toolbar, formatting, link/image/video insert)
+  // the `content` 1-column text widget uses, scoped to a single prose field.
+  const RichBody = ({ field }) => (
+    <div key={`${block.block_id}-${field}`} style={{ border: '1px solid #e5e7eb', borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
+      <InlineContentEditor
+        block={block}
+        site={site}
+        data={d}
+        onFieldSave={onFieldSave}
+        pages={pages}
+        bodyField={field}
+        bodyOnly
+      />
+    </div>
   );
 
   const Pill = ({ label, active, onClick }) => (
@@ -4389,6 +4731,11 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }
     <BlogBlockEditor block={block} site={site} businessId={businessId} onFieldSave={onFieldSave} />
   );
 
+  // ── Events ──
+  if (bt === 'events') return (
+    <EventsBlockEditor block={block} businessId={businessId} onFieldSave={onFieldSave} BgField={BgField} />
+  );
+
   // ── Testimonials — heading + intro editing lives on the canvas (inline) ──
   if (bt === 'testimonials') return null;
 
@@ -4409,7 +4756,7 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }
         <TxtInp field="headline" placeholder="Welcome to our farm…" />
       </Field>
       <Field label="Sub-text">
-        <TxtArea field="subtext" rows={3} placeholder="Fresh, local, sustainably grown." />
+        <RichBody field="subtext" />
       </Field>
       <Field label="Button Text">
         <TxtInp field="cta_text" placeholder="Learn More" />
@@ -4535,7 +4882,7 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }
         <TxtInp field="heading" placeholder="Get In Touch" />
       </Field>
       <Field label="Sub-heading Text">
-        <TxtArea field="sub_heading" rows={4} placeholder="Have a question? Fill out the form below…" />
+        <RichBody field="sub_heading" />
       </Field>
       <Field label="Send Form To (Email)">
         <TxtInp field="contact_email" placeholder="you@yourdomain.com" />
@@ -4554,6 +4901,164 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId }
       <BgField />
     </div>
   );
+
+  // ── Member Directory (association widget) ──
+  if (bt === 'member_directory') return (
+    <div style={{ padding: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>👥 Member Directory</div>
+      <Field label="Heading"><TxtInp field="heading" placeholder="Member Directory" /></Field>
+      <Field label="Intro"><RichBody field="intro_body" /></Field>
+      <Field label="Columns">
+        <select className={inp} defaultValue={d.columns || 3} onBlur={e => onFieldSave('columns', Number(e.target.value))}>
+          {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </Field>
+      <Field label="Max Members to Show">
+        <input key={`${block.block_id}-max`} type="number" className={inp} defaultValue={d.max_items || 24} min={1} max={500}
+          onBlur={e => onFieldSave('max_items', Number(e.target.value))} />
+      </Field>
+      <Field label="Show Search Box">
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151' }}>
+          <input type="checkbox" checked={!!d.show_search} onChange={e => onFieldSave('show_search', e.target.checked)} style={{ width: 16, height: 16 }} />
+          Enable keyword search
+        </label>
+      </Field>
+      <Field label="Show State Filter">
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151' }}>
+          <input type="checkbox" checked={!!d.show_state_filter} onChange={e => onFieldSave('show_state_filter', e.target.checked)} style={{ width: 16, height: 16 }} />
+          Enable state dropdown
+        </label>
+      </Field>
+      <BgField />
+    </div>
+  );
+
+  // ── Pedigree / Registry Search (association widget) ──
+  if (bt === 'pedigree_search') return (
+    <div style={{ padding: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>🧬 Registry Search</div>
+      <Field label="Heading"><TxtInp field="heading" placeholder="Registry Search" /></Field>
+      <Field label="Intro"><RichBody field="intro_body" /></Field>
+      <Field label="Search Fields">
+        {[
+          ['show_name', 'Animal name'],
+          ['show_reg_number', 'Registration number'],
+          ['show_owner', 'Owner name'],
+        ].map(([key, lbl]) => (
+          <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151', marginBottom: 4 }}>
+            <input type="checkbox" checked={d[key] !== false} onChange={e => onFieldSave(key, e.target.checked)} style={{ width: 16, height: 16 }} />
+            {lbl}
+          </label>
+        ))}
+      </Field>
+      <Field label="Max Results">
+        <input key={`${block.block_id}-maxr`} type="number" className={inp} defaultValue={d.max_results || 20} min={1} max={200}
+          onBlur={e => onFieldSave('max_results', Number(e.target.value))} />
+      </Field>
+      <BgField />
+    </div>
+  );
+
+  // ── Fee Schedule (association widget) ──
+  if (bt === 'fee_schedule') {
+    const rows = Array.isArray(d.rows) ? d.rows : [];
+    const saveRows = (r) => onFieldSave('rows', r);
+    const updateRow = (i, key, val) => saveRows(rows.map((r, j) => i !== j ? r : { ...r, [key]: val }));
+    const addRow    = () => saveRows([...rows, { label: '', amount: '', notes: '' }]);
+    const removeRow = (i) => saveRows(rows.filter((_, j) => j !== i));
+    return (
+      <div style={{ padding: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>💲 Fee Schedule</div>
+        <Field label="Heading"><TxtInp field="heading" placeholder="Fee Schedule" /></Field>
+        <Field label="Intro"><RichBody field="intro_body" /></Field>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Rows</label>
+          {rows.map((r, i) => (
+            <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 6, background: '#f9fafb' }}>
+              <input className={inp} defaultValue={r.label || ''} placeholder="Item label"
+                onBlur={e => updateRow(i, 'label', e.target.value)} style={{ marginBottom: 4 }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr auto', gap: 6 }}>
+                <input className={inp} defaultValue={r.amount || ''} placeholder="$0"
+                  onBlur={e => updateRow(i, 'amount', e.target.value)} />
+                <input className={inp} defaultValue={r.notes || ''} placeholder="Notes"
+                  onBlur={e => updateRow(i, 'notes', e.target.value)} />
+                <button type="button" onClick={() => removeRow(i)}
+                  style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '0 10px', cursor: 'pointer', fontSize: 12 }}>✕</button>
+              </div>
+            </div>
+          ))}
+          <button type="button" onClick={addRow}
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add row</button>
+        </div>
+        <BgField />
+      </div>
+    );
+  }
+
+  // ── Map & Location (universal widget) ──
+  if (bt === 'map_location') return (
+    <div style={{ padding: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>📍 Map & Location</div>
+      <Field label="Heading"><TxtInp field="heading" placeholder="Find Us" /></Field>
+      <Field label="Address"><TxtArea field="address" rows={2} /></Field>
+      <Field label="Google Maps Embed URL">
+        <TxtArea field="embed_url" rows={3} />
+        <p style={{ fontSize: 11, color: '#6b7280', marginTop: 4, lineHeight: 1.4 }}>
+          On Google Maps, click <strong>Share → Embed a map → Copy HTML</strong> and paste the <code>src=</code> URL here (starts with <code>https://www.google.com/maps/embed?…</code>).
+        </p>
+      </Field>
+      <Field label="Map Height (px)">
+        <input key={`${block.block_id}-h`} type="number" className={inp} defaultValue={d.height || 320} min={150} max={800}
+          onBlur={e => onFieldSave('height', Number(e.target.value))} />
+      </Field>
+      <BgField />
+    </div>
+  );
+
+  // ── Hours of Operation (universal widget) ──
+  if (bt === 'hours_of_operation') {
+    const rows = Array.isArray(d.hours) ? d.hours : [];
+    const saveRows = (r) => onFieldSave('hours', r);
+    const updateRow = (i, key, val) => saveRows(rows.map((r, j) => i !== j ? r : { ...r, [key]: val }));
+    const addRow = () => saveRows([...rows, { day: '', open: '', close: '', closed: false, notes: '' }]);
+    const removeRow = (i) => saveRows(rows.filter((_, j) => j !== i));
+    return (
+      <div style={{ padding: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>🕒 Hours of Operation</div>
+        <Field label="Heading"><TxtInp field="heading" placeholder="Hours" /></Field>
+        <Field label="Intro"><RichBody field="intro_body" /></Field>
+        <Field label="Timezone (optional)"><TxtInp field="timezone" placeholder="e.g. PT, ET, Mountain Time" /></Field>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Weekly Hours</label>
+          {rows.map((r, i) => (
+            <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 6, background: '#f9fafb' }}>
+              <input className={inp} defaultValue={r.day || ''} placeholder="Day"
+                onBlur={e => updateRow(i, 'day', e.target.value)} style={{ marginBottom: 4 }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 6, marginBottom: 4 }}>
+                <input className={inp} defaultValue={r.open || ''} placeholder="Open"
+                  onBlur={e => updateRow(i, 'open', e.target.value)} disabled={!!r.closed} />
+                <input className={inp} defaultValue={r.close || ''} placeholder="Close"
+                  onBlur={e => updateRow(i, 'close', e.target.value)} disabled={!!r.closed} />
+                <button type="button" onClick={() => removeRow(i)}
+                  style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '0 10px', cursor: 'pointer', fontSize: 12 }}>✕</button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 6, alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#374151' }}>
+                  <input type="checkbox" checked={!!r.closed} onChange={e => updateRow(i, 'closed', e.target.checked)} style={{ width: 14, height: 14 }} />
+                  Closed
+                </label>
+                <input className={inp} defaultValue={r.notes || ''} placeholder="Notes (optional)"
+                  onBlur={e => updateRow(i, 'notes', e.target.value)} />
+              </div>
+            </div>
+          ))}
+          <button type="button" onClick={addRow}
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add day</button>
+        </div>
+        <BgField />
+      </div>
+    );
+  }
 
   // ── Generic data blocks ──
   const meta = BLOCK_TYPES.find(b => b.type === bt) || { icon: '📦', label: bt };
@@ -5001,6 +5506,13 @@ export default function WebsiteBuilder() {
   const [editingPageId, setEditingPageId]     = useState(null);
   const [editingPageName, setEditingPageName] = useState('');
   const [nestingPageId, setNestingPageId]     = useState(null); // page showing parent picker
+
+  // Templates modal
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+  const [templates, setTemplates]                   = useState([]);
+  const [templatesBusinessTypeId, setTemplatesBusinessTypeId] = useState(null);
+  const [templatesLoading, setTemplatesLoading]     = useState(false);
+  const [templateApplying, setTemplateApplying]     = useState(null); // template_key while POSTing
   const [collapsedParents, setCollapsedParents] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('wb_collapsedParents') || '[]')); }
     catch { return new Set(); }
@@ -5213,6 +5725,110 @@ export default function WebsiteBuilder() {
       await selectPage(page);
     } catch (e) { alert(e.message); }
     finally { setSaving(false); }
+  };
+
+  // Fetch page templates for this business's BusinessTypeID
+  const openTemplatesModal = async () => {
+    setShowTemplatesModal(true);
+    setTemplatesLoading(true);
+    try {
+      const resp = await apiFetch(`/api/website/templates?business_id=${parseInt(BusinessID)}`);
+      setTemplates(resp?.templates || []);
+      setTemplatesBusinessTypeId(resp?.business_type_id ?? null);
+    } catch (e) {
+      alert(e.message);
+      setTemplates([]);
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  // Apply a template → creates page + seeded blocks, refreshes state, closes modal
+  const applyTemplate = async (template_key) => {
+    setTemplateApplying(template_key);
+    try {
+      const resp = await apiFetch('/api/website/pages/from-template', {
+        method: 'POST',
+        body: JSON.stringify({
+          website_id: site.website_id,
+          business_id: parseInt(BusinessID),
+          template_key,
+        }),
+      });
+      const newPage = resp?.page;
+      if (newPage) {
+        setPages(prev => [...prev, newPage]);
+        setShowTemplatesModal(false);
+        await selectPage(newPage);
+      }
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setTemplateApplying(null);
+    }
+  };
+
+  // Starter-pack key sets by BusinessTypeID. Keys match page_templates.py.
+  const STARTER_PACKS = {
+    1:  ['core_home_welcome', 'core_about', 'core_contact', 'assoc_join_renew', 'assoc_registry_search', 'assoc_annual_convention', 'assoc_board_of_directors'],
+    8:  ['core_home_welcome', 'core_about', 'core_contact', 'farm_our_animals', 'farm_our_products', 'farm_tours'],
+    9:  ['core_home_welcome', 'core_about', 'core_contact', 'restaurant_menu', 'restaurant_hours_location'],
+    10: ['core_home_welcome', 'core_about', 'core_contact', 'foodhub_producers', 'foodhub_buyers'],
+    11: ['core_home_welcome', 'core_about', 'core_contact', 'artisan_products', 'artisan_where_to_buy', 'commerce_store'],
+    14: ['core_home_welcome', 'core_about', 'core_contact', 'coop_join', 'coop_board', 'coop_patronage'],
+    15: ['core_home_welcome', 'core_about', 'core_contact', 'crafters_shows'],
+    16: ['core_home_welcome', 'core_about', 'core_contact', 'mfg_capabilities', 'mfg_request_quote'],
+    17: ['core_home_welcome', 'core_about', 'core_contact', 'vet_services', 'vet_team', 'vet_emergency'],
+    18: ['core_home_welcome', 'core_about', 'core_contact', 'fibermill_services', 'fibermill_process'],
+    19: ['core_home_welcome', 'core_about', 'core_contact', 'meatwholesale_cuts', 'meatwholesale_accounts'],
+    20: ['core_home_welcome', 'core_about', 'core_contact', 'svc_what_we_do', 'svc_process'],
+    21: ['core_home_welcome', 'core_about', 'core_contact', 'marina_slip_rentals', 'marina_services'],
+    22: ['core_home_welcome', 'core_about', 'core_contact', 'fishery_catch', 'fishery_csf'],
+    23: ['core_home_welcome', 'core_about', 'core_contact', 'fishery_catch', 'fishery_csf'],
+    24: ['core_home_welcome', 'core_about', 'core_contact', 'retail_departments', 'retail_locations'],
+    25: ['core_home_welcome', 'core_about', 'core_contact', 'coop_join', 'coop_board', 'coop_patronage'],
+    26: ['core_home_welcome', 'core_about', 'core_contact', 'retail_departments', 'retail_locations'],
+    27: ['core_home_welcome', 'core_about', 'core_contact', 'uni_programs', 'uni_extension', 'uni_research'],
+    28: ['core_home_welcome', 'core_about', 'core_contact', 'resources_programs', 'resources_library'],
+    29: ['core_home_welcome', 'core_about', 'core_contact', 'market_vendors', 'market_info'],
+    30: ['core_home_welcome', 'core_about', 'core_contact', 'realestate_listings', 'realestate_buyers'],
+    31: ['core_home_welcome', 'core_about', 'core_contact', 'herbtea_products', 'herbtea_brewing'],
+    32: ['core_home_welcome', 'core_about', 'core_contact', 'transport_services', 'transport_request'],
+    33: ['core_home_welcome', 'core_about', 'core_contact', 'winery_wines', 'winery_tastings'],
+    34: ['core_home_welcome', 'core_about', 'core_contact', 'winery_wines', 'winery_tastings'],
+    35: ['core_home_welcome', 'core_about', 'core_contact', 'hunger_get_help', 'hunger_donate'],
+  };
+  const getStarterPackKeys = () => STARTER_PACKS[templatesBusinessTypeId] || ['core_home_welcome', 'core_about', 'core_contact'];
+
+  const applyStarterPack = async () => {
+    const keys = getStarterPackKeys();
+    if (!keys.length) return;
+    if (!confirm(`Add ${keys.length} starter pages to your site? You can edit or delete each one.`)) return;
+    setTemplateApplying('__starter__');
+    try {
+      const resp = await apiFetch('/api/website/pages/from-templates-bulk', {
+        method: 'POST',
+        body: JSON.stringify({
+          website_id: site.website_id,
+          business_id: parseInt(BusinessID),
+          template_keys: keys,
+        }),
+      });
+      const newPages = (resp?.created || []).map(c => c.page).filter(Boolean);
+      if (newPages.length) {
+        setPages(prev => [...prev, ...newPages]);
+        setShowTemplatesModal(false);
+        await selectPage(newPages[0]);
+      }
+      const skipped = resp?.skipped || [];
+      if (skipped.length) {
+        alert(`Created ${newPages.length}. Skipped ${skipped.length}: ${skipped.map(s => s.template_key).join(', ')}`);
+      }
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setTemplateApplying(null);
+    }
   };
 
   const renamePage = async (pageId) => {
@@ -5695,10 +6311,16 @@ export default function WebsiteBuilder() {
                       <button onClick={() => { setShowNewPage(false); setNewPageName(''); }} style={{ padding: '2px 6px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#9ca3af' }}>×</button>
                     </div>
                   ) : (
-                    <button onClick={() => setShowNewPage(true)}
-                      style={{ width: '100%', marginTop: 6, padding: '6px 10px', background: 'none', border: '1px dashed #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: '#6b7280', textAlign: 'left' }}>
-                      + Add Page
-                    </button>
+                    <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                      <button onClick={() => setShowNewPage(true)}
+                        style={{ flex: 1, padding: '6px 10px', background: 'none', border: '1px dashed #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: '#6b7280', textAlign: 'left' }}>
+                        + Add Page
+                      </button>
+                      <button onClick={openTemplatesModal} title="Start from a page template"
+                        style={{ padding: '6px 10px', background: '#f3f0ff', border: '1px solid #d8ccf5', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: '#7C5CBF', fontWeight: 600 }}>
+                        📋 Template
+                      </button>
+                    </div>
                   )}
                   <button onClick={() => setActivePage('manage-pages')}
                     style={{ width: '100%', marginTop: 10, padding: '6px 10px', background: 'none', border: '1px solid #e5e7eb', borderRadius: 8, cursor: 'pointer', fontSize: 11, color: '#6b7280', textAlign: 'center' }}>
@@ -5831,6 +6453,7 @@ export default function WebsiteBuilder() {
                   onFieldsSave={(updates) => saveBlockFieldsMulti(selectedBlock.block_id, updates)}
                   site={site}
                   businessId={parseInt(BusinessID)}
+                  pages={pages}
                 />
               </div>
             )}
@@ -5958,6 +6581,79 @@ export default function WebsiteBuilder() {
         businessId={parseInt(BusinessID)}
         currentView={isDesign ? 'design' : isSettings ? 'settings' : isManagePages ? 'pages' : 'page'}
       />
+    )}
+
+    {showTemplatesModal && (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+           onClick={() => !templateApplying && setShowTemplatesModal(false)}>
+        <div onClick={e => e.stopPropagation()}
+             style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 880, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+          <div style={{ padding: '18px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ minWidth: 0 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>📋 Page Templates</h2>
+              <p style={{ fontSize: 12, color: '#6b7280', margin: '2px 0 0' }}>
+                Pick a template to start a new page with seeded blocks. You can edit everything after creating it.
+              </p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              {templates.length > 0 && (
+                <button onClick={applyStarterPack} disabled={!!templateApplying}
+                  style={{
+                    background: templateApplying === '__starter__' ? '#9ca3af' : '#7C5CBF',
+                    color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px',
+                    fontSize: 13, fontWeight: 600, cursor: templateApplying ? 'not-allowed' : 'pointer',
+                  }}>
+                  {templateApplying === '__starter__' ? 'Adding…' : '✨ Starter Pack'}
+                </button>
+              )}
+              <button onClick={() => !templateApplying && setShowTemplatesModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#9ca3af', lineHeight: 1, padding: 4 }}>×</button>
+            </div>
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+            {templatesLoading ? (
+              <div style={{ textAlign: 'center', color: '#9ca3af', padding: 40 }}>Loading templates…</div>
+            ) : templates.length === 0 ? (
+              <div style={{ textAlign: 'center', color: '#6b7280', padding: 40 }}>
+                <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
+                <p style={{ margin: 0 }}>No templates available for this business type{templatesBusinessTypeId != null ? ` (BusinessTypeID ${templatesBusinessTypeId})` : ''}.</p>
+                <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 6 }}>Use <strong>+ Add Page</strong> to create a blank page.</p>
+              </div>
+            ) : (() => {
+              const bySection = {};
+              templates.forEach(t => {
+                const s = t.section || 'Other';
+                if (!bySection[s]) bySection[s] = [];
+                bySection[s].push(t);
+              });
+              return Object.keys(bySection).sort().map(section => (
+                <div key={section} style={{ marginBottom: 22 }}>
+                  <h3 style={{ fontSize: 12, fontWeight: 700, color: '#7C5CBF', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>{section}</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10 }}>
+                    {bySection[section].map(tpl => {
+                      const applying = templateApplying === tpl.key;
+                      return (
+                        <button key={tpl.key} onClick={() => applyTemplate(tpl.key)} disabled={!!templateApplying}
+                          style={{ textAlign: 'left', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px', background: applying ? '#f3f0ff' : '#fff', cursor: templateApplying ? 'wait' : 'pointer', transition: 'all 0.1s' }}
+                          onMouseEnter={e => { if (!templateApplying) e.currentTarget.style.borderColor = '#7C5CBF'; }}
+                          onMouseLeave={e => { if (!templateApplying) e.currentTarget.style.borderColor = '#e5e7eb'; }}>
+                          <div style={{ fontWeight: 600, fontSize: 13, color: '#111827', marginBottom: 3 }}>{tpl.name}</div>
+                          <div style={{ fontSize: 11, color: '#9ca3af' }}>/{tpl.slug}</div>
+                          {tpl.meta_description && (
+                            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 5, lineHeight: 1.4 }}>{tpl.meta_description}</div>
+                          )}
+                          {applying && <div style={{ fontSize: 11, color: '#7C5CBF', marginTop: 6, fontWeight: 600 }}>Creating…</div>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
+      </div>
     )}
     </>
   );

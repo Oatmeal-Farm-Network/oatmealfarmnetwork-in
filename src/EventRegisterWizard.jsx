@@ -802,7 +802,7 @@ export default function EventRegisterWizard() {
           <ReviewStep cart={cart} items={items} onBack={goBack} onPay={goToPay} submitting={submitting} />
         )}
         {current.key === 'pay' && cart && (
-          <WizardPayStep cartId={cart.CartID} total={cart.Total} eventId={eventId} onPaid={() => goNext()} onBack={goBack} />
+          <WizardPayStep cartId={cart.CartID} total={cart.Total} eventId={eventId} hostBusinessId={event?.BusinessID} onPaid={() => goNext()} onBack={goBack} />
         )}
         {current.key === 'done' && cart && (
           <div className="bg-white rounded-2xl border border-gray-200 p-10 shadow-sm text-center">

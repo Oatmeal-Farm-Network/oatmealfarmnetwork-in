@@ -1,6 +1,7 @@
 // src/NewsFeed.jsx
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import './NewsFeed.css';
 
 const CATEGORIES = ['All', 'Markets', 'Weather', 'Policy', 'AgTech', 'Livestock', 'General'];
 
@@ -13,7 +14,7 @@ const CATEGORY_IMAGES = {
   General: '/images/news/news-general.svg',
 };
 
-const NEWS_API = import.meta.env.VITE_NEWS_API_URL || import.meta.env.VITE_API_URL || '';
+const API = import.meta.env.VITE_NEWS_API_URL || import.meta.env.VITE_API_URL || '';
 
 const NewsFeed = () => {
   const navigate = useNavigate();
@@ -23,14 +24,31 @@ const NewsFeed = () => {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
   const [sort, setSort] = useState('Newest');
-  const isLoggedIn = !!localStorage.getItem('access_token');
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(null);
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const [prefs, setPrefs] = useState({ categories: [], emailFrequency: 'off', preferredHour: 7 });
+  const [prefsSaving, setPrefsSaving] = useState(false);
+  const [prefsMsg, setPrefsMsg] = useState('');
+
+  const peopleId = localStorage.getItem('people_id') || '';
+  const accessLevel = parseInt(localStorage.getItem('access_level') || '0');
+  const isSignedIn = !!peopleId;
+  const isAdmin = accessLevel > 2;
+
+  const authHeaders = () => {
+    const h = { 'Content-Type': 'application/json' };
+    if (peopleId) h['x-people-id'] = peopleId;
+    if (accessLevel) h['x-access-level'] = String(accessLevel);
+    return h;
+  };
 
   useEffect(() => {
     const fetchNews = async () => {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch(`${NEWS_API}/api/news`);
+        const response = await fetch(`${API}/api/news`);
         if (!response.ok) throw new Error('Failed to fetch news');
         const data = await response.json();
         setArticles(data.articles || []);
@@ -42,7 +60,84 @@ const NewsFeed = () => {
       }
     };
     fetchNews();
+
+    fetch(`${API}/api/news/sync/status`).then(r => r.json()).then(setSyncStatus).catch(() => {});
   }, []);
+
+  const openPrefs = async () => {
+    setPrefsOpen(true);
+    setPrefsMsg('');
+    if (!isSignedIn) return;
+    try {
+      const r = await fetch(`${API}/api/news/prefs/me`, { headers: authHeaders() });
+      if (r.ok) {
+        const data = await r.json();
+        setPrefs({
+          categories: Array.isArray(data.categories) ? data.categories : [],
+          emailFrequency: data.emailFrequency || 'off',
+          preferredHour: typeof data.preferredHour === 'number' ? data.preferredHour : 7,
+          lastSentAt: data.lastSentAt,
+        });
+      }
+    } catch {}
+  };
+
+  const savePrefs = async () => {
+    setPrefsSaving(true);
+    setPrefsMsg('');
+    try {
+      const r = await fetch(`${API}/api/news/prefs/me`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(prefs),
+      });
+      if (!r.ok) throw new Error('Save failed');
+      setPrefsMsg('Saved.');
+    } catch {
+      setPrefsMsg('Could not save. Try again.');
+    } finally {
+      setPrefsSaving(false);
+    }
+  };
+
+  const sendPreview = async () => {
+    setPrefsSaving(true);
+    setPrefsMsg('');
+    try {
+      const r = await fetch(`${API}/api/news/digest/send-now`, {
+        method: 'POST',
+        headers: authHeaders(),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || 'Failed');
+      setPrefsMsg(`Preview sent to ${data.to}`);
+    } catch (err) {
+      setPrefsMsg(err.message || 'Failed to send preview.');
+    } finally {
+      setPrefsSaving(false);
+    }
+  };
+
+  const toggleCategory = (cat) => {
+    setPrefs(p => ({
+      ...p,
+      categories: p.categories.includes(cat)
+        ? p.categories.filter(c => c !== cat)
+        : [...p.categories, cat],
+    }));
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await fetch(`${API}/api/news/sync`, { method: 'POST' });
+      const response = await fetch(`${API}/api/news`);
+      const data = await response.json();
+      setArticles(data.articles || []);
+      const status = await fetch(`${API}/api/news/sync/status`).then(r => r.json());
+      setSyncStatus(status);
+    } catch {} finally { setSyncing(false); }
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -71,79 +166,239 @@ const NewsFeed = () => {
   };
 
   const getCategoryColor = (cat) => {
-    const colors = { Markets: '#2563eb', Weather: '#0891b2', Policy: '#7c3aed', AgTech: '#059669', Livestock: '#b45309', General: '#6b7280' };
+    const colors = {
+      Markets: '#2563eb', Weather: '#0891b2', Policy: '#7c3aed',
+      AgTech: '#059669', Livestock: '#b45309', General: '#6b7280',
+    };
     return colors[cat] || '#6b7280';
   };
 
   const getArticleImage = (article) => {
     const img = article.image?.trim();
-    if (img && img.startsWith('http')) return img;
+    if (img) return img;
     return article.placeholderImage || CATEGORY_IMAGES[article.category] || CATEGORY_IMAGES.General;
   };
 
   return (
-    <div style={{ paddingTop: '1.5rem', paddingBottom: '2rem', paddingLeft: '2rem', paddingRight: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#111827', margin: '0 0 0.25rem' }}>Agriculture News</h1>
-        <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: 0 }}>Live updates from USDA, Farm Journal, Brownfield Ag, AGDAILY and more.</p>
-      </div>
-
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        <input placeholder="Search headlines or sources..." value={query} onChange={e => setQuery(e.target.value)}
-          style={{ flex: 1, minWidth: '200px', paddingTop: '0.5rem', paddingBottom: '0.5rem', paddingLeft: '0.75rem', paddingRight: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.9rem' }} />
-        <select value={category} onChange={e => setCategory(e.target.value)}
-          style={{ paddingTop: '0.5rem', paddingBottom: '0.5rem', paddingLeft: '0.75rem', paddingRight: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.9rem' }}>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select value={sort} onChange={e => setSort(e.target.value)}
-          style={{ paddingTop: '0.5rem', paddingBottom: '0.5rem', paddingLeft: '0.75rem', paddingRight: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.9rem' }}>
-          <option>Newest</option>
-          <option>Oldest</option>
-        </select>
-      </div>
-
-      {loading && <div style={{ textAlign: 'center', paddingTop: '2rem', color: '#6b7280' }}>Loading agriculture news...</div>}
-      {error && <div style={{ textAlign: 'center', paddingTop: '2rem', color: '#dc2626' }}>{error}</div>}
-      {!loading && !error && filtered.length === 0 && <div style={{ textAlign: 'center', paddingTop: '2rem', color: '#9ca3af' }}>No articles match your filters.</div>}
-
-      {!isLoggedIn && filtered.length > 4 && (
-        <div style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: '10px', padding: '1rem 1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.9rem', color: '#5b21b6' }}>Sign in to see all {filtered.length} articles and unlock full filtering.</span>
-          <Link to="/login" style={{ background: '#7C5CBF', color: '#fff', textDecoration: 'none', padding: '0.4rem 1rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Sign In</Link>
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-        {(isLoggedIn ? filtered : filtered.slice(0, 4)).map((a, i) => (
-          <div key={`${a.id}-${i}`} onClick={() => navigate(`/app/news/${a.id}`)}
-            style={{ cursor: 'pointer', borderRadius: '10px', overflow: 'hidden', backgroundColor: '#fff', border: '1px solid #e5e7eb', transition: 'box-shadow 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; }}
-            onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}>
-            <div style={{ position: 'relative', overflow: 'hidden', lineHeight: 0 }}>
-              <img src={getArticleImage(a)} alt={a.title}
-                style={{ width: '100%', height: '140px', objectFit: 'cover', display: 'block' }}
-                onError={e => {
-                  const fallback = CATEGORY_IMAGES[a.category] || CATEGORY_IMAGES.General;
-                  if (e.target.src !== fallback) e.target.src = fallback;
-                }} />
-              <span style={{ position: 'absolute', top: '0.4rem', left: '0.4rem', backgroundColor: getCategoryColor(a.category), color: '#fff', fontSize: '0.6rem', fontWeight: 600,
-                paddingTop: '2px', paddingBottom: '2px', paddingLeft: '6px', paddingRight: '6px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {a.category}
-              </span>
+    <div className="news-page">
+      <section className="news-header">
+        <div className="news-header-inner" style={{ position: 'relative' }}>
+          <h1>Agriculture News</h1>
+          <p>Live updates from USDA, Farm Journal, Brownfield Ag, AGDAILY and more.</p>
+          {syncStatus?.lastSync && (
+            <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+              Last synced: {new Date(syncStatus.lastSync).toLocaleString()} · {syncStatus.articleCount} articles
+              {isAdmin && (
+                <button onClick={handleSync} disabled={syncing}
+                  style={{ marginLeft: '0.75rem', fontSize: '0.7rem', paddingTop: '2px', paddingBottom: '2px', paddingLeft: '8px', paddingRight: '8px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>
+                  {syncing ? 'Syncing...' : '🔄 Sync Now'}
+                </button>
+              )}
             </div>
-            <div style={{ paddingTop: '0.6rem', paddingBottom: '0.75rem', paddingLeft: '0.75rem', paddingRight: '0.75rem' }}>
-              <h3 style={{ fontSize: '0.85rem', fontWeight: 600, lineHeight: 1.3, margin: '0 0 0.3rem', color: '#111827',
-                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                {a.title}
-              </h3>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: '#9ca3af' }}>
-                <span>{a.source}</span>
-                <span>{formatDate(a.pubDate)}</span>
+          )}
+          <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {isSignedIn ? (
+              <button
+                onClick={openPrefs}
+                style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', fontWeight: 600, border: '1px solid #819360', backgroundColor: '#fff', color: '#819360', borderRadius: '6px', cursor: 'pointer' }}
+              >
+                ⚙ News Preferences
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', fontWeight: 600, border: 'none', backgroundColor: '#819360', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}
+              >
+                Sign in for full articles & daily digest
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="news-controls">
+        <div className="news-controls-row">
+          <input className="news-input" placeholder="Search headlines or sources..." value={query} onChange={(e) => setQuery(e.target.value)} />
+          <select className="news-input" value={category} onChange={(e) => setCategory(e.target.value)}>
+            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select className="news-input" value={sort} onChange={(e) => setSort(e.target.value)}>
+            <option>Newest</option>
+            <option>Oldest</option>
+          </select>
+        </div>
+      </section>
+
+      <section className="news-grid">
+        {loading && <div className="news-empty"><p>Loading agriculture news...</p></div>}
+        {error && <div className="news-empty" style={{ color: '#b91c1c' }}><p>{error}</p></div>}
+        {!loading && !error && filtered.length === 0 && <div className="news-empty">No articles match your filters.</div>}
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+          {filtered.map((a, i) => (
+            <div key={`${a.id}-${i}`} onClick={() => navigate(`/app/news/${a.id}`)}
+              style={{ cursor: 'pointer', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#fff', border: '1px solid #e5e7eb', transition: 'box-shadow 0.2s' }}
+              onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}>
+              <div style={{ position: 'relative', overflow: 'hidden', margin: 0, lineHeight: 0 }}>
+                <img src={getArticleImage(a)} alt={a.title}
+                  style={{ width: '100%', height: '120px', objectFit: 'cover', display: 'block', margin: 0 }}
+                  onError={(e) => {
+                    const img = e.target;
+                    const fallback = CATEGORY_IMAGES[a.category] || CATEGORY_IMAGES.General;
+                    if (img.src !== fallback) img.src = fallback;
+                  }} />
+                <span style={{ position: 'absolute', top: '0.4rem', left: '0.4rem', backgroundColor: getCategoryColor(a.category), color: '#fff', fontSize: '0.6rem', fontWeight: 600, paddingTop: '1px', paddingBottom: '1px', paddingLeft: '6px', paddingRight: '6px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {a.category}
+                </span>
+              </div>
+              <div style={{ paddingTop: '0.5rem', paddingBottom: '0.6rem', paddingLeft: '0.75rem', paddingRight: '0.75rem', margin: 0 }}>
+                <h3 style={{ fontSize: '0.85rem', fontWeight: 600, lineHeight: 1.3, margin: '0 0 0.3rem', color: '#111827', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {a.title}
+                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: '#9ca3af', margin: 0 }}>
+                  <span>{a.source}</span>
+                  <span>{formatDate(a.pubDate)}</span>
+                </div>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {prefsOpen && (
+        <div
+          onClick={() => setPrefsOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: '12px', maxWidth: '520px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: '1.75rem', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.35rem', color: '#111827' }}>News Preferences</h2>
+              <button onClick={() => setPrefsOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#9ca3af', cursor: 'pointer', lineHeight: 1 }}>×</button>
+            </div>
+
+            {!isSignedIn ? (
+              <div>
+                <p style={{ color: '#4b5563', lineHeight: 1.6 }}>
+                  Sign in to choose news categories and opt in to a daily (or weekly) email digest with the top 5 stories.
+                </p>
+                <button
+                  onClick={() => navigate('/login')}
+                  style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem', backgroundColor: '#819360', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}
+                >
+                  Sign in
+                </button>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label style={{ display: 'block', fontWeight: 600, color: '#111827', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                    Categories I want to see
+                  </label>
+                  <p style={{ margin: '0 0 0.6rem', color: '#6b7280', fontSize: '0.8rem' }}>
+                    Leave empty for all categories.
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {CATEGORIES.filter(c => c !== 'All').map(c => {
+                      const on = prefs.categories.includes(c);
+                      return (
+                        <button
+                          key={c}
+                          onClick={() => toggleCategory(c)}
+                          style={{
+                            padding: '0.35rem 0.85rem',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            border: `1px solid ${on ? '#819360' : '#d1d5db'}`,
+                            backgroundColor: on ? '#819360' : '#fff',
+                            color: on ? '#fff' : '#4b5563',
+                            borderRadius: '999px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {c}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label style={{ display: 'block', fontWeight: 600, color: '#111827', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                    Email digest
+                  </label>
+                  <select
+                    value={prefs.emailFrequency}
+                    onChange={(e) => setPrefs(p => ({ ...p, emailFrequency: e.target.value }))}
+                    style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.9rem', border: '1px solid #d1d5db', borderRadius: '6px', background: '#fff' }}
+                  >
+                    <option value="off">Off — don't email me</option>
+                    <option value="daily">Daily — top 5 stories</option>
+                    <option value="weekly">Weekly — top 5 stories</option>
+                  </select>
+                </div>
+
+                {prefs.emailFrequency !== 'off' && (
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <label style={{ display: 'block', fontWeight: 600, color: '#111827', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                      Preferred delivery hour (UTC)
+                    </label>
+                    <select
+                      value={prefs.preferredHour}
+                      onChange={(e) => setPrefs(p => ({ ...p, preferredHour: parseInt(e.target.value) }))}
+                      style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.9rem', border: '1px solid #d1d5db', borderRadius: '6px', background: '#fff' }}
+                    >
+                      {Array.from({ length: 24 }, (_, h) => (
+                        <option key={h} value={h}>{String(h).padStart(2, '0')}:00 UTC</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {prefs.lastSentAt && (
+                  <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '1rem' }}>
+                    Last digest sent: {new Date(prefs.lastSentAt).toLocaleString()}
+                  </div>
+                )}
+
+                {prefsMsg && (
+                  <div style={{ fontSize: '0.8rem', color: prefsMsg.startsWith('Could') || prefsMsg.startsWith('Failed') ? '#b91c1c' : '#047857', marginBottom: '0.75rem' }}>
+                    {prefsMsg}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                  {prefs.emailFrequency !== 'off' && (
+                    <button
+                      onClick={sendPreview}
+                      disabled={prefsSaving}
+                      style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem', fontWeight: 600, border: '1px solid #819360', backgroundColor: '#fff', color: '#819360', borderRadius: '6px', cursor: 'pointer' }}
+                    >
+                      Send preview now
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setPrefsOpen(false)}
+                    style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem', fontWeight: 600, border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#4b5563', borderRadius: '6px', cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={savePrefs}
+                    disabled={prefsSaving}
+                    style={{ padding: '0.55rem 1.4rem', fontSize: '0.85rem', fontWeight: 600, border: 'none', backgroundColor: '#819360', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}
+                  >
+                    {prefsSaving ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
