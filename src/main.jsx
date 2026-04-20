@@ -8,6 +8,7 @@ import "./AnimalAddWizard.css";
 import AnimalEdit from "./AnimalEdit";
 import MeatInventory from './MeatInventory';
 import AccountLayout from './AccountLayout';
+import AppShell from './AppShell';
 import NewsFeed from "./NewsFeed";
 import ArticleDetail from "./ArticleDetail";
 import MarketplaceCatalog from './MarketplaceCatalog';
@@ -221,6 +222,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="*" element={<WebsitePublic />} />
           </Routes>
         ) : (
+        <AppShell>
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/about" element={<About />} />
@@ -390,8 +392,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/marketplace/products" element={<ProductsMarketplace />} />
           <Route path="/marketplace/:id" element={<MarketplaceProduct />} />
 
-          {/* Buyer pages (login required) */}
-          <Route path="/cart" element={<MarketplaceCart />} />
+          {/* Buyer pages (login required) — /cart is the unified cart, registered above */}
+          <Route path="/marketplaces/cart" element={<MarketplaceCart />} />
           <Route path="/orders" element={<MarketplaceOrders />} />
           <Route path="/orders/:orderId" element={<OrderDetail />} />
 
@@ -403,6 +405,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/accounting" element={<RequireAuth><Accounting /></RequireAuth>} />
 
         </Routes>
+        </AppShell>
         )} {/* end isCustomDomain ternary */}
       </Suspense>
     </AccountProvider>

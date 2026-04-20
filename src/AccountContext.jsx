@@ -9,16 +9,24 @@ export function AccountProvider({ children }) {
   const [Expanded, setExpanded] = useState(true);
   const [businesses, setBusinesses] = useState([]);
 
-  // Fetch user's businesses once on app load
+  // Fetch user's businesses once on app load, then auto-load the previously-selected
+  // (or first) business so the global sidebar has data on every page.
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     const peopleId = localStorage.getItem('people_id');
-    if (token && peopleId) {
-      fetch(`${import.meta.env.VITE_API_URL}/auth/my-businesses?PeopleID=${peopleId}`)
-        .then(r => r.json())
-        .then(data => setBusinesses(Array.isArray(data) ? data : []))
-        .catch(() => {});
-    }
+    if (!token || !peopleId) return;
+    fetch(`${import.meta.env.VITE_API_URL}/auth/my-businesses?PeopleID=${peopleId}`)
+      .then(r => r.json())
+      .then(data => {
+        const list = Array.isArray(data) ? data : [];
+        setBusinesses(list);
+        if (list.length === 0) return;
+        const stored = parseInt(localStorage.getItem('selected_business_id') || '', 10);
+        const pick = list.find(b => (b.BusinessID ?? b.businessId ?? b.id) === stored) || list[0];
+        const id = pick.BusinessID ?? pick.businessId ?? pick.id;
+        if (id) LoadBusiness(id);
+      })
+      .catch(() => {});
   }, []);
 
 const LoadBusiness = (ID, Force = false) => {

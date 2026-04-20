@@ -39,7 +39,14 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X POST http://127.0.0.1:8000/api/marketplace/payments/create-intent -H \"Content-Type: application/json\" -d '{\"PeopleID\":1}')",
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(p\\) for p in sorted\\(d['paths']\\) if 'marketplace/payments' in p]\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X POST http://127.0.0.1:8000/api/marketplace/payments/create-intent/1 -H \"Content-Type: application/json\" -d '{\"PeopleID\":1}')",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X POST http://127.0.0.1:8000/api/marketplace/payments/confirm-payment/1 -H \"Content-Type: application/json\" -d '{\"PeopleID\":1}')"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X POST http://127.0.0.1:8000/api/marketplace/payments/confirm-payment/1 -H \"Content-Type: application/json\" -d '{\"PeopleID\":1}')",
+      "Bash(node node_modules/vite/bin/vite.js build --logLevel=warn)",
+      "Bash(node node_modules/vite/bin/vite.js build)",
+      "Bash(node node_modules/vite/bin/vite.js --port 5173)",
+      "Bash(curl -sf http://127.0.0.1:5173/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:5173/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:5175/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5175/)"
     ]
   }
 }
