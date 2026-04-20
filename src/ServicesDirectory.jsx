@@ -71,6 +71,18 @@ export default function ServicesDirectory() {
       />
       <Header />
 
+      {/* Hero */}
+      <div
+        className="relative w-full bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/Services.webp')", height: '220px' }}
+      >
+        <div className="absolute inset-0 bg-linear-to-r from-black/60 via-black/30 to-transparent" />
+        <div className="relative max-w-6xl mx-auto h-full px-4 flex flex-col justify-center">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">Services Directory</h1>
+          <p className="text-white/90 text-sm md:text-base">Browse farm and agricultural services by category.</p>
+        </div>
+      </div>
+
       <div className="max-w-6xl mx-auto px-4 py-10 flex-grow w-full">
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
@@ -81,9 +93,6 @@ export default function ServicesDirectory() {
         {/* If no category selected — show category grid */}
         {!categoryId ? (
           <>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Services Directory</h1>
-            <p className="text-gray-500 mb-8">Browse farm and agricultural services by category.</p>
-
             {categories.length === 0 ? (
               <div className="text-center py-20 text-gray-400">Loading categories…</div>
             ) : (
