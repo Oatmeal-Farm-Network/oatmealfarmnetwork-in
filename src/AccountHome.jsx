@@ -165,8 +165,8 @@ export default function AccountHome() {
       ],
     },
 
-    // Accounting — all businesses with AccessLevelID >= 3
-    {
+    // Accounting — gated by subscription feature flag
+    on('accounting') && {
       icon: '/images/Accounting.png',
       label: 'Accounting',
       links: [

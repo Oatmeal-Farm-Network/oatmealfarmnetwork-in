@@ -383,7 +383,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
-            {BusinessID && (
+            {on('accounting') && (
               <NavSection
                 icon="/images/Accounting.png"
                 label="Accounting"
