@@ -383,6 +383,22 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               </NavSection>
             )}
 
+            {BusinessID && (
+              <NavSection
+                icon="/images/Accounting.png"
+                label="Accounting"
+                expanded={Expanded}
+                isOpen={OpenSections['Accounting'] || false}
+                onToggle={() => toggleSection('Accounting')}
+              >
+                <NavChild to={`/accounting?BusinessID=${BusinessID}`} label="Dashboard" />
+                <NavChild to={`/accounting?BusinessID=${BusinessID}#invoices`} label="Invoices" />
+                <NavChild to={`/accounting?BusinessID=${BusinessID}#customers`} label="Customers" />
+                <NavChild to={`/accounting?BusinessID=${BusinessID}#vendors`} label="Vendors" />
+                <NavChild to={`/accounting?BusinessID=${BusinessID}#reports`} label="Reports" />
+              </NavSection>
+            )}
+
             <NavSection
               icon="/icons/Subscription.png"
               label="Account Settings"

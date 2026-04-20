@@ -188,34 +188,64 @@ export default function ProductsMarketplace() {
       />
       <Header />
 
-      <div className="max-w-6xl mx-auto w-full px-4 pt-3">
+      {/* ── Hero ── */}
+      <div className="mx-auto px-4 pt-2 md:pt-6" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
           { label: 'Marketplaces', to: '/marketplaces' },
           { label: 'Products' },
         ]} />
-      </div>
 
-      {/* Hero */}
-      <div
-        className="relative text-white py-10 px-4 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/ProductmarketplaceHeader.webp')" }}
-      >
-        <div className="absolute inset-0 bg-linear-to-r from-black/60 via-black/30 to-transparent" />
-        <div className="max-w-6xl mx-auto relative">
-          <h1 className="text-3xl font-bold mb-1">Products Marketplace</h1>
-          <p className="text-green-100 text-sm mb-5">Farm goods, handcrafted products, and more — shop direct from local sellers.</p>
-          <form onSubmit={handleSearch} className="flex gap-2 max-w-xl">
+        {/* Image — shorter on mobile, taller on desktop */}
+        <div className="relative w-full overflow-hidden rounded-xl rounded-b-none md:rounded-b-xl">
+          <img
+            src="/images/ProductmarketplaceHeader.webp"
+            alt="Products Marketplace"
+            className="w-full object-cover block h-[160px] md:h-[250px]"
+            loading="eager"
+          />
+          {/* Gradient + text overlay — desktop only */}
+          <div className="hidden md:block absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }} />
+          <div className="hidden md:flex absolute inset-0 flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
+            <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 12px', lineHeight: 1.2 }}>
+              Products Marketplace
+            </h1>
+            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 12px', lineHeight: 1.6 }}>
+              Farm goods, handcrafted products, and more — shop direct from local sellers.
+            </p>
+            <form onSubmit={handleSearch} className="flex gap-2 max-w-md">
+              <input
+                value={searchInput} onChange={e => setSearchInput(e.target.value)}
+                placeholder="Search products..."
+                className="flex-grow px-4 py-2 rounded-lg text-gray-900 text-sm bg-white border border-gray-300 focus:outline-none focus:border-[#3D6B34]"
+              />
+              <button type="submit" className="bg-[#3D6B34] text-white font-semibold px-5 py-2 rounded-lg hover:bg-[#2d5226] transition-colors">
+                Search
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Text below image — mobile only */}
+        <div className="md:hidden bg-white px-5 py-4 rounded-b-xl border border-t-0 border-gray-200">
+          <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.4rem', fontWeight: 'bold', margin: '0 0 8px', lineHeight: 1.2 }}>
+            Products Marketplace
+          </h1>
+          <p style={{ color: '#111111', fontSize: '0.85rem', margin: '0 0 10px', lineHeight: 1.6 }}>
+            Farm goods, handcrafted products, and more — shop direct from local sellers.
+          </p>
+          <form onSubmit={handleSearch} className="flex gap-2">
             <input
               value={searchInput} onChange={e => setSearchInput(e.target.value)}
               placeholder="Search products..."
-              className="flex-grow px-4 py-2 rounded-lg text-gray-900 text-sm focus:outline-none"
+              className="flex-grow px-3 py-2 rounded-lg text-gray-900 text-sm bg-white border border-gray-300 focus:outline-none focus:border-[#3D6B34]"
             />
-            <button type="submit" className="bg-white text-[#3D6B34] font-semibold px-5 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <button type="submit" className="bg-[#3D6B34] text-white font-semibold px-4 py-2 rounded-lg hover:bg-[#2d5226] transition-colors text-sm">
               Search
             </button>
           </form>
         </div>
+
       </div>
 
       <div className="max-w-6xl mx-auto w-full px-4 py-6 flex gap-6 flex-grow">

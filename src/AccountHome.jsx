@@ -167,7 +167,7 @@ export default function AccountHome() {
 
     // Accounting — all businesses with AccessLevelID >= 3
     {
-      icon: '/icons/accounting.svg',
+      icon: '/images/Accounting.png',
       label: 'Accounting',
       links: [
         { to: `/accounting?BusinessID=${BusinessID}`, label: 'Dashboard' },
