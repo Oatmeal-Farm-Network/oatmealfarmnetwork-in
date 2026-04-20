@@ -6,6 +6,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useAccount } from './AccountContext';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -14,6 +15,7 @@ const PRODUCT_TYPES = [
   { key: 'produce',        label: 'Produce',           emoji: '🥬' },
   { key: 'meat',           label: 'Meat',              emoji: '🥩' },
   { key: 'processed_food', label: 'Value-Added',       emoji: '🫙' },
+  { key: 'service',        label: 'Services',          emoji: '🛠️' },
 ];
 
 const SORT_OPTIONS = [
@@ -23,8 +25,32 @@ const SORT_OPTIONS = [
   { key: 'name_asc',       label: 'Name A–Z' },
 ];
 
+const AVAILABILITY_OPTIONS = [
+  { key: '',   label: 'Any time' },
+  { key: '0',  label: 'Available today' },
+  { key: '7',  label: 'This week' },
+  { key: '30', label: 'This month' },
+];
+
+// US state codes — enough coverage for restaurant buyers to filter by region
+const STATE_OPTIONS = [
+  '','AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
+];
+
 const typeEmoji = (type) =>
   type === 'meat' ? '🥩' : type === 'processed_food' ? '🫙' : '🥬';
+
+// Format an AvailableDate string as a short "Ready Mon D" label, or null if past/invalid/today.
+const formatAvailability = (dateStr) => {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d)) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (target <= today) return null; // already available — don't clutter the card
+  return `Ready ${target.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+};
 
 // ── Cart helpers (localStorage) ───────────────────────────────────────────────
 function getCart() {
@@ -41,6 +67,15 @@ export default function FarmToTableMarketplace() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('access_token'));
   const peopleId   = localStorage.getItem('people_id');
+
+  // Restaurant-buyer view: if any of the user's businesses is a Restaurant, show wholesale pricing.
+  const { businesses } = useAccount() || {};
+  const isRestaurant = isLoggedIn && Array.isArray(businesses) &&
+    businesses.some(b => (b.BusinessType || '').toLowerCase() === 'restaurant');
+  // First restaurant business — used as the "buyer" identity for the saved-farms list.
+  const restaurantBusinessId = isRestaurant
+    ? businesses.find(b => (b.BusinessType || '').toLowerCase() === 'restaurant')?.BusinessID
+    : null;
 
   // ── Sign-in form state (inline in cart drawer) ─────────────────────────────
   const [showSignIn,   setShowSignIn]   = useState(false);
@@ -84,14 +119,106 @@ export default function FarmToTableMarketplace() {
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState('');
 
-  const [typeFilter,   setTypeFilter]   = useState('all');
-  const [search,       setSearch]       = useState('');
-  const [sort,         setSort]         = useState('newest');
-  const [organicOnly,  setOrganicOnly]  = useState(false);
+  const [typeFilter,     setTypeFilter]     = useState('all');
+  const [search,         setSearch]         = useState('');
+  const [sort,           setSort]           = useState('newest');
+  const [organicOnly,    setOrganicOnly]    = useState(false);
+  const [availableWithin,setAvailableWithin]= useState(''); // '', '0', '7', '30'
+  const [minQty,         setMinQty]         = useState('');
+  const [stateFilter,    setStateFilter]    = useState('');
 
   const [cart,         setCart]         = useState(getCart);
   const [toastMsg,     setToastMsg]     = useState('');
   const [toastKey,     setToastKey]     = useState(0);
+
+  // Saved-farm IDs for the active restaurant buyer (Set for O(1) lookup).
+  const [savedFarmIds, setSavedFarmIds] = useState(() => new Set());
+  // Standing-order setup modal — null when closed; otherwise the listing being added.
+  const [standingTarget, setStandingTarget] = useState(null);
+
+  useEffect(() => {
+    if (!restaurantBusinessId) { setSavedFarmIds(new Set()); return; }
+    fetch(`${API}/api/marketplace/saved-farms?buyer_business_id=${restaurantBusinessId}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(rows => setSavedFarmIds(new Set((rows || []).map(r => r.FarmBusinessID))))
+      .catch(() => setSavedFarmIds(new Set()));
+  }, [restaurantBusinessId]);
+
+  const toggleSaveFarm = useCallback(async (farmBusinessId) => {
+    if (!restaurantBusinessId || !farmBusinessId) return;
+    const wasSaved = savedFarmIds.has(farmBusinessId);
+    // Optimistic update
+    setSavedFarmIds(prev => {
+      const next = new Set(prev);
+      if (wasSaved) next.delete(farmBusinessId); else next.add(farmBusinessId);
+      return next;
+    });
+    try {
+      if (wasSaved) {
+        await fetch(`${API}/api/marketplace/saved-farms?buyer_business_id=${restaurantBusinessId}&farm_business_id=${farmBusinessId}`, { method: 'DELETE' });
+        showToast('Removed from My Farms');
+      } else {
+        await fetch(`${API}/api/marketplace/saved-farms`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            BuyerBusinessID: restaurantBusinessId,
+            FarmBusinessID:  farmBusinessId,
+            AddedByPeopleID: peopleId ? parseInt(peopleId) : null,
+          }),
+        });
+        showToast('Saved to My Farms');
+      }
+    } catch {
+      // Revert on failure
+      setSavedFarmIds(prev => {
+        const next = new Set(prev);
+        if (wasSaved) next.add(farmBusinessId); else next.delete(farmBusinessId);
+        return next;
+      });
+    }
+  }, [restaurantBusinessId, savedFarmIds, peopleId]);
+
+  // Parse a synthetic ListingID like 'P123', 'M45', 'F9', 'S7' back to {type, sourceId}.
+  const parseListingId = (id) => {
+    if (typeof id !== 'string' || id.length < 2) return null;
+    const prefix = id[0];
+    const sourceId = parseInt(id.slice(1), 10);
+    if (Number.isNaN(sourceId)) return null;
+    const typeMap = { P: 'produce', M: 'meat', F: 'processed_food', G: 'sf', S: 'service' };
+    const type = typeMap[prefix];
+    return type ? { type, sourceId } : null;
+  };
+
+  const submitStandingOrder = async ({ frequency, dayOfWeek, quantity, notes }) => {
+    if (!standingTarget || !restaurantBusinessId) return;
+    const parsed = parseListingId(standingTarget.ListingID);
+    if (!parsed) { showToast('Could not identify product.'); return; }
+    try {
+      const res = await fetch(`${API}/api/marketplace/standing-orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          BuyerBusinessID:   restaurantBusinessId,
+          FarmBusinessID:    standingTarget.BusinessID,
+          ListingType:       parsed.type,
+          ListingSourceID:   parsed.sourceId,
+          ProductTitle:      standingTarget.Title,
+          Quantity:          quantity,
+          UnitLabel:         standingTarget.UnitLabel || null,
+          Frequency:         frequency,
+          DayOfWeek:         dayOfWeek,
+          Notes:             notes || null,
+          CreatedByPeopleID: peopleId ? parseInt(peopleId) : null,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setStandingTarget(null);
+      showToast('Standing order created');
+    } catch {
+      showToast('Could not create standing order');
+    }
+  };
 
   // ── Fetch listings ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -100,10 +227,13 @@ export default function FarmToTableMarketplace() {
       setError('');
       try {
         const params = new URLSearchParams();
-        if (typeFilter !== 'all') params.set('product_type', typeFilter);
-        if (organicOnly)          params.set('organic', 'true');   // ✓ matches backend param name
-        if (search.trim())        params.set('search', search.trim());
-        params.set('sort', sort); // ✓ matches backend param name directly
+        if (typeFilter !== 'all')   params.set('product_type', typeFilter);
+        if (organicOnly)            params.set('organic', 'true');
+        if (search.trim())          params.set('search', search.trim());
+        if (availableWithin !== '') params.set('available_within_days', availableWithin);
+        if (minQty)                 params.set('min_quantity', minQty);
+        if (stateFilter)            params.set('state', stateFilter);
+        params.set('sort', sort);
 
         const res = await fetch(`${API}/api/marketplace/catalog?${params}`);
         if (!res.ok) throw new Error(`Server error ${res.status}`);
@@ -117,7 +247,7 @@ export default function FarmToTableMarketplace() {
       }
     };
     load();
-  }, [typeFilter, organicOnly, sort, search]);
+  }, [typeFilter, organicOnly, sort, search, availableWithin, minQty, stateFilter]);
 
   // ── Cart actions ───────────────────────────────────────────────────────────
   const showToast = (msg) => {
@@ -369,6 +499,88 @@ export default function FarmToTableMarketplace() {
             )}
           </button>
         </div>
+
+        {/* ── Restaurant / bulk buyer filters (secondary row) ── */}
+        <div className="mx-auto px-4 pb-3 flex flex-wrap items-center gap-3 text-xs" style={{ maxWidth: '1300px' }}>
+          <span className="font-semibold uppercase tracking-wider text-gray-500">For buyers:</span>
+
+          {isRestaurant && (
+            <>
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                style={{ backgroundColor: '#fff4d6', color: '#8a6a0a' }}
+                title="You're signed in as a Restaurant — wholesale prices are shown when available."
+              >
+                🍽️ Wholesale view
+              </span>
+              <button
+                onClick={() => navigate('/restaurant/farms')}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[#3D6B34] border border-[#3D6B34] hover:bg-[#e8f0dc]"
+                title="View the farms you've saved"
+              >
+                ❤️ My Farms ({savedFarmIds.size})
+              </button>
+              <button
+                onClick={() => navigate('/restaurant/standing-orders')}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[#3D6B34] border border-[#3D6B34] hover:bg-[#e8f0dc]"
+                title="Manage your recurring orders"
+              >
+                🔁 Standing Orders
+              </button>
+              <button
+                onClick={() => navigate('/restaurant/digest')}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[#3D6B34] border border-[#3D6B34] hover:bg-[#e8f0dc]"
+                title="Weekly email digest of available products"
+              >
+                📬 Weekly Digest
+              </button>
+            </>
+          )}
+
+          <label className="flex items-center gap-1.5 text-gray-700">
+            <span>Available</span>
+            <select
+              value={availableWithin}
+              onChange={e => setAvailableWithin(e.target.value)}
+              className="border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:border-[#819360]"
+            >
+              {AVAILABILITY_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+            </select>
+          </label>
+
+          <label className="flex items-center gap-1.5 text-gray-700">
+            <span>State</span>
+            <select
+              value={stateFilter}
+              onChange={e => setStateFilter(e.target.value)}
+              className="border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:border-[#819360]"
+            >
+              {STATE_OPTIONS.map(s => <option key={s} value={s}>{s || 'Any'}</option>)}
+            </select>
+          </label>
+
+          <label className="flex items-center gap-1.5 text-gray-700">
+            <span>Min qty</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              placeholder="e.g. 20"
+              value={minQty}
+              onChange={e => setMinQty(e.target.value)}
+              className="border border-gray-300 rounded-lg px-2 py-1 text-xs w-20 focus:outline-none focus:border-[#819360]"
+            />
+          </label>
+
+          {(availableWithin !== '' || stateFilter || minQty) && (
+            <button
+              onClick={() => { setAvailableWithin(''); setStateFilter(''); setMinQty(''); }}
+              className="text-xs text-[#A3301E] underline hover:text-[#8a2718]"
+            >
+              Clear buyer filters
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Products grid ── */}
@@ -406,6 +618,14 @@ export default function FarmToTableMarketplace() {
                 inCart={cart.find(i => i.ListingID === l.ListingID)}
                 onAdd={() => addToCart(l)}
                 onView={() => navigate(`/marketplace/${l.ListingID}`)}
+                isRestaurant={isRestaurant}
+                isSaved={l.BusinessID && savedFarmIds.has(l.BusinessID)}
+                onToggleSave={restaurantBusinessId && l.BusinessID
+                  ? () => toggleSaveFarm(l.BusinessID)
+                  : null}
+                onMakeStanding={restaurantBusinessId
+                  ? () => setStandingTarget(l)
+                  : null}
               />
             ))}
           </div>
@@ -546,12 +766,102 @@ export default function FarmToTableMarketplace() {
       {toastMsg && (
         <Toast key={toastKey} message={toastMsg} onDone={() => setToastMsg('')} />
       )}
+
+      {/* ── Standing-order setup modal ── */}
+      {standingTarget && (
+        <StandingOrderModal
+          listing={standingTarget}
+          onCancel={() => setStandingTarget(null)}
+          onSubmit={submitStandingOrder}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Standing-order setup modal ───────────────────────────────────────────────
+function StandingOrderModal({ listing, onCancel, onSubmit }) {
+  const [frequency, setFrequency] = useState('weekly');
+  const [dayOfWeek, setDayOfWeek] = useState(1); // Mon default
+  const [quantity,  setQuantity]  = useState(1);
+  const [notes,     setNotes]     = useState('');
+  const [saving,    setSaving]    = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    await onSubmit({ frequency, dayOfWeek: parseInt(dayOfWeek), quantity: parseFloat(quantity), notes });
+    setSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={onCancel}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5" onClick={e => e.stopPropagation()}>
+        <h2 className="text-lg font-bold text-gray-900 mb-1">🔁 Standing order</h2>
+        <p className="text-sm text-gray-600 mb-4 truncate">
+          {listing.Title} <span className="text-gray-400">· {listing.SellerName}</span>
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Frequency</label>
+            <select value={frequency} onChange={e => setFrequency(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Every 2 weeks</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+
+          {frequency !== 'monthly' && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Day of week</label>
+              <select value={dayOfWeek} onChange={e => setDayOfWeek(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                {['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((d,i) =>
+                  <option key={d} value={i}>{d}</option>
+                )}
+              </select>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Quantity per delivery {listing.UnitLabel ? `(${listing.UnitLabel})` : ''}
+            </label>
+            <input type="number" min="0.25" step="0.25" value={quantity}
+              onChange={e => setQuantity(e.target.value)} required
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Notes (optional)</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+              placeholder="e.g. drop at back door, ring bell"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={onCancel}
+              className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-lg">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="px-4 py-2 text-sm font-bold text-white bg-[#3D6B34] hover:bg-[#2d5225] rounded-lg disabled:opacity-60">
+              {saving ? 'Creating…' : 'Create standing order'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
 
 // ── Product Card ──────────────────────────────────────────────────────────────
-function ProductCard({ listing: l, inCart, onAdd, onView }) {
+function ProductCard({ listing: l, inCart, onAdd, onView, isRestaurant = false, isSaved = false, onToggleSave = null, onMakeStanding = null }) {
+  const wholesale = l.WholesalePrice ? parseFloat(l.WholesalePrice) : null;
+  const retail    = l.UnitPrice      ? parseFloat(l.UnitPrice)      : 0;
+  const showWholesaleHeadline = isRestaurant && wholesale && wholesale < retail;
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-[#819360] transition-all duration-200 flex flex-col">
       {/* Image / emoji */}
@@ -571,6 +881,16 @@ function ProductCard({ listing: l, inCart, onAdd, onView }) {
             <span className="font-bold text-gray-500 text-sm">Out of Stock</span>
           </div>
         )}
+        {onToggleSave && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleSave(); }}
+            className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center text-base"
+            title={isSaved ? 'Remove from My Farms' : 'Save this farm to My Farms'}
+            aria-label={isSaved ? 'Remove from My Farms' : 'Save to My Farms'}
+          >
+            {isSaved ? '❤️' : '🤍'}
+          </button>
+        )}
       </div>
 
       {/* Info */}
@@ -581,14 +901,49 @@ function ProductCard({ listing: l, inCart, onAdd, onView }) {
         <h3 className="font-bold text-gray-800 text-sm leading-snug mb-1 cursor-pointer hover:underline line-clamp-2" style={{ color: '#3D6B34' }} onClick={onView}>
           {l.Title}
         </h3>
-        <p className="text-xs text-gray-500 mb-3">{l.SellerName} · {l.SellerCity}, {l.SellerState}</p>
+        <p className="text-xs text-gray-500 mb-2">{l.SellerName} · {l.SellerCity}, {l.SellerState}</p>
+
+        {/* Restaurant-buyer info: availability date, stock, delivery options */}
+        <div className="flex flex-wrap gap-1 mb-3">
+          {formatAvailability(l.AvailableDate) && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#fff4d6', color: '#8a6a0a' }}>
+              📅 {formatAvailability(l.AvailableDate)}
+            </span>
+          )}
+          {l.QuantityAvailable > 0 && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+              📦 {Number(l.QuantityAvailable)} {l.UnitLabel || 'avail'}
+            </span>
+          )}
+          {l.PickupAvailable ? (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#e8f0dc', color: '#3D6B34' }}>
+              🚜 Pickup
+            </span>
+          ) : null}
+          {l.ShippingAvailable ? (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#e8f0dc', color: '#3D6B34' }}>
+              🚚 Delivery
+            </span>
+          ) : null}
+        </div>
 
         <div className="mt-auto">
-          <div className="flex items-baseline gap-1.5 mb-3">
-            <span className="text-xl font-bold" style={{ color: '#3D6B34' }}>${parseFloat(l.UnitPrice).toFixed(2)}</span>
-            <span className="text-xs text-gray-400">/ {l.UnitLabel || 'each'}</span>
-            {l.WholesalePrice && (
-              <span className="text-xs text-gray-400 ml-1">WS: ${parseFloat(l.WholesalePrice).toFixed(2)}</span>
+          <div className="flex items-baseline gap-1.5 mb-3 flex-wrap">
+            {showWholesaleHeadline ? (
+              <>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ backgroundColor: '#fff4d6', color: '#8a6a0a' }}>WS</span>
+                <span className="text-xl font-bold" style={{ color: '#3D6B34' }}>${wholesale.toFixed(2)}</span>
+                <span className="text-xs text-gray-400">/ {l.UnitLabel || 'each'}</span>
+                <span className="text-xs text-gray-400 ml-1 line-through">${retail.toFixed(2)}</span>
+              </>
+            ) : (
+              <>
+                <span className="text-xl font-bold" style={{ color: '#3D6B34' }}>${retail.toFixed(2)}</span>
+                <span className="text-xs text-gray-400">/ {l.UnitLabel || 'each'}</span>
+                {wholesale && (
+                  <span className="text-xs text-gray-400 ml-1">WS: ${wholesale.toFixed(2)}</span>
+                )}
+              </>
             )}
           </div>
 
@@ -605,6 +960,16 @@ function ProductCard({ listing: l, inCart, onAdd, onView }) {
           ) : (
             <button disabled className="w-full py-2 rounded-lg text-sm font-semibold bg-gray-100 text-gray-400 cursor-not-allowed">
               Out of Stock
+            </button>
+          )}
+
+          {onMakeStanding && (
+            <button
+              onClick={onMakeStanding}
+              className="mt-2 w-full py-1.5 rounded-lg text-xs font-semibold border border-[#3D6B34] text-[#3D6B34] hover:bg-[#e8f0dc]"
+              title="Set up a recurring weekly/biweekly/monthly purchase from this farm"
+            >
+              🔁 Make this a standing order
             </button>
           )}
         </div>

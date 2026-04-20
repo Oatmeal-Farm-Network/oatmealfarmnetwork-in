@@ -213,8 +213,8 @@ export default function AccountHome() {
               <Link to={`/account/profile?BusinessID=${BusinessID}`} className="text-sm text-[#3D6B34] hover:underline">
                 Account Profile
               </Link>
-              <Link to={`/account/renew?BusinessID=${BusinessID}`} className="text-sm text-[#3D6B34] hover:underline">
-                Renew / Upgrade Membership
+              <Link to={`/account/subscription?BusinessID=${BusinessID}`} className="text-sm text-[#3D6B34] hover:underline">
+                Subscription / Billing
               </Link>
               <Link to={`/account/delete?BusinessID=${BusinessID}`} className="text-sm text-red-600 hover:underline">
                 Delete Account

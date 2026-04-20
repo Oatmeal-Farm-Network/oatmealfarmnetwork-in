@@ -1,0 +1,218 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import Header from './Header';
+import Footer from './Footer';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
+
+const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
+const niceDate = (d) => d ? new Date(d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : '';
+
+export default function UnifiedCart() {
+  const navigate = useNavigate();
+  const peopleId = localStorage.getItem('people_id');
+  const businessId = new URLSearchParams(window.location.search).get('BusinessID');
+
+  const [marketplaceCart, setMarketplaceCart] = useState(null);
+  const [eventCarts, setEventCarts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!peopleId) { navigate('/login'); return; }
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [mRes, eRes] = await Promise.all([
+          fetch(`${API}/api/marketplace/cart/${peopleId}`),
+          fetch(`${API}/api/people/${peopleId}/event-carts`),
+        ]);
+        const m = mRes.ok ? await mRes.json() : { sellers: [], itemCount: 0, subtotal: 0, platformFee: 0, total: 0 };
+        const eAll = eRes.ok ? await eRes.json() : [];
+        // Show only carts the buyer can still complete (drafts + pending payment).
+        const e = eAll.filter(c => ['draft', 'pending_payment'].includes((c.Status || '').toLowerCase()));
+        if (!cancelled) {
+          setMarketplaceCart(m);
+          setEventCarts(e);
+        }
+      } catch (err) {
+        if (!cancelled) setError('Could not load your cart.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [peopleId]);
+
+  const mpHasItems = (marketplaceCart?.itemCount || 0) > 0;
+  const hasEventCarts = eventCarts.length > 0;
+  const empty = !loading && !mpHasItems && !hasEventCarts;
+
+  const goToMarketplaceCart = () => {
+    const qs = businessId ? `?BusinessID=${businessId}` : '';
+    navigate(`/marketplaces/cart${qs}`);
+  };
+
+  const resumeEventCart = (c) => {
+    navigate(`/events/${c.EventID}/register/wizard?cartId=${c.CartID}`);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans">
+      <PageMeta title="Your Cart | Oatmeal Farm Network" noIndex />
+      <Header />
+
+      <div className="max-w-5xl mx-auto px-4 py-6">
+        <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Cart' }]} />
+
+        <div className="flex items-baseline justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Your Cart</h1>
+          <p className="text-sm text-gray-500">
+            {(marketplaceCart?.itemCount || 0) + eventCarts.length} item{(marketplaceCart?.itemCount || 0) + eventCarts.length === 1 ? '' : 's'} in progress
+          </p>
+        </div>
+
+        {error && (
+          <div className="mb-4 bg-red-50 border border-red-300 text-red-700 rounded px-4 py-3 text-sm">{error}</div>
+        )}
+
+        {loading ? (
+          <div className="text-center py-16 text-gray-400">Loading…</div>
+        ) : empty ? (
+          <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
+            <p className="text-gray-500 text-lg mb-4">Your cart is empty.</p>
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Link to="/marketplaces/farm-to-table" className="bg-[#819360] text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-[#3D6B35]">
+                Browse Marketplace
+              </Link>
+              <Link to="/events" className="border border-gray-300 text-gray-700 font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-50">
+                Find Events
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-2">
+
+            {/* Marketplace cart card */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col">
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-gray-800">Marketplace</h2>
+                  <p className="text-xs text-gray-500">Produce, meat, value-added goods, services</p>
+                </div>
+                <span className="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded">
+                  {marketplaceCart?.itemCount || 0} item{marketplaceCart?.itemCount === 1 ? '' : 's'}
+                </span>
+              </div>
+
+              {mpHasItems ? (
+                <div className="grow">
+                  {marketplaceCart.sellers.map(s => (
+                    <div key={s.SellerBusinessID} className="px-5 py-3 border-b border-gray-50 last:border-0">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">{s.SellerName}</p>
+                      <ul className="mt-1 space-y-1">
+                        {s.items.map(it => (
+                          <li key={it.CartItemID} className="flex justify-between text-sm">
+                            <span className="text-gray-700">
+                              {it.Quantity} × {it.Title}
+                            </span>
+                            <span className="text-gray-700 font-medium">{fmt(it.lineTotal)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                  <div className="px-5 py-4 bg-gray-50 border-t border-gray-100 text-sm space-y-1">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Subtotal</span><span>{fmt(marketplaceCart.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Platform fee</span><span>{fmt(marketplaceCart.platformFee)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-base text-gray-800 pt-1 border-t border-gray-200">
+                      <span>Total</span><span className="text-[#819360]">{fmt(marketplaceCart.total)}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="px-5 py-10 text-center text-sm text-gray-400 grow flex items-center justify-center">
+                  No marketplace items yet.
+                </div>
+              )}
+
+              <div className="px-5 py-3 border-t border-gray-100 flex justify-end">
+                <button
+                  onClick={goToMarketplaceCart}
+                  disabled={!mpHasItems}
+                  className="bg-[#819360] hover:bg-[#3D6B35] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-2 rounded-lg"
+                >
+                  {mpHasItems ? 'Review & Checkout' : 'Empty'}
+                </button>
+              </div>
+            </div>
+
+            {/* Event carts card */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col">
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-gray-800">Events</h2>
+                  <p className="text-xs text-gray-500">Registrations awaiting completion</p>
+                </div>
+                <span className="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded">
+                  {eventCarts.length} cart{eventCarts.length === 1 ? '' : 's'}
+                </span>
+              </div>
+
+              {hasEventCarts ? (
+                <ul className="grow divide-y divide-gray-100">
+                  {eventCarts.map(c => (
+                    <li key={c.CartID} className="px-5 py-3 flex items-center gap-3">
+                      <div className="grow min-w-0">
+                        <p className="font-semibold text-gray-800 text-sm truncate">{c.EventName || `Event ${c.EventID}`}</p>
+                        <p className="text-xs text-gray-500">
+                          {niceDate(c.EventStartDate)}
+                          {c.ItemCount ? <> · {c.ItemCount} item{c.ItemCount === 1 ? '' : 's'}</> : null}
+                          {c.Status === 'pending_payment' && <span className="ml-2 inline-block bg-amber-100 text-amber-800 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded">Awaiting payment</span>}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => resumeEventCart(c)}
+                        className="bg-[#7C5CBF] hover:bg-[#684aa6] text-white text-sm font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap"
+                      >
+                        Resume
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="px-5 py-10 text-center text-sm text-gray-400 grow flex items-center justify-center">
+                  No in-progress event registrations.
+                </div>
+              )}
+
+              <div className="px-5 py-3 border-t border-gray-100 flex justify-end">
+                <Link
+                  to="/events"
+                  className="border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-semibold px-4 py-2 rounded-lg"
+                >
+                  Find Events
+                </Link>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        <p className="mt-6 text-xs text-gray-400 text-center">
+          Marketplace orders and event registrations check out separately so each seller and host receives the right payout.
+        </p>
+      </div>
+
+      <Footer />
+    </div>
+  );
+}

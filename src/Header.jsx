@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAccount } from './AccountContext';
+import NotificationBell from './NotificationBell';
+import CartBell from './CartBell';
 
 const Header = () => {
   const { businesses } = useAccount();
@@ -224,6 +226,8 @@ const Header = () => {
                   )}
                 </li>
                 <li><Link to="/contact-us" className="nav-link">Contact</Link></li>
+                <li className="flex items-center"><CartBell /></li>
+                <li className="flex items-center"><NotificationBell /></li>
                 <li><button onClick={handleLogout} className="nav-link">Log Out</button></li>
               </>
             ) : (

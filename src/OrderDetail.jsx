@@ -145,6 +145,17 @@ export default function OrderDetail() {
                         <div>
                           <p className="font-bold text-gray-800">{item.ProductTitle}</p>
                           <p className="text-sm text-gray-500">{item.BusinessName || item.SellerName}</p>
+                          {item.SellerBusinessID && (
+                            <a
+                              href={`/provenance/${item.SellerBusinessID}?productTitle=${encodeURIComponent(item.ProductTitle || '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-[#3D6B34] hover:underline mt-1"
+                              title="Printable 'Sourced From' card for menus and social"
+                            >
+                              🖨️ Sourcing card
+                            </a>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="font-bold">${parseFloat(item.LineTotal).toFixed(2)}</p>

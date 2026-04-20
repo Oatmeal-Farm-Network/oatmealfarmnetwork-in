@@ -245,6 +245,13 @@ export default function OrgProfile() {
   const activeTab = searchParams.get('tab') || 'home';
   const setTab = (tab) => setSearchParams({ tab }, { replace: true });
 
+  // Restaurant-buyer "save this farm" state — only relevant when the viewer is a restaurant
+  // looking at a different business's profile.
+  const restaurantBusinessId = Array.isArray(businesses)
+    ? businesses.find(b => (b.BusinessType || '').toLowerCase() === 'restaurant')?.BusinessID
+    : null;
+  const [isSavedFarm, setIsSavedFarm] = useState(false);
+
   // Business ID can come from URL param (/ranch/:businessId),
   // router state (directory Profile button), the logged-in user's first business,
   // or the last selected business stored in localStorage
@@ -314,6 +321,40 @@ export default function OrgProfile() {
         .catch(() => {});
     }
   }, [businessId]);
+
+  // Fetch saved-farm membership when this profile belongs to a different business than the viewer's restaurant.
+  useEffect(() => {
+    if (!restaurantBusinessId || !businessId) { setIsSavedFarm(false); return; }
+    if (parseInt(restaurantBusinessId) === parseInt(businessId)) { setIsSavedFarm(false); return; }
+    fetch(`${API_URL}/api/marketplace/saved-farms?buyer_business_id=${restaurantBusinessId}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(rows => setIsSavedFarm((rows || []).some(r => parseInt(r.FarmBusinessID) === parseInt(businessId))))
+      .catch(() => setIsSavedFarm(false));
+  }, [restaurantBusinessId, businessId]);
+
+  const toggleSaveFarm = async () => {
+    if (!restaurantBusinessId || !businessId) return;
+    const wasSaved = isSavedFarm;
+    setIsSavedFarm(!wasSaved);
+    try {
+      if (wasSaved) {
+        await fetch(`${API_URL}/api/marketplace/saved-farms?buyer_business_id=${restaurantBusinessId}&farm_business_id=${businessId}`, { method: 'DELETE' });
+      } else {
+        const peopleId = localStorage.getItem('people_id');
+        await fetch(`${API_URL}/api/marketplace/saved-farms`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            BuyerBusinessID: parseInt(restaurantBusinessId),
+            FarmBusinessID:  parseInt(businessId),
+            AddedByPeopleID: peopleId ? parseInt(peopleId) : null,
+          }),
+        });
+      }
+    } catch {
+      setIsSavedFarm(wasSaved);
+    }
+  };
 
   if (loading) return (
     <div className="min-h-screen font-sans">
@@ -417,6 +458,80 @@ export default function OrgProfile() {
             {ranch.business_name}
           </h1>
           {location && <p style={{ color: '#888', margin: 0, fontSize: '0.95rem' }}>{location}</p>}
+          {ranch.business_id && (
+            <div style={{ marginTop: '12px', display: 'inline-flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <a
+                href={`/provenance/${ranch.business_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-block',
+                  padding: '6px 14px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: '#3D6B34',
+                  backgroundColor: '#fff',
+                  border: '1px solid #3D6B34',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                }}
+                title="Printable 'Sourced From' card for menus, table tents, and social"
+              >
+                🖨️ Get sourcing card
+              </a>
+              {restaurantBusinessId && parseInt(restaurantBusinessId) !== parseInt(ranch.business_id) && (
+                <button
+                  onClick={toggleSaveFarm}
+                  style={{
+                    padding: '6px 14px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: isSavedFarm ? '#fff' : '#A3301E',
+                    backgroundColor: isSavedFarm ? '#A3301E' : '#fff',
+                    border: '1px solid #A3301E',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                  }}
+                  title={isSavedFarm ? 'Saved to your My Farms list' : 'Save this farm for quick re-ordering'}
+                >
+                  {isSavedFarm ? '❤️ Saved to My Farms' : '🤍 Save to My Farms'}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── Restaurant facts strip — only when fields are set ── */}
+          {(ranch.cuisine || ranch.head_chef || ranch.seating_capacity || ranch.year_opened || ranch.restaurant_hours) && (
+            <div style={{
+              marginTop: '16px',
+              display: 'inline-flex',
+              flexWrap: 'wrap',
+              gap: '6px 14px',
+              justifyContent: 'center',
+              fontSize: '0.85rem',
+              color: '#555',
+            }}>
+              {ranch.cuisine          && <span>🍽️ <strong>{ranch.cuisine}</strong></span>}
+              {ranch.head_chef        && <span>👨‍🍳 Chef <strong>{ranch.head_chef}</strong></span>}
+              {ranch.seating_capacity && <span>🪑 Seats <strong>{ranch.seating_capacity}</strong></span>}
+              {ranch.year_opened      && <span>📅 Est. <strong>{ranch.year_opened}</strong></span>}
+              {ranch.restaurant_hours && <span>🕐 {ranch.restaurant_hours}</span>}
+            </div>
+          )}
+          {ranch.sourcing_philosophy && (
+            <p style={{
+              marginTop: '12px',
+              maxWidth: '640px',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              fontSize: '0.9rem',
+              color: '#555',
+              fontStyle: 'italic',
+              lineHeight: 1.5,
+            }}>
+              "{ranch.sourcing_philosophy}"
+            </p>
+          )}
         </div>
 
         {/* ── Tab nav ── */}

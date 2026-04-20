@@ -475,7 +475,10 @@ export default function AccountProfile() {
   const [searchParams] = useSearchParams();
   const businessId = searchParams.get('BusinessID');
   const navigate   = useNavigate();
-  const { Business, LoadBusiness } = useAccount();
+  const { Business, LoadBusiness, businesses } = useAccount();
+  const isRestaurantBusiness = Array.isArray(businesses)
+    && businesses.some(b => parseInt(b.BusinessID) === parseInt(businessId)
+                          && (b.BusinessType || '').toLowerCase() === 'restaurant');
 
   const [form,    setForm]    = useState(null);
   const [states,  setStates]  = useState([]);
@@ -672,6 +675,52 @@ export default function AccountProfile() {
             onChange={val => update('BusinessDescription', val)}
           />
         </div>
+
+        {/* ── Restaurant Profile ── shown only when this business is a Restaurant */}
+        {isRestaurantBusiness && (
+          <div className={sectionCard}>
+            <h2 className="text-base font-semibold text-gray-700">🍽️ Restaurant Profile <span className="text-gray-400 font-normal text-sm">(Optional)</span></h2>
+            <p className="text-xs text-gray-400">Helps farmers know who you are when you place orders or save them to My Farms.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Cuisine</label>
+                <input type="text" value={form.Cuisine || ''} onChange={e => update('Cuisine', e.target.value)}
+                  placeholder="e.g. Pacific Northwest, Italian, Farm-to-Table"
+                  className={inputClass} maxLength={200} />
+              </div>
+              <div>
+                <label className={labelClass}>Head Chef</label>
+                <input type="text" value={form.HeadChef || ''} onChange={e => update('HeadChef', e.target.value)}
+                  placeholder="Chef's name"
+                  className={inputClass} maxLength={200} />
+              </div>
+              <div>
+                <label className={labelClass}>Seating Capacity</label>
+                <input type="number" min="0" value={form.SeatingCapacity || ''} onChange={e => update('SeatingCapacity', e.target.value)}
+                  placeholder="e.g. 80"
+                  className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Year Opened</label>
+                <input type="number" min="1900" max="2100" value={form.YearOpened || ''} onChange={e => update('YearOpened', e.target.value)}
+                  placeholder="e.g. 2014"
+                  className={inputClass} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={labelClass}>Hours</label>
+                <input type="text" value={form.RestaurantHours || ''} onChange={e => update('RestaurantHours', e.target.value)}
+                  placeholder="e.g. Tue–Sun 5pm–10pm; closed Mon"
+                  className={inputClass} maxLength={500} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={labelClass}>Sourcing Philosophy</label>
+                <textarea value={form.SourcingPhilosophy || ''} onChange={e => update('SourcingPhilosophy', e.target.value)}
+                  placeholder="What do you look for in farm partners? Tell their story."
+                  rows={3} className={inputClass} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Social Media ── */}
         <div className={sectionCard}>

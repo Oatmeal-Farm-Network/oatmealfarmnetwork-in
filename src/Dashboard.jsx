@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import WeatherCompact from './WeatherCompact';
+import StandingOrderActivityWidget from './StandingOrderActivityWidget';
 import { useAccount } from './AccountContext';
 
 export default function Dashboard() {
@@ -122,9 +123,17 @@ export default function Dashboard() {
 
     if (on('farm_2_table') && FARM_TO_TABLE_BTS.includes(bt)) {
       links.push({ label: '📦 Incoming Orders', to: `/seller/orders?BusinessID=${bid}` });
+      links.push({ label: '🔁 Standing Orders', to: '/farm/standing-orders' });
       if (PRODUCE_BTS.includes(bt))        links.push({ label: '🥬 Produce',        to: `/produce/inventory?BusinessID=${bid}` });
       if (PROCESSED_FOOD_BTS.includes(bt)) links.push({ label: '🍯 Processed Foods', to: `/produce/processed-food?BusinessID=${bid}` });
       if (MEAT_BTS.includes(bt))           links.push({ label: '🥩 Meat',           to: `/produce/meat?BusinessID=${bid}` });
+    }
+
+    if (on('farm_2_table') && bt === 9) {
+      links.push({ label: '🛒 Browse Marketplace', to: '/marketplaces/farm-to-table' });
+      links.push({ label: '🔁 Standing Orders',    to: '/restaurant/standing-orders' });
+      links.push({ label: '❤️ Saved Farms',         to: '/restaurant/farms' });
+      links.push({ label: '📬 Weekly Digest',       to: '/restaurant/digest' });
     }
 
     if (on('products') && PRODUCTS_BTS.includes(bt)) {
@@ -279,6 +288,15 @@ export default function Dashboard() {
                                   ))}
                                 </div>
                               )}
+                            </div>
+                          )}
+
+                          {features?.farm_2_table && (FARM_TO_TABLE_BTS.includes(b.BusinessTypeID) || b.BusinessTypeID === 9) && (
+                            <div className="mb-4 pb-3 border-b border-gray-100">
+                              <StandingOrderActivityWidget
+                                businessId={b.BusinessID}
+                                role={b.BusinessTypeID === 9 ? 'buyer' : 'farm'}
+                              />
                             </div>
                           )}
 

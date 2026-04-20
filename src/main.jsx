@@ -157,6 +157,8 @@ const ContactUsConfirm = lazyWithReload(() => import('./ContactUsConfirm.jsx'))
 const AccountNew = lazyWithReload(() => import('./AccountNew.jsx'))
 const AccountProfile = lazyWithReload(() => import('./AccountProfile.jsx'))
 const AccountDelete = lazyWithReload(() => import('./AccountDelete.jsx'))
+const AccountSubscription = lazyWithReload(() => import('./AccountSubscription.jsx'))
+const UnifiedCart = lazyWithReload(() => import('./UnifiedCart.jsx'))
 const ProduceInventory = lazyWithReload(() => import('./ProduceInventory.jsx'))
 const ProcessedFoodInventory = lazyWithReload(() => import('./ProcessedFoodInventory.jsx'))
 const CropDetection = lazyWithReload(() => import('./CropDetection.jsx'))
@@ -176,6 +178,12 @@ const OrgProfile = lazyWithReload(() => import('./OrgProfile.jsx'))
 const Accounting = lazyWithReload(() => import('./Accounting.jsx'))
 const TestimonialsManage = lazyWithReload(() => import('./TestimonialsManage.jsx'))
 const TestimonialsRequest = lazyWithReload(() => import('./TestimonialsRequest.jsx'))
+const ProvenanceCard = lazyWithReload(() => import('./ProvenanceCard.jsx'))
+const RestaurantSavedFarms = lazyWithReload(() => import('./RestaurantSavedFarms.jsx'))
+const RestaurantStandingOrders = lazyWithReload(() => import('./RestaurantStandingOrders.jsx'))
+const FarmStandingOrders = lazyWithReload(() => import('./FarmStandingOrders.jsx'))
+const RestaurantDigest = lazyWithReload(() => import('./RestaurantDigest.jsx'))
+const SellerStripeConnect = lazyWithReload(() => import('./SellerStripeConnect.jsx'))
 
 function RequireAuth({ children }) {
   const token = localStorage.getItem('access_token');
@@ -223,6 +231,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/account/change-type" element={<AccountChangeType />} />
           <Route path="/account/profile" element={<AccountProfile />} />
           <Route path="/account/delete" element={<AccountDelete />} />
+          <Route path="/account/subscription" element={<RequireAuth><AccountSubscription /></RequireAuth>} />
+          <Route path="/cart" element={<RequireAuth><UnifiedCart /></RequireAuth>} />
           <Route path="/accounts" element={<Accounts />} />
           <Route path="/accounts/new" element={<AccountNew />} />
           <Route path="/animals" element={<AnimalsHome />} />
@@ -341,6 +351,16 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
           <Route path="/testimonials/manage" element={<TestimonialsManage />} />
           <Route path="/testimonials/request" element={<TestimonialsRequest />} />
+
+          {/* "Sourced From" provenance card — printable for menus, table tents, social */}
+          <Route path="/provenance/:businessId" element={<ProvenanceCard />} />
+
+          {/* Restaurant buyer's saved-farm list */}
+          <Route path="/restaurant/farms" element={<RequireAuth><RestaurantSavedFarms /></RequireAuth>} />
+          <Route path="/restaurant/standing-orders" element={<RequireAuth><RestaurantStandingOrders /></RequireAuth>} />
+          <Route path="/farm/standing-orders" element={<RequireAuth><FarmStandingOrders /></RequireAuth>} />
+          <Route path="/restaurant/digest" element={<RequireAuth><RestaurantDigest /></RequireAuth>} />
+          <Route path="/account/stripe-connect" element={<RequireAuth><SellerStripeConnect /></RequireAuth>} />
 
           <Route path="/forgot-password" element={<ForgotPassword />} />
 

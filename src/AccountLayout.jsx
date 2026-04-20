@@ -245,6 +245,8 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
                 onToggle={() => toggleSection('Farm 2 Table')}
               >
                 <NavChild to={`/seller/orders?BusinessID=${BusinessID}`} label="Incoming Orders" />
+                <NavChild to="/farm/standing-orders" label="Standing Orders" />
+                <NavChild to={`/account/stripe-connect?BusinessID=${BusinessID}`} label="Stripe Payouts" />
                 {[8, 10, 14, 26, 29, 31, 34].includes(BT) && (
                   <NavChild to={`/produce/inventory?BusinessID=${BusinessID}`} label="Produce" />
                 )}
@@ -254,6 +256,21 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
                 {[8, 10, 14, 19, 22, 23, 26, 29].includes(BT) && (
                   <NavChild to={`/produce/meat?BusinessID=${BusinessID}`} label="Meat" />
                 )}
+              </NavSection>
+            )}
+
+            {on('farm_2_table') && BT === 9 && (
+              <NavSection
+                icon="/icons/produce.webp"
+                label="Restaurant Sourcing"
+                expanded={Expanded}
+                isOpen={OpenSections['Restaurant Sourcing'] || false}
+                onToggle={() => toggleSection('Restaurant Sourcing')}
+              >
+                <NavChild to="/marketplaces/farm-to-table"  label="Browse Marketplace" />
+                <NavChild to="/restaurant/standing-orders"  label="Standing Orders" />
+                <NavChild to="/restaurant/farms"            label="Saved Farms" />
+                <NavChild to="/restaurant/digest"           label="Weekly Digest" />
               </NavSection>
             )}
 
@@ -409,7 +426,7 @@ export default function AccountLayout({ children, Business, BusinessID, PeopleID
               <NavChild to={`/account/change-type?BusinessID=${BusinessID}`} label="Change Account Type" />
               <NavChild to={`/account/associations?BusinessID=${BusinessID}`} label="Favorite Association" />
               <NavChild to={`/account/profile?BusinessID=${BusinessID}`} label="Account Profile" />
-              <NavChild to={`/account/renew?BusinessID=${BusinessID}`} label="Renew / Upgrade Membership" />
+              <NavChild to={`/account/subscription?BusinessID=${BusinessID}`} label="Subscription / Billing" />
               <NavChild to={`/account/delete?BusinessID=${BusinessID}`} label="Delete Account" />
             </NavSection>
 
