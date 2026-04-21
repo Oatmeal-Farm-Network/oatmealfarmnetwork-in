@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
@@ -16,6 +16,23 @@ export default function ProductsInventory() {
   const [savingRow, setSavingRow] = useState(null);
   const [deletingRow, setDeletingRow] = useState(null);
   const [editRows, setEditRows] = useState({});
+  const [inlineSaving, setInlineSaving] = useState({});
+  const [qtyDrafts, setQtyDrafts] = useState({});
+  const [search, setSearch] = useState('');
+  const [bulkQty, setBulkQty] = useState('');
+  const [bulkBusy, setBulkBusy] = useState(null); // 'Publishproduct' | 'ProdForSale' | 'ProdQuantityAvailable' | null
+
+  const filteredProducts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter(p =>
+      (p.Title || '').toLowerCase().includes(q) ||
+      (p.CategoryName || '').toLowerCase().includes(q)
+    );
+  }, [products, search]);
+
+  const allPublished = filteredProducts.length > 0 && filteredProducts.every(p => !!p.Publishproduct);
+  const allForSale = filteredProducts.length > 0 && filteredProducts.every(p => !!p.ProdForSale);
 
   useEffect(() => {
     if (BusinessID) LoadBusiness(BusinessID);
@@ -74,6 +91,48 @@ export default function ProductsInventory() {
     setSavingRow(null);
   }
 
+  async function saveInline(prodId, field, value) {
+    setInlineSaving(prev => ({ ...prev, [prodId]: field }));
+    // optimistic local update
+    setProducts(prev => prev.map(p => {
+      if (p.ProdID !== prodId) return p;
+      if (field === 'ProdQuantityAvailable') return { ...p, QuantityAvailable: value };
+      return { ...p, [field]: value };
+    }));
+    const res = await fetch(`${API_URL}/api/sfproducts/${prodId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: value }),
+    });
+    if (!res.ok) {
+      await loadProducts(); // revert from server on failure
+    }
+    setInlineSaving(prev => { const n = { ...prev }; delete n[prodId]; return n; });
+  }
+
+  async function bulkApply(field, value) {
+    if (filteredProducts.length === 0) return;
+    setBulkBusy(field);
+    // optimistic local update for every visible row
+    const ids = filteredProducts.map(p => p.ProdID);
+    setProducts(prev => prev.map(p => {
+      if (!ids.includes(p.ProdID)) return p;
+      if (field === 'ProdQuantityAvailable') return { ...p, QuantityAvailable: value };
+      return { ...p, [field]: value };
+    }));
+    const results = await Promise.all(
+      ids.map(id =>
+        fetch(`${API_URL}/api/sfproducts/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [field]: value }),
+        }).then(r => r.ok).catch(() => false)
+      )
+    );
+    if (results.some(ok => !ok)) await loadProducts(); // refresh if any failed
+    setBulkBusy(null);
+  }
+
   async function handleDelete(prodId) {
     if (!confirm('Delete this product? This cannot be undone.')) return;
     setDeletingRow(prodId);
@@ -109,8 +168,23 @@ export default function ProductsInventory() {
 
         {/* ── LIST ── */}
         <div className="bg-white rounded-2xl shadow border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-lg font-bold text-gray-800">Inventory</h2>
+          <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-gray-800">
+              Inventory
+              <span className="ml-2 text-sm font-normal text-gray-500">
+                {search.trim()
+                  ? `${filteredProducts.length} of ${products.length}`
+                  : `${products.length}`}
+              </span>
+            </h2>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by name or category..."
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#3D6B34]"
+              style={{ width: 280, maxWidth: '100%' }}
+            />
           </div>
 
           {loading ? (
@@ -120,17 +194,77 @@ export default function ProductsInventory() {
               You don't have any products yet.{' '}
               <Link to={`/products/add?BusinessID=${BusinessID}`} className="text-[#3D6B34] font-semibold hover:underline">Add your first product</Link>.
             </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              No products match "{search}". <button onClick={() => setSearch('')} className="text-[#3D6B34] hover:underline">Clear search</button>
+            </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ backgroundColor: '#F3F4F6' }}>
-                  {['Image', 'Name', 'Category', 'Price', 'Sale', 'Qty', 'Published', 'For Sale', 'Actions'].map(h => (
+                  {['Image', 'Name', 'Category', 'Price', 'Sale'].map(h => (
                     <th key={h} style={{ padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>{h}</th>
                   ))}
+                  {/* Qty header with bulk-set */}
+                  <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>
+                    <div>Qty</div>
+                    <div className="flex items-center gap-1 mt-1" title="Set quantity for all visible products">
+                      <input
+                        type="number"
+                        min="0"
+                        value={bulkQty}
+                        onChange={e => setBulkQty(e.target.value)}
+                        placeholder="Set all"
+                        disabled={bulkBusy === 'ProdQuantityAvailable'}
+                        className="border border-gray-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:border-[#3D6B34]"
+                        style={{ width: 60 }}
+                      />
+                      <button
+                        onClick={() => {
+                          const v = parseInt(bulkQty, 10);
+                          if (!Number.isFinite(v) || v < 0) return;
+                          if (!confirm(`Set quantity to ${v} for ${filteredProducts.length} product(s)?`)) return;
+                          bulkApply('ProdQuantityAvailable', v);
+                          setBulkQty('');
+                        }}
+                        disabled={bulkBusy === 'ProdQuantityAvailable' || bulkQty === ''}
+                        className="text-xs bg-[#3D6B34] text-white px-2 py-0.5 rounded hover:bg-[#2e5227] disabled:opacity-50"
+                      >
+                        {bulkBusy === 'ProdQuantityAvailable' ? '...' : 'Apply'}
+                      </button>
+                    </div>
+                  </th>
+                  {/* Published header with select-all toggle */}
+                  <th style={{ padding: '0.6rem 0.75rem', textAlign: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>
+                    <div>Published</div>
+                    <label className="flex items-center justify-center gap-1 mt-1 font-normal normal-case text-[10px] tracking-normal text-gray-500" title="Toggle all visible products">
+                      <input
+                        type="checkbox"
+                        checked={allPublished}
+                        disabled={bulkBusy === 'Publishproduct' || filteredProducts.length === 0}
+                        onChange={e => bulkApply('Publishproduct', e.target.checked ? 1 : 0)}
+                      />
+                      <span>All</span>
+                    </label>
+                  </th>
+                  {/* For Sale header with select-all toggle */}
+                  <th style={{ padding: '0.6rem 0.75rem', textAlign: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>
+                    <div>For Sale</div>
+                    <label className="flex items-center justify-center gap-1 mt-1 font-normal normal-case text-[10px] tracking-normal text-gray-500" title="Toggle all visible products">
+                      <input
+                        type="checkbox"
+                        checked={allForSale}
+                        disabled={bulkBusy === 'ProdForSale' || filteredProducts.length === 0}
+                        onChange={e => bulkApply('ProdForSale', e.target.checked ? 1 : 0)}
+                      />
+                      <span>All</span>
+                    </label>
+                  </th>
+                  <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {products.map((p, i) => {
+                {filteredProducts.map((p, i) => {
                   const isEditing = !!editRows[p.ProdID];
                   const row = editRows[p.ProdID] || {};
                   return (
@@ -188,7 +322,22 @@ export default function ProductsInventory() {
                         {isEditing ? (
                           <input type="number" value={row.ProdQuantityAvailable} onChange={e => updateEditRow(p.ProdID, 'ProdQuantityAvailable', e.target.value)} className="border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none" style={{ width: 60 }} />
                         ) : (
-                          <span className="text-sm text-gray-700">{p.QuantityAvailable ?? 0}</span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={qtyDrafts[p.ProdID] ?? (p.QuantityAvailable ?? 0)}
+                            onChange={e => setQtyDrafts(prev => ({ ...prev, [p.ProdID]: e.target.value }))}
+                            onBlur={e => {
+                              const v = parseInt(e.target.value, 10);
+                              const next = Number.isFinite(v) && v >= 0 ? v : 0;
+                              setQtyDrafts(prev => { const n = { ...prev }; delete n[p.ProdID]; return n; });
+                              if (next !== (p.QuantityAvailable ?? 0)) saveInline(p.ProdID, 'ProdQuantityAvailable', next);
+                            }}
+                            onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
+                            disabled={inlineSaving[p.ProdID] === 'ProdQuantityAvailable'}
+                            className="border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none focus:border-[#3D6B34]"
+                            style={{ width: 60 }}
+                          />
                         )}
                       </td>
 
@@ -197,7 +346,12 @@ export default function ProductsInventory() {
                         {isEditing ? (
                           <input type="checkbox" checked={!!row.Publishproduct} onChange={e => updateEditRow(p.ProdID, 'Publishproduct', e.target.checked ? 1 : 0)} />
                         ) : (
-                          <span>{p.Publishproduct ? '✓' : '—'}</span>
+                          <input
+                            type="checkbox"
+                            checked={!!p.Publishproduct}
+                            disabled={inlineSaving[p.ProdID] === 'Publishproduct'}
+                            onChange={e => saveInline(p.ProdID, 'Publishproduct', e.target.checked ? 1 : 0)}
+                          />
                         )}
                       </td>
 
@@ -206,7 +360,12 @@ export default function ProductsInventory() {
                         {isEditing ? (
                           <input type="checkbox" checked={!!row.ProdForSale} onChange={e => updateEditRow(p.ProdID, 'ProdForSale', e.target.checked ? 1 : 0)} />
                         ) : (
-                          <span>{p.ProdForSale ? '✓' : '—'}</span>
+                          <input
+                            type="checkbox"
+                            checked={!!p.ProdForSale}
+                            disabled={inlineSaving[p.ProdID] === 'ProdForSale'}
+                            onChange={e => saveInline(p.ProdID, 'ProdForSale', e.target.checked ? 1 : 0)}
+                          />
                         )}
                       </td>
 

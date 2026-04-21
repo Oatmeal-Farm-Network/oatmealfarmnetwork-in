@@ -140,7 +140,14 @@
       "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/oatmeal_main\" diff frontend/src/components/Sidebar.tsx frontend/src/routes/AppRouter.tsx)",
       "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/oatmeal_main\" add frontend/src/components/Sidebar.tsx frontend/src/routes/AppRouter.tsx frontend/src/services/adminApi.ts \"frontend/src/pages/admin/CronJobs.tsx\" \"frontend/src/pages/admin/ScraperKnowledge.jsx\" _proposals .claude/settings.local.json)",
       "Bash(git -C 'f:/Oatmeal AI/OatmealFarmNetwork Repo/oatmeal_main' commit -m ' *)",
-      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" add .claude/settings.local.json _vite.out)"
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" add .claude/settings.local.json _vite.out)",
+      "Bash(awk 'NR>=1 && NR<=40' public/images/sfProducts.txt)",
+      "Bash(awk 'NR>=2 && NR<=15' public/images/sfProducts.txt)",
+      "Bash(awk 'NR==2' public/images/sfProducts.txt)",
+      "Bash(awk '{$1=$1};1')",
+      "Bash(awk 'NF>0')",
+      "Bash(./venv/Scripts/python -c ' *)",
+      "Bash(./venv/Scripts/python scripts/import_sfproducts.py)"
     ]
   }
 }
