@@ -82,13 +82,6 @@ export default function Login() {
 
             <div className="px-8 py-8">
 
-              {/* Team-only notice */}
-              {settings?.team_only_login && (
-                <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 mb-6 text-sm text-center">
-                  This platform is currently available to team members only.
-                </div>
-              )}
-
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-6 text-sm">
                   {error}
