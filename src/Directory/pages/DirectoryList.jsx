@@ -12,7 +12,7 @@ const brImg               = '/images/BusinessResources.webp';
 const crafOrgImg          = '/images/CrafterOrganizations.webp';
 const farmersMarketImg    = '/images/FarmersMarket.webp';
 const farmsRanchesImg     = '/images/Farm.webp';
-const fiberImg            = '/images/DirectoryHome.webp';      // no FiberCooperatives image in /public/images — fallback
+const fiberImg            = '/images/FiberCooperatives.webp';
 const fiberMillsImg       = '/images/FiberMill.webp';
 const fisheriesImg        = '/images/Fishery.webp';
 const fishermenImg        = '/images/Fishermen.webp';
@@ -28,10 +28,10 @@ const restaurantsImg      = '/images/Restaurants.webp';
 const retailersImg        = '/images/Retailers.webp';
 const serviceProvidersImg = '/images/ServiceProviders.webp';
 const universitiesImg     = '/images/University.webp';
-const vetImg              = '/images/Vet.webp';
+const vetImg              = '/images/Vetrinarians.webp';
 const vineyardsImg        = '/images/Vineyard.webp';
 const wineriesImg         = '/images/Winery.webp';
-const othersImg           = '/Directory/Icons/Other.jpg'; 
+const othersImg           = '/icons/Other.png';
 
 const CATEGORIES = [
   {

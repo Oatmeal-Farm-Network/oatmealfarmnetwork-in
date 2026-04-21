@@ -1,0 +1,56 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import Header from './Header';
+import Footer from './Footer';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
+
+const DASHBOARDS = [
+  {
+    key: 'crop-analysis-summary',
+    title: 'Crop Analysis Summary',
+    blurb: 'Filter by field, crop, type, soil, zone, or pH and see KPIs, distributions, the nutrient matrix, and a detail table.',
+    icon: '/icons/PrecisionAg.svg',
+    to: '/precision-ag/visualizations/crop-analysis-summary',
+  },
+];
+
+export default function VisualizationsDashboard() {
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
+      <PageMeta title="Visualizations | Oatmeal Farm Network" noIndex />
+      <Header />
+
+      <div className="grow max-w-6xl mx-auto w-full px-4 py-8">
+        <Breadcrumbs items={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Precision Ag' },
+          { label: 'Visualizations' },
+        ]} />
+
+        <h1 className="text-2xl font-bold text-gray-800 mt-2 mb-2">Visualizations</h1>
+        <p className="text-sm text-gray-500 mb-6">
+          Interactive reports over your plant and varietal data.
+        </p>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {DASHBOARDS.map(d => (
+            <Link
+              key={d.key}
+              to={d.to}
+              className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-[#819360] transition"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <img src={d.icon} alt="" className="w-8 h-8" />
+                <h2 className="font-semibold text-gray-800">{d.title}</h2>
+              </div>
+              <p className="text-sm text-gray-600">{d.blurb}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <Footer />
+    </div>
+  );
+}

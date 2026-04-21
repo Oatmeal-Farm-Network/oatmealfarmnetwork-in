@@ -86,10 +86,10 @@ export default function UnifiedCart() {
           <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
             <p className="text-gray-500 text-lg mb-4">Your cart is empty.</p>
             <div className="flex gap-3 justify-center flex-wrap">
-              <Link to="/marketplaces/farm-to-table" className="bg-[#819360] text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-[#3D6B35]">
+              <Link to="/marketplaces/farm-to-table" className="bg-[#819360] text-white! font-semibold px-5 py-2.5 rounded-lg hover:bg-[#3D6B35]">
                 Browse Marketplace
               </Link>
-              <Link to="/events" className="bg-[#819360] text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-[#3D6B35]">
+              <Link to="/events" className="bg-[#819360] text-white! font-semibold px-5 py-2.5 rounded-lg hover:bg-[#3D6B35]">
                 Find Events
               </Link>
             </div>

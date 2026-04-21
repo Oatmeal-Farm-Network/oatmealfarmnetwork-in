@@ -9,31 +9,69 @@ const API = import.meta.env.VITE_API_URL || '';
 const FALLBACK_IMG = '/images/Services.webp';
 const EAGER_COUNT = 4;
 
+const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const CATEGORY_IMAGES = {
+  [norm('Agricultural Production')]:          '/images/AgriculturalServices.webp',
+  [norm('Animal Services')]:                  '/images/Animalservices.webp',
+  [norm('Artisan & Crafting Services')]:      '/images/Artisan&CraftingServices.webp',
+  [norm('Community Building & Advocacy')]:    '/images/CommunityBuilding&Advocacy.webp',
+  [norm('Education')]:                        '/images/EducationServices.webp',
+  [norm('Entertainment')]:                    '/images/EntertainmentServices.webp',
+  [norm('Environmental & Conservation Services')]: '/images/Environmental&ConcervationServices.webp',
+  [norm('Food Production & Processing')]:     '/images/FoodProduction&Processsing.webp',
+  [norm('Hospitality & Dining')]:             '/images/Hospitality&Dining.webp',
+  [norm('Logistics & Distribution')]:         '/images/Logistics&Distribution.webp',
+  [norm('Marketing and Sales')]:              '/images/Marketing&Sales.webp',
+  [norm('Medical')]:                          '/images/MedicalServices.webp',
+  [norm('Planning & Management')]:            '/images/FarmManagement.webp',
+  [norm('Retail & Wholesale')]:               '/images/Retail&Wholesale.webp',
+};
+
+const imgForCategory = (name) => CATEGORY_IMAGES[norm(name)] || FALLBACK_IMG;
+
 export default function ServicesDirectory() {
   const { categoryId } = useParams();
 
-  const [categories, setCategories] = useState([]);
-  const [services,   setServices]   = useState([]);
-  const [catName,    setCatName]    = useState('');
-  const [loading,    setLoading]    = useState(true);
+  const [categories,    setCategories]    = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  const [services,      setServices]      = useState([]);
+  const [catName,       setCatName]       = useState('');
+  const [loading,       setLoading]       = useState(true);
+  const [search,        setSearch]        = useState('');
+  const [subcatId,      setSubcatId]      = useState('');
 
   useEffect(() => {
     fetch(`${API}/api/services/categories`)
       .then(r => r.json())
       .then(d => setCategories(Array.isArray(d) ? d : []))
       .catch(() => {});
+    fetch(`${API}/api/services/subcategories/all`)
+      .then(r => r.json())
+      .then(d => setSubcategories(Array.isArray(d) ? d : []))
+      .catch(() => {});
   }, []);
 
+  useEffect(() => { setSubcatId(''); setSearch(''); }, [categoryId]);
+
+  const filtersActive = !!(search.trim() || subcatId);
+
   useEffect(() => {
+    if (!categoryId && !filtersActive) { setServices([]); setLoading(false); return; }
     setLoading(true);
-    const url = categoryId
-      ? `${API}/api/services/public?category_id=${categoryId}`
-      : `${API}/api/services/public`;
-    fetch(url)
+    const params = new URLSearchParams();
+    if (categoryId) params.set('category_id', categoryId);
+    if (subcatId) params.set('subcategory_id', subcatId);
+    if (search.trim()) params.set('q', search.trim());
+    fetch(`${API}/api/services/public?${params.toString()}`)
       .then(r => r.json())
       .then(d => { setServices(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => { setServices([]); setLoading(false); });
-  }, [categoryId]);
+  }, [categoryId, subcatId, search, filtersActive]);
+
+  const visibleSubcats = categoryId
+    ? subcategories.filter(s => String(s.ServiceCategoryID) === String(categoryId))
+    : subcategories;
 
   useEffect(() => {
     if (categoryId && categories.length) {
@@ -118,7 +156,41 @@ export default function ServicesDirectory() {
 
       <div className="mx-auto px-4 py-8 w-full flex-grow" style={{ maxWidth: '1300px' }}>
 
-        {!categoryId ? (
+        {/* ── Filter Bar ── */}
+        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-5 flex flex-col md:flex-row gap-3">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search services by title, description, or business…"
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#819360]"
+          />
+          <select
+            value={subcatId}
+            onChange={e => setSubcatId(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#819360]"
+          >
+            <option value="">All subcategories</option>
+            {visibleSubcats.map(sc => (
+              <option key={sc.ServiceSubCategoryID} value={sc.ServiceSubCategoryID}>
+                {categoryId
+                  ? sc.ServiceSubCategoryName
+                  : `${sc.ServicesCategory || 'Uncategorized'} — ${sc.ServiceSubCategoryName}`}
+              </option>
+            ))}
+          </select>
+          {(search || subcatId) && (
+            <button
+              type="button"
+              onClick={() => { setSearch(''); setSubcatId(''); }}
+              className="text-sm text-[#3D6B34] hover:underline px-2"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        {!categoryId && !filtersActive ? (
           <>
             <h2 className="text-lg font-bold text-gray-900 mb-5">Service Categories</h2>
 
@@ -137,13 +209,14 @@ export default function ServicesDirectory() {
                       style={{ width: '155px', height: '155px' }}
                     >
                       <img
-                        src={FALLBACK_IMG}
+                        src={imgForCategory(cat.ServicesCategory)}
                         alt={cat.ServicesCategory}
                         width="155"
                         height="155"
                         loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
                         decoding={index < EAGER_COUNT ? 'sync' : 'async'}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        onError={e => { e.target.onerror = null; e.target.src = FALLBACK_IMG; }}
                       />
                     </Link>
 
@@ -177,33 +250,19 @@ export default function ServicesDirectory() {
           </>
         ) : (
           <>
-            <div className="flex items-center gap-3 flex-wrap mb-5">
-              <Link to="/services/directory" className="text-sm text-[#3D6B34] hover:underline">
-                ← All Categories
-              </Link>
-              <span className="text-gray-300">|</span>
-              <div className="flex gap-2 flex-wrap">
-                {categories.map(cat => (
-                  <Link
-                    key={cat.ServiceCategoryID}
-                    to={`/services/directory/${cat.ServiceCategoryID}`}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors no-underline ${
-                      String(cat.ServiceCategoryID) === String(categoryId)
-                        ? 'bg-[#3D6B34] text-white'
-                        : 'bg-white border border-gray-200 text-gray-600 hover:border-[#3D6B34] hover:text-[#3D6B34]'
-                    }`}
-                  >
-                    {cat.ServicesCategory}
-                  </Link>
-                ))}
+            {categoryId && (
+              <div className="mb-5">
+                <Link to="/services/directory" className="text-sm text-[#3D6B34] hover:underline">
+                  ← All Categories
+                </Link>
               </div>
-            </div>
+            )}
 
             {loading ? (
               <div className="text-center py-20 text-gray-400">Loading services…</div>
             ) : services.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-200 p-16 text-center text-gray-400">
-                <p className="mb-3">No services listed in this category yet.</p>
+                <p className="mb-3">No services match your search.</p>
                 <Link to="/services/directory" className="text-[#3D6B34] hover:underline text-sm">← All Categories</Link>
               </div>
             ) : (

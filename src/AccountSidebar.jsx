@@ -99,7 +99,7 @@ export default function AccountSidebar() {
 
   return (
     <div
-      className={`fixed top-[72px] left-0 bottom-0 z-40 flex flex-col transition-all duration-300 ${Expanded ? 'w-52' : 'w-16'}`}
+      className={`fixed top-18 left-0 bottom-0 z-40 flex flex-col transition-all duration-300 ${Expanded ? 'w-52' : 'w-16'}`}
       style={{ backgroundColor: '#faf6ef' }}
     >
       <button
@@ -193,6 +193,8 @@ export default function AccountSidebar() {
               </>
             )}
             <NavChild to={`/precision-ag/analyses?BusinessID=${BusinessID}`} label="Analyses" />
+            <NavChild to={`/precision-ag/visualizations?BusinessID=${BusinessID}`} label="Visualizations" />
+            <NavChild to={`/precision-ag/visualizations/crop-analysis-summary?BusinessID=${BusinessID}`} label="— Crop Analysis Summary" />
             <NavChild to={`/oatsense/crop-rotation?BusinessID=${BusinessID}`} label="Crop Rotation" />
             <NavChild to={`/oatsense/notes?BusinessID=${BusinessID}`} label="Notes" />
           </NavSection>

@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
 import './index.css'
 import { AccountProvider } from './AccountContext';
-import PWAInstallPrompt from './PWAInstallPrompt.jsx';
 import "./AnimalAddWizard.css";
 import AnimalEdit from "./AnimalEdit";
 import MeatInventory from './MeatInventory';
@@ -163,6 +162,8 @@ const UnifiedCart = lazyWithReload(() => import('./UnifiedCart.jsx'))
 const ProduceInventory = lazyWithReload(() => import('./ProduceInventory.jsx'))
 const ProcessedFoodInventory = lazyWithReload(() => import('./ProcessedFoodInventory.jsx'))
 const CropDetection = lazyWithReload(() => import('./CropDetection.jsx'))
+const VisualizationsDashboard = lazyWithReload(() => import('./VisualizationsDashboard.jsx'))
+const CropAnalysisSummary = lazyWithReload(() => import('./CropAnalysisSummary.jsx'))
 const ServicesHome = lazyWithReload(() => import('./ServicesHome.jsx'))
 const ServicesAdd = lazyWithReload(() => import('./ServicesAdd.jsx'))
 const ServicesSuggestCategory = lazyWithReload(() => import('./ServicesSuggestCategory.jsx'))
@@ -214,7 +215,6 @@ const isCustomDomain = !OFN_HOSTS.some(
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <AccountProvider>
-      <PWAInstallPrompt />
       <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>}>
         {/* On a custom domain every path renders the public site — no OFN chrome, no auth routes */}
         {isCustomDomain ? (
@@ -261,6 +261,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/add" element={<PrecisionAgAdd />} />
           <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />
           <Route path="/precision-ag/crop-detection" element={<CropDetection />} />
+          <Route path="/precision-ag/visualizations" element={<RequireAuth><VisualizationsDashboard /></RequireAuth>} />
+          <Route path="/precision-ag/visualizations/crop-analysis-summary" element={<RequireAuth><CropAnalysisSummary /></RequireAuth>} />
           <Route path="/website/builder" element={<RequireAuth><WebsiteBuilder /></RequireAuth>} />
           <Route path="/account/audio-settings" element={<AudioSettings />} />
           <Route path="/account/settings" element={<RequireAuth><AccountSettings /></RequireAuth>} />

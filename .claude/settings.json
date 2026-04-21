@@ -137,7 +137,11 @@
       "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://127.0.0.1:8000/health)",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('notif paths:', [p for p in d['paths'] if 'notification' in p.lower\\(\\)]\\); print\\('standing paths:', [p for p in d['paths'] if 'standing-order' in p]\\)\")",
       "Bash(curl -s -o /dev/null -w \"unread-count \\(no auth\\): HTTP %{http_code}\\\\n\" http://127.0.0.1:8000/api/notifications/unread-count)",
-      "Bash(curl -s -o /dev/null -w \"list \\(no auth\\):         HTTP %{http_code}\\\\n\" http://127.0.0.1:8000/api/notifications)"
+      "Bash(curl -s -o /dev/null -w \"list \\(no auth\\):         HTTP %{http_code}\\\\n\" http://127.0.0.1:8000/api/notifications)",
+      "Bash(iconv -f UTF-16LE -t UTF-8 \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/src/Visualizations/Report/Layout\")",
+      "Bash(python -c \"import json; d=json.load\\(open\\('/tmp/layout.json', encoding='utf-8'\\)\\); print\\('keys:', list\\(d.keys\\(\\)\\)\\); print\\('sections:', len\\(d.get\\('sections',[]\\)\\)\\)\")",
+      "Bash(python)",
+      "Bash(taskkill //PID 28512 //F)"
     ]
   }
 }
