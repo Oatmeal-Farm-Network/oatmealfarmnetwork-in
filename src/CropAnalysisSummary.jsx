@@ -17,9 +17,9 @@ const PALETTE = ['#819360', '#3D6B35', '#A3301E', '#7C5CBF', '#E6A23C', '#5C7A9A
 // now label the "fields" filter as "Variety" in the UI — a variety row is a
 // specific cultivar of a crop (e.g., Crop=Tomato, Variety=Brandywine).
 const FILTER_KEYS = [
-  { key: 'field',        label: 'Variety',        optionsKey: 'fields',       help: 'Specific cultivar of the selected crop (e.g., Brandywine for Tomato). Pick a crop first to scope this list.' },
   { key: 'crop',         label: 'Crop',           optionsKey: 'crops',        help: 'Pick a single crop (plant species) to focus the dashboard on. Choosing a crop auto-fills Plant Type and narrows the Variety list.' },
-  { key: 'plantType',    label: 'Plant Type',     optionsKey: 'plantTypes',   help: 'High-level plant category — Fruits, Grains, Vegetables, Herbs, etc. Auto-fills when you pick a crop.' },
+  { key: 'field',        label: 'Variety',        optionsKey: 'fields',       help: 'Specific cultivar of the selected crop (e.g., Brandywine for Tomato). Pick a crop first to scope this list.' },
+  { key: 'plantType',    label: 'Plant Type',     optionsKey: 'plantTypes',   help: 'High-level plant category — Fruits, Grains, Vegetables, Herbs. Useful on its own for browsing a group; auto-fills (and becomes redundant) once you pick a Crop.' },
   { key: 'soilTexture',  label: 'Soil Texture',   optionsKey: 'soilTextures', help: 'Dominant soil makeup required by the crop — Clay, Loam, Sandy, Silty, etc.' },
   { key: 'zone',         label: 'Hardiness Zone', optionsKey: 'zones',        help: 'USDA plant hardiness zone the crop tolerates (e.g., 5a, 7b).' },
   { key: 'phRange',      label: 'pH Range',       optionsKey: 'phRanges',     help: 'Preferred soil pH band for the crop (e.g., 6.0 – 7.0).' },
