@@ -116,7 +116,31 @@
       "Bash(./venv/Scripts/python.exe -m playwright install chromium)",
       "Bash(../venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('routers/website_ai.py'\\).read\\(\\)\\); print\\('OK'\\)\")",
       "Bash(python -c \"import ast; ast.parse\\(open\\('routers/website_ai.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/oatmeal_main\" status)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" log --oneline -10)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" diff --stat HEAD~5..HEAD -- src/)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" diff HEAD -- src/)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" status --porcelain)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" show --stat HEAD)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" log -1 --format=%B HEAD)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" log --oneline origin/main..HEAD)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" log --oneline HEAD..origin/main)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/oatmeal_main\" diff frontend/src/services/adminApi.ts)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" remote -v)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" show --stat origin/main~2)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" show --stat origin/main~1)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" show --stat origin/main)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" merge origin/main --no-edit)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" log --oneline -10)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" log --oneline --all -20)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" log -1 --format=%H -- routers/website_ai.py)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" log --oneline -5 -- routers/website_ai.py scrapers/lavendir_scraper.py)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" show 961c732:routers/website_ai.py)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/oatmeal_main\" diff frontend/src/components/Sidebar.tsx frontend/src/routes/AppRouter.tsx)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/oatmeal_main\" add frontend/src/components/Sidebar.tsx frontend/src/routes/AppRouter.tsx frontend/src/services/adminApi.ts \"frontend/src/pages/admin/CronJobs.tsx\" \"frontend/src/pages/admin/ScraperKnowledge.jsx\" _proposals .claude/settings.local.json)",
+      "Bash(git -C 'f:/Oatmeal AI/OatmealFarmNetwork Repo/oatmeal_main' commit -m ' *)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" add .claude/settings.local.json _vite.out)"
     ]
   }
 }
