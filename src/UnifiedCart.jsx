@@ -89,7 +89,7 @@ export default function UnifiedCart() {
               <Link to="/marketplaces/farm-to-table" className="bg-[#819360] text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-[#3D6B35]">
                 Browse Marketplace
               </Link>
-              <Link to="/events" className="border border-gray-300 text-gray-700 font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-50">
+              <Link to="/events" className="bg-[#819360] text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-[#3D6B35]">
                 Find Events
               </Link>
             </div>
@@ -197,7 +197,7 @@ export default function UnifiedCart() {
               <div className="px-5 py-3 border-t border-gray-100 flex justify-end">
                 <Link
                   to="/events"
-                  className="border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-semibold px-4 py-2 rounded-lg"
+                  className="bg-[#819360] hover:bg-[#3D6B35] text-white text-sm font-semibold px-4 py-2 rounded-lg"
                 >
                   Find Events
                 </Link>
