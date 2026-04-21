@@ -67,7 +67,11 @@
       "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" log -1 --format=fuller)",
       "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" add -A)",
       "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" status --short)",
-      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" -c core.longpaths=true add -A)"
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" -c core.longpaths=true add -A)",
+      "Bash(git -C 'f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork' -c core.longpaths=true commit -m ' *)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" log -1 --oneline)",
+      "Bash(git -C \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork\" -c core.longpaths=true add .claude/settings.local.json _vite.out)",
+      "Bash(git -C 'f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork' commit -m ' *)"
     ]
   }
 }
