@@ -170,6 +170,8 @@ const ServicesEdit = lazyWithReload(() => import('./ServicesEdit.jsx'))
 const FarmToTableMarketplace = lazyWithReload(() => import('./FarmToTableMarketplace.jsx'))
 const ProductsMarketplace = lazyWithReload(() => import('./ProductsMarketplace.jsx'))
 const ProductDetail = lazyWithReload(() => import('./ProductDetail.jsx'))
+const ProductsInventory = lazyWithReload(() => import('./ProductsInventory.jsx'))
+const ProductEdit = lazyWithReload(() => import('./ProductEdit.jsx'))
 const LivestockMarketplace = lazyWithReload(() => import('./LivestockMarketplace.jsx'))
 const LivestockForSale = lazyWithReload(() => import('./LivestockForSale.jsx'))
 const LivestockAnimalDetail = lazyWithReload(() => import('./LivestockAnimalDetail.jsx'))
@@ -391,6 +393,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/marketplace/products/:id" element={<ProductDetail />} />
           <Route path="/marketplace/products" element={<ProductsMarketplace />} />
           <Route path="/marketplace/:id" element={<MarketplaceProduct />} />
+
+          {/* Seller product management (login required) */}
+          <Route path="/products" element={<RequireAuth><ProductsInventory /></RequireAuth>} />
+          <Route path="/products/add" element={<RequireAuth><ProductEdit /></RequireAuth>} />
+          <Route path="/products/edit/:prodId" element={<RequireAuth><ProductEdit /></RequireAuth>} />
 
           {/* Buyer pages (login required) — /cart is the unified cart, registered above */}
           <Route path="/marketplaces/cart" element={<MarketplaceCart />} />

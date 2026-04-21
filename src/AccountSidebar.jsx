@@ -264,6 +264,8 @@ export default function AccountSidebar() {
             onToggle={() => toggleSection('Products')}
           >
             <NavChild to="/marketplace/products" label="Browse Marketplace" />
+            <NavChild to={`/products?BusinessID=${BusinessID}`} label="My Products" />
+            <NavChild to={`/products/add?BusinessID=${BusinessID}`} label="Add Product" />
             <NavChild to={`/products/settings?BusinessID=${BusinessID}`} label="Settings" />
           </NavSection>
         )}
