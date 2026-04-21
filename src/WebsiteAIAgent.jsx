@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
 import { useAccount } from './AccountContext';
 
 const API = import.meta.env.VITE_API_URL;
@@ -35,6 +37,18 @@ function relativeAge(storedAtSec) {
 function authHeaders() {
   const token = localStorage.getItem('access_token');
   return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+}
+
+// When a confirmation banner is showing, intercept common yes/no replies the user
+// typed into the chat input instead of clicking the button, so Gemini doesn't
+// re-interpret "yes please" and drift off-task.
+const YES_RE = /^\s*(yes|yeah|yep|yup|ya|sure|ok(ay)?|do it|go ahead|go|confirm|confirmed|proceed|please do|sounds good|looks good|great|perfect)([\s,.!?]+(please|thanks?|do it|go ahead))*[\s,.!?]*$/i;
+const NO_RE  = /^\s*(no|nope|nah|cancel|never ?mind|stop|don'?t|wait|hold on|not (yet|now)|no thanks?|forget it)[\s,.!?]*$/i;
+function classifyConfirmReply(text) {
+  if (!text) return null;
+  if (YES_RE.test(text)) return 'yes';
+  if (NO_RE.test(text))  return 'no';
+  return null;
 }
 
 const STORAGE_MIC = 'lavendir_mic_device_id';
@@ -201,23 +215,85 @@ function speak(text, onEnd) {
 }
 
 // ── Markdown renderer ─────────────────────────────────────────────
+// Escapes HTML first so stray tags from the model (e.g. an unclosed <h1>)
+// can't inflate the rest of the panel, then applies a lightweight markdown
+// pass. The whole message is pinned to 12pt Verdana so every Lavendir reply
+// renders uniformly regardless of what markdown/HTML the LLM emits.
 function MessageContent({ text }) {
-  const html = text
+  const escapeHtml = (s) =>
+    s.replace(/&/g, '&amp;')
+     .replace(/</g, '&lt;')
+     .replace(/>/g, '&gt;')
+     .replace(/"/g, '&quot;')
+     .replace(/'/g, '&#39;');
+
+  const html = escapeHtml(text)
+    // Turn markdown headings into bold so they don't become giant <h1>-style text
+    .replace(/^#{1,6}\s+(.+)$/gm, '<strong>$1</strong>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/`(.*?)`/g, '<code class="bg-purple-50 text-purple-700 px-1 rounded text-xs">$1</code>')
+    .replace(/`(.*?)`/g, '<code style="background:#f5f3ff;color:#6d28d9;padding:0 3px;border-radius:3px;">$1</code>')
     .split('\n').join('<br />');
-  return <span dangerouslySetInnerHTML={{ __html: html }} />;
+
+  return (
+    <span
+      style={{
+        fontFamily: 'Verdana, Geneva, sans-serif',
+        fontSize: '12pt',
+        lineHeight: 1.45,
+        display: 'block',
+      }}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
+// ── Chat persistence ──────────────────────────────────────────────
+// Keyed by the signed-in person + business so switching users/accounts
+// shows a fresh chat instead of leaking someone else's history.
+function _chatStorageKey(businessId) {
+  const pid = (typeof window !== 'undefined' && localStorage.getItem('people_id')) || 'anon';
+  return `lavendir:msgs:${pid}:${businessId || 0}`;
+}
+
+function _loadStoredChat(businessId) {
+  try {
+    const raw = localStorage.getItem(_chatStorageKey(businessId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function _saveStoredChat(businessId, messages) {
+  try {
+    // Cap persisted history so localStorage doesn't balloon on long sessions.
+    const tail = Array.isArray(messages) ? messages.slice(-100) : [];
+    localStorage.setItem(_chatStorageKey(businessId), JSON.stringify(tail));
+  } catch {}
 }
 
 // ── Main component ────────────────────────────────────────────────
 export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
   const { Expanded: sidebarExpanded } = useAccount();
   const sidebarWidth = sidebarExpanded ? 208 : 64;
+  const location = useLocation();
 
   const [open, setOpen]                   = useState(false);
   const [panelExpanded, setPanelExpanded] = useState(false);
-  const [messages, setMessages]           = useState([]);
+
+  // Collapse full-page mode on route change so Lavendir doesn't sit on top
+  // of the page the user just navigated to. Watch the query string too —
+  // /blog/manage?view=new and /website/builder?view=design are separate
+  // screens under the same pathname.
+  useEffect(() => {
+    if (panelExpanded) setPanelExpanded(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, location.search]);
+  // Hydrate synchronously so the restored chat paints on first render.
+  const [messages, setMessages]           = useState(() => _loadStoredChat(businessId));
   const [input, setInput]                 = useState('');
   const [loading, setLoading]             = useState(false);
   const [ttsEnabled, setTtsEnabled]       = useState(false);
@@ -266,6 +342,17 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
     }
   }, [open]);
 
+  // ── Persist chat to localStorage so it survives navigation/reloads ──
+  useEffect(() => {
+    _saveStoredChat(businessId, messages);
+  }, [messages, businessId]);
+
+  // If the user switches businesses, load that business's chat history.
+  useEffect(() => {
+    setMessages(_loadStoredChat(businessId));
+    hasGreetedRef.current = false;
+  }, [businessId]);
+
   // ── Suggestions ───────────────────────────────────────────────
   useEffect(() => {
     if (!open || !websiteId) return;
@@ -304,6 +391,20 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
   const sendMessage = async (text) => {
     const userText = (typeof text === 'string' ? text : input).trim();
     if (!userText || loading) return;
+
+    // If Lavendir is waiting on a yes/no confirmation and the user typed one
+    // into the chat input instead of clicking, route through /confirm so
+    // Gemini doesn't reinterpret the reply as a fresh request.
+    if (pendingAction && !confirming) {
+      const verdict = classifyConfirmReply(userText);
+      if (verdict) {
+        setInput('');
+        setMessages(prev => [...prev, { role: 'user', content: userText }]);
+        confirmAction(verdict === 'yes');
+        return;
+      }
+    }
+
     setInput('');
     setPendingAction(null);
     setPreviewUrl('');
@@ -371,6 +472,8 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
     setPendingAction(null);
     setPreviewUrl('');
     setPreviewImageUrl('');
+    try { localStorage.removeItem(_chatStorageKey(businessId)); } catch {}
+    hasGreetedRef.current = false;
   };
 
   // ── Conversation mode toggle ──────────────────────────────────
@@ -437,8 +540,10 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
   };
 
   // ── Floating button ───────────────────────────────────────────
+  // Portal to body so the shell's `.app-shell-wrapper > *` layout rule
+  // (min-height: 100vh, display: flex) doesn't inflate this button.
   if (!open) {
-    return (
+    return createPortal(
       <button
         onClick={() => setOpen(true)}
         title={`Chat with ${AGENT_NAME}`}
@@ -446,17 +551,22 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
         style={{ background: 'transparent', border: 'none', padding: 0 }}
       >
         <LavenderBranchIcon size={64} />
-      </button>
+      </button>,
+      document.body,
     );
   }
 
   // Panel geometry: small (default) vs full-page
+  // Expanded mode uses explicit height + top-left anchoring so a transform or
+  // sticky footer in AccountLayout can't push the input bar below the viewport.
   const panelStyle = panelExpanded
-    ? { top: HEADER_H, left: sidebarWidth, right: 0, bottom: 0, zIndex: 45, borderRadius: 0 }
+    ? { top: HEADER_H, left: sidebarWidth, width: `calc(100vw - ${sidebarWidth}px)`,
+        height: `calc(100vh - ${HEADER_H}px)`, zIndex: 9999, borderRadius: 0 }
     : { width: 360, height: 540, bottom: 24, right: 24, zIndex: 50, borderRadius: '1rem' };
 
   // ── Chat panel ────────────────────────────────────────────────
-  return (
+  // Portal so the shell's layout rule doesn't inflate this panel either.
+  return createPortal(
     <div
       className="fixed flex flex-col shadow-2xl overflow-hidden"
       style={{ background: '#fff', border: '1px solid #e5e7eb', ...panelStyle }}
@@ -491,21 +601,6 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
                 }
               </svg>
             </button>
-          )}
-          {/* Knowledge dashboard — only in expanded mode */}
-          {panelExpanded && (
-            <a
-              href="/admin/scraper-knowledge"
-              target="_blank"
-              rel="noreferrer"
-              title="Open learning dashboard"
-              className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/20 transition-colors"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-              </svg>
-            </a>
           )}
           {/* Expand / collapse */}
           <button
@@ -724,6 +819,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
           </svg>
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

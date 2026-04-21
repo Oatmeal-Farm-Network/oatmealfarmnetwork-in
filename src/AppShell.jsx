@@ -50,9 +50,7 @@ export default function AppShell({ children }) {
           left: 0;
           right: 0;
           width: auto;
-          padding-left: calc(var(--sidebar-pad) + 1rem);
           box-sizing: border-box;
-          z-index: 50;
         }
         .app-shell-wrapper footer {
           margin-top: auto;

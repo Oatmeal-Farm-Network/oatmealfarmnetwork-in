@@ -58,7 +58,7 @@ const Header = () => {
 };
 
   const KbDropdown = () => (
-    <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded shadow-lg z-50 overflow-hidden">
+    <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded shadow-lg z-10000 overflow-hidden">
       <Link to="/plant-knowledgebase" onClick={() => setKbOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Plants</Link>
       <Link to="/livestock" onClick={() => setKbOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Livestock Breeds</Link>
       <Link to="/ingredient-knowledgebase" onClick={() => setKbOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Ingredients</Link>
@@ -66,14 +66,14 @@ const Header = () => {
   );
 
   const NrDropdown = () => (
-    <div className="absolute top-full left-0 mt-2 w-44 bg-white rounded shadow-lg z-50 overflow-hidden">
+    <div className="absolute top-full left-0 mt-2 w-44 bg-white rounded shadow-lg z-10000 overflow-hidden">
       <Link to="/app/news" onClick={() => setNrOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Newsfeed</Link>
       <Link to="/blog" onClick={() => setNrOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Blogs</Link>
     </div>
   );
 
   const MktDropdown = () => (
-    <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded shadow-lg z-50 overflow-hidden">
+    <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded shadow-lg z-10000 overflow-hidden">
       <Link to="/marketplaces/farm-to-table" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
         Farm 2 Table
       </Link>
@@ -139,8 +139,8 @@ const Header = () => {
   );
 
   return (
-    <nav className="bg-[#A3301E] py-3 px-4 shadow-2xl sticky top-0 z-50 font-montserrat">
-      <div className="max-w-7xl mx-auto flex justify-between items-center">
+    <nav className="bg-[#A3301E] py-3 px-4 shadow-2xl sticky top-0 z-10000 font-montserrat">
+      <div className="max-w-350 mx-auto flex justify-between items-center">
 
         {/* Logo */}
         <Link to={isLoggedIn ? "/dashboard" : "/"} className="flex items-center shrink-0">
@@ -203,7 +203,7 @@ const Header = () => {
                     Accounts <ChevronIcon open={acctOpen} />
                   </button>
                   {acctOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-52 bg-white rounded shadow-lg z-50 overflow-hidden">
+                    <div className="absolute top-full left-0 mt-2 w-52 bg-white rounded shadow-lg z-10000 overflow-hidden">
                       <Link to={`/accounts?PeopleID=${user?.peopleId}`} onClick={() => setAcctOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Accounts</Link>
                       <Link to={`/accounts/new?PeopleID=${user?.peopleId}`} onClick={() => setAcctOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Add Account</Link>
                       <Link to="/account/settings" onClick={() => setAcctOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Settings</Link>

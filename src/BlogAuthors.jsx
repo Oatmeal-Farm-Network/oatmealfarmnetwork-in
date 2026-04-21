@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
+import WebsiteAIAgent from './WebsiteAIAgent';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -681,6 +682,7 @@ export default function BlogAuthors() {
             onCancel={() => { setView('list'); setEditAuthor(null); }}
           />
         </div>
+        <WebsiteAIAgent websiteId={0} businessId={parseInt(BusinessID)} currentView="blog-author-editor" />
       </AccountLayout>
     );
   }
@@ -750,6 +752,7 @@ export default function BlogAuthors() {
           ))}
         </div>
       </div>
+      <WebsiteAIAgent websiteId={0} businessId={parseInt(BusinessID)} currentView="blog-authors" />
     </AccountLayout>
   );
 }

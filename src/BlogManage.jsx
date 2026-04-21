@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
+import WebsiteAIAgent from './WebsiteAIAgent';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -1115,6 +1116,7 @@ export default function BlogManage() {
   const [globalCategories, setGlobalCategories] = useState([]);
   const [customCategories, setCustomCategories] = useState([]);
   const [hasWebsite, setHasWebsite] = useState(false);
+  const [websiteId, setWebsiteId]   = useState(0);
 
   // Sort / filter state
   const [search, setSearch] = useState('');
@@ -1165,10 +1167,20 @@ export default function BlogManage() {
     if (BusinessID) {
       load();
       loadCategories();
-      // Check if this business has a website built
+      // Check if this business has a website built, and grab its id for Lavendir
       fetch(`${API_URL}/api/website/site?business_id=${BusinessID}`)
-        .then(r => setHasWebsite(r.ok))
-        .catch(() => setHasWebsite(false));
+        .then(async r => {
+          setHasWebsite(r.ok);
+          if (r.ok) {
+            try {
+              const data = await r.json();
+              setWebsiteId(data?.website_id || data?.WebsiteID || 0);
+            } catch { setWebsiteId(0); }
+          } else {
+            setWebsiteId(0);
+          }
+        })
+        .catch(() => { setHasWebsite(false); setWebsiteId(0); });
     }
   }, [BusinessID]);
 
@@ -1281,6 +1293,7 @@ export default function BlogManage() {
             onCancel={() => { setView('list'); setEditPost(null); }}
           />
         </div>
+          <WebsiteAIAgent websiteId={websiteId} businessId={parseInt(BusinessID)} currentView="blog-editor" />
       </AccountLayout>
     );
   }
@@ -1510,6 +1523,7 @@ export default function BlogManage() {
           </>
         )}
       </div>
+      <WebsiteAIAgent websiteId={websiteId} businessId={parseInt(BusinessID)} currentView="blog-manage" />
     </AccountLayout>
   );
 }

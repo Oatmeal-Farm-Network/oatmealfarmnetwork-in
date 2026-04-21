@@ -176,13 +176,13 @@ export default function Dashboard() {
       />
       <Header />
 
-      <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+      <div style={{ width: '100%', margin: '0 auto', padding: '1.5rem 1.5rem 3rem' }}>
 
         <div className="flex flex-col gap-4">
 
             <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
               <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-green-300">
-                <h2 className="text-2xl font-bold" style={{ color: '#3D6B34' }}>Accounts / Logbooks</h2>
+                <h2 className="text-2xl font-bold" style={{ color: '#3D6B34' }}>Accounts</h2>
                 <Link to={`/accounts/new?PeopleID=${user.peopleId}`}
                   className="text-sm font-semibold text-[#3D6B34] hover:underline">
                   + Add Account
@@ -335,37 +335,58 @@ export default function Dashboard() {
                                 </div>
                               ) : (
                                 <div className="flex flex-col gap-2 mb-4">
-                                  {fields.map(field => (
-                                    <Link
-                                      key={field.fieldid}
-                                      to={`/precision-ag/analyses?BusinessID=${b.BusinessID}&FieldID=${field.fieldid}`}
-                                      className="flex items-center justify-between px-4 py-2.5 rounded-lg border border-gray-100 hover:border-green-200 hover:bg-green-50/40 transition-all group"
-                                      style={{ background: '#fafafa' }}
-                                    >
-                                      <div className="min-w-0">
-                                        <span className="font-semibold text-gray-800 text-sm group-hover:text-[#3D6B34]">
-                                          {field.name}
-                                        </span>
-                                        {field.address && (
-                                          <span className="ml-2 text-xs text-gray-400 truncate">
-                                            📍 {field.address}
+                                  {fields.map(field => {
+                                    const score = field.latest_health_score;
+                                    const scoreColor =
+                                      score == null ? 'bg-gray-100 text-gray-500'
+                                      : score >= 70 ? 'bg-green-100 text-green-700'
+                                      : score >= 50 ? 'bg-amber-100 text-amber-700'
+                                      : 'bg-red-100 text-red-700';
+                                    const when = field.latest_analysis_date
+                                      ? new Date(field.latest_analysis_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                      : null;
+                                    return (
+                                      <Link
+                                        key={field.fieldid}
+                                        to={`/precision-ag/analyses?BusinessID=${b.BusinessID}&FieldID=${field.fieldid}`}
+                                        className="flex items-center justify-between px-4 py-2.5 rounded-lg border border-gray-100 hover:border-green-200 hover:bg-green-50/40 transition-all group"
+                                        style={{ background: '#fafafa' }}
+                                      >
+                                        <div className="min-w-0">
+                                          <span className="font-semibold text-gray-800 text-sm group-hover:text-[#3D6B34]">
+                                            {field.name}
                                           </span>
-                                        )}
-                                      </div>
-                                      <div className="flex items-center gap-2 shrink-0">
-                                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                          field.monitoring_enabled
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-gray-100 text-gray-500'
-                                        }`}>
-                                          {field.monitoring_enabled ? 'Active' : 'Inactive'}
-                                        </span>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                          <path d="M9 18l6-6-6-6" />
-                                        </svg>
-                                      </div>
-                                    </Link>
-                                  ))}
+                                          {field.address && (
+                                            <span className="ml-2 text-xs text-gray-400 truncate">
+                                              📍 {field.address}
+                                            </span>
+                                          )}
+                                          <div className="text-[11px] text-gray-500 mt-0.5">
+                                            {when
+                                              ? <>Last analysis: <span className="text-gray-700 font-medium">{when}</span></>
+                                              : <span className="italic text-gray-400">No analysis yet</span>}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          {score != null && (
+                                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${scoreColor}`} title={`Latest status: ${field.latest_status || '—'}`}>
+                                              {score}{field.latest_status ? ` ${field.latest_status}` : ''}
+                                            </span>
+                                          )}
+                                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                            field.monitoring_enabled
+                                              ? 'bg-green-100 text-green-700'
+                                              : 'bg-gray-100 text-gray-500'
+                                          }`}>
+                                            {field.monitoring_enabled ? 'Active' : 'Inactive'}
+                                          </span>
+                                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M9 18l6-6-6-6" />
+                                          </svg>
+                                        </div>
+                                      </Link>
+                                    );
+                                  })}
                                 </div>
                               )}
 

@@ -73,7 +73,6 @@ import SpeakerPortal from './SpeakerPortal';
 import EventAnalytics from './EventAnalytics';
 import EventAdminDashboard from './EventAdminDashboard';
 import EventFeaturesAdmin from './EventFeaturesAdmin';
-import ScraperKnowledgeAdmin from './ScraperKnowledgeAdmin';
 import EventClone from './EventClone';
 import BlogList from './BlogList';
 import BlogDetail from './BlogDetail';
@@ -333,7 +332,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/events/analytics" element={<EventAnalytics />} />
           <Route path="/events/:eventId/dashboard" element={<EventAdminDashboard />} />
           <Route path="/admin/events/features" element={<EventFeaturesAdmin />} />
-          <Route path="/admin/scraper-knowledge" element={<RequireAuth><ScraperKnowledgeAdmin /></RequireAuth>} />
           <Route path="/events/:eventId/clone" element={<EventClone />} />
           <Route path="/speaker/:accessCode" element={<SpeakerPortal />} />
           <Route path="/events/:eventId/register/wizard" element={<EventRegisterWizard />} />
