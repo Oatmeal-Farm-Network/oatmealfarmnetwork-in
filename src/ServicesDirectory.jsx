@@ -37,6 +37,34 @@ const CATEGORY_IMAGES = {
 
 const imgForCategory = (name) => CATEGORY_IMAGES[norm(name)] || FALLBACK_IMG;
 
+const DEFAULT_LEAD = 'From veterinarians and farriers to shearing, equipment rental, and farm consulting — connect with agricultural professionals serving farms and ranches.';
+
+const CATEGORY_LEADS = {
+  [norm('Agricultural Production')]:          'Crop growers, livestock producers, orchard and greenhouse operators — the farms and ranches producing food and fiber at the source.',
+  [norm('Animal Services')]:                  'Veterinarians, farriers, shearers, trainers, breeders, and livestock handlers serving every species on the farm.',
+  [norm('Artisan & Crafting Services')]:      'Hand-makers and craftspeople — woodworkers, leatherworkers, potters, blacksmiths, and other skilled artisans producing one-of-a-kind work.',
+  [norm('Baking & Pastry')]:                  'Bakers, pastry chefs, and custom-cake makers supplying bread, pies, desserts, and other baked goods to homes, markets, and events.',
+  [norm('Beverage Production')]:              'Breweries, wineries, cideries, distilleries, roasters, and other beverage makers crafting drinks from farm-grown ingredients.',
+  [norm('Community Building & Advocacy')]:    'Associations, cooperatives, nonprofits, and organizers strengthening the agricultural community through events, education, and advocacy.',
+  [norm('Education')]:                        'Instructors, workshops, clinics, and programs teaching farming, livestock husbandry, food production, and agricultural skills.',
+  [norm('Entertainment')]:                    'Agritainment venues, event hosts, petting zoos, and farm-based entertainment bringing visitors onto the farm.',
+  [norm('Environmental & Conservation Services')]: 'Conservationists, land stewards, and environmental specialists focused on soil health, water, wildlife, and sustainable land use.',
+  [norm('Fiber & Textile Arts')]:             'Spinners, weavers, dyers, knitters, and fiber processors turning raw wool, alpaca, and other fibers into finished textiles.',
+  [norm('Food Production & Processing')]:     'Butchers, millers, canners, cheesemakers, and processors turning raw farm products into shelf-ready food.',
+  [norm('Ghost Kitchens & Delivery-Only')]:   'Delivery-only kitchens and virtual food brands preparing meals from farm-sourced ingredients for pickup or doorstep delivery.',
+  [norm('Hospitality & Dining')]:             'Farm-to-table restaurants, farm stays, bed & breakfasts, and hospitality venues rooted in the agricultural community.',
+  [norm('Industrial & Manufacturing Support')]: 'Fabricators, equipment manufacturers, and industrial suppliers building and maintaining the tools and infrastructure farms depend on.',
+  [norm('Logistics & Distribution')]:         'Trucking, cold-chain, warehousing, and distribution services moving farm products from field to market.',
+  [norm('Marketing and Sales')]:              'Photographers, designers, copywriters, web builders, and sales specialists helping farms reach and grow their customer base.',
+  [norm('Medical')]:                          'Human medical, dental, and wellness services — health professionals serving rural communities and farm workers.',
+  [norm('Planning & Management')]:            'Consultants, farm managers, bookkeepers, and planning specialists helping agricultural operations run and scale.',
+  [norm('Real Estate & Land Management')]:    'Land brokers, farm realtors, surveyors, and property managers specializing in agricultural real estate and working land.',
+  [norm('Retail & Wholesale')]:               'Farm stores, co-ops, distributors, and wholesalers moving farm products through retail and wholesale channels.',
+  [norm('Specialty Support Services')]:       'Specialized providers — niche services and one-of-a-kind support roles that fill unique needs across the farm economy.',
+};
+
+const leadForCategory = (name) => CATEGORY_LEADS[norm(name)] || DEFAULT_LEAD;
+
 export default function ServicesDirectory() {
   const { categoryId } = useParams();
 
@@ -142,9 +170,15 @@ export default function ServicesDirectory() {
               {catName || 'Agricultural Services Directory'}
             </h1>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 8px', lineHeight: 1.6 }}>
-              From veterinarians and farriers to shearing, equipment rental, and farm consulting — connect with{' '}
-              <strong>{categories.length > 0 ? `${categories.length} service categories` : '…'}</strong>{' '}
-              of agricultural professionals serving farms and ranches.
+              {catName ? (
+                leadForCategory(catName)
+              ) : (
+                <>
+                  From veterinarians and farriers to shearing, equipment rental, and farm consulting — connect with{' '}
+                  <strong>{categories.length > 0 ? `${categories.length} service categories` : '…'}</strong>{' '}
+                  of agricultural professionals serving farms and ranches.
+                </>
+              )}
             </p>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
               Listings are added regularly. If you'd like to list a service or help us grow the directory, please{' '}
@@ -158,8 +192,14 @@ export default function ServicesDirectory() {
             {catName || 'Agricultural Services Directory'}
           </h1>
           <p style={{ color: '#111111', fontSize: '0.85rem', margin: '0 0 6px', lineHeight: 1.6 }}>
-            Connect with <strong>{categories.length > 0 ? `${categories.length} categories` : '…'}</strong> of
-            agricultural professionals serving farms and ranches.
+            {catName ? (
+              leadForCategory(catName)
+            ) : (
+              <>
+                Connect with <strong>{categories.length > 0 ? `${categories.length} categories` : '…'}</strong> of
+                agricultural professionals serving farms and ranches.
+              </>
+            )}
           </p>
           <p style={{ color: '#111111', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
             Want to list a service?{' '}
