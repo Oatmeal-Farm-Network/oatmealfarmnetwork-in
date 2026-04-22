@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PageMeta from './PageMeta';
+import RosemarieChat from './RosemarieChat';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -435,6 +436,7 @@ export default function ProcessedFoodInventory() {
           </div>
         </div>
       )}
+      <RosemarieChat businessId={businessId} />
     </div>
   );
 }

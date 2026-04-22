@@ -657,7 +657,7 @@ function FieldList({ businessId, onCreateNew }) {
       )}
 
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Fields</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Ag Dashboard</h2>
         <button
           onClick={() => navigate(`/precision-ag/crop-detection?BusinessID=${businessId}&mode=add-field`)}
           className="px-5 py-2 bg-[#819360] hover:bg-[#3D6B35] text-white rounded-lg font-medium text-sm transition-colors"
@@ -780,7 +780,7 @@ function PrecisionAgFields({ businessId: propBusinessId }) {
   if (loadError || !Business) return <div className="p-8 text-red-500">Could not load account. Please go back and try again.</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID} pageTitle="Fields" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Precision Ag' }, { label: 'Fields' }]}>
+    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID} pageTitle="Ag Dashboard" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Precision Ag' }, { label: 'Ag Dashboard' }]}>
       <div className="max-w-5xl mx-auto">
         {view === 'list' && (
           <FieldList

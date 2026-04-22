@@ -3,9 +3,76 @@ import { useNavigate, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
-import WeatherCompact from './WeatherCompact';
-import StandingOrderActivityWidget from './StandingOrderActivityWidget';
+import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
+
+const FARM_2_TABLE_SELLER_BTS = [8, 10, 11, 14, 19, 22, 23, 26, 29, 31, 33, 34];
+const PRODUCTS_BTS = [8, 10, 11, 14, 15, 16, 18, 19, 24, 25, 26, 29, 31, 33, 34];
+const SERVICES_SELLER_BTS = [1, 8, 9, 10, 17, 18, 20, 21, 27, 28, 32];
+const PROPERTIES_BTS = [8, 30];
+const ARTISAN_PRODUCER_BTS = [11, 26, 29, 31, 33, 34];
+
+function buildServiceLinks(businessTypeId, businessId, features) {
+  if (!features) return null;
+  const links = [];
+  const on = (key) => features[key] === true;
+
+  if (on('blog')) {
+    links.push({ label: 'Blog', to: `/blog/manage?BusinessID=${businessId}` });
+  }
+  if (on('precision_ag') && businessTypeId === 8) {
+    links.push({ label: 'Precision Ag', to: `/precision-ag/fields?BusinessID=${businessId}` });
+  }
+  if (on('farm_2_table') && FARM_2_TABLE_SELLER_BTS.includes(businessTypeId)) {
+    links.push({ label: 'Farm 2 Table', to: `/seller/orders?BusinessID=${businessId}` });
+  }
+  if (on('farm_2_table') && businessTypeId === 9) {
+    links.push({ label: 'Restaurant Sourcing', to: '/marketplaces/farm-to-table' });
+  }
+  if (on('livestock')) {
+    links.push({ label: 'Livestock', to: `/animals?BusinessID=${businessId}` });
+  }
+  if (on('products') && PRODUCTS_BTS.includes(businessTypeId)) {
+    links.push({ label: 'Products', to: `/products?BusinessID=${businessId}` });
+  }
+  if (on('services')) {
+    const to = SERVICES_SELLER_BTS.includes(businessTypeId)
+      ? `/services?BusinessID=${businessId}`
+      : '/services/directory';
+    links.push({ label: 'Services', to });
+  }
+  if (on('events')) {
+    links.push({ label: 'Events', to: `/events/manage?BusinessID=${businessId}` });
+  }
+  if (on('properties') && PROPERTIES_BTS.includes(businessTypeId)) {
+    links.push({ label: 'Properties', to: `/properties?BusinessID=${businessId}` });
+  }
+  if (on('associations') && businessTypeId === 1) {
+    links.push({ label: 'Associations', to: `/association/create?BusinessID=${businessId}` });
+  }
+  if (on('my_website')) {
+    links.push({ label: 'My Website', to: `/website/builder?BusinessID=${businessId}&view=manage-pages` });
+  }
+  if (on('accounting')) {
+    links.push({ label: 'Accounting', to: `/accounting?BusinessID=${businessId}` });
+  }
+  if (on('testimonials')) {
+    links.push({ label: 'Testimonials', to: `/testimonials/manage?BusinessID=${businessId}` });
+  }
+  if (on('chef_dashboard') && businessTypeId === 9) {
+    links.push({ label: 'Chef Dashboard', to: `/chef?BusinessID=${businessId}` });
+  }
+  if (on('pairsley') && businessTypeId === 9) {
+    links.push({ label: 'Pairsley AI', to: `/platform/pairsley?BusinessID=${businessId}` });
+  }
+  if (on('rosemarie') && ARTISAN_PRODUCER_BTS.includes(businessTypeId)) {
+    links.push({ label: 'Rosemarie AI', to: `/platform/rosemarie?BusinessID=${businessId}` });
+  }
+  if (on('provenance')) {
+    links.push({ label: 'Sourced From', to: `/provenance/${businessId}` });
+  }
+  return links;
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -13,162 +80,83 @@ export default function Dashboard() {
   const { setBusinesses: setContextBusinesses } = useAccount();
   const [user, setUser] = useState(null);
   const [businesses, setBusinesses] = useState([]);
-  const [businessFieldsMap, setBusinessFieldsMap] = useState({});
-  const [businessFeaturesMap, setBusinessFeaturesMap] = useState({});
-  const [businessEventsMap, setBusinessEventsMap] = useState({});
-  const [expandedBusiness, setExpandedBusiness] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [featuresByBusiness, setFeaturesByBusiness] = useState({});
+  const [confirmDelete, setConfirmDelete] = useState(null); // { BusinessID, BusinessName }
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (!token) { navigate('/login'); return; }
 
     const peopleId = localStorage.getItem('people_id');
-    const userData = {
+    setUser({
       firstName: localStorage.getItem('first_name'),
       lastName: localStorage.getItem('last_name'),
       peopleId,
       accessLevel: parseInt(localStorage.getItem('access_level') || '0'),
-    };
-    setUser(userData);
+    });
 
-    // Fetch businesses then fetch fields + features for each
     if (peopleId) {
       fetch(`${API_URL}/auth/my-businesses?PeopleID=${peopleId}`)
         .then(r => r.json())
-        .then(async data => {
+        .then(data => {
           const list = Array.isArray(data) ? data : [];
           setBusinesses(list);
           setContextBusinesses(list);
-          // Auto-expand the first business
-          if (list.length > 0) setExpandedBusiness(list[0].BusinessID);
-          // Fetch fields only for Farm / Ranch businesses (BusinessTypeID 8)
-          const fieldsMap = {};
-          await Promise.all(list.filter(b => b.BusinessTypeID === 8).map(async b => {
-            try {
-              const r = await fetch(`${API_URL}/api/fields?business_id=${b.BusinessID}`);
-              if (r.ok) {
-                const fields = await r.json();
-                if (Array.isArray(fields)) fieldsMap[b.BusinessID] = fields;
-              }
-            } catch {}
-          }));
-          setBusinessFieldsMap(fieldsMap);
-          // Fetch subscription-aware feature flags for every business
-          const featuresMap = {};
-          await Promise.all(list.map(async b => {
-            try {
-              const r = await fetch(`${API_URL}/api/company/features?business_id=${b.BusinessID}`);
-              if (r.ok) {
-                const rows = await r.json();
-                const map = {};
-                if (Array.isArray(rows)) rows.forEach(f => { map[f.feature_key] = f.is_enabled; });
-                featuresMap[b.BusinessID] = map;
-              } else {
-                featuresMap[b.BusinessID] = {};
-              }
-            } catch { featuresMap[b.BusinessID] = {}; }
-          }));
-          setBusinessFeaturesMap(featuresMap);
-          // Fetch upcoming events for every business
-          const today = new Date(); today.setHours(0, 0, 0, 0);
-          const eventsMap = {};
-          await Promise.all(list.map(async b => {
-            try {
-              const r = await fetch(`${API_URL}/api/my-events?business_id=${b.BusinessID}`);
-              if (r.ok) {
-                const rows = await r.json();
-                const upcoming = (Array.isArray(rows) ? rows : [])
-                  .filter(e => !e.EventEndDate || new Date(e.EventEndDate) >= today)
-                  .sort((a, b) => new Date(a.EventStartDate || 0) - new Date(b.EventStartDate || 0));
-                eventsMap[b.BusinessID] = upcoming;
-              } else {
-                eventsMap[b.BusinessID] = [];
-              }
-            } catch { eventsMap[b.BusinessID] = []; }
-          }));
-          setBusinessEventsMap(eventsMap);
         })
-        .catch(() => setBusinesses([]));
+        .catch(() => setBusinesses([]))
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-
   }, [navigate]);
 
-  if (!user) return null;
+  useEffect(() => {
+    if (!businesses.length) return;
+    businesses.forEach(b => {
+      fetch(`${API_URL}/api/company/features?business_id=${b.BusinessID}`)
+        .then(r => r.ok ? r.json() : [])
+        .then(rows => {
+          const map = {};
+          (Array.isArray(rows) ? rows : []).forEach(f => { map[f.feature_key] = f.is_enabled; });
+          setFeaturesByBusiness(prev => ({ ...prev, [b.BusinessID]: map }));
+        })
+        .catch(() => {
+          setFeaturesByBusiness(prev => ({ ...prev, [b.BusinessID]: {} }));
+        });
+    });
+  }, [businesses, API_URL]);
 
-  // BusinessTypeID gating — mirror AccountLayout.jsx so Dashboard and sidebar stay in sync.
-  const FARM_TO_TABLE_BTS   = [8, 9, 10, 11, 14, 19, 22, 23, 26, 29, 31, 33, 34];
-  const PRODUCE_BTS         = [8, 10, 14, 26, 29, 31, 34];
-  const PROCESSED_FOOD_BTS  = [8, 10, 11, 14, 26, 29, 31, 33, 34];
-  const MEAT_BTS            = [8, 10, 14, 19, 22, 23, 26, 29];
-  const PRODUCTS_BTS        = [8, 10, 11, 14, 15, 16, 18, 19, 24, 25, 26, 29, 31, 33, 34];
-  const SERVICES_PROVIDER_BTS = [1, 8, 9, 10, 17, 18, 20, 21, 27, 28, 32];
-  const PROPERTIES_BTS      = [8, 30];
-
-  // Return a flat, ordered list of quick links for a business card.
-  // Each section is only included when the feature is enabled in the business's
-  // subscription (fail-closed when features haven't loaded yet) AND the
-  // BusinessType gating allows it.
-  const buildQuickLinks = (bt, bid, features) => {
-    const feats = features || {};
-    const on = (key) => feats[key] === true;
-    const links = [];
-
-    if (on('blog')) {
-      links.push({ label: '📝 Blog', to: `/blog/manage?BusinessID=${bid}` });
-    }
-
-    if (on('livestock')) {
-      links.push({ label: '🐄 Animals', to: `/animals?BusinessID=${bid}` });
-    }
-
-    if (on('farm_2_table') && FARM_TO_TABLE_BTS.includes(bt)) {
-      links.push({ label: '📦 Incoming Orders', to: `/seller/orders?BusinessID=${bid}` });
-      links.push({ label: '🔁 Standing Orders', to: '/farm/standing-orders' });
-      if (PRODUCE_BTS.includes(bt))        links.push({ label: '🥬 Produce',        to: `/produce/inventory?BusinessID=${bid}` });
-      if (PROCESSED_FOOD_BTS.includes(bt)) links.push({ label: '🍯 Processed Foods', to: `/produce/processed-food?BusinessID=${bid}` });
-      if (MEAT_BTS.includes(bt))           links.push({ label: '🥩 Meat',           to: `/produce/meat?BusinessID=${bid}` });
-    }
-
-    if (on('farm_2_table') && bt === 9) {
-      links.push({ label: '🛒 Browse Marketplace', to: '/marketplaces/farm-to-table' });
-      links.push({ label: '🔁 Standing Orders',    to: '/restaurant/standing-orders' });
-      links.push({ label: '❤️ Saved Farms',         to: '/restaurant/farms' });
-      links.push({ label: '📬 Weekly Digest',       to: '/restaurant/digest' });
-    }
-
-    if (on('products') && PRODUCTS_BTS.includes(bt)) {
-      links.push({ label: '🛍️ Products', to: `/products/settings?BusinessID=${bid}` });
-    }
-
-    if (on('services')) {
-      if (SERVICES_PROVIDER_BTS.includes(bt)) {
-        links.push({ label: '🔧 My Services', to: `/services?BusinessID=${bid}` });
-      } else {
-        links.push({ label: '🔧 Browse Services', to: '/services/directory' });
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`${API_URL}/api/businesses/delete/${confirmDelete.BusinessID}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || 'Could not delete account.');
       }
+      setBusinesses(prev => prev.filter(b => b.BusinessID !== confirmDelete.BusinessID));
+      setContextBusinesses(prev => prev.filter(b => b.BusinessID !== confirmDelete.BusinessID));
+      setConfirmDelete(null);
+    } catch (e) {
+      setDeleteError(e.message || 'Delete failed.');
+    } finally {
+      setDeleting(false);
     }
-
-    if (on('events')) {
-      links.push({ label: '🎪 Events', to: `/events/manage?BusinessID=${bid}` });
-    }
-
-    if (on('properties') && PROPERTIES_BTS.includes(bt)) {
-      links.push({ label: '🏡 Properties', to: `/properties?BusinessID=${bid}` });
-    }
-
-    if (on('associations') && bt === 1) {
-      links.push({ label: '🏛️ Association', to: `/association/create?BusinessID=${bid}` });
-    }
-
-    if (on('my_website')) {
-      links.push({ label: '🌐 My Website', to: `/website/builder?BusinessID=${bid}` });
-    }
-
-    return links;
   };
 
+  if (!user) return null;
+  const peopleId = user.peopleId;
+
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen font-sans">
       <PageMeta
         title="Dashboard | Oatmeal Farm Network"
         description="Your Oatmeal Farm Network dashboard — manage your farm businesses, orders, livestock, and more."
@@ -176,295 +164,165 @@ export default function Dashboard() {
       />
       <Header />
 
-      <div style={{ width: '100%', margin: '0 auto', padding: '1.5rem 1.5rem 3rem' }}>
+      <div className="container mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
-        <div className="flex flex-col gap-4">
+        <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Dashboard' }]} />
 
-            <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-green-300">
-                <h2 className="text-2xl font-bold" style={{ color: '#3D6B34' }}>Accounts</h2>
-                <Link to={`/accounts/new?PeopleID=${user.peopleId}`}
-                  className="text-sm font-semibold text-[#3D6B34] hover:underline">
-                  + Add Account
-                </Link>
-              </div>
-
-              {businesses.length === 0 ? (
-                <p className="text-gray-400 text-sm">No accounts found.</p>
-              ) : (
-                businesses.map(b => {
-                  const isFarmRanch = b.BusinessTypeID === 8;
-                  const fields = isFarmRanch ? (businessFieldsMap[b.BusinessID] || []) : [];
-                  const activeFields = fields.filter(f => f.monitoring_enabled);
-                  const isExpanded = expandedBusiness === b.BusinessID;
-                  const features = businessFeaturesMap[b.BusinessID];
-                  const quickLinks = buildQuickLinks(b.BusinessTypeID, b.BusinessID, features);
-                  const bizEvents = businessEventsMap[b.BusinessID] || [];
-
-                  return (
-                    <div key={b.BusinessID} className="mb-4 rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-                      {/* Business header row */}
-                      <div
-                        className="flex items-center justify-between px-5 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
-                        style={{ background: '#f8faf5' }}
-                        onClick={() => setExpandedBusiness(isExpanded ? null : b.BusinessID)}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3D6B34" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-                            {isExpanded ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
-                          </svg>
-                          <div className="min-w-0">
-                            <span className="font-bold text-gray-900 text-base">{b.BusinessName}</span>
-                            {b.BusinessType && (
-                              <span className="ml-2 text-xs text-gray-500">{b.BusinessType}</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {fields.length > 0 && (
-                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                              {fields.length} field{fields.length !== 1 ? 's' : ''}
-                            </span>
-                          )}
-                          <Link
-                            to={`/account?PeopleID=${user.peopleId}&BusinessID=${b.BusinessID}`}
-                            className="regsubmit2 text-xs"
-                            onClick={e => e.stopPropagation()}
-                          >
-                            View
-                          </Link>
-                        </div>
-                      </div>
-
-                      {/* Expanded content */}
-                      {isExpanded && (
-                        <div className="px-5 pb-4 pt-3 border-t border-gray-100">
-                          {/* Per-business weather — use first field's coords if available, else geocode address */}
-                          {(() => {
-                            const firstGps = fields.find(f => f.latitude && f.longitude);
-                            const addr = [b.AddressCity, b.AddressState, b.AddressZip, b.AddressCountry].filter(Boolean).join(', ');
-                            if (!firstGps && !addr) return null;
-                            return (
-                              <div className="mb-4 pb-3 border-b border-gray-100">
-                                <WeatherCompact
-                                  lat={firstGps?.latitude}
-                                  lon={firstGps?.longitude}
-                                  address={firstGps ? undefined : addr}
-                                  label={`Weather${addr ? ` — ${addr}` : ''}`}
-                                />
-                              </div>
-                            );
-                          })()}
-
-                          {features?.events === true && (
-                            <div className="mb-4 pb-3 border-b border-gray-100">
-                              <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-sm font-semibold text-gray-700">🎪 Upcoming Events</h3>
-                                <div className="flex items-center gap-3">
-                                  <Link to={`/events/manage?BusinessID=${b.BusinessID}`}
-                                    className="text-xs text-[#3D6B34] hover:underline">Manage</Link>
-                                  <Link to={`/events/add?BusinessID=${b.BusinessID}`}
-                                    className="text-xs font-medium text-white bg-[#3D6B34] hover:bg-[#2d5226] px-2 py-0.5 rounded">
-                                    + Add
-                                  </Link>
-                                </div>
-                              </div>
-                              {bizEvents.length === 0 ? (
-                                <p className="text-xs text-gray-400">No upcoming events.</p>
-                              ) : (
-                                <div className="flex flex-col gap-1.5">
-                                  {bizEvents.slice(0, 5).map(ev => (
-                                    <Link key={ev.EventID}
-                                      to={`/events/${ev.EventID}/dashboard`}
-                                      className="flex items-center justify-between px-3 py-1.5 rounded-lg border border-gray-100 hover:border-green-200 hover:bg-green-50/40 text-sm">
-                                      <div className="min-w-0">
-                                        <span className="font-medium text-gray-800 truncate">{ev.EventName}</span>
-                                        {!ev.IsPublished && <span className="ml-2 text-[10px] text-gray-400 uppercase">draft</span>}
-                                      </div>
-                                      <span className="text-xs text-gray-500 shrink-0 ml-2">
-                                        {ev.EventStartDate ? new Date(ev.EventStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
-                                      </span>
-                                    </Link>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {features?.farm_2_table && (FARM_TO_TABLE_BTS.includes(b.BusinessTypeID) || b.BusinessTypeID === 9) && (
-                            <div className="mb-4 pb-3 border-b border-gray-100">
-                              <StandingOrderActivityWidget
-                                businessId={b.BusinessID}
-                                role={b.BusinessTypeID === 9 ? 'buyer' : 'farm'}
-                              />
-                            </div>
-                          )}
-
-                          {isFarmRanch && features?.precision_ag && (
-                            <>
-                              {/* Summary stats row */}
-                              {fields.length > 0 && (
-                                <div className="grid grid-cols-3 gap-3 mb-4">
-                                  <div className="rounded-lg p-3 text-center" style={{ background: '#6D8E2244' }}>
-                                    <div className="text-2xl font-bold text-gray-800">{fields.length}</div>
-                                    <div className="text-xs text-gray-600 mt-0.5">Total Fields</div>
-                                  </div>
-                                  <div className="rounded-lg p-3 text-center" style={{ background: '#FFC56744' }}>
-                                    <div className="text-2xl font-bold text-gray-800">{activeFields.length}</div>
-                                    <div className="text-xs text-gray-600 mt-0.5">Active</div>
-                                  </div>
-                                  <div className="rounded-lg p-3 text-center" style={{ background: '#2AB9CF44' }}>
-                                    <div className="text-2xl font-bold text-gray-800">
-                                      {fields.filter(f => f.latitude && f.longitude).length}
-                                    </div>
-                                    <div className="text-xs text-gray-600 mt-0.5">With GPS</div>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Fields list */}
-                              {fields.length === 0 ? (
-                                <div className="text-center py-6 text-gray-400 text-sm">
-                                  <p className="mb-2">No fields yet.</p>
-                                  <Link
-                                    to={`/precision-ag/crop-detection?BusinessID=${b.BusinessID}&mode=add-field`}
-                                    className="regsubmit2 text-xs"
-                                  >
-                                    + Add First Field
-                                  </Link>
-                                </div>
-                              ) : (
-                                <div className="flex flex-col gap-2 mb-4">
-                                  {fields.map(field => {
-                                    const score = field.latest_health_score;
-                                    const scoreColor =
-                                      score == null ? 'bg-gray-100 text-gray-500'
-                                      : score >= 70 ? 'bg-green-100 text-green-700'
-                                      : score >= 50 ? 'bg-amber-100 text-amber-700'
-                                      : 'bg-red-100 text-red-700';
-                                    const when = field.latest_analysis_date
-                                      ? new Date(field.latest_analysis_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                                      : null;
-                                    return (
-                                      <Link
-                                        key={field.fieldid}
-                                        to={`/precision-ag/analyses?BusinessID=${b.BusinessID}&FieldID=${field.fieldid}`}
-                                        className="flex items-center justify-between px-4 py-2.5 rounded-lg border border-gray-100 hover:border-green-200 hover:bg-green-50/40 transition-all group"
-                                        style={{ background: '#fafafa' }}
-                                      >
-                                        <div className="min-w-0">
-                                          <span className="font-semibold text-gray-800 text-sm group-hover:text-[#3D6B34]">
-                                            {field.name}
-                                          </span>
-                                          {field.address && (
-                                            <span className="ml-2 text-xs text-gray-400 truncate">
-                                              📍 {field.address}
-                                            </span>
-                                          )}
-                                          <div className="text-[11px] text-gray-500 mt-0.5">
-                                            {when
-                                              ? <>Last analysis: <span className="text-gray-700 font-medium">{when}</span></>
-                                              : <span className="italic text-gray-400">No analysis yet</span>}
-                                          </div>
-                                        </div>
-                                        <div className="flex items-center gap-2 shrink-0">
-                                          {score != null && (
-                                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${scoreColor}`} title={`Latest status: ${field.latest_status || '—'}`}>
-                                              {score}{field.latest_status ? ` ${field.latest_status}` : ''}
-                                            </span>
-                                          )}
-                                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                            field.monitoring_enabled
-                                              ? 'bg-green-100 text-green-700'
-                                              : 'bg-gray-100 text-gray-500'
-                                          }`}>
-                                            {field.monitoring_enabled ? 'Active' : 'Inactive'}
-                                          </span>
-                                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M9 18l6-6-6-6" />
-                                          </svg>
-                                        </div>
-                                      </Link>
-                                    );
-                                  })}
-                                </div>
-                              )}
-
-                              {/* Precision Ag action links */}
-                              <div className="flex flex-wrap gap-2 pb-3 mb-3 border-b border-gray-100">
-                                <Link
-                                  to={`/precision-ag/crop-detection?BusinessID=${b.BusinessID}&mode=add-field`}
-                                  className="text-xs font-medium text-white bg-[#3D6B34] hover:bg-[#2d5226] px-3 py-1.5 rounded-lg transition-colors"
-                                >
-                                  + Add Field
-                                </Link>
-                                <Link
-                                  to={`/precision-ag/fields?BusinessID=${b.BusinessID}`}
-                                  className="text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
-                                >
-                                  🗺️ Manage Fields
-                                </Link>
-                                <Link
-                                  to={`/oatsense/crop-rotation?BusinessID=${b.BusinessID}`}
-                                  className="text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
-                                >
-                                  🌾 Crop Rotation
-                                </Link>
-                                <Link
-                                  to={`/oatsense/notes?BusinessID=${b.BusinessID}`}
-                                  className="text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
-                                >
-                                  📓 Field Journal
-                                </Link>
-                                <Link
-                                  to={`/precision-ag/crop-detection?BusinessID=${b.BusinessID}`}
-                                  className="text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
-                                >
-                                  🔍 Crop Detection
-                                </Link>
-                              </div>
-                            </>
-                          )}
-
-                          {/* Subscription- and type-aware quick links for every business */}
-                          <div className="flex flex-wrap gap-2">
-                            <Link
-                              to={`/account?PeopleID=${user.peopleId}&BusinessID=${b.BusinessID}`}
-                              className="text-xs font-medium text-white bg-[#3D6B34] hover:bg-[#2d5226] px-3 py-1.5 rounded-lg transition-colors"
-                            >
-                              Go to Account
-                            </Link>
-                            {features === undefined ? (
-                              <span className="text-xs text-gray-400 italic px-1 py-1.5">Loading…</span>
-                            ) : quickLinks.length === 0 ? (
-                              <span className="text-xs text-gray-400 italic px-1 py-1.5">
-                                No features available on this subscription.
-                              </span>
-                            ) : (
-                              quickLinks.map(link => (
-                                <Link
-                                  key={link.to}
-                                  to={link.to}
-                                  className="text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors"
-                                >
-                                  {link.label}
-                                </Link>
-                              ))
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
+        <div className="flex items-center justify-between mb-6 pb-3 border-b-2 border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-800">Accounts</h2>
+          <Link to={`/accounts/new?PeopleID=${peopleId}`} className="text-sm font-semibold text-[#3D6B34] hover:underline">
+            + Add Account
+          </Link>
         </div>
 
-      </div>
-      {/* END outer container */}
+        {loading ? (
+          <p className="text-gray-500 py-8">Loading...</p>
+        ) : businesses.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-gray-500 mb-4">You don't have any business accounts yet.</p>
+            <Link to={`/accounts/new?PeopleID=${peopleId}`} className="regsubmit2">
+              Add Your First Account
+            </Link>
+          </div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Account Name</th>
+                <th style={thStyle}>Type</th>
+                <th style={{ ...thStyle, minWidth: '110px' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {businesses.map((b, i) => {
+                const features = featuresByBusiness[b.BusinessID];
+                const serviceLinks = buildServiceLinks(b.BusinessTypeID, b.BusinessID, features);
+                return (
+                  <React.Fragment key={b.BusinessID}>
+                    <tr style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                      <td style={tdStyle}>
+                        <Link
+                          to={`/account?PeopleID=${peopleId}&BusinessID=${b.BusinessID}`}
+                          className="text-[#3D6B34] hover:underline font-medium"
+                        >
+                          {b.BusinessName}
+                        </Link>
+                      </td>
+                      <td style={tdStyle} className="text-gray-600 text-sm">
+                        {b.BusinessType || '—'}
+                      </td>
+                      <td style={tdStyle}>
+                        <div className="flex items-center gap-2">
+                          <Link to={`/account/users?PeopleID=${peopleId}&BusinessID=${b.BusinessID}`} title="Users">
+                            <img src="/icons/Account.svg" width="20" alt="Users" onError={e => e.target.style.display='none'} />
+                          </Link>
+                          <span className="text-gray-300">|</span>
+                          <Link to={`/account/profile?BusinessID=${b.BusinessID}`} title="Edit">
+                            <img src="/icons/Edit.svg" width="20" alt="Edit" onError={e => e.target.style.display='none'} />
+                          </Link>
+                          <span className="text-gray-300">|</span>
+                          <button
+                            type="button"
+                            title="Delete"
+                            onClick={() => {
+                              setDeleteError(null);
+                              setConfirmDelete({ BusinessID: b.BusinessID, BusinessName: b.BusinessName });
+                            }}
+                            className="bg-transparent border-0 p-0 cursor-pointer"
+                          >
+                            <img src="/icons/Delete.svg" width="20" alt="Delete" onError={e => e.target.style.display='none'} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
 
+                    <tr style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #E5E7EB' }}>
+                      <td colSpan={3} style={{ padding: '0.25rem 1rem 0.6rem', fontSize: '0.82rem' }}>
+                        {serviceLinks === null ? (
+                          <span className="text-gray-400">Loading services…</span>
+                        ) : serviceLinks.length === 0 ? (
+                          <span className="text-gray-400">No services available on this subscription.</span>
+                        ) : (
+                          <span className="flex gap-3 flex-wrap items-center">
+                            {serviceLinks.map((link, idx) => (
+                              <React.Fragment key={link.label}>
+                                {idx > 0 && <span className="text-gray-300">|</span>}
+                                <Link to={link.to} className="text-[#3D6B34] hover:underline">{link.label}</Link>
+                              </React.Fragment>
+                            ))}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <Footer />
+
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => !deleting && setConfirmDelete(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Delete account?</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This will permanently remove <strong>{confirmDelete.BusinessName || 'this account'}</strong> and
+              all of its team links. This cannot be undone.
+            </p>
+            {deleteError && (
+              <div className="bg-red-50 border border-red-300 text-red-700 rounded px-3 py-2 text-sm mb-4">
+                {deleteError}
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setConfirmDelete(null)}
+                className="border border-gray-300 rounded px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleDelete}
+                className="bg-red-600 hover:bg-red-700 text-white rounded px-4 py-2 text-sm font-semibold disabled:opacity-50"
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+const thStyle = {
+  padding: '0.75rem 1rem',
+  textAlign: 'left',
+  backgroundColor: '#F3F4F6',
+  fontWeight: '600',
+  color: '#4B5563',
+  textTransform: 'uppercase',
+  fontSize: '0.75rem',
+  letterSpacing: '0.05em',
+  borderBottom: '1px solid #E5E7EB',
+};
+
+const tdStyle = {
+  padding: '0.75rem 1rem',
+  textAlign: 'left',
+  borderBottom: 'none',
+  verticalAlign: 'middle',
+};

@@ -47,6 +47,7 @@ export default function AccountSidebar() {
   const [fields, setFields] = useState([]);
   const [websiteSlug, setWebsiteSlug] = useState(null);
   const [features, setFeatures] = useState(null);
+  const [analysisOpen, setAnalysisOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -175,8 +176,26 @@ export default function AccountSidebar() {
             isOpen={OpenSections['Precision Ag'] || false}
             onToggle={() => toggleSection('Precision Ag')}
           >
+            <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}`} label="Ag Dashboard" />
+            <button
+              onClick={() => setAnalysisOpen(p => !p)}
+              className="w-full flex items-center px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
+            >
+              <span className="grow text-left">Analysis</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+                {analysisOpen ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
+              </svg>
+            </button>
+            {analysisOpen && (
+              <div className="ml-4 flex flex-col gap-0.5">
+                <NavChild to={`/precision-ag/analysis/histograms?BusinessID=${BusinessID}`} label="Histograms" />
+                <NavChild to={`/precision-ag/analysis/zoning?BusinessID=${BusinessID}`} label="Zoning" />
+                <NavChild to={`/precision-ag/analysis/maps?BusinessID=${BusinessID}`} label="Maps" />
+                <NavChild to={`/precision-ag/analysis/crop-status?BusinessID=${BusinessID}`} label="Crop Status" />
+                <NavChild to={`/precision-ag/analysis/multi-layer?BusinessID=${BusinessID}`} label="Multi-layer View" />
+              </div>
+            )}
             <NavChild to={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} label="Crop Detection" />
-            <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}`} label="Fields" />
             <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`} label="Add Field" />
             {fields.length > 0 && (
               <>
@@ -304,16 +323,66 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        <NavSection
-          icon="/images/Handshake.webp"
-          label="Testimonials"
-          expanded={Expanded}
-          isOpen={OpenSections.Testimonials || false}
-          onToggle={() => toggleSection('Testimonials')}
-        >
-          <NavChild to={`/testimonials/manage?BusinessID=${BusinessID}`} label="Manage Testimonials" />
-          <NavChild to={`/testimonials/request?BusinessID=${BusinessID}`} label="Request Testimonials" />
-        </NavSection>
+        {on('testimonials') && (
+          <NavSection
+            icon="/images/Handshake.webp"
+            label="Testimonials"
+            expanded={Expanded}
+            isOpen={OpenSections.Testimonials || false}
+            onToggle={() => toggleSection('Testimonials')}
+          >
+            <NavChild to={`/testimonials/manage?BusinessID=${BusinessID}`} label="Manage Testimonials" />
+            <NavChild to={`/testimonials/request?BusinessID=${BusinessID}`} label="Request Testimonials" />
+          </NavSection>
+        )}
+
+        {on('chef_dashboard') && BT === 9 && (
+          <NavSection
+            icon="/icons/Services.svg"
+            label="Chef Dashboard"
+            expanded={Expanded}
+            isOpen={OpenSections['Chef Dashboard'] || false}
+            onToggle={() => toggleSection('Chef Dashboard')}
+          >
+            <NavChild to={`/chef?BusinessID=${BusinessID}`} label="Chef Dashboard" />
+          </NavSection>
+        )}
+
+        {on('pairsley') && BT === 9 && (
+          <NavSection
+            icon="/icons/Services.svg"
+            label="Pairsley AI"
+            expanded={Expanded}
+            isOpen={OpenSections.Pairsley || false}
+            onToggle={() => toggleSection('Pairsley')}
+          >
+            <NavChild to={`/platform/pairsley?BusinessID=${BusinessID}`} label="About Pairsley" />
+          </NavSection>
+        )}
+
+        {on('rosemarie') && [11, 26, 29, 31, 33, 34].includes(BT) && (
+          <NavSection
+            icon="/icons/Services.svg"
+            label="Rosemarie AI"
+            expanded={Expanded}
+            isOpen={OpenSections.Rosemarie || false}
+            onToggle={() => toggleSection('Rosemarie')}
+          >
+            <NavChild to={`/platform/rosemarie?BusinessID=${BusinessID}`} label="About Rosemarie" />
+          </NavSection>
+        )}
+
+        {on('provenance') && (
+          <NavSection
+            icon="/icons/Assoc-events-icon.svg"
+            label="Sourced From"
+            expanded={Expanded}
+            isOpen={OpenSections.Provenance || false}
+            onToggle={() => toggleSection('Provenance')}
+          >
+            <NavChild to={`/provenance/${BusinessID}`} label="Provenance Card" />
+          </NavSection>
+        )}
 
         {on('properties') && [8, 30].includes(BT) && (
           <NavSection

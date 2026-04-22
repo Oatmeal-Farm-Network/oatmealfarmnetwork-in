@@ -160,7 +160,25 @@
       "Bash(node -e \"const babel=require\\('@babel/parser'\\); const fs=require\\('fs'\\); babel.parse\\(fs.readFileSync\\('src/main.jsx','utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\('OK'\\);\")",
       "Bash(python -c \"import ast; ast.parse\\(open\\('saige/pairsley.py', encoding='utf-8'\\).read\\(\\)\\); print\\('pairsley.py OK'\\)\")",
       "Bash(grep -n \"<Footer\\\\|</div>$\\\\|^}\" src/RestaurantStandingOrders.jsx)",
-      "Bash(node -e \"const babel=require\\('@babel/parser'\\); const fs=require\\('fs'\\); for \\(const f of ['src/PairsleyChat.jsx','src/ChefDashboard.jsx','src/RestaurantStandingOrders.jsx','src/RestaurantSavedFarms.jsx','src/RestaurantDigest.jsx']\\) { try { babel.parse\\(fs.readFileSync\\(f,'utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\(f, 'OK'\\); } catch\\(e\\){ console.log\\(f, 'FAIL:', e.message\\); } }\")"
+      "Bash(node -e \"const babel=require\\('@babel/parser'\\); const fs=require\\('fs'\\); for \\(const f of ['src/PairsleyChat.jsx','src/ChefDashboard.jsx','src/RestaurantStandingOrders.jsx','src/RestaurantSavedFarms.jsx','src/RestaurantDigest.jsx']\\) { try { babel.parse\\(fs.readFileSync\\(f,'utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\(f, 'OK'\\); } catch\\(e\\){ console.log\\(f, 'FAIL:', e.message\\); } }\")",
+      "Bash(node -e \"const babel=require\\('@babel/parser'\\); const fs=require\\('fs'\\); babel.parse\\(fs.readFileSync\\('src/EventsList.jsx','utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\('OK'\\);\")",
+      "Bash(python -c \"import ast, pathlib; ast.parse\\(pathlib.Path\\('routers/platform_services.py'\\).read_text\\(\\)\\); print\\('platform_services OK'\\)\")",
+      "Bash(python -c \"import ast, pathlib; ast.parse\\(pathlib.Path\\('main.py'\\).read_text\\(\\)\\); print\\('main OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('routers/platform_services.py', encoding='utf-8'\\).read\\(\\)\\); print\\('platform_services OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('main.py', encoding='utf-8'\\).read\\(\\)\\); print\\('main OK'\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(grep -n \"export default\\\\|^import\\\\|<Footer\\\\|</div>\\\\s*$\" \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/src/ProcessedFoodInventory.jsx\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('rosemarie.py', encoding='utf-8'\\).read\\(\\)\\); print\\('rosemarie.py: OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('api.py', encoding='utf-8'\\).read\\(\\)\\); print\\('api.py: OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('api.py', encoding='utf-8-sig'\\).read\\(\\)\\); print\\('api.py: OK'\\)\")",
+      "Bash(node -e \"require\\('@babel/parser'\\).parse\\(require\\('fs'\\).readFileSync\\('src/RosemarieChat.jsx','utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\('RosemarieChat.jsx: OK'\\)\")",
+      "Bash(node -e \"require\\('@babel/parser'\\).parse\\(require\\('fs'\\).readFileSync\\('src/AboutRosemarie.jsx','utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\('AboutRosemarie.jsx: OK'\\)\")",
+      "Bash(node -e \"require\\('@babel/parser'\\).parse\\(require\\('fs'\\).readFileSync\\('src/ProcessedFoodInventory.jsx','utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\('ProcessedFoodInventory.jsx: OK'\\)\")",
+      "Bash(python -c \"from routers.platform_subscriptions import platform_subscriptions_router; print\\('OK'\\); print\\([\\(r.path, r.methods\\) for r in platform_subscriptions_router.routes]\\)\")",
+      "Bash(../venv/Scripts/python.exe -c \"from routers.platform_subscriptions import platform_subscriptions_router; print\\('OK'\\); [print\\(r.path, r.methods\\) for r in platform_subscriptions_router.routes]\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(p for p in d['paths'] if 'platform-subscription' in p or 'package' in p\\)\\)\")",
+      "Bash(grep -iE \"^.{0,20}$\")",
+      "Bash(python -c \"import json,sys; rows=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(f\\\\\"{r['sort_order']:>3}  {r['feature_key']:<22} {r['feature_name']}\\\\\" for r in rows\\)\\)\")"
     ]
   }
 }

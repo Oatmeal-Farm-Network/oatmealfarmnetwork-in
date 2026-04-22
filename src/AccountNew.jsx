@@ -6,6 +6,10 @@ import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const FORM_MAX_WIDTH = '640px';
+
+const money = (n, ccy = 'USD') =>
+  new Intl.NumberFormat(undefined, { style: 'currency', currency: ccy }).format(Number(n) || 0);
 
 export default function AccountNew() {
   const navigate = useNavigate();
@@ -16,12 +20,19 @@ export default function AccountNew() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  // Plan picker state (steps 2 & 3). Packages come from the SubscriptionPackage
+  // table managed by the oatmeal_main admin (http://localhost:8080/app/admin/subscriptions).
+  const [plans, setPlans] = useState([]);
+  const [plansMode, setPlansMode] = useState(null); // 'test' | 'live'
+  const [plansLoading, setPlansLoading] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [createdBusinessId, setCreatedBusinessId] = useState(null);
+  const [paying, setPaying] = useState(false);
+
   const [form, setForm] = useState({
-    // Step 1
     BusinessTypeID: '',
     BusinessName: '',
     BusinessWebsite: '',
-    // Step 2
     AddressStreet: '',
     AddressApt: '',
     AddressCity: '',
@@ -39,20 +50,17 @@ export default function AccountNew() {
     const token = localStorage.getItem('access_token');
     if (!token) { navigate('/login'); return; }
 
-    // Load business types
     fetch(`${API_URL}/api/businesses/types`)
       .then(r => r.json())
       .then(data => setBusinessTypes(Array.isArray(data) ? data : []))
       .catch(() => {});
 
-    // Load countries
     fetch(`${API_URL}/api/businesses/countries`)
       .then(r => r.json())
       .then(data => setCountries(Array.isArray(data) ? data : []))
       .catch(() => {});
   }, [navigate]);
 
-  // Load states when country changes (default USA)
   useEffect(() => {
     fetch(`${API_URL}/api/businesses/states?country=USA`)
       .then(r => r.json())
@@ -60,17 +68,28 @@ export default function AccountNew() {
       .catch(() => {});
   }, []);
 
+  // Load packages when user reaches the plan step. Filter by the chosen
+  // business type so sellers don't see irrelevant offerings.
+  useEffect(() => {
+    if (step !== 2 || plans.length > 0) return;
+    setPlansLoading(true);
+    const url = new URL(`${API_URL}/api/platform-subscriptions/packages`);
+    if (form.BusinessTypeID) url.searchParams.set('business_type_id', form.BusinessTypeID);
+    fetch(url.toString())
+      .then(r => r.json())
+      .then(data => {
+        setPlansMode(data.mode || 'test');
+        setPlans(Array.isArray(data.packages) ? data.packages : []);
+      })
+      .catch(() => setErrors(e => ({ ...e, plans: 'Could not load plans.' })))
+      .finally(() => setPlansLoading(false));
+  }, [step, plans.length, form.BusinessTypeID]);
+
   const update = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
-  const validateStep1 = () => {
+  const validateDetails = () => {
     const e = {};
     if (!form.BusinessTypeID) e.BusinessTypeID = 'Please select an account type.';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const validateStep2 = () => {
-    const e = {};
     if (!form.StateIndex) e.StateIndex = 'Please select a state/province.';
     if (!form.PeoplePhone) e.PeoplePhone = 'Phone is required.';
     if (form.BusinessTypeID === '8') {
@@ -81,12 +100,9 @@ export default function AccountNew() {
     return Object.keys(e).length === 0;
   };
 
-  const handleNext = () => {
-    if (validateStep1()) setStep(2);
-  };
-
-  const handleSubmit = async () => {
-    if (!validateStep2()) return;
+  const handleCreateAccount = async () => {
+    if (!validateDetails()) return;
+    if (createdBusinessId) { setStep(2); return; }
     setSubmitting(true);
     try {
       const res = await fetch(`${API_URL}/api/businesses/create`, {
@@ -96,7 +112,8 @@ export default function AccountNew() {
       });
       const data = await res.json();
       if (res.ok) {
-        navigate(`/account?PeopleID=${peopleId}&BusinessID=${data.BusinessID}`);
+        setCreatedBusinessId(data.BusinessID);
+        setStep(2);
       } else {
         setErrors({ submit: data.detail || 'An error occurred. Please try again.' });
       }
@@ -107,11 +124,51 @@ export default function AccountNew() {
     }
   };
 
+  const handleChoosePlan = (plan) => {
+    if (!plan) return;
+    setSelectedPlanId(plan.PackageID);
+    setStep(3);
+  };
+
+  const handlePay = async () => {
+    if (!selectedPlanId || !createdBusinessId) return;
+    setPaying(true);
+    setErrors({});
+    const authHeaders = {
+      Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+      'Content-Type': 'application/json',
+    };
+    try {
+      if (plansMode === 'test') {
+        const res = await fetch(`${API_URL}/api/platform-subscriptions/assign-package/${createdBusinessId}`, {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({ package_id: selectedPlanId, billing_cycle: 'monthly' }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not activate subscription.');
+        navigate(`/account?PeopleID=${peopleId}&BusinessID=${createdBusinessId}`);
+      } else {
+        setErrors({ pay: 'Live Stripe checkout for subscription packages is not yet available. Ask an admin to enable Test Mode at /app/admin/payment-settings.' });
+        setPaying(false);
+      }
+    } catch (e) {
+      setErrors({ pay: e.message || 'Payment failed. Please try again.' });
+      setPaying(false);
+    }
+  };
+
   const inputClass = "w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#819360]";
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
   const errorClass = "text-red-600 text-xs mt-1";
 
-  const selectedType = businessTypes.find(t => String(t.BusinessTypeID) === String(form.BusinessTypeID));
+  const selectedPlan = plans.find(p => p.PackageID === selectedPlanId);
+
+  const stepTitle = {
+    1: 'Add An Account',
+    2: 'Choose a Subscription',
+    3: plansMode === 'test' ? 'Confirm Subscription' : 'Payment',
+  }[step];
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -122,22 +179,23 @@ export default function AccountNew() {
       />
       <Header />
 
-      <div style={{ maxWidth: '500px', margin: '2rem auto', padding: '0 1rem 3rem' }}>
+      <div style={{ maxWidth: FORM_MAX_WIDTH, margin: '2rem auto', padding: '0 1rem 3rem' }}>
         <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'My Accounts', to: '/accounts' }, { label: 'Add Account' }]} />
         <div className="bg-white rounded-xl shadow border border-gray-100 p-8">
 
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
-            {step === 1 ? 'Add An Account' : 'Account Details'}
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">{stepTitle}</h1>
 
-          {/* Step indicator */}
+          {/* 3-segment step indicator */}
           <div className="flex items-center gap-2 mb-6">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 1 ? 'bg-[#819360] text-white' : 'bg-gray-200 text-gray-500'}`}>1</div>
-            <div className={`flex-1 h-1 rounded ${step >= 2 ? 'bg-[#819360]' : 'bg-gray-200'}`} />
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 2 ? 'bg-[#819360] text-white' : 'bg-gray-200 text-gray-500'}`}>2</div>
+            {[1, 2, 3].map((n, i) => (
+              <React.Fragment key={n}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= n ? 'bg-[#819360] text-white' : 'bg-gray-200 text-gray-500'}`}>{n}</div>
+                {i < 2 && <div className={`flex-1 h-1 rounded ${step > n ? 'bg-[#819360]' : 'bg-gray-200'}`} />}
+              </React.Fragment>
+            ))}
           </div>
 
-          {/* STEP 1 */}
+          {/* STEP 1 — account type + details (combined) */}
           {step === 1 && (
             <div className="space-y-5">
               <div>
@@ -176,22 +234,6 @@ export default function AccountNew() {
                   placeholder="https://yourwebsite.com"
                 />
               </div>
-
-              <button onClick={handleNext} className="regsubmit2 w-full mt-4">
-                Next →
-              </button>
-            </div>
-          )}
-
-          {/* STEP 2 */}
-          {step === 2 && (
-            <div className="space-y-5">
-              {selectedType && (
-                <p className="text-sm text-gray-500 bg-gray-50 rounded px-3 py-2">
-                  Account type: <strong>{selectedType.BusinessType}</strong>
-                  {form.BusinessName && <> · <strong>{form.BusinessName}</strong></>}
-                </p>
-              )}
 
               <div>
                 <label className={labelClass}>Street <span className="text-gray-400 font-normal">(Optional)</span></label>
@@ -236,15 +278,11 @@ export default function AccountNew() {
                 {errors.PeoplePhone && <p className={errorClass}>{errors.PeoplePhone}</p>}
               </div>
 
-           
-
-              {/* Permission checkbox */}
               <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
                 <input type="checkbox" checked={form.Permission} onChange={e => update('Permission', e.target.checked)} className="mt-1" />
                 Yes, you have my permission to share my listings in mass emails and on social media.
               </label>
 
-              {/* Livestock disclaimers for type 8 */}
               {String(form.BusinessTypeID) === '8' && (
                 <>
                   <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
@@ -268,11 +306,125 @@ export default function AccountNew() {
               )}
 
               <div className="flex justify-end gap-3 mt-4">
+                <button onClick={handleCreateAccount} disabled={submitting} className="regsubmit2">
+                  {submitting ? 'Creating...' : createdBusinessId ? 'Continue →' : 'Create Account →'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2 — plan picker */}
+          {step === 2 && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Pick the plan that best fits your operation. You can change or cancel any time from your account settings.
+              </p>
+
+              {plansMode === 'test' && (
+                <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 rounded px-4 py-2 text-xs">
+                  Test mode is enabled — no payment will be collected on the next step.
+                </div>
+              )}
+
+              {errors.plans && (
+                <div className="bg-red-50 border border-red-300 text-red-700 rounded px-4 py-3 text-sm">
+                  {errors.plans}
+                </div>
+              )}
+
+              {plansLoading ? (
+                <div className="text-center py-8 text-gray-400">Loading plans…</div>
+              ) : plans.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 border border-dashed border-gray-300 rounded-lg">
+                  No subscription plans are configured yet.
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {plans.map(p => {
+                    const isSelected = selectedPlanId === p.PackageID;
+                    return (
+                      <button
+                        key={p.PackageID}
+                        type="button"
+                        onClick={() => setSelectedPlanId(p.PackageID)}
+                        className={`text-left rounded-lg border p-4 transition ${
+                          isSelected ? 'border-[#3D6B34] ring-2 ring-[#3D6B34]/30 bg-green-50/40' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-bold text-gray-800">{p.PackageName || `Plan ${p.PackageID}`}</div>
+                            {p.Description && (
+                              <div className="text-sm text-gray-600 mt-1 leading-relaxed">{p.Description}</div>
+                            )}
+                          </div>
+                          <div className="text-right whitespace-nowrap">
+                            <div className="text-xl font-bold text-gray-900">{money(p.MonthlyPrice)}</div>
+                            <div className="text-xs text-gray-500">/ mo</div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 mt-4">
                 <button onClick={() => setStep(1)} className="border border-gray-300 rounded px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
                   ← Back
                 </button>
-                <button onClick={handleSubmit} disabled={submitting} className="regsubmit2">
-                  {submitting ? 'Creating...' : 'Create Account'}
+                <button
+                  onClick={() => selectedPlanId && handleChoosePlan(plans.find(p => p.PackageID === selectedPlanId))}
+                  disabled={!selectedPlanId}
+                  className="regsubmit2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3 — payment / confirm */}
+          {step === 3 && (
+            <div className="space-y-4">
+              {selectedPlan && (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="text-sm text-gray-500 mb-1">You selected</div>
+                  <div className="flex items-center justify-between">
+                    <div className="font-bold text-gray-800">{selectedPlan.PackageName}</div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {money(selectedPlan.MonthlyPrice)}<span className="text-xs font-normal text-gray-500"> / mo</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {plansMode === 'test' ? (
+                <div className="bg-yellow-50 border border-yellow-300 text-yellow-900 rounded px-4 py-3 text-sm">
+                  <strong>Test mode.</strong> Your subscription will be activated immediately without
+                  processing a real payment.
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600">
+                  Click below to continue to Stripe and complete payment securely. You'll be returned
+                  here when you're done.
+                </p>
+              )}
+
+              {errors.pay && (
+                <div className="bg-red-50 border border-red-300 text-red-700 rounded px-4 py-3 text-sm">
+                  {errors.pay}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 mt-4">
+                <button onClick={() => setStep(2)} className="border border-gray-300 rounded px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+                  ← Back
+                </button>
+                <button onClick={handlePay} disabled={paying} className="regsubmit2">
+                  {paying
+                    ? (plansMode === 'test' ? 'Activating…' : 'Redirecting…')
+                    : (plansMode === 'test' ? 'Confirm Subscription' : 'Continue to Payment')}
                 </button>
               </div>
             </div>

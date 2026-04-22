@@ -13,6 +13,8 @@ const Header = () => {
   const [mktMobileOpen, setMktMobileOpen] = useState(false);
   const [nrOpen, setNrOpen] = useState(false);
   const [nrMobileOpen, setNrMobileOpen] = useState(false);
+  const [svcOpen, setSvcOpen] = useState(false);
+  const [svcMobileOpen, setSvcMobileOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [acctOpen, setAcctOpen] = useState(false);
@@ -21,6 +23,7 @@ const Header = () => {
   const acctRef = useRef(null);
   const mktRef = useRef(null);
   const nrRef = useRef(null);
+  const svcRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
@@ -40,12 +43,13 @@ const Header = () => {
       if (acctRef.current && !acctRef.current.contains(e.target)) setAcctOpen(false);
       if (mktRef.current && !mktRef.current.contains(e.target)) setMktOpen(false);
       if (nrRef.current && !nrRef.current.contains(e.target)) setNrOpen(false);
+      if (svcRef.current && !svcRef.current.contains(e.target)) setSvcOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
- const handleLogout = () => {
+  const handleLogout = () => {
   ['access_token', 'people_id', 'first_name', 'last_name', 'access_level',
    'AccessToken', 'PeopleID', 'PeopleFirstName', 'PeopleLastName', 'AccessLevel']
     .forEach(k => localStorage.removeItem(k));
@@ -70,6 +74,60 @@ const Header = () => {
       <Link to="/app/news" onClick={() => setNrOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Newsfeed</Link>
       <Link to="/blog" onClick={() => setNrOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Blogs</Link>
     </div>
+  );
+
+  const FALLBACK_AGENTS = [
+    { ServiceID: 'f1', Slug: 'saige',     Title: 'Saige',     IconEmoji: '🌾', RoutePath: '/platform/saige',     IsAgent: true },
+    { ServiceID: 'f2', Slug: 'rosemarie', Title: 'Rosemarie', IconEmoji: '🌿', RoutePath: '/platform/rosemarie', IsAgent: true },
+    { ServiceID: 'f3', Slug: 'pairsley',  Title: 'Pairsley',  IconEmoji: '🍳', RoutePath: '/platform/pairsley',  IsAgent: true },
+  ];
+  const FALLBACK_PLATFORM = [
+    { ServiceID: 'p1', Slug: 'website-builder', Title: 'Website Builder', IconEmoji: '🖥️', RoutePath: '/platform/website-builder', IsAgent: false },
+    { ServiceID: 'p2', Slug: 'marketplace',     Title: 'Marketplace',     IconEmoji: '🛒', RoutePath: '/platform/marketplace',     IsAgent: false },
+    { ServiceID: 'p3', Slug: 'events',          Title: 'Events',          IconEmoji: '🎪', RoutePath: '/platform/events',          IsAgent: false },
+    { ServiceID: 'p4', Slug: 'crop-monitor',    Title: 'Crop Monitor',    IconEmoji: '🛰️', RoutePath: '/platform/crop-monitor',    IsAgent: false },
+    { ServiceID: 'p5', Slug: 'directory',       Title: 'Directory',       IconEmoji: '📖', RoutePath: '/platform/directory',       IsAgent: false },
+  ];
+
+  const SvcDropdown = () => (
+    <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded shadow-lg z-10000 overflow-hidden py-1">
+      <p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">AI Agents</p>
+      {FALLBACK_AGENTS.map(s => (
+        <Link key={s.ServiceID} to={s.RoutePath}
+          onClick={() => setSvcOpen(false)}
+          className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
+          {s.IconEmoji} {s.Title}
+        </Link>
+      ))}
+      <hr className="my-1 border-gray-100" />
+      <p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">Platform Services</p>
+      {FALLBACK_PLATFORM.map(s => (
+        <Link key={s.ServiceID} to={s.RoutePath}
+          onClick={() => setSvcOpen(false)}
+          className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
+          {s.IconEmoji} {s.Title}
+        </Link>
+      ))}
+    </div>
+  );
+
+  const SvcMobileLinks = () => (
+    <ul className="mt-2 space-y-2 text-sm">
+      {FALLBACK_AGENTS.map(s => (
+        <li key={s.ServiceID}>
+          <Link to={s.RoutePath} onClick={() => setIsOpen(false)} className="!text-white/80 block">
+            {s.IconEmoji} {s.Title}
+          </Link>
+        </li>
+      ))}
+      {FALLBACK_PLATFORM.map(s => (
+        <li key={s.ServiceID}>
+          <Link to={s.RoutePath} onClick={() => setIsOpen(false)} className="!text-white/80 block">
+            {s.IconEmoji} {s.Title}
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 
   const MktDropdown = () => (
@@ -195,6 +253,14 @@ const Header = () => {
               {nrOpen && <NrDropdown />}
             </li>
 
+            {/* Services dropdown */}
+            <li className="relative" ref={svcRef}>
+              <button onClick={() => setSvcOpen(!svcOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
+                Services <ChevronIcon open={svcOpen} />
+              </button>
+              {svcOpen && <SvcDropdown />}
+            </li>
+
             {isLoggedIn ? (
               <>
                 {/* Accounts dropdown */}
@@ -204,7 +270,7 @@ const Header = () => {
                   </button>
                   {acctOpen && (
                     <div className="absolute top-full left-0 mt-2 w-52 bg-white rounded shadow-lg z-10000 overflow-hidden">
-                      <Link to={`/accounts?PeopleID=${user?.peopleId}`} onClick={() => setAcctOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Accounts</Link>
+                      <Link to="/dashboard" onClick={() => setAcctOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Accounts</Link>
                       <Link to={`/accounts/new?PeopleID=${user?.peopleId}`} onClick={() => setAcctOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Add Account</Link>
                       <Link to="/account/settings" onClick={() => setAcctOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Settings</Link>
                       {businesses.length > 0 && (
@@ -297,12 +363,20 @@ const Header = () => {
               )}
             </li>
 
+            {/* Services mobile */}
+            <li>
+              <button onClick={() => setSvcMobileOpen(!svcMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
+                Services <ChevronIcon open={svcMobileOpen} />
+              </button>
+              {svcMobileOpen && <SvcMobileLinks />}
+            </li>
+
             {isLoggedIn ? (
               <>
                 <li>
                   <p className="text-[#EFAE15] font-semibold text-sm mb-1">Accounts</p>
                   <ul className="space-y-2">
-                    <li><Link to={`/accounts?PeopleID=${user?.peopleId}`} onClick={() => setIsOpen(false)} className="nav-link block">Accounts</Link></li>
+                    <li><Link to="/dashboard" onClick={() => setIsOpen(false)} className="nav-link block">Accounts</Link></li>
                     <li><Link to={`/accounts/new?PeopleID=${user?.peopleId}`} onClick={() => setIsOpen(false)} className="nav-link block">Add Account</Link></li>
                     <li><Link to="/account/settings" onClick={() => setIsOpen(false)} className="nav-link block">Settings</Link></li>
                     {businesses.length > 0 && (

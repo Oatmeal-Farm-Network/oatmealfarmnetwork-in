@@ -113,6 +113,11 @@ const PrecisionAgFields = lazyWithReload(() => import('./PrecisionAgFields.jsx')
 const ChefDashboard = lazyWithReload(() => import('./ChefDashboard.jsx'))
 const PrecisionAgAdd = lazyWithReload(() => import('./PrecisionAgAdd.jsx'))
 const PrecisionAgAnalyses = lazyWithReload(() => import('./PrecisionAgAnalyses.jsx'))
+const PrecisionAgHistograms = lazyWithReload(() => import('./PrecisionAgHistograms.jsx'))
+const PrecisionAgZoning = lazyWithReload(() => import('./PrecisionAgZoning.jsx'))
+const PrecisionAgMaps = lazyWithReload(() => import('./PrecisionAgMaps.jsx'))
+const PrecisionAgCropStatus = lazyWithReload(() => import('./PrecisionAgCropStatus.jsx'))
+const PrecisionAgMultiLayer = lazyWithReload(() => import('./PrecisionAgMultiLayer.jsx'))
 const CropRotation = lazyWithReload(() => import('./CropRotation.jsx'))
 const OatSenseNotes = lazyWithReload(() => import('./OatSenseNotes.jsx'))
 const WebsiteBuilder = lazyWithReload(() => import('./WebsiteBuilder.jsx'))
@@ -165,6 +170,14 @@ const CropDetection = lazyWithReload(() => import('./CropDetection.jsx'))
 const VisualizationsDashboard = lazyWithReload(() => import('./VisualizationsDashboard.jsx'))
 const CropAnalysisSummary = lazyWithReload(() => import('./CropAnalysisSummary.jsx'))
 const ServicesHome = lazyWithReload(() => import('./ServicesHome.jsx'))
+const AboutSaige = lazyWithReload(() => import('./AboutSaige.jsx'))
+const AboutRosemarie = lazyWithReload(() => import('./AboutRosemarie.jsx'))
+const AboutPairsley = lazyWithReload(() => import('./AboutPairsley.jsx'))
+const AboutWebsiteBuilder = lazyWithReload(() => import('./AboutWebsiteBuilder.jsx'))
+const AboutMarketplace = lazyWithReload(() => import('./AboutMarketplace.jsx'))
+const AboutEvents = lazyWithReload(() => import('./AboutEvents.jsx'))
+const AboutCropMonitor = lazyWithReload(() => import('./AboutCropMonitor.jsx'))
+const AboutDirectory = lazyWithReload(() => import('./AboutDirectory.jsx'))
 const ServicesAdd = lazyWithReload(() => import('./ServicesAdd.jsx'))
 const ServicesSuggestCategory = lazyWithReload(() => import('./ServicesSuggestCategory.jsx'))
 const ServicesEdit = lazyWithReload(() => import('./ServicesEdit.jsx'))
@@ -263,6 +276,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/fields" element={<PrecisionAgFields />} />
           <Route path="/precision-ag/add" element={<PrecisionAgAdd />} />
           <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />
+          <Route path="/precision-ag/analysis/histograms" element={<PrecisionAgHistograms />} />
+          <Route path="/precision-ag/analysis/zoning" element={<PrecisionAgZoning />} />
+          <Route path="/precision-ag/analysis/maps" element={<PrecisionAgMaps />} />
+          <Route path="/precision-ag/analysis/crop-status" element={<PrecisionAgCropStatus />} />
+          <Route path="/precision-ag/analysis/multi-layer" element={<PrecisionAgMultiLayer />} />
           <Route path="/precision-ag/crop-detection" element={<CropDetection />} />
           <Route path="/precision-ag/visualizations" element={<RequireAuth><VisualizationsDashboard /></RequireAuth>} />
           <Route path="/precision-ag/visualizations/crop-analysis-summary" element={<RequireAuth><CropAnalysisSummary /></RequireAuth>} />
@@ -296,6 +314,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/services/public/:servicesId" element={<ServiceDetail />} />
           <Route path="/services/directory/:categoryId" element={<ServicesDirectory />} />
           <Route path="/services/directory" element={<ServicesDirectory />} />
+          {/* Platform services — OFN's own AI agents and offerings */}
+          <Route path="/platform/saige" element={<AboutSaige />} />
+          <Route path="/platform/rosemarie" element={<AboutRosemarie />} />
+          <Route path="/platform/pairsley" element={<AboutPairsley />} />
+          <Route path="/platform/website-builder" element={<AboutWebsiteBuilder />} />
+          <Route path="/platform/marketplace" element={<AboutMarketplace />} />
+          <Route path="/platform/events" element={<AboutEvents />} />
+          <Route path="/platform/crop-monitor" element={<AboutCropMonitor />} />
+          <Route path="/platform/directory" element={<AboutDirectory />} />
 
           {/* Events routes — specific before generic */}
           <Route path="/account/events" element={<AccountEventsRedirect />} />

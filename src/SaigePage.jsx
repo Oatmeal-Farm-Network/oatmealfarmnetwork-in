@@ -671,7 +671,7 @@ export default function SaigePage() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={userId} pageTitle="Saige AI" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Saige' }]}>
-      <div style={{ margin: '-24px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
+      <div style={{ margin: '-24px', display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 180px)' }}>
 
         <div style={{
           padding: '10px 20px', background: 'white', borderBottom: '1px solid #e8e0d5',

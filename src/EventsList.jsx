@@ -57,10 +57,14 @@ export default function EventsList() {
       <Header />
 
       {/* Hero */}
-      <div className="bg-[#3D6B34] text-white py-12 px-4">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Upcoming Events</h1>
-          <p className="text-white/80">Workshops, markets, farm tours, and more from our member farms.</p>
+      <div
+        className="relative bg-[#3D6B34] text-white py-16 px-4 bg-center bg-cover"
+        style={{ backgroundImage: "url('/images/EventsHeader.webp')" }}
+      >
+        <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
+        <div className="relative max-w-5xl mx-auto">
+          <h1 className="text-3xl font-bold mb-2 drop-shadow" style={{ color: '#fff' }}>Upcoming Events</h1>
+          <p className="text-white drop-shadow">Workshops, markets, farm tours, and more from our member farms.</p>
         </div>
       </div>
 
