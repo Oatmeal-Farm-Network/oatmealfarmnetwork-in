@@ -23,6 +23,7 @@ const CATEGORY_IMAGES = {
   [norm('Environmental & Conservation Services')]: '/images/Environmental&ConcervationServices.webp',
   [norm('Fiber & Textile Arts')]:             '/images/FiberArts.webp',
   [norm('Food Production & Processing')]:     '/images/FoodProduction&Processsing.webp',
+  [norm('Ghost Kitchens & Delivery-Only')]:   '/images/GhostKitchen.webp',
   [norm('Industrial & Manufacturing Support')]: '/images/Manufacturing.webp',
   [norm('Hospitality & Dining')]:             '/images/Hospitality&Dining.webp',
   [norm('Logistics & Distribution')]:         '/images/Logistics&Distribution.webp',
