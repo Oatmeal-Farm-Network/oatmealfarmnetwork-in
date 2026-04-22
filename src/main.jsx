@@ -110,6 +110,7 @@ const Dashboard = lazyWithReload(() => import('./Dashboard.jsx'))
 const AccountHome = lazyWithReload(() => import('./AccountHome.jsx'))
 const OatSense = lazyWithReload(() => import('./OatSense.jsx'))
 const PrecisionAgFields = lazyWithReload(() => import('./PrecisionAgFields.jsx'))
+const ChefDashboard = lazyWithReload(() => import('./ChefDashboard.jsx'))
 const PrecisionAgAdd = lazyWithReload(() => import('./PrecisionAgAdd.jsx'))
 const PrecisionAgAnalyses = lazyWithReload(() => import('./PrecisionAgAnalyses.jsx'))
 const CropRotation = lazyWithReload(() => import('./CropRotation.jsx'))
@@ -258,6 +259,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/oatsense" element={<OatSense />} />
           <Route path="/oatsense/crop-rotation" element={<CropRotation />} />
           <Route path="/oatsense/notes" element={<OatSenseNotes />} />
+          <Route path="/chef" element={<ChefDashboard />} />
           <Route path="/precision-ag/fields" element={<PrecisionAgFields />} />
           <Route path="/precision-ag/add" element={<PrecisionAgAdd />} />
           <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />

@@ -147,7 +147,20 @@
       "Bash(awk '{$1=$1};1')",
       "Bash(awk 'NF>0')",
       "Bash(./venv/Scripts/python -c ' *)",
-      "Bash(./venv/Scripts/python scripts/import_sfproducts.py)"
+      "Bash(./venv/Scripts/python scripts/import_sfproducts.py)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('saige/precision_ag.py'\\).read\\(\\)\\); ast.parse\\(open\\('saige/nodes.py'\\).read\\(\\)\\); ast.parse\\(open\\('saige/api.py'\\).read\\(\\)\\); print\\('syntax ok'\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(node --check src/SaigeDraftsPanel.jsx)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('saige/chef.py', encoding='utf-8'\\).read\\(\\)\\); print\\('chef.py OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('saige/nodes.py', encoding='utf-8'\\).read\\(\\)\\); print\\('nodes.py OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('saige/nodes.py', encoding='utf-8-sig'\\).read\\(\\)\\); print\\('nodes.py OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('saige/api.py', encoding='utf-8-sig'\\).read\\(\\)\\); print\\('api.py OK'\\)\")",
+      "Bash(grep -iE \"dashboard|page\\\\.jsx$|chef|precision\")",
+      "Bash(node -e \"const babel=require\\('@babel/parser'\\); const fs=require\\('fs'\\); babel.parse\\(fs.readFileSync\\('src/ChefDashboard.jsx','utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\('OK'\\);\")",
+      "Bash(node -e \"const babel=require\\('@babel/parser'\\); const fs=require\\('fs'\\); babel.parse\\(fs.readFileSync\\('src/main.jsx','utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\('OK'\\);\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('saige/pairsley.py', encoding='utf-8'\\).read\\(\\)\\); print\\('pairsley.py OK'\\)\")",
+      "Bash(grep -n \"<Footer\\\\|</div>$\\\\|^}\" src/RestaurantStandingOrders.jsx)",
+      "Bash(node -e \"const babel=require\\('@babel/parser'\\); const fs=require\\('fs'\\); for \\(const f of ['src/PairsleyChat.jsx','src/ChefDashboard.jsx','src/RestaurantStandingOrders.jsx','src/RestaurantSavedFarms.jsx','src/RestaurantDigest.jsx']\\) { try { babel.parse\\(fs.readFileSync\\(f,'utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\(f, 'OK'\\); } catch\\(e\\){ console.log\\(f, 'FAIL:', e.message\\); } }\")"
     ]
   }
 }

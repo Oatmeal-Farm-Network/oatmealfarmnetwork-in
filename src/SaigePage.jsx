@@ -4,6 +4,8 @@ import AccountLayout from './AccountLayout';
 import Header from './Header';
 import Footer from './Footer';
 import { useAccount } from './AccountContext';
+import SaigeFieldsCard from './SaigeFieldsCard';
+import SaigeDraftsPanel from './SaigeDraftsPanel';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001';
@@ -700,6 +702,16 @@ export default function SaigePage() {
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 8px' }}>
+              {isLoggedIn && (
+                <div style={{ maxWidth: 800, margin: '0 auto 16px' }}>
+                  <SaigeDraftsPanel businessId={BusinessID ? Number(BusinessID) : 0} />
+                </div>
+              )}
+              {isLoggedIn && activeChat.length <= 1 && (
+                <div style={{ maxWidth: 800, margin: '0 auto 16px' }}>
+                  <SaigeFieldsCard />
+                </div>
+              )}
               {activeChat.map((msg, i) => <ChatBubble key={i} message={msg} />)}
               {isThinking && <ThinkingDots stage={processingStage} />}
               {quiz && !isThinking && (

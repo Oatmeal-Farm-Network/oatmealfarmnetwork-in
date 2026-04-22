@@ -8,6 +8,7 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
+import PairsleyChat from './PairsleyChat';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -121,6 +122,7 @@ export default function RestaurantSavedFarms() {
       </div>
 
       <Footer />
+      <PairsleyChat businessId={buyerBusinessId} />
     </div>
   );
 }
