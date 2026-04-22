@@ -15,6 +15,8 @@ const CATEGORY_IMAGES = {
   [norm('Agricultural Production')]:          '/images/AgriculturalServices.webp',
   [norm('Animal Services')]:                  '/images/Animalservices.webp',
   [norm('Artisan & Crafting Services')]:      '/images/Artisan&CraftingServices.webp',
+  [norm('Baking & Pastry')]:                  '/images/BakingService.webp',
+  [norm('Beverage Production')]:              '/images/BeverageProductions.webp',
   [norm('Community Building & Advocacy')]:    '/images/CommunityBuilding&Advocacy.webp',
   [norm('Education')]:                        '/images/EducationServices.webp',
   [norm('Entertainment')]:                    '/images/EntertainmentServices.webp',
@@ -69,9 +71,16 @@ export default function ServicesDirectory() {
       .catch(() => { setServices([]); setLoading(false); });
   }, [categoryId, subcatId, search, filtersActive]);
 
-  const visibleSubcats = categoryId
+  const visibleSubcats = (categoryId
     ? subcategories.filter(s => String(s.ServiceCategoryID) === String(categoryId))
-    : subcategories;
+    : subcategories.slice()
+  ).sort((a, b) => {
+    if (!categoryId) {
+      const catCmp = String(a.ServicesCategory || '').localeCompare(String(b.ServicesCategory || ''));
+      if (catCmp !== 0) return catCmp;
+    }
+    return String(a.ServiceSubCategoryName || '').localeCompare(String(b.ServiceSubCategoryName || ''));
+  });
 
   useEffect(() => {
     if (categoryId && categories.length) {
