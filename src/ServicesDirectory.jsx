@@ -29,7 +29,9 @@ const CATEGORY_IMAGES = {
   [norm('Marketing and Sales')]:              '/images/Marketing&Sales.webp',
   [norm('Medical')]:                          '/images/MedicalServices.webp',
   [norm('Planning & Management')]:            '/images/FarmManagement.webp',
+  [norm('Real Estate & Land Management')]:    '/images/RealEstate.webp',
   [norm('Retail & Wholesale')]:               '/images/Retail&Wholesale.webp',
+  [norm('Specialty Support Services')]:       '/images/SpecialtySupportServices.webp',
 };
 
 const imgForCategory = (name) => CATEGORY_IMAGES[norm(name)] || FALLBACK_IMG;
