@@ -236,14 +236,51 @@ const DirectoryDetail = function () {
 
     useEffect(() => { if (backState) window.history.replaceState({}, document.title); }, []);
 
+    // Each entry: keys = any substring that must appear in the DB country name,
+    // excludes = substrings that must NOT appear (prevents false matches).
+    const FALLBACK_SPECS = [
+        { keys: ['canada'],                   excludes: [] },
+        { keys: ['india'],                    excludes: ['ocean', 'territory', 'british'] },
+        { keys: ['malaysia'],                 excludes: [] },
+        { keys: ['usa', 'united states'],     excludes: ['minor', 'outlying'] },
+    ];
+    // Hard-coded last-resort names (if the reference API is also unavailable).
     const FALLBACK_COUNTRIES = ['Canada', 'India', 'Malaysia', 'United States'];
 
     useEffect(() => {
         fetch(`${API_ENDPOINTS.COUNTRIES}?business_type_id=${encodeURIComponent(businessType)}`)
             .then(r => r.ok ? r.json() : [])
-            .then(data => setCountries(data.length > 0 ? data : FALLBACK_COUNTRIES))
+            .then(data => {
+                if (data.length > 0) { setCountries(data); return; }
+                // No listings yet — pull the reference country list so that the names
+                // exactly match what the states endpoint's JOIN uses.
+                fetch(API_ENDPOINTS.COUNTRIES)
+                    .then(r => r.ok ? r.json() : [])
+                    .then(all => {
+                        const matches = FALLBACK_SPECS.flatMap(spec => {
+                            const hit = all.find(c => {
+                                const lower = c.toLowerCase();
+                                return spec.keys.some(k => lower === k || lower.includes(k)) &&
+                                       !spec.excludes.some(ex => lower.includes(ex));
+                            });
+                            return hit ? [hit] : [];
+                        });
+                        setCountries(matches.length > 0 ? matches : FALLBACK_COUNTRIES);
+                    })
+                    .catch(() => setCountries(FALLBACK_COUNTRIES));
+            })
             .catch(() => setCountries(FALLBACK_COUNTRIES));
     }, [businessType]);
+
+    // Display labels for the country dropdown — keeps the DB name as the option value
+    // (needed for the states endpoint JOIN) but shows a friendlier label to users.
+    const COUNTRY_DISPLAY = (name) => {
+        const lower = name.toLowerCase();
+        if ((lower === 'usa' || lower.includes('united states')) &&
+            !lower.includes('minor') && !lower.includes('outlying'))
+            return 'USA';
+        return name;
+    };
 
     useEffect(() => {
         if (!selectedCountry) { setStates([]); setSelectedState(''); return; }
@@ -393,7 +430,7 @@ const DirectoryDetail = function () {
                                 style={{ padding: '8px 10px' }}
                             >
                                 <option value="">Select Country</option>
-                                {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                                {countries.map(c => <option key={c} value={c}>{COUNTRY_DISPLAY(c)}</option>)}
                             </select>
                         </div>
 
