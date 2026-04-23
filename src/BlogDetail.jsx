@@ -136,7 +136,7 @@ export default function BlogDetail() {
     ...(post.category ? { articleSection: post.category } : {}),
   } : null;
 
-  const profileBase = post?.business_id ? `/ranch/${post.business_id}` : null;
+  const profileBase = post?.business_id ? `/marketplaces/livestock/ranch/${post.business_id}` : null;
   const ranchLocation = ranch ? [ranch.address_city, ranch.address_state].filter(Boolean).join(', ') : '';
 
   const PROFILE_TABS = profileBase ? [
@@ -146,7 +146,7 @@ export default function BlogDetail() {
   ] : [];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+    <div className="min-h-screen flex flex-col font-sans">
       {post && (
         <PageMeta
           title={`${post.title}${post.business_name ? ' · ' + post.business_name : ''}`}
