@@ -246,6 +246,7 @@ const DirectoryDetail = function () {
         'universities':              '/images/UniversityHeader.webp',
         'service-providers':         '/images/ServiceProviderHeader.webp',
         'meat-wholesalers':          '/images/MeatWholesalerHeader.webp',
+        'real-estate-agents':        '/images/RealEstateHeader.webp',
     };
 
     const CATEGORY_TEXT = {
