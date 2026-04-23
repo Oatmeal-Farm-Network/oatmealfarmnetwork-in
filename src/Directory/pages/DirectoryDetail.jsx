@@ -206,10 +206,13 @@ const DirectoryDetail = function () {
     const [countries, setCountries]           = useState([]);
     const [states, setStates]                 = useState([]);
     const [businesses, setBusinesses]         = useState([]);
+    const [subcategories, setSubcategories]   = useState([]);
     const [selectedCountry, setSelectedCountry] = useState(backState?.selectedCountry || '');
     const [selectedState, setSelectedState]   = useState(backState?.selectedState || '');
+    const [selectedSubcat, setSelectedSubcat] = useState(backState?.selectedSubcat || '');
+    const [appliedSubcat, setAppliedSubcat]   = useState(backState?.selectedSubcat || '');
 
-    const countryTypeahead = useSelectTypeahead(countries, c => { setSelectedCountry(c); setSelectedState(''); });
+    const countryTypeahead = useSelectTypeahead(countries, c => { setSelectedCountry(c); setSelectedState(''); setSelectedSubcat(''); });
     const stateTypeahead   = useSelectTypeahead(states.map(s => s.name), setSelectedState);
     const [nameFilter, setNameFilter]         = useState(backState?.nameFilter || '');
     const [appliedCountry, setAppliedCountry] = useState(backState?.selectedCountry || '');
@@ -223,7 +226,24 @@ const DirectoryDetail = function () {
     const CATEGORY_HEADERS = {
         'agricultural-associations': '/images/AgricuturalAssociationsHeader.webp',
         'artisan-producers':         '/images/ArtisanProducersHeader.webp',
+        'business-resources':        '/images/BusinessResourcesHeader.webp',
+        'crafter-organizations':     '/images/CraftersHeader.webp',
+        'farmers-markets':           '/images/FarmersMarketHeader.webp',
+        'farms-ranches':             '/images/farmsHeader.webp',
+        'fiber-cooperatives':        '/images/FibercooperativeHeader.webp',
+        'fiber-mills':               '/images/FiberMillHeader.webp',
+        'fisheries':                 '/images/FisheryHeader.webp',
         'fishermen':                 '/images/FishermenHeader.webp',
+        'food-cooperatives':         '/images/FoodCoopHeader.webp',
+        'food-hubs':                 '/images/FoodHubHeader.webp',
+        'grocery-stores':            '/images/GroceryStoreHeader.webp',
+        'hunger-relief-organizations': '/images/HungerReleifOrgHeader.webp',
+        'manufacturers':             '/images/ManufacturingHeader.webp',
+        'marinas':                   '/images/MarinaHeader.webp',
+    };
+
+    const CATEGORY_TEXT = {
+        'business-resources': 'Consultants, lenders, accountants, and support organizations that help farm and food businesses manage finances, compliance, and growth. Whether you need help with business planning, loans, legal guidance, or marketing — find the right resource here.',
     };
 
     const businessType = DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID[directoryType] || directoryType;
@@ -235,6 +255,16 @@ const DirectoryDetail = function () {
     const categoryIcon = DIRECTORY_TYPE_TO_IMAGE?.[directoryType] || null;
 
     useEffect(() => { if (backState) window.history.replaceState({}, document.title); }, []);
+
+    useEffect(() => {
+        setSubcategories([]);
+        setSelectedSubcat('');
+        setAppliedSubcat('');
+        fetch(`${API_ENDPOINTS.BUSINESSES}subcategories?BusinessTypeID=${encodeURIComponent(businessType)}`)
+            .then(r => r.ok ? r.json() : [])
+            .then(data => setSubcategories(Array.isArray(data) ? data : []))
+            .catch(() => {});
+    }, [businessType]);
 
     // Each entry: keys = any substring that must appear in the DB country name,
     // excludes = substrings that must NOT appear (prevents false matches).
@@ -296,24 +326,26 @@ const DirectoryDetail = function () {
         let url = API_ENDPOINTS.BUSINESSES + '?BusinessTypeID=' + encodeURIComponent(businessType);
         if (appliedCountry) url += '&country=' + encodeURIComponent(appliedCountry);
         if (appliedState)   url += '&state='   + encodeURIComponent(appliedState);
+        if (appliedSubcat)  url += '&species_category=' + encodeURIComponent(appliedSubcat);
         fetch(url)
             .then(r => { if (!r.ok) throw new Error('Failed to fetch: ' + r.statusText); return r.json(); })
             .then(data => { setBusinesses(data || []); setLoading(false); })
             .catch(err => { setError(err.message); setLoading(false); });
-    }, [appliedCountry, appliedState, businessType]);
+    }, [appliedCountry, appliedState, appliedSubcat, businessType]);
 
-    useEffect(() => { setCurrentPage(1); }, [appliedCountry, appliedState, appliedName]);
+    useEffect(() => { setCurrentPage(1); }, [appliedCountry, appliedState, appliedName, appliedSubcat]);
 
     function handleApplyFilters() {
         setAppliedCountry(selectedCountry);
         setAppliedState(selectedState);
         setAppliedName(nameFilter);
+        setAppliedSubcat(selectedSubcat);
         setCurrentPage(1);
     }
 
     function handleProfileClick(business) {
         navigate('/profile', {
-            state: { business, directoryType, selectedCountry: appliedCountry, selectedState: appliedState, nameFilter: appliedName },
+            state: { business, directoryType, selectedCountry: appliedCountry, selectedState: appliedState, nameFilter: appliedName, selectedSubcat: appliedSubcat },
         });
     }
 
@@ -326,6 +358,7 @@ const DirectoryDetail = function () {
         b.BusinessName && b.BusinessName.trim() !== '' &&
         b.BusinessName.toLowerCase().includes(appliedName.toLowerCase())
     );
+    const showSubcatDropdown = subcategories.length > 0 && (filteredBusinesses.length > 20 || !!appliedSubcat);
     const totalPages       = Math.ceil(filteredBusinesses.length / itemsPerPage);
     const startIndex       = (currentPage - 1) * itemsPerPage;
     const currentBusinesses = filteredBusinesses.slice(startIndex, startIndex + itemsPerPage);
@@ -395,6 +428,11 @@ const DirectoryDetail = function () {
                                 {pageTitle}
                             </h1>
                         </div>
+                        {CATEGORY_TEXT[directoryType] && (
+                            <p style={{ color: '#111111', fontSize: '0.88rem', margin: '0 0 10px', lineHeight: 1.6, maxWidth: '560px' }}>
+                                {CATEGORY_TEXT[directoryType]}
+                            </p>
+                        )}
                         <Link
                             to="/directory"
                             style={{
@@ -448,6 +486,21 @@ const DirectoryDetail = function () {
                                 {states.map(s => <option key={s.StateIndex} value={s.name}>{s.name}</option>)}
                             </select>
                         </div>
+
+                        {showSubcatDropdown && (
+                            <div className="flex flex-col gap-1.5 flex-1" style={{ minWidth: '160px' }}>
+                                <label className="text-xs font-semibold text-gray-600">Category</label>
+                                <select
+                                    value={selectedSubcat}
+                                    onChange={e => setSelectedSubcat(e.target.value)}
+                                    className="border border-gray-300 rounded-lg text-sm text-gray-700"
+                                    style={{ padding: '8px 10px' }}
+                                >
+                                    <option value="">All</option>
+                                    {subcategories.map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                            </div>
+                        )}
 
                         <div className="flex flex-col gap-1.5" style={{ minWidth: '200px', flex: 2 }}>
                             <label className="text-xs font-semibold text-gray-600">Business Name</label>

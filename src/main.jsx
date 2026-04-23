@@ -1,6 +1,12 @@
-import React, { lazy, Suspense } from 'react'
+import React, { lazy, Suspense, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useLocation } from 'react-router-dom'
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 import './index.css'
 import { AccountProvider } from './AccountContext';
 import "./AnimalAddWizard.css";
@@ -231,6 +237,7 @@ const isCustomDomain = !OFN_HOSTS.some(
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
+    <ScrollToTop />
     <AccountProvider>
       <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>}>
         {/* On a custom domain every path renders the public site — no OFN chrome, no auth routes */}

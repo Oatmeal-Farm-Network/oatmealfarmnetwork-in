@@ -70,7 +70,7 @@ export const DIRECTORY_TYPE_TO_IMAGE = {
     'food-cooperatives': foodCopImg,
     'food-hubs': foodHubImg,
     'grocery-stores': groceryStoreImg,
-    'hunger-relief-organizations': '/images/HungerRelief.webp',
+    'hunger-relief-organizations': null,
     'manufacturers': manfacImg,
     'marinas': marinasImg,
     'meat-wholesalers': meatImg,
