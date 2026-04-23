@@ -500,8 +500,13 @@ export default function OrgProfile() {
 
   const hasFoodListings = produceItems.length > 0 || meatItems.length > 0 || processedFoodItems.length > 0;
 
+  const navigate = useNavigate();
   const activeTab = searchParams.get('tab') || 'home';
-  const setTab = (tab) => setSearchParams({ tab }, { replace: true });
+  // Preserve router state when switching tabs so directoryBusiness isn't lost
+  const setTab = (tab) => navigate(
+    { pathname: routerLocation.pathname, search: `?tab=${tab}` },
+    { state: routerLocation.state, replace: true }
+  );
 
   // Restaurant-buyer "save this farm" state — only relevant when the viewer is a restaurant
   // looking at a different business's profile.
