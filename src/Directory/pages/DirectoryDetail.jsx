@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
 import { DIRECTORY_TYPE_TO_IMAGE, DIRECTORY_TYPE_TO_BUSINESS_TYPE } from './directoryMappings';
@@ -180,6 +180,23 @@ function BusinessCard({ business, onProfileClick }) {
     );
 }
 
+// Accumulating type-ahead for <select> elements.
+// Appends each printable key to a buffer and jumps to the first option whose
+// text starts with the buffer. Resets after 1 second of no typing.
+function useSelectTypeahead(options, onSelect) {
+    const bufRef    = useRef('');
+    const timerRef  = useRef(null);
+    return useCallback((e) => {
+        if (e.key.length !== 1) return; // ignore arrows, backspace, etc.
+        clearTimeout(timerRef.current);
+        bufRef.current += e.key.toLowerCase();
+        const buf = bufRef.current;
+        const match = options.find(o => o.toLowerCase().startsWith(buf));
+        if (match) onSelect(match);
+        timerRef.current = setTimeout(() => { bufRef.current = ''; }, 1000);
+    }, [options, onSelect]);
+}
+
 const DirectoryDetail = function () {
     const { directoryType } = useParams();
     const navigate  = useNavigate();
@@ -191,6 +208,9 @@ const DirectoryDetail = function () {
     const [businesses, setBusinesses]         = useState([]);
     const [selectedCountry, setSelectedCountry] = useState(backState?.selectedCountry || '');
     const [selectedState, setSelectedState]   = useState(backState?.selectedState || '');
+
+    const countryTypeahead = useSelectTypeahead(countries, c => { setSelectedCountry(c); setSelectedState(''); });
+    const stateTypeahead   = useSelectTypeahead(states.map(s => s.name), setSelectedState);
     const [nameFilter, setNameFilter]         = useState(backState?.nameFilter || '');
     const [appliedCountry, setAppliedCountry] = useState(backState?.selectedCountry || '');
     const [appliedState, setAppliedState]     = useState(backState?.selectedState || '');
@@ -199,6 +219,11 @@ const DirectoryDetail = function () {
     const [error, setError]                   = useState(null);
     const [currentPage, setCurrentPage]       = useState(1);
     const itemsPerPage = 10;
+
+    const CATEGORY_HEADERS = {
+        'agricultural-associations': '/images/AgricuturalAssociationsHeader.webp',
+        'artisan-producers':         '/images/ArtisanProducersHeader.webp',
+    };
 
     const businessType = DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID[directoryType] || directoryType;
     const pageTitle    = directoryType
@@ -210,12 +235,14 @@ const DirectoryDetail = function () {
 
     useEffect(() => { if (backState) window.history.replaceState({}, document.title); }, []);
 
+    const FALLBACK_COUNTRIES = ['Canada', 'India', 'Malaysia', 'United States'];
+
     useEffect(() => {
-        fetch(API_ENDPOINTS.COUNTRIES)
+        fetch(`${API_ENDPOINTS.COUNTRIES}?business_type_id=${encodeURIComponent(businessType)}`)
             .then(r => r.ok ? r.json() : [])
-            .then(data => setCountries(data))
-            .catch(() => {});
-    }, []);
+            .then(data => setCountries(data.length > 0 ? data : FALLBACK_COUNTRIES))
+            .catch(() => setCountries(FALLBACK_COUNTRIES));
+    }, [businessType]);
 
     useEffect(() => {
         if (!selectedCountry) { setStates([]); setSelectedState(''); return; }
@@ -294,7 +321,7 @@ const DirectoryDetail = function () {
             <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
                 <div className="relative w-full overflow-hidden rounded-xl">
                     <img
-                        src="/images/DirectoryHeader.webp"
+                        src={CATEGORY_HEADERS[directoryType] || '/images/DirectoryHeader.webp'}
                         alt={pageTitle}
                         className="w-full object-cover"
                         style={{ height: '250px', display: 'block' }}
@@ -353,6 +380,7 @@ const DirectoryDetail = function () {
                             <select
                                 value={selectedCountry}
                                 onChange={e => { setSelectedCountry(e.target.value); setSelectedState(''); }}
+                                onKeyDown={countryTypeahead}
                                 className="border border-gray-300 rounded-lg text-sm text-gray-700"
                                 style={{ padding: '8px 10px' }}
                             >
@@ -366,6 +394,7 @@ const DirectoryDetail = function () {
                             <select
                                 value={selectedState}
                                 onChange={e => setSelectedState(e.target.value)}
+                                onKeyDown={stateTypeahead}
                                 disabled={states.length === 0}
                                 className="border border-gray-300 rounded-lg text-sm text-gray-700"
                                 style={{ padding: '8px 10px' }}
@@ -387,22 +416,24 @@ const DirectoryDetail = function () {
                                 style={{ padding: '8px 10px' }}
                             />
                         </div>
+
+                        <button
+                            onClick={handleApplyFilters}
+                            style={{
+                                backgroundColor: '#3D6B34',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '8px 24px',
+                                fontSize: '0.85rem',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                alignSelf: 'flex-end',
+                            }}
+                        >
+                            Apply Filters
+                        </button>
                     </div>
-                    <button
-                        onClick={handleApplyFilters}
-                        style={{
-                            backgroundColor: '#3D6B34',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '8px 24px',
-                            fontSize: '0.85rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                        }}
-                    >
-                        Apply Filters
-                    </button>
                 </div>
 
                 {/* ── Results heading ── */}

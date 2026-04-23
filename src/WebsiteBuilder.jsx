@@ -36,6 +36,12 @@ const BLOCK_TYPES = [
   { type: 'pedigree_search',  icon: '🧬', label: 'Pedigree / Registry Search', desc: 'Public registry lookup by name or reg number (association widget)' },
   { type: 'fee_schedule',     icon: '💲', label: 'Fee Schedule',       desc: 'Dues & registration fees in a clean table (association widget)' },
   { type: 'hours_of_operation', icon: '🕒', label: 'Hours of Operation', desc: 'Weekly hours table — restaurants, vets, markets, tasting rooms' },
+  { type: 'faq',            icon: '❓',  label: 'FAQ',                 desc: 'Accordion FAQ — questions and answers' },
+  { type: 'features',       icon: '⭐',  label: 'Features / Services', desc: 'Icon-box card grid — what you offer / why choose us' },
+  { type: 'team',           icon: '👥',  label: 'Team / Staff',        desc: 'Photo cards for your team members' },
+  { type: 'pricing',        icon: '💲',  label: 'Pricing / Plans',     desc: 'Column-based pricing tiers or rate cards' },
+  { type: 'sponsors',       icon: '🏆',  label: 'Sponsors',           desc: 'Sponsor logo grid with names and links' },
+  { type: 'cta',            icon: '📣',  label: 'CTA Banner',         desc: 'Full-width call-to-action bar with headline + button' },
   { type: 'map_location',   icon: '📍',  label: 'Map & Location',     desc: 'Address block with optional embedded map' },
   { type: 'divider',        icon: '➖',  label: 'Spacer / Divider',   desc: 'Visual separator between sections' },
 ];
@@ -93,6 +99,27 @@ const defaultBlockData = {
     { day: 'Sunday',    open: '',  close: '', closed: true,  notes: '' },
   ]},
   divider:        { height: 40 },
+  faq:            { heading: 'Frequently Asked Questions', items: [
+    { question: 'What is your return policy?', answer: 'We offer a 30-day return policy on all items.' },
+    { question: 'Do you ship nationwide?', answer: 'Yes, we ship to all 50 states.' },
+    { question: 'How do I place an order?', answer: 'You can order through our website or by calling us directly.' },
+  ]},
+  features:       { heading: '', items: [
+    { title: 'Feature One', description: 'Describe what makes this feature special.', icon_url: '' },
+    { title: 'Feature Two', description: 'Describe what makes this feature special.', icon_url: '' },
+    { title: 'Feature Three', description: 'Describe what makes this feature special.', icon_url: '' },
+  ]},
+  team:           { heading: 'Meet Our Team', members: [
+    { name: 'Jane Smith', role: 'Farm Manager', bio: '', photo_url: '' },
+    { name: 'John Doe',   role: 'Head Grower',  bio: '', photo_url: '' },
+  ]},
+  pricing:        { heading: 'Plans & Pricing', intro_body: '', tiers: [
+    { name: 'Basic',    price: '$29', period: 'month', description: '', features: ['Feature one', 'Feature two'], highlight: false },
+    { name: 'Pro',      price: '$79', period: 'month', description: '', features: ['Everything in Basic', 'Feature three', 'Feature four'], highlight: true },
+    { name: 'Premium',  price: '$149', period: 'month', description: '', features: ['Everything in Pro', 'Feature five', 'Priority support'], highlight: false },
+  ]},
+  sponsors:       { heading: 'Our Sponsors', intro_body: '', columns: 4, logo_height: 80, show_names: true, sponsors: [] },
+  cta:            { headline: "Don't Miss Out!", button_text: 'Learn More', button_link: '#', bg_color: '#1a1a1a', text_color: '#ffffff', button_bg_color: '', button_text_color: '#ffffff', align: 'split' },
 };
 
 // Normalize any size value to a px string. Accepts 'px', 'rem', 'em', or unitless.
@@ -178,7 +205,13 @@ function authHeaders() {
 }
 async function apiFetch(path, opts = {}) {
   const r = await fetch(`${API}${path}`, { headers: authHeaders(), ...opts });
-  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.detail || 'Request failed'); }
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({}));
+    let msg = 'Request failed';
+    if (typeof e.detail === 'string') msg = e.detail;
+    else if (Array.isArray(e.detail)) msg = e.detail.map(d => d.msg || String(d)).join(', ');
+    throw new Error(msg);
+  }
   return r.json();
 }
 
@@ -2272,12 +2305,13 @@ function SimpleBlockPreview({ block, site, businessId, onFieldSave }) {
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <div style={{
           width: '100%', maxWidth: bgWidth,
-          minHeight: 220, position: 'relative', display: 'flex', alignItems: 'center',
+          minHeight: d.min_height_px ? `${d.min_height_px}px` : 220,
+          position: 'relative', display: 'flex', alignItems: 'center',
           justifyContent: d.align === 'left' ? 'flex-start' : d.align === 'right' ? 'flex-end' : 'center',
           background: d.image_url ? `url(${d.image_url}) center/cover no-repeat` : primary,
           fontFamily,
         }}>
-          {d.overlay && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.42)' }} />}
+          {d.overlay && <div style={{ position: 'absolute', inset: 0, background: d.overlay_color || 'rgba(0,0,0,0.42)' }} />}
           <div style={{ position: 'relative', zIndex: 1, padding: '2rem 3rem', textAlign: d.align || 'center', maxWidth: cWidth, width: '100%' }}>
             <h1 style={{ color: '#fff', fontSize: '2rem', fontWeight: 800, margin: '0 0 0.5rem', lineHeight: 1.2 }}>
               {d.headline || 'Your Headline'}
@@ -2616,6 +2650,191 @@ function SimpleBlockPreview({ block, site, businessId, onFieldSave }) {
           ))}
         </div>
         {d.timezone ? <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: 8 }}>All times {d.timezone}.</p> : null}
+      </BlockWrap>
+    );
+  }
+
+  // FAQ accordion preview
+  if (bt === 'faq') {
+    const items = Array.isArray(d.items) ? d.items : [];
+    const textColor = site?.text_color || '#111827';
+    const primary = site?.primary_color || '#3D6B34';
+    return (
+      <BlockWrap>
+        {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), marginBottom: '1rem' }}>{d.heading}</h2>}
+        {items.length === 0 ? (
+          <div style={{ padding: '1.2rem', color: '#9ca3af', fontStyle: 'italic', fontSize: '0.85rem', textAlign: 'center', border: '1px dashed #e5e7eb', borderRadius: 8 }}>
+            Click to edit — add FAQ items.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {items.slice(0, 5).map((item, i) => (
+              <div key={i} style={{ background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                <div style={{ fontWeight: 600, fontSize: '0.85rem', color: textColor, lineHeight: 1.4 }}>{item.question || 'Question?'}</div>
+                <span style={{ color: primary, fontSize: '1rem', flexShrink: 0 }}>+</span>
+              </div>
+            ))}
+            {items.length > 5 && <div style={{ fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center' }}>+{items.length - 5} more</div>}
+          </div>
+        )}
+      </BlockWrap>
+    );
+  }
+
+  // Features grid — icon-box card preview
+  if (bt === 'features') {
+    const items = Array.isArray(d.items) ? d.items : [];
+    const primary = site?.primary_color || '#3D6B34';
+    const textColor = site?.text_color || '#111827';
+    const cols = items.length <= 2 ? items.length || 1 : items.length <= 4 ? 2 : 3;
+    return (
+      <BlockWrap>
+        {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), marginBottom: '1rem' }}>{d.heading}</h2>}
+        {items.length === 0 ? (
+          <div style={{ padding: '1.2rem', color: '#9ca3af', fontStyle: 'italic', fontSize: '0.85rem', textAlign: 'center', border: '1px dashed #e5e7eb', borderRadius: 8 }}>
+            Click to edit — add feature cards.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(cols, 3)}, 1fr)`, gap: '1rem' }}>
+            {items.map((item, i) => (
+              <div key={i} style={{ background: '#f9fafb', borderRadius: 10, padding: '1rem', border: '1px solid #e5e7eb' }}>
+                {item.icon_url
+                  ? <img src={item.icon_url} alt={item.title || ''} style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 6, marginBottom: 8 }} />
+                  : <div style={{ width: 36, height: 36, borderRadius: 8, background: `${primary}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', marginBottom: 8 }}>✦</div>
+                }
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: textColor, lineHeight: 1.3, marginBottom: 4 }}>{item.title || 'Feature'}</div>
+                {item.description && <p style={{ margin: 0, fontSize: '0.78rem', color: '#6B7280', lineHeight: 1.5 }}>{item.description.slice(0, 120)}{item.description.length > 120 ? '…' : ''}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </BlockWrap>
+    );
+  }
+
+  // Team / staff preview
+  if (bt === 'team') {
+    const members = Array.isArray(d.members) ? d.members : [];
+    const primary = site?.primary_color || '#3D6B34';
+    const textColor = site?.text_color || '#111827';
+    return (
+      <BlockWrap>
+        {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), marginBottom: '1rem' }}>{d.heading}</h2>}
+        {members.length === 0 ? (
+          <div style={{ padding: '1.2rem', color: '#9ca3af', fontStyle: 'italic', fontSize: '0.85rem', textAlign: 'center', border: '1px dashed #e5e7eb', borderRadius: 8 }}>
+            Click to edit — add team members.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(members.length, 3)}, 1fr)`, gap: '1.25rem' }}>
+            {members.map((m, i) => (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8 }}>
+                {m.photo_url
+                  ? <img src={m.photo_url} alt={m.name || ''} style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${primary}30` }} />
+                  : <div style={{ width: 80, height: 80, borderRadius: '50%', background: `${primary}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', color: primary }}>👤</div>
+                }
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: textColor }}>{m.name || 'Name'}</div>
+                  {m.role && <div style={{ fontSize: '0.78rem', color: primary, fontWeight: 600 }}>{m.role}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </BlockWrap>
+    );
+  }
+
+  // Pricing / plans preview
+  if (bt === 'pricing') {
+    const tiers = Array.isArray(d.tiers) ? d.tiers : [];
+    const primary = site?.primary_color || '#3D6B34';
+    const textColor = site?.text_color || '#111827';
+    return (
+      <BlockWrap>
+        {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), marginBottom: '0.75rem' }}>{d.heading}</h2>}
+        {tiers.length === 0 ? (
+          <div style={{ padding: '1.2rem', color: '#9ca3af', fontStyle: 'italic', fontSize: '0.85rem', textAlign: 'center', border: '1px dashed #e5e7eb', borderRadius: 8 }}>
+            Click to edit — add pricing tiers.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(tiers.length, 3)}, 1fr)`, gap: '0.75rem' }}>
+            {tiers.map((tier, i) => (
+              <div key={i} style={{
+                background: tier.highlight ? primary : '#f9fafb',
+                color: tier.highlight ? '#fff' : textColor,
+                borderRadius: 10, padding: '1rem',
+                border: tier.highlight ? `2px solid ${primary}` : '1px solid #e5e7eb',
+              }}>
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 4 }}>{tier.name}</div>
+                <div style={{ fontWeight: 800, fontSize: '1.3rem' }}>{tier.price}{tier.period && <span style={{ fontSize: '0.7rem', fontWeight: 400, marginLeft: 2 }}>/{tier.period}</span>}</div>
+                {Array.isArray(tier.features) && tier.features.slice(0, 3).map((f, j) => (
+                  <div key={j} style={{ fontSize: '0.72rem', marginTop: 3, opacity: 0.85 }}>✓ {f}</div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </BlockWrap>
+    );
+  }
+
+  // Sponsors — logo grid preview
+  if (bt === 'sponsors') {
+    const sponsors = Array.isArray(d.sponsors) ? d.sponsors : [];
+    const cols = Math.max(1, Math.min(6, Number(d.columns) || 4));
+    const logoH = Math.max(40, Math.min(200, Number(d.logo_height) || 80));
+    return (
+      <BlockWrap>
+        {d.heading && <h2 style={{ ...headingTypoStyle('h1', site), marginBottom: '0.4rem' }}>{d.heading}</h2>}
+        {d.intro_body && <div className="site-rte" style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '1rem' }} dangerouslySetInnerHTML={{ __html: d.intro_body }} />}
+        {sponsors.length === 0 ? (
+          <div style={{ padding: '1.2rem', color: '#9ca3af', fontStyle: 'italic', fontSize: '0.85rem', textAlign: 'center', border: '1px dashed #e5e7eb', borderRadius: 8 }}>
+            Click to edit — add sponsor logos.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '1.25rem', alignItems: 'center' }}>
+            {sponsors.map((s, i) => (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                {s.logo_url ? (
+                  <img src={s.logo_url} alt={s.name || 'Sponsor'} style={{ maxHeight: logoH, maxWidth: '100%', objectFit: 'contain' }} />
+                ) : (
+                  <div style={{ height: logoH, width: '80%', background: '#f3f4f6', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 12 }}>
+                    {s.name || 'Logo'}
+                  </div>
+                )}
+                {d.show_names && s.name && <div style={{ fontSize: '0.82rem', color: '#374151', fontWeight: 600, textAlign: 'center' }}>{s.name}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+      </BlockWrap>
+    );
+  }
+
+  // CTA banner — full-width call-to-action preview
+  if (bt === 'cta') {
+    const bg    = d.bg_color       || '#1a1a1a';
+    const fg    = d.text_color     || '#ffffff';
+    const btnBg = d.button_bg_color || site?.accent_color || '#7CB342';
+    const btnFg = d.button_text_color || '#ffffff';
+    const align = d.align === 'center' ? 'center' : 'split';
+    return (
+      <BlockWrap noPad>
+        <div style={{ background: bg, color: fg, padding: '2rem 1.5rem', borderRadius: 6 }}>
+          <div style={{ display: 'flex', flexDirection: align === 'center' ? 'column' : 'row',
+            justifyContent: align === 'center' ? 'center' : 'space-between',
+            alignItems: 'center', gap: '1.25rem', textAlign: 'center' }}>
+            {d.headline && (
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase' }}>{d.headline}</div>
+            )}
+            {d.button_text && (
+              <span style={{ display: 'inline-block', padding: '0.7rem 2rem', background: btnBg, color: btnFg,
+                fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', borderRadius: 4, fontSize: '0.9rem' }}>
+                {d.button_text}
+              </span>
+            )}
+          </div>
+        </div>
       </BlockWrap>
     );
   }
@@ -4816,6 +5035,53 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
           Show dark overlay over image
         </label>
       </Field>
+      {d.overlay && (
+        <Field label="Overlay Color">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="text"
+              value={d.overlay_color || ''}
+              onChange={e => onFieldSave('overlay_color', e.target.value)}
+              placeholder="rgba(0,0,0,0.45)"
+              style={{ flex: 1, padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, fontFamily: 'monospace' }}
+            />
+            {d.overlay_color && (
+              <button
+                onClick={() => onFieldSave('overlay_color', '')}
+                style={{ padding: '4px 8px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, cursor: 'pointer', color: '#6b7280' }}
+                title="Clear (use default dark overlay)"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
+            Any CSS color: rgba/hex/hsla. Blank = default dark.
+          </div>
+        </Field>
+      )}
+      <Field label={`Banner Height ${d.min_height_px ? `(${d.min_height_px}px)` : '(default 70vh)'}`}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input
+            type="range"
+            min="220"
+            max="900"
+            step="10"
+            value={d.min_height_px || 0}
+            onChange={e => onFieldSave('min_height_px', parseInt(e.target.value, 10) || 0)}
+            style={{ flex: 1 }}
+          />
+          {!!d.min_height_px && (
+            <button
+              onClick={() => onFieldSave('min_height_px', 0)}
+              style={{ padding: '4px 8px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, cursor: 'pointer', color: '#6b7280' }}
+              title="Reset to default (70vh)"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      </Field>
       <BgField />
     </div>
   );
@@ -5162,6 +5428,265 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
     );
   }
 
+  // ── FAQ ──
+  if (bt === 'faq') {
+    const items = Array.isArray(d.items) ? d.items : [];
+    const saveItems = (its) => onFieldSave('items', its);
+    const updateItem = (i, key, val) => saveItems(items.map((it, j) => i !== j ? it : { ...it, [key]: val }));
+    const addItem = () => saveItems([...items, { question: '', answer: '' }]);
+    const removeItem = (i) => saveItems(items.filter((_, j) => j !== i));
+    return (
+      <div style={{ padding: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>❓ FAQ</div>
+        <Field label="Section Heading"><TxtInp field="heading" placeholder="Frequently Asked Questions" /></Field>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Questions ({items.length})</label>
+          {items.map((item, i) => (
+            <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 6, background: '#f9fafb' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>Q{i + 1}</span>
+                <button type="button" onClick={() => removeItem(i)}
+                  style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: 11 }}>✕</button>
+              </div>
+              <input className={inp} defaultValue={item.question || ''} placeholder="Question?"
+                onBlur={e => updateItem(i, 'question', e.target.value)} style={{ marginBottom: 6 }} />
+              <textarea className={inp} defaultValue={item.answer || ''} placeholder="Answer…"
+                onBlur={e => updateItem(i, 'answer', e.target.value)}
+                rows={3} style={{ resize: 'vertical' }} />
+            </div>
+          ))}
+          <button type="button" onClick={addItem}
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add question</button>
+        </div>
+        <BgField />
+      </div>
+    );
+  }
+
+  // ── Features grid ──
+  if (bt === 'features') {
+    const items = Array.isArray(d.items) ? d.items : [];
+    const saveItems = (its) => onFieldSave('items', its);
+    const updateItem = (i, key, val) => saveItems(items.map((it, j) => i !== j ? it : { ...it, [key]: val }));
+    const addItem = () => saveItems([...items, { title: '', description: '', icon_url: '' }]);
+    const removeItem = (i) => saveItems(items.filter((_, j) => j !== i));
+    return (
+      <div style={{ padding: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>⭐ Features / Services Grid</div>
+        <Field label="Section Heading (optional)"><TxtInp field="heading" placeholder="What We Offer" /></Field>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Cards ({items.length})</label>
+          {items.map((item, i) => (
+            <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 6, background: '#f9fafb' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>Card {i + 1}</span>
+                <button type="button" onClick={() => removeItem(i)}
+                  style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: 11 }}>✕</button>
+              </div>
+              <input className={inp} defaultValue={item.title || ''} placeholder="Title"
+                onBlur={e => updateItem(i, 'title', e.target.value)} style={{ marginBottom: 6 }} />
+              <textarea className={inp} defaultValue={item.description || ''} placeholder="Description"
+                onBlur={e => updateItem(i, 'description', e.target.value)}
+                rows={2} style={{ resize: 'vertical', marginBottom: 6 }} />
+              <input className={inp} defaultValue={item.icon_url || ''} placeholder="Icon image URL (optional)"
+                onBlur={e => updateItem(i, 'icon_url', e.target.value)} />
+            </div>
+          ))}
+          <button type="button" onClick={addItem}
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add card</button>
+        </div>
+        <BgField />
+      </div>
+    );
+  }
+
+  // ── Team / Staff ──
+  if (bt === 'team') {
+    const members = Array.isArray(d.members) ? d.members : [];
+    const saveMembers = (ms) => onFieldSave('members', ms);
+    const updateMember = (i, key, val) => saveMembers(members.map((m, j) => i !== j ? m : { ...m, [key]: val }));
+    const addMember = () => saveMembers([...members, { name: '', role: '', bio: '', photo_url: '' }]);
+    const removeMember = (i) => saveMembers(members.filter((_, j) => j !== i));
+    return (
+      <div style={{ padding: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>👥 Team / Staff</div>
+        <Field label="Section Heading"><TxtInp field="heading" placeholder="Meet Our Team" /></Field>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Members ({members.length})</label>
+          {members.map((m, i) => (
+            <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 8, background: '#f9fafb' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>Member {i + 1}</span>
+                <button type="button" onClick={() => removeMember(i)}
+                  style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: 11 }}>✕</button>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
+                {m.photo_url && <img src={m.photo_url} alt="" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '1px solid #e5e7eb' }} />}
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>Photo</label>
+                  <ImageUploadField compact value={m.photo_url || ''} onChange={url => updateMember(i, 'photo_url', url)} />
+                </div>
+              </div>
+              <input className={inp} defaultValue={m.name || ''} placeholder="Full name"
+                onBlur={e => updateMember(i, 'name', e.target.value)} style={{ marginBottom: 4 }} />
+              <input className={inp} defaultValue={m.role || ''} placeholder="Title / role"
+                onBlur={e => updateMember(i, 'role', e.target.value)} style={{ marginBottom: 4 }} />
+              <textarea className={inp} defaultValue={m.bio || ''} placeholder="Short bio (optional)"
+                onBlur={e => updateMember(i, 'bio', e.target.value)} rows={2} style={{ resize: 'vertical' }} />
+            </div>
+          ))}
+          <button type="button" onClick={addMember}
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add member</button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Pricing / Plans ──
+  if (bt === 'pricing') {
+    const tiers = Array.isArray(d.tiers) ? d.tiers : [];
+    const saveTiers = (ts) => onFieldSave('tiers', ts);
+    const updateTier = (i, key, val) => saveTiers(tiers.map((t, j) => i !== j ? t : { ...t, [key]: val }));
+    const addTier = () => saveTiers([...tiers, { name: '', price: '', period: 'month', description: '', features: [], highlight: false }]);
+    const removeTier = (i) => saveTiers(tiers.filter((_, j) => j !== i));
+    const updateFeatures = (i, raw) => updateTier(i, 'features', raw.split('\n').map(s => s.trim()).filter(Boolean));
+    return (
+      <div style={{ padding: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>💲 Pricing / Plans</div>
+        <Field label="Section Heading"><TxtInp field="heading" placeholder="Plans & Pricing" /></Field>
+        <Field label="Intro Text"><TxtInp field="intro_body" placeholder="Choose the plan that's right for you." /></Field>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Tiers ({tiers.length})</label>
+          {tiers.map((tier, i) => (
+            <div key={i} style={{ border: `1px solid ${tier.highlight ? '#7C5CBF' : '#e5e7eb'}`, borderRadius: 6, padding: 8, marginBottom: 8, background: tier.highlight ? '#f5f3ff' : '#f9fafb' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>Tier {i + 1}</span>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#7C5CBF', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={!!tier.highlight} onChange={e => updateTier(i, 'highlight', e.target.checked)} />
+                    Featured
+                  </label>
+                  <button type="button" onClick={() => removeTier(i)}
+                    style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: 11 }}>✕</button>
+                </div>
+              </div>
+              <input className={inp} defaultValue={tier.name || ''} placeholder="Plan name (e.g. Basic)"
+                onBlur={e => updateTier(i, 'name', e.target.value)} style={{ marginBottom: 4 }} />
+              <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+                <input className={inp} defaultValue={tier.price || ''} placeholder="Price (e.g. $49)"
+                  onBlur={e => updateTier(i, 'price', e.target.value)} style={{ flex: 2 }} />
+                <select className={inp} defaultValue={tier.period || 'month'} onChange={e => updateTier(i, 'period', e.target.value)} style={{ flex: 1 }}>
+                  <option value="">one-time</option>
+                  <option value="month">/ month</option>
+                  <option value="year">/ year</option>
+                  <option value="week">/ week</option>
+                </select>
+              </div>
+              <input className={inp} defaultValue={tier.description || ''} placeholder="Short description"
+                onBlur={e => updateTier(i, 'description', e.target.value)} style={{ marginBottom: 4 }} />
+              <textarea className={inp}
+                defaultValue={Array.isArray(tier.features) ? tier.features.join('\n') : ''}
+                placeholder="Features — one per line"
+                onBlur={e => updateFeatures(i, e.target.value)}
+                rows={3} style={{ resize: 'vertical' }} />
+            </div>
+          ))}
+          <button type="button" onClick={addTier}
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add tier</button>
+        </div>
+        <BgField />
+      </div>
+    );
+  }
+
+  // ── Sponsors ──
+  if (bt === 'sponsors') {
+    const sponsors = Array.isArray(d.sponsors) ? d.sponsors : [];
+    const saveSponsors = (s) => onFieldSave('sponsors', s);
+    const updateSponsor = (i, key, val) => saveSponsors(sponsors.map((s, j) => i !== j ? s : { ...s, [key]: val }));
+    const addSponsor = () => saveSponsors([...sponsors, { logo_url: '', name: '', url: '' }]);
+    const removeSponsor = (i) => saveSponsors(sponsors.filter((_, j) => j !== i));
+    return (
+      <div style={{ padding: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>🏆 Sponsors</div>
+        <Field label="Heading"><TxtInp field="heading" placeholder="Our Sponsors" /></Field>
+        <Field label="Intro"><RichBody field="intro_body" /></Field>
+        <Field label="Columns">
+          <select className={inp} defaultValue={d.columns || 4} onBlur={e => onFieldSave('columns', Number(e.target.value))}>
+            {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </Field>
+        <Field label="Logo Height (px)">
+          <input key={`${block.block_id}-lh`} type="number" className={inp} defaultValue={d.logo_height || 80} min={40} max={200}
+            onBlur={e => onFieldSave('logo_height', Number(e.target.value))} />
+        </Field>
+        <Field label="Show Sponsor Names">
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151' }}>
+            <input type="checkbox" checked={d.show_names !== false} onChange={e => onFieldSave('show_names', e.target.checked)} style={{ width: 16, height: 16 }} />
+            Show name caption under logo
+          </label>
+        </Field>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Sponsors</label>
+          {sponsors.map((s, i) => (
+            <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 6, background: '#f9fafb' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
+                {s.logo_url && <img src={s.logo_url} alt="" style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 3, border: '1px solid #e5e7eb', background: '#fff' }} />}
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>Logo</label>
+                  <ImageUploadField compact value={s.logo_url || ''} onChange={url => updateSponsor(i, 'logo_url', url)} />
+                </div>
+                <button type="button" onClick={() => removeSponsor(i)}
+                  style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '0 10px', cursor: 'pointer', fontSize: 12, height: 28 }}>✕</button>
+              </div>
+              <input className={inp} defaultValue={s.name || ''} placeholder="Sponsor name"
+                onBlur={e => updateSponsor(i, 'name', e.target.value)} style={{ marginBottom: 4 }} />
+              <input className={inp} defaultValue={s.url || ''} placeholder="https://sponsor-website.com"
+                onBlur={e => updateSponsor(i, 'url', e.target.value)} />
+            </div>
+          ))}
+          <button type="button" onClick={addSponsor}
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add sponsor</button>
+        </div>
+        <BgField />
+      </div>
+    );
+  }
+
+  // ── CTA Banner ──
+  if (bt === 'cta') {
+    return (
+      <div style={{ padding: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>📣 CTA Banner</div>
+        <Field label="Headline"><TxtInp field="headline" placeholder="Don't Miss Out!" /></Field>
+        <Field label="Button Text"><TxtInp field="button_text" placeholder="Renew Your Membership" /></Field>
+        <Field label="Button Link"><TxtInp field="button_link" placeholder="https://… or /page" /></Field>
+        <Field label="Layout">
+          <select className={inp} defaultValue={d.align || 'split'} onBlur={e => onFieldSave('align', e.target.value)}>
+            <option value="split">Headline left, button right</option>
+            <option value="center">Stacked, centered</option>
+          </select>
+        </Field>
+        <Field label="Background Color">
+          <input type="color" className={inp} defaultValue={d.bg_color || '#1a1a1a'}
+            onBlur={e => onFieldSave('bg_color', e.target.value)} style={{ height: 36, padding: 2 }} />
+        </Field>
+        <Field label="Headline Color">
+          <input type="color" className={inp} defaultValue={d.text_color || '#ffffff'}
+            onBlur={e => onFieldSave('text_color', e.target.value)} style={{ height: 36, padding: 2 }} />
+        </Field>
+        <Field label="Button Background (blank = site accent)">
+          <input type="color" className={inp} defaultValue={d.button_bg_color || (site?.accent_color || '#7CB342')}
+            onBlur={e => onFieldSave('button_bg_color', e.target.value)} style={{ height: 36, padding: 2 }} />
+        </Field>
+        <Field label="Button Text Color">
+          <input type="color" className={inp} defaultValue={d.button_text_color || '#ffffff'}
+            onBlur={e => onFieldSave('button_text_color', e.target.value)} style={{ height: 36, padding: 2 }} />
+        </Field>
+      </div>
+    );
+  }
+
   // ── Generic data blocks ──
   const meta = BLOCK_TYPES.find(b => b.type === bt) || { icon: '📦', label: bt };
   return (
@@ -5398,12 +5923,24 @@ function CanvasSiteFooter({ site }) {
   const footerContentRadius = copyrightIsTransparent ? fRadiusCss : undefined;
   const copyrightRadius = copyrightIsTransparent ? undefined : fRadiusCss;
 
+  // Strip a trailing "© ... all rights reserved" block from footer_html so
+  // it never duplicates the dedicated copyright bar below.
+  const _copyRx = /<(div|p|small|span)\b[^>]*>[\s\S]*?(?:&copy;|©)[\s\S]*?all\s+rights\s+reserved[\s\S]*?<\/\1>\s*$/i;
+  let footerHtml = site.footer_html || '';
+  let extractedCopy = '';
+  const _m = footerHtml.match(_copyRx);
+  if (_m) {
+    extractedCopy = _m[0].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    footerHtml = footerHtml.replace(_copyRx, '');
+  }
+  const copyrightLine = site.copyright_text || extractedCopy || `© ${new Date().getFullYear()} ${site.site_name}`;
+
   const FooterContent = () => (
     <div style={{ background: footerBg }}>
       <div style={{ maxWidth: cW, margin: '0 auto' }}>
-        {site.footer_html ? (
+        {footerHtml ? (
           <div style={{ padding: '0.5rem 1rem', color: '#fff', fontSize: '0.9rem', lineHeight: 1.6 }}
-            dangerouslySetInnerHTML={{ __html: site.footer_html }} />
+            dangerouslySetInnerHTML={{ __html: footerHtml }} />
         ) : null}
       </div>
     </div>
@@ -5413,7 +5950,7 @@ function CanvasSiteFooter({ site }) {
     <div style={{ background: copyrightBg, borderRadius: copyrightRadius }}>
       <div style={{ maxWidth: cW, margin: '0 auto', padding: '0.6rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
-          {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
+          {copyrightLine}
         </span>
         <a href="https://www.OatmealFarmNetwork.com" target="_blank" rel="noopener noreferrer"
           style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>
@@ -5427,22 +5964,36 @@ function CanvasSiteFooter({ site }) {
     <div style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family }}>
       <div style={{ width: '100%', maxWidth: bgW, borderRadius: fRadiusCss, overflow: bottomRadius ? 'hidden' : undefined }}>
         {hasBgImg ? (
-          /* Image case: image as bg, footer content overlaid, copyright below */
-          <div style={{ position: 'relative', borderRadius: fRadiusCss, overflow: bottomRadius ? 'hidden' : undefined }}>
-            <img src={site.footer_bg_image_url} alt="" style={{ width: '100%', display: 'block' }} />
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-              <FooterContent />
+          /* Image case: bg-image with cover + overlay so height stays compact */
+          <>
+            <div style={{
+              position: 'relative',
+              minHeight: footerHeight,
+              backgroundImage: `url(${site.footer_bg_image_url})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              borderRadius: footerContentRadius,
+              overflow: bottomRadius && copyrightIsTransparent ? 'hidden' : undefined,
+            }}>
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', pointerEvents: 'none' }} />
+              <div style={{ position: 'relative', maxWidth: cW, margin: '0 auto' }}>
+                {footerHtml ? (
+                  <div style={{ padding: '0.5rem 1rem', color: '#fff', fontSize: '0.9rem', lineHeight: 1.6 }}
+                    dangerouslySetInnerHTML={{ __html: footerHtml }} />
+                ) : null}
+              </div>
             </div>
             <CopyrightStrip />
-          </div>
+          </>
         ) : (
           /* No image: plain block siblings — minHeight on footer content drives the height slider */
           <>
             <div style={{ minHeight: footerHeight, background: footerBg, borderRadius: footerContentRadius }}>
               <div style={{ maxWidth: cW, margin: '0 auto' }}>
-                {site.footer_html ? (
+                {footerHtml ? (
                   <div style={{ padding: '1.5rem 1rem', color: '#fff', fontSize: '0.9rem', lineHeight: 1.6 }}
-                    dangerouslySetInnerHTML={{ __html: site.footer_html }} />
+                    dangerouslySetInnerHTML={{ __html: footerHtml }} />
                 ) : null}
               </div>
             </div>
@@ -5671,7 +6222,12 @@ export default function WebsiteBuilder() {
     footer_bg_color: TEMPLATES[0].footer_bg_color,
     font_family:     TEMPLATES[0].font_family,
     phone: '', email: '', address: '', facebook_url: '', instagram_url: '', twitter_url: '',
+    import_enabled: false, import_url: '', import_legal_ack: false,
   });
+
+  // Build-in-progress overlay (covers wizard/builder while createSite runs)
+  const [building, setBuilding] = useState(false);
+  const [buildStatus, setBuildStatus] = useState('');
 
   const paramPage = searchParams.get('page');
   const paramView = searchParams.get('view');
@@ -5751,6 +6307,8 @@ export default function WebsiteBuilder() {
   // ── Site creation ──────────────────────────────────────────────
   const createSite = async () => {
     setSaving(true);
+    setBuilding(true);
+    setBuildStatus('Creating your site…');
     try {
       const bid = parseInt(BusinessID);
       const data = await apiFetch('/api/website/site', {
@@ -5759,6 +6317,7 @@ export default function WebsiteBuilder() {
       });
       setSite(data);
       setSetupMode(false);
+      setBuildStatus('Setting up your default pages…');
 
       const mkPage = (name, slug, isHome, order) =>
         apiFetch('/api/website/pages', { method: 'POST', body: JSON.stringify({ website_id: data.website_id, business_id: bid, page_name: name, slug, is_home_page: isHome, sort_order: order }) });
@@ -5788,10 +6347,37 @@ export default function WebsiteBuilder() {
       await mkBlock(contactPage.page_id, 'hero', { headline: 'Contact Us', subtext: "We'd love to hear from you.", image_url: '', cta_text: '', cta_link: '', overlay: true, align: 'center' }, 0);
       await mkBlock(contactPage.page_id, 'contact', { heading: 'Get In Touch', custom_message: '', show_form: true }, 1);
 
+      // Optional: scrape & copy from an existing website if requested
+      if (setupData.import_enabled && setupData.import_url.trim()) {
+        try {
+          const importUrl = setupData.import_url.trim();
+          let importHost = importUrl;
+          try { importHost = new URL(importUrl).hostname; } catch {}
+          setBuildStatus(`Lavendir is scraping ${importHost} — this can take 15–30 seconds…`);
+          const qs = new URLSearchParams({
+            website_id: String(data.website_id),
+            business_id: String(bid),
+            url: importUrl,
+            include: 'hero,about,design,nav',
+          }).toString();
+          const res = await apiFetch(`/api/lavendir/test-import?${qs}`, { method: 'POST' });
+          if (res && res.ok === false) {
+            alert(`Site created, but the import from ${importUrl} failed:\n\n${res.error || 'Unknown error'}`);
+          }
+        } catch (impErr) {
+          alert(`Site created, but the import failed: ${impErr.message}`);
+        }
+      }
+
+      setBuildStatus('Finishing up…');
       await loadPages(data.website_id);
       setActivePage('design');
     } catch (e) { alert(e.message); }
-    finally { setSaving(false); }
+    finally {
+      setSaving(false);
+      setBuilding(false);
+      setBuildStatus('');
+    }
   };
 
   // ── Site update ────────────────────────────────────────────────
@@ -6174,6 +6760,30 @@ export default function WebsiteBuilder() {
     </AccountLayout>
   );
 
+  // ── Build-in-progress overlay ──────────────────────────────────
+  // Takes precedence over the setup wizard AND the main builder while
+  // createSite is running, so the user never sees the empty Delete or
+  // "Select a page" panel during the multi-second import flow.
+  if (building) return (
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Website Builder" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Website Builder' }]}>
+      <div style={{ minHeight: 'calc(100vh - 230px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 max-w-md w-full text-center">
+          <div style={{ width: 56, height: 56, margin: '0 auto 1.25rem', borderRadius: '50%', border: '4px solid #e5e7eb', borderTopColor: '#7C5CBF', animation: 'wb-spin 0.9s linear infinite' }} />
+          <h2 className="text-lg font-bold text-gray-900 mb-1">Building your website…</h2>
+          <p className="text-sm text-gray-500 leading-relaxed">
+            {buildStatus || 'Setting things up. This usually takes a few seconds.'}
+          </p>
+          {setupData.import_enabled && (
+            <p className="text-xs text-gray-400 mt-3 italic">
+              Please don't close this tab while Lavendir works.
+            </p>
+          )}
+          <style>{`@keyframes wb-spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    </AccountLayout>
+  );
+
   // ── Setup wizard ───────────────────────────────────────────────
   if (setupMode) return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Website Builder" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Website Builder' }]}>
@@ -6218,9 +6828,62 @@ export default function WebsiteBuilder() {
               <input className={inp} value={setupData.email} onChange={e => setSetupData(p => ({ ...p, email: e.target.value }))} />
             </FormField>
           </div>
-          <button onClick={createSite} disabled={saving || !setupData.site_name || !setupData.slug}
+          <div className="border-t border-gray-100 pt-3 mt-1">
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!!setupData.import_enabled}
+                onChange={e => setSetupData(p => ({ ...p, import_enabled: e.target.checked }))}
+                className="mt-1"
+                style={{ width: 16, height: 16, accentColor: '#7C5CBF' }}
+              />
+              <span className="text-sm text-gray-700">
+                <span className="font-semibold">Import from existing website</span>
+                <span className="block text-xs text-gray-500 mt-0.5">
+                  Lavendir will scrape an existing website and copy its design, navigation, and content into your new site.
+                </span>
+              </span>
+            </label>
+            {setupData.import_enabled && (
+              <div className="mt-3">
+                <input
+                  className={inp}
+                  type="url"
+                  value={setupData.import_url}
+                  placeholder="https://example.com"
+                  onChange={e => setSetupData(p => ({ ...p, import_url: e.target.value }))}
+                />
+                <p className="text-xs text-gray-400 mt-1">Paste the full URL of the site you want to copy.</p>
+
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-xs font-semibold text-amber-900 mb-1.5">⚠️ Legal acknowledgement required</p>
+                  <p className="text-xs text-amber-900 leading-relaxed mb-2">
+                    Website content, layouts, images, and trademarks are typically protected by copyright and other laws.
+                    Copying another website without permission may violate those laws.
+                  </p>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!setupData.import_legal_ack}
+                      onChange={e => setSetupData(p => ({ ...p, import_legal_ack: e.target.checked }))}
+                      className="mt-0.5"
+                      style={{ width: 16, height: 16, accentColor: '#7C5CBF' }}
+                    />
+                    <span className="text-xs text-amber-900 leading-relaxed">
+                      I confirm that I own this website or have the legal right to copy its design and content.
+                      I agree that <strong>Oatmeal AI</strong> and its operators are not responsible for any
+                      copyright, trademark, or other claims arising from this import, and I will indemnify
+                      Oatmeal AI against any such claims.
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button onClick={createSite} disabled={saving || !setupData.site_name || !setupData.slug || (setupData.import_enabled && (!setupData.import_url.trim() || !setupData.import_legal_ack))}
             className="regsubmit2 w-full py-3 text-base mt-2 disabled:opacity-50">
-            {saving ? 'Creating your site…' : 'Create My Website →'}
+            {saving ? (setupData.import_enabled ? 'Building & importing…' : 'Creating your site…') : 'Create My Website →'}
           </button>
         </div>
       </div>

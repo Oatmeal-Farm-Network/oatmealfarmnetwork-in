@@ -6,7 +6,7 @@ import PageMeta from '../../PageMeta';
 import Breadcrumbs from '../../Breadcrumbs';
 
 // Directory category images — served from /public/images (WebP)
-const agriAssociaImg      = '/images/AgAssociations.webp';
+const agriAssociaImg      = '/images/AgriculturalAssociations.webp';
 const artisianImg         = '/images/ArtisanProducers.webp';
 const brImg               = '/images/BusinessResources.webp';
 const crafOrgImg          = '/images/CrafterOrganizations.webp';

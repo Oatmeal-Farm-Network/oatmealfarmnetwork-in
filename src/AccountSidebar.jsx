@@ -147,6 +147,7 @@ export default function AccountSidebar() {
           {isAccountOpen && Expanded && (
             <div className="flex flex-col gap-0.5 mt-0.5">
               <NavChild to={`/account/profile?BusinessID=${BusinessID}`} label="Edit Profile" />
+              <NavChild to={`/account/team?BusinessID=${BusinessID}`} label="Team Members" />
               <NavChild to={`/account/change-type?BusinessID=${BusinessID}`} label="Change Account Type" />
               <NavChild to={`/account/delete?BusinessID=${BusinessID}`} label="Delete Account" />
             </div>
@@ -379,19 +380,23 @@ export default function AccountSidebar() {
             isOpen={OpenSections['My Website'] || false}
             onToggle={() => toggleSection('My Website')}
           >
-            <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=manage-pages`} label="Dashboard" />
-            <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=design`} label="Design" />
-            <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=settings`} label="Website Settings" />
-            <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=delete`} label="Delete Website" />
-            {websiteSlug && (
-              <a
-                href={`https://www.OatmealFarmNetwork.com/sites/${websiteSlug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
-              >
-                View Live Site ↗
-              </a>
+            {!websiteSlug ? (
+              <NavChild to={`/website/builder?BusinessID=${BusinessID}`} label="Create Website" />
+            ) : (
+              <>
+                <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=manage-pages`} label="Dashboard" />
+                <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=design`} label="Design" />
+                <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=settings`} label="Website Settings" />
+                <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=delete`} label="Delete Website" />
+                <a
+                  href={`https://www.OatmealFarmNetwork.com/sites/${websiteSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
+                >
+                  View Live Site ↗
+                </a>
+              </>
             )}
           </NavSection>
         )}

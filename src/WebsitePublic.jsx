@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import PageMeta from './PageMeta';
 import { LivestockAnimalDetailContent } from './LivestockAnimalDetail';
@@ -255,14 +255,15 @@ function HeroBlock({ data, site }) {
     <div style={{ display: 'flex', justifyContent: 'center' }}>
       <section style={{
         width: '100%', maxWidth: bgWidth,
-        minHeight: '70vh', display: 'flex', alignItems: 'center',
+        minHeight: data.min_height_px ? `${data.min_height_px}px` : '70vh',
+        display: 'flex', alignItems: 'center',
         justifyContent: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center',
         backgroundImage: data.image_url ? `url(${data.image_url})` : `linear-gradient(135deg, ${site.primary_color}cc, ${site.secondary_color}cc)`,
         backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative',
         paddingTop: 10,
       }}>
         {data.image_url && data.overlay && (
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: data.overlay_color || 'rgba(0,0,0,0.45)' }} />
         )}
         <div style={{ position: 'relative', width: '100%', maxWidth: textWidth, padding: '3rem 2rem', zIndex: 1 }}
              className={`flex flex-col gap-4 ${alignClass}`}>
@@ -1910,6 +1911,242 @@ function HoursOfOperationBlock({ data, site }) {
   );
 }
 
+function CtaBlock({ data, site }) {
+  const headline    = (data.headline || '').trim();
+  const buttonText  = (data.button_text || '').trim();
+  const buttonLink  = (data.button_link || '#').trim() || '#';
+  if (!headline && !buttonText) return null;
+  const align       = data.align === 'center' ? 'center' : 'split';
+  const bg          = data.bg_color       || '#1a1a1a';
+  const fg          = data.text_color     || '#ffffff';
+  const btnBg       = data.button_bg_color || site.accent_color || '#7CB342';
+  const btnFg       = data.button_text_color || '#ffffff';
+  return (
+    <div style={{ background: bg, color: fg, padding: '2.5rem 1.5rem', width: '100%' }}>
+      <div className="ofn-cta-inner" style={{
+        maxWidth: 1200, margin: '0 auto',
+        display: 'flex',
+        flexDirection: align === 'center' ? 'column' : 'row',
+        justifyContent: align === 'center' ? 'center' : 'space-between',
+        alignItems: 'center', gap: '1.5rem', textAlign: 'center',
+      }}>
+        {headline && (
+          <div style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+            {headline}
+          </div>
+        )}
+        {buttonText && (
+          <a href={buttonLink} style={{
+            display: 'inline-block', padding: '0.85rem 2.5rem',
+            background: btnBg, color: btnFg, fontWeight: 700, letterSpacing: '0.04em',
+            textTransform: 'uppercase', textDecoration: 'none', borderRadius: 4,
+            fontSize: '0.95rem', whiteSpace: 'nowrap',
+          }}>{buttonText}</a>
+        )}
+      </div>
+      <style>{`@media (max-width: 768px) { .ofn-cta-inner { flex-direction: column !important; } }`}</style>
+    </div>
+  );
+}
+
+function SponsorsBlock({ data, site }) {
+  const sponsors = Array.isArray(data.sponsors) ? data.sponsors : [];
+  if (sponsors.length === 0 && !data.heading) return null;
+  const cols = Math.max(1, Math.min(6, Number(data.columns) || 4));
+  const logoH = Math.max(40, Math.min(200, Number(data.logo_height) || 80));
+  const showNames = data.show_names !== false;
+  const textColor = site.text_color || '#1f2937';
+  return (
+    <SectionWrap site={site}>
+      {data.heading && <SectionHeading site={site} headingStyle={data.heading_style || 'h1'}>{data.heading}</SectionHeading>}
+      {data.intro_body && <BodyText site={site} html={data.intro_body} />}
+      <div className="ofn-sponsors-grid" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '1.5rem 1.25rem', alignItems: 'center', padding: '0.5rem 0' }}>
+        {sponsors.map((s, i) => {
+          const inner = (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              {s.logo_url ? (
+                <img src={s.logo_url} alt={s.name || 'Sponsor'} loading="lazy"
+                  style={{ maxHeight: logoH, maxWidth: '100%', objectFit: 'contain', filter: s.grayscale ? 'grayscale(100%)' : undefined }} />
+              ) : (
+                <div style={{ height: logoH, width: '80%', background: '#f3f4f6', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 12 }}>
+                  {s.name || 'Logo'}
+                </div>
+              )}
+              {showNames && s.name && (
+                <div style={{ fontSize: '0.92rem', fontWeight: 600, color: textColor, textAlign: 'center' }}>{s.name}</div>
+              )}
+            </div>
+          );
+          return s.url ? (
+            <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+              style={{ textDecoration: 'none', color: 'inherit' }}>{inner}</a>
+          ) : (
+            <div key={i}>{inner}</div>
+          );
+        })}
+      </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .ofn-sponsors-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
+    </SectionWrap>
+  );
+}
+
+function FaqBlock({ data, site }) {
+  const items = Array.isArray(data.items) ? data.items : [];
+  if (items.length === 0) return null;
+  const primary   = site.primary_color || '#3D6B34';
+  const textColor = site.text_color    || '#111827';
+  const bodyColor = site.body_color    || site.text_color || '#4B5563';
+  return (
+    <SectionWrap site={site} alt>
+      {data.heading && <SectionHeading site={site}>{data.heading}</SectionHeading>}
+      <div style={{ marginTop: data.heading ? '1.25rem' : 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {items.map((item, i) => (
+          <details key={i} style={{ background: '#fff', borderRadius: 10, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+            <summary style={{
+              padding: '1rem 1.25rem', cursor: 'pointer', fontWeight: 700,
+              fontSize: '1rem', color: textColor, fontFamily: site.font_family,
+              listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              {item.question}
+              <span style={{ fontSize: '1.2rem', color: primary, marginLeft: 12, flexShrink: 0 }}>+</span>
+            </summary>
+            <div style={{ padding: '0 1.25rem 1rem', fontSize: '0.93rem', color: bodyColor, lineHeight: 1.7, borderTop: '1px solid #f3f4f6' }}>
+              {item.answer}
+            </div>
+          </details>
+        ))}
+      </div>
+    </SectionWrap>
+  );
+}
+
+function FeaturesBlock({ data, site }) {
+  const items = Array.isArray(data.items) ? data.items : [];
+  if (items.length === 0) return null;
+  const primary = site.primary_color || '#3D6B34';
+  const textColor = site.text_color || '#111827';
+  const bodyColor = site.body_color || site.text_color || '#4B5563';
+  const cols = items.length <= 2 ? items.length : items.length <= 4 ? 2 : 3;
+  return (
+    <SectionWrap site={site} alt>
+      {data.heading && <SectionHeading site={site}>{data.heading}</SectionHeading>}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '1.5rem', marginTop: data.heading ? '1.5rem' : 0 }}
+           className="ofn-features-grid">
+        {items.map((item, i) => (
+          <div key={i} style={{ background: '#fff', borderRadius: 12, padding: '1.5rem 1.25rem', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {item.icon_url && (
+              <img src={item.icon_url} alt={item.title || ''} loading="lazy"
+                style={{ width: 52, height: 52, objectFit: 'contain', borderRadius: 8 }} />
+            )}
+            {!item.icon_url && (
+              <div style={{ width: 44, height: 44, borderRadius: 10, background: `${primary}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>✦</div>
+            )}
+            <div style={{ fontWeight: 700, fontSize: '1rem', color: textColor, fontFamily: site.font_family, lineHeight: 1.3 }}>{item.title}</div>
+            {item.description && <p style={{ margin: 0, fontSize: '0.85rem', color: bodyColor, lineHeight: 1.6 }}>{item.description}</p>}
+          </div>
+        ))}
+      </div>
+      <style>{`
+        @media (max-width: 640px) { .ofn-features-grid { grid-template-columns: 1fr !important; } }
+        @media (max-width: 900px) and (min-width: 641px) { .ofn-features-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+      `}</style>
+    </SectionWrap>
+  );
+}
+
+function TeamBlock({ data, site }) {
+  const members = Array.isArray(data.members) ? data.members : [];
+  if (members.length === 0) return null;
+  const primary   = site.primary_color || '#3D6B34';
+  const textColor = site.text_color    || '#111827';
+  const bodyColor = site.body_color    || site.text_color || '#4B5563';
+  const cols = members.length <= 2 ? members.length : members.length <= 4 ? 2 : 3;
+  return (
+    <SectionWrap site={site}>
+      {data.heading && <SectionHeading site={site}>{data.heading}</SectionHeading>}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '2rem', marginTop: data.heading ? '2rem' : 0 }}
+           className="ofn-team-grid">
+        {members.map((m, i) => (
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 12 }}>
+            {m.photo_url ? (
+              <img src={m.photo_url} alt={m.name || ''} loading="lazy"
+                style={{ width: 140, height: 140, borderRadius: '50%', objectFit: 'cover', border: `3px solid ${primary}30` }} />
+            ) : (
+              <div style={{ width: 140, height: 140, borderRadius: '50%', background: `${primary}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', color: primary }}>👤</div>
+            )}
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '1.05rem', color: textColor, fontFamily: site.font_family }}>{m.name}</div>
+              {m.role && <div style={{ fontSize: '0.85rem', color: primary, fontWeight: 600, marginTop: 2 }}>{m.role}</div>}
+              {m.bio && <p style={{ margin: '8px 0 0', fontSize: '0.82rem', color: bodyColor, lineHeight: 1.6 }}>{m.bio}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+      <style>{`
+        @media (max-width: 640px) { .ofn-team-grid { grid-template-columns: 1fr !important; } }
+        @media (max-width: 900px) and (min-width: 641px) { .ofn-team-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+      `}</style>
+    </SectionWrap>
+  );
+}
+
+function PricingBlock({ data, site }) {
+  const tiers = Array.isArray(data.tiers) ? data.tiers : [];
+  if (tiers.length === 0) return null;
+  const primary   = site.primary_color || '#3D6B34';
+  const textColor = site.text_color    || '#111827';
+  const bodyColor = site.body_color    || site.text_color || '#4B5563';
+  const cols = Math.min(tiers.length, 3);
+  return (
+    <SectionWrap site={site} alt>
+      {data.heading && <SectionHeading site={site}>{data.heading}</SectionHeading>}
+      {data.intro_body && <p style={{ textAlign: 'center', color: bodyColor, marginBottom: '1.5rem' }}>{data.intro_body}</p>}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '1.5rem', marginTop: '1.5rem', alignItems: 'start' }}
+           className="ofn-pricing-grid">
+        {tiers.map((tier, i) => (
+          <div key={i} style={{
+            background: tier.highlight ? primary : '#fff',
+            color: tier.highlight ? '#fff' : textColor,
+            borderRadius: 16,
+            padding: '2rem 1.5rem',
+            boxShadow: tier.highlight ? `0 8px 30px ${primary}40` : '0 2px 12px rgba(0,0,0,0.07)',
+            display: 'flex', flexDirection: 'column', gap: 12,
+            border: tier.highlight ? `2px solid ${primary}` : '1px solid #e5e7eb',
+          }}>
+            {tier.highlight && (
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.85 }}>Most Popular</div>
+            )}
+            <div style={{ fontWeight: 700, fontSize: '1.15rem', fontFamily: site.font_family }}>{tier.name}</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+              <span style={{ fontSize: '2rem', fontWeight: 800 }}>{tier.price}</span>
+              {tier.period && <span style={{ fontSize: '0.85rem', opacity: 0.75 }}>/{tier.period}</span>}
+            </div>
+            {tier.description && <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.8, lineHeight: 1.6 }}>{tier.description}</p>}
+            {Array.isArray(tier.features) && tier.features.length > 0 && (
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {tier.features.map((f, j) => (
+                  <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '0.85rem', opacity: 0.9 }}>
+                    <span style={{ color: tier.highlight ? '#fff' : primary, flexShrink: 0, marginTop: 2 }}>✓</span>
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
+      <style>{`
+        @media (max-width: 640px) { .ofn-pricing-grid { grid-template-columns: 1fr !important; } }
+        @media (max-width: 900px) and (min-width: 641px) { .ofn-pricing-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+      `}</style>
+    </SectionWrap>
+  );
+}
+
 // ── Block dispatcher ──────────────────────────────────────────────
 function RenderBlock({ block, site, businessId }) {
   const { block_type: type, block_data: data } = block;
@@ -1941,6 +2178,12 @@ function RenderBlock({ block, site, businessId }) {
     case 'fee_schedule':     return <FeeScheduleBlock     data={data} site={site} />;
     case 'hours_of_operation': return <HoursOfOperationBlock data={data} site={site} />;
     case 'map_location':       return <MapLocationBlock       data={data} site={site} />;
+    case 'faq':                return <FaqBlock               data={data} site={site} />;
+    case 'features':           return <FeaturesBlock          data={data} site={site} />;
+    case 'team':               return <TeamBlock              data={data} site={site} />;
+    case 'pricing':            return <PricingBlock           data={data} site={site} />;
+    case 'sponsors':           return <SponsorsBlock          data={data} site={site} />;
+    case 'cta':                return <CtaBlock               data={data} site={site} />;
     default:               return null;
   }
 }
@@ -1960,6 +2203,27 @@ export default function WebsitePublic() {
   const [loading, setLoading] = useState(true);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null); // page_id of open nav dropdown
+  // Grace-period close so the dropdown doesn't vanish when the cursor briefly
+  // crosses the gap between the menu trigger and the dropdown panel — this is
+  // a pure UX fix that applies to any site, regardless of dropdown width.
+  const dropdownCloseTimerRef = useRef(null);
+  const openNavDropdown = (id) => {
+    if (dropdownCloseTimerRef.current) {
+      clearTimeout(dropdownCloseTimerRef.current);
+      dropdownCloseTimerRef.current = null;
+    }
+    setOpenDropdown(id);
+  };
+  const scheduleCloseNavDropdown = () => {
+    if (dropdownCloseTimerRef.current) clearTimeout(dropdownCloseTimerRef.current);
+    dropdownCloseTimerRef.current = setTimeout(() => {
+      setOpenDropdown(null);
+      dropdownCloseTimerRef.current = null;
+    }, 220);
+  };
+  useEffect(() => () => {
+    if (dropdownCloseTimerRef.current) clearTimeout(dropdownCloseTimerRef.current);
+  }, []);
 
   useEffect(() => {
     // On a custom domain, look up by hostname instead of URL slug so the
@@ -2009,6 +2273,22 @@ export default function WebsitePublic() {
     link.href = siteData.favicon_url;
     return () => { link.href = '/favicon.ico'; };
   }, [siteData?.favicon_url]);
+
+  // Inject Google Fonts <link> when the site was imported with a custom typeface
+  useEffect(() => {
+    let gfUrl = '';
+    try {
+      const sej = siteData?.seo_extras_json ? JSON.parse(siteData.seo_extras_json) : null;
+      gfUrl = (sej?.google_fonts_url || '').trim();
+    } catch {}
+    if (!gfUrl) return;
+    const existing = document.querySelector(`link[data-ofn-gf]`);
+    if (existing) { existing.href = gfUrl; return; }
+    const el = document.createElement('link');
+    el.rel = 'stylesheet'; el.href = gfUrl; el.setAttribute('data-ofn-gf', '1');
+    document.head.appendChild(el);
+    return () => { try { document.head.removeChild(el); } catch {} };
+  }, [siteData?.seo_extras_json]);
 
   // Close mobile menu when viewport widens past the md breakpoint (768px)
   useEffect(() => {
@@ -2205,8 +2485,16 @@ export default function WebsitePublic() {
             const itemPadding  = isNavTop ? '0.4rem 1rem' : '0.4rem 0.9rem';
             const itemRadius   = isNavTop ? 0 : 8;
             const itemFontSize = isNavTop ? '0.82rem' : '0.9rem';
-            const itemLetter   = isNavTop ? '0.05em' : 'normal';
-            const itemTransform= isNavTop ? 'uppercase' : 'none';
+            // Nav typography overrides extracted from the source site (when
+            // imported via Lavendir). Falls back to layout-aware defaults.
+            // menu_style_json shape: { fontWeight, textTransform, letterSpacing }
+            let menuStyle = {};
+            try { menuStyle = site.menu_style_json ? (typeof site.menu_style_json === 'string' ? JSON.parse(site.menu_style_json) : site.menu_style_json) : {}; }
+            catch { menuStyle = {}; }
+            const navItemWeight = (menuStyle.fontWeight && Number(menuStyle.fontWeight))
+              || 600;  // bumped default — old 500 read too thin on most sites
+            const itemTransform = menuStyle.textTransform || (isNavTop ? 'uppercase' : 'none');
+            const itemLetter    = menuStyle.letterSpacing || (isNavTop ? '0.05em' : 'normal');
             return (
               <nav style={{ width: '100%', maxWidth: site.header_content_width || '100%', background: navBg, boxShadow: '0 2px 16px rgba(0,0,0,0.15)' }}>
                 <div style={{ padding: '0 1.5rem', display: 'flex', alignItems: 'center', justifyContent: isNavTop ? 'center' : 'space-between', height: isNavTop ? 44 : 50 }}>
@@ -2220,24 +2508,27 @@ export default function WebsitePublic() {
                         return (
                           <button key={p.page_id}
                             onClick={() => { setActivePage(p); setOpenDropdown(null); }}
-                            style={{ background: active ? itemActiveBg : 'none', border: 0, color: navColor, padding: itemPadding, borderRadius: itemRadius, fontWeight: active ? 700 : (isNavTop ? 600 : 500), cursor: 'pointer', fontSize: itemFontSize, fontFamily: site.font_family, transition: 'background 0.2s', textTransform: itemTransform, letterSpacing: itemLetter }}>
+                            style={{ background: active ? itemActiveBg : 'none', border: 0, color: navColor, padding: itemPadding, borderRadius: itemRadius, fontWeight: active ? Math.max(navItemWeight, 700) : navItemWeight, cursor: 'pointer', fontSize: itemFontSize, fontFamily: site.font_family, transition: 'background 0.2s', textTransform: itemTransform, letterSpacing: itemLetter }}>
                             {p.page_name}
                           </button>
                         );
                       }
                       return (
                         <div key={p.page_id} style={{ position: 'relative' }}
-                          onMouseEnter={() => setOpenDropdown(p.page_id)}
-                          onMouseLeave={() => setOpenDropdown(null)}>
+                          onMouseEnter={() => openNavDropdown(p.page_id)}
+                          onMouseLeave={scheduleCloseNavDropdown}>
                           <span
-                            style={{ background: active ? itemActiveBg : 'none', color: navColor, padding: itemPadding, borderRadius: itemRadius, fontWeight: active ? 700 : (isNavTop ? 600 : 500), fontSize: itemFontSize, fontFamily: site.font_family, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'default', userSelect: 'none', textTransform: itemTransform, letterSpacing: itemLetter }}>
+                            style={{ background: active ? itemActiveBg : 'none', color: navColor, padding: itemPadding, borderRadius: itemRadius, fontWeight: active ? Math.max(navItemWeight, 700) : navItemWeight, fontSize: itemFontSize, fontFamily: site.font_family, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'default', userSelect: 'none', textTransform: itemTransform, letterSpacing: itemLetter }}>
                             {p.page_name}
                             {children.length > 0 && <span style={{ fontSize: '1rem', lineHeight: 1, opacity: 0.9 }}>▾</span>}
                           </span>
                           {children.length > 0 && openDropdown === p.page_id && (<>
-                            {/* Invisible bridge — fills gap between trigger and dropdown so onMouseLeave doesn't fire */}
-                            <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', height: 8, background: 'transparent' }} />
-                            <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: dropdownBg, borderRadius: 8, boxShadow: '0 6px 24px rgba(0,0,0,0.25)', minWidth: 170, zIndex: 300, overflow: 'hidden' }}>
+                            {/* Invisible bridge — extends past the parent's edges so the cursor
+                                stays inside a child element while crossing into the dropdown. */}
+                            <div style={{ position: 'absolute', top: '100%', left: -40, right: -40, height: 12, background: 'transparent' }} />
+                            <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: dropdownBg, borderRadius: 8, boxShadow: '0 6px 24px rgba(0,0,0,0.25)', minWidth: 170, zIndex: 300, overflow: 'hidden' }}
+                                 onMouseEnter={() => openNavDropdown(p.page_id)}
+                                 onMouseLeave={scheduleCloseNavDropdown}>
                               {children.map(child => (
                                 <DropdownItem key={child.page_id}
                                   label={child.page_name}
@@ -2356,30 +2647,51 @@ export default function WebsitePublic() {
         const fRadiusCss = fRadius ? `0 0 ${fRadius}px ${fRadius}px` : undefined;
         const copyrightBg = site.copyright_bar_bg_color || 'rgba(0,0,0,0.18)';
         const copyrightIsTransparent = !copyrightBg || copyrightBg === 'transparent';
-        // If the copyright bar is transparent, the footer content div is the visual bottom
-        // and needs the border-radius directly; otherwise the copyright bar is the visual bottom.
         const footerContentRadius = copyrightIsTransparent ? fRadiusCss : undefined;
         const copyrightRadius = copyrightIsTransparent ? undefined : fRadiusCss;
+        // Strip a trailing "© ... all rights reserved" block from footer_html so
+        // it never duplicates the dedicated copyright bar. If found, use its
+        // text as the copyright when the site doesn't have its own.
+        const _copyRx = /<(div|p|small|span)\b[^>]*>[\s\S]*?(?:&copy;|©)[\s\S]*?all\s+rights\s+reserved[\s\S]*?<\/\1>\s*$/i;
+        let footerHtml = site.footer_html || '';
+        let extractedCopy = '';
+        const m = footerHtml.match(_copyRx);
+        if (m) {
+          extractedCopy = m[0].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          footerHtml = footerHtml.replace(_copyRx, '');
+        }
+        const copyrightLine = site.copyright_text || extractedCopy || `© ${new Date().getFullYear()} ${site.site_name}`;
         return (
       <footer style={{ display: 'flex', justifyContent: 'center', background: 'transparent', fontFamily: site.font_family, paddingBottom: fRadius }}>
         <div style={{ width: '100%', maxWidth: site.footer_bg_width || '100%', borderRadius: fRadiusCss, overflow: fRadius ? 'hidden' : undefined }}>
           {site.footer_bg_image_url ? (
-            /* Image case: image as bg, footer content overlaid, copyright below */
-            <div style={{ position: 'relative', borderRadius: fRadiusCss, overflow: fRadius ? 'hidden' : undefined }}>
-              <img src={site.footer_bg_image_url} alt="" style={{ width: '100%', display: 'block' }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-                <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto' }}>
-                  {site.footer_html ? (
+            /* Image case: bg-image with cover+overlay; height matches the
+               no-image branch (footer_height) so the band stays compact. */
+            <>
+              <div style={{
+                position: 'relative',
+                minHeight: Number(site.footer_height) || 240,
+                backgroundImage: `url(${site.footer_bg_image_url})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                borderRadius: footerContentRadius,
+                overflow: fRadius && copyrightIsTransparent ? 'hidden' : undefined,
+              }}>
+                {/* Dark scrim so white text reads on bright photo areas */}
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', pointerEvents: 'none' }} />
+                <div style={{ position: 'relative', maxWidth: site.footer_content_width || '100%', margin: '0 auto' }}>
+                  {footerHtml ? (
                     <div style={{ padding: '0.5rem 1rem', color: '#fff', lineHeight: 1.7 }}
-                      dangerouslySetInnerHTML={{ __html: site.footer_html }} />
+                      dangerouslySetInnerHTML={{ __html: footerHtml }} />
                   ) : null}
                 </div>
               </div>
-              {/* Copyright bar — its own background, below the image */}
+              {/* Copyright bar — its own background, sibling block below */}
               <div style={{ background: copyrightBg, borderRadius: copyrightRadius }}>
                 <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto', padding: '0.5rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
-                    {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
+                    {copyrightLine}
                   </span>
                   <a href="https://www.OatmealFarmNetwork.com" target="_blank" rel="noopener noreferrer"
                     style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>
@@ -2387,16 +2699,16 @@ export default function WebsitePublic() {
                   </a>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             /* No image: footer content and copyright are plain block siblings */
             <>
               {/* Footer content area */}
               <div style={{ minHeight: Number(site.footer_height) || 200, background: site.footer_bg_color || site.primary_color, borderRadius: footerContentRadius }}>
                 <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto' }}>
-                  {site.footer_html ? (
+                  {footerHtml ? (
                     <div style={{ padding: '0.5rem 1rem', color: '#fff', lineHeight: 1.7 }}
-                      dangerouslySetInnerHTML={{ __html: site.footer_html }} />
+                      dangerouslySetInnerHTML={{ __html: footerHtml }} />
                   ) : null}
                 </div>
               </div>
@@ -2404,7 +2716,7 @@ export default function WebsitePublic() {
               <div style={{ background: copyrightBg, borderRadius: copyrightRadius }}>
                 <div style={{ maxWidth: site.footer_content_width || '100%', margin: '0 auto', padding: '0.5rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)' }}>
-                    {site.copyright_text || `© ${new Date().getFullYear()} ${site.site_name}`}
+                    {copyrightLine}
                   </span>
                   <a href="https://www.OatmealFarmNetwork.com" target="_blank" rel="noopener noreferrer"
                     style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>

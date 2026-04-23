@@ -125,6 +125,7 @@ const WebsitePublic = lazyWithReload(() => import('./WebsitePublic.jsx'))
 const AudioSettings = lazyWithReload(() => import('./AudioSettings.jsx'))
 const AccountSettings = lazyWithReload(() => import('./AccountSettings.jsx'))
 const AccountAssociations = lazyWithReload(() => import('./AccountAssociations.jsx'))
+const AccountTeamMembers = lazyWithReload(() => import('./AccountTeamMembers.jsx'))
 const SaigePage = lazyWithReload(() => import('./SaigePage.jsx'))
 const CompanionPlanting = lazyWithReload(() => import('./CompanionPlanting.jsx'))
 const CropNames = lazyWithReload(() => import('./CropNames.jsx'))
@@ -289,6 +290,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/account/audio-settings" element={<AudioSettings />} />
           <Route path="/account/settings" element={<RequireAuth><AccountSettings /></RequireAuth>} />
           <Route path="/account/associations" element={<RequireAuth><AccountAssociations /></RequireAuth>} />
+          <Route path="/account/team" element={<RequireAuth><AccountTeamMembers /></RequireAuth>} />
           <Route path="/sites/:slug" element={<WebsitePublic />} />
           <Route path="/knowledgebases" element={<Knowledgebases />} />
           <Route path="/plant-knowledgebase" element={<PlantKnowledgebase />} />

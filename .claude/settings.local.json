@@ -205,7 +205,40 @@
       "Bash(curl.exe -sL -o \"F:/tmp_oqha.svg\" \"https://oregonqha.com/wp-content/uploads/2024/07/oqha-logo.svg\" -A \"Mozilla/5.0\")",
       "Read(//f//**)",
       "Bash(curl.exe -sL -I \"https://oregonqha.com/wp-content/uploads/2024/07/oqha-logo.svg\" -A \"Mozilla/5.0\")",
-      "Bash(curl.exe -sL -I \"https://oregonqha.com/wp-content/uploads/2024/07/oqha-logo.svg\" -A \"Mozilla/5.0\" --tls-max 1.2)"
+      "Bash(curl.exe -sL -I \"https://oregonqha.com/wp-content/uploads/2024/07/oqha-logo.svg\" -A \"Mozilla/5.0\" --tls-max 1.2)",
+      "Bash(curl -sS -X POST \"http://localhost:8000/api/lavendir/test-import?website_id=12&business_id=15659&url=https://oregonqha.com/&include=design,nav,content,blog,footer\" --max-time 360)",
+      "WebFetch(domain:oregonqha.com)",
+      "Bash(curl -sL -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\" https://oregonqha.com/ -o /tmp/oqha.html)",
+      "Bash(curl -sL -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\" https://oregonqha.com/ -o ./_oqha.html)",
+      "Bash(\"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/venv/Scripts/python.exe\" -c \"import bs4; print\\(bs4.__version__\\)\")",
+      "Bash(\"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/venv/Scripts/python.exe\" -)",
+      "Bash(python -c \"from scrapers.lavendir_scraper import _extract_sponsors; print\\('import ok'\\)\")",
+      "Bash(python -m py_compile scrapers/lavendir_scraper.py)",
+      "Bash(python -m py_compile routers/website_ai.py)",
+      "Bash(curl -sL --max-time 20 -A \"Mozilla/5.0\" https://oregonqha.com/ -o /tmp/oqha_home.html)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('scrapers/lavendir_scraper.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash('f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/venv/Scripts/python' -c ' *)",
+      "Bash(grep -iE \"\\\\.py$\")",
+      "Bash(./venv/Scripts/python.exe _test_cta_oqha.py)",
+      "Bash(./venv/Scripts/python.exe _test_cta_html_inspect.py)",
+      "Bash(awk -F: '$2 < 2400 && $2 > 2000')",
+      "Bash(awk -F: '{print $1, $2}')",
+      "Bash(awk '$2 > 1900 && $2 < 2500')",
+      "Bash(./venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('oatmealfarmnetworkbackend/routers/website_ai.py'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(./venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('oatmealfarmnetworkbackend/routers/website_ai.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(./venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('oatmealfarmnetworkbackend/scrapers/lavendir_scraper.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId=16348\")",
+      "Bash(./venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('oatmealfarmnetworkbackend/scrapers/lavendir_scraper.py', encoding='utf-8'\\).read\\(\\)\\); ast.parse\\(open\\('oatmealfarmnetworkbackend/routers/website_ai.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(./venv/Scripts/python.exe _test_banner_inspect.py)",
+      "Bash(./venv/Scripts/python.exe _test_banner_extract.py)",
+      "Bash(python _test_banner_extract.py)",
+      "Bash(\"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/venv/Scripts/python.exe\" \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/_test_banner_extract.py\")",
+      "Bash(\"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/venv/Scripts/python.exe\" -c \"from oatmealfarmnetworkbackend.scrapers.lavendir_scraper import _extract_page_banner, _fetch_pages_content_playwright; print\\('imports ok'\\)\")",
+      "Bash(npx esbuild *)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('routers/website_ai.py', encoding='utf-8'\\).read\\(\\)\\); ast.parse\\(open\\('scrapers/lavendir_scraper.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }
