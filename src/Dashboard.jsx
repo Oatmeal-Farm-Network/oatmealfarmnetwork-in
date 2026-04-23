@@ -6,71 +6,28 @@ import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
 
-const FARM_2_TABLE_SELLER_BTS = [8, 10, 11, 14, 19, 22, 23, 26, 29, 31, 33, 34];
-const PRODUCTS_BTS = [8, 10, 11, 14, 15, 16, 18, 19, 24, 25, 26, 29, 31, 33, 34];
-const SERVICES_SELLER_BTS = [1, 8, 9, 10, 17, 18, 20, 21, 27, 28, 32];
-const PROPERTIES_BTS = [8, 30];
-const ARTISAN_PRODUCER_BTS = [11, 26, 29, 31, 33, 34];
-
-function buildServiceLinks(businessTypeId, businessId, features) {
+function buildServiceLinks(businessId, features) {
   if (!features) return null;
   const links = [];
   const on = (key) => features[key] === true;
 
-  if (on('blog')) {
-    links.push({ label: 'Blog', to: `/blog/manage?BusinessID=${businessId}` });
-  }
-  if (on('precision_ag') && businessTypeId === 8) {
-    links.push({ label: 'Precision Ag', to: `/precision-ag/fields?BusinessID=${businessId}` });
-  }
-  if (on('farm_2_table') && FARM_2_TABLE_SELLER_BTS.includes(businessTypeId)) {
-    links.push({ label: 'Farm 2 Table', to: `/seller/orders?BusinessID=${businessId}` });
-  }
-  if (on('farm_2_table') && businessTypeId === 9) {
-    links.push({ label: 'Restaurant Sourcing', to: '/marketplaces/farm-to-table' });
-  }
-  if (on('livestock')) {
-    links.push({ label: 'Livestock', to: `/animals?BusinessID=${businessId}` });
-  }
-  if (on('products') && PRODUCTS_BTS.includes(businessTypeId)) {
-    links.push({ label: 'Products', to: `/products?BusinessID=${businessId}` });
-  }
-  if (on('services')) {
-    const to = SERVICES_SELLER_BTS.includes(businessTypeId)
-      ? `/services?BusinessID=${businessId}`
-      : '/services/directory';
-    links.push({ label: 'Services', to });
-  }
-  if (on('events')) {
-    links.push({ label: 'Events', to: `/events/manage?BusinessID=${businessId}` });
-  }
-  if (on('properties') && PROPERTIES_BTS.includes(businessTypeId)) {
-    links.push({ label: 'Properties', to: `/properties?BusinessID=${businessId}` });
-  }
-  if (on('associations') && businessTypeId === 1) {
-    links.push({ label: 'Associations', to: `/association/create?BusinessID=${businessId}` });
-  }
-  if (on('my_website')) {
-    links.push({ label: 'My Website', to: `/website/builder?BusinessID=${businessId}&view=manage-pages` });
-  }
-  if (on('accounting')) {
-    links.push({ label: 'Accounting', to: `/accounting?BusinessID=${businessId}` });
-  }
-  if (on('testimonials')) {
-    links.push({ label: 'Testimonials', to: `/testimonials/manage?BusinessID=${businessId}` });
-  }
-  if (on('chef_dashboard') && businessTypeId === 9) {
-    links.push({ label: 'Chef Dashboard', to: `/chef?BusinessID=${businessId}` });
-  }
-  if (on('pairsley') && businessTypeId === 9) {
-    links.push({ label: 'Pairsley AI', to: `/platform/pairsley?BusinessID=${businessId}` });
-  }
-  if (on('rosemarie') && ARTISAN_PRODUCER_BTS.includes(businessTypeId)) {
-    links.push({ label: 'Rosemarie AI', to: `/platform/rosemarie?BusinessID=${businessId}` });
-  }
-  if (on('provenance')) {
-    links.push({ label: 'Sourced From', to: `/provenance/${businessId}` });
-  }
+  if (on('blog'))          links.push({ label: 'Blog',              to: `/blog/manage?BusinessID=${businessId}` });
+  if (on('precision_ag'))  links.push({ label: 'Precision Ag',      to: `/precision-ag/fields?BusinessID=${businessId}` });
+  if (on('farm_2_table'))  links.push({ label: 'Farm 2 Table',      to: `/seller/orders?BusinessID=${businessId}` });
+  if (on('restaurant_sourcing')) links.push({ label: 'Restaurant Sourcing', to: '/marketplaces/farm-to-table' });
+  if (on('livestock'))     links.push({ label: 'Livestock',         to: `/animals?BusinessID=${businessId}` });
+  if (on('products'))      links.push({ label: 'Products',          to: `/products?BusinessID=${businessId}` });
+  if (on('services'))      links.push({ label: 'Services',          to: `/services?BusinessID=${businessId}` });
+  if (on('events'))        links.push({ label: 'Events',            to: `/events/manage?BusinessID=${businessId}` });
+  if (on('properties'))    links.push({ label: 'Properties',        to: `/properties?BusinessID=${businessId}` });
+  if (on('associations'))  links.push({ label: 'Associations',      to: `/association/create?BusinessID=${businessId}` });
+  if (on('my_website'))    links.push({ label: 'My Website',        to: `/website/builder?BusinessID=${businessId}&view=manage-pages` });
+  if (on('accounting'))    links.push({ label: 'Accounting',        to: `/accounting?BusinessID=${businessId}` });
+  if (on('testimonials'))  links.push({ label: 'Testimonials',      to: `/testimonials/manage?BusinessID=${businessId}` });
+  if (on('chef_dashboard'))links.push({ label: 'Chef Dashboard',    to: `/chef?BusinessID=${businessId}` });
+  if (on('pairsley'))      links.push({ label: 'Pairsley AI',       to: `/platform/pairsley?BusinessID=${businessId}` });
+  if (on('rosemarie'))     links.push({ label: 'Rosemarie AI',      to: `/platform/rosemarie?BusinessID=${businessId}` });
+  if (on('provenance'))    links.push({ label: 'Sourced From',      to: `/provenance/${businessId}` });
   return links;
 }
 
@@ -190,13 +147,14 @@ export default function Dashboard() {
               <tr>
                 <th style={thStyle}>Account Name</th>
                 <th style={thStyle}>Type</th>
+                <th style={thStyle}>Favorite Association</th>
                 <th style={{ ...thStyle, minWidth: '110px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {businesses.map((b, i) => {
                 const features = featuresByBusiness[b.BusinessID];
-                const serviceLinks = buildServiceLinks(b.BusinessTypeID, b.BusinessID, features);
+                const serviceLinks = buildServiceLinks(b.BusinessID, features);
                 return (
                   <React.Fragment key={b.BusinessID}>
                     <tr style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#fafafa' }}>
@@ -210,6 +168,25 @@ export default function Dashboard() {
                       </td>
                       <td style={tdStyle} className="text-gray-600 text-sm">
                         {b.BusinessType || '—'}
+                      </td>
+                      <td style={tdStyle} className="text-sm">
+                        {b.BusinessTypeID === 1 ? (
+                          <span className="text-gray-400">—</span>
+                        ) : (
+                          <span className="flex items-center gap-2 flex-wrap">
+                            {b.FavoriteAssociationName ? (
+                              <span className="text-gray-700">{b.FavoriteAssociationName}</span>
+                            ) : (
+                              <span className="text-gray-400">None</span>
+                            )}
+                            <Link
+                              to={`/account/associations?BusinessID=${b.BusinessID}`}
+                              className="text-[#3D6B34] hover:underline text-xs"
+                            >
+                              {b.FavoriteAssociationName ? 'Change' : 'Set'}
+                            </Link>
+                          </span>
+                        )}
                       </td>
                       <td style={tdStyle}>
                         <div className="flex items-center gap-2">
@@ -237,7 +214,7 @@ export default function Dashboard() {
                     </tr>
 
                     <tr style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #E5E7EB' }}>
-                      <td colSpan={3} style={{ padding: '0.25rem 1rem 0.6rem', fontSize: '0.82rem' }}>
+                      <td colSpan={4} style={{ padding: '0.25rem 1rem 0.6rem', fontSize: '0.82rem' }}>
                         {serviceLinks === null ? (
                           <span className="text-gray-400">Loading services…</span>
                         ) : serviceLinks.length === 0 ? (

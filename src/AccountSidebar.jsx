@@ -168,7 +168,7 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        {on('precision_ag') && BT === 8 && (
+        {on('precision_ag') && (
           <NavSection
             icon="/icons/PrecisionAg.svg"
             label="Precision Ag"
@@ -219,7 +219,7 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        {on('farm_2_table') && [8, 9, 10, 11, 14, 19, 22, 23, 26, 29, 31, 33, 34].includes(BT) && (
+        {on('farm_2_table') && (
           <NavSection
             icon="/icons/produce.webp"
             label="Farm 2 Table"
@@ -230,19 +230,13 @@ export default function AccountSidebar() {
             <NavChild to={`/seller/orders?BusinessID=${BusinessID}`} label="Incoming Orders" />
             <NavChild to="/farm/standing-orders" label="Standing Orders" />
             <NavChild to={`/account/stripe-connect?BusinessID=${BusinessID}`} label="Stripe Payouts" />
-            {[8, 10, 14, 26, 29, 31, 34].includes(BT) && (
-              <NavChild to={`/produce/inventory?BusinessID=${BusinessID}`} label="Produce" />
-            )}
-            {[8, 10, 11, 14, 26, 29, 31, 33, 34].includes(BT) && (
-              <NavChild to={`/produce/processed-food?BusinessID=${BusinessID}`} label="Processed Foods" />
-            )}
-            {[8, 10, 14, 19, 22, 23, 26, 29].includes(BT) && (
-              <NavChild to={`/produce/meat?BusinessID=${BusinessID}`} label="Meat" />
-            )}
+            <NavChild to={`/produce/inventory?BusinessID=${BusinessID}`} label="Produce" />
+            <NavChild to={`/produce/processed-food?BusinessID=${BusinessID}`} label="Processed Foods" />
+            <NavChild to={`/produce/meat?BusinessID=${BusinessID}`} label="Meat" />
           </NavSection>
         )}
 
-        {on('farm_2_table') && BT === 9 && (
+        {on('restaurant_sourcing') && (
           <NavSection
             icon="/icons/produce.webp"
             label="Restaurant Sourcing"
@@ -274,7 +268,7 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        {on('products') && [8, 10, 11, 14, 15, 16, 18, 19, 24, 25, 26, 29, 31, 33, 34].includes(BT) && (
+        {on('products') && (
           <NavSection
             icon="/icons/Products.svg"
             label="Products"
@@ -298,13 +292,9 @@ export default function AccountSidebar() {
             onToggle={() => toggleSection('Services')}
           >
             <NavChild to="/services/directory" label="Browse Services" />
-            {[1, 8, 9, 10, 17, 18, 20, 21, 27, 28, 32].includes(BT) && (
-              <>
-                <NavChild to={`/services?BusinessID=${BusinessID}`} label="My Services" />
-                <NavChild to={`/services/add?BusinessID=${BusinessID}`} label="Add" />
-                <NavChild to={`/services/suggest-category?BusinessID=${BusinessID}`} label="Suggest Category" />
-              </>
-            )}
+            <NavChild to={`/services?BusinessID=${BusinessID}`} label="My Services" />
+            <NavChild to={`/services/add?BusinessID=${BusinessID}`} label="Add" />
+            <NavChild to={`/services/suggest-category?BusinessID=${BusinessID}`} label="Suggest Category" />
           </NavSection>
         )}
 
@@ -336,31 +326,27 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        {on('chef_dashboard') && BT === 9 && (
+        {(on('chef_dashboard') || on('pairsley') || on('provenance')) && (
           <NavSection
-            icon="/icons/Services.svg"
+            icon="/icons/Assoc-restaurants-icon.svg"
             label="Chef Dashboard"
             expanded={Expanded}
             isOpen={OpenSections['Chef Dashboard'] || false}
             onToggle={() => toggleSection('Chef Dashboard')}
           >
-            <NavChild to={`/chef?BusinessID=${BusinessID}`} label="Chef Dashboard" />
+            {on('chef_dashboard') && (
+              <NavChild to={`/chef?BusinessID=${BusinessID}`} label="Chef Dashboard" />
+            )}
+            {on('pairsley') && (
+              <NavChild to={`/platform/pairsley?BusinessID=${BusinessID}`} label="Pairsley AI" />
+            )}
+            {on('provenance') && (
+              <NavChild to={`/provenance/${BusinessID}`} label="Provenance Card" />
+            )}
           </NavSection>
         )}
 
-        {on('pairsley') && BT === 9 && (
-          <NavSection
-            icon="/icons/Services.svg"
-            label="Pairsley AI"
-            expanded={Expanded}
-            isOpen={OpenSections.Pairsley || false}
-            onToggle={() => toggleSection('Pairsley')}
-          >
-            <NavChild to={`/platform/pairsley?BusinessID=${BusinessID}`} label="About Pairsley" />
-          </NavSection>
-        )}
-
-        {on('rosemarie') && [11, 26, 29, 31, 33, 34].includes(BT) && (
+        {on('rosemarie') && (
           <NavSection
             icon="/icons/Services.svg"
             label="Rosemarie AI"
@@ -372,19 +358,7 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        {on('provenance') && (
-          <NavSection
-            icon="/icons/Assoc-events-icon.svg"
-            label="Sourced From"
-            expanded={Expanded}
-            isOpen={OpenSections.Provenance || false}
-            onToggle={() => toggleSection('Provenance')}
-          >
-            <NavChild to={`/provenance/${BusinessID}`} label="Provenance Card" />
-          </NavSection>
-        )}
-
-        {on('properties') && [8, 30].includes(BT) && (
+        {on('properties') && (
           <NavSection
             icon="/icons/Real-Estate.svg"
             label="Properties"
@@ -394,19 +368,6 @@ export default function AccountSidebar() {
           >
             <NavChild to={`/properties?BusinessID=${BusinessID}`} label="List" />
             <NavChild to={`/properties/add?BusinessID=${BusinessID}`} label="Add" />
-          </NavSection>
-        )}
-
-        {on('associations') && BT === 1 && (
-          <NavSection
-            icon="/icons/Assoc-administration-icon.svg"
-            label="Associations"
-            expanded={Expanded}
-            isOpen={OpenSections.Associations || false}
-            onToggle={() => toggleSection('Associations')}
-          >
-            <NavChild to={`/association/create?BusinessID=${BusinessID}`} label="Create" />
-            <NavChild to={`/association/delete?BusinessID=${BusinessID}`} label="Delete" />
           </NavSection>
         )}
 
@@ -459,7 +420,6 @@ export default function AccountSidebar() {
           onToggle={() => toggleSection('Account Settings')}
         >
           <NavChild to={`/account/change-type?BusinessID=${BusinessID}`} label="Change Account Type" />
-          <NavChild to={`/account/associations?BusinessID=${BusinessID}`} label="Favorite Association" />
           <NavChild to={`/account/profile?BusinessID=${BusinessID}`} label="Account Profile" />
           <NavChild to={`/account/subscription?BusinessID=${BusinessID}`} label="Subscription / Billing" />
           <NavChild to={`/account/delete?BusinessID=${BusinessID}`} label="Delete Account" />

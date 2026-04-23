@@ -175,6 +175,77 @@ function DropdownItem({ label, active, navColor, hoverColor, fontFamily, onClick
 
 // ── Block renderers ───────────────────────────────────────────────
 
+function SlideshowBlock({ data, site }) {
+  // Images can be array of strings or objects {url, caption}
+  const raw = Array.isArray(data.images) ? data.images : [];
+  const slides = raw
+    .map(s => (typeof s === 'string' ? { url: s, caption: '' } : s))
+    .filter(s => s && s.url);
+  const [idx, setIdx] = React.useState(0);
+  const intervalMs = Math.max(2000, Number(data.interval_ms) || 5000);
+  const bgWidth = site.body_bg_width || '100%';
+  React.useEffect(() => {
+    if (slides.length <= 1) return;
+    const t = setInterval(() => setIdx(i => (i + 1) % slides.length), intervalMs);
+    return () => clearInterval(t);
+  }, [slides.length, intervalMs]);
+  if (slides.length === 0) return null;
+  const current = slides[idx];
+  const showDots = data.show_dots !== false && slides.length > 1;
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <section style={{
+        width: '100%', maxWidth: bgWidth,
+        position: 'relative', overflow: 'hidden',
+        aspectRatio: '16 / 6', minHeight: 280, maxHeight: 620,
+        background: '#000',
+      }}>
+        {slides.map((s, i) => (
+          <img
+            key={s.url}
+            src={s.url}
+            alt={s.caption || ''}
+            style={{
+              position: 'absolute', inset: 0,
+              width: '100%', height: '100%', objectFit: 'cover',
+              opacity: i === idx ? 1 : 0,
+              transition: 'opacity 700ms ease',
+            }}
+          />
+        ))}
+        {current.caption && (
+          <div style={{
+            position: 'absolute', left: 0, right: 0, bottom: 0,
+            padding: '1rem 2rem',
+            background: 'linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0))',
+            color: '#fff', fontFamily: site.font_family, fontSize: '1.05rem',
+          }}>{current.caption}</div>
+        )}
+        {showDots && (
+          <div style={{
+            position: 'absolute', bottom: 12, left: 0, right: 0,
+            display: 'flex', justifyContent: 'center', gap: 8,
+          }}>
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIdx(i)}
+                aria-label={`Slide ${i + 1}`}
+                style={{
+                  width: 10, height: 10, borderRadius: '50%',
+                  border: 'none', cursor: 'pointer',
+                  background: i === idx ? '#fff' : 'rgba(255,255,255,0.5)',
+                  padding: 0,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
 function HeroBlock({ data, site }) {
   const align = data.align || 'center';
   const alignClass = align === 'left' ? 'items-start text-left' : align === 'right' ? 'items-end text-right' : 'items-center text-center';
@@ -1844,6 +1915,7 @@ function RenderBlock({ block, site, businessId }) {
   const { block_type: type, block_data: data } = block;
   switch (type) {
     case 'hero':           return <HeroBlock data={data} site={site} />;
+    case 'slideshow':      return <SlideshowBlock data={data} site={site} />;
     case 'about':          return <AboutBlock data={data} site={site} />;
     case 'content':        return <ContentBlock data={data} site={site} />;
     case 'content_2col':   return <MultiColumnBlock data={data} site={site} columnCount={2} />;
@@ -2063,41 +2135,58 @@ export default function WebsitePublic() {
             </div>
           )}
 
-          {/* Zone 2: Header banner — image+logo constrained to header_content_width */}
-          {(site.header_banner_url || site.logo_url || site.show_site_name !== false) && (
-            <div style={{
-              width: '100%', maxWidth: site.header_content_width || '100%',
-              position: 'relative',
-            }}>
-              {site.header_banner_url ? (
-                <img src={site.header_banner_url} alt=""
-                  style={{ width: '100%', display: 'block' }} />
-              ) : (
-                <div style={{ height: site.header_height || 120, background: site.header_banner_bg_color || site.primary_color || '#3D6B34' }} />
-              )}
-              <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                display: 'flex', alignItems: 'center', padding: '0 1.5rem', gap: '1rem',
-              }}>
-                {site.logo_url && (
-                  <img src={site.logo_url} alt="logo" style={{
-                    height: Math.min((site.header_height || 120) * 0.55, 90),
-                    objectFit: 'contain', borderRadius: 4,
-                  }} />
-                )}
-                {site.show_site_name !== false && (
-                  <span style={{
-                    fontWeight: 800, color: site.nav_text_color || '#fff',
-                    fontSize: 'clamp(1.1rem, 2.5vw, 1.8rem)',
-                    textShadow: site.header_banner_url ? '1px 2px 6px rgba(0,0,0,0.55)' : 'none',
-                  }}>{site.site_name}</span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Zone 3: Nav bar — constrained to header_content_width */}
           {(() => {
+            const isNavTop = site.header_layout === 'nav_top';
+
+            // Zone 2: Header banner — image+logo constrained to header_content_width.
+            // In nav_top layout the logo is the centerpiece: centered horizontally,
+            // larger, with a white/light background instead of the green primary.
+            const bannerHeight = site.header_height || (isNavTop ? 180 : 120);
+            const bannerBg = site.header_banner_bg_color
+              || (isNavTop ? '#ffffff' : (site.primary_color || '#3D6B34'));
+            const logoMaxHeight = isNavTop
+              ? Math.min(bannerHeight * 0.85, 150)
+              : Math.min(bannerHeight * 0.55, 90);
+            const bannerEl = (site.header_banner_url || site.logo_url || site.show_site_name !== false) ? (
+              <div style={{
+                width: '100%', maxWidth: site.header_content_width || '100%',
+                position: 'relative',
+              }}>
+                {site.header_banner_url ? (
+                  <img src={site.header_banner_url} alt=""
+                    style={{ width: '100%', display: 'block' }} />
+                ) : (
+                  <div style={{ height: bannerHeight, background: bannerBg }} />
+                )}
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  display: 'flex', alignItems: 'center',
+                  justifyContent: isNavTop ? 'center' : 'flex-start',
+                  padding: '0 1.5rem', gap: '1rem',
+                }}>
+                  {site.logo_url && (
+                    <img src={site.logo_url} alt="logo" style={{
+                      height: logoMaxHeight,
+                      maxWidth: '100%',
+                      objectFit: 'contain', borderRadius: 4,
+                    }} />
+                  )}
+                  {site.show_site_name !== false && (
+                    <span style={{
+                      fontWeight: 800,
+                      color: isNavTop
+                        ? (site.h1_color || site.text_color || '#111827')
+                        : (site.nav_text_color || '#fff'),
+                      fontSize: 'clamp(1.1rem, 2.5vw, 1.8rem)',
+                      textShadow: (!isNavTop && site.header_banner_url) ? '1px 2px 6px rgba(0,0,0,0.55)' : 'none',
+                    }}>{site.site_name}</span>
+                  )}
+                </div>
+              </div>
+            ) : null;
+
+            // Zone 3: Nav bar — constrained to header_content_width
+            const navEl = (() => {
             const navBg = site.nav_bg_image_url
               ? `url(${site.nav_bg_image_url}) center/cover no-repeat`
               : (site.primary_color || '#3D6B34');
@@ -2111,9 +2200,16 @@ export default function WebsitePublic() {
             const topLevelPages = visiblePages.filter(p => !p.parent_page_id);
             const childrenOf = parentId => visiblePages.filter(p => p.parent_page_id === parentId);
             const isActiveOrChild = p => activePage?.page_id === p.page_id || childrenOf(p.page_id).some(c => c.page_id === activePage?.page_id);
+            // nav_top layout: plain uppercase links, centered, no active-tab pill.
+            const itemActiveBg = isNavTop ? 'none' : 'rgba(255,255,255,0.2)';
+            const itemPadding  = isNavTop ? '0.4rem 1rem' : '0.4rem 0.9rem';
+            const itemRadius   = isNavTop ? 0 : 8;
+            const itemFontSize = isNavTop ? '0.82rem' : '0.9rem';
+            const itemLetter   = isNavTop ? '0.05em' : 'normal';
+            const itemTransform= isNavTop ? 'uppercase' : 'none';
             return (
               <nav style={{ width: '100%', maxWidth: site.header_content_width || '100%', background: navBg, boxShadow: '0 2px 16px rgba(0,0,0,0.15)' }}>
-                <div style={{ padding: '0 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 50 }}>
+                <div style={{ padding: '0 1.5rem', display: 'flex', alignItems: 'center', justifyContent: isNavTop ? 'center' : 'space-between', height: isNavTop ? 44 : 50 }}>
                   {/* Desktop nav */}
                   <div className="hidden md:flex items-center gap-1" style={{ position: 'relative' }}>
                     {topLevelPages.map(p => {
@@ -2124,7 +2220,7 @@ export default function WebsitePublic() {
                         return (
                           <button key={p.page_id}
                             onClick={() => { setActivePage(p); setOpenDropdown(null); }}
-                            style={{ background: active ? 'rgba(255,255,255,0.2)' : 'none', border: 0, color: navColor, padding: '0.4rem 0.9rem', borderRadius: 8, fontWeight: active ? 700 : 500, cursor: 'pointer', fontSize: '0.9rem', fontFamily: site.font_family, transition: 'background 0.2s' }}>
+                            style={{ background: active ? itemActiveBg : 'none', border: 0, color: navColor, padding: itemPadding, borderRadius: itemRadius, fontWeight: active ? 700 : (isNavTop ? 600 : 500), cursor: 'pointer', fontSize: itemFontSize, fontFamily: site.font_family, transition: 'background 0.2s', textTransform: itemTransform, letterSpacing: itemLetter }}>
                             {p.page_name}
                           </button>
                         );
@@ -2134,7 +2230,7 @@ export default function WebsitePublic() {
                           onMouseEnter={() => setOpenDropdown(p.page_id)}
                           onMouseLeave={() => setOpenDropdown(null)}>
                           <span
-                            style={{ background: active ? 'rgba(255,255,255,0.2)' : 'none', color: navColor, padding: '0.4rem 0.9rem', borderRadius: 8, fontWeight: active ? 700 : 500, fontSize: '0.9rem', fontFamily: site.font_family, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'default', userSelect: 'none' }}>
+                            style={{ background: active ? itemActiveBg : 'none', color: navColor, padding: itemPadding, borderRadius: itemRadius, fontWeight: active ? 700 : (isNavTop ? 600 : 500), fontSize: itemFontSize, fontFamily: site.font_family, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'default', userSelect: 'none', textTransform: itemTransform, letterSpacing: itemLetter }}>
                             {p.page_name}
                             {children.length > 0 && <span style={{ fontSize: '1rem', lineHeight: 1, opacity: 0.9 }}>▾</span>}
                           </span>
@@ -2199,6 +2295,11 @@ export default function WebsitePublic() {
                 )}
               </nav>
             );
+            })();
+
+            return isNavTop
+              ? (<>{navEl}{bannerEl}</>)
+              : (<>{bannerEl}{navEl}</>);
           })()}
         </div>
       </header>

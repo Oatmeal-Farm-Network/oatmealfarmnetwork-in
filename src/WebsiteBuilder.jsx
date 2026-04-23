@@ -12,6 +12,7 @@ const SITE_BASE_URL = 'https://www.OatmealFarmNetwork.com';
 // ── Block type catalogue ─────────────────────────────────────────
 const BLOCK_TYPES = [
   { type: 'hero',           icon: '🖼️',  label: 'Hero Banner',        desc: 'Full-width hero with image, headline & CTA' },
+  { type: 'slideshow',      icon: '🎞️',  label: 'Slideshow',           desc: 'Auto-rotating image slideshow with optional captions' },
   { type: 'about',          icon: '🏡',  label: 'About Us',           desc: 'About section with text and image' },
   { type: 'content',        icon: '📄',  label: '1 Column Widget',    desc: 'Heading, text, and optional image' },
   { type: 'content_2col',   icon: '📰',  label: '2 Column Widget',    desc: 'Two side-by-side content columns (stack on mobile)' },
@@ -41,6 +42,7 @@ const BLOCK_TYPES = [
 
 const defaultBlockData = {
   hero:           { headline: 'Welcome to Our Farm', subtext: 'Fresh, local, and sustainably grown.', image_url: '', cta_text: 'Learn More', cta_link: '#about', overlay: true, align: 'center' },
+  slideshow:      { images: [], interval_ms: 5000, show_dots: true },
   about:          { heading: 'About Us', body: 'Tell your story here...', image_url: '', images: [], image_position: 'right' },
   content:        { heading: '', body: '', image_url: '', images: [], image_position: 'right' },
   content_2col:   { columns: [
@@ -2286,6 +2288,41 @@ function SimpleBlockPreview({ block, site, businessId, onFieldSave }) {
                 {d.cta_text}
               </span>
             )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (bt === 'slideshow') {
+    const raw = Array.isArray(d.images) ? d.images : [];
+    const slides = raw.map(s => (typeof s === 'string' ? { url: s } : s)).filter(s => s && s.url);
+    const first = slides[0];
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{
+          width: '100%', maxWidth: bgWidth,
+          aspectRatio: '16 / 6', minHeight: 200, position: 'relative', overflow: 'hidden',
+          background: first ? `url(${first.url}) center/cover no-repeat` : '#1f2937',
+        }}>
+          {!first && (
+            <div style={{ position: 'absolute', inset: 0, display: 'flex',
+                          alignItems: 'center', justifyContent: 'center',
+                          color: 'rgba(255,255,255,0.75)', fontFamily, fontSize: 14 }}>
+              No slides yet — add images in the editor panel →
+            </div>
+          )}
+          <div style={{ position: 'absolute', bottom: 8, left: 0, right: 0,
+                        display: 'flex', justifyContent: 'center', gap: 6 }}>
+            {slides.slice(0, 8).map((_, i) => (
+              <span key={i} style={{ width: 8, height: 8, borderRadius: '50%',
+                background: i === 0 ? '#fff' : 'rgba(255,255,255,0.5)' }} />
+            ))}
+          </div>
+          <div style={{ position: 'absolute', top: 8, right: 10, color: 'rgba(255,255,255,0.85)',
+                        fontSize: 11, fontFamily, background: 'rgba(0,0,0,0.45)',
+                        padding: '2px 8px', borderRadius: 10 }}>
+            {slides.length} slide{slides.length === 1 ? '' : 's'}
           </div>
         </div>
       </div>
@@ -4782,6 +4819,71 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
       <BgField />
     </div>
   );
+
+  // ── Slideshow ──
+  if (bt === 'slideshow') {
+    const raw    = Array.isArray(d.images) ? d.images : [];
+    const slides = raw.map(s => (typeof s === 'string' ? { url: s, caption: '' } : { url: s.url || '', caption: s.caption || '' }));
+    const setSlides = (next) => onFieldSave('images', next);
+    const updateAt = (i, patch) => { const n = [...slides]; n[i] = { ...n[i], ...patch }; setSlides(n); };
+    const removeAt = (i) => { const n = [...slides]; n.splice(i, 1); setSlides(n); };
+    const addSlide = (url) => { if (!url) return; setSlides([...slides, { url, caption: '' }]); };
+    return (
+      <div style={{ padding: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>Slideshow</div>
+        <Field label="Interval (ms)">
+          <TxtInp field="interval_ms" placeholder="5000" />
+        </Field>
+        <Field label="Show Dots">
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#374151' }}>
+            <input type="checkbox" checked={d.show_dots !== false}
+                   onChange={e => onFieldSave('show_dots', e.target.checked)}
+                   style={{ width: 16, height: 16, accentColor: '#3b82f6' }} />
+            Show navigation dots
+          </label>
+        </Field>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', margin: '20px 0 10px' }}>
+          Slides ({slides.length})
+        </div>
+        {slides.map((s, i) => (
+          <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 10, marginBottom: 8, background: '#fafafa' }}>
+            {s.url && (
+              <img src={s.url} alt="" style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 6, marginBottom: 8 }} />
+            )}
+            <input
+              type="text"
+              value={s.caption}
+              onChange={e => updateAt(i, { caption: e.target.value })}
+              placeholder="Caption (optional)"
+              style={{ width: '100%', padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, marginBottom: 6 }}
+            />
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => removeAt(i)}
+                      style={{ padding: '4px 10px', background: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>
+                Remove
+              </button>
+              {i > 0 && (
+                <button onClick={() => { const n = [...slides]; [n[i-1], n[i]] = [n[i], n[i-1]]; setSlides(n); }}
+                        style={{ padding: '4px 10px', background: '#e5e7eb', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>
+                  ↑
+                </button>
+              )}
+              {i < slides.length - 1 && (
+                <button onClick={() => { const n = [...slides]; [n[i+1], n[i]] = [n[i], n[i+1]]; setSlides(n); }}
+                        style={{ padding: '4px 10px', background: '#e5e7eb', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>
+                  ↓
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        <Field label="Add Slide">
+          <ImageUploadField value="" onChange={addSlide} />
+        </Field>
+        <BgField />
+      </div>
+    );
+  }
 
   // ── About / Content ──
   if (bt === 'about' || bt === 'content') {
@@ -7439,6 +7541,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
     header_banner_url:  site.header_banner_url  || '',
     header_height:      site.header_height      || 120,
     show_site_name:     site.show_site_name !== false, // default true
+    header_layout:      site.header_layout      || 'banner_top',
     // Nav bar
     nav_bg_image_url:   site.nav_bg_image_url   || '',
     // Width controls
@@ -8320,6 +8423,21 @@ function DesignView({ site, onSave, saving, pages = [] }) {
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Header Banner</h3>
             <p className="text-xs text-gray-400 mb-3">Large image area above the navigation — contains your logo and site name.</p>
+            <FormField label="Header Layout">
+              <div className="flex gap-2">
+                {[
+                  ['banner_top', 'Banner above Nav', 'Logo on a colored banner, then the nav bar'],
+                  ['nav_top', 'Nav above Logo', 'Slim nav bar on top, large centered logo below'],
+                ].map(([v, l, hint]) => (
+                  <button key={v}
+                    onClick={() => set('header_layout', v)}
+                    title={hint}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium border transition-colors ${(local.header_layout || 'banner_top') === v ? 'bg-[#3D6B34] text-white border-[#3D6B34]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </FormField>
             <HeaderImagesManager websiteId={site.website_id} hideTitle />
             <div className="mt-4 pt-4 border-t border-gray-100">
               <FormField label="Banner Height (px)">

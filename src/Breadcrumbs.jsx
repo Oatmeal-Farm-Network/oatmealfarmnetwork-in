@@ -14,7 +14,23 @@ import { Link } from 'react-router-dom';
 const BASE_URL = 'https://oatmealfarmnetwork.com';
 const MARKER   = 'data-breadcrumb-jsonld';
 
-export default function Breadcrumbs({ items = [], className = '', style = {} }) {
+export default function Breadcrumbs({ items: rawItems = [], className = '', style = {} }) {
+  const isLoggedIn = typeof window !== 'undefined' && !!localStorage.getItem('access_token');
+
+  // When signed in, the Dashboard is the user's home. Swap any leading "Home → /"
+  // crumb for "Dashboard → /dashboard", then collapse the duplicate if the next
+  // crumb is already Dashboard.
+  const items = (() => {
+    if (!isLoggedIn || !rawItems.length) return rawItems;
+    const first = rawItems[0];
+    if (first.to !== '/' && first.label !== 'Home') return rawItems;
+    const rest = rawItems.slice(1);
+    if (rest.length && (rest[0].label === 'Dashboard' || rest[0].to === '/dashboard')) {
+      return rest;
+    }
+    return [{ label: 'Dashboard', to: '/dashboard' }, ...rest];
+  })();
+
   const key = JSON.stringify(items);
 
   useEffect(() => {
@@ -47,34 +63,45 @@ export default function Breadcrumbs({ items = [], className = '', style = {} }) 
   if (!items || items.length === 0) return null;
 
   return (
-    <nav
-      aria-label="Breadcrumb"
-      className={`text-xs mb-3 flex flex-wrap items-center ${className}`}
-      style={{ gap: 4, color: '#6b7280', ...style }}
-    >
-      {items.map((item, idx) => {
-        const isLast = idx === items.length - 1;
-        return (
-          <React.Fragment key={idx}>
-            {idx > 0 && <span aria-hidden="true" style={{ color: '#9ca3af' }}>›</span>}
-            {item.to && !isLast ? (
-              <Link
-                to={item.to}
-                style={{ color: '#3D6B34', textDecoration: 'none', fontWeight: 600 }}
-              >
-                {item.label}
-              </Link>
-            ) : (
-              <span
-                aria-current={isLast ? 'page' : undefined}
-                style={{ color: isLast ? '#374151' : '#6b7280' }}
-              >
-                {item.label}
-              </span>
-            )}
-          </React.Fragment>
-        );
-      })}
-    </nav>
+    <div className={`text-xs mb-3 flex flex-wrap items-center ${className}`} style={style}>
+      <nav
+        aria-label="Breadcrumb"
+        className="flex flex-wrap items-center"
+        style={{ gap: 4, color: '#6b7280' }}
+      >
+        {items.map((item, idx) => {
+          const isLast = idx === items.length - 1;
+          return (
+            <React.Fragment key={idx}>
+              {idx > 0 && <span aria-hidden="true" style={{ color: '#9ca3af' }}>›</span>}
+              {item.to && !isLast ? (
+                <Link
+                  to={item.to}
+                  style={{ color: '#3D6B34', textDecoration: 'none', fontWeight: 600 }}
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <span
+                  aria-current={isLast ? 'page' : undefined}
+                  style={{ color: isLast ? '#374151' : '#6b7280' }}
+                >
+                  {item.label}
+                </span>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </nav>
+      {isLoggedIn && (
+        <Link
+          to="/account/settings"
+          className="ml-auto"
+          style={{ color: '#3D6B34', textDecoration: 'none', fontWeight: 600 }}
+        >
+          Personal Settings
+        </Link>
+      )}
+    </div>
   );
 }
