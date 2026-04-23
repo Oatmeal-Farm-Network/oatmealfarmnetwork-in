@@ -223,6 +223,7 @@ const DirectoryDetail = function () {
     const CATEGORY_HEADERS = {
         'agricultural-associations': '/images/AgricuturalAssociationsHeader.webp',
         'artisan-producers':         '/images/ArtisanProducersHeader.webp',
+        'fishermen':                 '/images/FishermenHeader.webp',
     };
 
     const businessType = DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID[directoryType] || directoryType;
@@ -309,7 +310,7 @@ const DirectoryDetail = function () {
             />
             <Header />
 
-            <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
+            <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1400px' }}>
                 <Breadcrumbs items={[
                     { label: 'Home', to: '/' },
                     { label: 'Directory', to: '/directory' },
@@ -318,21 +319,28 @@ const DirectoryDetail = function () {
             </div>
 
             {/* ── Hero ── */}
-            <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
+            <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1400px' }}>
                 <div className="relative w-full overflow-hidden rounded-xl">
-                    <img
-                        src={CATEGORY_HEADERS[directoryType] || '/images/DirectoryHeader.webp'}
-                        alt={pageTitle}
-                        className="w-full object-cover"
-                        style={{ height: '250px', display: 'block' }}
-                        loading="eager"
-                        onError={e => { e.target.style.display = 'none'; }}
-                    />
+                    {CATEGORY_HEADERS[directoryType] && (
+                        <img
+                            src={CATEGORY_HEADERS[directoryType]}
+                            alt={pageTitle}
+                            className="w-full object-cover"
+                            style={{ height: '250px', display: 'block' }}
+                            loading="eager"
+                            onError={e => { e.target.style.display = 'none'; }}
+                        />
+                    )}
+                    {CATEGORY_HEADERS[directoryType] && (
+                        <div
+                            className="absolute inset-0"
+                            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }}
+                        />
+                    )}
                     <div
-                        className="absolute inset-0"
-                        style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }}
-                    />
-                    <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
+                        className={CATEGORY_HEADERS[directoryType] ? 'absolute inset-0 flex flex-col justify-center px-8 py-6' : 'flex flex-col gap-3 px-2 py-4'}
+                        style={{ maxWidth: '780px' }}
+                    >
                         <div className="flex items-center gap-3 mb-3">
                             {categoryIcon && (
                                 <img src={categoryIcon} alt={pageTitle} style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
@@ -370,7 +378,7 @@ const DirectoryDetail = function () {
                 </div>
             </div>
 
-            <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
+            <div className="mx-auto px-4 py-8" style={{ maxWidth: '1400px' }}>
 
                 {/* ── Filter card ── */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">

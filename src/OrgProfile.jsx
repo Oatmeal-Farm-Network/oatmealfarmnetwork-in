@@ -232,6 +232,256 @@ function ServicesTab({ businessId }) {
   );
 }
 
+// ── Produce tab ───────────────────────────────────────────────────────────────
+function ProduceTab({ items }) {
+  if (!items.length) return <p style={{ color: '#888', padding: '20px 0' }}>No produce listed at this time.</p>;
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+      {items.map(p => (
+        <div key={p.ProduceID} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: '10px', padding: '16px' }}>
+          <div style={{ fontWeight: 700, fontSize: '1rem', color: '#222', marginBottom: '6px' }}>{p.IngredientName}</div>
+          <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>
+            Qty: {p.Quantity} {p.MeasurementAbbreviation || p.Measurement || ''}
+          </div>
+          {(p.RetailPrice || p.WholesalePrice) && (
+            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#507033' }}>
+              {p.RetailPrice ? `$${parseFloat(p.RetailPrice).toFixed(2)} retail` : ''}
+              {p.RetailPrice && p.WholesalePrice ? ' · ' : ''}
+              {p.WholesalePrice ? `$${parseFloat(p.WholesalePrice).toFixed(2)} wholesale` : ''}
+            </div>
+          )}
+          {p.AvailableDate && <div style={{ fontSize: '0.78rem', color: '#999', marginTop: '4px' }}>Available: {p.AvailableDate}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Meat tab ──────────────────────────────────────────────────────────────────
+function MeatTab({ items }) {
+  if (!items.length) return <p style={{ color: '#888', padding: '20px 0' }}>No meat listed at this time.</p>;
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+      {items.map(m => (
+        <div key={m.MeatInventoryID} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: '10px', padding: '16px' }}>
+          <div style={{ fontWeight: 700, fontSize: '1rem', color: '#222', marginBottom: '6px' }}>{m.IngredientName || m.Cut || 'Meat'}</div>
+          {m.Cut && m.Cut !== m.IngredientName && <div style={{ fontSize: '0.82rem', color: '#888', marginBottom: '4px' }}>{m.Cut}</div>}
+          {m.Weight && <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>{m.Weight} {m.WeightUnit || 'lbs'}</div>}
+          {(m.RetailPrice || m.WholesalePrice) && (
+            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#507033' }}>
+              {m.RetailPrice ? `$${parseFloat(m.RetailPrice).toFixed(2)} retail` : ''}
+              {m.RetailPrice && m.WholesalePrice ? ' · ' : ''}
+              {m.WholesalePrice ? `$${parseFloat(m.WholesalePrice).toFixed(2)} wholesale` : ''}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Processed food / value-added tab ─────────────────────────────────────────
+function ProcessedFoodTab({ items }) {
+  if (!items.length) return <p style={{ color: '#888', padding: '20px 0' }}>No value-added products listed at this time.</p>;
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+      {items.map(f => (
+        <div key={f.ProcessedFoodID} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: '10px', padding: '16px' }}>
+          <div style={{ fontWeight: 700, fontSize: '1rem', color: '#222', marginBottom: '6px' }}>{f.Name}</div>
+          {f.CategoryName && <div style={{ fontSize: '0.8rem', color: '#507033', marginBottom: '4px' }}>{f.CategoryName}</div>}
+          <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '4px' }}>Qty: {f.Quantity}</div>
+          {(f.RetailPrice || f.WholesalePrice) && (
+            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#507033' }}>
+              {f.RetailPrice ? `$${parseFloat(f.RetailPrice).toFixed(2)} retail` : ''}
+              {f.RetailPrice && f.WholesalePrice ? ' · ' : ''}
+              {f.WholesalePrice ? `$${parseFloat(f.WholesalePrice).toFixed(2)} wholesale` : ''}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Small-farm products tab ───────────────────────────────────────────────────
+function SFProductsTab({ items }) {
+  if (!items.length) return <p style={{ color: '#888', padding: '20px 0' }}>No products listed at this time.</p>;
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+      {items.map(p => (
+        <div key={p.SourceID || p.ProdID} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}>
+          {p.ImageURL ? (
+            <img src={p.ImageURL} alt={p.Title || p.prodName} style={{ width: '100%', height: '140px', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
+          ) : (
+            <div style={{ height: '80px', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>🛍️</div>
+          )}
+          <div style={{ padding: '12px' }}>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#222', marginBottom: '4px' }}>{p.Title || p.prodName}</div>
+            {p.CategoryName && <div style={{ fontSize: '0.78rem', color: '#507033', marginBottom: '4px' }}>{p.CategoryName}</div>}
+            {p.Description && <div style={{ fontSize: '0.82rem', color: '#555', marginBottom: '6px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{p.Description}</div>}
+            {p.UnitPrice && <div style={{ fontWeight: 700, color: '#507033' }}>${parseFloat(p.UnitPrice).toFixed(2)}</div>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Blog tab ──────────────────────────────────────────────────────────────────
+const BLOG_CATEGORY_COLORS = {
+  'Farm News':      '#15803d',
+  'Recipes':        '#b45309',
+  'Seasonal':       '#0891b2',
+  'Events':         '#7C5CBF',
+  'Education':      '#1d4ed8',
+  'Market Updates': '#be185d',
+  'Community':      '#6b7280',
+  'General':        '#6b7280',
+};
+
+function blogExcerpt(content, wordLimit = 100) {
+  if (!content) return '';
+  let text = content;
+  try {
+    const blocks = JSON.parse(content);
+    if (Array.isArray(blocks))
+      text = blocks.filter(b => b.type === 'text').map(b => b.content || '').join(' ');
+  } catch {}
+  const plain = text.replace(/<[^>]*>/g, '').trim();
+  const words = plain.split(/\s+/);
+  return words.length <= wordLimit ? plain : words.slice(0, wordLimit).join(' ') + '…';
+}
+
+function BlogPostCard({ post }) {
+  const catColor = BLOG_CATEGORY_COLORS[post.category] || '#6b7280';
+  const date = (post.published_at || post.created_at)
+    ? new Date(post.published_at || post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : '';
+  const excerpt = blogExcerpt(post.content, 100);
+  return (
+    <div
+      style={{ background: '#fff', borderRadius: '10px', border: '1px solid #e5e7eb', overflow: 'hidden', transition: 'box-shadow 0.2s', display: 'flex', gap: 0 }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+    >
+      {post.cover_image && (
+        <img
+          src={post.cover_image} alt={post.title}
+          style={{ width: 180, minWidth: 180, objectFit: 'cover', display: 'block', flexShrink: 0 }}
+          onError={e => e.target.style.display = 'none'}
+        />
+      )}
+      <div style={{ padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {post.category && (
+            <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: catColor, background: catColor + '18', padding: '2px 8px', borderRadius: '10px' }}>
+              {post.category}
+            </span>
+          )}
+          <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{date}</span>
+        </div>
+        <Link to={`/blog/${post.blog_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+          <h3 style={{ margin: '0.1rem 0 0.3rem', fontSize: '1.05rem', fontWeight: 700, color: '#111827', lineHeight: 1.35 }}>
+            {post.title}
+          </h3>
+        </Link>
+        {excerpt && (
+          <p style={{ margin: 0, fontSize: '0.88rem', color: '#4b5563', lineHeight: 1.6 }}>{excerpt}</p>
+        )}
+        <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
+          <Link to={`/blog/${post.blog_id}`} style={{ fontSize: '0.83rem', color: '#819360', fontWeight: 600, textDecoration: 'none' }}>
+            Read more →
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BlogTab({ posts }) {
+  const [search, setSearch] = useState('');
+  const [activeCategory, setActiveCategory] = useState('');
+
+  const categories = [...new Set(posts.map(p => p.category).filter(Boolean))];
+
+  const filtered = posts.filter(p => {
+    const matchesCat = !activeCategory || p.category === activeCategory;
+    const matchesSearch = !search.trim() ||
+      p.title.toLowerCase().includes(search.toLowerCase()) ||
+      (p.content || '').toLowerCase().includes(search.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
+
+  if (!posts.length) return <p style={{ color: '#888', padding: '20px 0' }}>No blog posts at this time.</p>;
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <input
+          placeholder="Search posts..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ flex: 1, minWidth: '200px', padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.9rem' }}
+        />
+        {categories.length > 0 && (
+          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setActiveCategory('')}
+              style={{ padding: '0.35rem 0.85rem', borderRadius: '20px', border: '1px solid', fontSize: '0.82rem', cursor: 'pointer', fontWeight: activeCategory ? 400 : 700, background: activeCategory ? '#f9fafb' : '#819360', color: activeCategory ? '#374151' : '#fff', borderColor: activeCategory ? '#d1d5db' : '#819360' }}
+            >
+              All
+            </button>
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat === activeCategory ? '' : cat)}
+                style={{ padding: '0.35rem 0.85rem', borderRadius: '20px', border: '1px solid', fontSize: '0.82rem', cursor: 'pointer', fontWeight: activeCategory === cat ? 700 : 400, background: activeCategory === cat ? '#819360' : '#f9fafb', color: activeCategory === cat ? '#fff' : '#374151', borderColor: activeCategory === cat ? '#819360' : '#d1d5db' }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {filtered.length === 0 && <p style={{ color: '#9ca3af', padding: '2rem 0' }}>No posts found.</p>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {filtered.map(post => <BlogPostCard key={post.blog_id} post={post} />)}
+      </div>
+    </div>
+  );
+}
+
+// ── Events tab ────────────────────────────────────────────────────────────────
+function EventsTab({ events }) {
+  if (!events.length) return <p style={{ color: '#888', padding: '20px 0' }}>No upcoming events at this time.</p>;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {events.map(ev => {
+        const startDate = ev.EventStartDate ? new Date(ev.EventStartDate).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }) : '';
+        const endDate   = ev.EventEndDate   ? new Date(ev.EventEndDate).toLocaleDateString('en-US',   { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+        const location  = [ev.EventLocationName, ev.EventLocationCity, ev.EventLocationState].filter(Boolean).join(', ');
+        return (
+          <a key={ev.EventID} href={`/events/${ev.EventID}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: '10px', overflow: 'hidden', display: 'flex', gap: 0, transition: 'box-shadow 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.09)'}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+              {ev.EventImage && (
+                <img src={ev.EventImage} alt={ev.EventName} style={{ width: '120px', height: '120px', objectFit: 'cover', flexShrink: 0 }} onError={e => e.target.style.display = 'none'} />
+              )}
+              <div style={{ padding: '14px 16px', flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: '#222', marginBottom: '4px' }}>{ev.EventName}</div>
+                {startDate && <div style={{ fontSize: '0.82rem', color: '#507033', fontWeight: 600, marginBottom: '2px' }}>{startDate}{endDate && endDate !== startDate ? ` – ${endDate}` : ''}</div>}
+                {location && <div style={{ fontSize: '0.82rem', color: '#666', marginBottom: '4px' }}>📍 {location}</div>}
+                {ev.EventType && <span style={{ fontSize: '0.75rem', background: '#f0f4ed', color: '#507033', borderRadius: '4px', padding: '2px 8px', fontWeight: 600 }}>{ev.EventType}</span>}
+              </div>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function OrgProfile() {
   const { businessId: urlBusinessId } = useParams();
@@ -241,7 +491,14 @@ export default function OrgProfile() {
   const [ranch, setRanch] = useState(null);
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ for_sale: 0, studs: 0, services: 0 });
-  const [hasFoodListings, setHasFoodListings] = useState(false);
+  const [produceItems, setProduceItems]             = useState([]);
+  const [meatItems, setMeatItems]                   = useState([]);
+  const [processedFoodItems, setProcessedFoodItems] = useState([]);
+  const [sfProductItems, setSfProductItems]         = useState([]);
+  const [blogPosts, setBlogPosts]                   = useState([]);
+  const [upcomingEvents, setUpcomingEvents]         = useState([]);
+
+  const hasFoodListings = produceItems.length > 0 || meatItems.length > 0 || processedFoodItems.length > 0;
 
   const activeTab = searchParams.get('tab') || 'home';
   const setTab = (tab) => setSearchParams({ tab }, { replace: true });
@@ -321,20 +578,19 @@ export default function OrgProfile() {
         .then(d => d && setCounts(p => ({ ...p, services: Array.isArray(d) ? d.length : 0 })))
         .catch(() => {});
 
-      // Check whether this business has any food products (produce, meat, processed food)
-      // to decide whether to show the provenance / sourcing card link.
-      // Each endpoint filters by BusinessID server-side — no cross-business leakage.
-      Promise.all([
-        fetch(`${API_URL}/api/produce/inventory?BusinessID=${businessId}`).then(r => r.ok ? r.json() : []).catch(() => []),
-        fetch(`${API_URL}/api/meat/inventory?BusinessID=${businessId}`).then(r => r.ok ? r.json() : []).catch(() => []),
-        fetch(`${API_URL}/api/processed-food/inventory?BusinessID=${businessId}`).then(r => r.ok ? r.json() : []).catch(() => []),
-      ]).then(([produce, meat, processedFood]) => {
-        const hasFood =
-          (Array.isArray(produce)      && produce.length      > 0) ||
-          (Array.isArray(meat)         && meat.length         > 0) ||
-          (Array.isArray(processedFood) && processedFood.length > 0);
-        setHasFoodListings(hasFood);
-      });
+      // Food inventory — stored for tabs + sourcing card gate
+      fetch(`${API_URL}/api/produce/inventory?BusinessID=${businessId}`).then(r => r.ok ? r.json() : []).then(d => setProduceItems(Array.isArray(d) ? d : [])).catch(() => {});
+      fetch(`${API_URL}/api/meat/inventory?BusinessID=${businessId}`).then(r => r.ok ? r.json() : []).then(d => setMeatItems(Array.isArray(d) ? d : [])).catch(() => {});
+      fetch(`${API_URL}/api/processed-food/inventory?BusinessID=${businessId}`).then(r => r.ok ? r.json() : []).then(d => setProcessedFoodItems(Array.isArray(d) ? d : [])).catch(() => {});
+
+      // Small-farm products
+      fetch(`${API_URL}/api/sfproducts/?business_id=${businessId}`).then(r => r.ok ? r.json() : []).then(d => setSfProductItems(Array.isArray(d) ? d : [])).catch(() => {});
+
+      // Blog posts
+      fetch(`${API_URL}/api/blog/posts?business_id=${businessId}&limit=50`).then(r => r.ok ? r.json() : []).then(d => setBlogPosts(Array.isArray(d) ? d : [])).catch(() => {});
+
+      // Upcoming events
+      fetch(`${API_URL}/api/events?business_id=${businessId}`).then(r => r.ok ? r.json() : []).then(d => setUpcomingEvents(Array.isArray(d) ? d : [])).catch(() => {});
     }
   }, [businessId]);
 
@@ -375,7 +631,7 @@ export default function OrgProfile() {
   if (loading) return (
     <div className="min-h-screen font-sans">
       <Header />
-      <div style={{ maxWidth: '1100px', margin: '40px auto', padding: '0 16px' }} className="animate-pulse">
+      <div style={{ maxWidth: '1400px', margin: '40px auto', padding: '0 16px' }} className="animate-pulse">
         <div style={{ height: '100px', backgroundColor: '#e8e8e8', borderRadius: '8px', marginBottom: '24px' }} />
         <div style={{ height: '48px', backgroundColor: '#e8e8e8', borderRadius: '4px', marginBottom: '24px' }} />
         <div style={{ height: '300px', backgroundColor: '#f0f0f0', borderRadius: '8px' }} />
@@ -396,11 +652,17 @@ export default function OrgProfile() {
   );
 
   const TABS = [
-    { key: 'home',     label: 'Home',                                  show: true },
-    { key: 'animals',  label: `Animals For Sale (${counts.for_sale})`, show: counts.for_sale > 0 },
-    { key: 'studs',    label: `Stud Services (${counts.studs})`,       show: counts.studs > 0 },
-    { key: 'services', label: `Services (${counts.services})`,         show: counts.services > 0 },
-    { key: 'contact',  label: 'Contact',                                show: true },
+    { key: 'home',          label: 'Home',                                            show: true },
+    { key: 'blog',          label: `Blog (${blogPosts.length})`,                      show: blogPosts.length > 0 },
+    { key: 'events',        label: `Events (${upcomingEvents.length})`,               show: upcomingEvents.length > 0 },
+    { key: 'animals',       label: `Animals For Sale (${counts.for_sale})`,           show: counts.for_sale > 0 },
+    { key: 'studs',         label: `Stud Services (${counts.studs})`,                 show: counts.studs > 0 },
+    { key: 'produce',       label: `Produce (${produceItems.length})`,                show: produceItems.length > 0 },
+    { key: 'meat',          label: `Meat (${meatItems.length})`,                      show: meatItems.length > 0 },
+    { key: 'processedFood', label: `Value Added (${processedFoodItems.length})`,      show: processedFoodItems.length > 0 },
+    { key: 'sfProducts',    label: `Products (${sfProductItems.length})`,             show: sfProductItems.length > 0 },
+    { key: 'services',      label: `Services (${counts.services})`,                   show: counts.services > 0 },
+    { key: 'contact',       label: 'Contact',                                          show: true },
   ].filter(t => t.show);
 
   const location = [ranch.address_city, ranch.address_state].filter(Boolean).join(', ');
@@ -450,7 +712,7 @@ export default function OrgProfile() {
       />
       <Header />
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 16px 60px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 16px 60px' }}>
         <div style={{ paddingTop: '0.75rem' }}>
           <Breadcrumbs items={[
             { label: 'Home', to: '/' },
@@ -662,6 +924,24 @@ export default function OrgProfile() {
 
         {/* ── Services tab ── */}
         {activeTab === 'services' && <ServicesTab businessId={businessId} />}
+
+        {/* ── Blog tab ── */}
+        {activeTab === 'blog' && <BlogTab posts={blogPosts} />}
+
+        {/* ── Events tab ── */}
+        {activeTab === 'events' && <EventsTab events={upcomingEvents} />}
+
+        {/* ── Produce tab ── */}
+        {activeTab === 'produce' && <ProduceTab items={produceItems} />}
+
+        {/* ── Meat tab ── */}
+        {activeTab === 'meat' && <MeatTab items={meatItems} />}
+
+        {/* ── Value-added products tab ── */}
+        {activeTab === 'processedFood' && <ProcessedFoodTab items={processedFoodItems} />}
+
+        {/* ── Small-farm products tab ── */}
+        {activeTab === 'sfProducts' && <SFProductsTab items={sfProductItems} />}
 
         {/* ── About / Contact tab ── */}
         {activeTab === 'contact' && (
