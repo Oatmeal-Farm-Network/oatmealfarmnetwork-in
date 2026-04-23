@@ -23,6 +23,7 @@ const DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID = {
     'food-hubs': '18',
     'grocery-stores': '26',
     'herb-and-tea-producer': '31',
+    'hunger-relief-organizations': '35',
     'manufacturers': '16',
     'marinas': '21',
     'meat-wholesalers': '19',
@@ -206,13 +207,10 @@ const DirectoryDetail = function () {
     const [countries, setCountries]           = useState([]);
     const [states, setStates]                 = useState([]);
     const [businesses, setBusinesses]         = useState([]);
-    const [subcategories, setSubcategories]   = useState([]);
     const [selectedCountry, setSelectedCountry] = useState(backState?.selectedCountry || '');
     const [selectedState, setSelectedState]   = useState(backState?.selectedState || '');
-    const [selectedSubcat, setSelectedSubcat] = useState(backState?.selectedSubcat || '');
-    const [appliedSubcat, setAppliedSubcat]   = useState(backState?.selectedSubcat || '');
 
-    const countryTypeahead = useSelectTypeahead(countries, c => { setSelectedCountry(c); setSelectedState(''); setSelectedSubcat(''); });
+    const countryTypeahead = useSelectTypeahead(countries, c => { setSelectedCountry(c); setSelectedState(''); });
     const stateTypeahead   = useSelectTypeahead(states.map(s => s.name), setSelectedState);
     const [nameFilter, setNameFilter]         = useState(backState?.nameFilter || '');
     const [appliedCountry, setAppliedCountry] = useState(backState?.selectedCountry || '');
@@ -240,6 +238,14 @@ const DirectoryDetail = function () {
         'hunger-relief-organizations': '/images/HungerReleifOrgHeader.webp',
         'manufacturers':             '/images/ManufacturingHeader.webp',
         'marinas':                   '/images/MarinaHeader.webp',
+        'restaurants':               '/images/RestaurantHeader.webp',
+        'retailers':                 '/images/RetailerHeader.webp',
+        'wineries':                  '/images/WineryHeader.webp',
+        'vineyards':                 '/images/VineyardHeader.webp',
+        'veterinarians':             '/images/VetrinarianHeader.webp',
+        'universities':              '/images/UniversityHeader.webp',
+        'service-providers':         '/images/ServiceProviderHeader.webp',
+        'meat-wholesalers':          '/images/MeatWholesalerHeader.webp',
     };
 
     const CATEGORY_TEXT = {
@@ -256,17 +262,7 @@ const DirectoryDetail = function () {
 
     useEffect(() => { if (backState) window.history.replaceState({}, document.title); }, []);
 
-    useEffect(() => {
-        setSubcategories([]);
-        setSelectedSubcat('');
-        setAppliedSubcat('');
-        fetch(`${API_ENDPOINTS.BUSINESSES}subcategories?BusinessTypeID=${encodeURIComponent(businessType)}`)
-            .then(r => r.ok ? r.json() : [])
-            .then(data => setSubcategories(Array.isArray(data) ? data : []))
-            .catch(() => {});
-    }, [businessType]);
-
-    // Each entry: keys = any substring that must appear in the DB country name,
+// Each entry: keys = any substring that must appear in the DB country name,
     // excludes = substrings that must NOT appear (prevents false matches).
     const FALLBACK_SPECS = [
         { keys: ['canada'],                   excludes: [] },
@@ -326,26 +322,24 @@ const DirectoryDetail = function () {
         let url = API_ENDPOINTS.BUSINESSES + '?BusinessTypeID=' + encodeURIComponent(businessType);
         if (appliedCountry) url += '&country=' + encodeURIComponent(appliedCountry);
         if (appliedState)   url += '&state='   + encodeURIComponent(appliedState);
-        if (appliedSubcat)  url += '&species_category=' + encodeURIComponent(appliedSubcat);
         fetch(url)
             .then(r => { if (!r.ok) throw new Error('Failed to fetch: ' + r.statusText); return r.json(); })
             .then(data => { setBusinesses(data || []); setLoading(false); })
             .catch(err => { setError(err.message); setLoading(false); });
-    }, [appliedCountry, appliedState, appliedSubcat, businessType]);
+    }, [appliedCountry, appliedState, businessType]);
 
-    useEffect(() => { setCurrentPage(1); }, [appliedCountry, appliedState, appliedName, appliedSubcat]);
+    useEffect(() => { setCurrentPage(1); }, [appliedCountry, appliedState, appliedName]);
 
     function handleApplyFilters() {
         setAppliedCountry(selectedCountry);
         setAppliedState(selectedState);
         setAppliedName(nameFilter);
-        setAppliedSubcat(selectedSubcat);
         setCurrentPage(1);
     }
 
     function handleProfileClick(business) {
         navigate('/profile', {
-            state: { business, directoryType, selectedCountry: appliedCountry, selectedState: appliedState, nameFilter: appliedName, selectedSubcat: appliedSubcat },
+            state: { business, directoryType, selectedCountry: appliedCountry, selectedState: appliedState, nameFilter: appliedName },
         });
     }
 
@@ -358,7 +352,6 @@ const DirectoryDetail = function () {
         b.BusinessName && b.BusinessName.trim() !== '' &&
         b.BusinessName.toLowerCase().includes(appliedName.toLowerCase())
     );
-    const showSubcatDropdown = subcategories.length > 0 && (filteredBusinesses.length > 20 || !!appliedSubcat);
     const totalPages       = Math.ceil(filteredBusinesses.length / itemsPerPage);
     const startIndex       = (currentPage - 1) * itemsPerPage;
     const currentBusinesses = filteredBusinesses.slice(startIndex, startIndex + itemsPerPage);
@@ -487,22 +480,7 @@ const DirectoryDetail = function () {
                             </select>
                         </div>
 
-                        {showSubcatDropdown && (
-                            <div className="flex flex-col gap-1.5 flex-1" style={{ minWidth: '160px' }}>
-                                <label className="text-xs font-semibold text-gray-600">Category</label>
-                                <select
-                                    value={selectedSubcat}
-                                    onChange={e => setSelectedSubcat(e.target.value)}
-                                    className="border border-gray-300 rounded-lg text-sm text-gray-700"
-                                    style={{ padding: '8px 10px' }}
-                                >
-                                    <option value="">All</option>
-                                    {subcategories.map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                            </div>
-                        )}
-
-                        <div className="flex flex-col gap-1.5" style={{ minWidth: '200px', flex: 2 }}>
+<div className="flex flex-col gap-1.5" style={{ minWidth: '200px', flex: 2 }}>
                             <label className="text-xs font-semibold text-gray-600">Business Name</label>
                             <input
                                 type="text"
