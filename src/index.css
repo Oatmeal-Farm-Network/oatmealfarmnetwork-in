@@ -15,6 +15,16 @@ body {
   font-family: 'Montserrat', sans-serif;
 }
 
+/* Force site background on every page root.
+   Tailwind utilities (bg-gray-50, bg-white, etc.) live in @layer utilities;
+   unlayered rules written after the @import always win the cascade,
+   so this neutralises any per-page override without touching 150+ files.
+   Interior cards/panels that need white use inline style={{ background }} which
+   beats any class-based rule regardless. */
+.min-h-screen {
+  background-color: #f7f2e8;
+}
+
 h1 {
   font-family: 'Lora', 'Times New Roman', serif;
   font-size: 24px;
