@@ -259,7 +259,8 @@
       "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/CropMonitoringBackend\" status)",
       "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" status)",
       "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend\" add saige/llm.py)",
-      "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend\" commit --no-edit)"
+      "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend\" commit --no-edit)",
+      "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" ls-files)"
     ],
     "additionalDirectories": [
       "\\tmp"
