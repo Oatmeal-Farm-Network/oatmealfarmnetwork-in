@@ -260,7 +260,11 @@
       "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" status)",
       "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend\" add saige/llm.py)",
       "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend\" commit --no-edit)",
-      "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" ls-files)"
+      "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" ls-files)",
+      "Bash(python \"f:/tmp/probe_news.py\")",
+      "Bash(\"../venv/Scripts/python.exe\" \"f:/tmp/probe_news.py\")",
+      "Bash(\"../venv/Scripts/python.exe\" \"f:/tmp/probe_news_one.py\" 397cc4eda37cb8a304a00dc272052922)",
+      "Bash(\"../venv/Scripts/python.exe\" \"f:/tmp/probe_news_one.py\" 3241397ab2de494f1caf8b5d10dfae4f)"
     ],
     "additionalDirectories": [
       "\\tmp"

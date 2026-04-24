@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAccount } from './AccountContext';
 import NotificationBell from './NotificationBell';
 import CartBell from './CartBell';
@@ -19,6 +19,7 @@ const Header = () => {
   const [user, setUser] = useState(null);
   const [acctOpen, setAcctOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const kbRef = useRef(null);
   const acctRef = useRef(null);
   const mktRef = useRef(null);
@@ -26,15 +27,28 @@ const Header = () => {
   const svcRef = useRef(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
-    const firstName = localStorage.getItem('first_name') || localStorage.getItem('PeopleFirstName');
-    const peopleId = localStorage.getItem('people_id') || localStorage.getItem('PeopleID');
+    const refreshAuth = () => {
+      const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
+      const peopleId = localStorage.getItem('people_id') || localStorage.getItem('PeopleID');
+      const firstName =
+        localStorage.getItem('first_name') ||
+        localStorage.getItem('PeopleFirstName') ||
+        '';
 
-    if (token && firstName) {
-      setIsLoggedIn(true);
-      setUser({ firstName, peopleId });
-    }
-  }, []);
+      // Token is the source of truth for authentication. Name is display-only.
+      if (token && peopleId) {
+        setIsLoggedIn(true);
+        setUser({ firstName, peopleId });
+      } else {
+        setIsLoggedIn(false);
+        setUser(null);
+      }
+      console.debug('[Header] auth check', { hasToken: !!token, hasPeopleId: !!peopleId, hasFirstName: !!firstName });
+    };
+    refreshAuth();
+    window.addEventListener('storage', refreshAuth);
+    return () => window.removeEventListener('storage', refreshAuth);
+  }, [location.pathname]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
