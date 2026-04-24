@@ -254,7 +254,12 @@
       "Bash(\"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/venv/Scripts/python.exe\" -c \"import backend; print\\('CropMonitor imports OK, app =', backend.app.title\\)\")",
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); paths=[p for p in d.get\\('paths',{}\\) if 'yield' in p or 'fields/{field_id}' in p]; [print\\(p\\) for p in paths[:20]]\")",
       "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId = 8888\")",
-      "Bash(awk 'NR>=795 && NR<=889' \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/saige/nodes.py\")"
+      "Bash(awk 'NR>=795 && NR<=889' \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/saige/nodes.py\")",
+      "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend\" status)",
+      "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/CropMonitoringBackend\" status)",
+      "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend\" status)",
+      "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend\" add saige/llm.py)",
+      "Bash(git -C \"F:/Oatmeal AI/OatmealFarmNetwork Repo/Backend\" commit --no-edit)"
     ],
     "additionalDirectories": [
       "\\tmp"
