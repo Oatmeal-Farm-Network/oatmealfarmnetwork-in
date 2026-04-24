@@ -6786,6 +6786,7 @@ export default function WebsiteBuilder() {
 
   // ── Setup wizard ───────────────────────────────────────────────
   if (setupMode) return (
+    <>
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Website Builder" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Website Builder' }]}>
       <div style={{ maxWidth: 700, margin: '0 auto' }}>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Create Your Website</h1>
@@ -6888,6 +6889,15 @@ export default function WebsiteBuilder() {
         </div>
       </div>
     </AccountLayout>
+    {paramView === 'lavendir' && (
+      <WebsiteAIAgent
+        websiteId={null}
+        businessId={parseInt(BusinessID)}
+        currentView="setup"
+        autoOpen={true}
+      />
+    )}
+    </>
   );
 
   // ── Main builder UI ────────────────────────────────────────────
@@ -7231,6 +7241,7 @@ export default function WebsiteBuilder() {
           websiteId={site.website_id}
           businessId={parseInt(BusinessID)}
           currentView={activePage?.page_name || 'page'}
+          autoOpen={paramView === 'lavendir'}
         />
       )}
     </>
@@ -7345,6 +7356,7 @@ export default function WebsiteBuilder() {
         websiteId={site.website_id}
         businessId={parseInt(BusinessID)}
         currentView={isDesign ? 'design' : isSettings ? 'settings' : isManagePages ? 'pages' : 'page'}
+        autoOpen={paramView === 'lavendir'}
       />
     )}
 

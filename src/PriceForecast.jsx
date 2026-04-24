@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import RelatedSuggestions from './RelatedSuggestions.jsx';
 
-const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001';
+const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001/saige';
 
 export default function PriceForecast() {
   const [commodities, setCommodities] = useState([]);

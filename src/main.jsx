@@ -7,8 +7,22 @@ function ScrollToTop() {
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 }
+
+// Persistent Saige widget — mounted once above <Routes> so open/closed state survives
+// navigation within the same section.
+function SaigeWidgetGlobal() {
+  const { pathname, search } = useLocation();
+  let pageContext = null;
+  if (pathname.startsWith('/precision-ag')) pageContext = 'Precision Ag';
+  else if (pathname.startsWith('/oatsense'))    pageContext = 'OatSense';
+  else if (pathname.startsWith('/livestock'))   pageContext = 'Livestock';
+  if (!pageContext) return null;
+  const businessId = new URLSearchParams(search).get('BusinessID');
+  return <SaigeWidget businessId={businessId} pageContext={pageContext} />;
+}
 import './index.css'
 import { AccountProvider } from './AccountContext';
+import SaigeWidget from './SaigeWidget';
 import "./AnimalAddWizard.css";
 import AnimalEdit from "./AnimalEdit";
 import MeatInventory from './MeatInventory';
@@ -124,6 +138,17 @@ const PrecisionAgZoning = lazyWithReload(() => import('./PrecisionAgZoning.jsx')
 const PrecisionAgMaps = lazyWithReload(() => import('./PrecisionAgMaps.jsx'))
 const PrecisionAgCropStatus = lazyWithReload(() => import('./PrecisionAgCropStatus.jsx'))
 const PrecisionAgMultiLayer = lazyWithReload(() => import('./PrecisionAgMultiLayer.jsx'))
+const PrecisionAgScouting = lazyWithReload(() => import('./PrecisionAgScouting.jsx'))
+const PrecisionAgPrescriptions = lazyWithReload(() => import('./PrecisionAgPrescriptions.jsx'))
+const PrecisionAgSoilSamples = lazyWithReload(() => import('./PrecisionAgSoilSamples.jsx'))
+const PrecisionAgReports = lazyWithReload(() => import('./PrecisionAgReports.jsx'))
+const PrecisionAgAlerts = lazyWithReload(() => import('./PrecisionAgAlerts.jsx'))
+const PrecisionAgGDD = lazyWithReload(() => import('./PrecisionAgGDD.jsx'))
+const PrecisionAgActivityLog = lazyWithReload(() => import('./PrecisionAgActivityLog.jsx'))
+const PrecisionAgIrrigation = lazyWithReload(() => import('./PrecisionAgIrrigation.jsx'))
+const PrecisionAgYieldForecast = lazyWithReload(() => import('./PrecisionAgYieldForecast.jsx'))
+const PrecisionAgCarbon = lazyWithReload(() => import('./PrecisionAgCarbon.jsx'))
+const PrecisionAgBenchmark = lazyWithReload(() => import('./PrecisionAgBenchmark.jsx'))
 const CropRotation = lazyWithReload(() => import('./CropRotation.jsx'))
 const OatSenseNotes = lazyWithReload(() => import('./OatSenseNotes.jsx'))
 const WebsiteBuilder = lazyWithReload(() => import('./WebsiteBuilder.jsx'))
@@ -290,6 +315,17 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/analysis/maps" element={<PrecisionAgMaps />} />
           <Route path="/precision-ag/analysis/crop-status" element={<PrecisionAgCropStatus />} />
           <Route path="/precision-ag/analysis/multi-layer" element={<PrecisionAgMultiLayer />} />
+          <Route path="/precision-ag/scouting" element={<PrecisionAgScouting />} />
+          <Route path="/precision-ag/prescriptions" element={<PrecisionAgPrescriptions />} />
+          <Route path="/precision-ag/soil-samples" element={<PrecisionAgSoilSamples />} />
+          <Route path="/precision-ag/reports" element={<PrecisionAgReports />} />
+          <Route path="/precision-ag/alerts" element={<PrecisionAgAlerts />} />
+          <Route path="/precision-ag/gdd" element={<PrecisionAgGDD />} />
+          <Route path="/precision-ag/activity-log" element={<PrecisionAgActivityLog />} />
+          <Route path="/precision-ag/irrigation" element={<PrecisionAgIrrigation />} />
+          <Route path="/precision-ag/yield-forecast" element={<PrecisionAgYieldForecast />} />
+          <Route path="/precision-ag/carbon" element={<PrecisionAgCarbon />} />
+          <Route path="/precision-ag/benchmark" element={<PrecisionAgBenchmark />} />
           <Route path="/precision-ag/crop-detection" element={<CropDetection />} />
           <Route path="/precision-ag/visualizations" element={<RequireAuth><VisualizationsDashboard /></RequireAuth>} />
           <Route path="/precision-ag/visualizations/crop-analysis-summary" element={<RequireAuth><CropAnalysisSummary /></RequireAuth>} />
@@ -452,6 +488,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/accounting" element={<RequireAuth><Accounting /></RequireAuth>} />
 
         </Routes>
+        <SaigeWidgetGlobal />
         </AppShell>
         )} {/* end isCustomDomain ternary */}
       </Suspense>

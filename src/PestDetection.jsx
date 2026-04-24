@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import RelatedSuggestions from './RelatedSuggestions.jsx';
 
-const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001';
+const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001/saige';
 
 function confidenceColor(c) {
   if (c === 'high') return { bg: '#ecfdf5', border: '#86efac', color: '#065f46' };

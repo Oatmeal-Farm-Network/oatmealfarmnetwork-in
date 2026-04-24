@@ -100,7 +100,7 @@ export default function AccountSidebar() {
 
   return (
     <div
-      className={`fixed top-18 left-0 bottom-0 z-40 flex flex-col transition-all duration-300 ${Expanded ? 'w-52' : 'w-16'}`}
+      className={`fixed top-18 left-0 bottom-0 z-60 flex flex-col transition-all duration-300 ${Expanded ? 'w-52' : 'w-16'}`}
       style={{ backgroundColor: '#faf6ef' }}
     >
       <button
@@ -178,6 +178,7 @@ export default function AccountSidebar() {
             onToggle={() => toggleSection('Precision Ag')}
           >
             <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}`} label="Ag Dashboard" />
+            <NavChild to={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} label="Crop Detection" />
             <button
               onClick={() => setAnalysisOpen(p => !p)}
               className="w-full flex items-center px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
@@ -196,22 +197,18 @@ export default function AccountSidebar() {
                 <NavChild to={`/precision-ag/analysis/multi-layer?BusinessID=${BusinessID}`} label="Multi-layer View" />
               </div>
             )}
-            <NavChild to={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} label="Crop Detection" />
+            <NavChild to={`/precision-ag/scouting?BusinessID=${BusinessID}`} label="Scouting" />
+            <NavChild to={`/precision-ag/prescriptions?BusinessID=${BusinessID}`} label="Prescriptions" />
+            <NavChild to={`/precision-ag/soil-samples?BusinessID=${BusinessID}`} label="Soil Samples" />
+            <NavChild to={`/precision-ag/reports?BusinessID=${BusinessID}`} label="Reports" />
+            <NavChild to={`/precision-ag/alerts?BusinessID=${BusinessID}`} label="Alerts" />
+            <NavChild to={`/precision-ag/gdd?BusinessID=${BusinessID}`} label="Growing Degree Days" />
+            <NavChild to={`/precision-ag/activity-log?BusinessID=${BusinessID}`} label="Activity Log" />
+            <NavChild to={`/precision-ag/irrigation?BusinessID=${BusinessID}`} label="Irrigation" />
+            <NavChild to={`/precision-ag/yield-forecast?BusinessID=${BusinessID}`} label="Yield Forecast" />
+            <NavChild to={`/precision-ag/carbon?BusinessID=${BusinessID}`} label="Carbon & Sustainability" />
+            <NavChild to={`/precision-ag/benchmark?BusinessID=${BusinessID}`} label="Benchmark" />
             <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`} label="Add Field" />
-            {fields.length > 0 && (
-              <>
-                <div className="ml-4 mt-1 mb-0.5 text-[10px] text-gray-400 uppercase tracking-wide px-3">
-                  {Expanded ? 'Your Fields' : ''}
-                </div>
-                {fields.map((field) => (
-                  <NavChild
-                    key={field.fieldid || field.id}
-                    to={`/precision-ag/analyses?BusinessID=${BusinessID}&FieldID=${field.fieldid || field.id}`}
-                    label={field.name}
-                  />
-                ))}
-              </>
-            )}
             <NavChild to={`/precision-ag/analyses?BusinessID=${BusinessID}`} label="Analyses" />
             <NavChild to={`/precision-ag/visualizations?BusinessID=${BusinessID}`} label="Visualizations" />
             <NavChild to={`/precision-ag/visualizations/crop-analysis-summary?BusinessID=${BusinessID}`} label="— Crop Analysis Summary" />
@@ -380,6 +377,7 @@ export default function AccountSidebar() {
             isOpen={OpenSections['My Website'] || false}
             onToggle={() => toggleSection('My Website')}
           >
+            <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=lavendir`} label="✦ Lavendir AI" />
             {!websiteSlug ? (
               <NavChild to={`/website/builder?BusinessID=${BusinessID}`} label="Create Website" />
             ) : (

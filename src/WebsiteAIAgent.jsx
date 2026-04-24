@@ -276,19 +276,22 @@ function _saveStoredChat(businessId, messages) {
 }
 
 // ── Main component ────────────────────────────────────────────────
-export default function WebsiteAIAgent({ websiteId, businessId, currentView }) {
+export default function WebsiteAIAgent({ websiteId, businessId, currentView, autoOpen = false }) {
   const { Expanded: sidebarExpanded } = useAccount();
   const sidebarWidth = sidebarExpanded ? 208 : 64;
   const location = useLocation();
 
-  const [open, setOpen]                   = useState(false);
-  const [panelExpanded, setPanelExpanded] = useState(false);
+  const [open, setOpen]                   = useState(autoOpen);
+  const [panelExpanded, setPanelExpanded] = useState(autoOpen);
+  const _isMounted = useRef(false);
 
   // Collapse full-page mode on route change so Lavendir doesn't sit on top
   // of the page the user just navigated to. Watch the query string too —
   // /blog/manage?view=new and /website/builder?view=design are separate
   // screens under the same pathname.
+  // Skip the very first render so autoOpen isn't immediately cancelled.
   useEffect(() => {
+    if (!_isMounted.current) { _isMounted.current = true; return; }
     if (panelExpanded) setPanelExpanded(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, location.search]);

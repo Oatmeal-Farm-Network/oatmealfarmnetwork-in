@@ -8,7 +8,7 @@ import SaigeFieldsCard from './SaigeFieldsCard';
 import SaigeDraftsPanel from './SaigeDraftsPanel';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001';
+const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001/saige';
 
 // ─── STORAGE HELPERS (user-scoped) ───────────────────────────────────────────
 function threadsKey(userId) { return `saige_threads_${userId}`; }
