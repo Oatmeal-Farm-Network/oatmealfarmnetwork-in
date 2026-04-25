@@ -47,17 +47,15 @@ export default function AccountSidebar() {
   const [fields, setFields] = useState([]);
   const [websiteSlug, setWebsiteSlug] = useState(null);
   const [features, setFeatures] = useState(null);
-  const [analysisOpen, setAnalysisOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
-    if (BT === 8 && BusinessID) {
-      fetch(`${API_URL}/api/fields?business_id=${BusinessID}`)
-        .then(r => r.ok ? r.json() : [])
-        .then(data => setFields(Array.isArray(data) ? data : []))
-        .catch(() => setFields([]));
-    }
-  }, [BT, BusinessID]);
+    if (!BusinessID) return;
+    fetch(`${API_URL}/api/fields?business_id=${BusinessID}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setFields(Array.isArray(data) ? data : []))
+      .catch(() => setFields([]));
+  }, [BusinessID]);
 
   useEffect(() => {
     if (!BusinessID) return;
@@ -179,41 +177,21 @@ export default function AccountSidebar() {
           >
             <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}`} label="Ag Dashboard" />
             <NavChild to={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} label="Crop Detection" />
-            <button
-              onClick={() => setAnalysisOpen(p => !p)}
-              className="w-full flex items-center px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
-            >
-              <span className="grow text-left">Analysis</span>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
-                {analysisOpen ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
-              </svg>
-            </button>
-            {analysisOpen && (
-              <div className="ml-4 flex flex-col gap-0.5">
-                <NavChild to={`/precision-ag/analysis/histograms?BusinessID=${BusinessID}`} label="Histograms" />
-                <NavChild to={`/precision-ag/analysis/zoning?BusinessID=${BusinessID}`} label="Zoning" />
-                <NavChild to={`/precision-ag/analysis/maps?BusinessID=${BusinessID}`} label="Maps" />
-                <NavChild to={`/precision-ag/analysis/crop-status?BusinessID=${BusinessID}`} label="Crop Status" />
-                <NavChild to={`/precision-ag/analysis/multi-layer?BusinessID=${BusinessID}`} label="Multi-layer View" />
+            {fields.length > 0 && (
+              <div className="mt-1 pt-1 border-t border-gray-300/40">
+                {fields.map(f => {
+                  const fid = f.fieldid ?? f.id;
+                  const fname = f.name ?? f.fieldname ?? f.FieldName ?? `Field ${fid}`;
+                  return (
+                    <NavChild
+                      key={fid}
+                      to={`/precision-ag/analyses?BusinessID=${BusinessID}&FieldID=${fid}`}
+                      label={fname}
+                    />
+                  );
+                })}
               </div>
             )}
-            <NavChild to={`/precision-ag/scouting?BusinessID=${BusinessID}`} label="Scouting" />
-            <NavChild to={`/precision-ag/prescriptions?BusinessID=${BusinessID}`} label="Prescriptions" />
-            <NavChild to={`/precision-ag/soil-samples?BusinessID=${BusinessID}`} label="Soil Samples" />
-            <NavChild to={`/precision-ag/reports?BusinessID=${BusinessID}`} label="Reports" />
-            <NavChild to={`/precision-ag/alerts?BusinessID=${BusinessID}`} label="Alerts" />
-            <NavChild to={`/precision-ag/gdd?BusinessID=${BusinessID}`} label="Growing Degree Days" />
-            <NavChild to={`/precision-ag/activity-log?BusinessID=${BusinessID}`} label="Activity Log" />
-            <NavChild to={`/precision-ag/irrigation?BusinessID=${BusinessID}`} label="Irrigation" />
-            <NavChild to={`/precision-ag/yield-forecast?BusinessID=${BusinessID}`} label="Yield Forecast" />
-            <NavChild to={`/precision-ag/carbon?BusinessID=${BusinessID}`} label="Carbon & Sustainability" />
-            <NavChild to={`/precision-ag/benchmark?BusinessID=${BusinessID}`} label="Benchmark" />
-            <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`} label="Add Field" />
-            <NavChild to={`/precision-ag/analyses?BusinessID=${BusinessID}`} label="Analyses" />
-            <NavChild to={`/precision-ag/visualizations?BusinessID=${BusinessID}`} label="Visualizations" />
-            <NavChild to={`/precision-ag/visualizations/crop-analysis-summary?BusinessID=${BusinessID}`} label="— Crop Analysis Summary" />
-            <NavChild to={`/oatsense/crop-rotation?BusinessID=${BusinessID}`} label="Crop Rotation" />
-            <NavChild to={`/oatsense/notes?BusinessID=${BusinessID}`} label="Notes" />
           </NavSection>
         )}
 
@@ -377,7 +355,7 @@ export default function AccountSidebar() {
             isOpen={OpenSections['My Website'] || false}
             onToggle={() => toggleSection('My Website')}
           >
-            <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=lavendir`} label="✦ Lavendir AI" />
+            <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=lavendir`} label={<><img src="/images/LavendirIcon.png" alt="" className="w-4 h-4 mr-1.5 inline-block align-text-bottom" />Lavendir AI</>} />
             {!websiteSlug ? (
               <NavChild to={`/website/builder?BusinessID=${BusinessID}`} label="Create Website" />
             ) : (

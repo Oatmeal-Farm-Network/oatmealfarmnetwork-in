@@ -8,7 +8,18 @@ import SaigeFieldsCard from './SaigeFieldsCard';
 import SaigeDraftsPanel from './SaigeDraftsPanel';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001/saige';
+const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
+
+// ─── PALETTE (matches floating SaigeWidget) ──────────────────────────────────
+const SAIGE_GREEN      = '#3D6B34';
+const SAIGE_GREEN_DARK = '#2c4f25';
+const SAIGE_LIGHT      = '#f0f7ee';
+const SAIGE_BORDER     = '#c7dfc2';
+const SAIGE_PANEL_BG   = '#fafdf9';
+const SAIGE_TEXT       = '#1f2937';
+const SAIGE_MUTED      = '#6b7280';
+const SAIGE_FONT_HEAD  = 'Lora, Georgia, serif';
+const SAIGE_FONT_BODY  = 'Montserrat, system-ui, sans-serif';
 
 // ─── STORAGE HELPERS (user-scoped) ───────────────────────────────────────────
 function threadsKey(userId) { return `saige_threads_${userId}`; }
@@ -109,10 +120,10 @@ const STAGE_MESSAGES = {
 };
 
 const ADVISORY_COLORS = {
-  weather:   { bg: 'rgba(14,165,233,0.15)', text: '#38bdf8' },
-  livestock: { bg: 'rgba(245,158,11,0.15)', text: '#fbbf24' },
-  crops:     { bg: 'rgba(34,197,94,0.15)',  text: '#4ade80' },
-  mixed:     { bg: 'rgba(168,85,247,0.15)', text: '#c084fc' },
+  weather:   { bg: 'rgba(14,165,233,0.18)',  text: '#0369a1' },
+  livestock: { bg: 'rgba(245,158,11,0.20)',  text: '#92400e' },
+  crops:     { bg: 'rgba(34,197,94,0.20)',   text: SAIGE_GREEN_DARK },
+  mixed:     { bg: 'rgba(168,85,247,0.20)',  text: '#6b21a8' },
 };
 
 // ─── THINKING INDICATOR ───────────────────────────────────────────────────────
@@ -128,42 +139,64 @@ function ThinkingDots({ stage }) {
     <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
       <div style={{
         maxWidth: '80%', borderRadius: 12, padding: '12px 16px',
-        background: 'linear-gradient(135deg,#1e293b,#0f172a)',
-        border: '1px solid #334155', color: '#e2e8f0',
+        background: SAIGE_LIGHT,
+        border: `1px solid ${SAIGE_BORDER}`, color: SAIGE_TEXT,
         display: 'flex', alignItems: 'center', gap: 10,
+        fontFamily: SAIGE_FONT_BODY,
       }}>
         <svg style={{ width: 18, height: 18, flexShrink: 0, animation: 'saige-spin 1s linear infinite' }}
-          fill="none" viewBox="0 0 24 24" stroke="#60a5fa" strokeWidth={2}>
+          fill="none" viewBox="0 0 24 24" stroke={SAIGE_GREEN} strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round"
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
-        <span style={{ fontSize: 13, color: '#94a3b8', fontStyle: 'italic' }}>{msgs[msgIdx]}</span>
+        <span style={{ fontSize: 13, color: SAIGE_GREEN_DARK, fontStyle: 'italic' }}>{msgs[msgIdx]}</span>
       </div>
     </div>
   );
 }
 
 // ─── CHAT BUBBLE ─────────────────────────────────────────────────────────────
-function ChatBubble({ message }) {
+function ChatBubble({ message, voiceSupported, onSpeak }) {
   const isUser = message.role === 'user';
   return (
-    <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
+    <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: 10 }}>
       {!isUser && (
         <div style={{
           width: 32, height: 32, borderRadius: '50%', flexShrink: 0, marginRight: 8, marginTop: 2,
-          background: 'linear-gradient(135deg,#16a34a,#15803d)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-        }}>🌾</div>
+          background: SAIGE_GREEN,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden',
+        }}>
+          <img src="/images/SaigeIcon.png" alt="Saige" style={{ width: 32, height: 32, objectFit: 'cover' }} />
+        </div>
       )}
-      <div style={{
-        maxWidth: '75%', borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-        padding: '10px 14px',
-        background: isUser ? 'linear-gradient(135deg,#1d4ed8,#1e40af)' : 'linear-gradient(135deg,#1e293b,#0f172a)',
-        border: isUser ? 'none' : '1px solid #334155',
-        color: '#f1f5f9', fontSize: 14, lineHeight: 1.6,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+      <div className={isUser ? undefined : 'saige-msg'} style={{
+        position: 'relative',
+        maxWidth: '75%', borderRadius: isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+        padding: '9px 13px',
+        background: isUser ? SAIGE_GREEN : SAIGE_LIGHT,
+        border: isUser ? 'none' : `1px solid ${SAIGE_BORDER}`,
+        color: isUser ? '#fff' : SAIGE_TEXT,
+        fontSize: 13.5, lineHeight: 1.55,
+        fontFamily: SAIGE_FONT_BODY,
+        boxShadow: '0 1px 2px rgba(15,40,10,0.06)',
+        paddingRight: !isUser && voiceSupported ? '2.2rem' : '13px',
       }}>
-        <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{message.content}</p>
+        <p style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{message.content}</p>
+        {!isUser && voiceSupported && (
+          <button
+            className="saige-speak"
+            onClick={() => onSpeak(message.content)}
+            title="Read aloud"
+            style={{
+              position: 'absolute', top: 5, right: 5,
+              background: 'transparent', border: 'none',
+              color: SAIGE_GREEN, fontSize: 13, cursor: 'pointer',
+              padding: '2px 4px', opacity: 0, transition: 'opacity 0.15s',
+              lineHeight: 1,
+            }}
+          >🔊</button>
+        )}
       </div>
     </div>
   );
@@ -176,47 +209,51 @@ function QuizCard({ quiz, selectedOption, customAnswer, onOptionChange, onCustom
     <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
       <div style={{
         maxWidth: '80%', borderRadius: 12, padding: '16px 18px',
-        background: 'linear-gradient(135deg,#1e293b,#0f172a)',
-        border: '1px solid #334155', color: '#e2e8f0',
+        background: '#fff',
+        border: `1px solid ${SAIGE_BORDER}`, color: SAIGE_TEXT,
+        boxShadow: '0 2px 6px rgba(15,40,10,0.06)',
+        fontFamily: SAIGE_FONT_BODY,
       }}>
-        <p style={{ fontSize: 14, color: '#cbd5e1', marginBottom: 14, lineHeight: 1.5 }}>{quiz.question}</p>
+        <p style={{ fontSize: 14, color: SAIGE_TEXT, marginBottom: 14, lineHeight: 1.5, fontWeight: 500 }}>{quiz.question}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
           {quiz.options.map(opt => (
             <label key={opt} style={{
               display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
               padding: '8px 10px', borderRadius: 8, fontSize: 13,
-              background: selectedOption === opt ? 'rgba(29,78,216,0.3)' : 'rgba(255,255,255,0.04)',
-              border: `1px solid ${selectedOption === opt ? '#3b82f6' : '#334155'}`,
+              background: selectedOption === opt ? SAIGE_LIGHT : '#fafafa',
+              border: `1px solid ${selectedOption === opt ? SAIGE_GREEN : '#e5e7eb'}`,
+              color: SAIGE_TEXT,
               transition: 'all 0.15s',
             }}>
               <input type="radio" name="saige-quiz" value={opt}
                 checked={selectedOption === opt}
                 onChange={e => { onOptionChange(e.target.value); onCustomChange(''); }}
-                style={{ accentColor: '#3b82f6' }}
+                style={{ accentColor: SAIGE_GREEN }}
               />
               {opt}
             </label>
           ))}
         </div>
-        <div style={{ borderTop: '1px solid #334155', paddingTop: 12, marginBottom: 12 }}>
-          <p style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>Or write your own answer...</p>
+        <div style={{ borderTop: `1px solid ${SAIGE_BORDER}`, paddingTop: 12, marginBottom: 12 }}>
+          <p style={{ fontSize: 12, color: SAIGE_MUTED, marginBottom: 8 }}>Or write your own answer...</p>
           <input type="text" value={customAnswer}
             onChange={e => { onCustomChange(e.target.value); onOptionChange(''); }}
             onKeyDown={e => { if (e.key === 'Enter' && canSubmit) onSubmit(); }}
             placeholder="Type your answer..."
             style={{
               width: '100%', padding: '8px 12px', borderRadius: 8, fontSize: 13,
-              background: '#0f172a', border: '1px solid #334155', color: '#f1f5f9',
-              outline: 'none', boxSizing: 'border-box',
+              background: '#fff', border: '1px solid #d1d5db', color: SAIGE_TEXT,
+              outline: 'none', boxSizing: 'border-box', fontFamily: SAIGE_FONT_BODY,
             }}
           />
         </div>
         <button onClick={onSubmit} disabled={!canSubmit} style={{
           width: '100%', padding: '10px', borderRadius: 8, border: 'none',
-          background: canSubmit ? '#1d4ed8' : '#1e293b',
-          color: canSubmit ? 'white' : '#475569',
+          background: canSubmit ? SAIGE_GREEN : '#e5e7eb',
+          color: canSubmit ? 'white' : '#9ca3af',
           cursor: canSubmit ? 'pointer' : 'not-allowed',
           fontWeight: 600, fontSize: 13, transition: 'background 0.15s',
+          fontFamily: SAIGE_FONT_BODY,
         }}>Submit Answer</button>
       </div>
     </div>
@@ -229,28 +266,34 @@ function ChatSidebar({ threads, activeThreadId, isCollapsed, isLoading, onToggle
     <div style={{
       width: isCollapsed ? 0 : 260, minWidth: isCollapsed ? 0 : 260,
       overflow: 'hidden', transition: 'all 0.3s ease',
-      background: '#0f172a', borderRight: '1px solid #1e293b',
+      background: '#fff', borderRight: `1px solid ${SAIGE_BORDER}`,
       display: 'flex', flexDirection: 'column', position: 'relative', flexShrink: 0,
+      fontFamily: SAIGE_FONT_BODY,
     }}>
-      <div style={{ padding: '16px 14px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1e293b' }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1 }}>History</span>
+      <div style={{ padding: '14px 14px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${SAIGE_BORDER}` }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: SAIGE_GREEN_DARK, textTransform: 'uppercase', letterSpacing: 1 }}>Chat history</span>
       </div>
       <div style={{ padding: '10px 10px 6px' }}>
         <button onClick={onNewChat} style={{
           width: '100%', padding: '9px 12px', borderRadius: 8, border: 'none',
-          background: 'linear-gradient(135deg,#16a34a,#15803d)', color: 'white',
+          background: SAIGE_GREEN, color: 'white',
           cursor: 'pointer', fontWeight: 600, fontSize: 13,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-        }}>
-          <span style={{ fontSize: 16 }}>+</span> New Chat
+          fontFamily: SAIGE_FONT_BODY,
+          transition: 'background 0.15s',
+        }}
+          onMouseEnter={e => e.currentTarget.style.background = SAIGE_GREEN_DARK}
+          onMouseLeave={e => e.currentTarget.style.background = SAIGE_GREEN}
+        >
+          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> New Chat
         </button>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 8px' }}>
         {isLoading && threads.length === 0 && (
-          <p style={{ textAlign: 'center', color: '#475569', fontSize: 12, padding: '20px 0' }}>Loading...</p>
+          <p style={{ textAlign: 'center', color: SAIGE_MUTED, fontSize: 12, padding: '20px 0' }}>Loading...</p>
         )}
         {!isLoading && threads.length === 0 && (
-          <p style={{ textAlign: 'center', color: '#475569', fontSize: 12, padding: '20px 8px', lineHeight: 1.5 }}>
+          <p style={{ textAlign: 'center', color: SAIGE_MUTED, fontSize: 12, padding: '20px 8px', lineHeight: 1.5 }}>
             No past conversations yet. Start a new chat!
           </p>
         )}
@@ -262,32 +305,32 @@ function ChatSidebar({ threads, activeThreadId, isCollapsed, isLoading, onToggle
               style={{
                 position: 'relative', padding: '9px 10px', borderRadius: 8, marginBottom: 3,
                 cursor: 'pointer', transition: 'background 0.15s',
-                background: isActive ? '#1e293b' : 'transparent',
-                border: isActive ? '1px solid #334155' : '1px solid transparent',
+                background: isActive ? SAIGE_LIGHT : 'transparent',
+                border: isActive ? `1px solid ${SAIGE_BORDER}` : '1px solid transparent',
               }}
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#f5faf3'; }}
               onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
             >
-              <p style={{ margin: '0 0 4px', fontSize: 13, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 20 }}>
+              <p style={{ margin: '0 0 4px', fontSize: 13, color: SAIGE_TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 20, fontWeight: isActive ? 600 : 500 }}>
                 {t.preview || 'Empty conversation'}
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: t.status === 'complete' ? '#22c55e' : '#eab308', flexShrink: 0 }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: t.status === 'complete' ? SAIGE_GREEN : '#d97706', flexShrink: 0 }} />
                 {color && (
                   <span style={{ padding: '1px 6px', borderRadius: 10, fontSize: 10, fontWeight: 600, background: color.bg, color: color.text }}>
                     {t.advisory_type}
                   </span>
                 )}
-                <span style={{ fontSize: 11, color: '#475569', marginLeft: 'auto' }}>{formatRelativeTime(t.updated_at)}</span>
+                <span style={{ fontSize: 11, color: SAIGE_MUTED, marginLeft: 'auto' }}>{formatRelativeTime(t.updated_at)}</span>
               </div>
               <button onClick={e => { e.stopPropagation(); onDelete(t.thread_id); }}
                 style={{
                   position: 'absolute', top: 8, right: 6, padding: '3px', borderRadius: 4,
-                  background: 'none', border: 'none', cursor: 'pointer', color: '#475569',
+                  background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af',
                   opacity: 0, transition: 'opacity 0.15s',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = '#f87171'; }}
-                onMouseLeave={e => { e.currentTarget.style.opacity = 0; e.currentTarget.style.color = '#475569'; }}
+                onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = '#dc2626'; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = 0; e.currentTarget.style.color = '#9ca3af'; }}
               >✕</button>
             </div>
           );
@@ -423,6 +466,25 @@ function getAuthHeaders() {
 
 const _msgCache = new Map();
 
+// ─── VOICE HELPERS ───────────────────────────────────────────────────────────
+// Strip markdown so spoken output doesn't read "asterisk asterisk".
+function cleanForSpeech(text) {
+  return (text || '')
+    .replace(/```[\s\S]*?```/g, ' code block. ')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/#{1,6}\s/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[•▪–—]/g, ',')
+    .replace(/\n{2,}/g, '. ')
+    .replace(/\n/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .substring(0, 2000);
+}
+
+const SAIGE_AUTOSPEAK_KEY = 'saige_auto_speak';
+
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function SaigePage() {
   const [searchParams] = useSearchParams();
@@ -480,6 +542,160 @@ export default function SaigePage() {
   const switchingRef    = useRef(false);
   const abortRef        = useRef(null);
   const inputRef        = useRef(null);
+
+  // ── Voice (browser-native TTS + STT) ───────────────────────────────────────
+  const ttsSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  const sttSupported = typeof window !== 'undefined' &&
+    Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const voiceSupported = ttsSupported || sttSupported;
+
+  const [autoSpeak, setAutoSpeak] = useState(() => {
+    try {
+      const stored = localStorage.getItem(SAIGE_AUTOSPEAK_KEY);
+      return stored === null ? false : stored === 'true';
+    } catch { return false; }
+  });
+  const [speaking,  setSpeaking]  = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [voiceError, setVoiceError] = useState(null);
+
+  const recognitionRef    = useRef(null);
+  const isRecordingRef    = useRef(false);
+  const liveTranscriptRef = useRef('');
+  const pausedForTtsRef   = useRef(false);
+  const sendMsgRef        = useRef(() => {});
+
+  const showVoiceError = (msg) => {
+    setVoiceError(msg);
+    setTimeout(() => setVoiceError(null), 4000);
+  };
+
+  const stopTTS = useCallback(() => {
+    if (ttsSupported) window.speechSynthesis.cancel();
+    setSpeaking(false);
+    if (pausedForTtsRef.current && recognitionRef.current && isRecordingRef.current) {
+      pausedForTtsRef.current = false;
+      setTimeout(() => {
+        try { recognitionRef.current?.start(); } catch {}
+      }, 350);
+    } else {
+      pausedForTtsRef.current = false;
+    }
+  }, [ttsSupported]);
+
+  const playTTS = useCallback((text) => {
+    if (!ttsSupported) return;
+    const cleaned = cleanForSpeech(text);
+    if (!cleaned) return;
+    // Pause mic while we speak so Saige doesn't hear herself
+    if (recognitionRef.current && isRecordingRef.current) {
+      pausedForTtsRef.current = true;
+      try { recognitionRef.current.stop(); } catch {}
+    }
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(cleaned);
+    utter.rate = 1.0;
+    utter.pitch = 1.0;
+    utter.volume = 1.0;
+    // Prefer an English female voice if one is available
+    const voices = window.speechSynthesis.getVoices();
+    const preferred =
+      voices.find(v => /en[-_]US/i.test(v.lang) && /female|samantha|jenny|aria|zira/i.test(v.name)) ||
+      voices.find(v => /en[-_]GB/i.test(v.lang) && /female|hazel|libby/i.test(v.name)) ||
+      voices.find(v => /^en/i.test(v.lang));
+    if (preferred) utter.voice = preferred;
+    utter.onend = () => {
+      setSpeaking(false);
+      if (pausedForTtsRef.current && recognitionRef.current && isRecordingRef.current) {
+        pausedForTtsRef.current = false;
+        setTimeout(() => { try { recognitionRef.current?.start(); } catch {} }, 350);
+      } else {
+        pausedForTtsRef.current = false;
+      }
+    };
+    utter.onerror = () => { setSpeaking(false); pausedForTtsRef.current = false; };
+    setSpeaking(true);
+    window.speechSynthesis.speak(utter);
+  }, [ttsSupported]);
+
+  const setAndSaveAutoSpeak = (v) => {
+    setAutoSpeak(v);
+    try { localStorage.setItem(SAIGE_AUTOSPEAK_KEY, String(v)); } catch {}
+    if (!v && speaking) stopTTS();
+  };
+
+  const stopRecording = useCallback(() => {
+    isRecordingRef.current = false;
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+      recognitionRef.current = null;
+    }
+    const text = liveTranscriptRef.current.trim();
+    liveTranscriptRef.current = '';
+    setInput('');
+    setRecording(false);
+    if (text) sendMsgRef.current(text);
+  }, []);
+
+  const startRecording = useCallback(() => {
+    if (recording || !sttSupported) return;
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    try {
+      const rec = new SpeechRec();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+      let finalText = '';
+      let silenceTimer = null;
+      const SILENCE_MS = 1500;
+
+      const submitIfReady = () => {
+        const text = liveTranscriptRef.current.trim();
+        if (!text) return;
+        liveTranscriptRef.current = '';
+        finalText = '';
+        setInput('');
+        sendMsgRef.current(text);
+      };
+
+      rec.onresult = (e) => {
+        if (silenceTimer) clearTimeout(silenceTimer);
+        silenceTimer = setTimeout(submitIfReady, SILENCE_MS);
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) finalText += e.results[i][0].transcript + ' ';
+          else interim += e.results[i][0].transcript;
+        }
+        const combined = finalText + interim;
+        liveTranscriptRef.current = combined;
+        setInput(combined);
+      };
+      rec.onend = () => {
+        if (isRecordingRef.current && !pausedForTtsRef.current) {
+          try { rec.start(); } catch {}
+        }
+      };
+      rec.onerror = (e) => {
+        if (e.error === 'no-speech' || e.error === 'aborted') return;
+        if (e.error === 'not-allowed') showVoiceError('Microphone permission denied.');
+        else showVoiceError(`Mic error: ${e.error}`);
+        stopRecording();
+      };
+      rec.start();
+      recognitionRef.current = rec;
+      isRecordingRef.current = true;
+      setRecording(true);
+    } catch (err) {
+      showVoiceError('Could not start microphone.');
+    }
+  }, [recording, sttSupported, stopRecording]);
+
+  // Cleanup voice on unmount
+  useEffect(() => () => {
+    isRecordingRef.current = false;
+    if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch {} }
+    if (ttsSupported) { try { window.speechSynthesis.cancel(); } catch {} }
+  }, [ttsSupported]);
 
   useEffect(() => { if (!activeThreadId) setActiveThreadId(generateThreadId()); }, [activeThreadId]);
   useEffect(() => { if (window.innerWidth < 900) setSidebarCollapsed(true); }, []);
@@ -644,6 +860,7 @@ export default function SaigePage() {
           return updated;
         });
         fetchThreads();
+        if (autoSpeak && content) playTTS(content);
       } else if (data.status === 'error') {
         setActiveChat(prev => [...prev, { role: 'assistant', content: `Sorry, an error occurred: ${data.message || 'Please try again.'}` }]);
       } else {
@@ -666,6 +883,10 @@ export default function SaigePage() {
     sendMessage(answer, { showUserBubble: false });
   }
 
+  // Keep mic-callback's send fn fresh — speech callbacks fire after state
+  // updates, and capturing sendMessage in a closure would go stale.
+  sendMsgRef.current = sendMessage;
+
   if (!authChecked) return null;
   if (!isLoggedIn) return <AboutSaige />;
 
@@ -674,21 +895,48 @@ export default function SaigePage() {
       <div style={{ margin: '-24px', display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 180px)' }}>
 
         <div style={{
-          padding: '10px 20px', background: 'white', borderBottom: '1px solid #e8e0d5',
-          display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
+          padding: '10px 18px', background: SAIGE_GREEN, color: '#fff',
+          display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0,
+          boxShadow: '0 1px 0 rgba(0,0,0,0.08)',
         }}>
           <button onClick={() => setSidebarCollapsed(p => !p)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 6, color: '#6b7280', fontSize: 18 }}
-            title={sidebarCollapsed ? 'Show history' : 'Hide history'}
+            style={{
+              background: 'rgba(255,255,255,0.18)', border: 'none', cursor: 'pointer',
+              padding: '6px 10px', borderRadius: 6, color: '#fff', fontSize: 16,
+              fontWeight: 700, lineHeight: 1,
+            }}
+            title={sidebarCollapsed ? 'Show chat history' : 'Hide chat history'}
           >☰</button>
-          <img src="/images/AI-agent-logo-saige.svg" alt="Saige" style={{ width: 28, height: 28, flexShrink: 0 }} />
-          <div>
-            <div style={{ fontFamily: 'Georgia,serif', fontWeight: 700, fontSize: 17, color: '#2c1a0e' }}>Saige</div>
-            <div style={{ fontSize: 11, color: '#8b7355' }}>AI Agricultural Assistant — crops, livestock, soil, weather & more</div>
+          <img src="/images/SaigeIcon.png" alt="Saige" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid rgba(255,255,255,0.4)' }} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: SAIGE_FONT_HEAD, fontWeight: 700, fontSize: 17, lineHeight: 1.1, color: '#fff' }}>Saige</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontFamily: SAIGE_FONT_BODY }}>
+              Your AI Agricultural Assistant — crops, livestock, soil, weather &amp; more
+            </div>
           </div>
+          {ttsSupported && (
+            <button
+              onClick={() => setAndSaveAutoSpeak(!autoSpeak)}
+              title={autoSpeak ? 'Auto-speak ON — Saige reads replies aloud. Click to mute.' : 'Auto-speak OFF — click to have Saige read replies aloud.'}
+              style={{
+                marginLeft: 'auto',
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', borderRadius: 999,
+                background: autoSpeak ? '#fff' : 'rgba(255,255,255,0.18)',
+                color: autoSpeak ? SAIGE_GREEN_DARK : '#fff',
+                border: '1px solid ' + (autoSpeak ? '#fff' : 'rgba(255,255,255,0.35)'),
+                cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                fontFamily: SAIGE_FONT_BODY,
+                transition: 'all 0.15s',
+              }}
+            >
+              <span style={{ fontSize: 13 }}>{autoSpeak ? '🔊' : '🔇'}</span>
+              <span>Auto-speak {autoSpeak ? 'on' : 'off'}</span>
+            </button>
+          )}
         </div>
 
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: '#0f172a' }}>
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: SAIGE_PANEL_BG }}>
           <ChatSidebar
             threads={threads}
             activeThreadId={activeThreadId}
@@ -700,7 +948,7 @@ export default function SaigePage() {
             onNewChat={handleNewChat}
           />
 
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 8px' }}>
               {isLoggedIn && (
                 <div style={{ maxWidth: 800, margin: '0 auto 16px' }}>
@@ -712,7 +960,9 @@ export default function SaigePage() {
                   <SaigeFieldsCard />
                 </div>
               )}
-              {activeChat.map((msg, i) => <ChatBubble key={i} message={msg} />)}
+              {activeChat.map((msg, i) => (
+                <ChatBubble key={i} message={msg} voiceSupported={ttsSupported} onSpeak={playTTS} />
+              ))}
               {isThinking && <ThinkingDots stage={processingStage} />}
               {quiz && !isThinking && (
                 <QuizCard
@@ -726,32 +976,85 @@ export default function SaigePage() {
               )}
             </div>
 
+            {speaking && (
+              <div style={{
+                padding: '8px 20px', borderTop: `1px solid ${SAIGE_BORDER}`, background: SAIGE_LIGHT,
+                display: 'flex', justifyContent: 'center',
+              }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '6px 14px', borderRadius: 999,
+                  background: '#fff', border: `1px solid ${SAIGE_GREEN}`,
+                  color: SAIGE_GREEN_DARK, fontSize: 12, fontWeight: 600,
+                  fontFamily: SAIGE_FONT_BODY,
+                }}>
+                  <span style={{ display: 'inline-flex', gap: 3, alignItems: 'flex-end', height: 14 }}>
+                    <span style={{ display: 'inline-block', width: 3, height: 4, background: SAIGE_GREEN, borderRadius: 2, animation: 'saige-wave 1s ease-in-out infinite', animationDelay: '0s' }} />
+                    <span style={{ display: 'inline-block', width: 3, height: 4, background: SAIGE_GREEN, borderRadius: 2, animation: 'saige-wave 1s ease-in-out infinite', animationDelay: '0.15s' }} />
+                    <span style={{ display: 'inline-block', width: 3, height: 4, background: SAIGE_GREEN, borderRadius: 2, animation: 'saige-wave 1s ease-in-out infinite', animationDelay: '0.3s' }} />
+                  </span>
+                  Saige is speaking…
+                  <button onClick={stopTTS} style={{
+                    marginLeft: 6, padding: '3px 10px', borderRadius: 999,
+                    background: SAIGE_GREEN, border: `1px solid ${SAIGE_GREEN_DARK}`,
+                    color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                    fontFamily: SAIGE_FONT_BODY,
+                  }}>Stop</button>
+                </div>
+              </div>
+            )}
+
             {!quiz && !isThinking && (
-              <div style={{ padding: '12px 20px 16px', borderTop: '1px solid #1e293b', background: '#0f172a' }}>
-                <div style={{ display: 'flex', gap: 10, maxWidth: 800, margin: '0 auto' }}>
+              <div style={{ padding: '12px 20px 16px', borderTop: `1px solid ${SAIGE_BORDER}`, background: '#fff' }}>
+                <div style={{ display: 'flex', gap: 10, maxWidth: 800, margin: '0 auto', alignItems: 'center' }}>
+                  {sttSupported && (
+                    <button
+                      onClick={() => (recording ? stopRecording() : startRecording())}
+                      title={recording ? 'Stop recording (will send what you said)' : 'Tap to talk'}
+                      style={{
+                        width: 42, height: 42, flexShrink: 0,
+                        borderRadius: '50%', border: 'none', cursor: 'pointer',
+                        background: recording
+                          ? 'linear-gradient(135deg,#ef4444,#b91c1c)'
+                          : SAIGE_LIGHT,
+                        color: recording ? 'white' : SAIGE_GREEN_DARK,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 18, transition: 'all 0.15s',
+                        animation: recording ? 'saige-rec-pulse 1.4s ease-in-out infinite' : 'none',
+                        boxShadow: recording ? 'none' : `inset 0 0 0 1px ${SAIGE_BORDER}`,
+                      }}
+                    >
+                      {recording ? '■' : '🎤'}
+                    </button>
+                  )}
                   <input
                     ref={inputRef}
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && input.trim()) sendMessage(input); }}
-                    placeholder="Ask about crops, livestock, weather, soil health..."
+                    placeholder={recording ? 'Listening — speak now…' : 'Ask about crops, livestock, weather, soil health…'}
                     style={{
-                      flex: 1, padding: '11px 16px', borderRadius: 10,
-                      background: '#1e293b', border: '1px solid #334155',
-                      color: '#f1f5f9', fontSize: 14, outline: 'none',
+                      flex: 1, padding: '10px 14px', borderRadius: 10,
+                      background: '#fff',
+                      border: '1px solid ' + (recording ? '#ef4444' : '#d1d5db'),
+                      color: SAIGE_TEXT, fontSize: 13.5, outline: 'none',
+                      fontFamily: SAIGE_FONT_BODY,
                     }}
                   />
                   <button
                     onClick={() => input.trim() && sendMessage(input)}
                     disabled={!input.trim()}
                     style={{
-                      padding: '11px 18px', borderRadius: 10, border: 'none',
-                      background: input.trim() ? 'linear-gradient(135deg,#16a34a,#15803d)' : '#1e293b',
-                      color: input.trim() ? 'white' : '#475569',
+                      padding: '10px 18px', borderRadius: 10, border: 'none',
+                      background: input.trim() ? SAIGE_GREEN : '#e5e7eb',
+                      color: input.trim() ? 'white' : '#9ca3af',
                       cursor: input.trim() ? 'pointer' : 'not-allowed',
-                      fontWeight: 600, fontSize: 14, transition: 'all 0.15s',
+                      fontWeight: 600, fontSize: 13.5, transition: 'all 0.15s',
                       display: 'flex', alignItems: 'center', gap: 6,
+                      fontFamily: SAIGE_FONT_BODY,
                     }}
+                    onMouseEnter={e => { if (input.trim()) e.currentTarget.style.background = SAIGE_GREEN_DARK; }}
+                    onMouseLeave={e => { if (input.trim()) e.currentTarget.style.background = SAIGE_GREEN; }}
                   >
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -761,10 +1064,34 @@ export default function SaigePage() {
                 </div>
               </div>
             )}
+
+            {voiceError && (
+              <div style={{
+                position: 'absolute', bottom: 88, left: '50%', transform: 'translateX(-50%)',
+                padding: '8px 16px', borderRadius: 8,
+                background: '#fee2e2', color: '#991b1b',
+                border: '1px solid #fca5a5', fontSize: 12, fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 10,
+                fontFamily: SAIGE_FONT_BODY,
+              }}>
+                {voiceError}
+              </div>
+            )}
           </div>
         </div>
       </div>
-      <style>{`@keyframes saige-spin { 100% { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes saige-spin { 100% { transform: rotate(360deg); } }
+        @keyframes saige-wave {
+          0%, 100% { height: 4px; }
+          50%      { height: 14px; }
+        }
+        @keyframes saige-rec-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.55); }
+          50%      { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+        }
+        .saige-msg:hover .saige-speak { opacity: 1 !important; }
+      `}</style>
     </AccountLayout>
   );
 }

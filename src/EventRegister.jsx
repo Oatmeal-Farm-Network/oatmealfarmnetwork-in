@@ -5,6 +5,7 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import RichTextEditor from './RichTextEditor';
+import ThaiymeChat from './ThaiymeChat';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -354,6 +355,7 @@ export default function EventRegister() {
       </div>
 
       <Footer />
+      <ThaiymeChat eventId={Number(eventId) || null} page="event_register" />
     </div>
   );
 }

@@ -1300,7 +1300,7 @@ export default function BlogManage() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Manage Blog" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Blog' }, { label: 'Manage' }]}>
-      <div style={{ maxWidth: '960px' }}>
+      <div style={{ width: '100%' }}>
 
         {/* ── Header row ── */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', gap: '0.75rem', flexWrap: 'wrap' }}>

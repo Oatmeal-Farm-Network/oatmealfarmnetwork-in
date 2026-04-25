@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import MoonPhase from './MoonPhase';
 import WeatherCompact from './WeatherCompact';
@@ -26,6 +26,36 @@ async function getFields(businessId) {
   const res = await fetch(`${API_URL}/api/fields?business_id=${businessId}`);
   if (!res.ok) throw new Error('Failed to load fields');
   return res.json();
+}
+
+const thStyle = {
+  padding: '0.75rem 1rem',
+  textAlign: 'left',
+  backgroundColor: '#F3F4F6',
+  fontWeight: '600',
+  color: '#4B5563',
+  textTransform: 'uppercase',
+  fontSize: '0.75rem',
+  letterSpacing: '0.05em',
+  borderBottom: '1px solid #E5E7EB',
+};
+
+const tdStyle = {
+  padding: '0.75rem 1rem',
+  textAlign: 'left',
+  borderBottom: 'none',
+  verticalAlign: 'middle',
+};
+
+function buildFieldServiceLinks(businessId, fieldId) {
+  return [
+    { label: 'Analyses',      to: `/precision-ag/analyses?BusinessID=${businessId}&FieldID=${fieldId}` },
+    { label: 'Crop Status',   to: `/precision-ag/analysis/crop-status?BusinessID=${businessId}&FieldID=${fieldId}` },
+    { label: 'Histograms',    to: `/precision-ag/analyses?BusinessID=${businessId}&FieldID=${fieldId}&tab=histograms` },
+    { label: 'Zoning',        to: `/precision-ag/analysis/zoning?BusinessID=${businessId}&FieldID=${fieldId}` },
+    { label: 'Maps',          to: `/precision-ag/analysis/maps?BusinessID=${businessId}&FieldID=${fieldId}` },
+    { label: 'Notes',         to: `/oatsense/notes?BusinessID=${businessId}&FieldID=${fieldId}` },
+  ];
 }
 
 async function createField(data) {
@@ -656,11 +686,11 @@ function FieldList({ businessId, onCreateNew }) {
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Ag Dashboard</h2>
+      <div className="flex items-center justify-between mb-6 pb-3 border-b-2 border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-800">Ag Dashboard</h2>
         <button
           onClick={() => navigate(`/precision-ag/crop-detection?BusinessID=${businessId}&mode=add-field`)}
-          className="px-5 py-2 bg-[#819360] hover:bg-[#3D6B35] text-white rounded-lg font-medium text-sm transition-colors"
+          className="text-sm font-semibold text-[#3D6B34] hover:underline bg-transparent border-0 p-0 cursor-pointer"
         >
           + Add Field
         </button>
@@ -682,59 +712,105 @@ function FieldList({ businessId, onCreateNew }) {
           <p className="text-sm">Click "Add Field" to get started.</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {fields.map((field) => {
-            const fieldId = field.fieldid || field.id;
-            return (
-              <div
-                key={fieldId}
-                className="bg-white rounded-lg shadow-sm p-5 border border-gray-100 hover:shadow-md hover:border-[#6D8E22] transition-all relative group"
-              >
-                <div
-                  className="cursor-pointer"
-                  onClick={() => navigate(`/precision-ag/analyses?BusinessID=${businessId}&FieldID=${fieldId}`)}
-                >
-                  <h3 className="font-semibold text-gray-900 mb-1 pr-8">{field.name}</h3>
-                  {field.crop_type && (
-                    <p className="text-sm text-gray-500 mb-1">🌱 {field.crop_type}</p>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Field Name</th>
+              <th style={thStyle}>Crop</th>
+              <th style={thStyle}>Size</th>
+              <th style={thStyle}>Address</th>
+              <th style={{ ...thStyle, minWidth: '110px' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fields.map((field, i) => {
+              const fieldId = field.fieldid || field.id;
+              const rowBg = i % 2 === 0 ? '#fff' : '#fafafa';
+              const serviceLinks = buildFieldServiceLinks(businessId, fieldId);
+              const biomassOpen = openBiomass.has(fieldId);
+              return (
+                <React.Fragment key={fieldId}>
+                  <tr style={{ backgroundColor: rowBg }}>
+                    <td style={tdStyle}>
+                      <Link
+                        to={`/precision-ag/analyses?BusinessID=${businessId}&FieldID=${fieldId}`}
+                        className="text-[#3D6B34] hover:underline font-medium"
+                      >
+                        {field.name}
+                      </Link>
+                    </td>
+                    <td style={tdStyle} className="text-gray-600 text-sm">
+                      {field.crop_type || <span className="text-gray-400">—</span>}
+                    </td>
+                    <td style={tdStyle} className="text-gray-600 text-sm">
+                      {field.field_size_hectares ? `${field.field_size_hectares} ha` : <span className="text-gray-400">—</span>}
+                    </td>
+                    <td style={tdStyle} className="text-gray-600 text-sm">
+                      {field.address || <span className="text-gray-400">—</span>}
+                    </td>
+                    <td style={tdStyle}>
+                      <div className="flex items-center gap-2">
+                        <Link to={`/precision-ag/fields?BusinessID=${businessId}&view=edit-field&FieldID=${fieldId}`} title="Edit">
+                          <img src="/icons/Edit.svg" width="20" alt="Edit" onError={e => e.target.style.display='none'} />
+                        </Link>
+                        <span className="text-gray-300">|</span>
+                        <button
+                          type="button"
+                          title="Delete"
+                          onClick={() => setConfirmDeleteId(fieldId)}
+                          className="bg-transparent border-0 p-0 cursor-pointer"
+                        >
+                          <img src="/icons/Delete.svg" width="20" alt="Delete" onError={e => e.target.style.display='none'} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr style={{ backgroundColor: rowBg, borderBottom: '1px solid #E5E7EB' }}>
+                    <td colSpan={5} style={{ padding: '0.25rem 1rem 0.6rem', fontSize: '0.82rem' }}>
+                      <span className="flex gap-3 flex-wrap items-center">
+                        {serviceLinks.map((link, idx) => (
+                          <React.Fragment key={link.label}>
+                            {idx > 0 && <span className="text-gray-300">|</span>}
+                            <Link to={link.to} className="text-[#3D6B34] hover:underline">{link.label}</Link>
+                          </React.Fragment>
+                        ))}
+                        <span className="text-gray-300">|</span>
+                        <button
+                          type="button"
+                          onClick={() => toggleBiomass(fieldId)}
+                          className="text-[#3D6B34] hover:underline bg-transparent border-0 p-0 cursor-pointer"
+                        >
+                          {biomassOpen ? 'Hide Biomass' : 'Biomass'}
+                        </button>
+                        {(field.latitude && field.longitude) && (
+                          <>
+                            <span className="text-gray-300">|</span>
+                            <span className="text-gray-500"><WeatherCompact lat={field.latitude} lon={field.longitude} mini /></span>
+                          </>
+                        )}
+                      </span>
+                    </td>
+                  </tr>
+
+                  {biomassOpen && (
+                    <tr style={{ backgroundColor: rowBg, borderBottom: '1px solid #E5E7EB' }}>
+                      <td colSpan={5} style={{ padding: '0 1rem 0.75rem' }}>
+                        <BiomassPanel fieldId={fieldId} onClose={() => toggleBiomass(fieldId)} />
+                      </td>
+                    </tr>
                   )}
-                  {field.field_size_hectares && (
-                    <p className="text-xs text-gray-400">📏 {field.field_size_hectares} ha</p>
-                  )}
-                  {field.address && (
-                    <p className="text-xs text-gray-400 mt-1 truncate">📍 {field.address}</p>
-                  )}
-                  {(field.latitude && field.longitude) && (
-                    <div className="mt-2 pt-2 border-t border-gray-100">
-                      <WeatherCompact lat={field.latitude} lon={field.longitude} mini />
-                    </div>
-                  )}
-                </div>
-                <div className="mt-2 flex items-center gap-2">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleBiomass(fieldId); }}
-                    className="text-xs px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium border border-emerald-200"
-                  >
-                    {openBiomass.has(fieldId) ? 'Hide biomass' : '🌱 Biomass'}
-                  </button>
-                </div>
-                {openBiomass.has(fieldId) && (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <BiomassPanel fieldId={fieldId} onClose={() => toggleBiomass(fieldId)} />
-                  </div>
-                )}
-                <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(fieldId); }}
-                  className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full text-gray-300 hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
-                  title="Delete field"
-                >
-                  🗑
-                </button>
-              </div>
-            );
-          })}
-        </div>
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
       )}
+
+      <div className="mt-8 flex gap-4 flex-wrap">
+        <Link to={`/oatsense/crop-rotation?BusinessID=${businessId}`} className="text-[#3D6B34] hover:underline text-sm font-medium">Crop Rotation</Link>
+        <Link to={`/oatsense/notes?BusinessID=${businessId}`} className="text-[#3D6B34] hover:underline text-sm font-medium">Field Journal</Link>
+      </div>
     </div>
   );
 }

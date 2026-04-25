@@ -2,64 +2,67 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
-import { useFields, useAnalyses, getIndex, seededRand, ndviColor, generateMapCells, calcHaFromGeojson } from './precisionAgUtils';
+import { useFields, useAnalyses, getIndex, calcHaFromGeojson, API_URL } from './precisionAgUtils';
+import SaigeWidget from './SaigeWidget';
 
-// ─── Zoning map ───────────────────────────────────────────────────────────────
-function ZoneMap({ cells, numZones, min, max, palette, cols = 32, rows = 20 }) {
-  if (!cells) return (
-    <div className="flex items-center justify-center text-gray-400 font-mont text-sm rounded-xl bg-gray-50 border border-dashed border-gray-200"
-      style={{ minHeight: 260 }}>
-      Select a field and run an analysis to generate zone data
-    </div>
-  );
-  const range = max - min || 0.01;
-  const PALETTES = {
-    ndvi:  ['#A32715','#C86419','#DCB428','#AAD232','#5AA528','#1E6414'],
-    blue:  ['#1E3A5F','#1D4ED8','#3B82F6','#60A5FA','#93C5FD','#DBEAFE'],
-    warm:  ['#7C2D12','#C2410C','#F97316','#FB923C','#FED7AA','#FFF7ED'],
-    cool:  ['#064E3B','#065F46','#047857','#10B981','#6EE7B7','#D1FAE5'],
-    mono:  ['#111827','#374151','#6B7280','#9CA3AF','#D1D5DB','#F9FAFB'],
-  };
-  const pal = PALETTES[palette] || PALETTES.ndvi;
+const ZONE_PALETTES = {
+  ndvi: ['#A32715','#C86419','#DCB428','#AAD232','#5AA528','#1E6414'],
+  blue: ['#1E3A5F','#1D4ED8','#3B82F6','#60A5FA','#93C5FD','#DBEAFE'],
+  warm: ['#7C2D12','#C2410C','#F97316','#FB923C','#FED7AA','#FFF7ED'],
+  cool: ['#064E3B','#065F46','#047857','#10B981','#6EE7B7','#D1FAE5'],
+  mono: ['#111827','#374151','#6B7280','#9CA3AF','#D1D5DB','#F9FAFB'],
+};
+function paletteColor(palette, zoneIdx, numZones) {
+  const pal = ZONE_PALETTES[palette] || ZONE_PALETTES.ndvi;
+  return pal[Math.floor((zoneIdx / Math.max(1, numZones - 1)) * (pal.length - 1))];
+}
 
+// ─── Zoning map (real k-means raster from /api/fields/{id}/zones) ─────────────
+function ZoneMap({ zoneData, palette, status }) {
+  if (status === 'loading') {
+    return (
+      <div className="flex items-center justify-center text-gray-400 font-mont text-sm rounded-xl bg-gray-50 border border-dashed border-gray-200"
+        style={{ minHeight: 260 }}>
+        Clustering raster…
+      </div>
+    );
+  }
+  if (!zoneData) {
+    return (
+      <div className="flex items-center justify-center text-gray-400 font-mont text-sm rounded-xl bg-gray-50 border border-dashed border-gray-200"
+        style={{ minHeight: 260 }}>
+        Select a field with a recent analysis to see real zones.
+      </div>
+    );
+  }
+
+  const { grid, num_zones } = zoneData;
+  const cells = grid.labels.flat();
   return (
-    <div className="rounded-xl overflow-hidden border border-gray-200" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, height: 260 }}>
-      {cells.map((cell, i) => {
-        const t = (cell.v - min) / range;
-        const zoneIdx = Math.min(numZones - 1, Math.floor(t * numZones));
-        const color = pal[Math.floor((zoneIdx / Math.max(1, numZones - 1)) * (pal.length - 1))];
-        return <div key={i} style={{ background: color }} />;
+    <div className="rounded-xl overflow-hidden border border-gray-200"
+      style={{ display: 'grid', gridTemplateColumns: `repeat(${grid.cols}, 1fr)`, height: 260 }}>
+      {cells.map((label, i) => {
+        if (label < 0) return <div key={i} style={{ background: '#F3F4F6' }} />;
+        return <div key={i} style={{ background: paletteColor(palette, label, num_zones) }} />;
       })}
     </div>
   );
 }
 
-// ─── Mini histogram for zone panel ───────────────────────────────────────────
-function ZoneHistogram({ cells, numZones, min, max, palette }) {
-  if (!cells) return null;
-  const range = max - min || 0.01;
-  const bins = Array(numZones).fill(0);
-  cells.forEach(cell => {
-    const zoneIdx = Math.min(numZones - 1, Math.floor(((cell.v - min) / range) * numZones));
-    bins[zoneIdx]++;
-  });
-  const maxBin = Math.max(...bins, 1);
-  const PALETTES = {
-    ndvi: ['#A32715','#C86419','#DCB428','#AAD232','#5AA528','#1E6414'],
-    blue: ['#1E3A5F','#1D4ED8','#3B82F6','#60A5FA','#93C5FD','#DBEAFE'],
-    warm: ['#7C2D12','#C2410C','#F97316','#FB923C','#FED7AA','#FFF7ED'],
-    cool: ['#064E3B','#065F46','#047857','#10B981','#6EE7B7','#D1FAE5'],
-    mono: ['#111827','#374151','#6B7280','#9CA3AF','#D1D5DB','#F9FAFB'],
-  };
-  const pal = PALETTES[palette] || PALETTES.ndvi;
+// ─── Mini histogram for zone panel — uses real per-zone area % ────────────────
+function ZoneHistogram({ zoneData, palette }) {
+  if (!zoneData) return null;
+  const { zones, num_zones } = zoneData;
+  const counts = zones.map(z => z.pixel_count || 0);
+  const maxBin = Math.max(...counts, 1);
   const W = 300, H = 80, PL = 4, PR = 4, PT = 4, PB = 4;
   const cW = W - PL - PR, cH = H - PT - PB;
-  const binW = cW / numZones;
+  const binW = cW / num_zones;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 80 }}>
-      {bins.map((count, i) => {
+      {counts.map((count, i) => {
         const bH = Math.max(2, (count / maxBin) * cH);
-        const color = pal[Math.floor((i / Math.max(1, numZones - 1)) * (pal.length - 1))];
+        const color = paletteColor(palette, i, num_zones);
         return <rect key={i} x={PL + i * binW + 1} y={PT + cH - bH} width={Math.max(1, binW - 2)} height={bH} fill={color} rx="2" />;
       })}
     </svg>
@@ -92,16 +95,36 @@ export default function PrecisionAgZoning() {
   const [analysisIdx,  setAnalysisIdx]  = useState(0);
   const [saved,        setSaved]        = useState(false);
 
+  // Real zones from backend k-means
+  const [zoneData, setZoneData] = useState(null);
+  const [zonesStatus, setZonesStatus] = useState('idle');  // idle | loading | error
+  const [zonesError, setZonesError] = useState(null);
+
   useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
   useEffect(() => {
     if (fields.length > 0 && !selectedFieldId)
       setSelectedFieldId(String(fields[0].fieldid || fields[0].id));
   }, [fields]);
 
+  // Fetch real zones whenever inputs change. Sentinel-Hub path can take a few
+  // seconds, so debounce briefly on numZones spam.
+  useEffect(() => {
+    if (!selectedFieldId) { setZoneData(null); return; }
+    const ctrl = new AbortController();
+    const t = setTimeout(() => {
+      setZonesStatus('loading');
+      setZonesError(null);
+      const url = `${API_URL}/api/fields/${selectedFieldId}/zones?index=${selectedIdx}&num_zones=${numZones}&grid=48`;
+      fetch(url, { signal: ctrl.signal })
+        .then(r => r.ok ? r.json() : r.json().then(j => Promise.reject(j?.detail || 'zones fetch failed')))
+        .then(d => { setZoneData(d); setZonesStatus('idle'); })
+        .catch(e => { if (e?.name === 'AbortError') return; setZonesError(String(e)); setZonesStatus('error'); setZoneData(null); });
+    }, 200);
+    return () => { ctrl.abort(); clearTimeout(t); };
+  }, [selectedFieldId, selectedIdx, numZones]);
+
   const analysis    = analyses[analysisIdx] || null;
   const indexData   = analysis ? getIndex(analysis, selectedIdx) : null;
-  const fieldIdNum  = parseInt(selectedFieldId) || 1;
-  const cells       = indexData ? generateMapCells(indexData, fieldIdNum, selectedIdx, 32, 20) : null;
 
   const totalHa = (() => {
     const f = fields.find(f => String(f.fieldid || f.id) === selectedFieldId);
@@ -111,32 +134,16 @@ export default function PrecisionAgZoning() {
       : null;
   })();
 
-  // Zone stats
-  const zoneStats = (() => {
-    if (!cells || !indexData) return [];
-    const { min, max } = indexData;
-    const range = max - min || 0.01;
-    const counts = Array(numZones).fill(0);
-    cells.forEach(cell => {
-      const zi = Math.min(numZones - 1, Math.floor(((cell.v - min) / range) * numZones));
-      counts[zi]++;
-    });
-    const total = cells.length;
-    return counts.map((count, i) => ({
-      zone: i + 1,
-      pct: count / total,
-      ha: totalHa ? (count / total) * totalHa : null,
-    }));
-  })();
+  // Zone stats from real k-means output
+  const zoneStats = (zoneData?.zones || []).map(z => ({
+    zone:    z.zone + 1,
+    pct:     (z.area_pct || 0) / 100,
+    ha:      totalHa ? totalHa * (z.area_pct || 0) / 100 : null,
+    mean:    z.mean,
+    centroid: z.centroid,
+  }));
 
-  const ZONE_PALETTE_COLORS = {
-    ndvi: ['#A32715','#C86419','#DCB428','#AAD232','#5AA528','#1E6414'],
-    blue: ['#1E3A5F','#1D4ED8','#3B82F6','#60A5FA','#93C5FD','#DBEAFE'],
-    warm: ['#7C2D12','#C2410C','#F97316','#FB923C','#FED7AA','#FFF7ED'],
-    cool: ['#064E3B','#065F46','#047857','#10B981','#6EE7B7','#D1FAE5'],
-    mono: ['#111827','#374151','#6B7280','#9CA3AF','#D1D5DB','#F9FAFB'],
-  };
-  const pal = ZONE_PALETTE_COLORS[palette] || ZONE_PALETTE_COLORS.ndvi;
+  const pal = ZONE_PALETTES[palette] || ZONE_PALETTES.ndvi;
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
@@ -245,23 +252,26 @@ export default function PrecisionAgZoning() {
               </div>
 
               {/* Mini histogram */}
-              {cells && <div>
+              {zoneData && <div>
                 <div className="text-xs font-semibold font-mont text-gray-500 mb-1">Distribution</div>
-                <ZoneHistogram cells={cells} numZones={numZones} min={indexData.min} max={indexData.max} palette={palette} />
+                <ZoneHistogram zoneData={zoneData} palette={palette} />
               </div>}
 
               {/* Zone legend */}
               {zoneStats.length > 0 && (
                 <div>
-                  <div className="text-xs font-semibold font-mont text-gray-500 mb-2">Zones</div>
+                  <div className="text-xs font-semibold font-mont text-gray-500 mb-2">Zones (lowest = stress)</div>
                   <div className="space-y-1.5">
                     {zoneStats.map((zs, i) => {
-                      const color = pal[Math.floor((i / Math.max(1, numZones - 1)) * (pal.length - 1))];
+                      const color = paletteColor(palette, i, numZones);
                       return (
                         <div key={i} className="flex items-center justify-between text-xs font-mont">
                           <div className="flex items-center gap-2">
                             <span className="w-4 h-4 rounded-sm flex-shrink-0" style={{ background: color }} />
-                            <span className="text-gray-700">Zone {zs.zone}</span>
+                            <span className="text-gray-700">
+                              Zone {zs.zone}
+                              {zs.mean != null && <span className="text-gray-400 ml-1">({selectedIdx} {zs.mean.toFixed(2)})</span>}
+                            </span>
                           </div>
                           <span className="text-gray-500">
                             {zs.ha ? `${zs.ha.toFixed(2)} ha` : `${(zs.pct * 100).toFixed(0)}%`}
@@ -273,11 +283,35 @@ export default function PrecisionAgZoning() {
                 </div>
               )}
 
+              {/* Prescription export */}
+              {zoneData && (
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="text-xs font-semibold font-mont text-gray-500 mb-1.5">Variable-rate prescription</div>
+                  <div className="flex gap-2">
+                    <a
+                      href={`${API_URL}/api/fields/${selectedFieldId}/zones/prescription?index=${selectedIdx}&num_zones=${numZones}&grid=48&fmt=geojson`}
+                      download
+                      className="flex-1 text-center py-2 rounded-lg font-mont font-bold text-xs border border-[#1D4ED8] text-[#1D4ED8] hover:bg-blue-50">
+                      ⬇ GeoJSON
+                    </a>
+                    <a
+                      href={`${API_URL}/api/fields/${selectedFieldId}/zones/prescription?index=${selectedIdx}&num_zones=${numZones}&grid=48&fmt=csv`}
+                      download
+                      className="flex-1 text-center py-2 rounded-lg font-mont font-bold text-xs border border-[#1D4ED8] text-[#1D4ED8] hover:bg-blue-50">
+                      ⬇ CSV
+                    </a>
+                  </div>
+                  <p className="text-[10px] font-mont text-gray-400 mt-1.5">
+                    Default rates are 80–120% of base; controllers usually let you remap per zone.
+                  </p>
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex gap-2 pt-2 border-t border-gray-100">
                 <button
                   onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 2000); }}
-                  disabled={!cells}
+                  disabled={!zoneData}
                   className="flex-1 py-2 rounded-lg font-mont font-bold text-sm text-white transition-all disabled:opacity-40"
                   style={{ background: '#1D4ED8' }}>
                   {saved ? '✓ Saved' : 'Create Zoning'}
@@ -307,18 +341,24 @@ export default function PrecisionAgZoning() {
                       </span>
                     )}
                   </div>
-                  <ZoneMap cells={cells} numZones={numZones} min={indexData?.min || 0} max={indexData?.max || 1} palette={palette} />
+                  <ZoneMap zoneData={zoneData} palette={palette} status={zonesStatus} />
+
+                  {zonesStatus === 'error' && (
+                    <div className="mt-3 text-xs text-red-600 font-mont">
+                      Couldn't compute zones: {zonesError}
+                    </div>
+                  )}
 
                   {/* Color scale legend */}
-                  {indexData && (
+                  {zoneData && (
                     <div className="mt-3 flex items-center gap-3">
-                      <span className="font-mont text-xs text-gray-400">-1.00</span>
+                      <span className="font-mont text-xs text-gray-400">{zoneData.raster?.min?.toFixed(2)}</span>
                       <div className="flex-1 h-4 rounded flex overflow-hidden">
                         {pal.map((c, i) => <div key={i} className="flex-1" style={{ background: c }} />)}
                       </div>
-                      <span className="font-mont text-xs text-gray-400">1.00</span>
+                      <span className="font-mont text-xs text-gray-400">{zoneData.raster?.max?.toFixed(2)}</span>
                       <div className="ml-3 flex flex-col gap-0.5">
-                        <span className="font-mont text-xs text-blue-600 cursor-pointer hover:underline">Fixed</span>
+                        <span className="font-mont text-xs text-gray-400">{zoneData.raster?.valid_pixels} px</span>
                       </div>
                     </div>
                   )}
@@ -340,6 +380,7 @@ export default function PrecisionAgZoning() {
           </div>
         )}
       </div>
+      <SaigeWidget businessId={BusinessID} fieldId={selectedFieldId} pageContext="Precision Ag — Zoning" />
     </AccountLayout>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useAccount } from './AccountContext';
+import ThaiymeChat from './ThaiymeChat';
 
 const API = import.meta.env.VITE_API_URL || '';
 const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-[#819360]";
@@ -233,6 +234,7 @@ export default function SimpleEventRegister() {
           </div>
         )}
       </div>
+      <ThaiymeChat eventId={Number(eventId) || null} page="simple_event_register" />
     </div>
   );
 }

@@ -344,7 +344,12 @@ function SeasonCard({ entry, onEdit, onDelete }) {
 export default function CropRotation() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate    = useNavigate();
-  const businessId  = searchParams.get('BusinessID');
+  const businessId  = (() => {
+    const raw = searchParams.get('BusinessID');
+    if (!raw || raw === 'null' || raw === 'undefined') return null;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  })();
   const initFieldId = searchParams.get('FieldID');
   const PeopleID    = localStorage.getItem('PeopleID') || localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();

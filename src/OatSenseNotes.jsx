@@ -12,16 +12,30 @@ const CATEGORIES = [
   { value: 'Irrigation',        label: 'Irrigation',        icon: '💧',  color: '#0277BD', bg: '#e1f5fe' },
   { value: 'Harvest',           label: 'Harvest',           icon: '🌾',  color: '#F57F17', bg: '#fffde7' },
   { value: 'Scouting',          label: 'Scouting',          icon: '🔍',  color: '#6A1B9A', bg: '#f3e5f5' },
+  { value: 'Pest',              label: 'Pest',              icon: '🐛',  color: '#B71C1C', bg: '#ffebee' },
+  { value: 'Disease',           label: 'Disease',           icon: '🦠',  color: '#AD1457', bg: '#fce4ec' },
+  { value: 'Weed',              label: 'Weed',              icon: '🌿',  color: '#388E3C', bg: '#e8f5e9' },
+  { value: 'Nutrient',          label: 'Nutrient',          icon: '⚗️', color: '#5D4037', bg: '#efebe9' },
   { value: 'Equipment',         label: 'Equipment',         icon: '🔧',  color: '#4E342E', bg: '#efebe9' },
   { value: 'Weather',           label: 'Weather',           icon: '🌤️', color: '#0288D1', bg: '#e1f5fe' },
   { value: 'General',           label: 'General',           icon: '📋',  color: '#546E7A', bg: '#eceff1' },
 ];
+
+// Scouting-style categories surface severity/GPS/photo inputs and a severity badge.
+const SCOUTING_CATEGORIES = new Set(['Scouting', 'Pest', 'Disease', 'Weed', 'Nutrient', 'Irrigation', 'Weather']);
+
+const SEVERITIES = ['Low', 'Medium', 'High', 'Critical'];
+const SEV_COLOR  = { Low: '#10B981', Medium: '#F59E0B', High: '#F97316', Critical: '#EF4444' };
 
 const EMPTY_FORM = {
   note_date: new Date().toISOString().slice(0, 10),
   category:  'Observation',
   title:     '',
   content:   '',
+  severity:  '',
+  latitude:  '',
+  longitude: '',
+  image_url: '',
 };
 
 function getCat(value) {
@@ -48,7 +62,16 @@ function groupByDate(notes) {
 function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSave, onCancel }) {
   const [form, setForm] = useState(
     editNote
-      ? { note_date: editNote.note_date, category: editNote.category, title: editNote.title, content: editNote.content }
+      ? {
+          note_date: editNote.note_date,
+          category:  editNote.category,
+          title:     editNote.title,
+          content:   editNote.content,
+          severity:  editNote.severity  ?? '',
+          latitude:  editNote.latitude  ?? '',
+          longitude: editNote.longitude ?? '',
+          image_url: editNote.image_url ?? '',
+        }
       : EMPTY_FORM
   );
   const [fieldId, setFieldId] = useState(initialFieldId || (fields[0] ? String(fields[0].fieldid ?? fields[0].id) : ''));
@@ -72,9 +95,20 @@ function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSa
     try {
       const url    = editNote ? `${API_URL}/api/notes/${editNote.note_id}` : `${API_URL}/api/notes`;
       const method = editNote ? 'PUT' : 'POST';
-      const body   = editNote
-        ? { note_date: form.note_date, category: form.category, title: form.title, content: form.content }
-        : { ...form, field_id: parseInt(fieldId), business_id: parseInt(businessId), people_id: peopleId ? parseInt(peopleId) : null };
+      const isScouting = SCOUTING_CATEGORIES.has(form.category);
+      const sharedFields = {
+        note_date: form.note_date,
+        category:  form.category,
+        title:     form.title,
+        content:   form.content,
+        severity:  isScouting && form.severity ? form.severity : null,
+        latitude:  form.latitude  !== '' ? parseFloat(form.latitude)  : null,
+        longitude: form.longitude !== '' ? parseFloat(form.longitude) : null,
+        image_url: form.image_url || null,
+      };
+      const body = editNote
+        ? sharedFields
+        : { ...sharedFields, field_id: parseInt(fieldId), business_id: parseInt(businessId), people_id: peopleId ? parseInt(peopleId) : null };
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (!res.ok) throw new Error((await res.json()).detail || 'Save failed');
       const saved = await res.json();
@@ -127,6 +161,39 @@ function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSa
           className={inputCls} required />
       </div>
 
+      {SCOUTING_CATEGORIES.has(form.category) && (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-3">
+          <div className="text-xs font-semibold font-mont text-gray-500 uppercase tracking-wide">Scouting details (optional)</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Severity</label>
+              <select name="severity" value={form.severity} onChange={handleChange} className={inputCls}>
+                <option value="">— None —</option>
+                {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Photo URL</label>
+              <input type="url" name="image_url" value={form.image_url} onChange={handleChange}
+                placeholder="https://…"
+                className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Latitude</label>
+              <input type="number" step="any" name="latitude" value={form.latitude} onChange={handleChange}
+                placeholder="e.g. 42.34521"
+                className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Longitude</label>
+              <input type="number" step="any" name="longitude" value={form.longitude} onChange={handleChange}
+                placeholder="e.g. -85.12734"
+                className={inputCls} />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Journal Entry</label>
         <textarea
@@ -173,8 +240,19 @@ function NoteCard({ note, fieldName, onEdit, onDelete }) {
                 style={{ background: cat.bg, color: cat.color }}>
                 {cat.icon} {cat.label}
               </span>
+              {note.severity && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full font-mont"
+                  style={{ background: (SEV_COLOR[note.severity] || '#9CA3AF') + '22', color: SEV_COLOR[note.severity] || '#374151' }}>
+                  {note.severity}
+                </span>
+              )}
               {fieldName && (
                 <span className="text-xs text-gray-400 font-mont">📍 {fieldName}</span>
+              )}
+              {(note.latitude != null && note.longitude != null) && (
+                <span className="text-xs text-gray-400 font-mont">
+                  {Number(note.latitude).toFixed(5)}, {Number(note.longitude).toFixed(5)}
+                </span>
               )}
             </div>
             <h3 className="font-lora font-bold text-gray-900 text-base leading-snug">{note.title}</h3>
@@ -207,6 +285,11 @@ function NoteCard({ note, fieldName, onEdit, onDelete }) {
             {expanded ? 'Show less' : 'Read more'}
           </button>
         )}
+        {note.image_url && (
+          <img src={note.image_url} alt="Note attachment"
+            className="mt-3 w-48 h-32 object-cover rounded-lg border border-gray-100"
+            onError={e => e.currentTarget.style.display = 'none'} />
+        )}
       </div>
     </div>
   );
@@ -216,7 +299,12 @@ function NoteCard({ note, fieldName, onEdit, onDelete }) {
 export default function OatSenseNotes() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate    = useNavigate();
-  const businessId  = searchParams.get('BusinessID');
+  const businessId  = (() => {
+    const raw = searchParams.get('BusinessID');
+    if (!raw || raw === 'null' || raw === 'undefined') return null;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  })();
   const initFieldId = searchParams.get('FieldID');
   const PeopleID    = localStorage.getItem('PeopleID') || localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();

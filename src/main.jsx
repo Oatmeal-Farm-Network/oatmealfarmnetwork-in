@@ -8,6 +8,19 @@ function ScrollToTop() {
   return null;
 }
 
+// /oatsense was merged into /precision-ag/fields — preserve the query string so
+// any old bookmarks land on the new dashboard with their BusinessID intact.
+function OatSenseRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={`/precision-ag/fields${search}`} replace />;
+}
+
+// Scouting was merged into the Field Journal (Notes). Old bookmarks redirect.
+function ScoutingRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={`/oatsense/notes${search}`} replace />;
+}
+
 // Persistent Saige widget — mounted once above <Routes> so open/closed state survives
 // navigation within the same section.
 function SaigeWidgetGlobal() {
@@ -72,6 +85,12 @@ import AuctionAdmin from './AuctionAdmin';
 import AuctionBrowse from './AuctionBrowse';
 import VendorFairAdmin from './VendorFairAdmin';
 import VendorFairApply from './VendorFairApply';
+import SponsorshipAdmin from './SponsorshipAdmin';
+import EventLeadRetrieval from './EventLeadRetrieval';
+import FloorPlanAdmin from './FloorPlanAdmin';
+import FloorPlanPublic from './FloorPlanPublic';
+import BoothServicesAdmin from './BoothServicesAdmin';
+import EventCOIAdmin from './EventCOIAdmin';
 import DiningAdmin from './DiningAdmin';
 import DiningRegister from './DiningRegister';
 import FarmTourAdmin from './FarmTourAdmin';
@@ -128,7 +147,6 @@ const Login = lazyWithReload(() => import('./login.jsx'))
 const Signup = lazyWithReload(() => import('./Signup.jsx'))
 const Dashboard = lazyWithReload(() => import('./Dashboard.jsx'))
 const AccountHome = lazyWithReload(() => import('./AccountHome.jsx'))
-const OatSense = lazyWithReload(() => import('./OatSense.jsx'))
 const PrecisionAgFields = lazyWithReload(() => import('./PrecisionAgFields.jsx'))
 const ChefDashboard = lazyWithReload(() => import('./ChefDashboard.jsx'))
 const PrecisionAgAdd = lazyWithReload(() => import('./PrecisionAgAdd.jsx'))
@@ -138,10 +156,10 @@ const PrecisionAgZoning = lazyWithReload(() => import('./PrecisionAgZoning.jsx')
 const PrecisionAgMaps = lazyWithReload(() => import('./PrecisionAgMaps.jsx'))
 const PrecisionAgCropStatus = lazyWithReload(() => import('./PrecisionAgCropStatus.jsx'))
 const PrecisionAgMultiLayer = lazyWithReload(() => import('./PrecisionAgMultiLayer.jsx'))
-const PrecisionAgScouting = lazyWithReload(() => import('./PrecisionAgScouting.jsx'))
 const PrecisionAgPrescriptions = lazyWithReload(() => import('./PrecisionAgPrescriptions.jsx'))
 const PrecisionAgSoilSamples = lazyWithReload(() => import('./PrecisionAgSoilSamples.jsx'))
 const PrecisionAgReports = lazyWithReload(() => import('./PrecisionAgReports.jsx'))
+const FieldAssessmentReport = lazyWithReload(() => import('./FieldAssessmentReport.jsx'))
 const PrecisionAgAlerts = lazyWithReload(() => import('./PrecisionAgAlerts.jsx'))
 const PrecisionAgGDD = lazyWithReload(() => import('./PrecisionAgGDD.jsx'))
 const PrecisionAgActivityLog = lazyWithReload(() => import('./PrecisionAgActivityLog.jsx'))
@@ -150,6 +168,8 @@ const PrecisionAgYieldForecast = lazyWithReload(() => import('./PrecisionAgYield
 const PrecisionAgCarbon = lazyWithReload(() => import('./PrecisionAgCarbon.jsx'))
 const PrecisionAgBenchmark = lazyWithReload(() => import('./PrecisionAgBenchmark.jsx'))
 const CropRotation = lazyWithReload(() => import('./CropRotation.jsx'))
+const PrecisionAgWaterUse = lazyWithReload(() => import('./PrecisionAgWaterUse.jsx'))
+const PrecisionAgAgronomy = lazyWithReload(() => import('./PrecisionAgAgronomy.jsx'))
 const OatSenseNotes = lazyWithReload(() => import('./OatSenseNotes.jsx'))
 const WebsiteBuilder = lazyWithReload(() => import('./WebsiteBuilder.jsx'))
 const WebsitePublic = lazyWithReload(() => import('./WebsitePublic.jsx'))
@@ -260,9 +280,25 @@ const isCustomDomain = !OFN_HOSTS.some(
   h => window.location.hostname === h || window.location.hostname.endsWith(`.${h}`)
 );
 
+// Register the unified service worker (push + offline + bg-sync) on first paint.
+// Uses the new /sw.js. The legacy /push-sw.js is left in place so existing
+// installations don't break, but the PushNotifications page now also tries
+// the new SW first.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(reg => console.log('[OFN] SW registered:', reg.scope))
+      .catch(err => console.warn('[OFN] SW registration failed:', err));
+  });
+}
+
+// Lazy import so install-prompt JS doesn't bloat the critical bundle.
+const InstallPrompt = React.lazy(() => import('./InstallPrompt.jsx'));
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <ScrollToTop />
+    <Suspense fallback={null}><InstallPrompt /></Suspense>
     <AccountProvider>
       <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>}>
         {/* On a custom domain every path renders the public site — no OFN chrome, no auth routes */}
@@ -303,9 +339,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/saige/insurance" element={<Insurance />} />
           <Route path="/saige/push" element={<PushNotifications />} />
           <Route path="/saige/profile" element={<SaigeProfile />} />
-          <Route path="/oatsense" element={<OatSense />} />
+          <Route path="/oatsense" element={<OatSenseRedirect />} />
           <Route path="/oatsense/crop-rotation" element={<CropRotation />} />
           <Route path="/oatsense/notes" element={<OatSenseNotes />} />
+          <Route path="/precision-ag/field-journal" element={<OatSenseNotes />} />
+          <Route path="/precision-ag/crop-rotation" element={<CropRotation />} />
+          <Route path="/precision-ag/water-use" element={<PrecisionAgWaterUse />} />
+          <Route path="/precision-ag/agronomy" element={<PrecisionAgAgronomy />} />
           <Route path="/chef" element={<ChefDashboard />} />
           <Route path="/precision-ag/fields" element={<PrecisionAgFields />} />
           <Route path="/precision-ag/add" element={<PrecisionAgAdd />} />
@@ -315,10 +355,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/analysis/maps" element={<PrecisionAgMaps />} />
           <Route path="/precision-ag/analysis/crop-status" element={<PrecisionAgCropStatus />} />
           <Route path="/precision-ag/analysis/multi-layer" element={<PrecisionAgMultiLayer />} />
-          <Route path="/precision-ag/scouting" element={<PrecisionAgScouting />} />
+          <Route path="/precision-ag/scouting" element={<ScoutingRedirect />} />
           <Route path="/precision-ag/prescriptions" element={<PrecisionAgPrescriptions />} />
           <Route path="/precision-ag/soil-samples" element={<PrecisionAgSoilSamples />} />
           <Route path="/precision-ag/reports" element={<PrecisionAgReports />} />
+          <Route path="/precision-ag/assessment-report" element={<FieldAssessmentReport />} />
           <Route path="/precision-ag/alerts" element={<PrecisionAgAlerts />} />
           <Route path="/precision-ag/gdd" element={<PrecisionAgGDD />} />
           <Route path="/precision-ag/activity-log" element={<PrecisionAgActivityLog />} />
@@ -389,6 +430,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/events/:eventId/auction" element={<AuctionBrowse />} />
           <Route path="/events/:eventId/admin/vendor-fair" element={<VendorFairAdmin />} />
           <Route path="/events/:eventId/vendor-apply" element={<VendorFairApply />} />
+          <Route path="/events/:eventId/admin/sponsorship" element={<SponsorshipAdmin />} />
+          <Route path="/events/:eventId/leads" element={<EventLeadRetrieval />} />
+          <Route path="/events/:eventId/admin/floor-plan" element={<FloorPlanAdmin />} />
+          <Route path="/events/:eventId/floor-plan" element={<FloorPlanPublic />} />
+          <Route path="/events/:eventId/admin/booth-services" element={<BoothServicesAdmin />} />
+          <Route path="/events/:eventId/admin/coi" element={<EventCOIAdmin />} />
           <Route path="/events/:eventId/admin/dining" element={<DiningAdmin />} />
           <Route path="/events/:eventId/dining" element={<DiningRegister />} />
           <Route path="/events/:eventId/admin/tour" element={<FarmTourAdmin />} />

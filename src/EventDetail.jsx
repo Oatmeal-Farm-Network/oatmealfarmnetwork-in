@@ -140,12 +140,40 @@ function PublicFeatureCTAs({ features, ev, eventId }) {
   );
 }
 
+function FloorPlanCTA({ eventId }) {
+  const [summary, setSummary] = useState(null);
+  useEffect(() => {
+    fetch(`${API}/api/events/${eventId}/floor-plan`).then(r => r.ok ? r.json() : null).then(d => {
+      if (!d?.floor_plan?.ImageURL) return;
+      fetch(`${API}/api/events/${eventId}/floor-plan/summary`).then(r => r.ok ? r.json() : null).then(s => {
+        if ((s?.total || 0) > 0) setSummary(s);
+      });
+    });
+  }, [eventId]);
+  if (!summary) return null;
+  return (
+    <Link to={`/events/${eventId}/floor-plan`}
+      className="block bg-[#3D6B34] hover:bg-[#2d5226] text-white rounded-xl p-4 no-underline transition-colors">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="font-bold">🗺️ Browse the floor plan</div>
+          <div className="text-xs text-white/80 mt-0.5">
+            {summary.by_status?.available || 0} of {summary.total} booths still available — click to claim yours
+          </div>
+        </div>
+        <span className="text-2xl">→</span>
+      </div>
+    </Link>
+  );
+}
+
 export default function EventDetail() {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const [ev, setEv] = useState(null);
   const [loading, setLoading] = useState(true);
   const [features, setFeatures] = useState([]);
+  const [sponsorTiers, setSponsorTiers] = useState([]);
   const accountCtx = useAccount() || {};
   const myBusinesses = accountCtx.businesses || [];
 
@@ -161,6 +189,13 @@ export default function EventDetail() {
       .then(r => r.ok ? r.json() : null)
       .then(d => setFeatures(Array.isArray(d?.features) ? d.features : []))
       .catch(() => setFeatures([]));
+  }, [eventId]);
+
+  useEffect(() => {
+    fetch(`${API}/api/events/${eventId}/sponsors/public`)
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setSponsorTiers(Array.isArray(d) ? d : []))
+      .catch(() => setSponsorTiers([]));
   }, [eventId]);
 
   if (loading) return (
@@ -408,6 +443,44 @@ export default function EventDetail() {
 
             {/* Public feature CTAs — driven by OFNEventFeatures catalog */}
             <PublicFeatureCTAs features={features} ev={ev} eventId={eventId} />
+
+            {/* Floor plan + booth booking — only show when a plan exists */}
+            <FloorPlanCTA eventId={eventId} />
+
+            {/* Sponsors — grouped by tier with tier-appropriate logo sizes */}
+            {sponsorTiers.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-3">Thanks to our sponsors</p>
+                {sponsorTiers.map(t => (
+                  <div key={t.TierID} className="mb-4 last:mb-0">
+                    <div className="text-xs font-bold text-[#3D6B34] uppercase tracking-wide mb-2">{t.Name}</div>
+                    <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.max(1, Math.min(t.DisplayColumns || 3, 6))}, minmax(0, 1fr))` }}>
+                      {t.Sponsors.map(s => {
+                        const inner = s.LogoURL ? (
+                          <img src={s.LogoURL} alt={s.Name}
+                            className="object-contain mx-auto"
+                            style={{ maxWidth: t.LogoSizePx || 200, maxHeight: (t.LogoSizePx || 200) * 0.6 }} />
+                        ) : (
+                          <div className="text-sm text-gray-700 font-semibold text-center">{s.Name}</div>
+                        );
+                        const wrap = s.WebsiteURL ? (
+                          <a href={s.WebsiteURL.startsWith('http') ? s.WebsiteURL : `https://${s.WebsiteURL}`}
+                            target="_blank" rel="noopener noreferrer" className="block hover:opacity-80 transition-opacity">
+                            {inner}
+                          </a>
+                        ) : inner;
+                        return (
+                          <div key={s.SponsorID} className="text-center" title={s.Tagline || s.Name}>
+                            {wrap}
+                            {s.Tagline && <div className="text-[10px] text-gray-500 mt-1 italic">{s.Tagline}</div>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Organizer card */}
             <div className="bg-white rounded-xl border border-gray-200 p-5">

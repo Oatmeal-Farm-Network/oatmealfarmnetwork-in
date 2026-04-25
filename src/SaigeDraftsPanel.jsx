@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 
-const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001/saige';
+const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
 
 function authHeaders() {
   const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');

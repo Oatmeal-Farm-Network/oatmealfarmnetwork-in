@@ -36,6 +36,7 @@ export default function PrecisionAgReports() {
   const [scouts, setScouts] = useState([]);
   const [soilSamples, setSoilSamples] = useState([]);
   const [downloading, setDownloading] = useState(false);
+  const [emailing, setEmailing] = useState(false);
 
   useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
   useEffect(() => {
@@ -57,6 +58,22 @@ export default function PrecisionAgReports() {
   const selectedField = fields.find(f => String(f.fieldid || f.id) === selectedFieldId);
   const latest = analyses[0] || null;
   const ndviMean = getIndex(latest, 'NDVI')?.mean;
+
+  const emailLatest = async () => {
+    if (!selectedFieldId) return;
+    setEmailing(true);
+    try {
+      const peopleId = typeof window !== 'undefined' ? localStorage.getItem('people_id') : null;
+      const url = `${API_URL}/api/fields/${selectedFieldId}/email-analysis${peopleId ? `?people_id=${peopleId}` : ''}`;
+      const r = await fetch(url, { method: 'POST' });
+      if (!r.ok) throw new Error(await r.text());
+      alert('Latest analysis emailed.');
+    } catch (e) {
+      alert('Email failed: ' + e.message);
+    } finally {
+      setEmailing(false);
+    }
+  };
 
   const downloadExcel = async () => {
     setDownloading(true);
@@ -100,10 +117,16 @@ export default function PrecisionAgReports() {
             <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">Field Reports</h1>
             <p className="font-mont text-sm text-gray-500">Full-field summary combining satellite analysis, soil samples, and scouting data. Export to Excel.</p>
           </div>
-          <button onClick={downloadExcel} disabled={!selectedFieldId || downloading}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#6D8E22] text-white text-sm font-mont font-semibold rounded-lg hover:bg-[#5a7519] disabled:opacity-50">
-            {downloading ? '⏳ Preparing…' : '↓ Download Excel Report'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={emailLatest} disabled={!selectedFieldId || emailing}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#6D8E22] text-[#6D8E22] text-sm font-mont font-semibold rounded-lg hover:bg-[#f5f8eb] disabled:opacity-50">
+              {emailing ? '⏳ Sending…' : '✉ Email Latest Analysis'}
+            </button>
+            <button onClick={downloadExcel} disabled={!selectedFieldId || downloading}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#6D8E22] text-white text-sm font-mont font-semibold rounded-lg hover:bg-[#5a7519] disabled:opacity-50">
+              {downloading ? '⏳ Preparing…' : '↓ Download Excel Report'}
+            </button>
+          </div>
         </div>
 
         {/* Field selector */}

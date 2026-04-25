@@ -1,30 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
-import { useFields, useAnalyses, getIndex, seededRand } from './precisionAgUtils';
+import { useFields, useAnalyses, getIndex, useRaster } from './precisionAgUtils';
 
-// ─── Histogram from min/mean/max (approximated normal distribution) ──────────
-function IndexHistogram({ indexData, indexName, fieldId, color = '#6D8E22', height = 130 }) {
-  if (!indexData) return (
-    <div className="flex items-center justify-center text-gray-400 text-xs font-mont" style={{ height }}>No data — run an analysis first</div>
+// ─── Real-raster histogram (one card per index) ─────────────────────────────
+function IndexHistogramCard({ fieldId, indexKey, color = '#6D8E22', height = 130 }) {
+  const { data, loading, error } = useRaster(fieldId, indexKey, 48);
+
+  if (loading) return (
+    <div className="flex items-center justify-center text-gray-400 text-xs font-mont animate-pulse" style={{ height }}>
+      Loading raster…
+    </div>
   );
-  const { min, max, mean } = indexData;
-  const range = max - min || 0.01;
+  if (error || !data?.grid?.values) return (
+    <div className="flex items-center justify-center text-gray-400 text-xs font-mont" style={{ height }}>
+      {error ? `Couldn't load raster` : 'No data — run an analysis first'}
+    </div>
+  );
+
+  const values = data.grid.values.flat().filter(v => v != null);
+  if (values.length === 0) return (
+    <div className="flex items-center justify-center text-gray-400 text-xs font-mont" style={{ height }}>
+      No valid pixels
+    </div>
+  );
+
+  const min = data.raster?.min ?? Math.min(...values);
+  const max = data.raster?.max ?? Math.max(...values);
+  const mean = data.raster?.mean ?? (values.reduce((s, v) => s + v, 0) / values.length);
+  const std = data.raster?.std;
+  const range = (max - min) || 0.01;
+
   const BINS = 24;
   const step = range / BINS;
-  const rand = seededRand(fieldId * 31 + indexName.charCodeAt(0));
-  const std = range / 5;
-  const samples = Array.from({ length: 800 }, () => {
-    let s = 0;
-    for (let i = 0; i < 6; i++) s += rand();
-    return mean + (s - 3) * std * 0.6;
-  });
   const bins = Array(BINS).fill(0);
-  samples.forEach(v => {
+  values.forEach(v => {
     const idx = Math.min(BINS - 1, Math.max(0, Math.floor((v - min) / step)));
     bins[idx]++;
   });
+
   const maxBin = Math.max(...bins, 1);
   const W = 400, H = height;
   const PL = 8, PR = 8, PT = 10, PB = 28;
@@ -39,18 +54,23 @@ function IndexHistogram({ indexData, indexName, fieldId, color = '#6D8E22', heig
           const binCenter = min + (i + 0.5) * step;
           const c = binCenter < mean ? '#F97316' : color;
           const bH = Math.max(1, (count / maxBin) * cH);
-          return <rect key={i} x={PL + i * binW + 0.5} y={PT + cH - bH} width={Math.max(1, binW - 1)} height={bH} fill={c} rx="1" />;
+          return (
+            <rect key={i} x={PL + i * binW + 0.5} y={PT + cH - bH} width={Math.max(1, binW - 1)} height={bH} fill={c} rx="1">
+              <title>{`${binCenter.toFixed(3)}: ${count} px`}</title>
+            </rect>
+          );
         })}
         <line x1={meanX} y1={PT} x2={meanX} y2={PT + cH} stroke="#111827" strokeWidth="1.5" strokeDasharray="3,2" />
         <text x={PL} y={H - 6} fontSize="9" fill="#9CA3AF">{min.toFixed(2)}</text>
         <text x={meanX} y={H - 6} textAnchor="middle" fontSize="9" fill="#374151" fontWeight="bold">{mean.toFixed(2)}</text>
         <text x={W - PR} y={H - 6} textAnchor="end" fontSize="9" fill="#9CA3AF">{max.toFixed(2)}</text>
       </svg>
-      <div className="flex gap-4 mt-1 text-xs font-mont text-gray-500">
+      <div className="flex gap-4 mt-1 text-xs font-mont text-gray-500 flex-wrap">
         <span>Min <strong>{min.toFixed(3)}</strong></span>
         <span>Mean <strong style={{ color }}>{mean.toFixed(3)}</strong></span>
         <span>Max <strong>{max.toFixed(3)}</strong></span>
-        <span>Range <strong>{range.toFixed(3)}</strong></span>
+        {std != null && <span>Std <strong>{std.toFixed(3)}</strong></span>}
+        <span className="ml-auto text-gray-400">{values.length} px</span>
       </div>
     </div>
   );
@@ -175,10 +195,9 @@ export default function PrecisionAgHistograms() {
                       )}
                     </div>
                     <p className="font-mont text-xs text-gray-400 mb-3">{cfg.desc}</p>
-                    <IndexHistogram
-                      indexData={idxData}
-                      indexName={cfg.key}
+                    <IndexHistogramCard
                       fieldId={fieldIdNum}
+                      indexKey={cfg.key}
                       color={cfg.color}
                       height={130}
                     />
@@ -188,28 +207,50 @@ export default function PrecisionAgHistograms() {
               })}
             </div>
 
-            {/* Analysis comparison — if multiple runs */}
-            {analyses.length >= 2 && (
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">
-                  NDVI Distribution — All Analyses
+            {/* NDVI mean over time — replaces synthetic per-date histograms with
+                real per-analysis stats (mean/min/max from the DB). For full per-date
+                rasters we'd need an analysis_id-aware /raster endpoint. */}
+            {analyses.length >= 2 && (() => {
+              const ndviStats = analyses.map(a => ({ a, idx: getIndex(a, 'NDVI') })).filter(x => x.idx);
+              if (ndviStats.length < 2) return null;
+              const overallMin = Math.min(...ndviStats.map(s => s.idx.min));
+              const overallMax = Math.max(...ndviStats.map(s => s.idx.max));
+              const range = overallMax - overallMin || 0.01;
+              return (
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">
+                    NDVI Range Per Analysis (real stats from each scene)
+                  </div>
+                  <div className="p-5 space-y-2">
+                    {ndviStats.map(({ a, idx }, i) => {
+                      const minPct  = ((idx.min  - overallMin) / range) * 100;
+                      const meanPct = ((idx.mean - overallMin) / range) * 100;
+                      const maxPct  = ((idx.max  - overallMin) / range) * 100;
+                      const widthPct = maxPct - minPct;
+                      const active = i === selectedAnalysisIdx;
+                      return (
+                        <button key={i} onClick={() => setSelectedAnalysisIdx(i)}
+                          className={`w-full text-left flex items-center gap-3 rounded-lg p-2 ${active ? 'bg-green-50 border border-[#6D8E22]' : 'hover:bg-gray-50 border border-transparent'}`}>
+                          <div className="font-mont text-xs font-semibold text-gray-600 w-28 shrink-0">
+                            {new Date(a.analysis_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+                          </div>
+                          <div className="flex-1 relative h-5 bg-gray-100 rounded">
+                            <div
+                              className="absolute top-0 h-full rounded"
+                              style={{ left: `${minPct}%`, width: `${widthPct}%`, background: 'linear-gradient(to right, rgba(160,30,30,0.4), rgba(90,165,40,0.4))' }} />
+                            <div className="absolute top-0 h-full w-0.5 bg-gray-900"
+                              style={{ left: `${meanPct}%` }} title={`Mean ${idx.mean.toFixed(3)}`} />
+                          </div>
+                          <div className="font-mont text-xs text-gray-500 w-16 text-right tabular-nums">
+                            {idx.mean.toFixed(2)}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {analyses.map((a, i) => {
-                    const idxData = getIndex(a, 'NDVI');
-                    return (
-                      <div key={i} className={`rounded-lg border p-3 ${i === selectedAnalysisIdx ? 'border-[#6D8E22] bg-green-50' : 'border-gray-100'}`}>
-                        <div className="font-mont text-xs font-semibold text-gray-600 mb-2">
-                          {new Date(a.analysis_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
-                          {i === 0 && <span className="ml-1 text-gray-400">(latest)</span>}
-                        </div>
-                        <IndexHistogram indexData={idxData} indexName="NDVI" fieldId={fieldIdNum + i * 13} height={90} />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </>
         )}
       </div>

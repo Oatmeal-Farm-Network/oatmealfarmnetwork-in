@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
+import ThaiymeChat from './ThaiymeChat';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -357,6 +358,7 @@ export default function Accounting() {
   if (loading) return (
     <AccountLayout BusinessID={businessId} PeopleID={peopleId} pageTitle="Accounting">
       <div className="p-8 text-gray-500">Loading accounting...</div>
+      <ThaiymeChat businessId={businessId} page="accounting" />
     </AccountLayout>
   );
 
@@ -973,6 +975,7 @@ export default function Accounting() {
           }}
         />
       )}
+      <ThaiymeChat businessId={businessId} page="accounting" />
     </AccountLayout>
   );
 }

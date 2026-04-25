@@ -565,7 +565,7 @@ export default function AccountProfile() {
 
   return (
     <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId} pageTitle="Account Profile" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Account Settings' }, { label: 'Profile' }]}>
-      <div className="space-y-6 max-w-3xl">
+      <div className="space-y-6 w-full">
 
         <h1 className="text-2xl font-bold text-gray-800">Account Profile</h1>
 
@@ -582,7 +582,7 @@ export default function AccountProfile() {
         <div className={sectionCard}>
           <h2 className="text-base font-semibold text-gray-700">Contact Information</h2>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className={labelClass}>First Name <span className="text-gray-400 font-normal">(Optional)</span></label>
               <input type="text" value={form.ContactFirstName || ''} onChange={e => update('ContactFirstName', e.target.value)} className={inputClass} />
@@ -591,26 +591,26 @@ export default function AccountProfile() {
               <label className={labelClass}>Last Name <span className="text-gray-400 font-normal">(Optional)</span></label>
               <input type="text" value={form.ContactLastName || ''} onChange={e => update('ContactLastName', e.target.value)} className={inputClass} />
             </div>
+            <div className="lg:col-span-2">
+              <label className={labelClass}>Business / Organization Name</label>
+              <input type="text" value={form.BusinessName || ''} onChange={e => update('BusinessName', e.target.value)} className={inputClass} maxLength={100} />
+              {errors.BusinessName && <p className={errorClass}>{errors.BusinessName}</p>}
+            </div>
           </div>
 
-          <div>
-            <label className={labelClass}>Business / Organization Name</label>
-            <input type="text" value={form.BusinessName || ''} onChange={e => update('BusinessName', e.target.value)} className={inputClass} maxLength={100} />
-            {errors.BusinessName && <p className={errorClass}>{errors.BusinessName}</p>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Email</label>
+              <input type="email" value={form.ContactEmail || ''} onChange={e => update('ContactEmail', e.target.value)} className={inputClass} />
+              {errors.ContactEmail && <p className={errorClass}>{errors.ContactEmail}</p>}
+            </div>
+            <div>
+              <label className={labelClass}>Website <span className="text-gray-400 font-normal">(Optional)</span></label>
+              <input type="text" value={form.BusinessWebsite || ''} onChange={e => update('BusinessWebsite', e.target.value)} className={inputClass} placeholder="https://yourwebsite.com" />
+            </div>
           </div>
 
-          <div>
-            <label className={labelClass}>Email</label>
-            <input type="email" value={form.ContactEmail || ''} onChange={e => update('ContactEmail', e.target.value)} className={inputClass} />
-            {errors.ContactEmail && <p className={errorClass}>{errors.ContactEmail}</p>}
-          </div>
-
-          <div>
-            <label className={labelClass}>Website <span className="text-gray-400 font-normal">(Optional)</span></label>
-            <input type="text" value={form.BusinessWebsite || ''} onChange={e => update('BusinessWebsite', e.target.value)} className={inputClass} placeholder="https://yourwebsite.com" />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className={labelClass}>Phone <span className="text-gray-400 font-normal">(Optional)</span></label>
               <input type="tel" value={form.BusinessPhone || ''} onChange={e => update('BusinessPhone', e.target.value.replace(/[^0-9().\-\s+]/g, ''))} className={inputClass} />
@@ -630,15 +630,17 @@ export default function AccountProfile() {
         <div className={sectionCard}>
           <h2 className="text-base font-semibold text-gray-700">Address <span className="text-gray-400 font-normal text-sm">(Optional)</span></h2>
 
-          <div>
-            <label className={labelClass}>Mailing Address</label>
-            <input type="text" value={form.AddressStreet || ''} onChange={e => update('AddressStreet', e.target.value)} className={inputClass} />
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="sm:col-span-2 lg:col-span-3">
+              <label className={labelClass}>Mailing Address</label>
+              <input type="text" value={form.AddressStreet || ''} onChange={e => update('AddressStreet', e.target.value)} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Apartment / Suite</label>
+              <input type="text" value={form.AddressApt || ''} onChange={e => update('AddressApt', e.target.value)} className={inputClass} />
+            </div>
           </div>
-          <div>
-            <label className={labelClass}>Apartment / Suite</label>
-            <input type="text" value={form.AddressApt || ''} onChange={e => update('AddressApt', e.target.value)} className={inputClass} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className={labelClass}>City</label>
               <input type="text" value={form.AddressCity || ''} onChange={e => update('AddressCity', e.target.value)} className={inputClass} />
@@ -647,20 +649,18 @@ export default function AccountProfile() {
               <label className={labelClass}>Postal Code</label>
               <input type="text" value={form.AddressZip || ''} onChange={e => update('AddressZip', e.target.value)} className={inputClass} maxLength={10} />
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Country</label>
-              <select value={form.country_name || 'USA'} onChange={e => handleCountryChange(e.target.value)} className={inputClass}>
-                <option value="USA">USA</option>
-                <option value="Canada">Canada</option>
-              </select>
-            </div>
             <div>
               <label className={labelClass}>State / Province</label>
               <select value={form.StateIndex || ''} onChange={e => update('StateIndex', e.target.value)} className={inputClass}>
                 <option value="">Select...</option>
                 {states.map(s => <option key={s.StateIndex} value={s.StateIndex}>{s.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Country</label>
+              <select value={form.country_name || 'USA'} onChange={e => handleCountryChange(e.target.value)} className={inputClass}>
+                <option value="USA">USA</option>
+                <option value="Canada">Canada</option>
               </select>
             </div>
           </div>
@@ -725,7 +725,7 @@ export default function AccountProfile() {
         {/* ── Social Media ── */}
         <div className={sectionCard}>
           <h2 className="text-base font-semibold text-gray-700">Social Media &amp; Links <span className="text-gray-400 font-normal text-sm">(Optional)</span></h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {SOCIAL_FIELDS.map(({ key, label, placeholder }) => (
               <div key={key}>
                 <label className={labelClass}>{label}</label>

@@ -12,7 +12,7 @@ const HEADER_H = 72; // px — matches AccountLayout header height
 function LavenderBranchIcon({ size = 24 }) {
   return (
     <img
-      src="/images/AI-agent-logo-lavendair.svg"
+      src="/images/LavendirIcon.png"
       alt="Lavendir"
       width={size}
       height={size}

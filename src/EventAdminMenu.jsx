@@ -258,6 +258,21 @@ export default function EventAdminMenu({
           <Row to={`/events/${eventId}/admin/abandoned-carts`} icon="🛒" label="Abandoned Carts"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/admin/abandoned-carts`} />
+          <Row to={`/events/${eventId}/admin/sponsorship`} icon="🏆" label="Sponsorship"
+            expanded={menuExpanded}
+            active={loc.pathname === `/events/${eventId}/admin/sponsorship`} />
+          <Row to={appendBiz(`/events/${eventId}/leads`, businessId)} icon="📇" label="My Leads (exhibitor)"
+            expanded={menuExpanded}
+            active={loc.pathname === `/events/${eventId}/leads`} />
+          <Row to={`/events/${eventId}/admin/floor-plan`} icon="🗺️" label="Floor Plan"
+            expanded={menuExpanded}
+            active={loc.pathname === `/events/${eventId}/admin/floor-plan`} />
+          <Row to={`/events/${eventId}/admin/booth-services`} icon="⚡" label="Booth Services"
+            expanded={menuExpanded}
+            active={loc.pathname === `/events/${eventId}/admin/booth-services`} />
+          <Row to={`/events/${eventId}/admin/coi`} icon="📜" label="COI / Insurance"
+            expanded={menuExpanded}
+            active={loc.pathname === `/events/${eventId}/admin/coi`} />
         </div>
 
         <div className="mt-2">

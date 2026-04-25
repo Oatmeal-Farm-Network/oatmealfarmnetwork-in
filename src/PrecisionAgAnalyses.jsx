@@ -3,10 +3,14 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import BiomassPanel from './BiomassPanel';
+import MaturityPanel from './MaturityPanel';
+import ClimateForecastPanel from './ClimateForecastPanel';
+import { useRaster } from './precisionAgUtils';
+import SaigeWidget from './SaigeWidget';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const CROP_API_URL = window.location.hostname === 'localhost'
-  ? 'http://127.0.0.1:8002'
+  ? `${API_URL}/cm`   // unified server_all.py mounts CropMonitor at /cm
   : 'https://crop-detection-802455386518.us-central1.run.app';
 
 async function safeFetch(url) {
@@ -17,11 +21,6 @@ async function safeFetch(url) {
   } catch { return null; }
 }
 
-// ─── Seeded LCG random (deterministic per field/index) ───────────────────────
-function seededRand(seed) {
-  let s = Math.abs(Math.sin(seed) * 100000) % 233280;
-  return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-}
 
 // ─── Color scales ─────────────────────────────────────────────────────────────
 function ndviColor(t) {
@@ -35,7 +34,7 @@ function ndviColor(t) {
 }
 
 // ─── LineChart ────────────────────────────────────────────────────────────────
-function LineChart({ series, xLabels, height = 200, yMin, yMax }) {
+function LineChart({ series, xLabels, height = 200, yMin, yMax, stretch = false }) {
   const PL = 44, PR = 14, PT = 14, PB = 38;
   const W = 560, H = height;
   const cW = W - PL - PR, cH = H - PT - PB;
@@ -49,7 +48,12 @@ function LineChart({ series, xLabels, height = 200, yMin, yMax }) {
   const py = v => PT + cH - ((v - lo) / span) * cH;
   const ticks = [lo, lo + span * 0.25, lo + span * 0.5, lo + span * 0.75, hi];
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }}>
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio={stretch ? 'none' : 'xMidYMid meet'}
+      className="w-full block"
+      style={stretch ? { height: '100%', width: '100%' } : { height }}
+    >
       {ticks.map((v, i) => (
         <g key={i}>
           <line x1={PL} y1={py(v)} x2={W - PR} y2={py(v)} stroke="#E5E7EB" strokeWidth="1" />
@@ -171,46 +175,48 @@ function ScatterPlot({ points, xLabel, yLabel, height = 220 }) {
   );
 }
 
-// ─── VegetationZoneMap ────────────────────────────────────────────────────────
-function VegetationZoneMap({ indexData, indexName, fieldId, description }) {
-  if (!indexData) {
+// ─── VegetationZoneMap (real raster from /api/fields/{id}/raster/{index}) ─────
+function VegetationZoneMap({ indexName, fieldId, description }) {
+  const { data, loading, error } = useRaster(fieldId, indexName, 48);
+
+  if (loading) {
     return (
-      <div className="rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 font-mont text-sm" style={{ height: 180 }}>
-        Run an analysis to generate the {indexName} spatial map
+      <div className="rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 font-mont text-sm animate-pulse" style={{ height: 180 }}>
+        Loading {indexName} raster…
       </div>
     );
   }
-  const { min, max, mean } = indexData;
-  const range = max - min || 0.01;
-  const cols = 28, rows = 16;
-  const rand = seededRand(fieldId * 127 + indexName.charCodeAt(0) * 31);
-  // Generate spatially-coherent values using CLT approximation
-  const cells = Array.from({ length: rows * cols }, () => {
-    const r = (rand() + rand() + rand() + rand() - 2) * 0.5;
-    return Math.max(min, Math.min(max, mean + r * range * 0.45));
-  });
-  // Simple smoothing: average with neighbors
-  const smooth = cells.map((v, i) => {
-    const r = Math.floor(i / cols), c = i % cols;
-    let sum = v, cnt = 1;
-    if (r > 0) { sum += cells[(r - 1) * cols + c]; cnt++; }
-    if (r < rows - 1) { sum += cells[(r + 1) * cols + c]; cnt++; }
-    if (c > 0) { sum += cells[r * cols + c - 1]; cnt++; }
-    if (c < cols - 1) { sum += cells[r * cols + c + 1]; cnt++; }
-    return sum / cnt;
-  });
-  // Zone percentages
+  if (error || !data?.grid?.values) {
+    return (
+      <div className="rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 font-mont text-sm" style={{ height: 180 }}>
+        {error ? `${indexName} raster unavailable` : `Run an analysis to generate the ${indexName} spatial map`}
+      </div>
+    );
+  }
+
+  const { values, rows, cols } = data.grid;
+  const min  = data.raster?.min  ?? 0;
+  const max  = data.raster?.max  ?? 1;
+  const mean = data.raster?.mean ?? (min + max) / 2;
+  const range = (max - min) || 0.01;
+
+  // Real zone percentages from actual cell values
+  const flat = values.flat().filter(v => v != null);
   const lo = mean - (mean - min) * 0.5;
   const hi = mean + (max - mean) * 0.5;
-  const zLow = smooth.filter(v => v < lo).length / smooth.length * 100;
-  const zMed = smooth.filter(v => v >= lo && v <= hi).length / smooth.length * 100;
-  const zHigh = smooth.filter(v => v > hi).length / smooth.length * 100;
+  const zLow  = flat.filter(v => v < lo).length / flat.length * 100;
+  const zMed  = flat.filter(v => v >= lo && v <= hi).length / flat.length * 100;
+  const zHigh = flat.filter(v => v > hi).length / flat.length * 100;
+
   return (
     <div>
-      <div className="rounded-lg overflow-hidden border border-gray-200 mb-2" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, height: 140 }}>
-        {smooth.map((v, i) => (
-          <div key={i} style={{ background: ndviColor((v - min) / range) }} />
-        ))}
+      <div className="rounded-lg overflow-hidden border border-gray-200 mb-2"
+        style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, height: 140 }}>
+        {values.flatMap((row, r) => row.map((v, c) => (
+          v == null
+            ? <div key={`${r}-${c}`} style={{ background: '#F3F4F6' }} />
+            : <div key={`${r}-${c}`} style={{ background: ndviColor((v - min) / range) }} title={`${indexName} ${v.toFixed(3)}`} />
+        )))}
       </div>
       <div className="flex items-center gap-2 mb-1">
         <div className="flex-1 h-3 rounded" style={{ background: 'linear-gradient(to right, rgb(160,30,30), rgb(220,180,40), rgb(170,210,50), rgb(30,100,20))' }} />
@@ -224,8 +230,175 @@ function VegetationZoneMap({ indexData, indexName, fieldId, description }) {
         <span className="px-2 py-0.5 rounded" style={{ background: 'rgb(160,30,30)', color: 'white' }}>Stressed {zLow.toFixed(0)}%</span>
         <span className="px-2 py-0.5 rounded" style={{ background: 'rgb(170,210,50)', color: '#333' }}>Average {zMed.toFixed(0)}%</span>
         <span className="px-2 py-0.5 rounded" style={{ background: 'rgb(30,100,20)', color: 'white' }}>High {zHigh.toFixed(0)}%</span>
+        <span className="ml-auto text-gray-400">{flat.length} px</span>
       </div>
       {description && <p className="text-xs text-gray-400 font-mont mt-2">{description}</p>}
+    </div>
+  );
+}
+
+// ─── Wind rose (Open-Meteo hourly, aggregated into 8 compass sectors) ──────
+function WindRose({ fieldId }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!fieldId) return;
+    setLoading(true);
+    const ctrl = new AbortController();
+    fetch(`${API_URL}/api/fields/${fieldId}/wind?days=30`, { signal: ctrl.signal })
+      .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+      .then(d => { setData(d); setLoading(false); })
+      .catch(e => { if (e?.name !== 'AbortError') { setError(String(e)); setLoading(false); } });
+    return () => ctrl.abort();
+  }, [fieldId]);
+
+  if (loading) return <div className="rounded-xl bg-gray-50 border border-gray-100 p-6 text-center text-gray-400 font-mont text-sm animate-pulse">Loading wind data…</div>;
+  if (error || !data) return <div className="rounded-xl bg-gray-50 border border-gray-100 p-6 text-center text-gray-400 font-mont text-sm">Wind data unavailable {error ? `(${error})` : ''}</div>;
+  if (data.samples === 0) return <div className="rounded-xl bg-gray-50 border border-gray-100 p-6 text-center text-gray-400 font-mont text-sm">No wind samples in the last {data.days} days.</div>;
+
+  const sectors = data.sectors || [];
+  const matrix  = data.matrix  || [];
+  const binLabels = data.bin_labels || [];
+  // Bin colors — calm to strongest
+  const binColors = ['#E5E7EB','#A7F3D0','#6EE7B7','#FBBF24','#F97316','#DC2626'];
+
+  // SVG geometry
+  const W = 360, H = 360, cx = W / 2, cy = H / 2;
+  const rMax = 130;
+  const rGrid = 30;
+  const sectorAngle = 360 / 8;
+  // Largest stack height (sum across bins for one sector) sets the scale
+  const maxStack = Math.max(1, ...sectors.map(s => s.count || 0));
+
+  // Compass labels
+  const compass = ['N','NE','E','SE','S','SW','W','NW'];
+
+  // Build stacked sectors as concentric arcs per bin
+  const polarPath = (r1, r2, ang1, ang2) => {
+    const toRad = a => (a - 90) * Math.PI / 180;
+    const x1 = cx + r1 * Math.cos(toRad(ang1));
+    const y1 = cy + r1 * Math.sin(toRad(ang1));
+    const x2 = cx + r2 * Math.cos(toRad(ang1));
+    const y2 = cy + r2 * Math.sin(toRad(ang1));
+    const x3 = cx + r2 * Math.cos(toRad(ang2));
+    const y3 = cy + r2 * Math.sin(toRad(ang2));
+    const x4 = cx + r1 * Math.cos(toRad(ang2));
+    const y4 = cy + r1 * Math.sin(toRad(ang2));
+    const large = (ang2 - ang1) > 180 ? 1 : 0;
+    return `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)} A ${r2} ${r2} 0 ${large} 1 ${x3.toFixed(1)} ${y3.toFixed(1)} L ${x4.toFixed(1)} ${y4.toFixed(1)} A ${r1} ${r1} 0 ${large} 0 ${x1.toFixed(1)} ${y1.toFixed(1)} Z`;
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="grid md:grid-cols-2 gap-6 items-start">
+        {/* SVG wind rose */}
+        <div className="flex justify-center">
+          <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: 400 }}>
+            {/* concentric grid rings */}
+            {[0.25, 0.5, 0.75, 1.0].map((t, i) => (
+              <circle key={i} cx={cx} cy={cy} r={rMax * t} fill="none" stroke="#E5E7EB" strokeDasharray="2 3" />
+            ))}
+            {/* spoke radials */}
+            {Array.from({ length: 8 }).map((_, i) => {
+              const ang = i * sectorAngle;
+              const toRad = a => (a - 90) * Math.PI / 180;
+              const x = cx + rMax * Math.cos(toRad(ang));
+              const y = cy + rMax * Math.sin(toRad(ang));
+              return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="#F3F4F6" />;
+            })}
+            {/* compass labels */}
+            {compass.map((lbl, i) => {
+              const ang = i * sectorAngle;
+              const toRad = a => (a - 90) * Math.PI / 180;
+              const x = cx + (rMax + 18) * Math.cos(toRad(ang));
+              const y = cy + (rMax + 18) * Math.sin(toRad(ang));
+              return <text key={i} x={x} y={y + 4} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#374151">{lbl}</text>;
+            })}
+            {/* sector stacks: each sector renders bins outward from center */}
+            {matrix.map((bins, sectorIdx) => {
+              const ang1 = sectorIdx * sectorAngle - sectorAngle / 2;
+              const ang2 = ang1 + sectorAngle - 4;   // 4° padding
+              let cumR = 0;
+              return bins.map((count, binIdx) => {
+                if (count === 0) return null;
+                const r1 = (cumR / maxStack) * rMax;
+                cumR += count;
+                const r2 = (cumR / maxStack) * rMax;
+                return (
+                  <path key={`${sectorIdx}-${binIdx}`}
+                    d={polarPath(Math.max(2, r1), r2, ang1, ang2)}
+                    fill={binColors[binIdx] || '#9CA3AF'}
+                    opacity={0.9}>
+                    <title>{`${compass[sectorIdx]} · ${binLabels[binIdx]} kph · ${count} hrs`}</title>
+                  </path>
+                );
+              });
+            })}
+            <text x={cx} y={cy + 4} textAnchor="middle" fontSize="9" fill="#9CA3AF">{data.samples} hrs</text>
+          </svg>
+        </div>
+
+        {/* Stats + legend */}
+        <div className="space-y-3">
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+            <div className="text-xs font-mont uppercase text-amber-700 font-semibold">Predominant wind</div>
+            <div className="text-2xl font-lora font-bold text-gray-900 mt-1">
+              {data.predominant} <span className="text-sm font-mont text-gray-500">({data.predominant_pct}% of hours)</span>
+            </div>
+            <div className="text-xs text-gray-500 font-mont mt-1">
+              Calm hours (&lt;5 kph): {data.calm_pct}% · {data.days}-day window
+            </div>
+          </div>
+
+          {/* Speed legend */}
+          <div>
+            <div className="text-xs font-mont uppercase text-gray-500 font-semibold mb-1.5">Speed (kph)</div>
+            <div className="flex flex-wrap gap-2 text-xs font-mont text-gray-600">
+              {binLabels.map((b, i) => (
+                <div key={i} className="flex items-center gap-1">
+                  <span className="w-3 h-3 rounded-sm" style={{ background: binColors[i] }} />
+                  <span>{b}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Per-sector summary */}
+          <div>
+            <div className="text-xs font-mont uppercase text-gray-500 font-semibold mb-1.5">By sector</div>
+            <table className="w-full text-xs font-mont">
+              <thead>
+                <tr className="text-gray-400">
+                  <th className="text-left py-1">Dir</th>
+                  <th className="text-right py-1">Hours</th>
+                  <th className="text-right py-1">% Time</th>
+                  <th className="text-right py-1">Mean kph</th>
+                  <th className="text-right py-1">Max kph</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sectors.map(s => (
+                  <tr key={s.label} className={s.label === data.predominant ? 'bg-amber-50' : ''}>
+                    <td className="py-0.5 font-semibold text-gray-700">{s.label}</td>
+                    <td className="text-right text-gray-600">{s.count}</td>
+                    <td className="text-right text-gray-600">{s.frequency_pct}%</td>
+                    <td className="text-right text-gray-600">{s.mean_speed}</td>
+                    <td className="text-right text-gray-600">{s.max_speed}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="text-xs font-mont text-gray-400 italic">
+            Data: Open-Meteo hourly wind at 10 m, last {data.days} days. For
+            spray drift documentation, this captures predominant patterns —
+            an on-farm anemometer is still useful for instantaneous compliance.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -336,14 +509,6 @@ function MapsTab({ latest, analyses, fieldId }) {
     { key: 'EVI', label: 'EVI — Enhanced Vegetation Index', desc: 'Reduced soil background influence. More accurate than NDVI in high-canopy-density conditions.' },
     { key: 'GNDVI', label: 'GNDVI — Green NDVI', desc: 'Sensitive to chlorophyll concentration. Useful for distinguishing crop stress from crop density differences.' },
   ];
-  const ndviForMsavi = latest ? getIndex(latest, 'NDVI') : null;
-  const msaviData = ndviForMsavi ? {
-    // MSAVI approximated from NDVI with soil correction — shown as educational placeholder
-    min: Math.max(0, ndviForMsavi.min - 0.05),
-    mean: Math.max(0, ndviForMsavi.mean - 0.03),
-    max: Math.min(1, ndviForMsavi.max - 0.02),
-  } : null;
-
   if (!latest) {
     return (
       <div className="text-center py-16 rounded-xl bg-gray-50 border border-gray-100">
@@ -366,7 +531,6 @@ function MapsTab({ latest, analyses, fieldId }) {
         <div key={key}>
           <SectionTitle>{label}</SectionTitle>
           <VegetationZoneMap
-            indexData={getIndex(latest, key)}
             indexName={key}
             fieldId={typeof fieldId === 'number' ? fieldId : parseInt(fieldId)}
             description={desc}
@@ -377,10 +541,9 @@ function MapsTab({ latest, analyses, fieldId }) {
       <div>
         <SectionTitle>MSAVI — Modified Soil Adjusted Vegetation Index</SectionTitle>
         <VegetationZoneMap
-          indexData={msaviData}
           indexName="MSAVI"
-          fieldId={typeof fieldId === 'number' ? fieldId : parseInt(fieldId) + 7}
-          description="Best for early-season crops where bare soil signal interferes with vegetation readings. Values estimated from NDVI with soil correction."
+          fieldId={typeof fieldId === 'number' ? fieldId : parseInt(fieldId)}
+          description="Best for early-season crops where bare soil signal interferes with vegetation readings. Real MSAVI from the Sentinel-2 evalscript (Qi et al. 1994)."
         />
       </div>
 
@@ -653,16 +816,6 @@ function WeatherTab({ weather, field }) {
         </div>
       )}
 
-      {/* Temperature trend */}
-      {tempSeries.length > 0 && daily.length >= 2 && (
-        <div>
-          <SectionTitle>Temperature Trend — {daily.length}-Day Forecast (°F)</SectionTitle>
-          <div className="bg-white rounded-xl border border-gray-100 p-4">
-            <LineChart series={tempSeries} xLabels={dayLabels} height={200} />
-          </div>
-        </div>
-      )}
-
       {/* Daily forecast */}
       {daily.length > 0 && (
         <div>
@@ -700,16 +853,21 @@ function WeatherTab({ weather, field }) {
         </div>
       </div>
 
-      {/* Wind rose placeholder */}
+      {/* Wind direction rose (real Open-Meteo hourly data, 30d default) */}
       <div>
         <SectionTitle>Wind Direction Rose</SectionTitle>
-        <DataRequired
-          icon="🧭"
-          title="On-Farm Weather Station Required"
-          description="Wind speed and direction rose plots show predominant wind patterns — critical for spray application records (proving no drift during chemical applications) and disease pressure modelling."
-          integrations={['Davis Instruments Vantage Pro', 'Onset HOBO weather station', 'Campbell Scientific', 'WatchDog 2000 Series']}
-        />
+        <WindRose fieldId={fieldId} />
       </div>
+
+      {/* Temperature trend */}
+      {tempSeries.length > 0 && daily.length >= 2 && (
+        <div>
+          <SectionTitle>Temperature Trend — {daily.length}-Day Forecast (°F)</SectionTitle>
+          <div className="bg-white rounded-xl border border-gray-100 p-4 h-[480px]">
+            <LineChart series={tempSeries} xLabels={dayLabels} stretch />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1027,10 +1185,222 @@ function AnalyticsTab({ analyses, recommendations }) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
+// TAB: HISTOGRAMS — bins real raster values from /api/fields/{id}/raster/{index}
+// ════════════════════════════════════════════════════════════════════════════════
+function IndexHistogram({ indexName, fieldId, color = '#6D8E22', height = 130 }) {
+  const { data, loading, error } = useRaster(fieldId, indexName, 48);
+
+  if (loading) return (
+    <div className="flex items-center justify-center text-gray-400 text-xs font-mont animate-pulse" style={{ height }}>
+      Loading raster…
+    </div>
+  );
+  if (error || !data?.grid?.values) return (
+    <div className="flex items-center justify-center text-gray-400 text-xs font-mont" style={{ height }}>
+      {error ? 'Raster unavailable' : 'No data — run an analysis first'}
+    </div>
+  );
+
+  const values = data.grid.values.flat().filter(v => v != null);
+  if (values.length === 0) return (
+    <div className="flex items-center justify-center text-gray-400 text-xs font-mont" style={{ height }}>
+      No valid pixels
+    </div>
+  );
+
+  const min  = data.raster?.min  ?? Math.min(...values);
+  const max  = data.raster?.max  ?? Math.max(...values);
+  const mean = data.raster?.mean ?? values.reduce((s, v) => s + v, 0) / values.length;
+  const range = (max - min) || 0.01;
+
+  const BINS = 24;
+  const step = range / BINS;
+  const bins = Array(BINS).fill(0);
+  values.forEach(v => {
+    const idx = Math.min(BINS - 1, Math.max(0, Math.floor((v - min) / step)));
+    bins[idx]++;
+  });
+
+  const maxBin = Math.max(...bins, 1);
+  const W = 400, H = height;
+  const PL = 8, PR = 8, PT = 10, PB = 28;
+  const cW = W - PL - PR, cH = H - PT - PB;
+  const binW = cW / BINS;
+  const meanX = PL + ((mean - min) / range) * cW;
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }}>
+        {bins.map((count, i) => {
+          const binCenter = min + (i + 0.5) * step;
+          const c = binCenter < mean ? '#F97316' : color;
+          const bH = Math.max(1, (count / maxBin) * cH);
+          return (
+            <rect key={i} x={PL + i * binW + 0.5} y={PT + cH - bH} width={Math.max(1, binW - 1)} height={bH} fill={c} rx="1">
+              <title>{`${binCenter.toFixed(3)}: ${count} px`}</title>
+            </rect>
+          );
+        })}
+        <line x1={meanX} y1={PT} x2={meanX} y2={PT + cH} stroke="#111827" strokeWidth="1.5" strokeDasharray="3,2" />
+        <text x={PL} y={H - 6} fontSize="9" fill="#9CA3AF">{min.toFixed(2)}</text>
+        <text x={meanX} y={H - 6} textAnchor="middle" fontSize="9" fill="#374151" fontWeight="bold">{mean.toFixed(2)}</text>
+        <text x={W - PR} y={H - 6} textAnchor="end" fontSize="9" fill="#9CA3AF">{max.toFixed(2)}</text>
+      </svg>
+      <div className="flex gap-4 mt-1 text-xs font-mont text-gray-500 flex-wrap">
+        <span>Min <strong>{min.toFixed(3)}</strong></span>
+        <span>Mean <strong style={{ color }}>{mean.toFixed(3)}</strong></span>
+        <span>Max <strong>{max.toFixed(3)}</strong></span>
+        <span>Range <strong>{range.toFixed(3)}</strong></span>
+        <span className="ml-auto text-gray-400">{values.length} px</span>
+      </div>
+    </div>
+  );
+}
+
+function HistogramGradientBar({ min, max }) {
+  return (
+    <div className="flex items-center gap-2 mt-2">
+      <span className="text-xs font-mont text-gray-400">{min.toFixed(2)}</span>
+      <div className="flex-1 h-3 rounded" style={{ background: 'linear-gradient(to right, rgb(160,30,30), rgb(220,180,40), rgb(90,165,40), rgb(30,100,20))' }} />
+      <span className="text-xs font-mont text-gray-400">{max.toFixed(2)}</span>
+    </div>
+  );
+}
+
+const HISTOGRAM_INDEX_CONFIGS = [
+  { key: 'NDVI',  label: 'NDVI',  color: '#6D8E22', desc: 'Normalized Difference Vegetation Index — overall greenness and biomass' },
+  { key: 'NDRE',  label: 'NDRE',  color: '#3B82F6', desc: 'Normalized Difference Red Edge — nitrogen stress, late-season crops' },
+  { key: 'EVI',   label: 'EVI',   color: '#F59E0B', desc: 'Enhanced Vegetation Index — reduced soil background signal' },
+  { key: 'GNDVI', label: 'GNDVI', color: '#10B981', desc: 'Green NDVI — chlorophyll concentration and crop stress' },
+  { key: 'NDWI',  label: 'NDWI',  color: '#6366F1', desc: 'Normalized Difference Water Index — canopy water content' },
+];
+
+function HistogramsTab({ analyses, fieldId }) {
+  const [selectedAnalysisIdx, setSelectedAnalysisIdx] = useState(0);
+  const getIndex = (a, name) => a?.vegetation_indices?.find(i => i.index_type === name);
+
+  if (analyses.length === 0) {
+    return (
+      <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
+        <div className="text-5xl mb-4">📊</div>
+        <div className="font-lora text-xl text-gray-600 mb-2">No analysis data</div>
+        <div className="font-mont text-sm text-gray-400">Run an analysis on this field to generate histogram data.</div>
+      </div>
+    );
+  }
+
+  const analysis = analyses[selectedAnalysisIdx] || null;
+  const fieldIdNum = parseInt(fieldId) || 1;
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <p className="font-mont text-sm text-gray-500">
+          Pixel-value distributions for each vegetation index — per satellite pass. Spot outliers and track season-over-season shifts.
+        </p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 flex-wrap items-end">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold font-mont text-gray-500">Analysis Date</label>
+          <select value={selectedAnalysisIdx} onChange={e => setSelectedAnalysisIdx(Number(e.target.value))}
+            className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 min-w-[180px]">
+            {analyses.map((a, i) => (
+              <option key={i} value={i}>
+                {new Date(a.analysis_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {i === 0 ? ' (latest)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {analysis && (
+        <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-6 flex-wrap">
+          <div className="text-sm font-mont text-gray-600">
+            <span className="font-semibold text-gray-800">
+              {new Date(analysis.analysis_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </span>
+            {analysis.cloud_percent != null && <span className="ml-3 text-gray-400">Cloud cover: {analysis.cloud_percent.toFixed(1)}%</span>}
+          </div>
+          <div className="flex items-center gap-3 ml-auto">
+            <span className="w-3 h-3 rounded-sm" style={{ background: '#F97316' }} />
+            <span className="text-xs font-mont text-gray-500">Below mean</span>
+            <span className="w-3 h-3 rounded-sm ml-2" style={{ background: '#6D8E22' }} />
+            <span className="text-xs font-mont text-gray-500">Above mean</span>
+            <span className="text-xs font-mont text-gray-400 ml-2">— Mean value</span>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {HISTOGRAM_INDEX_CONFIGS.map(cfg => {
+          const idxData = getIndex(analysis, cfg.key);
+          return (
+            <div key={cfg.key} className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="flex items-center justify-between mb-1">
+                <div className="font-lora font-bold text-gray-900 text-base">{cfg.label}</div>
+                {idxData && (
+                  <span className="font-mont text-sm font-bold" style={{ color: cfg.color }}>
+                    {idxData.mean.toFixed(3)}
+                  </span>
+                )}
+              </div>
+              <p className="font-mont text-xs text-gray-400 mb-3">{cfg.desc}</p>
+              <IndexHistogram indexName={cfg.key} fieldId={fieldIdNum} color={cfg.color} height={130} />
+              {idxData && <HistogramGradientBar min={idxData.min} max={idxData.max} />}
+            </div>
+          );
+        })}
+      </div>
+
+      {analyses.length >= 2 && (() => {
+        const ndviStats = analyses.map(a => ({ a, idx: getIndex(a, 'NDVI') })).filter(x => x.idx);
+        if (ndviStats.length < 2) return null;
+        const overallMin = Math.min(...ndviStats.map(s => s.idx.min));
+        const overallMax = Math.max(...ndviStats.map(s => s.idx.max));
+        const range = overallMax - overallMin || 0.01;
+        return (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">
+              NDVI Range Per Analysis (real stats from each scene)
+            </div>
+            <div className="p-5 space-y-2">
+              {ndviStats.map(({ a, idx }, i) => {
+                const minPct  = ((idx.min  - overallMin) / range) * 100;
+                const meanPct = ((idx.mean - overallMin) / range) * 100;
+                const maxPct  = ((idx.max  - overallMin) / range) * 100;
+                const widthPct = maxPct - minPct;
+                const active = i === selectedAnalysisIdx;
+                return (
+                  <div key={i} className={`flex items-center gap-3 rounded-lg p-2 ${active ? 'bg-green-50 border border-[#6D8E22]' : 'border border-transparent'}`}>
+                    <div className="font-mont text-xs font-semibold text-gray-600 w-28 shrink-0">
+                      {new Date(a.analysis_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+                    </div>
+                    <div className="flex-1 relative h-5 bg-gray-100 rounded">
+                      <div className="absolute top-0 h-full rounded"
+                        style={{ left: `${minPct}%`, width: `${widthPct}%`, background: 'linear-gradient(to right, rgba(160,30,30,0.4), rgba(90,165,40,0.4))' }} />
+                      <div className="absolute top-0 h-full w-0.5 bg-gray-900" style={{ left: `${meanPct}%` }} title={`Mean ${idx.mean.toFixed(3)}`} />
+                    </div>
+                    <div className="font-mont text-xs text-gray-500 w-16 text-right tabular-nums">
+                      {idx.mean.toFixed(2)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
 // FieldDetail
 // ════════════════════════════════════════════════════════════════════════════════
-function FieldDetail({ field, businessId, onBack, onEdit, onJournal }) {
-  const [tab, setTab] = useState('overview');
+function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab }) {
+  const [tab, setTab] = useState(initialTab || 'overview');
   const [analyses, setAnalyses] = useState([]);
   const [weather, setWeather] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
@@ -1078,9 +1448,12 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal }) {
   const TABS = [
     { id: 'overview',    label: 'Overview' },
     { id: 'maps',        label: 'Satellite Maps' },
+    { id: 'histograms',  label: 'Histograms' },
     { id: 'growth',      label: 'Crop Growth' },
+    { id: 'maturity',    label: 'Maturity' },
     { id: 'soil',        label: 'Soil & Nutrients' },
     { id: 'weather',     label: 'Weather' },
+    { id: 'climate',     label: 'Climate Forecast' },
     // { id: 'operations',  label: 'Operations' },  // hidden temporarily
     { id: 'economics',   label: 'Economics' },
     { id: 'analytics',   label: 'Analytics' },
@@ -1220,9 +1593,12 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal }) {
           )}
 
           {tab === 'maps'       && <MapsTab latest={latest} analyses={analyses} fieldId={fieldId} />}
+          {tab === 'histograms' && <HistogramsTab analyses={analyses} fieldId={fieldId} />}
           {tab === 'growth'     && <GrowthTab analyses={analyses} agronomy={agronomy} />}
+          {tab === 'maturity'   && <MaturityPanel fieldId={fieldId} businessId={businessId} />}
           {tab === 'soil'       && <SoilTab agronomy={agronomy} />}
           {tab === 'weather'    && <WeatherTab weather={weather} field={field} />}
+          {tab === 'climate'    && <ClimateForecastPanel fieldId={fieldId} />}
           {/* {tab === 'operations' && <OperationsTab />} */}
           {tab === 'economics'  && <EconomicsTab field={field} analyses={analyses} />}
           {tab === 'analytics'  && <AnalyticsTab analyses={analyses} recommendations={recommendations} />}
@@ -1235,8 +1611,14 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal }) {
 // ─── Main export ──────────────────────────────────────────────────────────────
 export default function PrecisionAgAnalyses() {
   const [searchParams] = useSearchParams();
-  const BusinessID = searchParams.get('BusinessID');
+  const BusinessID = (() => {
+    const raw = searchParams.get('BusinessID');
+    if (!raw || raw === 'null' || raw === 'undefined') return null;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  })();
   const FieldID    = searchParams.get('FieldID');
+  const tabParam   = searchParams.get('tab') || undefined;
   const PeopleID   = localStorage.getItem('PeopleID');
   const { Business, LoadBusiness } = useAccount();
   const [field, setField] = useState(null);
@@ -1264,6 +1646,7 @@ export default function PrecisionAgAnalyses() {
           <FieldDetail
             field={field}
             businessId={BusinessID}
+            initialTab={tabParam}
             onBack={() => navigate(`/precision-ag/fields?BusinessID=${BusinessID}`)}
             onEdit={() => navigate(`/precision-ag/fields?BusinessID=${BusinessID}&view=edit-field&FieldID=${FieldID}`)}
             onJournal={() => navigate(`/oatsense/notes?BusinessID=${BusinessID}&FieldID=${FieldID}`)}
@@ -1283,6 +1666,7 @@ export default function PrecisionAgAnalyses() {
           </div>
         )}
       </div>
+      <SaigeWidget businessId={BusinessID} fieldId={FieldID} pageContext="Precision Ag — Analyses" />
     </AccountLayout>
   );
 }

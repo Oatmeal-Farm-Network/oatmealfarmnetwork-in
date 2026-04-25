@@ -742,6 +742,41 @@ export default function CropDetection() {
   }, [fetchAnalysis, updateDrawLayers, BusinessID, navigate]);
 
   // ─── Address search ───────────────────────────────────────────────────────
+  // Looks like a street address if it starts with a house number.
+  const looksLikeStreetAddress = (s) => /^\s*\d+\s+\S/.test(s);
+
+  const queryNominatim = async (val) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=us&limit=8&addressdetails=1`
+      );
+      const data = await res.json();
+      if (!Array.isArray(data)) return [];
+      return data.map(item => ({
+        display_name: item.display_name,
+        lat: parseFloat(item.lat),
+        lon: parseFloat(item.lon),
+        source: 'nominatim',
+      }));
+    } catch { return []; }
+  };
+
+  // US Census Geocoder — free, no key, CORS-enabled, accurate for full US street addresses.
+  const queryCensus = async (val) => {
+    try {
+      const url = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(val)}&benchmark=Public_AR_Current&format=json`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const matches = data?.result?.addressMatches || [];
+      return matches.map(m => ({
+        display_name: m.matchedAddress,
+        lat: parseFloat(m.coordinates?.y),
+        lon: parseFloat(m.coordinates?.x),
+        source: 'census',
+      })).filter(r => isFinite(r.lat) && isFinite(r.lon));
+    } catch { return []; }
+  };
+
   const handleAddressChange = (val) => {
     setAddress(val);
     if (val.length < 3) { setShowSuggestions(false); return; }
@@ -749,12 +784,29 @@ export default function CropDetection() {
     setIsSearching(true);
     searchTimeout.current = setTimeout(async () => {
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=us&limit=8&addressdetails=1`, { headers: { 'User-Agent': 'CropDashboard/1.0' } });
-        const data = await res.json();
-        const ranked = Array.isArray(data)
-          ? data.map(item => ({ ...item, rankScore: item.display_name.toLowerCase().startsWith(val.toLowerCase()) ? 100 : 0 }))
-              .sort((a, b) => b.rankScore - a.rankScore).slice(0, 5)
-          : [];
+        const isStreet = looksLikeStreetAddress(val);
+        const [censusRes, nominatimRes] = await Promise.all([
+          isStreet ? queryCensus(val) : Promise.resolve([]),
+          queryNominatim(val),
+        ]);
+
+        // Merge — Census street matches first (most accurate for full addresses),
+        // then Nominatim for cities/states/zips. Dedupe by rounded coords.
+        const seen = new Set();
+        const merged = [...censusRes, ...nominatimRes].filter(r => {
+          const key = `${r.lat.toFixed(4)},${r.lon.toFixed(4)}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        // Boost prefix matches within each source's order.
+        const lower = val.toLowerCase();
+        const ranked = merged
+          .map(r => ({ ...r, rankScore: r.display_name.toLowerCase().startsWith(lower) ? 100 : 0 }))
+          .sort((a, b) => b.rankScore - a.rankScore)
+          .slice(0, 6);
+
         setSuggestions(ranked);
         setShowSuggestions(ranked.length > 0);
       } catch { setSuggestions([]); }
@@ -766,10 +818,12 @@ export default function CropDetection() {
     setAddress(sug.display_name.split(',')[0]);
     setShowSuggestions(false);
     if (!map.current) return;
-    const lat = parseFloat(sug.lat); const lon = parseFloat(sug.lon);
+    const lat = sug.lat; const lon = sug.lon;
     if (marker.current) marker.current.remove();
     marker.current = new maplibregl.Marker({ color: '#ef4444' }).setLngLat([lon, lat]).addTo(map.current);
-    map.current.flyTo({ center: [lon, lat], zoom: 15, duration: 2000 });
+    // Street-level matches deserve a tighter zoom than place-level matches.
+    const zoom = sug.source === 'census' ? 17 : 15;
+    map.current.flyTo({ center: [lon, lat], zoom, duration: 2000 });
   };
 
   // ─── Map init ──────────────────────────────────────────────────────────────
@@ -973,7 +1027,7 @@ export default function CropDetection() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '2px solid #e2e8f0', borderRadius: 10, padding: '10px 12px', background: 'white' }}>
                   <span style={{ color: '#64748b', fontSize: 14 }}>🔍</span>
                   <input
-                    type="text" placeholder="Search US address…" value={address}
+                    type="text" placeholder="Street address, city, state, or ZIP…" value={address}
                     onChange={e => handleAddressChange(e.target.value)}
                     onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                     style={{ border: 'none', background: 'transparent', flex: 1, outline: 'none', fontSize: 13, color: '#1e293b' }}

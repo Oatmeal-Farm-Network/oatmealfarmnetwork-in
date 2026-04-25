@@ -8,6 +8,7 @@ import Breadcrumbs from './Breadcrumbs';
 import AnimalPickerStep from './AnimalPickerStep';
 import WizardPayStep from './WizardPayStep';
 import WizardAttendeesStep from './WizardAttendeesStep';
+import ThaiymeChat from './ThaiymeChat';
 
 const API = import.meta.env.VITE_API_URL || '';
 const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-[#3D6B34]";
@@ -817,6 +818,7 @@ export default function EventRegisterWizard() {
         )}
       </div>
       <Footer />
+      <ThaiymeChat eventId={Number(eventId) || null} page="event_register_wizard" />
     </div>
   );
 }

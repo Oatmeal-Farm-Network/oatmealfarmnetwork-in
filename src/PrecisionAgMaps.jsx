@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
-import { useFields, useAnalyses, getIndex, generateMapCells, ndviColor } from './precisionAgUtils';
+import { useFields, useAnalyses, getIndex, useRaster, ndviColor } from './precisionAgUtils';
+import SaigeWidget from './SaigeWidget';
 
 const INDEX_CONFIGS = [
   { key: 'NDVI',  label: 'NDVI',  desc: 'Vegetation density & biomass' },
@@ -32,34 +33,39 @@ function indexColor(v, min, max, indexKey) {
   return ndviColor(t);
 }
 
-function FieldMap({ indexData, fieldId, indexKey, height = 420 }) {
-  const cells = useMemo(
-    () => generateMapCells(indexData, fieldId, indexKey, COLS, ROWS),
-    [indexData, fieldId, indexKey]
-  );
+function FieldMap({ fieldId, indexKey, analysisId = null, height = 420 }) {
+  const { data, loading, error } = useRaster(fieldId, indexKey, COLS, analysisId);
 
-  if (!cells) return (
+  if (loading) return (
+    <div className="flex items-center justify-center text-gray-400 font-mont text-sm animate-pulse" style={{ height }}>
+      Loading raster…
+    </div>
+  );
+  if (error || !data?.grid?.values) return (
     <div className="flex items-center justify-center text-gray-400 font-mont text-sm" style={{ height }}>
-      No data — run an analysis first
+      {error ? `Couldn't load raster: ${error}` : 'No data — run an analysis first'}
     </div>
   );
 
-  const cellW = 100 / COLS, cellH = 100 / ROWS;
+  const { values, rows: gRows, cols: gCols } = data.grid;
+  const min = data.raster?.min ?? 0;
+  const max = data.raster?.max ?? 1;
+  const cellW = 100 / gCols, cellH = 100 / gRows;
 
   return (
     <div className="relative w-full overflow-hidden rounded-lg" style={{ height }}>
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-        {cells.map((cell, i) => {
-          const col = i % COLS, row = Math.floor(i / COLS);
+        {values.flatMap((row, r) => row.map((v, c) => {
+          if (v == null) return <rect key={`${r}-${c}`} x={c*cellW} y={r*cellH} width={cellW+0.1} height={cellH+0.1} fill="#F3F4F6" />;
           return (
-            <rect
-              key={i}
-              x={col * cellW} y={row * cellH}
+            <rect key={`${r}-${c}`}
+              x={c * cellW} y={r * cellH}
               width={cellW + 0.1} height={cellH + 0.1}
-              fill={indexColor(cell.v, cell.min, cell.max, indexKey)}
-            />
+              fill={indexColor(v, min, max, indexKey)}>
+              <title>{`${indexKey} = ${v.toFixed(3)}`}</title>
+            </rect>
           );
-        })}
+        }))}
       </svg>
       {/* Coordinate grid overlay */}
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none opacity-10">
@@ -75,6 +81,48 @@ function FieldMap({ indexData, fieldId, indexKey, height = 420 }) {
         <rect x="0" y="0" width="100" height="100" fill="none" stroke="white" strokeWidth="0.6" strokeDasharray="2,1" opacity="0.6" />
       </svg>
     </div>
+  );
+}
+
+// Per-date raster thumbnail. Fetches the historical scene via analysis_id ONLY
+// when that analysis has a satellite_acquired_at to anchor the time window —
+// otherwise the per-date fetch falls back to "latest" on the backend, so we'd
+// be making N redundant requests for the same scene. In that case we just
+// show the index mean as a colored chip.
+function DateThumbnail({ fieldId, indexKey, analysisId, satelliteAcquiredAt, indexData, date, active, onClick }) {
+  const canFetchScene = !!satelliteAcquiredAt;
+  const { data, loading } = useRaster(fieldId, indexKey, 16, canFetchScene ? analysisId : null);
+  const meanFallback = indexData ? indexColor(indexData.mean, indexData.min, indexData.max, indexKey) : '#E5E7EB';
+
+  return (
+    <button onClick={onClick}
+      className={`rounded-lg border overflow-hidden text-left transition-all ${active ? 'border-[#6D8E22] ring-2 ring-[#6D8E22]/30' : 'border-gray-100 hover:border-gray-300'}`}>
+      <div className="relative w-full" style={{ paddingBottom: '62.5%', background: meanFallback }}>
+        {canFetchScene && loading && (
+          <div className="absolute inset-0 flex items-center justify-center text-white/60 text-[10px] font-mont animate-pulse bg-black/10">…</div>
+        )}
+        {canFetchScene && data?.grid?.values && (
+          <svg viewBox={`0 0 ${data.grid.cols} ${data.grid.rows}`} preserveAspectRatio="none" className="absolute inset-0 w-full h-full">
+            {data.grid.values.flatMap((row, r) => row.map((v, c) => {
+              if (v == null) return <rect key={`${r}-${c}`} x={c} y={r} width="1.05" height="1.05" fill="#F3F4F6" />;
+              return <rect key={`${r}-${c}`} x={c} y={r} width="1.05" height="1.05"
+                fill={indexColor(v, data.raster.min, data.raster.max, indexKey)} />;
+            }))}
+          </svg>
+        )}
+        {!data && !loading && !indexData && (
+          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-300 text-xs">No data</div>
+        )}
+      </div>
+      <div className="px-2 py-1.5 border-t border-gray-100">
+        <div className="font-mont text-xs text-gray-600 font-semibold">
+          {new Date(date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+        </div>
+        {indexData && (
+          <div className="font-mont text-xs text-gray-400">{indexData.mean.toFixed(3)}</div>
+        )}
+      </div>
+    </button>
   );
 }
 
@@ -220,9 +268,9 @@ export default function PrecisionAgMaps() {
             {/* Map */}
             <div className="p-4">
               <FieldMap
-                indexData={indexData}
                 fieldId={fieldIdNum}
                 indexKey={selectedIndex}
+                analysisId={analysis?.analysis_id || null}
                 height={440}
               />
               <ColorScaleLegend indexData={indexData} indexKey={selectedIndex} />
@@ -256,39 +304,25 @@ export default function PrecisionAgMaps() {
             <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {analyses.map((a, i) => {
                 const iData = getIndex(a, selectedIndex);
-                const cells = iData ? generateMapCells(iData, fieldIdNum + i * 7, selectedIndex, 16, 10) : null;
                 const active = i === selectedAnalysisIdx;
                 return (
-                  <button key={i} onClick={() => setSelectedAnalysisIdx(i)}
-                    className={`rounded-lg border overflow-hidden text-left transition-all ${active ? 'border-[#6D8E22] ring-2 ring-[#6D8E22]/30' : 'border-gray-100 hover:border-gray-300'}`}>
-                    <div className="relative w-full" style={{ paddingBottom: '62.5%' }}>
-                      {cells ? (
-                        <svg viewBox="0 0 16 10" preserveAspectRatio="none" className="absolute inset-0 w-full h-full">
-                          {cells.map((cell, ci) => {
-                            const col = ci % 16, row = Math.floor(ci / 16);
-                            return <rect key={ci} x={col} y={row} width="1.05" height="1.05"
-                              fill={indexColor(cell.v, cell.min, cell.max, selectedIndex)} />;
-                          })}
-                        </svg>
-                      ) : (
-                        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-300 text-xs">No data</div>
-                      )}
-                    </div>
-                    <div className="px-2 py-1.5 border-t border-gray-100">
-                      <div className="font-mont text-xs text-gray-600 font-semibold">
-                        {new Date(a.analysis_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}
-                      </div>
-                      {iData && (
-                        <div className="font-mont text-xs text-gray-400">{iData.mean.toFixed(3)}</div>
-                      )}
-                    </div>
-                  </button>
+                  <DateThumbnail key={i}
+                    fieldId={fieldIdNum}
+                    indexKey={selectedIndex}
+                    analysisId={a.analysis_id}
+                    satelliteAcquiredAt={a.satellite_acquired_at}
+                    indexData={iData}
+                    date={a.analysis_date}
+                    active={active}
+                    onClick={() => setSelectedAnalysisIdx(i)}
+                  />
                 );
               })}
             </div>
           </div>
         )}
       </div>
+      <SaigeWidget businessId={BusinessID} fieldId={selectedFieldId} pageContext="Precision Ag — Maps" />
     </AccountLayout>
   );
 }

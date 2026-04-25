@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
-import { useFields, useAnalyses, getIndex, generateMapCells, ndviColor } from './precisionAgUtils';
+import { useFields, useAnalyses, getIndex, useRaster, ndviColor } from './precisionAgUtils';
 
 const ALL_INDICES = [
   { key: 'NDVI',  label: 'NDVI',   desc: 'Vegetation density & biomass' },
@@ -27,30 +27,31 @@ function indexColor(v, min, max, indexKey) {
   return ndviColor(t);
 }
 
-function MiniMap({ indexData, fieldId, indexKey, height = 240 }) {
-  const cells = useMemo(
-    () => generateMapCells(indexData, fieldId, indexKey, COLS, ROWS),
-    [indexData, fieldId, indexKey]
-  );
+function MiniMap({ fieldId, indexKey, height = 240 }) {
+  const { data, loading, error } = useRaster(fieldId, indexKey, COLS);
 
-  if (!cells) return (
-    <div className="flex items-center justify-center text-gray-400 font-mont text-xs bg-gray-50 rounded-lg"
-      style={{ height }}>
-      No data
+  if (loading) return (
+    <div className="flex items-center justify-center text-gray-400 font-mont text-xs bg-gray-50 rounded-lg animate-pulse" style={{ height }}>
+      Loading…
+    </div>
+  );
+  if (error || !data?.grid?.values) return (
+    <div className="flex items-center justify-center text-gray-400 font-mont text-xs bg-gray-50 rounded-lg" style={{ height }}>
+      {error ? 'Raster unavailable' : 'No data'}
     </div>
   );
 
-  const cW = 100 / COLS, cH = 100 / ROWS;
+  const { values, rows: gRows, cols: gCols } = data.grid;
+  const min = data.raster?.min ?? 0;
+  const max = data.raster?.max ?? 1;
+  const cW = 100 / gCols, cH = 100 / gRows;
   return (
     <div className="relative w-full rounded-lg overflow-hidden" style={{ height }}>
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-        {cells.map((cell, i) => {
-          const col = i % COLS, row = Math.floor(i / COLS);
-          return (
-            <rect key={i} x={col * cW} y={row * cH} width={cW + 0.1} height={cH + 0.1}
-              fill={indexColor(cell.v, cell.min, cell.max, indexKey)} />
-          );
-        })}
+        {values.flatMap((row, r) => row.map((v, c) => {
+          if (v == null) return <rect key={`${r}-${c}`} x={c*cW} y={r*cH} width={cW+0.1} height={cH+0.1} fill="#F3F4F6" />;
+          return <rect key={`${r}-${c}`} x={c*cW} y={r*cH} width={cW+0.1} height={cH+0.1} fill={indexColor(v, min, max, indexKey)} />;
+        }))}
       </svg>
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none">
         <rect x="0" y="0" width="100" height="100" fill="none" stroke="white" strokeWidth="0.8" strokeDasharray="2.5,1.5" opacity="0.5" />
@@ -114,7 +115,7 @@ function MapPanel({ panelIdx, indexKey, onIndexChange, analysis, fieldId, analys
           </div>
         ) : (
           <>
-            <MiniMap indexData={indexData} fieldId={fieldId + panelIdx * 37} indexKey={indexKey} height={240} />
+            <MiniMap fieldId={fieldId} indexKey={indexKey} height={240} />
             <ColorBar indexData={indexData} indexKey={indexKey} />
             {indexData && (
               <div className="mt-2 flex gap-3 text-xs font-mont text-gray-400">

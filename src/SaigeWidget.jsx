@@ -12,7 +12,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAccount } from './AccountContext';
 
-const SAIGE_API   = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8001/saige';
+const SAIGE_API   = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
 const SAIGE_GREEN = '#3D6B34';
 const SAIGE_LIGHT = '#f0f7ee';
 const HEADER_H    = 72; // px — matches AppShell padding-top
@@ -55,7 +55,7 @@ function Bubble({ role, content }) {
 
 // ── Chat panel ────────────────────────────────────────────────────────────────
 
-function ChatPanel({ businessId, pageContext, onClose, onToggleFullscreen, fullscreen, sidebarWidth }) {
+function ChatPanel({ businessId, fieldId, pageContext, onClose, onToggleFullscreen, fullscreen, sidebarWidth }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput]       = useState('');
   const [sending, setSending]   = useState(false);
@@ -84,13 +84,20 @@ function ChatPanel({ businessId, pageContext, onClose, onToggleFullscreen, fulls
     setInput('');
     setSending(true);
     try {
+      // Prepend page/field context so Saige can pick the right tools without
+      // the user having to repeat "field 13" every turn.
+      const fieldHint = fieldId ? `[Field #${fieldId}]` : '';
+      const pageHint  = pageContext ? `[Page: ${pageContext}]` : '';
+      const userInputWithHints = [fieldHint, pageHint, val].filter(Boolean).join(' ').trim();
+
       const res = await fetch(`${SAIGE_API}/chat`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({
-          user_input: val,
+          user_input: userInputWithHints,
           thread_id: threadId,
           business_id: businessId ? String(businessId) : null,
+          field_id: fieldId ? String(fieldId) : null,
         }),
       });
       if (!res.ok) throw new Error(`Server error (${res.status})`);
@@ -118,7 +125,7 @@ function ChatPanel({ businessId, pageContext, onClose, onToggleFullscreen, fulls
     } finally {
       setSending(false);
     }
-  }, [input, messages, sending, threadId, businessId]);
+  }, [input, messages, sending, threadId, businessId, fieldId, pageContext]);
 
   const onKey = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
@@ -310,7 +317,7 @@ const chipStyle = {
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export default function SaigeWidget({ businessId, pageContext }) {
+export default function SaigeWidget({ businessId, fieldId, pageContext }) {
   const { Expanded: sidebarExpanded } = useAccount();
   const sidebarWidth = sidebarExpanded ? 208 : 64;
   const [open, setOpen]           = useState(false);
@@ -361,6 +368,7 @@ export default function SaigeWidget({ businessId, pageContext }) {
       {open && (
         <ChatPanel
           businessId={businessId}
+          fieldId={fieldId}
           pageContext={pageContext}
           fullscreen={fullscreen}
           sidebarWidth={sidebarWidth}

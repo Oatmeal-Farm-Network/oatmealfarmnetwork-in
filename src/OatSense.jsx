@@ -34,14 +34,21 @@ function SummaryCard({ title, value, bg }) {
 
 export default function OatSense() {
   const [searchParams] = useSearchParams();
-  const BusinessID = searchParams.get('BusinessID');
+  // searchParams.get can return the literal string 'null' if a Link was
+  // generated with a null BusinessID — coerce to a real positive int or null.
+  const rawBusinessID = searchParams.get('BusinessID');
+  const BusinessID = (() => {
+    if (!rawBusinessID || rawBusinessID === 'null' || rawBusinessID === 'undefined') return null;
+    const n = parseInt(rawBusinessID, 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  })();
   const PeopleID = localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();
   const [summary, setSummary] = useState(null);
   const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
+  useEffect(() => { if (BusinessID) LoadBusiness(BusinessID); }, [BusinessID]);
 
   useEffect(() => {
     if (!BusinessID) return;

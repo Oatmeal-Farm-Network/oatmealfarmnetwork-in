@@ -32,8 +32,7 @@ export default function AccountNav({ Business, BusinessID, PeopleID }) {
             <td className="py-3">
               <p className="font-bold text-gray-800 mb-1">Oatsense Precision Ag</p>
               <ul className="flex flex-wrap gap-3 text-sm">
-                <li><Link to={`/oatsense?BusinessID=${BusinessID}`} className="text-[#3D6B34] hover:underline">Dashboard</Link></li>
-                <li><Link to={`/precision-ag/fields?BusinessID=${BusinessID}`} className="text-[#3D6B34] hover:underline">Fields</Link></li>
+                <li><Link to={`/precision-ag/fields?BusinessID=${BusinessID}`} className="text-[#3D6B34] hover:underline">Dashboard</Link></li>
                 <li><Link to={`/precision-ag/add?BusinessID=${BusinessID}`} className="text-[#3D6B34] hover:underline">Add Field</Link></li>
                 <li><Link to={`/precision-ag/analyses?BusinessID=${BusinessID}`} className="text-[#3D6B34] hover:underline">Analyses</Link></li>
                 <li><Link to={`/oatsense/crop-rotation?BusinessID=${BusinessID}`} className="text-[#3D6B34] hover:underline">Crop Rotation</Link></li>

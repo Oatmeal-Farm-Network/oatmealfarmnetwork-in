@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+// CropMonitor is now mounted at /cm under the main backend (server_all.py).
+// The legacy standalone process on :8002 still works as a fallback if running.
 export const CROP_API_URL = window.location.hostname === 'localhost'
-  ? 'http://127.0.0.1:8001'
+  ? `${API_URL}/cm`
   : 'https://crop-detection-802455386518.us-central1.run.app';
 
 export async function safeFetch(url) {
@@ -16,6 +18,32 @@ export async function safeFetch(url) {
 export function seededRand(seed) {
   let s = Math.abs(Math.sin(seed) * 100000) % 233280;
   return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+}
+
+// Shared hook: real downsampled vegetation-index raster from
+// /api/fields/{id}/raster/{index}. Returns { data, loading, error } where
+// `data.grid.values` is a 2D array of cell values (null = no-data).
+//
+// Pass `analysisId` to fetch a historical scene tied to a specific Analysis
+// row (uses that row's SatelliteAcquiredAt to narrow the Sentinel time window).
+export function useRaster(fieldId, indexKey, grid = 48, analysisId = null) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!fieldId || !indexKey) { setData(null); return; }
+    const ctrl = new AbortController();
+    setLoading(true); setError(null);
+    const url = `${API_URL}/api/fields/${fieldId}/raster/${indexKey}?grid=${grid}${analysisId ? `&analysis_id=${analysisId}` : ''}`;
+    fetch(url, { signal: ctrl.signal })
+      .then(r => r.ok ? r.json() : r.json().then(j => Promise.reject(j?.detail || `${r.status}`)))
+      .then(d => { setData(d); setLoading(false); })
+      .catch(e => { if (e?.name === 'AbortError') return; setError(String(e)); setLoading(false); setData(null); });
+    return () => ctrl.abort();
+  }, [fieldId, indexKey, grid, analysisId]);
+
+  return { data, loading, error };
 }
 
 export function ndviColor(t) {

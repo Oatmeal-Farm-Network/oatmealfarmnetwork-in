@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
-import { useFields, useAnalyses, getIndex, generateMapCells, API_URL, CROP_API_URL } from './precisionAgUtils';
+import { useFields, useAnalyses, getIndex, API_URL, CROP_API_URL } from './precisionAgUtils';
 
 const ZONE_METHODS  = ['Equidistant', 'Quantile', 'Natural Breaks'];
 const INDEX_OPTIONS = ['NDVI', 'NDRE', 'EVI', 'GNDVI', 'NDWI'];
@@ -15,30 +15,43 @@ function zoneColor(zoneIdx, numZones) {
   return pal[Math.min(step, pal.length - 1)];
 }
 
-function buildZoneCells(cells, numZones) {
-  if (!cells) return null;
-  const sorted = [...cells].sort((a, b) => a.v - b.v);
-  const thresholds = Array.from({ length: numZones - 1 }, (_, i) =>
-    sorted[Math.floor((i + 1) * sorted.length / numZones)]?.v ?? 0
-  );
-  return cells.map(cell => {
-    let z = 0;
-    for (const t of thresholds) { if (cell.v > t) z++; }
-    return { ...cell, zone: z };
-  });
-}
+// Real zones from k-means /api/fields/{id}/zones — replaces the prior
+// quantile-on-synthetic-cells preview.
+function ZoneMapPreview({ fieldId, indexKey, numZones, height = 200 }) {
+  const [zoneData, setZoneData] = useState(null);
+  const [status, setStatus] = useState('idle');
 
-function ZoneMapPreview({ cells, numZones, height = 200 }) {
-  if (!cells) return <div className="flex items-center justify-center text-gray-400 font-mont text-xs rounded-lg bg-gray-50" style={{ height }}>No analysis data</div>;
-  const zoneCells = buildZoneCells(cells, numZones);
-  const cW = 100 / COLS, cH = 100 / ROWS;
+  useEffect(() => {
+    if (!fieldId || !indexKey) { setZoneData(null); return; }
+    const ctrl = new AbortController();
+    setStatus('loading');
+    fetch(`${API_URL}/api/fields/${fieldId}/zones?index=${indexKey}&num_zones=${numZones}&grid=48`, { signal: ctrl.signal })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(d => { setZoneData(d); setStatus('idle'); })
+      .catch(e => { if (e?.name !== 'AbortError') { setZoneData(null); setStatus('error'); } });
+    return () => ctrl.abort();
+  }, [fieldId, indexKey, numZones]);
+
+  if (status === 'loading') return (
+    <div className="flex items-center justify-center text-gray-400 font-mont text-xs rounded-lg bg-gray-50 animate-pulse" style={{ height }}>
+      Clustering raster…
+    </div>
+  );
+  if (!zoneData?.grid?.labels) return (
+    <div className="flex items-center justify-center text-gray-400 font-mont text-xs rounded-lg bg-gray-50" style={{ height }}>
+      {status === 'error' ? 'Zones unavailable' : 'Select a field with a recent analysis'}
+    </div>
+  );
+
+  const { labels, rows: gRows, cols: gCols } = zoneData.grid;
+  const cW = 100 / gCols, cH = 100 / gRows;
   return (
     <div className="relative w-full rounded-lg overflow-hidden" style={{ height }}>
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-        {zoneCells.map((cell, i) => {
-          const col = i % COLS, row = Math.floor(i / COLS);
-          return <rect key={i} x={col * cW} y={row * cH} width={cW + 0.1} height={cH + 0.1} fill={zoneColor(cell.zone, numZones)} />;
-        })}
+        {labels.flatMap((row, r) => row.map((label, c) => {
+          if (label < 0) return <rect key={`${r}-${c}`} x={c*cW} y={r*cH} width={cW+0.1} height={cH+0.1} fill="#F3F4F6" />;
+          return <rect key={`${r}-${c}`} x={c*cW} y={r*cH} width={cW+0.1} height={cH+0.1} fill={zoneColor(label, numZones)} />;
+        }))}
       </svg>
     </div>
   );
@@ -152,7 +165,6 @@ export default function PrecisionAgPrescriptions() {
   const analysis = analyses[selectedAnalysisIdx] || null;
   const fieldIdNum = parseInt(selectedFieldId) || 1;
   const indexData = getIndex(analysis, form.index_key);
-  const cells = useMemo(() => generateMapCells(indexData, fieldIdNum, form.index_key, COLS, ROWS), [indexData, fieldIdNum, form.index_key]);
 
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const setRate = (i, v) => setRates(prev => prev.map((r, j) => j === i ? { ...r, rate: v } : r));
@@ -318,7 +330,7 @@ export default function PrecisionAgPrescriptions() {
               {/* Right: zone map preview */}
               <div>
                 <div className="font-mont text-xs font-semibold text-gray-500 mb-2">Zone Map Preview</div>
-                <ZoneMapPreview cells={cells} numZones={form.num_zones} height={240} />
+                <ZoneMapPreview fieldId={selectedFieldId} indexKey={form.index_key} numZones={form.num_zones} height={240} />
                 <div className="mt-3 flex gap-3 flex-wrap">
                   {Array.from({ length: form.num_zones }, (_, i) => (
                     <div key={i} className="flex items-center gap-1.5">
@@ -327,8 +339,21 @@ export default function PrecisionAgPrescriptions() {
                     </div>
                   ))}
                 </div>
-                {!indexData && (
-                  <div className="mt-3 font-mont text-xs text-gray-400">No {form.index_key} data for selected date — map is simulated.</div>
+                {selectedFieldId && (
+                  <div className="mt-3 flex gap-2">
+                    <a
+                      href={`${API_URL}/api/fields/${selectedFieldId}/zones/prescription?index=${form.index_key}&num_zones=${form.num_zones}&grid=48&fmt=geojson&units=${encodeURIComponent(form.unit)}${rates.every(r => r.rate !== '') ? `&rates=${rates.map(r => r.rate).join(',')}` : ''}`}
+                      download
+                      className="flex-1 text-center py-2 rounded-lg font-mont font-bold text-xs border border-[#6D8E22] text-[#6D8E22] hover:bg-green-50">
+                      ⬇ GeoJSON Rx
+                    </a>
+                    <a
+                      href={`${API_URL}/api/fields/${selectedFieldId}/zones/prescription?index=${form.index_key}&num_zones=${form.num_zones}&grid=48&fmt=csv&units=${encodeURIComponent(form.unit)}${rates.every(r => r.rate !== '') ? `&rates=${rates.map(r => r.rate).join(',')}` : ''}`}
+                      download
+                      className="flex-1 text-center py-2 rounded-lg font-mont font-bold text-xs border border-[#6D8E22] text-[#6D8E22] hover:bg-green-50">
+                      ⬇ CSV Rx
+                    </a>
+                  </div>
                 )}
               </div>
             </div>

@@ -77,7 +77,7 @@ export default function AboutWebsiteBuilder() {
               body="Add an animal or list a product once, and it appears on your website, your OFN directory profile, and the marketplace automatically." />
             <Feature icon="🌐" title="Custom domains"
               body="Point your own domain at your OFN site in minutes. SSL is automatic; DNS is straightforward — we walk you through it." />
-            <Feature icon="💜" title="Lavendir AI help built in"
+            <Feature icon={<img src="/images/LavendirIcon.png" alt="Lavendir" className="w-6 h-6 inline-block" />} title="Lavendir AI help built in"
               body="Need a new page? Ask Lavendir, our design-assistant AI, to draft it for you. Publishing still requires your review." />
             <Feature icon="📱" title="Mobile-first"
               body="Every layout is responsive by default. Preview desktop, tablet, and phone side-by-side before you publish." />

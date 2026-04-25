@@ -3,6 +3,17 @@ import { useLocation } from 'react-router-dom';
 
 const AccountContext = createContext(null);
 
+// Coerce anything → a valid numeric BusinessID, or null. Treats 'null',
+// 'undefined', empty string, NaN, and 0 as null — any caller that hands
+// us garbage gets a clean rejection instead of a poisoned downstream URL.
+function toValidBusinessID(v) {
+  if (v === null || v === undefined) return null;
+  const s = String(v).trim();
+  if (!s || s === 'null' || s === 'undefined') return null;
+  const n = parseInt(s, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 export function AccountProvider({ children }) {
   const [Business, setBusiness] = useState(null);
   const [BusinessID, setBusinessID] = useState(null);
@@ -10,6 +21,16 @@ export function AccountProvider({ children }) {
   const [Expanded, setExpanded] = useState(true);
   const [businesses, setBusinesses] = useState([]);
   const location = useLocation();
+
+  // Boot-time scrub: a previous bad LoadBusiness(null) call may have written
+  // the literal string "null" to localStorage. Clear it so downstream readers
+  // (which treat "null" as truthy) don't fire fetches with business_id=null.
+  useEffect(() => {
+    const v = localStorage.getItem('selected_business_id');
+    if (v === 'null' || v === 'undefined' || v === '') {
+      localStorage.removeItem('selected_business_id');
+    }
+  }, []);
 
   // Read BusinessID from URL so the context follows page navigation instead of
   // sticking on whichever business happened to be first in the list.
@@ -50,10 +71,12 @@ export function AccountProvider({ children }) {
   }, [urlBusinessID]);
 
 const LoadBusiness = (ID, Force = false) => {
-    if (ID === BusinessID && Business && !Force) return;
-    setBusinessID(ID);
-    localStorage.setItem('selected_business_id', ID);
-    fetch(`${import.meta.env.VITE_API_URL}/auth/account-home?BusinessID=${ID}`)
+    const validID = toValidBusinessID(ID);
+    if (!validID) return; // null/undefined/'null'/0 → no-op (prevents 422 spam)
+    if (validID === BusinessID && Business && !Force) return;
+    setBusinessID(validID);
+    localStorage.setItem('selected_business_id', String(validID));
+    fetch(`${import.meta.env.VITE_API_URL}/auth/account-home?BusinessID=${validID}`)
       .then(Res => {
         if (!Res.ok) throw new Error(`HTTP ${Res.status}`);
         return Res.json();

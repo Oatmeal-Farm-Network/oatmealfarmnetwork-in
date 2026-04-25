@@ -65,6 +65,8 @@ export default function BiomassPanel({ fieldId, onClose }) {
   const [state, setState] = useState({ satellite: null, upload: null, history: [] });
   const [loadingSat, setLoadingSat] = useState(false);
   const [loadingUpload, setLoadingUpload] = useState(false);
+  const [loadingResolve, setLoadingResolve] = useState(false);
+  const [resolved, setResolved] = useState(null);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
@@ -128,7 +130,27 @@ export default function BiomassPanel({ fieldId, onClose }) {
     }
   };
 
+  const resolveConfidence = async () => {
+    setError('');
+    setLoadingResolve(true);
+    try {
+      const r = await fetch(`${API_URL}/api/fields/${fieldId}/biomass/resolve`, { method: 'POST' });
+      if (!r.ok) {
+        const txt = await r.text();
+        throw new Error(txt || `HTTP ${r.status}`);
+      }
+      const data = await r.json();
+      setResolved(data);
+      await refresh();
+    } catch (e) {
+      setError(`Could not improve confidence: ${e.message || e}`);
+    } finally {
+      setLoadingResolve(false);
+    }
+  };
+
   const bothExist = state.satellite && state.upload;
+  const lowConfidence = state.satellite && state.satellite.confidence != null && state.satellite.confidence < 0.4;
 
   return (
     <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-3">
@@ -192,6 +214,39 @@ export default function BiomassPanel({ fieldId, onClose }) {
           avg {fmt((state.satellite.biomass_kg_per_ha + state.upload.biomass_kg_per_ha) / 2)} kg DM/ha
           {' · '}
           Δ {fmt(Math.abs(state.satellite.biomass_kg_per_ha - state.upload.biomass_kg_per_ha))} kg/ha between methods
+        </div>
+      )}
+
+      {lowConfidence && (
+        <div className="mt-3 text-xs bg-amber-50 border border-amber-200 text-amber-900 rounded px-2.5 py-2">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="font-semibold mb-1">⚠ Low satellite confidence ({fmtPct(state.satellite.confidence)})</div>
+              <div className="leading-relaxed">
+                The NDVI signal is weak — usually because the canopy is sparse or the latest cloud-free
+                pass was suboptimal. Averaging several recent satellite passes will reduce the noise and
+                raise confidence.
+              </div>
+            </div>
+            <button
+              onClick={resolveConfidence}
+              disabled={loadingResolve}
+              className="shrink-0 text-xs px-2.5 py-1.5 rounded-md bg-amber-600 text-white hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
+            >
+              {loadingResolve ? 'Working…' : 'Improve confidence'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {resolved && (
+        <div className="mt-3 text-xs bg-emerald-50 border border-emerald-200 text-emerald-900 rounded px-2.5 py-2">
+          <div className="font-semibold mb-1">
+            ✓ Combined estimate from {resolved.n_samples} pass(es)
+          </div>
+          <div>
+            {fmt(resolved.averaged_biomass_kg_per_ha)} kg DM/ha · confidence {fmtPct(resolved.averaged_confidence)}
+          </div>
         </div>
       )}
     </div>
