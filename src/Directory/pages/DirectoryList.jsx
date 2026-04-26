@@ -16,9 +16,11 @@ const fiberImg            = '/images/FiberCooperatives.webp';
 const fiberMillsImg       = '/images/FiberMill.webp';
 const fisheriesImg        = '/images/Fishery.webp';
 const fishermenImg        = '/images/Fishermen.webp';
+const foodAggregatorsImg  = '/images/FoodAggregators.webp';
 const foodCopImg          = '/images/FoodCooperatives.webp';
 const foodHubImg          = '/images/FoodHubs.webp';
 const groceryStoreImg     = '/images/GroceryStores.webp';
+const herbTeaImg          = '/images/Herbs.webp';
 const hungerReliefImg     = '/images/HumanReleafOrganization.webp';
 const manfacImg           = '/images/Manufacturers.webp';
 const marinasImg          = '/images/Marina.webp';
@@ -27,12 +29,16 @@ const realEstateImg       = '/images/RealEstateAgents.webp';
 const restaurantsImg      = '/images/Restaurants.webp';
 const retailersImg        = '/images/Retailers.webp';
 const serviceProvidersImg = '/images/ServiceProviders.webp';
+const transporterImg      = '/images/Transportation.webp';
 const universitiesImg     = '/images/University.webp';
 const vetImg              = '/images/Vetrinarians.webp';
 const vineyardsImg        = '/images/Vineyard.webp';
 const wineriesImg         = '/images/Winery.webp';
 const othersImg           = '/icons/Other.png';
 
+// Categories surfaced in the public directory. Sourced from the
+// `businesstypelookup` table (excluding the "N/A" placeholder row) and
+// ordered alphabetically by BusinessType to match GET /api/businesses/types.
 const CATEGORIES = [
   {
     title: 'Agricultural Associations',
@@ -95,6 +101,12 @@ const CATEGORIES = [
     desc:  'Independent commercial fishermen and small fishing operations harvesting seafood from oceans, lakes, and rivers.',
   },
   {
+    title: 'Food Aggregators',
+    slug:  'food-aggregators',
+    img:   foodAggregatorsImg,
+    desc:  'Organizations that consolidate and resell product from multiple farms — connecting smaller producers to wholesale buyers, distributors, and institutional kitchens.',
+  },
+  {
     title: 'Food Cooperatives',
     slug:  'food-cooperatives',
     img:   foodCopImg,
@@ -111,6 +123,12 @@ const CATEGORIES = [
     slug:  'grocery-stores',
     img:   groceryStoreImg,
     desc:  'Independent and regional grocery retailers committed to stocking local and regional food products alongside everyday staples.',
+  },
+  {
+    title: 'Herb & Tea Producers',
+    slug:  'herb-and-tea-producers',
+    img:   herbTeaImg,
+    desc:  'Growers and crafters of culinary, medicinal, and aromatic herbs, plus loose-leaf and blended tea producers working from farm to cup.',
   },
   {
     title: 'Hunger Relief Organizations',
@@ -161,6 +179,12 @@ const CATEGORIES = [
     desc:  'Veterinarians, agronomists, equipment dealers, and other service businesses that keep farms and food enterprises running smoothly.',
   },
   {
+    title: 'Transporters',
+    slug:  'transporters',
+    img:   transporterImg,
+    desc:  'Refrigerated trucking, livestock haulers, and logistics providers that move farm product from field to processor, distributor, and end buyer.',
+  },
+  {
     title: 'Universities',
     slug:  'universities',
     img:   universitiesImg,
@@ -184,6 +208,7 @@ const CATEGORIES = [
     img:   wineriesImg,
     desc:  'Craft and commercial wineries that ferment, age, and bottle wine from grapes and other fruits, often sourcing from local vineyards.',
   },
+  // "Other" is intentionally pinned to the bottom rather than sorted in.
   {
     title: 'Other',
     slug:  'others',
@@ -249,7 +274,7 @@ export default function DirectoryList() {
               Food System &amp; Beyond Directory
             </h1>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 8px', lineHeight: 1.6 }}>
-              Find what you're looking for across <strong>25 categories</strong> — from farms and food hubs to
+              Find what you're looking for across <strong>29 categories</strong> — from farms and food hubs to
               restaurants, fiber mills, and more.
             </p>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
