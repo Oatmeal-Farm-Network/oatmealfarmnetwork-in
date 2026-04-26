@@ -8,7 +8,7 @@
  *   - Background-sync queue for offline POSTs (lead scans, scouting notes)
  */
 
-const VERSION         = 'ofn-sw-v3';
+const VERSION         = 'ofn-sw-v4';
 const SHELL_CACHE     = `${VERSION}-shell`;
 const STATIC_CACHE    = `${VERSION}-static`;
 const RUNTIME_CACHE   = `${VERSION}-runtime`;

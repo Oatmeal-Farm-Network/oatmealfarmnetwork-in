@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
-// CropMonitor is now mounted at /cm under the main backend (server_all.py).
-// The legacy standalone process on :8002 still works as a fallback if running.
-export const CROP_API_URL = window.location.hostname === 'localhost'
-  ? `${API_URL}/cm`
-  : 'https://crop-detection-802455386518.us-central1.run.app';
+// CropMonitor: in dev it's mounted at /cm under server_all.py; in prod it's the
+// standalone Cloud Run service. VITE_CROP_API_URL overrides both.
+export const CROP_API_URL = import.meta.env.VITE_CROP_API_URL
+  || (window.location.hostname === 'localhost' ? `${API_URL}/cm` : `${API_URL}/cm`);
 
 export async function safeFetch(url) {
   try {
