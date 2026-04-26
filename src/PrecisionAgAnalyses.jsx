@@ -5,13 +5,8 @@ import { useAccount } from './AccountContext';
 import BiomassPanel from './BiomassPanel';
 import MaturityPanel from './MaturityPanel';
 import ClimateForecastPanel from './ClimateForecastPanel';
-import { useRaster } from './precisionAgUtils';
+import { useRaster, API_URL, CROP_API_URL } from './precisionAgUtils';
 import SaigeWidget from './SaigeWidget';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
-const CROP_API_URL = window.location.hostname === 'localhost'
-  ? `${API_URL}/cm`   // unified server_all.py mounts CropMonitor at /cm
-  : 'https://crop-detection-802455386518.us-central1.run.app';
 
 async function safeFetch(url) {
   try {
