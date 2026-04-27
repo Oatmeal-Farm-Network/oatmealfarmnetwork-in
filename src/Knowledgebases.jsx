@@ -1,3 +1,11 @@
+/**
+ * Knowledgebases landing page — high-level overview of the three databases
+ * (Plant, Livestock, Ingredient) with deep-link cards into each.
+ *
+ * Lora headlines are set via inline style because index.css cascades a global
+ * `h1 { font-size: 24px; font-weight: bold; }` rule that out-prioritises any
+ * Tailwind size/weight utility — same pattern the home page uses.
+ */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
@@ -5,84 +13,231 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 
-const FeatureBox = ({ title, description, imgSrc, link }) => (
-  <div className="flex flex-col bg-[white] rounded-[20px] p-[10px] shadow-[0_4px_8px_rgba(0,0,0,0.1)] min-h-[250px] text-center w-full mb-4 lg:mb-0 border border-[#4d734d]/20">
-    <Link to={link} className="block mb-[10px] overflow-hidden rounded-[20px]">
+const LORA = "'Lora', 'Times New Roman', serif";
+const GREEN = '#3D6B34';
+const SAGE = '#4C8B5D';
+
+// One source of truth for both the top-of-page stats strip and the per-KB cards.
+const KBS = [
+  {
+    slug: 'plants',
+    title: 'Plant Knowledgebase',
+    icon: '🌾',
+    statN: '4,000+',
+    statLabel: 'Plant varieties',
+    img: '/images/PlantDBHome.webp',
+    link: '/plant-knowledgebase',
+    tagline: 'From staple grains to single-origin spices.',
+    description:
+      "Detailed profiles for every food plant we've documented across 22 categories — grains, legumes, vegetables, fruits, berries, herbs, spices, oilseeds, mushrooms, edible flowers and more. Each entry covers scientific name, varieties, growing conditions, climate zones, harvest timing, common pests, and culinary or processing uses.",
+    bullets: [
+      '22 categories — grains, vegetables, fruits, herbs, spices, more',
+      'Variety-level detail (cultivar, region, season)',
+      'Growing requirements: zone, soil, water, sun',
+      'Pest & disease references plus companion-planting hints',
+      'Direct links to producers in the Food-System Directory',
+    ],
+    cta: 'Explore plant database',
+  },
+  {
+    slug: 'livestock',
+    title: 'Livestock Database',
+    icon: '🐄',
+    statN: '3,000+',
+    statLabel: 'Breeds across 28 species',
+    img: '/images/HomepageLivestockDB.webp',
+    link: '/livestock',
+    tagline: 'Every breed worth raising — with the data to prove it.',
+    description:
+      'Profiles for over 3,000 breeds across 28 species: cattle, sheep, goats, pigs, poultry, rabbits, alpacas, llamas, yaks, bison, camels, deer, donkeys, horses, fish and more. Each breed entry includes origin, history, morphology, productivity (milk / meat / fiber / draft), temperament, dual-purpose ratings, conservation status, and links to active producers and registries.',
+    bullets: [
+      '28 species — from cattle and sheep to alpacas, yaks and bees',
+      'Origin, history, and conservation-status notes',
+      'Productivity data: milk yield, meat quality, fiber micron, eggs',
+      'Temperament, climate fitness, and dual-purpose suitability',
+      'Cross-links to breed registries and active producers',
+    ],
+    cta: 'Explore livestock database',
+  },
+  {
+    slug: 'ingredients',
+    title: 'Ingredient Knowledgebase',
+    icon: '🧂',
+    statN: '1,400+',
+    statLabel: 'Ingredients · 14,000+ varieties',
+    img: '/images/Homepagefoodsystemdirectory.webp',
+    link: '/ingredient-knowledgebase',
+    tagline: 'Built for chefs, food businesses, and anyone sourcing real food.',
+    description:
+      'Over 1,400 agricultural ingredients with more than 14,000 varieties — flours, cheeses, oils, fish, fungi, edible flowers, fruits, herbs and teas, spices, sweeteners, and chemistry. Each ingredient entry covers flavor profile, nutritional data, common processing methods, culinary uses, allergen and substitution notes, and direct sourcing paths to artisan producers and farms in the network.',
+    bullets: [
+      'Flavor profile, nutritional snapshot, allergen flags',
+      'Substitutions and processing-method notes',
+      'Variety-level detail (e.g. 80+ cheese varieties)',
+      'Sourcing paths into the Farm 2 Table marketplace',
+      'Powers Chef\'s Digital Pantry and the Pairsley AI advisor',
+    ],
+    cta: 'Explore ingredient database',
+  },
+];
+
+function StatStrip() {
+  return (
+    <section style={{ backgroundColor: GREEN }} className="text-white">
+      <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+        {KBS.map(k => (
+          <Link
+            key={k.slug}
+            to={k.link}
+            className="block rounded-xl px-2 py-1 transition-colors hover:bg-white/10"
+            style={{ fontFamily: LORA, color: '#ffffff' }}
+          >
+            <div className="text-3xl md:text-4xl font-bold leading-none" style={{ color: '#ffffff' }}>
+              {k.statN}
+            </div>
+            <div className="text-[10px] md:text-xs tracking-widest mt-1 uppercase" style={{ color: '#ffffff' }}>
+              {k.statLabel}
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function KBCard({ kb, imageRight }) {
+  const Img = (
+    <Link to={kb.link} className="block w-full md:w-2/5 shrink-0 overflow-hidden aspect-video md:aspect-auto bg-white">
       <img
-        src={imgSrc}
-        alt={title}
-        className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
+        src={kb.img}
+        alt={kb.title}
+        loading="lazy"
+        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+        onError={e => { e.target.src = '/images/DirectoryHome.webp'; }}
       />
     </Link>
-    <h3>
-      <Link to={link} className="body">
-        {title}
+  );
+  const Text = (
+    <div className="p-6 flex flex-col justify-center flex-1">
+      <div className="text-[10px] uppercase tracking-widest font-semibold text-gray-500 mb-1">
+        {kb.statN} {kb.statLabel}
+      </div>
+      <h2
+        style={{ fontFamily: LORA, fontWeight: 700, fontSize: 'clamp(1.5rem, 2.5vw, 2rem)', color: SAGE, marginBottom: '0.5rem' }}
+      >
+        {kb.title}
+      </h2>
+      <div className="italic text-sm text-gray-600 mb-3" style={{ fontFamily: LORA }}>
+        {kb.tagline}
+      </div>
+      <p className="text-sm text-gray-700 leading-relaxed mb-3">{kb.description}</p>
+      <ul className="text-sm text-gray-700 space-y-1 mb-4 list-disc pl-5">
+        {kb.bullets.map((b, i) => <li key={i}>{b}</li>)}
+      </ul>
+      <Link
+        to={kb.link}
+        className="self-end px-5 py-2 rounded-full font-semibold text-white text-sm shadow-sm hover:shadow-md transition"
+        style={{ backgroundColor: GREEN, color: '#ffffff' }}
+      >
+        {kb.cta} →
       </Link>
-    </h3>
-    <p className="body">
-      {description}
-    </p>
-    <Link to={link} className="regsubmit2">
-      Learn More
-    </Link>
-  </div>
-);
+    </div>
+  );
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow duration-200">
+      {imageRight ? (<>{Text}{Img}</>) : (<>{Img}{Text}</>)}
+    </div>
+  );
+}
 
 export default function Knowledgebases() {
-  const isLoggedIn = useIsLoggedIn();
-
   return (
-    <div className="min-h-screen font-sans">
+    <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title="Agricultural Knowledgebases | Plants, Livestock & Ingredients"
-        description="Explore 4,000+ food plant varieties, 2,000+ livestock breeds across 28 species, and 1,400+ agricultural ingredients in our comprehensive farm knowledgebases."
-        keywords="agricultural database, plant varieties, livestock breeds, ingredient knowledgebase, farm encyclopedia"
+        description="Three trusted, free databases for the food system: 4,000+ food plant varieties, 3,000+ livestock breeds across 28 species, and 1,400+ ingredients with 14,000+ varieties."
+        keywords="agricultural database, plant varieties, livestock breeds, ingredient knowledgebase, farm encyclopedia, food system reference"
         canonical="https://oatmealfarmnetwork.com/knowledgebases"
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'CollectionPage',
           name: 'Agricultural Knowledgebases',
           url: 'https://oatmealfarmnetwork.com/knowledgebases',
-          description: 'Plants, livestock, and ingredient knowledgebases for farmers and food businesses.'
+          description: 'Plants, livestock, and ingredient knowledgebases — a trusted source of truth for the food ecosystem.',
         }}
       />
-       <Header />
+      <Header />
 
-      <section className="py-6 bg-white text-center">
-        <div className="max-w-7xl mx-auto px-4">
+      {/* ─── Hero ─────────────────────────────────────────────────────── */}
+      <section className="bg-white">
+        <div className="max-w-7xl mx-auto px-4 py-10">
           <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Knowledgebases' }]} />
-          <h1 className="text-4xl font-bold mt-3 mb-4 text-gray-900">
-            Knowledgebases
+          <h1
+            className="leading-tight mt-3 mb-3"
+            style={{
+              fontFamily: LORA,
+              fontStyle: 'italic',
+              fontWeight: 400,
+              fontSize: 'clamp(1.625rem, 2.5vw, 2.25rem)',
+              color: '#232f3a',
+            }}
+          >
+            A trusted source of truth for the food ecosystem.
           </h1>
-          <p className="mt-3 text-gray-800 text-lg leading-relaxed">
-            Explore our comprehensive databases covering plants, livestock, and ingredients.
-            Whether you're researching food plant varieties, livestock breeds, or ingredient profiles,
-            we have the information you need from ground to gourmet.
+          <h2
+            className="mb-4"
+            style={{
+              fontFamily: LORA,
+              fontWeight: 700,
+              fontSize: 'clamp(1.875rem, 3vw, 2.5rem)',
+              color: SAGE,
+            }}
+          >
+            Three knowledgebases. One ecosystem.
+          </h2>
+          <p className="text-gray-700 text-base leading-relaxed max-w-3xl">
+            From the seed catalog a small grower opens in winter, to the breed registry a 4-H club leans on at the
+            county fair, to the ingredient profile a chef pulls up before writing tomorrow's menu — these three
+            databases sit underneath every part of the Oatmeal Farm Network. They're free to browse, deeply linked to
+            the producers and businesses behind them, and built to be cited.
           </p>
         </div>
       </section>
 
-      <section className="py-8 bg-white text-center">
+      {/* ─── Headline stats ───────────────────────────────────────────── */}
+      <StatStrip />
+
+      {/* ─── Per-KB detail cards ─────────────────────────────────────── */}
+      <section className="py-10">
+        <div className="max-w-7xl mx-auto px-4 space-y-6">
+          {KBS.map((kb, i) => (
+            <KBCard key={kb.slug} kb={kb} imageRight={i % 2 === 1} />
+          ))}
+        </div>
+      </section>
+
+      {/* ─── How they connect ────────────────────────────────────────── */}
+      <section className="pb-16">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <FeatureBox
-              title="Plant Knowledgebase"
-              description="Explore detailed profiles for over 4,000 food plant varieties, from grains to culinary herbs and spices."
-              imgSrc="/images/PlantDBHome.webp"
-              link="/plant-knowledgebase"
-            />
-            <FeatureBox
-              title="Livestock Database"
-              description="Delve into detailed profiles for over 2,000 livestock breeds, covering morphology, origin, and use."
-              imgSrc="/images/HomepageLivestockDB.webp"
-              link="/Livestock"
-            />
-            <FeatureBox
-              title="Ingredient Knowledgebase"
-              description="A comprehensive look at over 1,400 Ingredients with over 14,000 varieties."
-              imgSrc="/images/Homepagefoodsystemdirectory.webp"
-              link="/ingredient-knowledgebase"
-            />
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <h3
+              className="mb-3"
+              style={{ fontFamily: LORA, fontWeight: 700, fontSize: '1.5rem', color: SAGE }}
+            >
+              Why three, not one?
+            </h3>
+            <p className="text-sm text-gray-700 leading-relaxed mb-4">
+              Plants, animals, and finished ingredients each ask different questions of a database. A grower needs
+              growing-zone, soil and pest data; a breeder needs morphology, productivity and registry links; a chef
+              needs flavor, allergen and substitution notes. Splitting them keeps each profile useful instead of
+              compromising on a single one-size-fits-all schema.
+            </p>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              They cross-reference where it matters: an ingredient page links to the plant or livestock breed it
+              came from; a breed page links to producers; a plant page links to growers selling its harvest. The
+              same identifiers feed Saige's farm advice, Pairsley's restaurant sourcing, and the Chef's Digital
+              Pantry — so the data you see here is the same data the AI advisors reason from.
+            </p>
           </div>
         </div>
       </section>

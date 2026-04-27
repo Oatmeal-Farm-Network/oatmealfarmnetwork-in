@@ -51,13 +51,22 @@ a:hover {
   color: #333333;
 }
 
-/* Home-page news card image cap. Bypasses Tailwind so it can't be lost to a
-   JIT cache miss — the previous lg:max-h-44 + lg:self-center combo wasn't
-   regenerating reliably during dev. */
-@media (min-width: 1024px) {
+/* Home-page news card image. On md+ screens, hold the image at 200px tall
+   and let its width follow the natural aspect ratio (rather than being
+   stretched into the 40% card column and cropped). max-width caps absurdly
+   wide images so they can't crowd out the article text. !important defeats
+   the inline Tailwind w-2/5 / aspect-auto utilities. */
+@media (min-width: 768px) {
   .home-news-img {
-    max-height: 200px;
+    width: auto !important;
+    height: 200px !important;
+    max-width: 50% !important;
+    aspect-ratio: auto !important;
     align-self: center;
+  }
+  .home-news-img > img {
+    width: auto !important;
+    height: 100% !important;
   }
 }
 
