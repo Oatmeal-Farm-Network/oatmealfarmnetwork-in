@@ -12,11 +12,35 @@
  * All images are pulled from /public/images. Replace any of the IMG_* constants
  * if you want a different shot in a particular slot.
  */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+
+const NEWS_API = import.meta.env.VITE_NEWS_API_URL || import.meta.env.VITE_API_URL || '';
+
+// Strip HTML tags + decode entities (Brownfield/USDA articles arrive with HTML)
+function plainText(html) {
+  if (!html) return '';
+  if (typeof window === 'undefined' || !window.DOMParser) return String(html);
+  const doc = new DOMParser().parseFromString(String(html), 'text/html');
+  return (doc.body.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+function firstNWords(text, n = 100) {
+  const words = (text || '').split(/\s+/).filter(Boolean);
+  if (words.length <= n) return text;
+  return words.slice(0, n).join(' ') + '…';
+}
+
+// The news API also returns category-placeholder SVGs in the `image` field
+// when the source article had no real image — skip those when picking the
+// "latest article with an image."
+function hasRealImage(a) {
+  const img = (a?.image || '').trim();
+  return img && !img.startsWith('/images/news/');
+}
 
 // ─── Image map ────────────────────────────────────────────────────────────────
 // Hand-mapped to existing files in /public/images so a fresh checkout renders
@@ -93,6 +117,66 @@ function NewsCard({ title, description, img, link, imageRight }) {
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow duration-200">
       {imageRight ? (<>{Text}{Img}</>) : (<>{Img}{Text}</>)}
     </div>
+  );
+}
+
+/**
+ * Pulls the latest article from the news_articles Firestore collection that
+ * actually has an image (skipping category-placeholder SVGs), and renders it
+ * in the Market News slot. Falls back to a static "no recent news" card while
+ * loading or if every recent article is image-less.
+ */
+function MarketNewsCard() {
+  const [article, setArticle] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${NEWS_API}/api/news?limit=20`)
+      .then(r => r.ok ? r.json() : null)
+      .then(j => {
+        if (cancelled) return;
+        const list = (j && j.articles) || [];
+        // API returns articles sorted by pubDate desc; first match wins.
+        setArticle(list.find(hasRealImage) || null);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading) {
+    return (
+      <NewsCard
+        title="Market News"
+        description="Loading the latest market and food-system news…"
+        img={IMG_MARKET_NEWS}
+        link="/app/news"
+        imageRight={true}
+      />
+    );
+  }
+  if (!article) {
+    return (
+      <NewsCard
+        title="Market News"
+        description="No recent articles to feature. Browse the full feed for today's pricing shifts, supply and demand changes, seasonal forecasts, and key industry developments."
+        img={IMG_MARKET_NEWS}
+        link="/app/news"
+        imageRight={true}
+      />
+    );
+  }
+
+  const excerpt = firstNWords(plainText(article.description || article.content), 100);
+  return (
+    <NewsCard
+      title={article.title || 'Market News'}
+      description={excerpt}
+      img={article.image}
+      link={`/app/news/${article.id}`}
+      imageRight={true}
+    />
   );
 }
 
@@ -275,13 +359,7 @@ export default function App() {
             link="/news"
             imageRight={false}
           />
-          <NewsCard
-            title="Market News"
-            description="Stay updated on the latest trends and insights shaping the agricultural and food markets. Our Market News section covers pricing shifts, supply and demand changes, seasonal forecasts, and key industry developments. From crop performance to livestock trends and emerging market opportunities, we provide the insights you need to make informed decisions and stay ahead in a rapidly evolving food ecosystem."
-            img={IMG_MARKET_NEWS}
-            link="/news?category=market"
-            imageRight={true}
-          />
+          <MarketNewsCard />
         </div>
       </section>
 
