@@ -325,7 +325,8 @@
       "Bash(powershell -Command \"\\(Get-Date\\) - \\(Get-CimInstance Win32_Process -Filter 'ProcessId = 33460'\\).CreationDate | Select-Object -ExpandProperty TotalMinutes\")",
       "Bash(powershell -Command \"Get-CimInstance Win32_Process -Filter 'ProcessId = 33460' | Select-Object ProcessId, CreationDate\")",
       "Bash(grep -v \":.*//.*crop-detection\")",
-      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(f\\\\\"{r['feature_key']:30s} {r['feature_name']}\\\\\"\\) for r in data]\")"
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(f\\\\\"{r['feature_key']:30s} {r['feature_name']}\\\\\"\\) for r in data]\")",
+      "Bash(grep -iE \"\\(precision|websitedesign|website[^\\\\\\\\s]+\\\\\\\\.webp\\)\")"
     ],
     "additionalDirectories": [
       "\\tmp"
