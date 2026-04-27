@@ -30,8 +30,10 @@ function plainText(html) {
 
 function firstNWords(text, n = 100) {
   const words = (text || '').split(/\s+/).filter(Boolean);
-  if (words.length <= n) return text;
-  return words.slice(0, n).join(' ') + '…';
+  // Always end with "..." to signal "click for more" — even when text is shorter
+  // than the cap, the link goes somewhere with more content.
+  if (words.length <= n) return (text || '').trim() + ' ...';
+  return words.slice(0, n).join(' ') + ' ...';
 }
 
 // The news API also returns category-placeholder SVGs in the `image` field
@@ -52,14 +54,14 @@ const IMG_ARTISAN      = '/images/HomeArtisanProducers.webp';
 const IMG_RESTAURANTS  = '/images/HomeRestaurants.webp';
 const IMG_COMPANY_NEWS = '/images/HomePageComingsoon.webp';
 const IMG_MARKET_NEWS  = '/images/FarmersMarket.webp';
-const IMG_PRECISION    = '/images/FarmManagement.webp';
+const IMG_PRECISION    = '/images/HomePrecisionAg.webp';
 const IMG_FARM2TABLE   = '/images/HomepageLivestockMarketplace.webp';
 const IMG_ASSOCIATION  = '/images/AssociationGoats.webp';
 const IMG_LIVESTOCK    = '/images/HomepageLivestockMarketplace.webp';
 const IMG_EVENTS       = '/images/EventsHeader.webp';
 const IMG_AI_ADVISORS  = '/images/SaigeBanner.webp';
 const IMG_CHEF_PANTRY  = '/images/Restaurants.webp';
-const IMG_WEBSITE      = '/images/204654websitedesignad.webp';
+const IMG_WEBSITE      = '/images/HomeCustomWebsiteSystem.webp';
 const IMG_KNOWLEDGE    = '/images/PlantDBHome.webp';
 
 // ─── Reusable sub-components ──────────────────────────────────────────────────
@@ -92,23 +94,33 @@ function EcosystemCard({ title, description, img, link, eager }) {
   );
 }
 
-function NewsCard({ title, description, img, link, imageRight }) {
+function NewsCard({ title, description, img, link, imageRight, eyebrow, imageFit = 'cover' }) {
   const Img = (
-    <Link to={link} className="block w-full md:w-2/5 shrink-0 overflow-hidden aspect-video md:aspect-auto">
+    <Link
+      to={link}
+      // .home-news-img caps height + vertically centers on lg+ via index.css
+      // (Tailwind lg:max-h-44 + lg:self-center kept losing to JIT caching).
+      className="home-news-img block w-full md:w-2/5 shrink-0 overflow-hidden aspect-video md:aspect-auto bg-white"
+    >
       <img
         src={img}
         alt={title}
         loading="lazy"
-        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+        className={`w-full h-full ${imageFit === 'contain' ? 'object-contain' : 'object-cover hover:scale-105 transition-transform duration-300'}`}
         onError={e => { e.target.src = '/images/DirectoryHome.webp'; }}
       />
     </Link>
   );
   const Text = (
     <div className="p-6 flex flex-col justify-center flex-1">
+      {eyebrow && (
+        <div className="text-[10px] uppercase tracking-widest font-semibold text-gray-500 mb-1">
+          {eyebrow}
+        </div>
+      )}
       <h3 className="font-lora font-bold text-xl text-[#3D6B34] mb-2">{title}</h3>
       <p className="text-sm text-gray-700 leading-relaxed mb-3">{description}</p>
-      <Link to={link} className="self-start text-[#3D6B34] font-semibold text-sm hover:underline">
+      <Link to={link} className="self-end text-[#3D6B34] font-semibold text-sm hover:underline">
         Explore →
       </Link>
     </div>
@@ -171,11 +183,13 @@ function MarketNewsCard() {
   const excerpt = firstNWords(plainText(article.description || article.content), 100);
   return (
     <NewsCard
+      eyebrow="Industry News"
       title={article.title || 'Market News'}
       description={excerpt}
       img={article.image}
       link={`/app/news/${article.id}`}
       imageRight={true}
+      imageFit="contain"
     />
   );
 }

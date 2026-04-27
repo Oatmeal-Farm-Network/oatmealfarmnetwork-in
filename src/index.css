@@ -51,6 +51,16 @@ a:hover {
   color: #333333;
 }
 
+/* Home-page news card image cap. Bypasses Tailwind so it can't be lost to a
+   JIT cache miss — the previous lg:max-h-44 + lg:self-center combo wasn't
+   regenerating reliably during dev. */
+@media (min-width: 1024px) {
+  .home-news-img {
+    max-height: 200px;
+    align-self: center;
+  }
+}
+
 p.body:last-child {
     margin-bottom: 0;
 }
