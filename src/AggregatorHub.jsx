@@ -21,6 +21,8 @@ const TILES = [
     desc: 'Dispatch, drivers, cold-chain temperature log, breach alerts.' },
   { slug: 'sales',     icon: '🛒', title: 'B2B & D2C Sales',
     desc: 'Retail/restaurant accounts plus Zepto / Swiggy / own-app channels.' },
+  { slug: 'esg',       icon: '🌍', title: 'ESG Reports',
+    desc: 'Audit-ready proof of sustainable practices — auto-pulled from sourcing, cold chain, inputs; manual metrics for the rest. PDF export.' },
 ];
 
 const fmt$  = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });

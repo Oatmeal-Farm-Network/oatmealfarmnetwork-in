@@ -302,6 +302,7 @@ export default function AccountSidebar() {
             <NavChild to={`/aggregator/produce?BusinessID=${BusinessID}`}   label="Procurement & Inventory" />
             <NavChild to={`/aggregator/logistics?BusinessID=${BusinessID}`} label="Logistics" />
             <NavChild to={`/aggregator/sales?BusinessID=${BusinessID}`}     label="B2B & D2C Sales" />
+            <NavChild to={`/aggregator/esg?BusinessID=${BusinessID}`}       label="ESG Reports" />
           </NavSection>
         )}
 

@@ -96,6 +96,7 @@ const AggregatorFarms     = lazy(() => import('./AggregatorFarms.jsx'));
 const AggregatorProduce   = lazy(() => import('./AggregatorProduce.jsx'));
 const AggregatorLogistics = lazy(() => import('./AggregatorLogistics.jsx'));
 const AggregatorSales     = lazy(() => import('./AggregatorSales.jsx'));
+const AggregatorESG       = lazy(() => import('./AggregatorESG.jsx'));
 import DiningAdmin from './DiningAdmin';
 import DiningRegister from './DiningRegister';
 import FarmTourAdmin from './FarmTourAdmin';
@@ -448,6 +449,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/aggregator/produce"   element={<AggregatorProduce />} />
           <Route path="/aggregator/logistics" element={<AggregatorLogistics />} />
           <Route path="/aggregator/sales"     element={<AggregatorSales />} />
+          <Route path="/aggregator/esg"       element={<AggregatorESG />} />
           <Route path="/events/:eventId/admin/dining" element={<DiningAdmin />} />
           <Route path="/events/:eventId/dining" element={<DiningRegister />} />
           <Route path="/events/:eventId/admin/tour" element={<FarmTourAdmin />} />
