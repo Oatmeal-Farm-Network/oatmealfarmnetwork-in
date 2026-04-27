@@ -21,7 +21,7 @@ import PageMeta from './PageMeta';
 // ─── Image map ────────────────────────────────────────────────────────────────
 // Hand-mapped to existing files in /public/images so a fresh checkout renders
 // without needing new assets. Swap any of these one-liners to update a slot.
-const IMG_HERO         = '/images/Field.webp';
+const IMG_HERO         = '/images/HomePageField.webp';
 const IMG_FARM         = '/images/Farm.webp';
 const IMG_RANCHES      = '/images/Cattle.webp';
 const IMG_ARTISAN      = '/images/ArtisanProducers.webp';
