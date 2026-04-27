@@ -177,18 +177,23 @@ export default function App() {
               Explore Directory
             </Link>
           </div>
-          <div className="relative rounded-2xl overflow-hidden shadow-md aspect-[4/3]">
-            <img
-              src={IMG_HERO}
-              alt="Sunset over a farm field"
-              loading="eager"
-              fetchPriority="high"
-              className="w-full h-full object-cover"
-              onError={e => { e.target.src = '/images/DirectoryHome.webp'; }}
-            />
-            <div className="absolute right-4 bottom-4 bg-white/85 backdrop-blur-sm rounded-xl p-4 max-w-[55%]">
+          <div className="relative">
+            <div className="rounded-2xl overflow-hidden shadow-md aspect-[4/3]">
+              <img
+                src={IMG_HERO}
+                alt="Sunset over a farm field"
+                loading="eager"
+                fetchPriority="high"
+                className="w-full h-full object-cover"
+                onError={e => { e.target.src = '/images/DirectoryHome.webp'; }}
+              />
+            </div>
+            {/* Quote sits at the bottom-left of the image with ~30% extending
+                past the left edge — translate-x of -30% on a left-anchored
+                element pushes that fraction of its width into the gutter. */}
+            <div className="absolute left-0 bottom-6 -translate-x-[30%] bg-white/90 backdrop-blur-sm rounded-xl shadow-md p-4 max-w-[60%]">
               <div className="font-lora italic text-gray-800 text-sm md:text-base leading-snug">
-                "The future of food is rooted in the precision of our past."
+                "The future of food is rooted in the wisdom of our past."
               </div>
             </div>
           </div>
