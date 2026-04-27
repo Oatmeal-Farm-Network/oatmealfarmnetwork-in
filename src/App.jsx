@@ -209,7 +209,7 @@ function FeatureCard({ title, description, img, link }) {
       <div className="p-5 flex flex-col flex-1">
         <h3 className="font-bold text-base text-gray-900 mb-2">{title}</h3>
         <p className="text-xs text-gray-600 flex-1 leading-relaxed">{description}</p>
-        <Link to={link} className="mt-3 self-start text-[#3D6B34] font-semibold text-xs hover:underline">
+        <Link to={link} className="mt-3 self-end text-[#3D6B34] font-semibold text-xs hover:underline">
           Explore →
         </Link>
       </div>
