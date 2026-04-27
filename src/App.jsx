@@ -22,11 +22,11 @@ import PageMeta from './PageMeta';
 // Hand-mapped to existing files in /public/images so a fresh checkout renders
 // without needing new assets. Swap any of these one-liners to update a slot.
 const IMG_HERO         = '/images/HomePageField.webp';
-const IMG_FARM         = '/images/Farm.webp';
-const IMG_RANCHES      = '/images/Cattle.webp';
-const IMG_ARTISAN      = '/images/ArtisanProducers.webp';
-const IMG_RESTAURANTS  = '/images/Restaurants.webp';
-const IMG_COMPANY_NEWS = '/images/Field2.webp';
+const IMG_FARM         = '/images/Homefarm.webp';
+const IMG_RANCHES      = '/images/Homeranches.webp';
+const IMG_ARTISAN      = '/images/HomeArtisanProducers.webp';
+const IMG_RESTAURANTS  = '/images/HomeRestaurants.webp';
+const IMG_COMPANY_NEWS = '/images/HomePageComingsoon.webp';
 const IMG_MARKET_NEWS  = '/images/FarmersMarket.webp';
 const IMG_PRECISION    = '/images/FarmManagement.webp';
 const IMG_FARM2TABLE   = '/images/HomepageLivestockMarketplace.webp';
@@ -153,10 +153,27 @@ export default function App() {
       <section className="bg-white">
         <div className="max-w-7xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-10 items-center">
           <div>
-            <h1 className="font-lora font-normal text-3xl md:text-4xl text-gray-900 leading-tight mb-2">
+            <h1
+              className="leading-tight mb-3"
+              style={{
+                fontFamily: "'Lora', 'Times New Roman', serif",
+                fontStyle: 'italic',
+                fontWeight: 400,
+                fontSize: 'clamp(1.625rem, 2.5vw, 2.25rem)',  // ~26px → ~36px
+                color: '#232f3a',
+              }}
+            >
               Connect, Grow, Thrive:
             </h1>
-            <h2 className="font-lora font-bold text-3xl md:text-4xl mb-5" style={{ color: '#4C8B5D' }}>
+            <h2
+              className="mb-5"
+              style={{
+                fontFamily: "'Lora', 'Times New Roman', serif",
+                fontWeight: 700,
+                fontSize: 'clamp(1.875rem, 3vw, 2.25rem)',   // text-3xl → text-4xl
+                color: '#4C8B5D',
+              }}
+            >
               The Oatmeal Farm Network
             </h2>
             <p className="text-gray-700 text-base mb-3 leading-relaxed">
@@ -169,13 +186,6 @@ export default function App() {
               Marketplace, you'll soon be able to buy and sell directly within the network —
               helping you grow, connect, and thrive from ground to gourmet.
             </p>
-            <Link
-              to="/directory"
-              className="inline-block px-6 py-2.5 rounded-full font-semibold text-white shadow-sm hover:shadow-md transition"
-              style={{ backgroundColor: '#3D6B34' }}
-            >
-              Explore Directory
-            </Link>
           </div>
           <div className="relative">
             <div className="rounded-2xl overflow-hidden shadow-md aspect-[4/3]">
@@ -212,10 +222,14 @@ export default function App() {
             <Link
               key={s.label}
               to={s.link}
-              className="block rounded-xl px-2 py-1 font-lora font-bold text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none"
+              className="block rounded-xl px-2 py-1 font-bold transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none"
+              style={{
+                fontFamily: "'Lora', 'Times New Roman', serif",
+                color: '#ffffff',
+              }}
             >
-              <div className="text-3xl md:text-4xl leading-none">{s.n}</div>
-              <div className="text-[10px] md:text-xs tracking-widest mt-1">{s.label}</div>
+              <div className="text-3xl md:text-4xl leading-none" style={{ color: '#ffffff' }}>{s.n}</div>
+              <div className="text-[10px] md:text-xs tracking-widest mt-1" style={{ color: '#ffffff' }}>{s.label}</div>
             </Link>
           ))}
         </div>
@@ -255,8 +269,8 @@ export default function App() {
       <section className="pb-12">
         <div className="max-w-7xl mx-auto px-4 space-y-5">
           <NewsCard
-            title="Company News"
-            description="Stay informed with the latest updates from across the Oatmeal ecosystem. Our Company News section covers product launches, feature updates, partnerships, and key milestones shaping the future of agriculture and food systems. Discover innovations in AI-powered tools and stories from farmers, producers, and restaurants. Stay connected to how we're building a more transparent, efficient, and connected farm-to-table network."
+            title="Coming Soon: Open for Business"
+            description={`The Oatmeal Farm Network is entering its final phase of technical readiness for our 2026 launch. We are currently onboarding a select group of pilot food businesses and associations to refine our "digital nervous system" before opening the gates to the wider community. Soon, the tools to manage everything from a single restaurant's pantry to a national breed association's registry will be available in one integrated ecosystem.`}
             img={IMG_COMPANY_NEWS}
             link="/news"
             imageRight={false}
