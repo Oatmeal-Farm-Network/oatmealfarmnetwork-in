@@ -153,10 +153,10 @@ export default function App() {
       <section className="bg-white">
         <div className="max-w-7xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-10 items-center">
           <div>
-            <h1 className="font-lora text-3xl md:text-4xl text-gray-900 leading-tight mb-2">
+            <h1 className="font-lora font-normal text-3xl md:text-4xl text-gray-900 leading-tight mb-2">
               Connect, Grow, Thrive:
             </h1>
-            <h2 className="font-lora text-3xl md:text-4xl font-bold mb-5" style={{ color: '#3D6B34' }}>
+            <h2 className="font-lora font-bold text-3xl md:text-4xl mb-5" style={{ color: '#4C8B5D' }}>
               The Oatmeal Farm Network
             </h2>
             <p className="text-gray-700 text-base mb-3 leading-relaxed">
@@ -204,15 +204,19 @@ export default function App() {
       <section style={{ backgroundColor: '#3D6B34' }} className="text-white">
         <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           {[
-            { n: '4K+',    label: 'PLANT VARIETIES' },
-            { n: '3K+',    label: 'LIVESTOCK BREEDS' },
-            { n: '1,400+', label: 'UNIQUE INGREDIENTS' },
-            { n: '52',     label: 'GLOBAL CATEGORIES' },
+            { n: '52',     label: 'BUSINESS CATEGORIES', link: '/directory' },
+            { n: '4K+',    label: 'PLANT VARIETIES',     link: '/plant-knowledgebase' },
+            { n: '3K+',    label: 'LIVESTOCK BREEDS',    link: '/livestock' },
+            { n: '1,400+', label: 'INGREDIENTS',         link: '/ingredient-knowledgebase' },
           ].map(s => (
-            <div key={s.label}>
-              <div className="text-3xl md:text-4xl font-bold leading-none">{s.n}</div>
-              <div className="text-[10px] md:text-xs tracking-widest opacity-90 mt-1">{s.label}</div>
-            </div>
+            <Link
+              key={s.label}
+              to={s.link}
+              className="block rounded-xl px-2 py-1 font-lora font-bold text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none"
+            >
+              <div className="text-3xl md:text-4xl leading-none">{s.n}</div>
+              <div className="text-[10px] md:text-xs tracking-widest mt-1">{s.label}</div>
+            </Link>
           ))}
         </div>
       </section>
