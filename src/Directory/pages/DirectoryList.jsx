@@ -8,7 +8,7 @@ import Breadcrumbs from '../../Breadcrumbs';
 // Directory category images — served from /public/images (WebP)
 const agriAssociaImg      = '/images/AgriculturalAssociations.webp';
 const artisianImg         = '/images/ArtisanProducers.webp';
-const brImg               = '/images/BusinessResources.webp';
+const brImg               = '/images/BusinessResourcesDirectoryImage.webp';
 const crafOrgImg          = '/images/CrafterOrganizations.webp';
 const farmersMarketImg    = '/images/FarmersMarket.webp';
 const farmsRanchesImg     = '/images/Farm.webp';

@@ -224,7 +224,7 @@ const DirectoryDetail = function () {
     const CATEGORY_HEADERS = {
         'agricultural-associations': '/images/AgricuturalAssociationsHeader.webp',
         'artisan-producers':         '/images/ArtisanProducersHeader.webp',
-        'business-resources':        '/images/BusinessResourcesHeader.webp',
+        'business-resources':        '/images/BusinessResources.webp',
         'crafter-organizations':     '/images/CraftersHeader.webp',
         'farmers-markets':           '/images/FarmersMarketHeader.webp',
         'farms-ranches':             '/images/farmsHeader.webp',
