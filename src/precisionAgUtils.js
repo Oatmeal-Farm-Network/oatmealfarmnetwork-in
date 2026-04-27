@@ -34,7 +34,9 @@ export function useRaster(fieldId, indexKey, grid = 48, analysisId = null) {
     if (!fieldId || !indexKey) { setData(null); return; }
     const ctrl = new AbortController();
     setLoading(true); setError(null);
-    const url = `${API_URL}/api/fields/${fieldId}/raster/${indexKey}?grid=${grid}${analysisId ? `&analysis_id=${analysisId}` : ''}`;
+    // Raster lives only on CropMonitor — main backend has no raster route, so
+    // the previous ${API_URL} call returned a bare 404 for every analysis.
+    const url = `${CROP_API_URL}/api/fields/${fieldId}/raster/${indexKey}?grid=${grid}${analysisId ? `&analysis_id=${analysisId}` : ''}`;
     fetch(url, { signal: ctrl.signal })
       .then(r => r.ok ? r.json() : r.json().then(j => Promise.reject(j?.detail || `${r.status}`)))
       .then(d => { setData(d); setLoading(false); })

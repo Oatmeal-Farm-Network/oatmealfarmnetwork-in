@@ -299,7 +299,7 @@ export default function App() {
             {/* Quote sits at the bottom-left of the image with ~30% extending
                 past the left edge — translate-x of -30% on a left-anchored
                 element pushes that fraction of its width into the gutter. */}
-            <div className="absolute left-0 bottom-6 -translate-x-[30%] bg-white/90 backdrop-blur-sm rounded-xl shadow-md p-4 max-w-[60%]">
+            <div className="absolute left-0 bottom-6 -translate-x-[20%] bg-white/60 backdrop-blur-sm rounded-xl shadow-md p-4 max-w-[42%]">
               <div className="font-lora italic text-gray-800 text-sm md:text-base leading-snug">
                 "The future of food is rooted in the wisdom of our past."
               </div>
