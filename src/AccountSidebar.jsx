@@ -289,6 +289,22 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
+        {on('food_aggregation') && (
+          <NavSection
+            icon="/images/FoodAggregators.webp"
+            label="Food Aggregation"
+            expanded={Expanded}
+            isOpen={OpenSections['Food Aggregation'] || false}
+            onToggle={() => toggleSection('Food Aggregation')}
+          >
+            <NavChild to={`/aggregator?BusinessID=${BusinessID}`}           label="Hub Dashboard" />
+            <NavChild to={`/aggregator/farms?BusinessID=${BusinessID}`}     label="Farm Network" />
+            <NavChild to={`/aggregator/produce?BusinessID=${BusinessID}`}   label="Procurement & Inventory" />
+            <NavChild to={`/aggregator/logistics?BusinessID=${BusinessID}`} label="Logistics" />
+            <NavChild to={`/aggregator/sales?BusinessID=${BusinessID}`}     label="B2B & D2C Sales" />
+          </NavSection>
+        )}
+
         {on('testimonials') && (
           <NavSection
             icon="/images/Handshake.webp"

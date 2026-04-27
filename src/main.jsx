@@ -91,6 +91,11 @@ import FloorPlanAdmin from './FloorPlanAdmin';
 import FloorPlanPublic from './FloorPlanPublic';
 import BoothServicesAdmin from './BoothServicesAdmin';
 import EventCOIAdmin from './EventCOIAdmin';
+const AggregatorHub       = lazy(() => import('./AggregatorHub.jsx'));
+const AggregatorFarms     = lazy(() => import('./AggregatorFarms.jsx'));
+const AggregatorProduce   = lazy(() => import('./AggregatorProduce.jsx'));
+const AggregatorLogistics = lazy(() => import('./AggregatorLogistics.jsx'));
+const AggregatorSales     = lazy(() => import('./AggregatorSales.jsx'));
 import DiningAdmin from './DiningAdmin';
 import DiningRegister from './DiningRegister';
 import FarmTourAdmin from './FarmTourAdmin';
@@ -436,6 +441,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/events/:eventId/floor-plan" element={<FloorPlanPublic />} />
           <Route path="/events/:eventId/admin/booth-services" element={<BoothServicesAdmin />} />
           <Route path="/events/:eventId/admin/coi" element={<EventCOIAdmin />} />
+
+          {/* Food Aggregation — gated by on('food_aggregation') in the sidebar */}
+          <Route path="/aggregator"           element={<AggregatorHub />} />
+          <Route path="/aggregator/farms"     element={<AggregatorFarms />} />
+          <Route path="/aggregator/produce"   element={<AggregatorProduce />} />
+          <Route path="/aggregator/logistics" element={<AggregatorLogistics />} />
+          <Route path="/aggregator/sales"     element={<AggregatorSales />} />
           <Route path="/events/:eventId/admin/dining" element={<DiningAdmin />} />
           <Route path="/events/:eventId/dining" element={<DiningRegister />} />
           <Route path="/events/:eventId/admin/tour" element={<FarmTourAdmin />} />
