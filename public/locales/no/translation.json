@@ -33,7 +33,7 @@
   "footer": {
     "tagline": "Kobler sammen hele matsystemet – fra frø til kveldsmat.",
     "explore": "Utforske",
-    "food_directory": "Katalog over matsystemer",
+    "food_directory": "Matsystemkatalog",
     "plant_kb": "Kunnskapsbase for planter",
     "livestock_db": "Husdyrdatabase",
     "ingredient_kb": "Kunnskapsbase for ingredienser",
@@ -46,7 +46,7 @@
     "copyright": "© 2025 - {{year}} Havregrøt AI. Alle rettigheter forbeholdt."
   },
   "lang": {
-    "title": "Velg språket ditt",
+    "title": "Velg språk",
     "subtitle": "Preferansen din lagres og brukes på alle AI-rådgivere",
     "search_placeholder": "Søk på språk…",
     "no_results": "Ingen språk samsvarer med «{{query}}»"
@@ -54,7 +54,7 @@
   "home": {
     "hero_tagline": "Koble til, vokse, blomstre:",
     "hero_title": "Havregrynsfarmnettverket",
-    "hero_body1": "Oatmeal Farm Network er din alt-i-ett-plattform som kobler sammen hele matsystemet.",
+    "hero_body1": "Oatmeal Farm Network er din alt-i-ett-plattform som forbinder hele matsystemet.",
     "hero_body2": "Oppdag lokale forbindelser gjennom vår matsystemkatalog, ta smartere beslutninger med Saiges AI-innsikt, og utforsk over 4000 plantesorter og 3000 husdyrraser i våre spesialiserte databaser. Med vår kommende husdyrmarkedsplass vil du snart kunne kjøpe og selge direkte i nettverket – og hjelpe deg med å dyrke, knytte kontakter og trives fra jord til gourmet.",
     "hero_quote": "«Matens fremtid er forankret i fortidens visdom.»",
     "stats_categories": "VIRKSOMHETSKATEGORIER",
@@ -127,5 +127,83 @@
     "passwords_mismatch": "Passordene stemmer ikke overens.",
     "signup_failed": "Registreringen mislyktes. Prøv på nytt.",
     "server_error": "Kan ikke koble til serveren. Prøv på nytt."
+  },
+  "forgot": {
+    "title": "Hent passordet ditt",
+    "subtitle": "Vi sender den til deg på e-post med en gang",
+    "intro": "Skriv inn e-postadressen som er knyttet til kontoen din, så sender vi deg passordet ditt.",
+    "send_btn": "Send passordet mitt",
+    "sending": "Sender...",
+    "remember_password": "Husker du passordet ditt?",
+    "success_title": "Passord sendt!",
+    "success_body_pre": "Passordet ditt er sendt på e-post til",
+    "success_body_post": "Sjekk innboksen din og logg inn.",
+    "success_spam": "Ser du det ikke? Sjekk søppelpostmappen din.",
+    "go_to_login": "Gå til Logg inn",
+    "not_found_pre": "E-postadressen",
+    "not_found_post": "ble ikke funnet i systemet vårt. Vennligst dobbeltsjekk eller",
+    "not_found_cta": "opprett en ny konto",
+    "request_failed": "Forespørselen mislyktes ({{status}}). Prøv på nytt."
+  },
+  "contact": {
+    "title": "Kontakt Havregrynsfarmnettverket",
+    "subtitle": "Har du spørsmål om Oatmeal Farm Network eller våre kommende virtuelle AI-konsulenter? Fyll ut skjemaet nedenfor, så tar teamet vårt kontakt med deg snart.",
+    "field_org": "Organisasjons-/firmanavn",
+    "org_optional": "(Valgfri)",
+    "org_placeholder": "f.eks. Sunny Valley Farm",
+    "field_message": "Hvordan kan vi hjelpe?",
+    "message_placeholder": "Fortell oss om dine behov eller spørsmål.",
+    "captcha_title": "Menneskelig verifisering",
+    "captcha_subtitle": "Vennligst svar på det enkle mattespørsmålet nedenfor.",
+    "captcha_q": "Hva er {{left}} + {{right}}?",
+    "captcha_error": "Vennligst svar riktig på matteoppgaven.",
+    "send_btn": "Send melding",
+    "sending": "Sender...",
+    "confirm_title": "Takk skal du ha",
+    "confirm_body": "Vi tar kontakt med deg snart.",
+    "confirm_name": "Navn:",
+    "confirm_email": "E-post:",
+    "confirm_org": "Organisasjon:",
+    "confirm_return_dashboard": "Gå tilbake til dashbordet",
+    "confirm_return_home": "Gå tilbake til hjemmet"
+  },
+  "for_biz": {
+    "what_ofn": "Hva OFN gir deg",
+    "tools_included": "Verktøy som er inkludert i kontoen din",
+    "ready_title": "Klar til å komme i gang?",
+    "ready_body": "Gratis å bli medlem. Alle verktøy er inkludert i kontoen din – ingen tillegg, ingen pris per funksjon.",
+    "create_free": "Opprett en gratis konto →",
+    "browse_directory": "Bla gjennom katalogen"
+  },
+  "about": {
+    "title": "Støtte til landbruk",
+    "tagline": "Vi gir bønder og ranchere verktøyene de trenger for å ta smartere beslutninger, nå nye markeder og bygge fremtidens landbruk.",
+    "body1": "I dagens jordbrukslandskap betyr suksess mer enn bare en god avling eller en sunn besetning. Det betyr å utnytte banebrytende teknologi for å drive mer effektivt og bygge direkte forbindelser til lokalsamfunnene du mater.",
+    "body2": "Oatmeal Farm Network ble bygget for denne nye æraen. Vi kombinerer et levende, tilkoblet fellesskap med den revolusjonerende kraften til Oatmeal AI for å gi deg en uovertruffen fordel.",
+    "h2_ai": "Havregrøtfordelen: AI-drevet landbruk",
+    "ai_body": "Slutt å gjette og begynn å vite. Nettverket vårt er utelukkende drevet av Oatmeal AI, som leverer intelligente agenter som analyserer data, tilbyr prediktiv innsikt og bidrar til å effektivisere hele driften.",
+    "h2_ecosystem": "Mer enn et nettverk: Et komplett økosystem",
+    "ecosystem_body": "Bryt deg løs fra tradisjonelle barrierer og få kontakt med en større verden. Oatmeal Farm Network er din inngangsport til et enormt økosystem designet for å hjelpe deg med å vokse.",
+    "li_livestock": "Husdyrmarkedet: Vis frem dyrene dine for et landsdekkende publikum og kom i kontakt med seriøse kjøpere gjennom vår nettbaserte markedsplass.",
+    "li_directory": "Matsystemkatalogen: Fra frø til kveldsmat, finn nye partnere, leverandører og kunder i vår omfattende katalog.",
+    "li_farm2table": "Jord-til-bord-initiativer: Vi tilbyr verktøyene og forbindelsene du trenger for å bygge en blomstrende direkte-til-forbruker-virksomhet.",
+    "h2_ready": "Klar til å bygge fremtiden?",
+    "ready_body1": "Du er ikke bare en bruker; du er medlem av et fellesskap som forstår utfordringene og triumfene innen landbruket.",
+    "ready_body2": "Bli med oss, og la oss sammen skape fremtidens landbruk.",
+    "link_marketplace": "Utforsk markedsplassen",
+    "link_livestock_db": "Se husdyrdatabasen",
+    "link_directory": "Bla gjennom katalogen"
+  },
+  "livestock_mkt": {
+    "title": "Kobler sammen rancher over hele USA",
+    "intro1": "Livestock of America er en unik markedsplass for husdyr som hjelper rancher med å vise frem dyrene sine på nett. Vi støtter alle husdyroppdrettere, uavhengig av rase eller type.",
+    "intro2": "Fra den barske Stillehavskysten til de historiske strendene i Plymouth, forbinder Livestock of America oppdrettere av dyr som lever av landet. Disse mennene og kvinnene sørger for at landet vårt er mett, og vi er stolte av å hjelpe dem med å lykkes.",
+    "join_now": "Bli med nå",
+    "loading": "Laster inn oppføringer ...",
+    "no_listings": "Ingen oppføringer tilgjengelig akkurat nå.",
+    "list_animals": "List opp dyrene dine",
+    "featured": "Utvalgte oppføringer",
+    "browse": "Bla gjennom oppføringer",
+    "price_call": "Ring for pris"
   }
 }

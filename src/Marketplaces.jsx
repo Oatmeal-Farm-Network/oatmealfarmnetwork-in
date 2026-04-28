@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -7,6 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 function AnimalCard({ animal }) {
   const [failed, setFailed] = useState(false);
+  const { t } = useTranslation();
 
   // Skip rendering this card entirely if image fails
   if (failed) return null;
@@ -24,7 +26,7 @@ function AnimalCard({ animal }) {
     if (animal.price) {
       return <>Price: <strong>${Math.round(animal.price).toLocaleString()}</strong></>;
     }
-    return <strong>Call For Price</strong>;
+    return <strong>{t('livestock_mkt.price_call')}</strong>;
   };
 
   const shortName = animal.full_name?.length > 28
@@ -103,6 +105,7 @@ function CardGrid({ animals }) {
 export default function LivestockMarketplace() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetch(`${API_URL}/api/marketplace/homepage-listings`)
@@ -136,25 +139,23 @@ export default function LivestockMarketplace() {
       {/* Intro */}
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem 1rem 1rem' }}>
         <h1 style={{ textAlign: 'center', fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-          Connecting Ranches Across The United States
+          {t('livestock_mkt.title')}
         </h1>
         <p style={{ fontSize: '0.9rem', color: '#333', lineHeight: 1.6, marginBottom: '0.5rem' }}>
-          Livestock of America is a one-of-a-kind livestock marketplace, helping ranches showcase their animals online.
-          We support all livestock breeders, regardless of breed or type.
+          {t('livestock_mkt.intro1')}
         </p>
         <p style={{ fontSize: '0.9rem', color: '#333', lineHeight: 1.6, marginBottom: '1rem' }}>
-          From the rugged Pacific coast to the historic shores of Plymouth, Livestock of America connects the breeders
-          of animals who live off the land. These men and women keep our country fed, and we are proud to help them succeed.
+          {t('livestock_mkt.intro2')}
         </p>
-        <Link to="/signup" className="regsubmit2">Join Now</Link>
+        <Link to="/signup" className="regsubmit2">{t('livestock_mkt.join_now')}</Link>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>Loading listings...</div>
+        <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>{t('livestock_mkt.loading')}</div>
       ) : listings.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>
-          <p style={{ marginBottom: '1rem' }}>No listings available right now.</p>
-          <Link to="/signup" className="regsubmit2">List Your Animals</Link>
+          <p style={{ marginBottom: '1rem' }}>{t('livestock_mkt.no_listings')}</p>
+          <Link to="/signup" className="regsubmit2">{t('livestock_mkt.list_animals')}</Link>
         </div>
       ) : (
         <>
@@ -165,7 +166,7 @@ export default function LivestockMarketplace() {
                 textAlign: 'center', fontSize: '1.4rem', fontWeight: 'bold',
                 marginBottom: '1.25rem', color: '#222',
               }}>
-                Featured Listings
+                {t('livestock_mkt.featured')}
               </h2>
               <CardGrid animals={featured} />
             </div>
@@ -184,7 +185,7 @@ export default function LivestockMarketplace() {
                 textAlign: 'center', fontSize: '1.4rem', fontWeight: 'bold',
                 marginBottom: '1.25rem', color: '#222',
               }}>
-                Browse Listings
+                {t('livestock_mkt.browse')}
               </h2>
               {/* Two rows of 4 */}
               <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>

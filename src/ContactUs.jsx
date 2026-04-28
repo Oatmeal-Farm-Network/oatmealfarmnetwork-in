@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -16,6 +17,7 @@ const newQuestion = () => {
 
 export default function ContactUs() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -130,11 +132,10 @@ export default function ContactUs() {
         <section className="bg-white p-6 md:p-10 rounded-2xl shadow-[0_10px_25px_rgba(74,92,67,0.08)]">
           <header className="mb-6">
             <h1 className="text-3xl md:text-4xl font-bold text-[#4A5C43] mb-2">
-              Contact The Oatmeal Farm Network
+              {t('contact.title')}
             </h1>
             <p className="text-gray-700">
-              Have questions about the Oatmeal Farm Network or our upcoming AI virtual consultants?
-              Complete the form below and our team will get back to you shortly.
+              {t('contact.subtitle')}
             </p>
           </header>
 
@@ -148,28 +149,28 @@ export default function ContactUs() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  First Name
+                  {t('auth.field_first_name')}
                 </label>
                 <input
                   type="text"
                   name="FName"
                   value={formData.FName}
                   onChange={handleChange}
-                  placeholder="First Name"
+                  placeholder={t('auth.field_first_name')}
                   className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-[#4A5C43] focus:outline-none focus:ring-2 focus:ring-[#4A5C43]/20"
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Last Name
+                  {t('auth.field_last_name')}
                 </label>
                 <input
                   type="text"
                   name="LName"
                   value={formData.LName}
                   onChange={handleChange}
-                  placeholder="Last Name"
+                  placeholder={t('auth.field_last_name')}
                   className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-[#4A5C43] focus:outline-none focus:ring-2 focus:ring-[#4A5C43]/20"
                   required
                 />
@@ -177,27 +178,27 @@ export default function ContactUs() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Organization / Business Name <span className="text-gray-400 font-normal">(Optional)</span></label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">{t('contact.field_org')} <span className="text-gray-400 font-normal">{t('contact.org_optional')}</span></label>
               <input
                 type="text"
                 name="BizName"
                 value={formData.BizName}
                 onChange={handleChange}
-                placeholder="e.g. Sunny Valley Farm"
+                placeholder={t('contact.org_placeholder')}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-[#4A5C43] focus:outline-none focus:ring-2 focus:ring-[#4A5C43]/20"
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address
+                {t('auth.field_email')}
               </label>
               <input
                 type="email"
                 name="Email"
                 value={formData.Email}
                 onChange={handleChange}
-                placeholder="you@example.com"
+                placeholder={t('auth.email_placeholder')}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-[#4A5C43] focus:outline-none focus:ring-2 focus:ring-[#4A5C43]/20"
                 required
               />
@@ -205,23 +206,23 @@ export default function ContactUs() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                How can we help? <span className="text-gray-400 font-normal">(Optional)</span>
+                {t('contact.field_message')} <span className="text-gray-400 font-normal">{t('contact.org_optional')}</span>
               </label>
               <textarea
                 name="CommentText"
                 value={formData.CommentText}
                 onChange={handleChange}
-                placeholder="Tell us about your needs or questions."
+                placeholder={t('contact.message_placeholder')}
                 rows={5}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-[#4A5C43] focus:outline-none focus:ring-2 focus:ring-[#4A5C43]/20"
               />
             </div>
 
             <div className="bg-gray-100 rounded-xl p-5">
-              <label className="block text-sm font-bold text-gray-800 mb-2">Human Verification</label>
-              <p className="text-sm text-gray-600 mb-3">Please answer the simple math question below.</p>
+              <label className="block text-sm font-bold text-gray-800 mb-2">{t('contact.captcha_title')}</label>
+              <p className="text-sm text-gray-600 mb-3">{t('contact.captcha_subtitle')}</p>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                What is {captcha.left} + {captcha.right}?
+                {t('contact.captcha_q', { left: captcha.left, right: captcha.right })}
               </label>
               <input
                 type="text"
@@ -249,7 +250,7 @@ export default function ContactUs() {
                 disabled={loading || !canSubmit}
                 className="rounded-lg bg-[#4A5C43] text-white font-semibold py-3 px-10 hover:bg-[#3e4d37] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {loading ? 'Sending...' : 'Send Message'}
+                {loading ? t('contact.sending') : t('contact.send_btn')}
               </button>
             </div>
           </form>

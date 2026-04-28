@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 
 export default function ForgotPassword() {
+  const { t } = useTranslation();
   const [email, setEmail]                   = useState('');
   const [error, setError]                   = useState('');
   const [loading, setLoading]               = useState(false);
@@ -73,8 +75,8 @@ export default function ForgotPassword() {
                 alt="Oatmeal Farm Network"
                 className="h-10 mx-auto mb-4"
               />
-              <h1 className="text-white text-2xl font-bold font-lora m-0">Retrieve Your Password</h1>
-              <p className="text-white/80 text-sm mt-1">We'll email it to you right away</p>
+              <h1 className="text-white text-2xl font-bold font-lora m-0">{t('forgot.title')}</h1>
+              <p className="text-white/80 text-sm mt-1">{t('forgot.subtitle')}</p>
             </div>
 
             <div className="px-8 py-8">
@@ -83,20 +85,20 @@ export default function ForgotPassword() {
               {sent && (
                 <div className="text-center space-y-4">
                   <div className="text-5xl">✉️</div>
-                  <h2 className="text-xl font-bold text-gray-800">Password Sent!</h2>
+                  <h2 className="text-xl font-bold text-gray-800">{t('forgot.success_title')}</h2>
                   <p className="text-sm text-gray-600">
-                    Your password has been emailed to{' '}
-                    <span className="font-semibold text-gray-800">{submittedEmail}</span>.
-                    Please check your inbox and log in.
+                    {t('forgot.success_body_pre')}{' '}
+                    <span className="font-semibold text-gray-800">{submittedEmail}</span>.{' '}
+                    {t('forgot.success_body_post')}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Don't see it? Check your spam folder.
+                    {t('forgot.success_spam')}
                   </p>
                   <Link
                     to="/login"
                     className="inline-block mt-2  hover:bg-[#4d734d] text-white font-bold py-2.5 px-6 rounded-xl transition-colors duration-200 text-sm uppercase tracking-wider"
                   >
-                    Go to Login
+                    {t('forgot.go_to_login')}
                   </Link>
                 </div>
               )}
@@ -105,7 +107,7 @@ export default function ForgotPassword() {
               {!sent && (
                 <>
                   <p className="text-sm text-gray-600 mb-6">
-                    Enter the email address associated with your account and we'll send your password to you.
+                    {t('forgot.intro')}
                   </p>
 
                   {error && (
@@ -116,23 +118,22 @@ export default function ForgotPassword() {
 
                   {notFound && (
                     <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-6 text-sm">
-                      The email address <span className="font-semibold">{submittedEmail}</span> was not found in our system.
-                      Please double-check or{' '}
-                      <Link to="/signup" className="underline font-semibold">create a new account</Link>.
+                      {t('forgot.not_found_pre')} <span className="font-semibold">{submittedEmail}</span> {t('forgot.not_found_post')}{' '}
+                      <Link to="/signup" className="underline font-semibold">{t('forgot.not_found_cta')}</Link>.
                     </div>
                   )}
 
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Email Address
+                        {t('auth.field_email')}
                       </label>
                       <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        placeholder="you@example.com"
+                        placeholder={t('auth.email_placeholder')}
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
                       />
                     </div>
@@ -142,14 +143,14 @@ export default function ForgotPassword() {
                       disabled={loading}
                       className="w-full bg-[#A3301E] hover:bg-[#8a2718] text-white font-bold py-3 px-6 rounded-xl transition-colors duration-200 text-sm uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      {loading ? 'Sending...' : 'Send My Password'}
+                      {loading ? t('forgot.sending') : t('forgot.send_btn')}
                     </button>
                   </form>
 
                   <p className="text-center text-sm text-gray-500 mt-6">
-                    Remember your password?{' '}
+                    {t('forgot.remember_password')}{' '}
                     <Link to="/login" className="text-[#819360] font-semibold hover:text-[#4d734d]">
-                      Sign In
+                      {t('auth.sign_in')}
                     </Link>
                   </p>
                 </>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -116,6 +117,7 @@ const CONFIGS = {
 
 export default function ForBusinessPage({ type }) {
   const cfg = CONFIGS[type];
+  const { t } = useTranslation();
   if (!cfg) return null;
 
   return (
@@ -157,7 +159,7 @@ export default function ForBusinessPage({ type }) {
         <section className="mt-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-3"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            What OFN gives you
+            {t('for_biz.what_ofn')}
           </h2>
           <p className="text-gray-700 leading-relaxed">{cfg.what}</p>
         </section>
@@ -165,7 +167,7 @@ export default function ForBusinessPage({ type }) {
         <section className="mt-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-4"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            Tools included with your account
+            {t('for_biz.tools_included')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {cfg.tools.map(t => (
@@ -178,21 +180,21 @@ export default function ForBusinessPage({ type }) {
         <section className="mt-10 text-center bg-white border border-gray-200 rounded-2xl p-8">
           <h3 className="text-2xl font-bold text-gray-900 mb-2"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            Ready to get started?
+            {t('for_biz.ready_title')}
           </h3>
           <p className="text-sm text-gray-600 mb-5">
-            Free to join. All tools are included with your account — no add-ons, no per-feature pricing.
+            {t('for_biz.ready_body')}
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/signup"
               className="px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
               style={{ backgroundColor: cfg.color }}>
-              Create a free account →
+              {t('for_biz.create_free')}
             </Link>
             <Link to={cfg.dir}
               className="px-6 py-3 rounded-lg font-bold border-2 transition hover:bg-gray-50"
               style={{ color: cfg.color, borderColor: cfg.color }}>
-              Browse the directory
+              {t('for_biz.browse_directory')}
             </Link>
           </div>
         </section>
