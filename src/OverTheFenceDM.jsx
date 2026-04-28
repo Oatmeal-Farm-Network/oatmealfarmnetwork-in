@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
 
 const OTF_API = import.meta.env.VITE_OTF_API_URL || import.meta.env.VITE_API_URL || '';
 const MILL    = `${OTF_API}/api/admin/mill`;
 const POLL_MS = 5000;
-const NAV_BG  = '#516234';   // sidebar header + primary buttons
+const NAV_BG  = '#516234';
+const NAV_LT  = '#e8f0e4';
 
 function authHeaders() {
   const token = localStorage.getItem('access_token') || '';
@@ -19,8 +21,7 @@ const ME = () => parseInt(localStorage.getItem('people_id') || '0', 10);
 
 function fmtTime(iso) {
   if (!iso) return '';
-  const d   = new Date(iso);
-  const now = new Date();
+  const d = new Date(iso), now = new Date();
   if (d.toDateString() === now.toDateString())
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
@@ -30,8 +31,21 @@ function chanName(ch) {
   if (!ch) return '';
   if (ch.ChannelType === 'group_dm') return ch.Name || ch.DmPartnerNames || 'Group OTF DM';
   if (ch.ChannelType === 'dm')       return ch.DmPartnerNames || 'OTF DM';
-  return `#${ch.Name}`;
+  return ch.Name || 'channel';
 }
+
+function avatarLetter(str) { return (str || '?')[0].toUpperCase(); }
+
+const ChevronRight = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
+    <polyline points="9 18 15 12 9 6"/>
+  </svg>
+);
+const ChevronDown = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
+    <polyline points="6 9 12 15 18 9"/>
+  </svg>
+);
 
 // ── Login gate ────────────────────────────────────────────────────────────────
 function LoginGate() {
@@ -39,13 +53,10 @@ function LoginGate() {
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <Header />
       <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <img
-          src="/images/Over-the-Fence-LogIcon.webp"
-          alt="Over The Fence DM"
+        <img src="/images/Over-the-Fence-LogIcon.webp" alt="Over The Fence DM"
           className="mx-auto mb-4 rounded-xl"
           style={{ height: 64, width: 'auto', objectFit: 'contain' }}
-          onError={e => { e.target.style.display = 'none'; }}
-        />
+          onError={e => { e.target.style.display = 'none'; }} />
         <h1 className="font-bold text-2xl text-gray-900 mb-2" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
           Over The Fence DM
         </h1>
@@ -60,68 +71,189 @@ function LoginGate() {
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
 export default function OverTheFenceDM() {
   const token = localStorage.getItem('access_token');
   if (!token) return <LoginGate />;
   return <DMApp />;
 }
 
+// ── Channel row ───────────────────────────────────────────────────────────────
+function ChannelRow({ ch, isActive, onClick, indent }) {
+  const isDM = ch.ChannelType === 'dm' || ch.ChannelType === 'group_dm';
+  return (
+    <button
+      onClick={() => onClick(ch)}
+      className="w-full text-left flex items-center gap-2.5 hover:bg-gray-50 transition border-b border-gray-50"
+      style={{
+        padding: indent ? '8px 12px 8px 28px' : '10px 12px',
+        backgroundColor: isActive ? NAV_LT : undefined,
+      }}
+    >
+      {isDM ? (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0"
+          style={{ backgroundColor: NAV_BG }}>
+          {avatarLetter(chanName(ch))}
+        </div>
+      ) : (
+        <span className="w-8 h-8 rounded flex items-center justify-center text-gray-400 font-bold text-sm shrink-0"
+          style={{ backgroundColor: '#f3f4f6' }}>
+          #
+        </span>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-baseline">
+          <span className="font-medium text-sm text-gray-800 truncate">{chanName(ch)}</span>
+          {ch.LastMessageAt && (
+            <span className="text-[10px] text-gray-400 shrink-0 ml-1">{fmtTime(ch.LastMessageAt)}</span>
+          )}
+        </div>
+        {ch.LastMessage && (
+          <div className="text-xs text-gray-400 truncate">{ch.LastMessage}</div>
+        )}
+      </div>
+      {ch.UnreadCount > 0 && (
+        <span className="rounded-full text-[10px] font-bold text-white shrink-0"
+          style={{ backgroundColor: '#25d366', minWidth: 18, padding: '2px 5px', textAlign: 'center' }}>
+          {ch.UnreadCount}
+        </span>
+      )}
+    </button>
+  );
+}
+
+// ── Main app ──────────────────────────────────────────────────────────────────
 function DMApp() {
-  const [channels,   setChannels]   = useState([]);
-  const [active,     setActive]     = useState(null);
-  const [messages,   setMessages]   = useState([]);
-  const [body,       setBody]       = useState('');
-  const [sending,    setSending]    = useState(false);
-  const [showNew,    setShowNew]    = useState(false);
-  const [people,     setPeople]     = useState([]);
-  const [search,     setSearch]     = useState('');
-  const [selected,   setSelected]   = useState([]);
-  const [loadingMsg, setLoadingMsg] = useState(false);
+  // Communities
+  const [communities,   setCommunities]   = useState([]);
+  const [showNewComm,   setShowNewComm]   = useState(false);
+  const [newCommName,   setNewCommName]   = useState('');
+  const [newCommDesc,   setNewCommDesc]   = useState('');
+  const [newCommPublic, setNewCommPublic] = useState(true);
+  const [commSaving,    setCommSaving]    = useState(false);
+
+  // Accordion state — dms open by default
+  const [expanded, setExpanded] = useState({ dms: true });
+  const toggleSection = (key) => setExpanded(e => ({ ...e, [key]: !e[key] }));
+
+  // Channels / messages
+  const [channels,        setChannels]        = useState([]);
+  const [active,          setActive]          = useState(null);
+  const [activeCommunity, setActiveCommunity] = useState(null);
+  const [messages,        setMessages]        = useState([]);
+  const [body,            setBody]            = useState('');
+  const [sending,         setSending]         = useState(false);
+  const [loadingMsg,      setLoadingMsg]      = useState(false);
+
+  // New DM modal
+  const [showNew,  setShowNew]  = useState(false);
+  const [people,   setPeople]   = useState([]);
+  const [search,   setSearch]   = useState('');
+  const [selected, setSelected] = useState([]);
+
   const bottomRef = useRef(null);
   const pollRef   = useRef(null);
 
-  const loadChannels = useCallback(async () => {
+  // ── API ────────────────────────────────────────────────────────────────────
+
+  const loadCommunities = useCallback(async () => {
     try {
-      const r    = await fetch(`${MILL}/channels`, { headers: authHeaders() });
+      const r = await fetch(`${MILL}/communities`, { headers: authHeaders() });
       if (!r.ok) return;
       const data = await r.json();
-      const list = (data.channels || data || [])
-        .filter(c => c.ChannelType === 'dm' || c.ChannelType === 'group_dm')
-        .sort((a, b) => new Date(b.LastMessageAt || 0) - new Date(a.LastMessageAt || 0));
-      setChannels(list);
+      setCommunities(Array.isArray(data) ? data : (data.communities || []));
+    } catch {}
+  }, []);
+
+  const loadChannels = useCallback(async () => {
+    try {
+      const r = await fetch(`${MILL}/channels`, { headers: authHeaders() });
+      if (!r.ok) return;
+      const data = await r.json();
+      setChannels(data.channels || data || []);
     } catch {}
   }, []);
 
   const loadMessages = useCallback(async (channelId) => {
     if (!channelId) return;
     try {
-      const r    = await fetch(`${MILL}/channels/${channelId}/messages`, { headers: authHeaders() });
+      const r = await fetch(`${MILL}/channels/${channelId}/messages`, { headers: authHeaders() });
       if (!r.ok) return;
       const data = await r.json();
       setMessages(data.messages || data || []);
     } catch {}
   }, []);
 
-  useEffect(() => { loadChannels(); }, [loadChannels]);
+  const loadPeople = async (q = '') => {
+    try {
+      const url = q ? `${MILL}/people?q=${encodeURIComponent(q)}` : `${MILL}/people`;
+      const r = await fetch(url, { headers: authHeaders() });
+      if (!r.ok) return;
+      const d = await r.json();
+      setPeople(Array.isArray(d) ? d : (d.people || []));
+    } catch {}
+  };
 
-  useEffect(() => {
-    pollRef.current = setInterval(() => {
-      loadChannels();
-      if (active) loadMessages(active.ChannelID);
-    }, POLL_MS);
-    return () => clearInterval(pollRef.current);
-  }, [active, loadChannels, loadMessages]);
+  // ── Community helpers ──────────────────────────────────────────────────────
 
-  useEffect(() => {
-    if (!active) { setMessages([]); return; }
-    setLoadingMsg(true);
-    loadMessages(active.ChannelID).finally(() => setLoadingMsg(false));
-  }, [active, loadMessages]);
+  const joinCommunity = async (comm) => {
+    try {
+      await fetch(`${MILL}/communities/${comm.CommunityID}/join`, { method: 'POST', headers: authHeaders() });
+      await loadCommunities();
+      await loadChannels();
+      setExpanded(e => ({ ...e, [comm.CommunityID]: true }));
+    } catch {}
+  };
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  const createCommunity = async () => {
+    if (!newCommName.trim()) return;
+    setCommSaving(true);
+    try {
+      const r = await fetch(`${MILL}/communities`, {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ name: newCommName.trim(), description: newCommDesc, isPublic: newCommPublic }),
+      });
+      if (r.ok) {
+        const data = await r.json();
+        setShowNewComm(false); setNewCommName(''); setNewCommDesc(''); setNewCommPublic(true);
+        await loadCommunities();
+        await loadChannels();
+        const cid = data.communityId || data.CommunityID;
+        if (cid) setExpanded(e => ({ ...e, [cid]: true }));
+      }
+    } catch {}
+    setCommSaving(false);
+  };
+
+  // ── Channel / DM helpers ───────────────────────────────────────────────────
+
+  const handleChannelClick = (ch) => {
+    setActive(ch);
+    if (ch.CommunityID) {
+      setActiveCommunity(communities.find(c => c.CommunityID === ch.CommunityID) || null);
+    } else {
+      setActiveCommunity(null);
+    }
+  };
+
+  const startDM = async () => {
+    if (!selected.length) return;
+    try {
+      const payload = selected.length === 1
+        ? { targetPeopleId: selected[0].PeopleID }
+        : { memberIds: selected.map(p => p.PeopleID) };
+      const r = await fetch(`${MILL}/dm`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+      if (r.ok) {
+        const data = await r.json();
+        setShowNew(false); setSelected([]); setSearch('');
+        await loadChannels();
+        setExpanded(e => ({ ...e, dms: true }));
+        if (data.channelId) {
+          setActive({ ChannelID: data.channelId, ChannelType: 'dm', DmPartnerNames: selected[0]?.Name });
+          setActiveCommunity(null);
+        }
+      }
+    } catch {}
+  };
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -129,8 +261,7 @@ function DMApp() {
     setSending(true);
     try {
       const r = await fetch(`${MILL}/channels/${active.ChannelID}/messages`, {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ body: body.trim() }),
+        method: 'POST', headers: authHeaders(), body: JSON.stringify({ body: body.trim() }),
       });
       if (r.ok) {
         setBody('');
@@ -141,176 +272,225 @@ function DMApp() {
     setSending(false);
   };
 
-  const loadPeople = async () => {
-    try {
-      const r = await fetch(`${OTF_API}/api/admin/mill/people`, { headers: authHeaders() });
-      if (r.ok) { const d = await r.json(); setPeople(d.people || d || []); }
-    } catch {}
-  };
+  // ── Effects ────────────────────────────────────────────────────────────────
 
-  const startDM = async () => {
-    if (!selected.length) return;
-    try {
-      const endpoint    = selected.length === 1 ? `${MILL}/dm` : `${MILL}/group-dm`;
-      const bodyPayload = selected.length === 1
-        ? { targetPeopleId: selected[0].PeopleID }
-        : { memberIds: selected.map(p => p.PeopleID), name: selected.map(p => p.Name.split(' ')[0]).join(', ') };
-      const r = await fetch(endpoint, { method: 'POST', headers: authHeaders(), body: JSON.stringify(bodyPayload) });
-      if (r.ok) {
-        const data = await r.json();
-        setShowNew(false); setSelected([]); setSearch('');
-        await loadChannels();
-        setActive(data.channel || data);
-      }
-    } catch {}
-  };
+  useEffect(() => { loadCommunities(); loadChannels(); }, [loadCommunities, loadChannels]);
 
-  const filtered = people.filter(p =>
+  useEffect(() => {
+    if (!active) { setMessages([]); return; }
+    setLoadingMsg(true);
+    loadMessages(active.ChannelID).finally(() => setLoadingMsg(false));
+  }, [active, loadMessages]);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
+  useEffect(() => {
+    pollRef.current = setInterval(() => {
+      loadChannels();
+      if (active) loadMessages(active.ChannelID);
+    }, POLL_MS);
+    return () => clearInterval(pollRef.current);
+  }, [active, loadChannels, loadMessages]);
+
+  // ── Derived data ───────────────────────────────────────────────────────────
+
+  const dmChannels = channels
+    .filter(c => c.ChannelType === 'dm' || c.ChannelType === 'group_dm')
+    .sort((a, b) => new Date(b.LastMessageAt || 0) - new Date(a.LastMessageAt || 0));
+
+  const channelsByCommunity = Object.fromEntries(
+    communities.map(comm => [
+      comm.CommunityID,
+      channels
+        .filter(c => c.CommunityID === comm.CommunityID)
+        .sort((a, b) => (a.Name || '').localeCompare(b.Name || '')),
+    ])
+  );
+
+  const filteredPeople = people.filter(p =>
     p.PeopleID !== ME() && (p.Name || '').toLowerCase().includes(search.toLowerCase())
   );
 
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
     <div className="font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8', height: '100vh' }}>
-      <PageMeta
-        title="Over The Fence DM | Oatmeal Farm Network"
-        description="Private messages with anyone on the Oatmeal Farm Network."
-      />
+      <PageMeta title="Over The Fence DM | Oatmeal Farm Network" description="Messages and communities on the Oatmeal Farm Network." />
       <Header />
 
-      {/* Main chat layout — fills the remaining viewport below the fixed header */}
-      <div className="flex flex-1 overflow-hidden" style={{ paddingTop: 72 }}>
-        <div className="flex w-full overflow-hidden" style={{ height: 'calc(100vh - 72px)' }}>
+      <div className="flex flex-col flex-1 overflow-hidden">
+        {/* Breadcrumbs + Personal Settings */}
+        <div className="px-6 py-3 shrink-0" style={{ backgroundColor: '#f7f2e8' }}>
+          <Breadcrumbs items={[
+            { label: 'Dashboard', to: '/dashboard' },
+            { label: 'Over The Fence DM' },
+          ]} />
+        </div>
 
-          {/* ── Left panel: conversation list ──────────────────────── */}
-          <div
-            className="flex flex-col border-r border-gray-200 bg-white shrink-0"
-            style={{ width: 300, minWidth: 260 }}
-          >
-            {/* Panel header */}
-            <div
-              className="flex items-center justify-between px-4 py-3 shrink-0"
-              style={{ backgroundColor: NAV_BG }}
-            >
+        <div className="flex flex-1 overflow-hidden">
+
+          {/* ── Left panel ──────────────────────────────────────────── */}
+          <div className="flex flex-col border-r border-gray-200 bg-white shrink-0" style={{ width: 300, minWidth: 260 }}>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ backgroundColor: NAV_BG }}>
               <div className="flex items-center gap-2 min-w-0">
-                <img
-                  src="/images/Over-the-Fence-LogIcon.webp"
-                  alt="Over The Fence DM"
+                <img src="/images/Over-the-Fence-LogIcon.webp" alt="OTF DM"
                   style={{ height: 28, width: 'auto', objectFit: 'contain', borderRadius: 6, flexShrink: 0 }}
-                  onError={e => { e.target.style.display = 'none'; }}
-                />
+                  onError={e => { e.target.style.display = 'none'; }} />
                 <span className="text-white font-bold text-sm truncate">Over The Fence DM</span>
               </div>
-              <button
-                onClick={() => { setShowNew(true); loadPeople(); }}
-                title="New OTF DM"
-                className="text-white hover:bg-white/20 rounded-full p-1 transition shrink-0 ml-2"
-              >
+              <button onClick={() => { setShowNew(true); loadPeople(); }} title="New OTF DM"
+                className="text-white hover:bg-white/20 rounded-full p-1 transition shrink-0 ml-2">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
               </button>
             </div>
 
-            {/* Channel list */}
+            {/* Accordion list */}
             <div className="flex-1 overflow-y-auto">
-              {channels.length === 0 && (
-                <div className="px-4 py-8 text-center text-sm text-gray-400">
-                  <p>No messages yet.</p>
+
+              {/* Direct Messages section */}
+              <div>
+                <div className="flex items-center px-3 py-2">
                   <button
-                    onClick={() => { setShowNew(true); loadPeople(); }}
-                    className="mt-3 text-xs font-bold underline"
-                    style={{ color: NAV_BG }}
+                    onClick={() => toggleSection('dms')}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-800 transition flex-1 text-left"
                   >
-                    Start a conversation
+                    <span className="text-gray-400">{expanded.dms ? <ChevronDown /> : <ChevronRight />}</span>
+                    Direct Messages
+                  </button>
+                  <button onClick={() => { setShowNew(true); loadPeople(); }} title="New conversation"
+                    className="text-gray-400 hover:text-gray-700 transition text-base leading-none font-bold ml-1">
+                    +
                   </button>
                 </div>
-              )}
-              {channels.map(ch => (
-                <button
-                  key={ch.ChannelID}
-                  onClick={() => setActive(ch)}
-                  className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition border-b border-gray-50"
-                  style={active?.ChannelID === ch.ChannelID ? { backgroundColor: '#e9edef' } : {}}
-                >
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                    style={{ backgroundColor: NAV_BG }}
-                  >
-                    {(chanName(ch) || '?')[0].toUpperCase()}
+                {expanded.dms && dmChannels.map(ch => (
+                  <ChannelRow key={ch.ChannelID} ch={ch} isActive={active?.ChannelID === ch.ChannelID} onClick={handleChannelClick} indent={false} />
+                ))}
+                {expanded.dms && dmChannels.length === 0 && (
+                  <div className="px-5 pb-2">
+                    <button onClick={() => { setShowNew(true); loadPeople(); }}
+                      className="text-xs hover:underline" style={{ color: NAV_BG }}>
+                      Start a conversation
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline">
-                      <span className="font-semibold text-sm text-gray-900 truncate">{chanName(ch)}</span>
-                      <span className="text-[10px] text-gray-400 shrink-0 ml-2">{fmtTime(ch.LastMessageAt)}</span>
+                )}
+              </div>
+
+              {/* Community sections */}
+              {communities.map(comm => {
+                const isOpen = !!expanded[comm.CommunityID];
+                const commChannels = channelsByCommunity[comm.CommunityID] || [];
+                return (
+                  <div key={comm.CommunityID} className="border-t border-gray-100">
+                    <div className="flex items-center px-3 py-2">
+                      <button
+                        onClick={() => toggleSection(comm.CommunityID)}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 transition flex-1 min-w-0 text-left"
+                      >
+                        <span className="text-gray-400">{isOpen ? <ChevronDown /> : <ChevronRight />}</span>
+                        <span className="truncate">{comm.Name}</span>
+                        {!comm.IsMember && (
+                          <span className="ml-1 text-[10px] text-gray-400 font-normal shrink-0">· join</span>
+                        )}
+                      </button>
+                      {comm.MemberCount > 0 && (
+                        <span className="text-[10px] text-gray-400 ml-1 shrink-0">{comm.MemberCount}</span>
+                      )}
                     </div>
-                    <div className="text-xs text-gray-500 truncate">{ch.LastMessage || ''}</div>
+
+                    {isOpen && !comm.IsMember && (
+                      <div className="px-5 pb-3">
+                        <button onClick={() => joinCommunity(comm)}
+                          className="text-xs font-bold px-3 py-1 rounded-lg text-white"
+                          style={{ backgroundColor: NAV_BG }}>
+                          Join Community
+                        </button>
+                        {comm.Description && (
+                          <p className="text-xs text-gray-400 mt-1">{comm.Description}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {isOpen && comm.IsMember && commChannels.map(ch => (
+                      <ChannelRow key={ch.ChannelID} ch={ch} isActive={active?.ChannelID === ch.ChannelID} onClick={handleChannelClick} indent />
+                    ))}
+
+                    {isOpen && comm.IsMember && commChannels.length === 0 && (
+                      <div className="px-5 pb-2 text-xs text-gray-400">No channels yet</div>
+                    )}
                   </div>
-                  {ch.UnreadCount > 0 && (
-                    <span
-                      className="rounded-full text-[10px] font-bold text-white shrink-0"
-                      style={{ backgroundColor: '#25d366', minWidth: 18, padding: '2px 6px', textAlign: 'center' }}
-                    >
-                      {ch.UnreadCount}
-                    </span>
-                  )}
+                );
+              })}
+
+              {/* Create community */}
+              <div className="border-t border-gray-100 px-3 py-2">
+                <button onClick={() => setShowNewComm(true)}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  Create a Community
                 </button>
-              ))}
+              </div>
+
             </div>
           </div>
 
-          {/* ── Right panel: message thread ─────────────────────────── */}
+          {/* ── Right panel ─────────────────────────────────────────── */}
           <div className="flex flex-col flex-1 overflow-hidden">
             {!active ? (
-              /* Empty state */
-              <div
-                className="flex-1 flex flex-col items-center justify-center text-center p-8"
-                style={{ backgroundColor: '#efeae2' }}
-              >
-                <img
-                  src="/images/Over-the-Fence-LogIcon.webp"
-                  alt="Over The Fence DM"
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8"
+                style={{ backgroundColor: '#efeae2' }}>
+                <img src="/images/Over-the-Fence-LogIcon.webp" alt="Over The Fence DM"
                   className="mx-auto mb-4 opacity-60"
                   style={{ height: 72, width: 'auto', objectFit: 'contain' }}
-                  onError={e => { e.target.style.display = 'none'; }}
-                />
-                <h2
-                  className="font-bold text-xl text-gray-700 mb-2"
-                  style={{ fontFamily: "'Lora','Times New Roman',serif" }}
-                >
-                  Over The Fence DM
+                  onError={e => { e.target.style.display = 'none'; }} />
+                <h2 className="font-bold text-xl text-gray-700 mb-2" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
+                  {activeCommunity ? activeCommunity.Name : 'Over The Fence DM'}
                 </h2>
-                <p className="text-gray-500 text-sm max-w-xs">
-                  Select a conversation or start a new one. Messages are shared across all Oatmeal Farm Network sites.
+                <p className="text-gray-500 text-sm max-w-xs mb-5">
+                  {activeCommunity
+                    ? (activeCommunity.Description || 'Select a channel or start a conversation.')
+                    : 'Select a conversation or start a new one. Messages are shared across all Oatmeal Farm Network sites.'}
                 </p>
-                <button
-                  onClick={() => { setShowNew(true); loadPeople(); }}
-                  className="mt-5 px-5 py-2.5 rounded-lg text-white font-bold text-sm"
-                  style={{ backgroundColor: NAV_BG }}
-                >
-                  New OTF DM
-                </button>
+                <div className="flex gap-3 flex-wrap justify-center">
+                  <button onClick={() => { setShowNew(true); loadPeople(); }}
+                    className="px-5 py-2.5 rounded-lg text-white font-bold text-sm"
+                    style={{ backgroundColor: NAV_BG }}>
+                    New OTF DM
+                  </button>
+                  <button onClick={() => setShowNewComm(true)}
+                    className="px-5 py-2.5 rounded-lg font-bold text-sm border-2"
+                    style={{ color: NAV_BG, borderColor: NAV_BG }}>
+                    New Community
+                  </button>
+                </div>
               </div>
             ) : (
               <>
                 {/* Thread header */}
                 <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white shrink-0">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                    style={{ backgroundColor: NAV_BG }}
-                  >
-                    {(chanName(active) || '?')[0].toUpperCase()}
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
+                    style={{ backgroundColor: NAV_BG }}>
+                    {(active.ChannelType === 'dm' || active.ChannelType === 'group_dm')
+                      ? avatarLetter(chanName(active))
+                      : '#'}
                   </div>
                   <div>
                     <div className="font-semibold text-sm text-gray-900">{chanName(active)}</div>
-                    <div className="text-xs text-gray-500">Private conversation</div>
+                    <div className="text-xs text-gray-500">
+                      {active.ChannelType === 'dm' ? 'Private conversation'
+                        : active.ChannelType === 'group_dm' ? 'Group conversation'
+                        : active.Description || (activeCommunity?.Name || '')}
+                    </div>
                   </div>
                 </div>
 
                 {/* Messages */}
-                <div
-                  className="flex-1 overflow-y-auto px-4 py-4 space-y-2"
-                  style={{ backgroundColor: '#efeae2' }}
-                >
+                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2" style={{ backgroundColor: '#efeae2' }}>
                   {loadingMsg && <div className="text-center text-xs text-gray-400 py-4">Loading…</div>}
                   {messages.map(msg => {
                     const mine = msg.SenderID === ME();
@@ -322,14 +502,12 @@ function DMApp() {
                               {msg.SenderName}
                             </div>
                           )}
-                          <div
-                            className="px-3 py-2 text-sm shadow-sm"
+                          <div className="px-3 py-2 text-sm shadow-sm"
                             style={{
                               backgroundColor: mine ? '#d9fdd3' : '#ffffff',
                               color: '#111b21',
                               borderRadius: mine ? '12px 4px 12px 12px' : '4px 12px 12px 12px',
-                            }}
-                          >
+                            }}>
                             {msg.IsDeleted ? <em className="text-gray-400">Message deleted</em> : msg.Body}
                           </div>
                           <div className={`text-[10px] text-gray-400 mt-0.5 ${mine ? 'text-right mr-1' : 'ml-1'}`}>
@@ -342,7 +520,7 @@ function DMApp() {
                   <div ref={bottomRef} />
                 </div>
 
-                {/* Message input */}
+                {/* Input */}
                 <form onSubmit={sendMessage} className="px-4 py-3 flex gap-2 bg-white border-t border-gray-200 shrink-0">
                   <input
                     className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none"
@@ -351,12 +529,9 @@ function DMApp() {
                     value={body}
                     onChange={e => setBody(e.target.value)}
                   />
-                  <button
-                    type="submit"
-                    disabled={!body.trim() || sending}
+                  <button type="submit" disabled={!body.trim() || sending}
                     className="w-9 h-9 rounded-full flex items-center justify-center text-white transition disabled:opacity-40 shrink-0"
-                    style={{ backgroundColor: NAV_BG }}
-                  >
+                    style={{ backgroundColor: NAV_BG }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
                     </svg>
@@ -368,72 +543,46 @@ function DMApp() {
         </div>
       </div>
 
-      {/* ── New DM modal ─────────────────────────────────────────────── */}
+      {/* ── New DM modal ────────────────────────────────────────────── */}
       {showNew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}>
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 overflow-hidden">
-            {/* Modal header */}
-            <div
-              className="flex items-center justify-between px-4 py-3"
-              style={{ backgroundColor: NAV_BG }}
-            >
+            <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: NAV_BG }}>
               <span className="text-white font-bold text-sm">New Over The Fence DM</span>
-              <button
-                onClick={() => { setShowNew(false); setSelected([]); setSearch(''); }}
-                className="text-white hover:bg-white/20 rounded-full p-1"
-              >
+              <button onClick={() => { setShowNew(false); setSelected([]); setSearch(''); }}
+                className="text-white hover:bg-white/20 rounded-full p-1">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
               </button>
             </div>
-
             <div className="p-4">
-              <input
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:border-green-700"
-                placeholder="Search people…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-
+              <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none"
+                placeholder="Search people…" value={search}
+                onChange={e => { setSearch(e.target.value); loadPeople(e.target.value); }} />
               {selected.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-3">
                   {selected.map(p => (
-                    <span
-                      key={p.PeopleID}
-                      className="flex items-center gap-1 text-xs rounded-full px-2 py-0.5"
-                      style={{ backgroundColor: '#e8f0e4', color: NAV_BG }}
-                    >
+                    <span key={p.PeopleID} className="flex items-center gap-1 text-xs rounded-full px-2 py-0.5"
+                      style={{ backgroundColor: NAV_LT, color: NAV_BG }}>
                       {p.Name}
-                      <button
-                        onClick={() => setSelected(s => s.filter(x => x.PeopleID !== p.PeopleID))}
-                        className="hover:text-red-600"
-                      >
-                        ×
-                      </button>
+                      <button onClick={() => setSelected(s => s.filter(x => x.PeopleID !== p.PeopleID))} className="hover:text-red-600">×</button>
                     </span>
                   ))}
                 </div>
               )}
-
               <div className="max-h-52 overflow-y-auto border border-gray-100 rounded-lg divide-y divide-gray-50">
-                {filtered.length === 0 && (
-                  <div className="px-3 py-3 text-sm text-gray-400 text-center">No results</div>
-                )}
-                {filtered.slice(0, 20).map(p => {
+                {filteredPeople.length === 0 && <div className="px-3 py-3 text-sm text-gray-400 text-center">No results</div>}
+                {filteredPeople.slice(0, 20).map(p => {
                   const sel = selected.some(s => s.PeopleID === p.PeopleID);
                   return (
-                    <button
-                      key={p.PeopleID}
+                    <button key={p.PeopleID}
                       onClick={() => setSelected(s => sel ? s.filter(x => x.PeopleID !== p.PeopleID) : [...s, p])}
                       className="w-full text-left px-3 py-2 flex items-center gap-2 text-sm hover:bg-gray-50 transition"
-                      style={sel ? { backgroundColor: '#e8f0e4' } : {}}
-                    >
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                        style={{ backgroundColor: NAV_BG }}
-                      >
-                        {(p.Name || '?')[0].toUpperCase()}
+                      style={sel ? { backgroundColor: NAV_LT } : {}}>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                        style={{ backgroundColor: NAV_BG }}>
+                        {avatarLetter(p.Name)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{p.Name}</div>
@@ -448,15 +597,59 @@ function DMApp() {
                   );
                 })}
               </div>
-
-              <button
-                onClick={startDM}
-                disabled={!selected.length}
+              <button onClick={startDM} disabled={!selected.length}
                 className="w-full mt-3 py-2.5 rounded-lg text-white font-bold text-sm transition disabled:opacity-40"
-                style={{ backgroundColor: NAV_BG }}
-              >
+                style={{ backgroundColor: NAV_BG }}>
                 Start OTF DM {selected.length > 1 ? '(Group)' : ''}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── New Community modal ──────────────────────────────────────── */}
+      {showNewComm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: NAV_BG }}>
+              <span className="text-white font-bold text-sm">Create a Community</span>
+              <button onClick={() => setShowNewComm(false)} className="text-white hover:bg-white/20 rounded-full p-1">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Community name</label>
+                <input value={newCommName} onChange={e => setNewCommName(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  placeholder="e.g. Sunrise Farm" autoFocus />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Description (optional)</label>
+                <input value={newCommDesc} onChange={e => setNewCommDesc(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  placeholder="What is this community about?" />
+              </div>
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input type="checkbox" checked={newCommPublic} onChange={e => setNewCommPublic(e.target.checked)} className="accent-[#516234]" />
+                Public — anyone can see and join
+              </label>
+              <div className="rounded-lg p-3 text-xs leading-relaxed" style={{ backgroundColor: '#f0f7ee', color: '#374151' }}>
+                💡 Communities and their channels are shared across The Oat and Oatmeal Farm Network.
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button onClick={createCommunity} disabled={!newCommName.trim() || commSaving}
+                  className="flex-1 py-2.5 rounded-lg text-white font-bold text-sm transition disabled:opacity-40"
+                  style={{ backgroundColor: NAV_BG }}>
+                  {commSaving ? 'Creating…' : 'Create Community'}
+                </button>
+                <button onClick={() => setShowNewComm(false)}
+                  className="px-4 py-2.5 rounded-lg text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>

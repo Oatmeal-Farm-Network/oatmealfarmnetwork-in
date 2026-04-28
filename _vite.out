@@ -1235,3 +1235,5 @@ Port 5174 is in use, trying another one...
 [2m7:42:06 PM[22m [36m[1m[vite][22m[39m [32mvite.config.js changed, restarting server...[39m
 [2m7:42:08 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because lockfile has changed
 [2m7:42:09 PM[22m [36m[1m[vite][22m[39m server restarted.
+[2m1:25:50 PM[22m [36m[1m[vite][22m[39m [32m.env.development changed, restarting server...[39m
+[2m1:25:51 PM[22m [36m[1m[vite][22m[39m server restarted.

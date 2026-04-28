@@ -155,6 +155,48 @@ function RotationWheel({ entries }) {
   );
 }
 
+// ─── 5-Year Timeline ──────────────────────────────────────────────────────────
+function FiveYearTimeline({ entries }) {
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear - 4, currentYear - 3, currentYear - 2, currentYear - 1, currentYear];
+  const byYear = Object.fromEntries(entries.map(e => [e.season_year, e]));
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+      <h3 className="font-lora font-bold text-gray-900 text-base mb-3">5-Year Timeline</h3>
+      <div className="space-y-1.5">
+        {years.map(yr => {
+          const crop = byYear[yr];
+          if (!crop) return (
+            <div key={yr} className="flex items-center gap-3">
+              <span className="font-mont text-xs text-gray-400 w-10 text-right shrink-0">{yr}</span>
+              <div className="flex-1 h-7 rounded-lg bg-gray-50 border border-dashed border-gray-200 flex items-center px-3">
+                <span className="font-mont text-xs text-gray-300">no record</span>
+              </div>
+            </div>
+          );
+          const s = getCropStyle(crop.crop_name);
+          return (
+            <div key={yr} className="flex items-center gap-3">
+              <span className="font-mont text-xs font-semibold text-gray-600 w-10 text-right shrink-0">{yr}</span>
+              <div className="flex-1 h-7 rounded-lg flex items-center gap-2 px-3"
+                style={{ background: s.bg, border: `1px solid ${s.border}` }}>
+                <span className="text-sm">{s.icon}</span>
+                <span className="font-mont text-xs font-semibold truncate" style={{ color: s.text }}>{crop.crop_name}</span>
+                {crop.is_cover_crop && <span className="ml-auto font-mont text-xs text-cyan-600 shrink-0">cover</span>}
+                {crop.yield_amount && !crop.is_cover_crop && (
+                  <span className="ml-auto font-mont text-xs shrink-0" style={{ color: s.text, opacity: 0.7 }}>
+                    {crop.yield_amount} {crop.yield_unit}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Season Form ──────────────────────────────────────────────────────────────
 function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
   const { t } = useTranslation();
@@ -554,6 +596,9 @@ export default function CropRotation() {
 
                 {/* Right: Wheel + Analysis */}
                 <div className="space-y-6">
+
+                  {/* 5-year timeline */}
+                  <FiveYearTimeline entries={entries} />
 
                   {/* Rotation wheel */}
                   {entries.filter(e => !e.is_cover_crop).length >= 2 && (

@@ -206,6 +206,13 @@ export default function PrecisionAgAgronomy() {
               />
             </div>
 
+            {agro && !agro?.gdd?.gdd && !agro?.growth_stage && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3 text-sm font-mont mb-6">
+                <span>📅</span>
+                <span className="text-amber-800">GDD and growth stage require a planting date. <a href={`/precision-ag/fields?BusinessID=${BusinessID}&FieldID=${fieldId}`} className="font-semibold underline">Set planting date in field settings →</a></span>
+              </div>
+            )}
+
             <div className="grid md:grid-cols-2 gap-4 mb-6">
               <div className="bg-white border border-gray-200 rounded-xl p-5">
                 <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">Latest Vegetation Indices</h2>
@@ -225,9 +232,6 @@ export default function PrecisionAgAgronomy() {
                   )}
                   {agro?.disease_risk?.level && (
                     <li><span className="font-semibold text-rose-700">🦠 Disease risk:</span> {agro.disease_risk.level}</li>
-                  )}
-                  {agro?.weather?.wind_speed != null && (
-                    <li><span className="font-semibold text-gray-700">💨 Wind:</span> {agro.weather.wind_speed}</li>
                   )}
                   {!agro?.irrigation && !agro?.disease_risk && (
                     <li className="text-gray-500 italic">No active signals from the model.</li>

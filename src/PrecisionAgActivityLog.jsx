@@ -80,6 +80,7 @@ export default function PrecisionAgActivityLog() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [filterType, setFilterType] = useState('');
+  const [gpsLoading, setGpsLoading] = useState(false);
 
   useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
   useEffect(() => {
@@ -139,10 +140,35 @@ export default function PrecisionAgActivityLog() {
             <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">Field Activity Log</h1>
             <p className="font-mont text-sm text-gray-500">Track all field operations — spraying, fertilizing, tillage, irrigation, and more.</p>
           </div>
-          <button onClick={() => setShowForm(p => !p)}
-            className="px-5 py-2.5 bg-[#6D8E22] text-white text-sm font-mont font-semibold rounded-lg hover:bg-[#5a7519]">
-            + Log Activity
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+                setGpsLoading(true);
+                navigator.geolocation.getCurrentPosition(
+                  pos => {
+                    const { latitude, longitude, accuracy } = pos.coords;
+                    const ts = new Date().toLocaleString();
+                    setForm({
+                      ...EMPTY_FORM,
+                      activity_type: 'Scouting',
+                      notes: `GPS: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (±${Math.round(accuracy)}m) @ ${ts}`,
+                    });
+                    setShowForm(true);
+                    setGpsLoading(false);
+                  },
+                  () => { alert('Unable to get GPS location'); setGpsLoading(false); }
+                );
+              }}
+              disabled={gpsLoading}
+              className="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-mont font-semibold rounded-lg hover:bg-gray-50 disabled:opacity-50">
+              {gpsLoading ? 'Getting GPS…' : '📍 Quick Note'}
+            </button>
+            <button onClick={() => { setForm(EMPTY_FORM); setShowForm(p => !p); }}
+              className="px-5 py-2.5 bg-[#6D8E22] text-white text-sm font-mont font-semibold rounded-lg hover:bg-[#5a7519]">
+              + Log Activity
+            </button>
+          </div>
         </div>
 
         {/* Field selector */}

@@ -64,11 +64,22 @@ export function AccountProvider({ children }) {
 
   // If the URL's BusinessID changes (e.g. user navigates to a different account's
   // page), swap the context so the sidebar re-renders against the right business.
+  // Only swap if the user actually owns that business — never load a foreign business
+  // from a stale URL (e.g. after login as a different user).
   useEffect(() => {
-    if (urlBusinessID && urlBusinessID !== BusinessID) {
-      LoadBusiness(urlBusinessID);
+    if (!urlBusinessID || urlBusinessID === BusinessID) return;
+    if (businesses.length > 0) {
+      const owns = businesses.some(b => (b.BusinessID ?? b.businessId ?? b.id) === urlBusinessID);
+      if (owns) LoadBusiness(urlBusinessID);
     }
-  }, [urlBusinessID]);
+  }, [urlBusinessID, businesses]);
+
+  const clearBusiness = () => {
+    setBusiness(null);
+    setBusinessID(null);
+    setBusinesses([]);
+    localStorage.removeItem('selected_business_id');
+  };
 
 const LoadBusiness = (ID, Force = false) => {
     const validID = toValidBusinessID(ID);
@@ -91,6 +102,7 @@ const LoadBusiness = (ID, Force = false) => {
       setBusiness,
       BusinessID,
       LoadBusiness,
+      clearBusiness,
       OpenSections,
       setOpenSections,
       Expanded,

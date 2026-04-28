@@ -360,6 +360,8 @@ export default function FieldAssessmentReport() {
   const [loadingLatest, setLoadingLatest] = useState(false);
   const [error, setError]     = useState(null);
   const [emptyKnown, setEmptyKnown] = useState(false);  // confirmed no stored report
+  const [showShare, setShowShare] = useState(false);
+  const [shareEmail, setShareEmail] = useState('');
 
   useEffect(() => { if (BusinessID) LoadBusiness(BusinessID); }, [BusinessID]);
 
@@ -510,10 +512,44 @@ export default function FieldAssessmentReport() {
               disabled={!report}
               className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-mont font-semibold hover:bg-gray-50 disabled:opacity-40"
             >
-              {t('field_assessment.btn_print')}
+              Print / Save as PDF
+            </button>
+            <button
+              onClick={() => setShowShare(s => !s)}
+              disabled={!report}
+              className="px-4 py-2 rounded-lg border border-[#6D8E22] text-[#6D8E22] text-sm font-mont font-semibold hover:bg-green-50 disabled:opacity-40"
+            >
+              Share with Agronomist
             </button>
           </div>
         </div>
+
+        {/* Share modal */}
+        {showShare && report && (
+          <div className="no-print mb-4 bg-white border border-[#6D8E22] rounded-xl p-5 print:hidden">
+            <div className="font-mont text-sm font-semibold text-gray-700 mb-3">Share Assessment Report</div>
+            <div className="flex gap-3 flex-wrap items-end">
+              <div className="flex flex-col gap-1 flex-1 min-w-48">
+                <label className="text-xs font-semibold font-mont text-gray-500">Agronomist email</label>
+                <input type="email" value={shareEmail} onChange={e => setShareEmail(e.target.value)}
+                  placeholder="agronomist@example.com"
+                  className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2" />
+              </div>
+              <a
+                href={`mailto:${shareEmail}?subject=${encodeURIComponent(`Field Assessment Report — ${field?.name || 'Field'}`)}&body=${encodeURIComponent(`Hi,\n\nPlease find the attached field assessment report for ${field?.name || 'our field'}, generated on ${genAt ? new Date(genAt).toLocaleDateString() : 'recently'}.\n\nOverall health: ${report.executive_summary?.overall_health || '—'}\n\nSummary: ${report.executive_summary?.summary || ''}\n\nBest regards`)}`}
+                className="px-4 py-2 bg-[#6D8E22] text-white text-sm font-mont font-semibold rounded-lg hover:bg-[#5a7519]"
+                onClick={() => setShowShare(false)}
+              >
+                Open Email
+              </a>
+              <button onClick={() => setShowShare(false)}
+                className="px-3 py-2 text-sm font-mont text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">
+                Cancel
+              </button>
+            </div>
+            <p className="font-mont text-xs text-gray-400 mt-2">Opens your email client with the report summary pre-filled.</p>
+          </div>
+        )}
 
         {!fieldId && (
           <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 text-sm">

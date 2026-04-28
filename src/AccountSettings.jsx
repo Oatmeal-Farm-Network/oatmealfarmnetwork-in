@@ -583,6 +583,11 @@ export default function AccountSettings() {
     urlTab === 'audio' ? 'Language & Audio Settings' : 'Login & Account'
   );
 
+  useEffect(() => {
+    const t = new URLSearchParams(location.search).get('tab');
+    setTab(t === 'audio' ? 'Language & Audio Settings' : 'Login & Account');
+  }, [location.search]);
+
   return (
     <AccountLayout Business={Business} BusinessID={null} PeopleID={PeopleID} pageTitle="Settings" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Settings' }]}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>

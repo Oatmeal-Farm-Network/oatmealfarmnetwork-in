@@ -117,6 +117,17 @@ export default function PrecisionAgBenchmark() {
               ))}
             </div>
 
+            {/* Peer group coming soon */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+              <span className="text-xl mt-0.5">🌐</span>
+              <div>
+                <div className="font-mont text-sm font-semibold text-blue-800">County &amp; Network Benchmarks — Coming Soon</div>
+                <div className="font-mont text-xs text-blue-600 mt-0.5">
+                  Compare your fields against anonymized county averages and a cohort of similar operations in the Oatmeal Farm Network. Peer group filtering by crop type and farm size will be available in a future update.
+                </div>
+              </div>
+            </div>
+
             {/* Best performer callout */}
             {topField?.ndvi != null && (
               <div className="bg-[#6D8E22]/5 border border-[#6D8E22]/30 rounded-xl p-4 flex items-center gap-3">

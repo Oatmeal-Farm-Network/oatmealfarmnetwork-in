@@ -113,6 +113,7 @@ export default function PrecisionAgHistograms() {
 
   const analysis = analyses[selectedAnalysisIdx] || null;
   const fieldIdNum = parseInt(selectedFieldId) || 1;
+  const selectedField = fields.find(f => String(f.fieldid || f.id) === selectedFieldId);
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
@@ -167,8 +168,12 @@ export default function PrecisionAgHistograms() {
             {analysis && (
               <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-6 flex-wrap">
                 <div className="text-sm font-mont text-gray-600">
+                  <span className="text-gray-500">As of </span>
                   <span className="font-semibold text-gray-800">{new Date(analysis.analysis_date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</span>
-                  {analysis.cloud_percent != null && <span className="ml-3 text-gray-400">Cloud cover: {analysis.cloud_percent.toFixed(1)}%</span>}
+                  {analysis.cloud_percent != null && <span className="ml-3 text-gray-400">Cloud: {analysis.cloud_percent.toFixed(1)}%</span>}
+                  {selectedField?.field_size_hectares && (
+                    <span className="ml-3 text-gray-400">Field: {(selectedField.field_size_hectares * 2.471).toFixed(1)} ac</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 ml-auto">
                   <span className="w-3 h-3 rounded-sm" style={{ background:'#F97316' }} />

@@ -8,7 +8,7 @@
 //     { label: 'Alpacas', to: '/marketplaces/livestock/alpacas' },
 //     { label: 'ALR Josephine' }, // last item (current page) — omit `to`
 //   ]} />
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 const BASE_URL = 'https://oatmealfarmnetwork.com';
@@ -16,6 +16,16 @@ const MARKER   = 'data-breadcrumb-jsonld';
 
 export default function Breadcrumbs({ items: rawItems = [], className = '', style = {} }) {
   const isLoggedIn = typeof window !== 'undefined' && !!localStorage.getItem('access_token');
+  const [psOpen, setPsOpen] = useState(false);
+  const psRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!psOpen) return;
+    const handler = (e) => { if (psRef.current && !psRef.current.contains(e.target)) setPsOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [psOpen]);
 
   // When signed in, the Dashboard is the user's home. Swap any leading "Home → /"
   // crumb for "Dashboard → /dashboard", then collapse the duplicate if the next
@@ -93,14 +103,43 @@ export default function Breadcrumbs({ items: rawItems = [], className = '', styl
           );
         })}
       </nav>
+
       {isLoggedIn && (
-        <Link
-          to="/account/settings"
-          className="ml-auto"
-          style={{ color: '#3D6B34', textDecoration: 'none', fontWeight: 600 }}
-        >
-          Personal Settings
-        </Link>
+        <div className="ml-auto relative" ref={psRef}>
+          <button
+            onClick={() => setPsOpen(o => !o)}
+            title="Personal Settings"
+            style={{ color: '#3D6B34', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="8" cy="5" r="2.5"/>
+              <path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5"/>
+            </svg>
+          </button>
+          {psOpen && (
+            <div
+              className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50"
+              style={{ minWidth: 200 }}
+            >
+              <Link
+                to="/account/settings"
+                onClick={() => setPsOpen(false)}
+                className="block px-4 py-2 hover:bg-gray-50 transition-colors"
+                style={{ color: '#374151', textDecoration: 'none', fontSize: '0.8rem' }}
+              >
+                Login &amp; Account
+              </Link>
+              <Link
+                to="/account/settings?tab=audio"
+                onClick={() => setPsOpen(false)}
+                className="block px-4 py-2 hover:bg-gray-50 transition-colors"
+                style={{ color: '#374151', textDecoration: 'none', fontSize: '0.8rem' }}
+              >
+                Language &amp; Audio Settings
+              </Link>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

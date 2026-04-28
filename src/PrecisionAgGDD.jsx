@@ -30,6 +30,9 @@ function GDDChart({ daily, totalGDD, milestones }) {
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 180 }}>
+      {/* Y-axis label */}
+      <text x={8} y={PAD.t + (H - PAD.t - PAD.b) / 2} textAnchor="middle" fontSize="8" fill="#9CA3AF"
+        transform={`rotate(-90, 8, ${PAD.t + (H - PAD.t - PAD.b) / 2})`}>GDD</text>
       {/* grid */}
       {yticks.map(v => (
         <g key={v}>
@@ -135,7 +138,7 @@ export default function PrecisionAgGDD() {
           </div>
           {data && (
             <div className="font-mont text-xs text-gray-400 self-end pb-2">
-              Base temp: {data.base_temp_f}°F — Crop: {data.crop_type || 'Unknown'}
+              Base temp: {data.base_temp_f}°F — Crop: {data.crop_type || 'Not set'}
             </div>
           )}
         </div>

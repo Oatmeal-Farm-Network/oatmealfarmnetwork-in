@@ -181,6 +181,18 @@ export default function PrecisionAgIrrigation() {
               <WaterDeficitChart daily={data.daily} />
             </div>
 
+            {/* ET source note */}
+            <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+              <p className="font-mont text-xs text-gray-500 font-semibold mb-1">Data Source &amp; Model Notes</p>
+              <p className="font-mont text-xs text-gray-400">
+                ET₀ is sourced from Open-Meteo (ERA5 reanalysis + 7-day forecast). Coverage is global but accuracy
+                varies in remote areas — if your field shows implausible values, consider supplementing with
+                on-site weather station data. Crop ET (ETc) applies FAO-56 crop coefficients (Kc) to ET₀.
+                For fields outside Open-Meteo coverage, the ASCE Penman-Monteith method or a nearby NOAA COOP
+                station are suitable alternatives.
+              </p>
+            </div>
+
             {/* Table — last 14 days */}
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">

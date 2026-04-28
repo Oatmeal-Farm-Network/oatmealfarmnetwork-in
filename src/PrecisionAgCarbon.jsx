@@ -90,6 +90,7 @@ export default function PrecisionAgCarbon() {
 
   useEffect(() => { load(); }, [load]);
 
+  const selectedField = fields.find(f => String(f.fieldid || f.id) === selectedFieldId);
   const uniqueCrops = data ? [...new Set((data.rotation_history || []).map(r => r.crop).filter(Boolean))] : [];
 
   return (
@@ -218,6 +219,42 @@ export default function PrecisionAgCarbon() {
                 <div className="font-mont text-xs text-gray-400 mt-1">Add rotation history in the Crop Rotation section.</div>
               </div>
             )}
+
+            {/* Carbon credit estimator */}
+            {selectedField?.field_size_hectares && data.latest_soc_MgCha != null && (() => {
+              const fieldHa = selectedField.field_size_hectares;
+              const seqRate = data.om_trend_pct > 0 ? 0.3 : data.om_trend_pct < 0 ? 0.05 : 0.15;
+              const annualCO2e = seqRate * fieldHa * 3.67;
+              const lo = (annualCO2e * 15).toFixed(0);
+              const hi = (annualCO2e * 50).toFixed(0);
+              return (
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <div className="font-mont text-sm font-semibold text-gray-600 mb-3">Carbon Credit Estimator</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                    <div className="bg-gray-50 rounded-xl border border-gray-100 px-3 py-2.5">
+                      <div className="font-mont text-xs text-gray-400">Field Area</div>
+                      <div className="font-mont text-xl font-bold text-gray-800">{fieldHa.toFixed(1)} ha</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl border border-gray-100 px-3 py-2.5">
+                      <div className="font-mont text-xs text-gray-400">Seq. Rate</div>
+                      <div className="font-mont text-xl font-bold text-gray-800">{seqRate} tC/ha/yr</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl border border-gray-100 px-3 py-2.5">
+                      <div className="font-mont text-xs text-gray-400">Annual CO₂e</div>
+                      <div className="font-mont text-xl font-bold text-[#16A34A]">{annualCO2e.toFixed(1)} t</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl border border-gray-100 px-3 py-2.5">
+                      <div className="font-mont text-xs text-gray-400">Estimated Value</div>
+                      <div className="font-mont text-xl font-bold text-[#16A34A]">${lo}–${hi}/yr</div>
+                    </div>
+                  </div>
+                  <p className="font-mont text-xs text-gray-400">
+                    Estimate based on OM trend ({data.om_trend_pct > 0 ? 'improving' : data.om_trend_pct < 0 ? 'declining' : 'stable'}) at $15–$50/tCO₂e market range.
+                    For verified credits, consult a certified carbon registry program.
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* Carbon methodology note */}
             <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">

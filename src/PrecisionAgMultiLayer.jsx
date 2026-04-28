@@ -16,6 +16,12 @@ const ALL_INDICES = [
 const DEFAULT_PANEL_INDICES = ['NDVI', 'NDRE', 'GNDVI', 'NDWI'];
 const COLS = 32, ROWS = 20;
 
+const PRESET_VIEWS = [
+  { label: 'Stress Detection', indices: ['NDVI', 'NDRE', 'GNDVI', 'EVI'], layout: '2x2' },
+  { label: 'Water Stress',     indices: ['NDVI', 'NDWI'],                 layout: '1x2' },
+  { label: 'Full Audit',       indices: ['NDVI', 'NDRE', 'GNDVI', 'NDWI'], layout: '2x2' },
+];
+
 function indexColor(v, min, max, indexKey) {
   const t = max > min ? (v - min) / (max - min) : 0.5;
   if (indexKey === 'NDWI') {
@@ -216,6 +222,17 @@ export default function PrecisionAgMultiLayer() {
               </select>
             </div>
           )}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold font-mont text-gray-500">Preset Views</label>
+            <div className="flex gap-1">
+              {PRESET_VIEWS.map(p => (
+                <button key={p.label} onClick={() => { setPanelIndices([...p.indices]); setLayout(p.layout); }}
+                  className="px-3 py-2 rounded-lg text-xs font-mont border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all">
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="flex flex-col gap-1 ml-auto">
             <label className="text-xs font-semibold font-mont text-gray-500">Layout</label>
             <div className="flex gap-1">

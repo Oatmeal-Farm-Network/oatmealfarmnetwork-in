@@ -545,11 +545,18 @@ export default function MaturityPanel({ fieldId, businessId }) {
           </form>
         )}
 
-        {sortedSamples.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-500">
-            No samples logged yet. Each sample (Brix, anthocyanin, firmness, pH) tightens the harvest prediction.
-          </p>
-        ) : (
+        {sortedSamples.length === 0 && !showSampleForm ? (
+          <div className="mt-4 flex flex-col items-center gap-3 py-6 bg-gray-50 rounded-lg">
+            <div className="text-3xl">🌿</div>
+            <p className="text-sm text-gray-600 text-center max-w-sm">
+              Start tracking maturity by logging a sample. Enter Brix, firmness, pH, or anthocyanin readings.
+            </p>
+            <button onClick={() => setShowSampleForm(true)}
+              className="px-4 py-2 bg-[#3D6B34] text-white rounded-lg text-sm font-semibold hover:opacity-90">
+              + Start Maturity Tracking
+            </button>
+          </div>
+        ) : sortedSamples.length > 0 ? (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs text-gray-500 uppercase tracking-wide">
@@ -583,7 +590,7 @@ export default function MaturityPanel({ fieldId, businessId }) {
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

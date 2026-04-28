@@ -1482,8 +1482,8 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
         </div>
       </div>
 
-      {/* Alerts */}
-      {alerts.length > 0 && (
+      {/* Alerts — show only on satellite-relevant tabs */}
+      {alerts.length > 0 && ['overview', 'maps', 'histograms', 'growth', 'analytics'].includes(tab) && (
         <div className="rounded-xl border border-red-300 bg-red-50 p-4 mb-6">
           <div className="font-lora font-bold text-red-700 mb-2">⚠️ {alerts.length} Active Alert{alerts.length > 1 ? 's' : ''}</div>
           {alerts.map((a, i) => <div key={i} className="text-sm text-red-700 font-mont">{a.message || a.alert_type}</div>)}
@@ -1519,7 +1519,11 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
 
               {latest && (
                 <div>
-                  <h3 className="font-lora font-bold text-gray-900 text-lg mb-3">Vegetation Indices</h3>
+                  <h3 className="font-lora font-bold text-gray-900 text-lg mb-1">Vegetation Indices</h3>
+                  <p className="font-mont text-xs text-gray-400 mb-3">
+                    As of {new Date(latest.analysis_date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
+                    {latest.cloud_percent > 20 && <span className="ml-2 text-amber-600">☁ {latest.cloud_percent.toFixed(0)}% cloud cover</span>}
+                  </p>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {['NDVI', 'NDRE', 'EVI', 'GNDVI', 'NDWI'].map(name => {
                       const idx = getIndex(latest, name);
@@ -1550,9 +1554,17 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
               {agronomy && (
                 <div>
                   <h3 className="font-lora font-bold text-gray-900 text-lg mb-3">Agronomy Snapshot</h3>
+                  {!agronomy.gdd && !agronomy.growth_stage && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3 text-sm font-mont mb-3">
+                      <span>📅</span>
+                      <span className="text-amber-800">GDD and growth stage require a planting date.{' '}
+                        <button onClick={onEdit} className="font-semibold underline">Set crop & planting date in field settings →</button>
+                      </span>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <StatCard label="GDD (°C·days)" value={agronomy.gdd ? Math.round(agronomy.gdd.gdd) : 'N/A'} sub={agronomy.gdd ? `Base ${agronomy.gdd.base_temp_c}°C` : 'Add crop + planting date'} />
-                    <StatCard label="Growth Stage" value={agronomy.growth_stage?.stage ?? 'N/A'} sub={agronomy.growth_stage?.model} />
+                    <StatCard label="GDD (°C·days)" value={agronomy.gdd ? Math.round(agronomy.gdd.gdd) : 'Not set'} sub={agronomy.gdd ? `Base ${agronomy.gdd.base_temp_c}°C` : 'Add crop + planting date'} />
+                    <StatCard label="Growth Stage" value={agronomy.growth_stage?.stage ?? 'Not set'} sub={agronomy.growth_stage?.model} />
                     <StatCard label="Spray Decision" value={agronomy.spray_decision?.decision ?? 'N/A'} sub={agronomy.spray_decision?.reasons?.join(', ')} />
                     <StatCard label="Irrigation" value={agronomy.irrigation_advice?.status ?? 'N/A'} />
                     <StatCard label="Disease Risk" value={agronomy.disease_risk?.risk ?? 'N/A'} />

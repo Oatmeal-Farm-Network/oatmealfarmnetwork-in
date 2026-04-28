@@ -215,21 +215,6 @@ export default function AccountSidebar() {
         </NavSection>
       </div>
 
-      {/* Personal Settings — always visible, icon-only trigger */}
-      <div className="px-2 pb-2 border-b border-gray-300/50 shrink-0">
-        <NavSection
-          icon={ICONS.personalSettings}
-          label="Personal Settings"
-          expanded={Expanded}
-          isOpen={OpenSections['Personal Settings'] || false}
-          onToggle={() => toggleSection('Personal Settings')}
-          iconOnly
-        >
-          <NavChild to="/account/settings" label="Account Settings" />
-          <NavChild to="/account/settings?tab=audio" label="Language & Audio" />
-        </NavSection>
-      </div>
-
       {/* Business name + all feature nav — only shown when an org account is selected */}
       {!!BusinessID && (
         <>

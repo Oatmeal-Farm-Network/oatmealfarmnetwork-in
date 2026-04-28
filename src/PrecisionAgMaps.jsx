@@ -89,10 +89,11 @@ function FieldMap({ fieldId, indexKey, analysisId = null, height = 420 }) {
 // otherwise the per-date fetch falls back to "latest" on the backend, so we'd
 // be making N redundant requests for the same scene. In that case we just
 // show the index mean as a colored chip.
-function DateThumbnail({ fieldId, indexKey, analysisId, satelliteAcquiredAt, indexData, date, active, onClick }) {
+function DateThumbnail({ fieldId, indexKey, analysisId, satelliteAcquiredAt, indexData, date, cloudPercent, active, onClick }) {
   const canFetchScene = !!satelliteAcquiredAt;
   const { data, loading } = useRaster(fieldId, indexKey, 16, canFetchScene ? analysisId : null);
   const meanFallback = indexData ? indexColor(indexData.mean, indexData.min, indexData.max, indexKey) : '#E5E7EB';
+  const heavyCloud = cloudPercent != null && cloudPercent > 30;
 
   return (
     <button onClick={onClick}
@@ -109,6 +110,11 @@ function DateThumbnail({ fieldId, indexKey, analysisId, satelliteAcquiredAt, ind
                 fill={indexColor(v, data.raster.min, data.raster.max, indexKey)} />;
             }))}
           </svg>
+        )}
+        {heavyCloud && (
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.35) 0px, rgba(255,255,255,0.35) 4px, transparent 4px, transparent 10px)'
+          }} />
         )}
         {!data && !loading && !indexData && (
           <div className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-300 text-xs">No data</div>
@@ -254,8 +260,9 @@ export default function PrecisionAgMaps() {
                 {selectedField?.name} — {INDEX_CONFIGS.find(c => c.key === selectedIndex)?.label}
               </span>
               {analysis && (
-                <span className="font-mont text-xs text-gray-400">
-                  {new Date(analysis.analysis_date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
+                <span className="font-mont text-xs text-gray-500">
+                  As of {new Date(analysis.analysis_date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
+                  {analysis.cloud_percent > 20 && <span className="ml-2 text-amber-600">☁ {analysis.cloud_percent.toFixed(0)}% cloud cover</span>}
                 </span>
               )}
               {indexData && (
@@ -313,6 +320,7 @@ export default function PrecisionAgMaps() {
                     satelliteAcquiredAt={a.satellite_acquired_at}
                     indexData={iData}
                     date={a.analysis_date}
+                    cloudPercent={a.cloud_percent}
                     active={active}
                     onClick={() => setSelectedAnalysisIdx(i)}
                   />

@@ -37,6 +37,7 @@ export default function PrecisionAgReports() {
   const [soilSamples, setSoilSamples] = useState([]);
   const [downloading, setDownloading] = useState(false);
   const [emailing, setEmailing] = useState(false);
+  const [sections, setSections] = useState({ satellite: true, soil: true, scouting: true });
 
   useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
   useEffect(() => {
@@ -151,6 +152,18 @@ export default function PrecisionAgReports() {
           )}
         </div>
 
+        {/* Section toggles */}
+        <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-6 flex-wrap">
+          <span className="font-mont text-xs font-semibold text-gray-500">Report Sections:</span>
+          {[['satellite','Satellite Analysis'],['soil','Soil Samples'],['scouting','Scouting']].map(([k,l]) => (
+            <label key={k} className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={sections[k]} onChange={e => setSections(p => ({ ...p, [k]: e.target.checked }))}
+                className="accent-[#6D8E22]" />
+              <span className="font-mont text-xs text-gray-600">{l}</span>
+            </label>
+          ))}
+        </div>
+
         {loading ? (
           <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
         ) : (
@@ -169,7 +182,7 @@ export default function PrecisionAgReports() {
             </div>
 
             {/* Latest satellite analysis */}
-            {latest && (
+            {sections.satellite && latest && (
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">
                   Latest Satellite Analysis —{' '}
@@ -193,7 +206,7 @@ export default function PrecisionAgReports() {
             )}
 
             {/* Analysis history mini-table */}
-            {analyses.length > 0 && (
+            {sections.satellite && analyses.length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">
                   Analysis History ({analyses.length} passes)
@@ -230,7 +243,7 @@ export default function PrecisionAgReports() {
             )}
 
             {/* Soil samples summary */}
-            {soilSamples.length > 0 && (
+            {sections.soil && soilSamples.length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 p-5">
                 <div className="font-mont text-sm font-semibold text-gray-600 mb-3">
                   Soil Samples — Field Average ({soilSamples.length} samples)
@@ -256,7 +269,7 @@ export default function PrecisionAgReports() {
             )}
 
             {/* Scouting summary */}
-            {scouts.length > 0 && (
+            {sections.scouting && scouts.length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 p-5">
                 <div className="font-mont text-sm font-semibold text-gray-600 mb-3">
                   Scouting Summary ({scouts.length} observations)

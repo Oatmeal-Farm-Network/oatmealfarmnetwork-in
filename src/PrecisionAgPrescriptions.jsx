@@ -166,8 +166,20 @@ export default function PrecisionAgPrescriptions() {
   const fieldIdNum = parseInt(selectedFieldId) || 1;
   const indexData = getIndex(analysis, form.index_key);
 
+  const [ifThenBase, setIfThenBase] = useState('');
+
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const setRate = (i, v) => setRates(prev => prev.map((r, j) => j === i ? { ...r, rate: v } : r));
+
+  const applyIfThen = () => {
+    const base = parseFloat(ifThenBase);
+    if (!base || isNaN(base)) return;
+    const n = form.num_zones;
+    setRates(prev => prev.map((r, i) => {
+      const factor = n > 1 ? 1 + 0.4 * (1 - (2 * i) / (n - 1)) : 1;
+      return { ...r, rate: (base * factor).toFixed(1) };
+    }));
+  };
 
   const submit = async () => {
     if (!form.name.trim()) { setFormError('Name is required.'); return; }
@@ -293,6 +305,24 @@ export default function PrecisionAgPrescriptions() {
                         {n}
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                {/* If-Then rate calculator */}
+                <div className="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                  <div className="font-mont text-xs font-semibold text-gray-600 mb-2">If-Then Rate Calculator</div>
+                  <p className="font-mont text-xs text-gray-400 mb-2">
+                    Low-{form.index_key} zones get higher rates, high zones get lower rates. Enter a base rate and auto-fill.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input type="number" min="0" step="any" placeholder="Base rate"
+                      value={ifThenBase} onChange={e => setIfThenBase(e.target.value)}
+                      className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-1.5 w-32" />
+                    <span className="font-mont text-xs text-gray-400">{form.unit}</span>
+                    <button type="button" onClick={applyIfThen}
+                      className="px-3 py-1.5 bg-[#6D8E22] text-white text-xs font-mont font-semibold rounded-lg hover:bg-[#5a7519]">
+                      Auto-fill Rates
+                    </button>
                   </div>
                 </div>
 

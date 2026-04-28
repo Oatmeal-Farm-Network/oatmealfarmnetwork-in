@@ -255,6 +255,39 @@ export default function PrecisionAgSoilSamples() {
           />
         )}
 
+        {/* Sample location map */}
+        {samples.some(s => s.latitude && s.longitude) && (() => {
+          const geo = samples.filter(s => s.latitude && s.longitude);
+          const lats = geo.map(s => s.latitude);
+          const lons = geo.map(s => s.longitude);
+          const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+          const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+          const pad = 0.1;
+          const W = 500, H = 200, PL = 20, PR = 20, PT = 16, PB = 16;
+          const nx = lon => PL + ((lon - minLon) / Math.max(maxLon - minLon, 0.0001)) * (W - PL - PR);
+          const ny = lat => H - PB - ((lat - minLat) / Math.max(maxLat - minLat, 0.0001)) * (H - PT - PB);
+          return (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="font-mont text-sm font-semibold text-gray-600 mb-3">Sample Locations ({geo.length} with GPS)</div>
+              <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 220, background: '#F9FAFB', borderRadius: 8 }}>
+                <rect width={W} height={H} fill="#F9FAFB" rx="6" />
+                {geo.map((s, i) => (
+                  <g key={s.sample_id}>
+                    <circle cx={nx(s.longitude)} cy={ny(s.latitude)} r="6" fill="#6D8E22" fillOpacity="0.7" stroke="white" strokeWidth="1.5" />
+                    <text x={nx(s.longitude) + 9} y={ny(s.latitude) + 4} fontSize="9" fill="#374151" fontWeight="600">
+                      {s.sample_label || `#${i + 1}`}
+                    </text>
+                  </g>
+                ))}
+                <text x={PL} y={H - 4} fontSize="8" fill="#9CA3AF">W</text>
+                <text x={W - PR - 4} y={H - 4} fontSize="8" fill="#9CA3AF">E</text>
+                <text x={PL} y={PT - 2} fontSize="8" fill="#9CA3AF">N</text>
+                <text x={PL} y={H - PT + 4} fontSize="8" fill="#9CA3AF">S</text>
+              </svg>
+            </div>
+          );
+        })()}
+
         {/* Field average summary */}
         {samples.length > 1 && (
           <div className="bg-white rounded-xl border border-gray-200 p-5">

@@ -8,7 +8,7 @@ import LanguageSelector from './LanguageSelector';
 
 const Header = () => {
   const { t } = useTranslation();
-  const { businesses } = useAccount();
+  const { businesses, clearBusiness } = useAccount();
   const [isOpen, setIsOpen] = useState(false);
   const [kbOpen, setKbOpen] = useState(false);
   const [kbMobileOpen, setKbMobileOpen] = useState(false);
@@ -78,6 +78,7 @@ const Header = () => {
   Object.keys(localStorage)
   .filter(k => k.startsWith('saige_'))
   .forEach(k => localStorage.removeItem(k));
+  clearBusiness();
   setIsLoggedIn(false);
   setUser(null);
   navigate('/login');
