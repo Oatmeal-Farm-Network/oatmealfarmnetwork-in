@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useLanguage } from './LanguageContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -27,6 +28,7 @@ function DetailItem({ label, value, description, impact }) {
 
 export default function PlantVarietalDetail() {
   const { varietyId } = useParams();
+  const { language } = useLanguage();
   const [detail, setDetail] = useState(null);
   const [nutrients, setNutrients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,7 @@ export default function PlantVarietalDetail() {
     const token = localStorage.getItem('access_token');
     setIsLoggedIn(Boolean(token));
 
-    fetch(`${API_URL}/api/plant-knowledgebase/varietal-detail/${varietyId}`)
+    fetch(`${API_URL}/api/plant-knowledgebase/varietal-detail/${varietyId}?lang=${language}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data) {
@@ -46,7 +48,7 @@ export default function PlantVarietalDetail() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [varietyId]);
+  }, [varietyId, language]);
 
   if (loading) return (
     <div className="min-h-screen font-sans">

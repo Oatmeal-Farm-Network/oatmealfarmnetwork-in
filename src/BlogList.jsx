@@ -6,6 +6,7 @@ import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useLanguage } from './LanguageContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -94,6 +95,7 @@ function BlogListContent() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const { language } = useLanguage();
 
   const activeCategory = searchParams.get('category') || '';
 
@@ -106,14 +108,14 @@ function BlogListContent() {
 
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams({ limit: '50' });
+    const params = new URLSearchParams({ limit: '50', lang: language });
     if (activeCategory) params.set('category_name', activeCategory);
     fetch(`${API_URL}/api/blog/posts?${params}`)
       .then(r => r.ok ? r.json() : [])
       .then(data => setPosts(Array.isArray(data) ? data : []))
       .catch(() => setPosts([]))
       .finally(() => setLoading(false));
-  }, [activeCategory]);
+  }, [activeCategory, language]);
 
   const filtered = search.trim()
     ? posts.filter(p =>

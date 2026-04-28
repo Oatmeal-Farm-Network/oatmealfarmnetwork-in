@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -7,6 +8,7 @@ import PageMeta from './PageMeta';
 const API = import.meta.env.VITE_API_URL;
 
 export default function Login() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,7 +40,7 @@ export default function Login() {
 
       if (!response.ok) {
         const detail = data.detail;
-        setError(Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || `Login failed (${response.status}). Please try again.`));
+        setError(Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || t('auth.login_failed', { status: response.status })));
         return;
       }
 
@@ -50,7 +52,7 @@ export default function Login() {
 
       navigate('/dashboard');
     } catch (err) {
-      setError('Unable to connect to server. Please try again.');
+      setError(t('auth.server_error'));
     } finally {
       setLoading(false);
     }
@@ -76,8 +78,8 @@ export default function Login() {
                 alt="Oatmeal Farm Network"
                 className="h-10 mx-auto mb-4"
               />
-              <h1 className="text-white text-2xl font-bold font-lora m-0">Welcome Back</h1>
-              <p className="text-white/80 text-sm mt-1">Sign in to your account</p>
+              <h1 className="text-white text-2xl font-bold font-lora m-0">{t('auth.login_welcome')}</h1>
+              <p className="text-white/80 text-sm mt-1">{t('auth.login_subtitle')}</p>
             </div>
 
             <div className="px-8 py-8">
@@ -91,7 +93,7 @@ export default function Login() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Email Address
+                    {t('auth.field_email')}
                   </label>
                   <input
                     type="email"
@@ -99,14 +101,14 @@ export default function Login() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    placeholder="you@example.com"
+                    placeholder={t('auth.email_placeholder')}
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Password
+                    {t('auth.field_password')}
                   </label>
                   <input
                     type="password"
@@ -114,14 +116,14 @@ export default function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    placeholder="••••••••"
+                    placeholder={t('auth.password_placeholder')}
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
                   />
                 </div>
 
                 <div className="flex justify-end">
                   <Link to="/forgot-password" className="text-xs text-[#819360] hover:text-[#4d734d] font-medium">
-                    Forgot password?
+                    {t('auth.forgot_password')}
                   </Link>
                 </div>
 
@@ -130,16 +132,16 @@ export default function Login() {
                   disabled={loading}
                   className="w-full bg-[#A3301E] hover:bg-[#8a2718] text-white font-bold py-3 px-6 rounded-xl transition-colors duration-200 text-sm uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Signing In...' : 'Sign In'}
+                  {loading ? t('auth.signing_in') : t('auth.sign_in')}
                 </button>
               </form>
 
               {/* Only show Sign Up link if signup is open */}
               {settings?.signup_open && (
                 <p className="text-center text-sm text-gray-500 mt-6">
-                  Don't have an account?{' '}
+                  {t('auth.no_account')}{' '}
                   <Link to="/signup" className="text-[#819360] font-semibold hover:text-[#4d734d]">
-                    Sign Up
+                    {t('auth.sign_up')}
                   </Link>
                 </p>
               )}

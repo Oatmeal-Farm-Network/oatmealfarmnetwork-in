@@ -22,6 +22,7 @@ export default defineConfig({
     watch: {
       ignored: [
         '**/public/images/**',
+        '**/public/locales/**',
         '**/node_modules/**',
       ],
     },

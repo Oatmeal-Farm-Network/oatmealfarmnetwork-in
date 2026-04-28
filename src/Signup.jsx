@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -7,6 +8,7 @@ import PageMeta from './PageMeta';
 const API = import.meta.env.VITE_API_URL;
 
 export default function Signup() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -31,7 +33,7 @@ export default function Signup() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(t('auth.passwords_mismatch'));
       return;
     }
 
@@ -53,7 +55,7 @@ export default function Signup() {
 
       if (!response.ok) {
         const detail = data.detail;
-        setError(Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || 'Signup failed. Please try again.'));
+        setError(Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || t('auth.signup_failed')));
         return;
       }
 
@@ -65,7 +67,7 @@ export default function Signup() {
 
       navigate('/dashboard');
     } catch (err) {
-      setError('Unable to connect to server. Please try again.');
+      setError(t('auth.server_error'));
     } finally {
       setLoading(false);
     }
@@ -91,8 +93,8 @@ export default function Signup() {
                 alt="Oatmeal Farm Network"
                 className="h-10 mx-auto mb-4"
               />
-              <h1 className="text-white text-2xl font-bold font-lora m-0">Create Account</h1>
-              <p className="text-white/80 text-sm mt-1">Join the Oatmeal Farm Network</p>
+              <h1 className="text-white text-2xl font-bold font-lora m-0">{t('auth.create_account')}</h1>
+              <p className="text-white/80 text-sm mt-1">{t('auth.join_network')}</p>
             </div>
 
             <div className="px-8 py-8">
@@ -101,9 +103,9 @@ export default function Signup() {
                 /* Registration closed */
                 <div className="text-center py-4">
                   <div className="text-4xl mb-4">🔒</div>
-                  <h2 className="text-lg font-bold text-gray-800 mb-2">Registration is Currently Closed</h2>
+                  <h2 className="text-lg font-bold text-gray-800 mb-2">{t('auth.registration_closed_title')}</h2>
                   <p className="text-sm text-gray-500 mb-6">
-                    New account creation is not available at this time. Please check back later.
+                    {t('auth.registration_closed_body')}
                   </p>
                   <Link to="/login" className="text-[#819360] font-semibold hover:text-[#4d734d] text-sm">
                   
@@ -120,61 +122,61 @@ export default function Signup() {
 
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">First Name</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('auth.field_first_name')}</label>
                       <input
                         type="text"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         required
-                        placeholder="John"
+                        placeholder={t('auth.first_name_placeholder')}
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Last Name</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('auth.field_last_name')}</label>
                       <input
                         type="text"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         required
-                        placeholder="Doe"
+                        placeholder={t('auth.last_name_placeholder')}
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('auth.field_email')}</label>
                       <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        placeholder="you@example.com"
+                        placeholder={t('auth.email_placeholder')}
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('auth.field_password')}</label>
                       <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        placeholder="••••••••"
+                        placeholder={t('auth.password_placeholder')}
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Confirm Password</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('auth.field_confirm_password')}</label>
                       <input
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
-                        placeholder="••••••••"
+                        placeholder={t('auth.password_placeholder')}
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 transition-all"
                       />
                     </div>
@@ -184,14 +186,14 @@ export default function Signup() {
                       disabled={loading}
                       className="w-full bg-[#A3301E] hover:bg-[#8a2718] text-white font-bold py-3 px-6 rounded-xl transition-colors duration-200 text-sm uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      {loading ? 'Creating Account...' : 'Sign Up'}
+                      {loading ? t('auth.creating_account') : t('auth.sign_up')}
                     </button>
                   </form>
 
                   <p className="text-center text-sm text-gray-500 mt-6">
-                    Already have an account?{' '}
+                    {t('auth.already_account')}{' '}
                     <Link to="/login" className="text-[#819360] font-semibold hover:text-[#4d734d]">
-                      Sign In
+                      {t('auth.sign_in')}
                     </Link>
                   </p>
                 </>

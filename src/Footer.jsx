@@ -1,14 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function Footer() {
+  const { t } = useTranslation();
   const isLoggedIn = !!localStorage.getItem('access_token');
 
   if (isLoggedIn) {
     return (
       <footer className="bg-[#1a1a1a] text-white py-4 mt-12">
         <div className="text-center">
-          <p className="text-gray-500 text-xs tracking-[0.2em]">© 2025 - {new Date().getFullYear()} Oatmeal AI. All rights reserved.</p>
+          <p className="text-gray-500 text-xs tracking-[0.2em]">{t('footer.copyright', { year: new Date().getFullYear() })}</p>
         </div>
       </footer>
     );
@@ -28,37 +30,37 @@ export default function Footer() {
               className="h-10 mb-4"
             />
             <p className="text-gray-400 text-sm leading-relaxed">
-              Connecting the entire food system — from seed to supper.
+              {t('footer.tagline')}
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="footer">Explore</h3>
+            <h3 className="footer">{t('footer.explore')}</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/directory" className="footer">Food-System Directory</Link></li>
-              <li><Link to="/plants" className="footer">Plant Knowledgebase</Link></li>
-              <li><Link to="/livestock" className="footer">Livestock Database</Link></li>
-              <li><Link to="/ingredients" className="footer">Ingredient Knowledgebase</Link></li>
-              <li><Link to="/marketplace" className="footer">Livestock Marketplace</Link></li>
+              <li><Link to="/directory" className="footer">{t('footer.food_directory')}</Link></li>
+              <li><Link to="/plants" className="footer">{t('footer.plant_kb')}</Link></li>
+              <li><Link to="/livestock" className="footer">{t('footer.livestock_db')}</Link></li>
+              <li><Link to="/ingredients" className="footer">{t('footer.ingredient_kb')}</Link></li>
+              <li><Link to="/marketplaces/livestock" className="footer">{t('footer.livestock_marketplace')}</Link></li>
             </ul>
           </div>
 
           {/* Company */}
           <div>
-            <h3 className="footer">Company</h3>
+            <h3 className="footer">{t('footer.company')}</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/about" className="footer">About Us</Link></li>
-              <li><Link to="/saige" className="footer">Saige AI</Link></li>
-              <li><Link to="/login" className="footer">Login</Link></li>
-              <li><Link to="/signup" className="footer">Sign Up</Link></li>
+              <li><Link to="/about" className="footer">{t('footer.about_us')}</Link></li>
+              <li><Link to="/saige" className="footer">{t('footer.saige_ai')}</Link></li>
+              <li><Link to="/login" className="footer">{t('footer.login')}</Link></li>
+              <li><Link to="/signup" className="footer">{t('footer.signup')}</Link></li>
             </ul>
           </div>
 
         </div>
 
         <div className="border-t border-gray-800 pt-6 text-center">
-          <p className="text-gray-500 text-xs tracking-[0.2em]">© 2025 - {new Date().getFullYear()} Oatmeal AI. All rights reserved.</p>
+          <p className="text-gray-500 text-xs tracking-[0.2em]">{t('footer.copyright', { year: new Date().getFullYear() })}</p>
         </div>
 
       </div>

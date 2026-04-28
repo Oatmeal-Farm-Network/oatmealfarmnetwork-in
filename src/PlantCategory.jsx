@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useLanguage } from './LanguageContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -45,6 +46,7 @@ function plantImgSrc(plant) {
 
 export default function PlantCategory() {
   const { category } = useParams();
+  const { language } = useLanguage();
   const [plants, setPlants] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -57,12 +59,12 @@ export default function PlantCategory() {
     setIsLoggedIn(Boolean(token));
     if (!cat) { setPlants([]); return; }
 
-    const url = API_URL + '/api/plant-knowledgebase/plants?plant_type=' + encodeURIComponent(cat.dbType);
+    const url = API_URL + '/api/plant-knowledgebase/plants?plant_type=' + encodeURIComponent(cat.dbType) + '&lang=' + language;
     fetch(url)
       .then(r => r.json())
       .then(data => setPlants(Array.isArray(data) ? data : []))
       .catch(() => setPlants([]));
-  }, [category, cat?.dbType]);
+  }, [category, cat?.dbType, language]);
 
   if (!cat) return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>

@@ -4,22 +4,24 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useLanguage } from './LanguageContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function LivestockBreed() {
   const { species, breedId } = useParams();
+  const { language } = useLanguage();
   const [breed, setBreed] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetch(`${API_URL}/api/livestock/breed/${breedId}`)
+    fetch(`${API_URL}/api/livestock/breed/${breedId}?lang=${language}`)
       .then(r => r.json())
       .then(data => setBreed(data))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [breedId]);
+  }, [breedId, language]);
 
   const label = species
     ? species.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())

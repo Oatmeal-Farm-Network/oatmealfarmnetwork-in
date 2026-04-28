@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useLanguage } from './LanguageContext';
 
 function buildExcerpt(content, max = 160) {
   if (!content) return '';
@@ -71,6 +72,7 @@ function renderContent(content) {
 
 export default function BlogDetail() {
   const { postId } = useParams();
+  const { language } = useLanguage();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -80,7 +82,7 @@ export default function BlogDetail() {
   useEffect(() => {
     if (!postId) return;
     setLoading(true);
-    fetch(`${API_URL}/api/blog/posts/${postId}`)
+    fetch(`${API_URL}/api/blog/posts/${postId}?lang=${language}`)
       .then(r => {
         if (r.status === 404) { setNotFound(true); return null; }
         return r.json();
@@ -88,7 +90,7 @@ export default function BlogDetail() {
       .then(data => { if (data) setPost(data); })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [postId]);
+  }, [postId, language]);
 
   useEffect(() => {
     if (!post?.business_id) return;

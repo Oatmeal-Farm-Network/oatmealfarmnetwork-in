@@ -4,11 +4,13 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useLanguage } from './LanguageContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function PlantVarietals() {
   const { plantId } = useParams();
+  const { language } = useLanguage();
   const [plantName, setPlantName] = useState('');
   const [varietals, setVarietals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +20,7 @@ export default function PlantVarietals() {
     const token = localStorage.getItem('access_token');
     setIsLoggedIn(Boolean(token));
 
-    fetch(`${API_URL}/api/plant-knowledgebase/varietals/${plantId}`)
+    fetch(`${API_URL}/api/plant-knowledgebase/varietals/${plantId}?lang=${language}`)
       .then(r => r.ok ? r.json() : { plant_name: '', varietals: [] })
       .then(data => {
         setPlantName(data.plant_name || '');
@@ -26,7 +28,7 @@ export default function PlantVarietals() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [plantId]);
+  }, [plantId, language]);
 
   const na = v => (v === null || v === undefined || v === '') ? 'N/A' : v;
   const water = (min, max) => (min == null || max == null) ? 'N/A' : `${min} - ${max}`;

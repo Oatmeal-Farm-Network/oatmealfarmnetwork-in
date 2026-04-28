@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useLanguage } from './LanguageContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -57,6 +58,7 @@ const EAGER_COUNT = 4;
 
 export default function LivestockSpecies() {
   const { species } = useParams();
+  const { language } = useLanguage();
   const [speciesInfo, setSpeciesInfo]           = useState(null);
   const [availableLetters, setAvailableLetters] = useState([]);
   const [selectedLetter, setSelectedLetter]     = useState(null);
@@ -96,22 +98,22 @@ export default function LivestockSpecies() {
   useEffect(() => {
     if (!showAll) return;
     setLoadingBreeds(true);
-    fetch(`${API_URL}/api/livestock/species/${species}`)
+    fetch(`${API_URL}/api/livestock/species/${species}?lang=${language}`)
       .then(r => r.json())
       .then(data => { setBreeds(data.breeds || []); setLoadingBreeds(false); })
       .catch(() => { setBreeds([]); setLoadingBreeds(false); });
-  }, [showAll, species]);
+  }, [showAll, species, language]);
 
   // Load breeds by letter when paginating
   useEffect(() => {
     if (showAll || !selectedLetter) return;
     setBreeds(null);
     setLoadingBreeds(true);
-    fetch(`${API_URL}/api/livestock/species/${species}?letter=${encodeURIComponent(selectedLetter)}`)
+    fetch(`${API_URL}/api/livestock/species/${species}?letter=${encodeURIComponent(selectedLetter)}&lang=${language}`)
       .then(r => r.json())
       .then(data => { setBreeds(data.breeds || []); setLoadingBreeds(false); })
       .catch(() => { setBreeds([]); setLoadingBreeds(false); });
-  }, [species, selectedLetter, showAll]);
+  }, [species, selectedLetter, showAll, language]);
 
   const label      = species ? species.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '';
   const pluralTerm = speciesInfo?.plural || label;

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LANGUAGES, useLanguage } from './LanguageContext';
 
 const REGION_ORDER = [
@@ -22,6 +23,7 @@ function groupByRegion(list) {
 }
 
 export default function LanguageSelector() {
+  const { t } = useTranslation();
   const { language, setLanguage, nativeName } = useLanguage();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -112,10 +114,10 @@ export default function LanguageSelector() {
               <GlobeIcon color="#374151" size={20} />
               <div style={{ flex: 1 }}>
                 <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#111827', fontFamily: 'Montserrat, sans-serif' }}>
-                  Choose Your Language
+                  {t('lang.title')}
                 </p>
                 <p style={{ margin: 0, fontSize: 11, color: '#6b7280', fontFamily: 'Montserrat, sans-serif' }}>
-                  Your preference is saved and applied to all AI advisors
+                  {t('lang.subtitle')}
                 </p>
               </div>
               <button
@@ -133,7 +135,7 @@ export default function LanguageSelector() {
               <input
                 ref={searchRef}
                 type="text"
-                placeholder="Search languages…"
+                placeholder={t('lang.search_placeholder')}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 style={{
@@ -153,7 +155,7 @@ export default function LanguageSelector() {
             <div style={{ overflowY: 'auto', flex: 1, padding: '4px 20px 16px' }}>
               {regions.length === 0 && (
                 <p style={{ color: '#6b7280', fontSize: 13, textAlign: 'center', padding: '24px 0', fontFamily: 'Montserrat, sans-serif' }}>
-                  No languages match "{query}"
+                  {t('lang.no_results', { query })}
                 </p>
               )}
               {regions.map(region => (

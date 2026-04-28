@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useLanguage } from './LanguageContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -126,6 +127,7 @@ function IngredientCard({ ing, category, index }) {
 
 export default function IngredientCategory() {
   const { category } = useParams();
+  const { language } = useLanguage();
   const [catName, setCatName]       = useState('');
   const [catHeader, setCatHeader]   = useState('');
   const [ingredients, setIngredients] = useState(null);
@@ -133,7 +135,7 @@ export default function IngredientCategory() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetch(`${API_URL}/api/ingredient-knowledgebase/category/${category}`)
+    fetch(`${API_URL}/api/ingredient-knowledgebase/category/${category}?lang=${language}`)
       .then(r => r.json())
       .then(data => {
         setCatName(data.category_name || category);
@@ -141,7 +143,7 @@ export default function IngredientCategory() {
         setIngredients(Array.isArray(data.ingredients) ? data.ingredients : []);
       })
       .catch(() => setIngredients([]));
-  }, [category]);
+  }, [category, language]);
 
   const filtered = ingredients
     ? ingredients.filter(ing => {

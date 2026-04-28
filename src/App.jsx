@@ -14,6 +14,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -67,6 +68,7 @@ const IMG_KNOWLEDGE    = '/images/PlantDBHome.webp';
 // ─── Reusable sub-components ──────────────────────────────────────────────────
 
 function EcosystemCard({ title, description, img, link, eager }) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md hover:border-[#819360] transition-all duration-200">
       <Link to={link} className="block aspect-[4/3] overflow-hidden">
@@ -85,9 +87,9 @@ function EcosystemCard({ title, description, img, link, eager }) {
         <p className="text-sm text-gray-600 flex-1 leading-relaxed">{description}</p>
         <Link
           to={link}
-          className="mt-3 self-start text-[#3D6B34] font-semibold text-sm hover:underline"
+          className="mt-3 self-end text-[#3D6B34] font-semibold text-sm hover:underline"
         >
-          Explore →
+          {t('home.explore_arrow')}
         </Link>
       </div>
     </div>
@@ -95,6 +97,7 @@ function EcosystemCard({ title, description, img, link, eager }) {
 }
 
 function NewsCard({ title, description, img, link, imageRight, eyebrow, imageFit = 'cover' }) {
+  const { t } = useTranslation();
   const Img = (
     <Link
       to={link}
@@ -121,7 +124,7 @@ function NewsCard({ title, description, img, link, imageRight, eyebrow, imageFit
       <h3 className="font-lora font-bold text-xl text-[#3D6B34] mb-2">{title}</h3>
       <p className="text-sm text-gray-700 leading-relaxed mb-3">{description}</p>
       <Link to={link} className="self-end text-[#3D6B34] font-semibold text-sm hover:underline">
-        Explore →
+        {t('home.explore_arrow')}
       </Link>
     </div>
   );
@@ -139,6 +142,7 @@ function NewsCard({ title, description, img, link, imageRight, eyebrow, imageFit
  * loading or if every recent article is image-less.
  */
 function MarketNewsCard() {
+  const { t } = useTranslation();
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -160,8 +164,8 @@ function MarketNewsCard() {
   if (loading) {
     return (
       <NewsCard
-        title="Market News"
-        description="Loading the latest market and food-system news…"
+        title={t('home.market_news_title')}
+        description={t('home.market_news_loading')}
         img={IMG_MARKET_NEWS}
         link="/app/news"
         imageRight={true}
@@ -171,8 +175,8 @@ function MarketNewsCard() {
   if (!article) {
     return (
       <NewsCard
-        title="Market News"
-        description="No recent articles to feature. Browse the full feed for today's pricing shifts, supply and demand changes, seasonal forecasts, and key industry developments."
+        title={t('home.market_news_title')}
+        description={t('home.market_news_fallback')}
         img={IMG_MARKET_NEWS}
         link="/app/news"
         imageRight={true}
@@ -183,8 +187,8 @@ function MarketNewsCard() {
   const excerpt = firstNWords(plainText(article.description || article.content), 100);
   return (
     <NewsCard
-      eyebrow="Industry News"
-      title={article.title || 'Market News'}
+      eyebrow={t('home.industry_news_eyebrow')}
+      title={article.title || t('home.market_news_title')}
       description={excerpt}
       img={article.image}
       link={`/app/news/${article.id}`}
@@ -195,6 +199,7 @@ function MarketNewsCard() {
 }
 
 function FeatureCard({ title, description, img, link }) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md hover:border-[#819360] transition-all duration-200">
       <Link to={link} className="block aspect-video overflow-hidden">
@@ -210,7 +215,7 @@ function FeatureCard({ title, description, img, link }) {
         <h3 className="font-bold text-base text-gray-900 mb-2">{title}</h3>
         <p className="text-xs text-gray-600 flex-1 leading-relaxed">{description}</p>
         <Link to={link} className="mt-3 self-end text-[#3D6B34] font-semibold text-xs hover:underline">
-          Explore →
+          {t('home.explore_arrow')}
         </Link>
       </div>
     </div>
@@ -220,6 +225,7 @@ function FeatureCard({ title, description, img, link }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
@@ -261,7 +267,7 @@ export default function App() {
                 color: '#232f3a',
               }}
             >
-              Connect, Grow, Thrive:
+              {t('home.hero_tagline')}
             </h1>
             <h2
               className="mb-5"
@@ -272,17 +278,13 @@ export default function App() {
                 color: '#4C8B5D',
               }}
             >
-              The Oatmeal Farm Network
+              {t('home.hero_title')}
             </h2>
             <p className="text-gray-700 text-base mb-3 leading-relaxed">
-              <strong>Oatmeal Farm Network</strong> is your all-in-one platform connecting the entire food system.
+              <strong>Oatmeal Farm Network</strong> {t('home.hero_body1')}
             </p>
             <p className="text-gray-700 text-base mb-6 leading-relaxed">
-              Discover local connections through our Food-System Directory, make smarter
-              decisions with Saige's AI insights, and explore over 4,000 plant varieties and
-              3,000 livestock breeds in our specialized databases. With our upcoming Livestock
-              Marketplace, you'll soon be able to buy and sell directly within the network —
-              helping you grow, connect, and thrive from ground to gourmet.
+              {t('home.hero_body2')}
             </p>
           </div>
           <div className="relative">
@@ -305,7 +307,7 @@ export default function App() {
               bg-white/60 backdrop-blur-sm rounded-xl shadow-md p-4
             ">
               <div className="font-lora italic text-gray-800 text-sm md:text-base leading-snug text-center md:text-left">
-                "The future of food is rooted in the wisdom of our past."
+                {t('home.hero_quote')}
               </div>
             </div>
           </div>
@@ -316,10 +318,10 @@ export default function App() {
       <section style={{ backgroundColor: '#3D6B34' }} className="text-white">
         <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           {[
-            { n: '52',     label: 'BUSINESS CATEGORIES', link: '/directory' },
-            { n: '4K+',    label: 'PLANT VARIETIES',     link: '/plant-knowledgebase' },
-            { n: '3K+',    label: 'LIVESTOCK BREEDS',    link: '/livestock' },
-            { n: '1,400+', label: 'INGREDIENTS',         link: '/ingredient-knowledgebase' },
+            { n: '52',     label: t('home.stats_categories'), link: '/directory' },
+            { n: '4K+',    label: t('home.stats_plants'),     link: '/plant-knowledgebase' },
+            { n: '3K+',    label: t('home.stats_livestock'),  link: '/livestock' },
+            { n: '1,400+', label: t('home.stats_ingredients'),link: '/ingredient-knowledgebase' },
           ].map(s => (
             <Link
               key={s.label}
@@ -342,27 +344,27 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-8">
             <h2 className="font-lora text-3xl md:text-4xl font-bold text-gray-900">
-              Built for the <span style={{ color: '#3D6B34' }}>Ecosystem</span>
+              {t('home.ecosystem_title')} <span style={{ color: '#3D6B34' }}>{t('home.ecosystem_span')}</span>
             </h2>
-            <p className="text-gray-600 mt-2">Four pillars of the modern food network, unified.</p>
+            <p className="text-gray-600 mt-2">{t('home.ecosystem_sub')}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <EcosystemCard
-              title="Farm"
-              description="Grow smarter with modern tools and reliable connections designed to support today's agriculture."
-              img={IMG_FARM} link="/directory/farms-ranches" eager />
+              title={t('home.ecosystem_farm_title')}
+              description={t('home.ecosystem_farm_desc')}
+              img={IMG_FARM} link="/for-farms" eager />
             <EcosystemCard
-              title="Ranches"
-              description="Manage livestock more efficiently while expanding your reach to stronger, more sustainable markets."
-              img={IMG_RANCHES} link="/directory/farms-ranches" eager />
+              title={t('home.ecosystem_ranches_title')}
+              description={t('home.ecosystem_ranches_desc')}
+              img={IMG_RANCHES} link="/for-ranches" eager />
             <EcosystemCard
-              title="Artisan Producers"
-              description="Bring your handcrafted goods to a wider, quality-focused audience that values authenticity and craft."
-              img={IMG_ARTISAN} link="/directory/artisan-producers" eager />
+              title={t('home.ecosystem_artisan_title')}
+              description={t('home.ecosystem_artisan_desc')}
+              img={IMG_ARTISAN} link="/for-artisan-producers" eager />
             <EcosystemCard
-              title="Restaurants"
-              description="Connect with trusted local sources to serve fresh, high-quality ingredients with full transparency."
-              img={IMG_RESTAURANTS} link="/directory/restaurants" eager />
+              title={t('home.ecosystem_restaurants_title')}
+              description={t('home.ecosystem_restaurants_desc')}
+              img={IMG_RESTAURANTS} link="/for-restaurants" eager />
           </div>
         </div>
       </section>
@@ -371,8 +373,8 @@ export default function App() {
       <section className="pb-12">
         <div className="max-w-7xl mx-auto px-4 space-y-5">
           <NewsCard
-            title="Coming Soon: Open for Business"
-            description={`The Oatmeal Farm Network is entering its final phase of technical readiness for our 2026 launch. We are currently onboarding a select group of pilot food businesses and associations to refine our "digital nervous system" before opening the gates to the wider community. Soon, the tools to manage everything from a single restaurant's pantry to a national breed association's registry will be available in one integrated ecosystem.`}
+            title={t('home.news_company_title')}
+            description={t('home.news_company_desc')}
             img={IMG_COMPANY_NEWS}
             link="/news"
             imageRight={false}
@@ -385,45 +387,18 @@ export default function App() {
       <section className="pb-16">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="font-lora text-3xl md:text-4xl font-bold text-gray-900 mb-8">
-            Core <span style={{ color: '#3D6B34' }}>Features</span>
+            {t('home.features_title')} <span style={{ color: '#3D6B34' }}>{t('home.features_span')}</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <FeatureCard
-              title="Precision Agriculture"
-              description="An integrated precision agriculture solution that turns field data into actionable insights. Monitor crop health with satellite data, receive real-time alerts for stress or pests, and use predictive analytics to optimize yield, irrigation, and nutrient planning."
-              img={IMG_PRECISION} link="/precision-ag/fields" />
-            <FeatureCard
-              title="Farm 2 Table Marketplace"
-              description="A farm-to-table ecosystem that connects producers directly with chefs, restaurants, and consumers. Easily source fresh, local products, manage orders with smart logistics, and ensure full transparency with traceable product origins."
-              img={IMG_FARM2TABLE} link="/marketplace" />
-            <FeatureCard
-              title="Association Support"
-              description="A support program that equips food-system organizations with modern digital tools at no cost. Get a custom website, seamless event management, and earn a share of platform fees to support your community."
-              img={IMG_ASSOCIATION} link="/associations" />
-            <FeatureCard
-              title="Livestock Marketplace"
-              description="A data-driven livestock marketplace built for transparent buying, selling, and management. Access verified animal profiles, discover quality genetics for breeding, and make informed decisions with complete lifecycle visibility."
-              img={IMG_LIVESTOCK} link="/marketplaces" />
-            <FeatureCard
-              title="Event Registration"
-              description="A streamlined event management system designed for associations and producers. Easily create events, track registrations in real time, and offer seamless ticketing with fully branded event pages — all in one place."
-              img={IMG_EVENTS} link="/events" />
-            <FeatureCard
-              title="AI Advisors"
-              description="Industry-specific AI assistants designed to support every role in the ecosystem. From optimizing farm operations to managing restaurant inventory and streamlining artisan production, each AI helps automate workflows and improve decision-making."
-              img={IMG_AI_ADVISORS} link="/saige" />
-            <FeatureCard
-              title="Chef's Digital Pantry"
-              description="An intelligent inventory system that connects your kitchen directly to its supply chain. Track ingredients in real time, automate restocking, and manage costs with up-to-date pricing — all while sourcing seamlessly from local producers."
-              img={IMG_CHEF_PANTRY} link="/chef" />
-            <FeatureCard
-              title="Custom Website System"
-              description="An AI-powered website builder and CMS designed for producers with no technical skills. Instantly create a professional site, manage content with simple commands, and keep everything updated in real time."
-              img={IMG_WEBSITE} link="/website-builder" />
-            <FeatureCard
-              title="Knowledgebases"
-              description="A comprehensive knowledgebase built as a trusted source of truth for the food ecosystem. Explore detailed data on plant varieties, livestock breeds, and ingredients to support better decisions across agriculture and culinary industries."
-              img={IMG_KNOWLEDGE} link="/knowledgebases" />
+            <FeatureCard title={t('home.feat_precision_title')} description={t('home.feat_precision_desc')} img={IMG_PRECISION} link="/platform/precision-ag" />
+            <FeatureCard title={t('home.feat_farm2table_title')} description={t('home.feat_farm2table_desc')} img={IMG_FARM2TABLE} link="/marketplaces/farm-to-table" />
+            <FeatureCard title={t('home.feat_association_title')} description={t('home.feat_association_desc')} img={IMG_ASSOCIATION} link="/agriculture-support" />
+            <FeatureCard title={t('home.feat_livestock_title')} description={t('home.feat_livestock_desc')} img={IMG_LIVESTOCK} link="/marketplaces" />
+            <FeatureCard title={t('home.feat_events_title')} description={t('home.feat_events_desc')} img={IMG_EVENTS} link="/event-registration" />
+            <FeatureCard title={t('home.feat_ai_title')} description={t('home.feat_ai_desc')} img={IMG_AI_ADVISORS} link="/ai-agents" />
+            <FeatureCard title={t('home.feat_chef_title')} description={t('home.feat_chef_desc')} img={IMG_CHEF_PANTRY} link="/chef-pantry" />
+            <FeatureCard title={t('home.feat_website_title')} description={t('home.feat_website_desc')} img={IMG_WEBSITE} link="/website-builder" />
+            <FeatureCard title={t('home.feat_knowledge_title')} description={t('home.feat_knowledge_desc')} img={IMG_KNOWLEDGE} link="/knowledgebases" />
           </div>
         </div>
       </section>

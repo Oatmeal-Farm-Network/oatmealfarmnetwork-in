@@ -33,6 +33,7 @@ function SaigeWidgetGlobal() {
   const businessId = new URLSearchParams(search).get('BusinessID');
   return <SaigeWidget businessId={businessId} pageContext={pageContext} />;
 }
+import './i18n.js';
 import './index.css'
 import { AccountProvider } from './AccountContext';
 import { LanguageProvider } from './LanguageContext';

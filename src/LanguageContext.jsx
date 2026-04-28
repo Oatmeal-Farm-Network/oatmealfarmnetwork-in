@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import i18n from './i18n.js';
 
 export const LANGUAGES = [
   // ── Americas & British Isles ────────────────────────────────────
@@ -93,10 +94,14 @@ export function LanguageProvider({ children }) {
   const setLanguage = (code) => {
     localStorage.setItem(STORAGE_KEY, code);
     setLanguageState(code);
+    i18n.changeLanguage(code);
   };
 
   useEffect(() => {
     document.documentElement.lang = language;
+    const rtl = ['ar', 'ur'];
+    document.documentElement.dir = rtl.includes(language) ? 'rtl' : 'ltr';
+    i18n.changeLanguage(language);
   }, [language]);
 
   const entry = LANGUAGES.find(l => l.code === language);
