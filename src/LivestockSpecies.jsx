@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -57,6 +58,7 @@ const resolveHeroSrc = (speciesInfo, species) => {
 const EAGER_COUNT = 4;
 
 export default function LivestockSpecies() {
+  const { t } = useTranslation();
   const { species } = useParams();
   const { language } = useLanguage();
   const [speciesInfo, setSpeciesInfo]           = useState(null);
@@ -177,7 +179,7 @@ export default function LivestockSpecies() {
                 lineHeight: 1.2,
               }}
             >
-              Breeds of {pluralTerm}
+              {t('livestock_species.breeds_of', { name: pluralTerm })}
             </h1>
             {heroSnippet && (
               <p style={{ color: '#111111', fontSize: '0.82rem', margin: '0 0 10px', lineHeight: 1.5 }}>
@@ -198,7 +200,7 @@ export default function LivestockSpecies() {
                   textDecoration: 'none',
                 }}
               >
-                Learn More About {pluralTerm}
+                {t('livestock_species.learn_more', { name: pluralTerm })}
               </Link>
             </div>
           </div>
@@ -208,7 +210,7 @@ export default function LivestockSpecies() {
       <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
         {/* ── Section heading ── */}
-        <h2 className="text-lg font-bold text-gray-900 mb-4">All {label} Breeds</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">{t('livestock_species.all_breeds', { label })}</h2>
 
         {/* ── Letter selector (only when paginating) ── */}
         {!showAll && availableLetters.length > 0 && (
@@ -246,9 +248,9 @@ export default function LivestockSpecies() {
             ))}
           </div>
         ) : breeds === null ? (
-          <div className="text-gray-400 py-12 text-center">Select a letter above to browse breeds.</div>
+          <div className="text-gray-400 py-12 text-center">{t('livestock_species.select_letter')}</div>
         ) : breeds.length === 0 ? (
-          <div className="text-gray-400 py-8 text-center">No breeds found.</div>
+          <div className="text-gray-400 py-8 text-center">{t('livestock_species.no_breeds')}</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {breeds.map((b, index) => {
@@ -278,7 +280,7 @@ export default function LivestockSpecies() {
                         onError={e => { e.target.parentElement.classList.add('hidden'); }}
                       />
                     ) : (
-                      <span className="text-gray-300 text-xs text-center px-3">No image</span>
+                      <span className="text-gray-300 text-xs text-center px-3">{t('livestock_species.no_image')}</span>
                     )}
                   </Link>
 
@@ -306,7 +308,7 @@ export default function LivestockSpecies() {
                         className="text-xs font-bold hover:underline"
                         style={{ color: '#3D6B34' }}
                       >
-                        LEARN MORE →
+                        {t('livestock_species.learn_more_arrow')}
                       </Link>
                     </div>
                   </div>

@@ -3,6 +3,7 @@
 // Also handles legacy redirect: /livestockmarketplace/Animals/Details.asp?ID=xxx
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -62,9 +63,11 @@ function PhotoGallery({ photos }) {
 
   const visibleCount = photos ? photos.filter((_, i) => !failed[i]).length : 0;
 
+  const { t } = useTranslation();
+
   if (!photos || photos.length === 0 || visibleCount === 0) return (
     <div className="bg-gray-100 rounded-xl flex items-center justify-center" style={{ height: '320px' }}>
-      <p className="text-gray-400 text-sm">No photos available</p>
+      <p className="text-gray-400 text-sm">{t('livestock_animal.no_photos')}</p>
     </div>
   );
 
@@ -161,7 +164,7 @@ function AncestorBox({ node, gender }) {
             <div className="text-gray-500 leading-tight mt-0.5">{node.color}</div>
           )}
           {node.reg && String(node.reg).trim() && (
-            <div className="text-gray-500 leading-tight mt-0.5">Reg# {node.reg}</div>
+            <div className="text-gray-500 leading-tight mt-0.5">{node.reg}</div>
           )}
         </>
       )}
@@ -202,10 +205,12 @@ function AncestrySection({ ancestry, species }) {
     ancestry.dam_sire_sire, ancestry.dam_sire_dam,
     ancestry.dam_dam_sire, ancestry.dam_dam_dam,
   ].some(hasAncestor);
+  const { t } = useTranslation();
+
   if (bloodlineEntries.length === 0 && !hasAnyAncestor) return null;
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mt-6">
-      <h2 className="text-base font-bold mb-3" style={{ color: '#507033' }}>Ancestry</h2>
+      <h2 className="text-base font-bold mb-3" style={{ color: '#507033' }}>{t('livestock_animal.ancestry')}</h2>
       {bloodlineEntries.length > 0 && (
         <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-800 mb-5">
           {bloodlineEntries.map(([label, value]) => (
@@ -331,6 +336,8 @@ function PedigreeTree({ ancestry, species }) {
 
 // ── Fiber stats table ─────────────────────────────────────────────────────────
 function FiberStats({ rows }) {
+  const { t } = useTranslation();
+
   if (!rows || rows.length === 0) return null;
   const hasData = rows.some(r =>
     r.Average || r.StandardDev || r.COV || r.GreaterThan30 ||
@@ -340,22 +347,22 @@ function FiberStats({ rows }) {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-base font-bold mb-4" style={{ color: '#507033' }}>Fiber Stats</h2>
+      <h2 className="text-base font-bold mb-4" style={{ color: '#507033' }}>{t('livestock_animal.fiber_stats')}</h2>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-gray-200">
-              <th className="text-left pb-2 text-gray-500 font-semibold">Date</th>
-              <th className="text-center pb-2 text-gray-500 font-semibold">AFD</th>
-              <th className="text-center pb-2 text-gray-500 font-semibold">SD</th>
-              <th className="text-center pb-2 text-gray-500 font-semibold">COV</th>
-              <th className="text-center pb-2 text-gray-500 font-semibold">%&gt;30µ</th>
-              <th className="text-center pb-2 text-gray-500 font-semibold">Curve</th>
-              <th className="text-center pb-2 text-gray-500 font-semibold">CF</th>
-              <th className="text-center pb-2 text-gray-500 font-semibold">Crimps/In</th>
-              <th className="text-center pb-2 text-gray-500 font-semibold">Staple Length</th>
-              <th className="text-center pb-2 text-gray-500 font-semibold">Shear Wt</th>
-              <th className="text-center pb-2 text-gray-500 font-semibold">Blanket Wt</th>
+              <th className="text-left pb-2 text-gray-500 font-semibold">{t('livestock_animal.fiber_date')}</th>
+              <th className="text-center pb-2 text-gray-500 font-semibold">{t('livestock_animal.fiber_afd')}</th>
+              <th className="text-center pb-2 text-gray-500 font-semibold">{t('livestock_animal.fiber_sd')}</th>
+              <th className="text-center pb-2 text-gray-500 font-semibold">{t('livestock_animal.fiber_cov')}</th>
+              <th className="text-center pb-2 text-gray-500 font-semibold">{t('livestock_animal.fiber_gt30')}</th>
+              <th className="text-center pb-2 text-gray-500 font-semibold">{t('livestock_animal.fiber_curve')}</th>
+              <th className="text-center pb-2 text-gray-500 font-semibold">{t('livestock_animal.fiber_cf')}</th>
+              <th className="text-center pb-2 text-gray-500 font-semibold">{t('livestock_animal.fiber_crimps')}</th>
+              <th className="text-center pb-2 text-gray-500 font-semibold">{t('livestock_animal.fiber_length')}</th>
+              <th className="text-center pb-2 text-gray-500 font-semibold">{t('livestock_animal.fiber_shear')}</th>
+              <th className="text-center pb-2 text-gray-500 font-semibold">{t('livestock_animal.fiber_blanket')}</th>
             </tr>
           </thead>
           <tbody>
@@ -389,14 +396,14 @@ function FiberStats({ rows }) {
 
 // ── Awards table ──────────────────────────────────────────────────────────────
 function Awards({ rows }) {
+  const { t } = useTranslation();
   if (!rows || rows.length === 0) return null;
-  // Treat '0', 0, '', null, undefined as empty
   const hasVal = (v) => v != null && v !== '' && String(v) !== '0';
   const filtered = rows.filter(r => hasVal(r.ShowName) || hasVal(r.Placing) || hasVal(r.AwardClass));
   if (filtered.length === 0) return null;
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-base font-bold mb-4" style={{ color: '#507033' }}>Awards</h2>
+      <h2 className="text-base font-bold mb-4" style={{ color: '#507033' }}>{t('livestock_animal.awards')}</h2>
       <div className="space-y-2">
         {filtered.map((r, i) => (
           <div key={i} className={`rounded-lg px-4 py-2 text-sm ${i % 2 === 0 ? 'bg-gray-50' : 'bg-white border border-gray-100'}`}>
@@ -433,7 +440,7 @@ export function LivestockAnimalDetailContent({
   animalPackages: passedPackages,
   onPackageClick,
 }) {
-  // Fetch packages this animal belongs to (if not passed as prop)
+  const { t } = useTranslation();
   const [fetchedPackages, setFetchedPackages] = useState([]);
   useEffect(() => {
     if (passedPackages || !animal?.animal_id) return;
@@ -449,7 +456,7 @@ export function LivestockAnimalDetailContent({
   const dob = formatDOB(animal.dob || {});
 
   const priceDisplay = pricing.free
-    ? 'Free'
+    ? t('livestock_animal.free')
     : pricing.sold
     ? null
     : pricing.price
@@ -457,7 +464,7 @@ export function LivestockAnimalDetailContent({
     : null;
 
   const studFeeDisplay = !animal.sold && (animal.publish_stud || pricing.stud_fee)
-    ? (pricing.stud_fee ? formatPrice(pricing.stud_fee) : 'Call for Fee')
+    ? (pricing.stud_fee ? formatPrice(pricing.stud_fee) : t('livestock_animal.call_for_fee'))
     : null;
 
   const backSlug = animal.species_slug;
@@ -469,8 +476,8 @@ export function LivestockAnimalDetailContent({
       {!siteMode && (
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: 'Marketplaces', to: '/marketplaces' },
-          { label: 'Livestock', to: '/marketplaces/livestock' },
+          { label: t('livestock_mkt.crumb_marketplaces'), to: '/marketplaces' },
+          { label: t('livestock_mkt.crumb_livestock'), to: '/marketplaces/livestock' },
           ...(backSlug ? [{ label: backCrumbLabel, to: `/marketplaces/livestock/${backSlug}` }] : []),
           { label: animal.full_name },
         ]} />
@@ -481,13 +488,13 @@ export function LivestockAnimalDetailContent({
           onClick={onBack}
           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: primaryColor, fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.75rem' }}
         >
-          ← Back to {backLabel}
+          {t('livestock_animal.back_label', { label: backLabel })}
         </button>
       )}
 
       {animal.last_updated && (
         <p className="text-xs text-gray-400 mb-4">
-          Last updated: {new Date(animal.last_updated).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+          {t('livestock_animal.last_updated', { date: new Date(animal.last_updated).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) })}
         </p>
       )}
 
@@ -497,13 +504,13 @@ export function LivestockAnimalDetailContent({
 
       <div className="flex flex-wrap gap-2 mb-6">
         {animal.sold && (
-          <span className="inline-block bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">SOLD</span>
+          <span className="inline-block bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">{t('livestock_animal.sold')}</span>
         )}
         {animal.sale_pending && !animal.sold && (
-          <span className="inline-block bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-1 rounded-full">Sale Pending</span>
+          <span className="inline-block bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-1 rounded-full">{t('livestock_animal.sale_pending')}</span>
         )}
         {animal.publish_stud && !animal.sold && (
-          <span className="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">Stud Available</span>
+          <span className="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">{t('livestock_animal.stud_available')}</span>
         )}
       </div>
 
@@ -522,13 +529,13 @@ export function LivestockAnimalDetailContent({
               <table className="w-full text-sm">
                 <tbody>
                   {priceDisplay && (
-                    <StatRow label="Price">
+                    <StatRow label={t('livestock_animal.label_price')}>
                       <span className="font-bold text-lg" style={{ color: primaryColor }}>{priceDisplay}</span>
-                      {pricing.obo && <span className="ml-2 text-xs text-gray-500">OBO</span>}
+                      {pricing.obo && <span className="ml-2 text-xs text-gray-500">{t('livestock_animal.obo')}</span>}
                     </StatRow>
                   )}
                   {pricing.discount > 0 && priceDisplay && (
-                    <StatRow label="Discount">
+                    <StatRow label={t('livestock_animal.label_discount')}>
                       <span className="text-red-600 font-bold">{pricing.discount}% off</span>
                       <span className="ml-2 text-gray-500 line-through">{priceDisplay}</span>
                       <span className="ml-2 font-bold text-red-600">
@@ -537,11 +544,11 @@ export function LivestockAnimalDetailContent({
                     </StatRow>
                   )}
                   {studFeeDisplay && (
-                    <StatRow label="Stud Fee">
+                    <StatRow label={t('livestock_animal.label_stud_fee')}>
                       <span className="font-bold" style={{ color: primaryColor }}>{studFeeDisplay}</span>
                     </StatRow>
                   )}
-                  {dob && <StatRow label="DOB" value={dob} />}
+                  {dob && <StatRow label={t('livestock_animal.label_dob')} value={dob} />}
                   {(() => {
                     const seen = new Set();
                     return (registrations || [])
@@ -555,18 +562,18 @@ export function LivestockAnimalDetailContent({
                         <StatRow key={i} label={r.type} value={r.number} />
                       ));
                   })()}
-                  <StatRow label="Species" value={animal.species_singular} />
+                  <StatRow label={t('livestock_animal.label_species')} value={animal.species_singular} />
                   {animal.breeds && animal.breeds.length > 0 && (
-                    <StatRow label={animal.breeds.length > 1 ? 'Breeds' : 'Breed'} value={animal.breeds.join(', ')} />
+                    <StatRow label={animal.breeds.length > 1 ? t('livestock_animal.label_breeds') : t('livestock_animal.label_breed')} value={animal.breeds.join(', ')} />
                   )}
                   {animal.category && String(animal.category) !== '0' && (
-                    <StatRow label="Category" value={animal.category} />
+                    <StatRow label={t('livestock_animal.label_category')} value={animal.category} />
                   )}
                   {animal.colors && animal.colors.length > 0 && (
-                    <StatRow label="Color" value={animal.colors.join(' / ')} />
+                    <StatRow label={t('livestock_animal.label_color')} value={animal.colors.join(' / ')} />
                   )}
                   {animalPackages.length > 0 && (
-                    <StatRow label={animalPackages.length === 1 ? 'Package' : 'Packages'}>
+                    <StatRow label={animalPackages.length === 1 ? t('livestock_animal.label_package') : t('livestock_animal.label_packages')}>
                       {animalPackages.map((pkg, i) => (
                         <span key={pkg.PackageID}>
                           {onPackageClick ? (
@@ -584,16 +591,16 @@ export function LivestockAnimalDetailContent({
                       ))}
                     </StatRow>
                   )}
-                  {animal.height && <StatRow label="Height" value={animal.height} />}
-                  {animal.weight && <StatRow label="Weight" value={animal.weight} />}
-                  {animal.horns && String(animal.horns) !== '0' && <StatRow label="Horns" value={animal.horns} />}
+                  {animal.height && <StatRow label={t('livestock_animal.label_height')} value={animal.height} />}
+                  {animal.weight && <StatRow label={t('livestock_animal.label_weight')} value={animal.weight} />}
+                  {animal.horns && String(animal.horns) !== '0' && <StatRow label={t('livestock_animal.label_horns')} value={animal.horns} />}
                   {animal.temperament && animal.temperament !== '0' && (
-                    <StatRow label="Temperament">
-                      {animal.temperament} <span className="text-xs text-gray-400 ml-1">(1=calm, 10=spirited)</span>
+                    <StatRow label={t('livestock_animal.label_temperament')}>
+                      {animal.temperament} <span className="text-xs text-gray-400 ml-1">{t('livestock_animal.temperament_scale')}</span>
                     </StatRow>
                   )}
                   {animal.vaccinations && (
-                    <StatRow label="Vaccinations" value={animal.vaccinations} />
+                    <StatRow label={t('livestock_animal.label_vaccinations')} value={animal.vaccinations} />
                   )}
                 </tbody>
               </table>
@@ -606,7 +613,7 @@ export function LivestockAnimalDetailContent({
                   <hr className="border-gray-100" />
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                      About {animal.full_name}
+                      {t('livestock_animal.about_animal', { name: animal.full_name })}
                     </p>
                     <div
                       className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none"
@@ -620,7 +627,7 @@ export function LivestockAnimalDetailContent({
                 <>
                   <hr className="border-gray-100" />
                   <div className="text-center">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Listed By</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">{t('livestock_animal.listed_by')}</p>
                     {owner.logo && (
                       <img
                         src={owner.logo}
@@ -645,19 +652,19 @@ export function LivestockAnimalDetailContent({
                           className="inline-block mt-2 text-xs font-bold"
                           style={{ color: primaryColor }}
                         >
-                          View Ranch Page →
+                          {t('livestock_animal.view_ranch')}
                         </Link>
                       </div>
                     )}
                     {owner.business_id && (
                       <div className="mt-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Contact Seller</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">{t('livestock_animal.contact_seller')}</p>
                         <Link
                           to={`/marketplaces/livestock/ranch/${owner.business_id}`}
                           className="inline-block px-4 py-1.5 rounded-lg font-bold text-xs text-white transition-all hover:opacity-90"
                           style={{ backgroundColor: 'rgb(123, 141, 92)', color: '#ffffff' }}
                         >
-                          Contact Seller
+                          {t('livestock_animal.contact_seller')}
                         </Link>
                       </div>
                     )}
@@ -666,12 +673,11 @@ export function LivestockAnimalDetailContent({
               )
             )}
 
-            {/* Finance terms */}
             {animal.finance_terms && animal.finance_terms.trim().length > 6 && (
               <>
                 <hr className="border-gray-100" />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Financial Terms</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">{t('livestock_animal.financial_terms')}</p>
                   <p className="text-sm text-gray-700 leading-relaxed">{animal.finance_terms}</p>
                 </div>
               </>
@@ -682,7 +688,7 @@ export function LivestockAnimalDetailContent({
           {/* Co-owners */}
           {animal.co_owners && animal.co_owners.length > 0 && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-sm font-bold mb-2 text-gray-700">Co-Owned By</h2>
+              <h2 className="text-sm font-bold mb-2 text-gray-700">{t('livestock_animal.co_owned_by')}</h2>
               {animal.co_owners.map((co, i) => (
                 <div key={i} className="text-sm text-gray-700 mb-1">
                   {co.link && co.link.length > 3
@@ -706,7 +712,7 @@ export function LivestockAnimalDetailContent({
             {animal.video_url && (
               <div className="mt-3">
                 <a href={animal.video_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold" style={{ color: primaryColor }}>
-                  ▶ Watch Video
+                  {t('livestock_animal.watch_video')}
                 </a>
               </div>
             )}
@@ -715,13 +721,13 @@ export function LivestockAnimalDetailContent({
                 {animal.registration_url && (
                   <a href={animal.registration_url} target="_blank" rel="noopener noreferrer" download
                      className="text-xs font-bold" style={{ color: primaryColor }}>
-                    📄 Download Registration Certificate
+                    {t('livestock_animal.download_reg')}
                   </a>
                 )}
                 {animal.histogram_url && (
                   <a href={animal.histogram_url} target="_blank" rel="noopener noreferrer" download
                      className="text-xs font-bold" style={{ color: primaryColor }}>
-                    📄 Download Histogram
+                    {t('livestock_animal.download_histogram')}
                   </a>
                 )}
               </div>
@@ -730,7 +736,7 @@ export function LivestockAnimalDetailContent({
               <div className="mt-3">
                 <Link to={`/marketplaces/livestock/animal/${animal.animal_id}/progeny`}
                       className="text-xs font-bold" style={{ color: primaryColor }}>
-                  👶 View Progeny
+                  {t('livestock_animal.view_progeny')}
                 </Link>
               </div>
             )}
@@ -750,7 +756,7 @@ export function LivestockAnimalDetailContent({
       {!siteMode && animal.description && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mt-6">
           <h2 className="text-base font-bold mb-3" style={{ color: '#507033' }}>
-            About {animal.full_name}
+            {t('livestock_animal.about_animal', { name: animal.full_name })}
           </h2>
           <div
             className="text-sm text-gray-700 leading-relaxed"
@@ -779,14 +785,14 @@ export function LivestockAnimalDetailContent({
             disabled={!hasPrev}
             style={{ background: 'none', border: 'none', padding: 0, cursor: hasPrev ? 'pointer' : 'default', color: hasPrev ? primaryColor : 'transparent', fontSize: '0.9rem', fontWeight: 600, opacity: hasPrev ? 1 : 0, pointerEvents: hasPrev ? 'auto' : 'none' }}
           >
-            ← Previous
+            {t('livestock_animal.prev')}
           </button>
           <button
             onClick={hasNext ? onNext : undefined}
             disabled={!hasNext}
             style={{ background: 'none', border: 'none', padding: 0, cursor: hasNext ? 'pointer' : 'default', color: hasNext ? primaryColor : 'transparent', fontSize: '0.9rem', fontWeight: 600, opacity: hasNext ? 1 : 0, pointerEvents: hasNext ? 'auto' : 'none' }}
           >
-            Next →
+            {t('livestock_animal.next')}
           </button>
         </div>
       )}
@@ -796,6 +802,7 @@ export function LivestockAnimalDetailContent({
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function LivestockAnimalDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const { language } = useLanguage();
   const [animal, setAnimal] = useState(null);
@@ -832,9 +839,9 @@ export default function LivestockAnimalDetail() {
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <Header />
       <div className="max-w-2xl mx-auto px-4 py-24 text-center">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">Animal Not Found</h1>
-        <p className="text-gray-600 mb-8">This listing may have been removed or the ID is incorrect.</p>
-        <Link to="/marketplaces/livestock" className="text-sm font-bold" style={{ color: '#3D6B34' }}>← Back to Livestock Marketplace</Link>
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">{t('livestock_animal.not_found')}</h1>
+        <p className="text-gray-600 mb-8">{t('livestock_animal.not_found_body')}</p>
+        <Link to="/marketplaces/livestock" className="text-sm font-bold" style={{ color: '#3D6B34' }}>{t('livestock_animal.back_marketplace')}</Link>
       </div>
       <Footer />
     </div>

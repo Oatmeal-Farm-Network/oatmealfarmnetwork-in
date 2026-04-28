@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -74,6 +75,7 @@ function getCover(post) {
 }
 
 export default function BlogAuthorDetail() {
+  const { t } = useTranslation();
   const { authorId } = useParams();
   const [author, setAuthor]   = useState(null);
   const [loading, setLoading] = useState(true);
@@ -146,15 +148,15 @@ export default function BlogAuthorDetail() {
           { label: author?.name || 'Author' },
         ]} />
         <Link to="/blog" style={{ color: '#7C5CBF', textDecoration: 'none', fontSize: '0.85rem', display: 'inline-block', marginBottom: '1.5rem' }}>
-          ← Back to Blog
+          {t('blog_author.back_blog')}
         </Link>
 
-        {loading && <p style={{ color: '#9ca3af', textAlign: 'center', padding: '3rem 0' }}>Loading...</p>}
+        {loading && <p style={{ color: '#9ca3af', textAlign: 'center', padding: '3rem 0' }}>{t('blog_author.loading')}</p>}
 
         {notFound && !loading && (
           <div style={{ textAlign: 'center', padding: '3rem' }}>
-            <h2 style={{ color: '#374151' }}>Author Not Found</h2>
-            <p style={{ color: '#9ca3af' }}>This author profile may have been removed.</p>
+            <h2 style={{ color: '#374151' }}>{t('blog_author.not_found')}</h2>
+            <p style={{ color: '#9ca3af' }}>{t('blog_author.not_found_body')}</p>
           </div>
         )}
 
@@ -193,7 +195,7 @@ export default function BlogAuthorDetail() {
             {author.posts && author.posts.length > 0 && (
               <div>
                 <h2 style={{ margin: '0 0 1rem', fontSize: '1.2rem', fontWeight: 700, color: '#111827' }}>
-                  Posts by {author.name}
+                  {t('blog_author.posts_by', { name: author.name })}
                 </h2>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
                   {author.posts.map(post => {
@@ -234,7 +236,7 @@ export default function BlogAuthorDetail() {
 
             {author.posts && author.posts.length === 0 && (
               <p style={{ color: '#9ca3af', fontSize: '0.9rem', textAlign: 'center', padding: '2rem 0' }}>
-                No published posts yet.
+                {t('blog_author.no_posts')}
               </p>
             )}
           </>

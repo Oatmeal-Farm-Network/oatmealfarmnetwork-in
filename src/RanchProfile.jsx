@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -21,9 +22,10 @@ const SOCIAL_LINKS = [
 ];
 
 function AnimalCard({ animal, isStuds }) {
+  const { t } = useTranslation();
   const [imgFailed, setImgFailed] = useState(false);
   const detailUrl = `/livestockmarketplace/Animals/Details.asp?ID=${animal.animal_id}`;
-  const priceLabel = isStuds ? 'Stud Fee' : 'Price';
+  const priceLabel = isStuds ? t('ranch_profile.stud_fee') : t('ranch_profile.price_label');
 
   return (
     <div style={{ border: '1px solid #e0e0e0', borderRadius: '6px', padding: '12px', display: 'flex', gap: '12px', marginBottom: '12px', backgroundColor: '#fff' }}>
@@ -36,7 +38,7 @@ function AnimalCard({ animal, isStuds }) {
           </a>
         ) : (
           <div style={{ width: '90px', height: '90px', backgroundColor: '#f0f0f0', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ccc', fontSize: '11px' }}>
-            No Photo
+            {t('ranch_profile.no_photo')}
           </div>
         )}
       </div>
@@ -46,10 +48,10 @@ function AnimalCard({ animal, isStuds }) {
         </a>
         {animal.breeds.length > 0 && <p style={{ margin: '0 0 4px', fontSize: '0.85rem', color: '#666' }}>{animal.breeds.join(', ')}</p>}
         <p style={{ margin: '0 0 8px', fontSize: '0.85rem' }}>
-          <strong>{priceLabel}:</strong> {animal.price ? `$${Math.round(animal.price).toLocaleString()}` : 'Call for Price'}
+          <strong>{priceLabel}:</strong> {animal.price ? `$${Math.round(animal.price).toLocaleString()}` : t('ranch_profile.call_for_price')}
         </p>
         <a href={detailUrl} style={{ backgroundColor: '#6c757d', color: '#fff', padding: '4px 12px', borderRadius: '4px', textDecoration: 'none', fontSize: '0.8rem' }}>
-          View Details
+          {t('ranch_profile.view_details')}
         </a>
       </div>
     </div>
@@ -57,6 +59,7 @@ function AnimalCard({ animal, isStuds }) {
 }
 
 function AnimalsTab({ businessId, isStuds }) {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -69,19 +72,19 @@ function AnimalsTab({ businessId, isStuds }) {
       .catch(() => setLoading(false));
   }, [businessId, page, isStuds]);
 
-  if (loading) return <div style={{ padding: '20px', color: '#888' }}>Loading...</div>;
+  if (loading) return <div style={{ padding: '20px', color: '#888' }}>{t('ranch_profile.loading')}</div>;
   if (!data || data.animals.length === 0) return (
-    <div style={{ padding: '20px', color: '#888' }}>No {isStuds ? 'stud' : 'sale'} listings found.</div>
+    <div style={{ padding: '20px', color: '#888' }}>{isStuds ? t('ranch_profile.no_stud_listings') : t('ranch_profile.no_sale_listings')}</div>
   );
 
   return (
     <div>
-      <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '12px' }}>{data.total} animal{data.total !== 1 ? 's' : ''}</p>
+      <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '12px' }}>{t('ranch_profile.animal_count', { count: data.total })}</p>
       {data.animals.map(a => <AnimalCard key={a.animal_id} animal={a} isStuds={isStuds} />)}
       {data.total_pages > 1 && (
         <div style={{ display: 'flex', gap: '4px', marginTop: '16px' }}>
-          {page > 1 && <button onClick={() => setPage(p => p - 1)} style={btnStyle}>‹ Prev</button>}
-          {page < data.total_pages && <button onClick={() => setPage(p => p + 1)} style={btnStyle}>Next ›</button>}
+          {page > 1 && <button onClick={() => setPage(p => p - 1)} style={btnStyle}>{t('ranch_profile.prev')}</button>}
+          {page < data.total_pages && <button onClick={() => setPage(p => p + 1)} style={btnStyle}>{t('ranch_profile.next')}</button>}
         </div>
       )}
     </div>
@@ -89,6 +92,7 @@ function AnimalsTab({ businessId, isStuds }) {
 }
 
 function ContactTab({ ranch }) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
   const [sent, setSent] = useState(false);
   const [q] = useState(() => {
@@ -100,21 +104,21 @@ function ContactTab({ ranch }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (parseInt(userAnswer) !== q.answer) { alert('Please answer the math question correctly.'); return; }
-    if (!formData.name || !formData.email) { alert('Please fill in required fields.'); return; }
+    if (parseInt(userAnswer) !== q.answer) { alert(t('ranch_profile.alert_wrong_answer')); return; }
+    if (!formData.name || !formData.email) { alert(t('ranch_profile.alert_required')); return; }
     setSent(true);
   };
 
   if (sent) return (
     <div style={{ backgroundColor: '#d4edda', border: '1px solid #c3e6cb', borderRadius: '4px', padding: '16px' }}>
-      <h4 style={{ margin: '0 0 8px', color: '#155724' }}>Message Sent!</h4>
-      <p style={{ margin: 0, color: '#155724' }}>Thank you for contacting {ranch.business_name}. They will be in touch soon.</p>
+      <h4 style={{ margin: '0 0 8px', color: '#155724' }}>{t('ranch_profile.msg_sent')}</h4>
+      <p style={{ margin: 0, color: '#155724' }}>{t('ranch_profile.thank_you', { name: ranch.business_name })}</p>
     </div>
   );
 
   return (
     <div style={{ maxWidth: '500px' }}>
-      <h3 style={{ marginBottom: '16px' }}>Contact {ranch.business_name}</h3>
+      <h3 style={{ marginBottom: '16px' }}>{t('ranch_profile.contact_heading', { name: ranch.business_name })}</h3>
       {ranch.address_city && (
         <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '16px' }}>
           {[ranch.address_street, ranch.address_city, ranch.address_state, ranch.address_zip, ranch.address_country].filter(Boolean).join(', ')}
@@ -127,26 +131,26 @@ function ContactTab({ ranch }) {
       )}
       <form onSubmit={handleSubmit}>
         {[
-          { id: 'name', label: 'Name', type: 'text', required: true },
-          { id: 'email', label: 'Email', type: 'email', required: true },
-          { id: 'phone', label: 'Phone', type: 'tel', required: false, optional: true },
+          { id: 'name', tkey: 'ranch_profile.field_name', type: 'text', required: true },
+          { id: 'email', tkey: 'ranch_profile.field_email', type: 'email', required: true },
+          { id: 'phone', tkey: 'ranch_profile.field_phone', type: 'tel', required: false, optional: true },
         ].map(f => (
           <div key={f.id} style={{ marginBottom: '12px' }}>
             <label style={formLabel}>
-              {f.label}
-              {f.optional && <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400, marginLeft: 4 }}>(optional)</span>}
+              {t(f.tkey)}
+              {f.optional && <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400, marginLeft: 4 }}>{t('ranch_profile.optional')}</span>}
             </label>
             <input type={f.type} value={formData[f.id]} onChange={e => setFormData(p => ({ ...p, [f.id]: e.target.value }))}
               required={f.required} style={formInput} />
           </div>
         ))}
         <div style={{ marginBottom: '12px' }}>
-          <label style={formLabel}>Message</label>
+          <label style={formLabel}>{t('ranch_profile.field_message')}</label>
           <textarea value={formData.message} onChange={e => setFormData(p => ({ ...p, message: e.target.value }))}
             rows={4} style={{ ...formInput, resize: 'vertical' }} />
         </div>
         <div style={{ marginBottom: '16px', backgroundColor: '#f8f8f8', padding: '12px', borderRadius: '4px' }}>
-          <p style={{ margin: '0 0 8px', fontSize: '0.85rem', fontWeight: 600 }}>Human Verification</p>
+          <p style={{ margin: '0 0 8px', fontSize: '0.85rem', fontWeight: 600 }}>{t('ranch_profile.human_verification')}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{q.a} + {q.b} =</span>
             <input type="number" value={userAnswer} onChange={e => setUserAnswer(e.target.value)}
@@ -154,7 +158,7 @@ function ContactTab({ ranch }) {
           </div>
         </div>
         <button type="submit" style={{ backgroundColor: '#819360', color: '#fff', padding: '10px 24px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
-          Send Message
+          {t('ranch_profile.send')}
         </button>
       </form>
     </div>
@@ -162,6 +166,7 @@ function ContactTab({ ranch }) {
 }
 
 function EventsTab({ events }) {
+  const { t } = useTranslation();
   const fmtDate = (d) => {
     if (!d) return '';
     try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
@@ -175,13 +180,13 @@ function EventsTab({ events }) {
   };
 
   if (!events || events.length === 0) return (
-    <div style={{ padding: '20px', color: '#888' }}>No upcoming events.</div>
+    <div style={{ padding: '20px', color: '#888' }}>{t('ranch_profile.no_events')}</div>
   );
 
   return (
     <div>
       <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '12px' }}>
-        {events.length} upcoming event{events.length !== 1 ? 's' : ''}
+        {t('ranch_profile.event_count', { count: events.length })}
       </p>
       {events.map(e => {
         const days = daysUntil(e.EventStartDate);
@@ -199,13 +204,13 @@ function EventsTab({ events }) {
               </p>
               {days != null && days >= 0 && days <= 30 && (
                 <span style={{ display: 'inline-block', marginTop: '6px', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '999px', backgroundColor: '#eef3e7', color: '#3D6B34', fontWeight: 600 }}>
-                  in {days} day{days !== 1 ? 's' : ''}
+                  {t('ranch_profile.days_until', { count: days })}
                 </span>
               )}
             </div>
             <Link to={`/events/${e.EventID}`}
               style={{ backgroundColor: '#507033', color: '#fff', padding: '8px 16px', borderRadius: '4px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
-              Register →
+              {t('ranch_profile.register')}
             </Link>
           </div>
         );
@@ -215,6 +220,7 @@ function EventsTab({ events }) {
 }
 
 export default function RanchProfile() {
+  const { t } = useTranslation();
   const { businessId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const [ranch, setRanch] = useState(null);
@@ -265,18 +271,18 @@ export default function RanchProfile() {
   if (!ranch) return (
     <div className="min-h-screen font-sans">
       <Header />
-      <div style={{ textAlign: 'center', padding: '60px' }}><p>Ranch not found.</p><Link to="/marketplaces/livestock">← Back</Link></div>
+      <div style={{ textAlign: 'center', padding: '60px' }}><p>{t('ranch_profile.not_found')}</p><Link to="/marketplaces/livestock">{t('ranch_profile.back')}</Link></div>
       <Footer />
     </div>
   );
 
   const TABS = [
-    { key: 'home', label: 'Home', always: true },
-    { key: 'animals', label: `Animals For Sale (${animalCounts.for_sale})`, show: animalCounts.for_sale > 0 },
-    { key: 'studs', label: `Stud Services (${animalCounts.studs})`, show: animalCounts.studs > 0 },
-    { key: 'events', label: `Upcoming Events (${events.length})`, show: events.length > 0 },
-    { key: 'contact', label: 'About / Contact', always: true },
-  ].filter(t => t.always || t.show);
+    { key: 'home', label: t('ranch_profile.tab_home'), always: true },
+    { key: 'animals', label: t('ranch_profile.tab_animals', { count: animalCounts.for_sale }), show: animalCounts.for_sale > 0 },
+    { key: 'studs', label: t('ranch_profile.tab_studs', { count: animalCounts.studs }), show: animalCounts.studs > 0 },
+    { key: 'events', label: t('ranch_profile.tab_events', { count: events.length }), show: events.length > 0 },
+    { key: 'contact', label: t('ranch_profile.tab_contact'), always: true },
+  ].filter(tab => tab.always || tab.show);
 
   const ranchLocation = [ranch.address_city, ranch.address_state].filter(Boolean).join(', ');
   const ranchDesc = ranch.description
@@ -394,7 +400,7 @@ export default function RanchProfile() {
 
             <button onClick={() => setTab('contact')}
               style={{ backgroundColor: '#507033', color: '#fff', padding: '10px 24px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>
-              Contact This Ranch
+              {t('ranch_profile.contact_btn')}
             </button>
           </div>
         )}

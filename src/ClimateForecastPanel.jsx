@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const SEVERITY_STYLE = {
-  critical: { bg: '#FFE4E6', border: '#FB7185', text: '#9F1239', dot: '#E11D48', label: 'Critical' },
-  severe:   { bg: '#FFEDD5', border: '#FB923C', text: '#9A3412', dot: '#F97316', label: 'Severe'  },
-  warn:     { bg: '#FEF3C7', border: '#FBBF24', text: '#92400E', dot: '#F59E0B', label: 'Warning' },
+  critical: { bg: '#FFE4E6', border: '#FB7185', text: '#9F1239', dot: '#E11D48', tKey: 'sev_critical' },
+  severe:   { bg: '#FFEDD5', border: '#FB923C', text: '#9A3412', dot: '#F97316', tKey: 'sev_severe'   },
+  warn:     { bg: '#FEF3C7', border: '#FBBF24', text: '#92400E', dot: '#F59E0B', tKey: 'sev_warn'     },
 };
 
 const KI = ({ children }) => (
@@ -16,25 +17,27 @@ const KI = ({ children }) => (
 );
 
 const KIND_LABEL = {
-  heatwave:   { label: 'Heatwave',                  icon: <KI><path d="M8 1v2M8 13v2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M1 8h2M13 8h2M3.5 12.5l1.4-1.4M11.1 4.9l1.4-1.4"/><circle cx="8" cy="8" r="3"/></KI> },
-  frost:      { label: 'Frost / Hard Freeze',        icon: <KI><line x1="8" y1="1" x2="8" y2="15"/><line x1="1" y1="8" x2="15" y2="8"/><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></KI> },
-  cold_snap:  { label: 'Cold Snap',                  icon: <KI><path d="M8 2v12M5 5l3-3 3 3M5 11l3 3 3-3M2 8l3-3-3 3M14 8l-3-3 3 3"/></KI> },
-  high_vpd:   { label: 'High VPD / Drought Stress',  icon: <KI><path d="M8 14V8"/><path d="M5 10c0-3 3-5 3-8 0 3 3 5 3 8a3 3 0 0 1-6 0z"/><line x1="4" y1="6" x2="12" y2="6" strokeDasharray="1.5 1.5"/></KI> },
-  heavy_rain: { label: 'Heavy Rain',                 icon: <KI><path d="M3 9a5 5 0 0 1 10 0 3 3 0 0 1 0 6H3a3 3 0 0 1 0-6z"/><line x1="5" y1="13" x2="4" y2="15"/><line x1="8" y1="13" x2="7" y2="15"/><line x1="11" y1="13" x2="10" y2="15"/></KI> },
-  high_wind:  { label: 'High Wind',                  icon: <KI><path d="M2 8h9a2 2 0 1 0-2-2"/><path d="M2 11h6a2 2 0 1 1-2 2"/><path d="M2 5h5a2 2 0 1 0-2-2"/></KI> },
+  heatwave:   { tKey: 'kind_heatwave',   icon: <KI><path d="M8 1v2M8 13v2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M1 8h2M13 8h2M3.5 12.5l1.4-1.4M11.1 4.9l1.4-1.4"/><circle cx="8" cy="8" r="3"/></KI> },
+  frost:      { tKey: 'kind_frost',      icon: <KI><line x1="8" y1="1" x2="8" y2="15"/><line x1="1" y1="8" x2="15" y2="8"/><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></KI> },
+  cold_snap:  { tKey: 'kind_cold_snap',  icon: <KI><path d="M8 2v12M5 5l3-3 3 3M5 11l3 3 3-3M2 8l3-3-3 3M14 8l-3-3 3 3"/></KI> },
+  high_vpd:   { tKey: 'kind_high_vpd',  icon: <KI><path d="M8 14V8"/><path d="M5 10c0-3 3-5 3-8 0 3 3 5 3 8a3 3 0 0 1-6 0z"/><line x1="4" y1="6" x2="12" y2="6" strokeDasharray="1.5 1.5"/></KI> },
+  heavy_rain: { tKey: 'kind_heavy_rain', icon: <KI><path d="M3 9a5 5 0 0 1 10 0 3 3 0 0 1 0 6H3a3 3 0 0 1 0-6z"/><line x1="5" y1="13" x2="4" y2="15"/><line x1="8" y1="13" x2="7" y2="15"/><line x1="11" y1="13" x2="10" y2="15"/></KI> },
+  high_wind:  { tKey: 'kind_high_wind',  icon: <KI><path d="M2 8h9a2 2 0 1 0-2-2"/><path d="M2 11h6a2 2 0 1 1-2 2"/><path d="M2 5h5a2 2 0 1 0-2-2"/></KI> },
 };
 
 const WarnIcon = () => (
   <KI><path d="M8 2L1 14h14z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12.5" r="0.6" fill="currentColor" stroke="none"/></KI>
 );
 
-function fmtRelative(hours) {
+function fmtRelative(t, hours) {
   if (hours == null) return '—';
-  if (hours < 1)   return 'now';
-  if (hours < 24)  return `in ${hours}h`;
+  if (hours < 1)   return t('climate_forecast.relative_now');
+  if (hours < 24)  return t('climate_forecast.relative_hours', { hours });
   const days = Math.floor(hours / 24);
   const rem  = hours % 24;
-  return rem === 0 ? `in ${days}d` : `in ${days}d ${rem}h`;
+  return rem === 0
+    ? t('climate_forecast.relative_days', { days })
+    : t('climate_forecast.relative_days_hours', { days, rem });
 }
 
 function fmtClock(iso) {
@@ -71,8 +74,9 @@ function MiniSpark({ rows, valueKey, lo, hi, color }) {
 }
 
 function StressEventCard({ ev }) {
+  const { t } = useTranslation();
   const style = SEVERITY_STYLE[ev.severity] || SEVERITY_STYLE.warn;
-  const kind  = KIND_LABEL[ev.kind] || { label: ev.kind, icon: <WarnIcon /> };
+  const kind  = KIND_LABEL[ev.kind] || { tKey: null, icon: <WarnIcon /> };
   return (
     <div className="rounded-lg border p-4" style={{ background: style.bg, borderColor: style.border }}>
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -80,10 +84,16 @@ function StressEventCard({ ev }) {
           <span style={{ color: style.text }}>{kind.icon}</span>
           <div>
             <div className="font-mont font-bold text-sm" style={{ color: style.text }}>
-              {kind.label}
+              {kind.tKey ? t('climate_forecast.' + kind.tKey) : ev.kind}
             </div>
             <div className="text-xs" style={{ color: style.text, opacity: 0.85 }}>
-              Onset {fmtRelative(ev.onset_hours_out)} ({fmtClock(ev.onset)}) · {ev.duration_hours}h · peak {ev.peak_value} {ev.units}
+              {t('climate_forecast.event_onset_desc', {
+                relative: fmtRelative(t, ev.onset_hours_out),
+                clock: fmtClock(ev.onset),
+                duration: ev.duration_hours,
+                peak: ev.peak_value,
+                units: ev.units,
+              })}
             </div>
           </div>
         </div>
@@ -91,7 +101,7 @@ function StressEventCard({ ev }) {
           className="text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded-full"
           style={{ background: style.dot, color: '#fff' }}
         >
-          {style.label}
+          {t('climate_forecast.' + style.tKey)}
         </span>
       </div>
       <p className="mt-3 text-sm" style={{ color: style.text }}>{ev.reason}</p>
@@ -110,6 +120,7 @@ function StressEventCard({ ev }) {
 }
 
 export default function ClimateForecastPanel({ fieldId }) {
+  const { t } = useTranslation();
   const [data, setData]     = useState(null);
   const [loading, setLoad]  = useState(true);
   const [error, setError]   = useState(null);
@@ -126,8 +137,8 @@ export default function ClimateForecastPanel({ fieldId }) {
       .finally(() => setLoad(false));
   }, [fieldId, hours]);
 
-  if (loading && !data) return <div className="p-6 text-gray-500">Loading forecast…</div>;
-  if (error)            return <div className="p-6 text-red-600">Could not load climate forecast: {error}</div>;
+  if (loading && !data) return <div className="p-6 text-gray-500">{t('climate_forecast.loading')}</div>;
+  if (error)            return <div className="p-6 text-red-600">{t('climate_forecast.error_load', { error })}</div>;
   if (!data)            return null;
 
   const { summary = {}, events = [], hourly = [], crop_profile = {}, source } = data;
@@ -139,9 +150,13 @@ export default function ClimateForecastPanel({ fieldId }) {
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <h3 className="font-lora text-xl font-bold text-gray-900">Predictive Climate Stress</h3>
+            <h3 className="font-lora text-xl font-bold text-gray-900">{t('climate_forecast.heading')}</h3>
             <p className="text-sm text-gray-500 font-mont mt-1">
-              {data.field_name} · {data.crop_type || 'Unknown crop'} · next {data.horizon_hours}h
+              {t('climate_forecast.subheading', {
+                field_name: data.field_name,
+                crop_type: data.crop_type || t('climate_forecast.unknown_crop'),
+                horizon_hours: data.horizon_hours,
+              })}
             </p>
           </div>
           <div className="flex gap-1 text-xs">
@@ -161,48 +176,53 @@ export default function ClimateForecastPanel({ fieldId }) {
 
         <div className="mt-5 grid grid-cols-2 md:grid-cols-5 gap-4">
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">High</div>
+            <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">{t('climate_forecast.stat_high')}</div>
             <div className="text-2xl font-lora font-bold text-gray-900 mt-1">{summary.max_temp_f ?? '—'}°F</div>
             <MiniSpark rows={next72} valueKey="temp_f" color="#EF4444" />
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Low</div>
+            <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">{t('climate_forecast.stat_low')}</div>
             <div className="text-2xl font-lora font-bold text-gray-900 mt-1">{summary.min_temp_f ?? '—'}°F</div>
             <MiniSpark rows={next72} valueKey="temp_f" color="#3B82F6" />
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Peak VPD</div>
+            <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">{t('climate_forecast.stat_peak_vpd')}</div>
             <div className="text-2xl font-lora font-bold text-gray-900 mt-1">{summary.max_vpd_kpa ?? '—'}</div>
-            <div className="text-[10px] text-gray-400">kPa · drought-stress proxy</div>
+            <div className="text-[10px] text-gray-400">{t('climate_forecast.vpd_unit')}</div>
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Peak Wind</div>
+            <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">{t('climate_forecast.stat_peak_wind')}</div>
             <div className="text-2xl font-lora font-bold text-gray-900 mt-1">{summary.max_wind_mph ?? '—'}</div>
-            <div className="text-[10px] text-gray-400">mph</div>
+            <div className="text-[10px] text-gray-400">{t('climate_forecast.wind_unit')}</div>
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Total Rain</div>
+            <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">{t('climate_forecast.stat_total_rain')}</div>
             <div className="text-2xl font-lora font-bold text-gray-900 mt-1">{summary.total_precip_in ?? '—'}″</div>
-            <div className="text-[10px] text-gray-400">over horizon</div>
+            <div className="text-[10px] text-gray-400">{t('climate_forecast.rain_unit')}</div>
           </div>
         </div>
 
         <p className="mt-4 text-xs text-gray-400 italic">
-          Source: {source}. Tunnel-typical: {crop_profile.tunnel_typical ? 'yes' : 'no'} ·
-          Heat-sensitive: {crop_profile.heat_sensitive ? 'yes' : 'no'} ·
-          Frost-sensitive: {crop_profile.frost_sensitive ? 'yes' : 'no'} ·
-          Rain-split risk: {crop_profile.rain_split_risk ? 'yes' : 'no'}
+          {t('climate_forecast.source_footer', {
+            source,
+            tunnel:  crop_profile.tunnel_typical   ? t('climate_forecast.yes') : t('climate_forecast.no'),
+            heat:    crop_profile.heat_sensitive    ? t('climate_forecast.yes') : t('climate_forecast.no'),
+            frost:   crop_profile.frost_sensitive   ? t('climate_forecast.yes') : t('climate_forecast.no'),
+            rain:    crop_profile.rain_split_risk   ? t('climate_forecast.yes') : t('climate_forecast.no'),
+          })}
         </p>
       </div>
 
       {/* Events */}
       <div>
         <h4 className="font-mont text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">
-          {events.length > 0 ? `${events.length} stress event${events.length > 1 ? 's' : ''} predicted` : 'No stress events predicted'}
+          {events.length > 0
+            ? t(events.length === 1 ? 'climate_forecast.events_predicted_one' : 'climate_forecast.events_predicted_other', { count: events.length })
+            : t('climate_forecast.no_events')}
         </h4>
         {events.length === 0 ? (
           <div className="bg-white border border-green-200 rounded-lg p-5 text-sm text-green-800">
-            ✓ No heatwave, frost, high-VPD, saturating rain, or damaging-wind events detected in the next {data.horizon_hours} hours. Continue routine operations.
+            {t('climate_forecast.no_events_desc', { hours: data.horizon_hours })}
           </div>
         ) : (
           <div className="space-y-3">
@@ -214,17 +234,17 @@ export default function ClimateForecastPanel({ fieldId }) {
       {/* Hourly strip — first 72 hours, condensed */}
       {next72.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg p-5">
-          <h4 className="font-mont text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">Hourly outlook (next 72h)</h4>
+          <h4 className="font-mont text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">{t('climate_forecast.hourly_heading')}</h4>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead className="text-left text-gray-500">
                 <tr>
-                  <th className="py-2 pr-3">When</th>
-                  <th className="py-2 pr-3">Temp</th>
-                  <th className="py-2 pr-3">RH</th>
-                  <th className="py-2 pr-3">VPD</th>
-                  <th className="py-2 pr-3">Wind</th>
-                  <th className="py-2 pr-3">Rain</th>
+                  <th className="py-2 pr-3">{t('climate_forecast.col_when')}</th>
+                  <th className="py-2 pr-3">{t('climate_forecast.col_temp')}</th>
+                  <th className="py-2 pr-3">{t('climate_forecast.col_rh')}</th>
+                  <th className="py-2 pr-3">{t('climate_forecast.col_vpd')}</th>
+                  <th className="py-2 pr-3">{t('climate_forecast.col_wind')}</th>
+                  <th className="py-2 pr-3">{t('climate_forecast.col_rain')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -242,7 +262,7 @@ export default function ClimateForecastPanel({ fieldId }) {
             </table>
           </div>
           <div className="mt-2 text-[11px] text-gray-400 italic">
-            Showing every 3rd hour for compactness. Full 168-hour series powers the event detection.
+            {t('climate_forecast.hourly_note')}
           </div>
         </div>
       )}

@@ -52,7 +52,6 @@ export default function AppShell({ children }) {
 
   const showSidebar =
     !!token &&
-    !!(Business || BusinessID) &&
     !isExcluded(location.pathname);
 
   if (!showSidebar) return children;

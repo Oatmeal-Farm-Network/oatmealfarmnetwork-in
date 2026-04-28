@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -44,7 +45,7 @@ const EMPTY_FORM = {
 };
 
 // ─── Rotation analysis engine ─────────────────────────────────────────────────
-function analyzeRotation(entries) {
+function analyzeRotation(entries, t) {
   if (!entries.length) return null;
   const sorted = [...entries].filter(e => !e.is_cover_crop).sort((a, b) => a.season_year - b.season_year);
   const all    = [...entries].sort((a, b) => a.season_year - b.season_year);
@@ -53,28 +54,28 @@ function analyzeRotation(entries) {
   // Consecutive same crop
   for (let i = 1; i < sorted.length; i++) {
     if (sorted[i].crop_name.toLowerCase() === sorted[i - 1].crop_name.toLowerCase()) {
-      insights.push({ type: 'warning', text: `${sorted[i].crop_name} planted consecutively in ${sorted[i - 1].season_year} and ${sorted[i].season_year} — increases disease and pest pressure.` });
+      insights.push({ type: 'warning', text: t('crop_rotation.insight_consecutive', { crop: sorted[i].crop_name, year1: sorted[i - 1].season_year, year2: sorted[i].season_year }) });
     }
   }
 
   // Legume benefit
   const legumes = ['soy', 'alfalfa', 'clover', 'vetch', 'pea', 'bean'];
   if (sorted.some(e => legumes.some(l => e.crop_name.toLowerCase().includes(l)))) {
-    insights.push({ type: 'good', text: 'Legumes in your rotation fix atmospheric nitrogen, reducing synthetic fertilizer costs for the following crop.' });
+    insights.push({ type: 'good', text: t('crop_rotation.insight_legume') });
   }
 
   // Cover crop benefit
   if (all.some(e => e.is_cover_crop)) {
-    insights.push({ type: 'good', text: 'Cover crops in rotation improve soil organic matter, suppress weeds, and reduce erosion between main seasons.' });
+    insights.push({ type: 'good', text: t('crop_rotation.insight_cover_crop') });
   }
 
   // Diversity
   const recent = sorted.slice(-4);
   const unique = new Set(recent.map(e => e.crop_name.toLowerCase())).size;
   if (unique >= 3) {
-    insights.push({ type: 'good', text: `Strong diversity — ${unique} different crops in the last ${recent.length} seasons improves soil biology and breaks pest cycles.` });
+    insights.push({ type: 'good', text: t('crop_rotation.insight_strong_diversity', { count: unique, seasons: recent.length }) });
   } else if (unique <= 1 && sorted.length >= 3) {
-    insights.push({ type: 'warning', text: 'Low crop diversity. Adding a third crop (e.g. small grain or legume) would significantly improve rotation benefits.' });
+    insights.push({ type: 'warning', text: t('crop_rotation.insight_low_diversity') });
   }
 
   // Next crop recommendation
@@ -83,15 +84,15 @@ function analyzeRotation(entries) {
   if (last) {
     const lc = last.crop_name.toLowerCase();
     if (lc.includes('corn') || lc.includes('maize'))
-      recommendation = { crop: 'Soybeans or Winter Wheat', reason: 'Breaks corn rootworm cycle; soybeans provide N credit for next season.' };
+      recommendation = { crop: t('crop_rotation.rec_corn_label'), reason: t('crop_rotation.rec_corn_reason') };
     else if (lc.includes('soy') || lc.includes('bean'))
-      recommendation = { crop: 'Corn or Winter Wheat', reason: 'Capitalize on the 30–50 lb/ac nitrogen credit left by soybeans.' };
+      recommendation = { crop: t('crop_rotation.rec_soy_label'), reason: t('crop_rotation.rec_soy_reason') };
     else if (lc.includes('wheat') || lc.includes('barley') || lc.includes('oat'))
-      recommendation = { crop: 'Soybeans or Cover Crop', reason: 'Legumes after small grains maximize N fixation and allow soil recovery before row crops.' };
+      recommendation = { crop: t('crop_rotation.rec_wheat_label'), reason: t('crop_rotation.rec_wheat_reason') };
     else if (lc.includes('canola') || lc.includes('rapeseed'))
-      recommendation = { crop: 'Wheat or Corn', reason: 'Avoid canola more than 1-in-3 years due to clubroot risk; grasses restore balance.' };
+      recommendation = { crop: t('crop_rotation.rec_canola_label'), reason: t('crop_rotation.rec_canola_reason') };
     else
-      recommendation = { crop: 'A legume (soybeans, alfalfa)', reason: 'Introducing a legume will add nitrogen and diversify your rotation.' };
+      recommendation = { crop: t('crop_rotation.rec_default_label'), reason: t('crop_rotation.rec_default_reason') };
   }
 
   return { insights, recommendation };
@@ -99,6 +100,7 @@ function analyzeRotation(entries) {
 
 // ─── Rotation Wheel SVG ───────────────────────────────────────────────────────
 function RotationWheel({ entries }) {
+  const { t } = useTranslation();
   const main = [...entries].filter(e => !e.is_cover_crop).sort((a, b) => a.season_year - b.season_year).slice(-6);
   if (main.length < 2) return null;
   const n = main.length;
@@ -117,8 +119,8 @@ function RotationWheel({ entries }) {
         </marker>
       </defs>
       {/* Center label */}
-      <text x={cx} y={cy - 8} textAnchor="middle" fontSize="11" fill="#9CA3AF" fontFamily="serif">Rotation</text>
-      <text x={cx} y={cy + 8} textAnchor="middle" fontSize="11" fill="#9CA3AF" fontFamily="serif">Cycle</text>
+      <text x={cx} y={cy - 8} textAnchor="middle" fontSize="11" fill="#9CA3AF" fontFamily="serif">{t('crop_rotation.wheel_rotation')}</text>
+      <text x={cx} y={cy + 8} textAnchor="middle" fontSize="11" fill="#9CA3AF" fontFamily="serif">{t('crop_rotation.wheel_cycle')}</text>
 
       {/* Arrows */}
       {main.map((_, i) => {
@@ -155,6 +157,7 @@ function RotationWheel({ entries }) {
 
 // ─── Season Form ──────────────────────────────────────────────────────────────
 function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(
     editEntry ? {
       season_year:   editEntry.season_year,
@@ -176,7 +179,7 @@ function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!form.crop_name.trim()) { setError('Crop name is required.'); return; }
+    if (!form.crop_name.trim()) { setError(t('crop_rotation.error_crop_required')); return; }
     setSaving(true); setError('');
     try {
       const url    = editEntry ? `${API_URL}/api/crop-rotation/${editEntry.rotation_id}` : `${API_URL}/api/crop-rotation`;
@@ -204,7 +207,7 @@ function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Season Year</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('crop_rotation.label_season_year')}</label>
           <input type="number" value={form.season_year} onChange={e => set('season_year', e.target.value)}
             min="1900" max="2100" className={inp} required />
         </div>
@@ -212,19 +215,19 @@ function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.is_cover_crop} onChange={e => set('is_cover_crop', e.target.checked)}
               className="w-4 h-4 accent-[#6D8E22]" />
-            <span className="text-sm font-medium text-gray-700">Cover Crop</span>
+            <span className="text-sm font-medium text-gray-700">{t('crop_rotation.label_cover_crop')}</span>
           </label>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Crop Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('crop_rotation.label_crop_name')}</label>
           <input type="text" value={form.crop_name} onChange={e => set('crop_name', e.target.value)}
             placeholder="e.g. Corn, Soybeans, Winter Wheat" className={inp} required />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Variety / Hybrid <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('crop_rotation.label_variety')} <span className="text-xs text-gray-400 font-normal">{t('crop_rotation.optional')}</span></label>
           <input type="text" value={form.variety} onChange={e => set('variety', e.target.value)}
             placeholder="e.g. DeKalb DKC52-61" className={inp} />
         </div>
@@ -232,23 +235,23 @@ function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Planting Date <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('crop_rotation.label_planting_date')} <span className="text-xs text-gray-400 font-normal">{t('crop_rotation.optional')}</span></label>
           <input type="date" value={form.planting_date} onChange={e => set('planting_date', e.target.value)} className={inp} />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Harvest Date <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('crop_rotation.label_harvest_date')} <span className="text-xs text-gray-400 font-normal">{t('crop_rotation.optional')}</span></label>
           <input type="date" value={form.harvest_date} onChange={e => set('harvest_date', e.target.value)} className={inp} />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Yield <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('crop_rotation.label_yield')} <span className="text-xs text-gray-400 font-normal">{t('crop_rotation.optional')}</span></label>
           <input type="number" step="0.01" min="0" value={form.yield_amount} onChange={e => set('yield_amount', e.target.value)}
             placeholder="e.g. 185" className={inp} />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('crop_rotation.label_unit')}</label>
           <select value={form.yield_unit} onChange={e => set('yield_unit', e.target.value)} className={inp}>
             {YIELD_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
           </select>
@@ -256,7 +259,7 @@ function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t('crop_rotation.label_notes')}</label>
         <textarea value={form.notes} onChange={e => set('notes', e.target.value)}
           rows={3} placeholder="Variety performance, field conditions, issues observed…"
           className={`${inp} resize-none`} />
@@ -265,12 +268,12 @@ function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
       <div className="flex justify-end gap-3 pt-1">
         <button type="button" onClick={onCancel}
           className="px-5 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">
-          Cancel
+          {t('crop_rotation.btn_cancel')}
         </button>
         <button type="submit" disabled={saving}
           className="px-6 py-2 rounded-lg text-white text-sm font-semibold transition disabled:opacity-50"
           style={{ background: '#819360' }}>
-          {saving ? 'Saving…' : editEntry ? 'Save Changes' : 'Add Season'}
+          {saving ? t('crop_rotation.btn_saving') : editEntry ? t('crop_rotation.btn_save_changes') : t('crop_rotation.btn_add')}
         </button>
       </div>
     </form>
@@ -279,6 +282,7 @@ function SeasonForm({ fieldId, businessId, editEntry, onSave, onCancel }) {
 
 // ─── Season Card ──────────────────────────────────────────────────────────────
 function SeasonCard({ entry, onEdit, onDelete }) {
+  const { t } = useTranslation();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const s = getCropStyle(entry.crop_name);
 
@@ -301,11 +305,11 @@ function SeasonCard({ entry, onEdit, onDelete }) {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-lg font-lora font-bold text-gray-900">{s.icon} {entry.crop_name}</span>
                 {entry.is_cover_crop && (
-                  <span className="text-xs px-2 py-0.5 rounded-full font-mont font-semibold bg-cyan-100 text-cyan-700">Cover Crop</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-mont font-semibold bg-cyan-100 text-cyan-700">{t('crop_rotation.card_cover_crop')}</span>
                 )}
               </div>
               {entry.variety && (
-                <p className="text-sm text-gray-500 font-mont mt-0.5">Variety: {entry.variety}</p>
+                <p className="text-sm text-gray-500 font-mont mt-0.5">{t('crop_rotation.card_variety', { variety: entry.variety })}</p>
               )}
             </div>
             <div className="flex items-center gap-1 shrink-0">
@@ -314,9 +318,9 @@ function SeasonCard({ entry, onEdit, onDelete }) {
               {confirmDelete ? (
                 <div className="flex items-center gap-1">
                   <button onClick={() => onDelete(entry.rotation_id)}
-                    className="text-xs px-2 py-1 bg-red-600 text-white rounded-lg font-medium">Delete</button>
+                    className="text-xs px-2 py-1 bg-red-600 text-white rounded-lg font-medium">{t('crop_rotation.card_delete')}</button>
                   <button onClick={() => setConfirmDelete(false)}
-                    className="text-xs px-2 py-1 border border-gray-200 rounded-lg text-gray-500">Cancel</button>
+                    className="text-xs px-2 py-1 border border-gray-200 rounded-lg text-gray-500">{t('crop_rotation.btn_cancel')}</button>
                 </div>
               ) : (
                 <button onClick={() => setConfirmDelete(true)} title="Delete"
@@ -326,8 +330,8 @@ function SeasonCard({ entry, onEdit, onDelete }) {
           </div>
 
           <div className="flex flex-wrap gap-4 text-xs font-mont text-gray-500 mt-2">
-            {entry.planting_date && <span>🌱 Planted {entry.planting_date}</span>}
-            {entry.harvest_date  && <span>🌾 Harvested {entry.harvest_date}</span>}
+            {entry.planting_date && <span>🌱 {t('crop_rotation.card_planted', { date: entry.planting_date })}</span>}
+            {entry.harvest_date  && <span>🌾 {t('crop_rotation.card_harvested', { date: entry.harvest_date })}</span>}
             {entry.yield_amount  && <span>📊 {entry.yield_amount} {entry.yield_unit}</span>}
           </div>
 
@@ -342,6 +346,7 @@ function SeasonCard({ entry, onEdit, onDelete }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function CropRotation() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate    = useNavigate();
   const businessId  = (() => {
@@ -384,7 +389,7 @@ export default function CropRotation() {
     fetch(`${API_URL}/api/crop-rotation?business_id=${businessId}&field_id=${activeField}`)
       .then(r => r.json())
       .then(data => { setEntries(Array.isArray(data) ? data : []); setError(''); })
-      .catch(() => setError('Could not load rotation data.'))
+      .catch(() => setError(t('crop_rotation.error_load')))
       .finally(() => setLoading(false));
   }, [businessId, activeField]);
 
@@ -424,38 +429,38 @@ export default function CropRotation() {
   const closeForm  = ()    => { setShowForm(false);  setEditEntry(null); };
 
   const sortedEntries = [...entries].sort((a, b) => b.season_year - a.season_year);
-  const analysis = analyzeRotation(entries);
+  const analysis = analyzeRotation(entries, t);
   const activeFieldObj = fields.find(f => String(f.fieldid ?? f.id) === String(activeField));
 
-  if (!Business) return <div className="p-8 text-gray-500 font-mont">Loading…</div>;
+  if (!Business) return <div className="p-8 text-gray-500 font-mont">{t('crop_rotation.loading_history')}</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID} pageTitle="Crop Rotation" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Crops' }, { label: 'Rotation' }]}>
+    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID} pageTitle={t('crop_rotation.page_title')} breadcrumbs={[{ label: t('nav.dashboard'), to: '/dashboard' }, { label: t('crop_detection.breadcrumb_crops') }, { label: t('crop_rotation.breadcrumb_rotation') }]}>
       <div className="max-w-5xl mx-auto pb-20">
 
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="font-lora text-3xl font-bold text-gray-900">Crop Rotation</h1>
+            <h1 className="font-lora text-3xl font-bold text-gray-900">{t('crop_rotation.heading')}</h1>
             <p className="text-gray-500 font-mont text-sm mt-1">
-              Track crop history, plan next-season rotations, and get agronomic insights.
+              {t('crop_rotation.subheading')}
             </p>
           </div>
           {activeField && (
             <button onClick={openNew}
               className="px-5 py-2.5 rounded-lg font-mont font-semibold text-white text-sm shadow-sm hover:opacity-90 transition"
               style={{ background: '#819360' }}>
-              + Add Season
+              {t('crop_rotation.btn_add_season')}
             </button>
           )}
         </div>
 
         {/* Field selector */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 mb-6 flex flex-wrap items-center gap-4">
-          <span className="text-xs font-mont font-semibold text-gray-400 uppercase tracking-wide">Field</span>
+          <span className="text-xs font-mont font-semibold text-gray-400 uppercase tracking-wide">{t('crop_rotation.field_label')}</span>
           <select value={activeField} onChange={e => setActiveField(e.target.value)}
             className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-mont focus:outline-none focus:ring-2 focus:ring-[#6D8E22] transition flex-1 max-w-xs">
-            <option value="">— Select a field —</option>
+            <option value="">{t('crop_rotation.field_select_placeholder')}</option>
             {fields.map(f => {
               const id = f.fieldid ?? f.id;
               return <option key={id} value={id}>{f.name}</option>;
@@ -464,7 +469,7 @@ export default function CropRotation() {
           {activeFieldObj && (
             <button onClick={() => navigate(`/precision-ag/analyses?BusinessID=${businessId}&FieldID=${activeField}`)}
               className="text-xs font-mont font-semibold text-[#6D8E22] hover:underline ml-auto">
-              View Field Analysis →
+              {t('crop_rotation.view_analysis')}
             </button>
           )}
         </div>
@@ -473,7 +478,7 @@ export default function CropRotation() {
         {!activeField ? (
           <div className="text-center py-24">
             <div className="text-5xl mb-4">🔄</div>
-            <div className="font-lora text-xl text-gray-700">Select a field to view its rotation history</div>
+            <div className="font-lora text-xl text-gray-700">{t('crop_rotation.select_field_prompt')}</div>
           </div>
         ) : (
           <>
@@ -481,7 +486,7 @@ export default function CropRotation() {
             {showForm && (
               <div className="bg-white rounded-xl border-2 border-[#6D8E22] shadow-lg p-6 mb-8">
                 <h2 className="font-lora font-bold text-gray-900 text-lg mb-4">
-                  {editEntry ? `Editing — ${editEntry.crop_name} ${editEntry.season_year}` : 'Add Season Entry'}
+                  {editEntry ? t('crop_rotation.editing_header', { crop: editEntry.crop_name, year: editEntry.season_year }) : t('crop_rotation.add_season_header')}
                 </h2>
                 <SeasonForm
                   fieldId={activeField}
@@ -494,7 +499,7 @@ export default function CropRotation() {
             )}
 
             {loading ? (
-              <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm">Loading rotation history…</div>
+              <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm">{t('crop_rotation.loading_history')}</div>
             ) : error ? (
               <div className="text-center py-16 text-red-500 font-mont text-sm">{error}</div>
             ) : entries.length === 0 ? null : (
@@ -511,7 +516,7 @@ export default function CropRotation() {
                         style={{ borderColor: s.border, background: s.bg }}>
                         <div>
                           <div className="text-xs font-mont font-semibold uppercase tracking-widest mb-1"
-                            style={{ color: s.text, opacity: 0.7 }}>Current / Most Recent Season</div>
+                            style={{ color: s.text, opacity: 0.7 }}>{t('crop_rotation.current_season')}</div>
                           <div className="font-lora font-bold text-2xl mb-1" style={{ color: s.text }}>
                             {s.icon} {cur.crop_name}
                             {cur.is_cover_crop && <span className="ml-2 text-xs px-2 py-0.5 rounded-full font-mont font-semibold bg-cyan-100 text-cyan-700">Cover Crop</span>}
@@ -519,8 +524,8 @@ export default function CropRotation() {
                           {cur.variety && <div className="text-sm font-mont mb-1" style={{ color: s.text }}>{cur.variety}</div>}
                           <div className="flex flex-wrap gap-4 text-xs font-mont mt-2" style={{ color: s.text, opacity: 0.8 }}>
                             <span className="font-semibold">{cur.season_year}</span>
-                            {cur.planting_date && <span>🌱 Planted {cur.planting_date}</span>}
-                            {cur.harvest_date  && <span>🌾 Harvested {cur.harvest_date}</span>}
+                            {cur.planting_date && <span>🌱 {t('crop_rotation.card_planted', { date: cur.planting_date })}</span>}
+                            {cur.harvest_date  && <span>🌾 {t('crop_rotation.card_harvested', { date: cur.harvest_date })}</span>}
                             {cur.yield_amount  && <span>📊 {cur.yield_amount} {cur.yield_unit}</span>}
                           </div>
                           {cur.notes && <p className="text-xs font-mont mt-2" style={{ color: s.text, opacity: 0.75 }}>{cur.notes}</p>}
@@ -528,13 +533,13 @@ export default function CropRotation() {
                         <button onClick={() => handleEdit(cur)}
                           className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-mont font-semibold border transition hover:opacity-80"
                           style={{ borderColor: s.border, color: s.text, background: 'rgba(255,255,255,0.5)' }}>
-                          Edit
+                          {t('crop_rotation.btn_edit')}
                         </button>
                       </div>
                     );
                   })()}
 
-                  <h2 className="font-lora font-bold text-gray-900 text-xl mb-4">Season History</h2>
+                  <h2 className="font-lora font-bold text-gray-900 text-xl mb-4">{t('crop_rotation.season_history')}</h2>
                   <div>
                     {sortedEntries.map(entry => (
                       <SeasonCard
@@ -553,7 +558,7 @@ export default function CropRotation() {
                   {/* Rotation wheel */}
                   {entries.filter(e => !e.is_cover_crop).length >= 2 && (
                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-                      <h3 className="font-lora font-bold text-gray-900 text-base mb-3 text-center">Rotation Cycle</h3>
+                      <h3 className="font-lora font-bold text-gray-900 text-base mb-3 text-center">{t('crop_rotation.rotation_cycle')}</h3>
                       <RotationWheel entries={entries} />
                     </div>
                   )}
@@ -561,7 +566,7 @@ export default function CropRotation() {
                   {/* Analysis */}
                   {analysis && (
                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
-                      <h3 className="font-lora font-bold text-gray-900 text-base">Rotation Analysis</h3>
+                      <h3 className="font-lora font-bold text-gray-900 text-base">{t('crop_rotation.rotation_analysis')}</h3>
 
                       {analysis.insights.map((ins, i) => (
                         <div key={i} className={`flex gap-3 rounded-lg p-3 text-sm font-mont ${ins.type === 'warning' ? 'bg-amber-50 border border-amber-200' : 'bg-green-50 border border-green-200'}`}>
@@ -572,7 +577,7 @@ export default function CropRotation() {
 
                       {analysis.recommendation && (
                         <div className="rounded-lg p-4 border-2 border-[#6D8E22] bg-[#f0f5e8]">
-                          <div className="text-xs font-mont font-semibold text-[#6D8E22] uppercase tracking-wide mb-1">Recommended Next Crop</div>
+                          <div className="text-xs font-mont font-semibold text-[#6D8E22] uppercase tracking-wide mb-1">{t('crop_rotation.recommended_next')}</div>
                           <div className="font-lora font-bold text-gray-900 text-base mb-1">
                             {getCropStyle(analysis.recommendation.crop).icon} {analysis.recommendation.crop}
                           </div>
@@ -584,29 +589,29 @@ export default function CropRotation() {
 
                   {/* Field quick stats */}
                   <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-                    <h3 className="font-lora font-bold text-gray-900 text-base mb-3">Field Summary</h3>
+                    <h3 className="font-lora font-bold text-gray-900 text-base mb-3">{t('crop_rotation.field_summary')}</h3>
                     <div className="space-y-2 text-sm font-mont text-gray-600">
                       <div className="flex justify-between">
-                        <span>Seasons recorded</span>
+                        <span>{t('crop_rotation.seasons_recorded')}</span>
                         <span className="font-semibold text-gray-900">{entries.length}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Main crops</span>
+                        <span>{t('crop_rotation.main_crops')}</span>
                         <span className="font-semibold text-gray-900">{entries.filter(e => !e.is_cover_crop).length}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Cover crops</span>
+                        <span>{t('crop_rotation.cover_crops_count')}</span>
                         <span className="font-semibold text-gray-900">{entries.filter(e => e.is_cover_crop).length}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Unique crops</span>
+                        <span>{t('crop_rotation.unique_crops')}</span>
                         <span className="font-semibold text-gray-900">
                           {new Set(entries.map(e => e.crop_name.toLowerCase())).size}
                         </span>
                       </div>
                       {entries.some(e => e.yield_amount) && (
                         <div className="flex justify-between">
-                          <span>Avg yield (where recorded)</span>
+                          <span>{t('crop_rotation.avg_yield')}</span>
                           <span className="font-semibold text-gray-900">
                             {(entries.filter(e => e.yield_amount).reduce((s, e) => s + e.yield_amount, 0) / entries.filter(e => e.yield_amount).length).toFixed(1)}
                             {' '}{entries.find(e => e.yield_amount)?.yield_unit}

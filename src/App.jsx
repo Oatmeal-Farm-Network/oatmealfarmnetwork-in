@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
+import OTFDMWidget from './OTFDMWidget';
 
 const NEWS_API = import.meta.env.VITE_NEWS_API_URL || import.meta.env.VITE_API_URL || '';
 
@@ -55,9 +56,9 @@ const IMG_ARTISAN      = '/images/HomeArtisanProducers.webp';
 const IMG_RESTAURANTS  = '/images/HomeRestaurants.webp';
 const IMG_COMPANY_NEWS = '/images/HomePageComingsoon.webp';
 const IMG_MARKET_NEWS  = '/images/FarmersMarket.webp';
-const IMG_PRECISION    = '/images/HomePrecisionAg.webp';
-const IMG_FARM2TABLE   = '/images/HomepageLivestockMarketplace.webp';
-const IMG_ASSOCIATION  = '/images/AssociationGoats.webp';
+const IMG_PRECISION    = '/images/CoreFeaturesPrecisionAg.webp';
+const IMG_FARM2TABLE   = '/images/CoreFeaturesFarm2Table.webp';
+const IMG_ASSOCIATION  = '/images/CoreFeaturesAssociationSupport.webp';
 const IMG_LIVESTOCK    = '/images/HomepageLivestockMarketplace.webp';
 const IMG_EVENTS       = '/images/EventsHeader.webp';
 const IMG_AI_ADVISORS  = '/images/SaigeBanner.webp';
@@ -212,7 +213,9 @@ function FeatureCard({ title, description, img, link }) {
         />
       </Link>
       <div className="p-5 flex flex-col flex-1">
-        <h3 className="font-bold text-base text-gray-900 mb-2">{title}</h3>
+        <h3 className="font-bold text-base mb-2">
+          <Link to={link} className="hover:underline" style={{ color: '#3D6B34' }}>{title}</Link>
+        </h3>
         <p className="text-xs text-gray-600 flex-1 leading-relaxed">{description}</p>
         <Link to={link} className="mt-3 self-end text-[#3D6B34] font-semibold text-xs hover:underline">
           {t('home.explore_arrow')}
@@ -281,7 +284,7 @@ export default function App() {
               {t('home.hero_title')}
             </h2>
             <p className="text-gray-700 text-base mb-3 leading-relaxed">
-              <strong>Oatmeal Farm Network</strong> {t('home.hero_body1')}
+              {t('home.hero_body1')}
             </p>
             <p className="text-gray-700 text-base mb-6 leading-relaxed">
               {t('home.hero_body2')}
@@ -382,6 +385,9 @@ export default function App() {
           <MarketNewsCard />
         </div>
       </section>
+
+      {/* ─── 4.5 Over The Fence DM widget (logged-in users only) ───────── */}
+      <OTFDMWidget />
 
       {/* ─── 5. Core Features ───────────────────────────────────────────── */}
       <section className="pb-16">

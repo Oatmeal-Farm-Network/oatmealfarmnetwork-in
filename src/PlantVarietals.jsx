@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -9,6 +10,7 @@ import { useLanguage } from './LanguageContext';
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function PlantVarietals() {
+  const { t } = useTranslation();
   const { plantId } = useParams();
   const { language } = useLanguage();
   const [plantName, setPlantName] = useState('');
@@ -50,30 +52,30 @@ export default function PlantVarietals() {
           { label: 'Plant Knowledgebase', to: '/plant-knowledgebase' },
           { label: plantName ? `${plantName} Varietals` : 'Varietals' },
         ]} />
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{plantName} Varietals</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{plantName} {t('plant_varietals.varietals_suffix')}</h1>
         <p className="text-gray-700 mb-6">
-          Below is a list of all known varietals for {plantName}. Click on a varietal name to view more detailed information.
+          {t('plant_varietals.intro', { name: plantName })}
         </p>
 
         {loading ? (
-          <div className="text-gray-400 py-12 text-center">Loading...</div>
+          <div className="text-gray-400 py-12 text-center">{t('plant_varietals.loading')}</div>
         ) : varietals.length === 0 ? (
-          <div className="text-gray-500 py-8 text-center">No varietals found for {plantName}.</div>
+          <div className="text-gray-500 py-8 text-center">{t('plant_varietals.not_found', { name: plantName })}</div>
         ) : (
           <div className="overflow-x-auto rounded border border-gray-200 shadow-sm">
             <table className="w-full text-sm border-collapse" style={{ minWidth: '800px' }}>
               <thead>
                 <tr className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wide">
-                  <th className="px-4 py-3 text-left border-b border-gray-200">Varietal Name</th>
-                  <th className="px-4 py-3 text-left border-b border-gray-200">Description</th>
-                  <th className="px-4 py-3 text-left border-b border-gray-200">Soil Texture</th>
-                  <th className="px-4 py-3 text-left border-b border-gray-200">pH Range</th>
-                  <th className="px-4 py-3 text-left border-b border-gray-200">Organic Matter</th>
-                  <th className="px-4 py-3 text-left border-b border-gray-200">Salinity Level</th>
-                  <th className="px-4 py-3 text-left border-b border-gray-200">Hardiness Zone</th>
-                  <th className="px-4 py-3 text-left border-b border-gray-200">Humidity</th>
-                  <th className="px-4 py-3 text-left border-b border-gray-200">Water (in/wk)</th>
-                  <th className="px-4 py-3 text-left border-b border-gray-200">Primary Nutrient</th>
+                  <th className="px-4 py-3 text-left border-b border-gray-200">{t('plant_varietals.col_varietal_name')}</th>
+                  <th className="px-4 py-3 text-left border-b border-gray-200">{t('plant_varietals.col_description')}</th>
+                  <th className="px-4 py-3 text-left border-b border-gray-200">{t('plant_varietals.col_soil_texture')}</th>
+                  <th className="px-4 py-3 text-left border-b border-gray-200">{t('plant_varietals.col_ph_range')}</th>
+                  <th className="px-4 py-3 text-left border-b border-gray-200">{t('plant_varietals.col_organic_matter')}</th>
+                  <th className="px-4 py-3 text-left border-b border-gray-200">{t('plant_varietals.col_salinity_level')}</th>
+                  <th className="px-4 py-3 text-left border-b border-gray-200">{t('plant_varietals.col_hardiness_zone')}</th>
+                  <th className="px-4 py-3 text-left border-b border-gray-200">{t('plant_varietals.col_humidity')}</th>
+                  <th className="px-4 py-3 text-left border-b border-gray-200">{t('plant_varietals.col_water')}</th>
+                  <th className="px-4 py-3 text-left border-b border-gray-200">{t('plant_varietals.col_primary_nutrient')}</th>
                 </tr>
               </thead>
               <tbody>

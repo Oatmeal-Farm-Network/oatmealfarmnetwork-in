@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -63,9 +64,17 @@ const CATEGORY_LEADS = {
   [norm('Specialty Support Services')]:       'Specialized providers — niche services and one-of-a-kind support roles that fill unique needs across the farm economy.',
 };
 
-const leadForCategory = (name) => CATEGORY_LEADS[norm(name)] || DEFAULT_LEAD;
+const leadForCategory = (name, t) => {
+  if (t) {
+    const key = 'services_dir.lead_' + norm(name);
+    const translated = t(key, CATEGORY_LEADS[norm(name)] || DEFAULT_LEAD);
+    return translated;
+  }
+  return CATEGORY_LEADS[norm(name)] || DEFAULT_LEAD;
+};
 
 export default function ServicesDirectory() {
+  const { t } = useTranslation();
   const { categoryId } = useParams();
 
   const [categories,    setCategories]    = useState([]);
@@ -160,50 +169,51 @@ export default function ServicesDirectory() {
         <div className="relative w-full overflow-hidden rounded-xl rounded-b-none md:rounded-b-xl">
           <img
             src="/images/ServiceDirectory.webp"
-            alt="Agricultural Services Directory"
+            alt={t('services_dir.hero_alt')}
             className="w-full object-cover block h-[160px] md:h-[250px]"
             loading="eager"
           />
           <div className="hidden md:block absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }} />
           <div className="hidden md:flex absolute inset-0 flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
             <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 12px', lineHeight: 1.2 }}>
-              {catName || 'Agricultural Services Directory'}
+              {catName || t('services_dir.title')}
             </h1>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 8px', lineHeight: 1.6 }}>
               {catName ? (
-                leadForCategory(catName)
+                leadForCategory(catName, t)
               ) : (
                 <>
-                  From veterinarians and farriers to shearing, equipment rental, and farm consulting — connect with{' '}
-                  <strong>{categories.length > 0 ? `${categories.length} service categories` : '…'}</strong>{' '}
-                  of agricultural professionals serving farms and ranches.
+                  {t('services_dir.hero_body_pre')}{' '}
+                  <strong>{categories.length > 0 ? t('services_dir.cat_count', { count: categories.length }) : '…'}</strong>{' '}
+                  {t('services_dir.hero_body_post')}
                 </>
               )}
             </p>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
-              Listings are added regularly. If you'd like to list a service or help us grow the directory, please{' '}
-              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>Contact Us</Link>.
+              {t('services_dir.listings_added')}{' '}
+              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>{t('services_dir.contact_us')}</Link>.
             </p>
           </div>
         </div>
 
         <div className="md:hidden bg-white px-5 py-4 rounded-b-xl border border-t-0 border-gray-200">
           <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.4rem', fontWeight: 'bold', margin: '0 0 8px', lineHeight: 1.2 }}>
-            {catName || 'Agricultural Services Directory'}
+            {catName || t('services_dir.title')}
           </h1>
           <p style={{ color: '#111111', fontSize: '0.85rem', margin: '0 0 6px', lineHeight: 1.6 }}>
             {catName ? (
-              leadForCategory(catName)
+              leadForCategory(catName, t)
             ) : (
               <>
-                Connect with <strong>{categories.length > 0 ? `${categories.length} categories` : '…'}</strong> of
-                agricultural professionals serving farms and ranches.
+                {t('services_dir.hero_body_pre')}{' '}
+                <strong>{categories.length > 0 ? t('services_dir.cat_count_mobile', { count: categories.length }) : '…'}</strong>{' '}
+                {t('services_dir.hero_body_post')}
               </>
             )}
           </p>
           <p style={{ color: '#111111', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
-            Want to list a service?{' '}
-            <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>Contact Us</Link>.
+            {t('services_dir.want_to_list')}{' '}
+            <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>{t('services_dir.contact_us')}</Link>.
           </p>
         </div>
       </div>
@@ -216,7 +226,7 @@ export default function ServicesDirectory() {
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search services by title, description, or business…"
+            placeholder={t('services_dir.search_placeholder')}
             className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#819360]"
           />
           <select
@@ -224,7 +234,7 @@ export default function ServicesDirectory() {
             onChange={e => setSubcatId(e.target.value)}
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#819360]"
           >
-            <option value="">All subcategories</option>
+            <option value="">{t('services_dir.all_subcategories')}</option>
             {visibleSubcats.map(sc => (
               <option key={sc.ServiceSubCategoryID} value={sc.ServiceSubCategoryID}>
                 {categoryId
@@ -239,17 +249,17 @@ export default function ServicesDirectory() {
               onClick={() => { setSearch(''); setSubcatId(''); }}
               className="text-sm text-[#3D6B34] hover:underline px-2"
             >
-              Clear
+              {t('services_dir.clear')}
             </button>
           )}
         </div>
 
         {!categoryId && !filtersActive ? (
           <>
-            <h2 className="text-lg font-bold text-gray-900 mb-5">Service Categories</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-5">{t('services_dir.service_categories')}</h2>
 
             {categories.length === 0 ? (
-              <div className="text-center py-20 text-gray-400">Loading categories…</div>
+              <div className="text-center py-20 text-gray-400">{t('services_dir.loading_categories')}</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {categories.map((cat, index) => (
@@ -284,7 +294,7 @@ export default function ServicesDirectory() {
                           {cat.ServicesCategory}
                         </Link>
                         <p className="text-xs text-gray-600 leading-relaxed mt-2">
-                          Find {cat.ServicesCategory.toLowerCase()} professionals offering services to farmers, ranchers, and agricultural businesses.
+                          {t('services_dir.find_professionals', { category: cat.ServicesCategory.toLowerCase() })}
                         </p>
                       </div>
                       <div className="mt-3">
@@ -293,7 +303,7 @@ export default function ServicesDirectory() {
                           className="text-xs font-bold hover:underline"
                           style={{ color: '#3D6B34' }}
                         >
-                          EXPLORE →
+                          {t('services_dir.explore_arrow')}
                         </Link>
                       </div>
                     </div>
@@ -307,17 +317,17 @@ export default function ServicesDirectory() {
             {categoryId && (
               <div className="mb-5">
                 <Link to="/services/directory" className="text-sm text-[#3D6B34] hover:underline">
-                  ← All Categories
+                  {t('services_dir.back_categories')}
                 </Link>
               </div>
             )}
 
             {loading ? (
-              <div className="text-center py-20 text-gray-400">Loading services…</div>
+              <div className="text-center py-20 text-gray-400">{t('services_dir.loading_services')}</div>
             ) : services.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-200 p-16 text-center text-gray-400">
-                <p className="mb-3">No services match your search.</p>
-                <Link to="/services/directory" className="text-[#3D6B34] hover:underline text-sm">← All Categories</Link>
+                <p className="mb-3">{t('services_dir.no_services')}</p>
+                <Link to="/services/directory" className="text-[#3D6B34] hover:underline text-sm">{t('services_dir.back_categories')}</Link>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -367,11 +377,11 @@ export default function ServicesDirectory() {
                           className="text-xs font-bold hover:underline"
                           style={{ color: '#3D6B34' }}
                         >
-                          VIEW →
+                          {t('services_dir.view_arrow')}
                         </Link>
                         <div className="text-right shrink-0">
                           {svc.ServiceContactForPrice ? (
-                            <span className="text-xs text-gray-500 italic">Contact for Price</span>
+                            <span className="text-xs text-gray-500 italic">{t('services_dir.contact_for_price')}</span>
                           ) : svc.ServicePrice ? (
                             <span className="text-sm font-bold text-[#3D6B34]">
                               ${parseFloat(svc.ServicePrice).toLocaleString()}

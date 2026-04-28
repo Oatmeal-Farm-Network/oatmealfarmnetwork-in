@@ -1,6 +1,7 @@
 // src/ProductsMarketplace.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -9,10 +10,10 @@ import Breadcrumbs from './Breadcrumbs';
 const API = import.meta.env.VITE_API_URL || '';
 
 const SORT_OPTIONS = [
-  { key: 'newest',     label: 'Newest First' },
-  { key: 'price_asc',  label: 'Price: Low → High' },
-  { key: 'price_desc', label: 'Price: High → Low' },
-  { key: 'name_asc',   label: 'Name A–Z' },
+  { key: 'newest' },
+  { key: 'price_asc' },
+  { key: 'price_desc' },
+  { key: 'name_asc' },
 ];
 
 function getCart() {
@@ -21,6 +22,7 @@ function getCart() {
 function saveCart(cart) { localStorage.setItem('marketplace_cart', JSON.stringify(cart)); }
 
 export default function ProductsMarketplace() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isLoggedIn = !!localStorage.getItem('access_token');
   const peopleId   = localStorage.getItem('people_id');
@@ -58,14 +60,14 @@ export default function ProductsMarketplace() {
         body: JSON.stringify({ Email: signInEmail, Password: signInPass }),
       });
       const data = await res.json();
-      if (!res.ok) { setSignInError(data.detail || 'Login failed.'); return; }
+      if (!res.ok) { setSignInError(data.detail || t('prod_mkt.login_failed')); return; }
       localStorage.setItem('access_token', data.AccessToken);
       localStorage.setItem('people_id', data.PeopleID);
       localStorage.setItem('first_name', data.PeopleFirstName);
       localStorage.setItem('last_name', data.PeopleLastName);
       setLoggedIn(true);
       setShowSignIn(false);
-    } catch { setSignInError('Unable to connect.'); } finally { setSignInLoading(false); }
+    } catch { setSignInError(t('prod_mkt.connect_error')); } finally { setSignInLoading(false); }
   };
 
   const loadProducts = useCallback(async () => {
@@ -167,7 +169,7 @@ export default function ProductsMarketplace() {
         });
       }
       navigate('/cart');
-    } catch { alert('Could not proceed to checkout. Please try again.'); }
+    } catch { alert(t('prod_mkt.checkout_error')); }
     finally { setCheckoutLoading(false); }
   };
 
@@ -208,19 +210,19 @@ export default function ProductsMarketplace() {
           <div className="hidden md:block absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }} />
           <div className="hidden md:flex absolute inset-0 flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
             <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 12px', lineHeight: 1.2 }}>
-              Products Marketplace
+              {t('prod_mkt.title')}
             </h1>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 12px', lineHeight: 1.6 }}>
-              Farm goods, handcrafted products, and more — shop direct from local sellers.
+              {t('prod_mkt.hero_body')}
             </p>
             <form onSubmit={handleSearch} className="flex gap-2 max-w-md">
               <input
                 value={searchInput} onChange={e => setSearchInput(e.target.value)}
-                placeholder="Search products..."
+                placeholder={t('prod_mkt.search_placeholder')}
                 className="flex-grow px-4 py-2 rounded-lg text-gray-900 text-sm bg-white border border-gray-300 focus:outline-none focus:border-[#3D6B34]"
               />
               <button type="submit" className="bg-[#3D6B34] text-white font-semibold px-5 py-2 rounded-lg hover:bg-[#2d5226] transition-colors">
-                Search
+                {t('prod_mkt.search_btn')}
               </button>
             </form>
           </div>
@@ -229,19 +231,19 @@ export default function ProductsMarketplace() {
         {/* Text below image — mobile only */}
         <div className="md:hidden bg-white px-5 py-4 rounded-b-xl border border-t-0 border-gray-200">
           <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.4rem', fontWeight: 'bold', margin: '0 0 8px', lineHeight: 1.2 }}>
-            Products Marketplace
+            {t('prod_mkt.title')}
           </h1>
           <p style={{ color: '#111111', fontSize: '0.85rem', margin: '0 0 10px', lineHeight: 1.6 }}>
-            Farm goods, handcrafted products, and more — shop direct from local sellers.
+            {t('prod_mkt.hero_body')}
           </p>
           <form onSubmit={handleSearch} className="flex gap-2">
             <input
               value={searchInput} onChange={e => setSearchInput(e.target.value)}
-              placeholder="Search products..."
+              placeholder={t('prod_mkt.search_placeholder')}
               className="flex-grow px-3 py-2 rounded-lg text-gray-900 text-sm bg-white border border-gray-300 focus:outline-none focus:border-[#3D6B34]"
             />
             <button type="submit" className="bg-[#3D6B34] text-white font-semibold px-4 py-2 rounded-lg hover:bg-[#2d5226] transition-colors text-sm">
-              Search
+              {t('prod_mkt.search_btn')}
             </button>
           </form>
         </div>
@@ -253,12 +255,12 @@ export default function ProductsMarketplace() {
         {/* Sidebar filters */}
         <aside className="w-48 shrink-0 hidden md:block">
           <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Category</h3>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">{t('prod_mkt.category')}</h3>
             <ul className="space-y-1">
               <li>
                 <button onClick={() => selectCategory(null)}
                   className={`text-sm w-full text-left px-2 py-1 rounded-lg ${category === 'all' ? 'bg-green-50 text-[#3D6B34] font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}>
-                  All Products
+                  {t('prod_mkt.all_products')}
                 </button>
               </li>
               {categories.map(cat => (
@@ -273,7 +275,7 @@ export default function ProductsMarketplace() {
                       <li>
                         <button onClick={() => selectSubcat(null)}
                           className={`text-xs w-full text-left px-2 py-0.5 rounded ${!subcatId ? 'text-[#3D6B34] font-semibold' : 'text-gray-500 hover:text-gray-700'}`}>
-                          All
+                          {t('prod_mkt.all')}
                         </button>
                       </li>
                       {subcategories.map(sub => (
@@ -292,13 +294,13 @@ export default function ProductsMarketplace() {
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 p-4">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Sort</h3>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">{t('prod_mkt.sort')}</h3>
             <ul className="space-y-1">
               {SORT_OPTIONS.map(o => (
                 <li key={o.key}>
                   <button onClick={() => setSort(o.key)}
                     className={`text-sm w-full text-left px-2 py-1 rounded-lg ${sort === o.key ? 'bg-green-50 text-[#3D6B34] font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}>
-                    {o.label}
+                    {t('prod_mkt.sort_' + o.key)}
                   </button>
                 </li>
               ))}
@@ -310,12 +312,12 @@ export default function ProductsMarketplace() {
         <div className="flex-grow min-w-0">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-gray-500">
-              {loading ? 'Loading…' : `${products.length} product${products.length !== 1 ? 's' : ''}`}
+              {loading ? t('prod_mkt.loading') : t('prod_mkt.product_count', { count: products.length })}
             </p>
             {/* Cart button */}
             <button onClick={() => setShowCart(true)}
               className="relative flex items-center gap-2 bg-[#3D6B34] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#2d5226] transition-colors">
-              🛒 Cart
+              🛒 {t('prod_mkt.cart_btn')}
               {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
                   {cartCount}
@@ -333,8 +335,8 @@ export default function ProductsMarketplace() {
           ) : products.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-100 p-16 text-center text-gray-400">
               <div className="text-4xl mb-3">🛍️</div>
-              <p className="font-medium">No products found.</p>
-              {search && <button onClick={() => { setSearch(''); setSearchInput(''); }} className="mt-2 text-sm text-[#3D6B34] hover:underline">Clear search</button>}
+              <p className="font-medium">{t('prod_mkt.no_products')}</p>
+              {search && <button onClick={() => { setSearch(''); setSearchInput(''); }} className="mt-2 text-sm text-[#3D6B34] hover:underline">{t('prod_mkt.clear_search')}</button>}
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -369,7 +371,7 @@ export default function ProductsMarketplace() {
                       </p>
                       <div className="mt-auto flex items-end justify-between gap-2">
                         {product.prodCallforPrice ? (
-                          <span className="text-sm text-gray-500 font-medium">Contact for Price</span>
+                          <span className="text-sm text-gray-500 font-medium">{t('prod_mkt.contact_for_price')}</span>
                         ) : (
                           <div>
                             <span className="text-lg font-bold text-[#3D6B34]">${(product.UnitPrice || 0).toFixed(2)}</span>
@@ -387,7 +389,7 @@ export default function ProductsMarketplace() {
                               ? 'bg-green-100 text-green-700'
                               : 'bg-[#3D6B34] text-white hover:bg-[#2d5226]'
                           }`}>
-                          {addedId === listingId ? '✓ Added!' : '+ Add to Cart'}
+                          {addedId === listingId ? t('prod_mkt.added') : t('prod_mkt.add_to_cart')}
                         </button>
                       )}
                     </div>
@@ -405,29 +407,29 @@ export default function ProductsMarketplace() {
           <div className="flex-grow bg-black/40" onClick={() => { setShowCart(false); setShowSignIn(false); }} />
           <div className="w-full max-w-md bg-white shadow-2xl flex flex-col">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h2 className="font-bold text-gray-900 text-lg">Your Cart</h2>
+              <h2 className="font-bold text-gray-900 text-lg">{t('prod_mkt.cart_title')}</h2>
               <button onClick={() => { setShowCart(false); setShowSignIn(false); }} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
             </div>
 
             {/* Sign-in prompt */}
             {showSignIn && !loggedIn && (
               <div className="px-5 py-4 bg-amber-50 border-b border-amber-100">
-                <p className="text-sm font-semibold text-amber-800 mb-3">Sign in to checkout</p>
+                <p className="text-sm font-semibold text-amber-800 mb-3">{t('prod_mkt.sign_in_checkout')}</p>
                 <form onSubmit={handleSignIn} className="space-y-2">
-                  <input type="email" required placeholder="Email" value={signInEmail} onChange={e => setSignInEmail(e.target.value)}
+                  <input type="email" required placeholder={t('prod_mkt.email_placeholder')} value={signInEmail} onChange={e => setSignInEmail(e.target.value)}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
-                  <input type="password" required placeholder="Password" value={signInPass} onChange={e => setSignInPass(e.target.value)}
+                  <input type="password" required placeholder={t('prod_mkt.password_placeholder')} value={signInPass} onChange={e => setSignInPass(e.target.value)}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
                   {signInError && <p className="text-xs text-red-600">{signInError}</p>}
                   <button type="submit" disabled={signInLoading}
                     className="w-full bg-[#3D6B34] text-white font-semibold py-2 rounded-lg text-sm disabled:opacity-50">
-                    {signInLoading ? 'Signing in…' : 'Sign In'}
+                    {signInLoading ? t('prod_mkt.signing_in') : t('prod_mkt.sign_in')}
                   </button>
                 </form>
                 <p className="text-xs text-center mt-2">
-                  <Link to="/signup" className="text-[#3D6B34] hover:underline">Create account</Link>
+                  <Link to="/signup" className="text-[#3D6B34] hover:underline">{t('prod_mkt.create_account')}</Link>
                   {' · '}
-                  <button onClick={() => setShowSignIn(false)} className="text-gray-400 hover:underline">Continue browsing</button>
+                  <button onClick={() => setShowSignIn(false)} className="text-gray-400 hover:underline">{t('prod_mkt.continue_browsing')}</button>
                 </p>
               </div>
             )}
@@ -436,7 +438,7 @@ export default function ProductsMarketplace() {
               {cart.length === 0 ? (
                 <div className="text-center text-gray-400 py-16">
                   <div className="text-4xl mb-3">🛍️</div>
-                  <p>Your cart is empty.</p>
+                  <p>{t('prod_mkt.cart_empty')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -470,15 +472,15 @@ export default function ProductsMarketplace() {
             {cart.length > 0 && (
               <div className="px-5 py-4 border-t border-gray-100">
                 <div className="flex justify-between text-sm font-semibold text-gray-700 mb-3">
-                  <span>Subtotal</span>
+                  <span>{t('prod_mkt.subtotal')}</span>
                   <span>${cartTotal.toFixed(2)}</span>
                 </div>
                 <button onClick={checkout} disabled={checkoutLoading}
                   className="w-full bg-[#3D6B34] text-white font-bold py-3 rounded-xl hover:bg-[#2d5226] transition-colors disabled:opacity-50 text-sm">
-                  {checkoutLoading ? 'Loading…' : loggedIn ? 'Proceed to Checkout →' : 'Sign In to Checkout'}
+                  {checkoutLoading ? t('prod_mkt.checkout_loading') : loggedIn ? t('prod_mkt.checkout') : t('prod_mkt.checkout_signin')}
                 </button>
                 <p className="text-center text-xs text-gray-400 mt-2">
-                  You can also mix food & products — <Link to="/marketplaces/farm-to-table" className="text-[#3D6B34] hover:underline">browse food</Link>
+                  {t('prod_mkt.mix_note_pre')} <Link to="/marketplaces/farm-to-table" className="text-[#3D6B34] hover:underline">{t('prod_mkt.browse_food')}</Link>
                 </p>
               </div>
             )}

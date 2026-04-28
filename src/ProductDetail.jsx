@@ -2,6 +2,7 @@
 // Public product detail page — /marketplace/products/:id
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -19,6 +20,7 @@ function getCart() {
 function saveCart(c) { localStorage.setItem('marketplace_cart', JSON.stringify(c)); }
 
 export default function ProductDetail() {
+  const { t }      = useTranslation();
   const { id }     = useParams();
   const navigate   = useNavigate();
   const isLoggedIn = !!localStorage.getItem('access_token');
@@ -126,7 +128,7 @@ export default function ProductDetail() {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         <Header />
-        <div className="flex-grow flex items-center justify-center text-gray-400 text-lg">Loading…</div>
+        <div className="flex-grow flex items-center justify-center text-gray-400 text-lg">{t('prod_detail.loading')}</div>
         <Footer />
       </div>
     );
@@ -137,8 +139,8 @@ export default function ProductDetail() {
       <div className="min-h-screen flex flex-col bg-gray-50">
         <Header />
         <div className="flex-grow flex flex-col items-center justify-center gap-4">
-          <p className="text-gray-500 text-lg">Product not found.</p>
-          <Link to="/marketplace/products" className="text-[#3D6B34] hover:underline">Browse all products</Link>
+          <p className="text-gray-500 text-lg">{t('prod_detail.not_found')}</p>
+          <Link to="/marketplace/products" className="text-[#3D6B34] hover:underline">{t('prod_detail.browse_all')}</Link>
         </div>
         <Footer />
       </div>
@@ -215,13 +217,13 @@ export default function ProductDetail() {
             {/* Badges */}
             <div className="flex flex-wrap gap-2">
               {product.prodCustomorder && (
-                <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full">Custom Orders Available</span>
+                <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full">{t('prod_detail.custom_orders')}</span>
               )}
               {isOnSale && (
-                <span className="bg-red-100 text-red-600 text-xs font-semibold px-3 py-1 rounded-full">On Sale</span>
+                <span className="bg-red-100 text-red-600 text-xs font-semibold px-3 py-1 rounded-full">{t('prod_detail.on_sale')}</span>
               )}
               {isMadeInUSA(product.prodMadeIn) && (
-                <span className="bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">🇺🇸 Made in the USA</span>
+                <span className="bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">{t('prod_detail.made_in_usa')}</span>
               )}
             </div>
 
@@ -236,10 +238,10 @@ export default function ProductDetail() {
             {/* Price */}
             {product.prodCallforPrice ? (
               <div className="flex items-center gap-3">
-                <span className="text-gray-600 text-base font-medium">Price available on request</span>
+                <span className="text-gray-600 text-base font-medium">{t('prod_detail.price_on_request')}</span>
                 <a href={`mailto:?subject=Inquiry about ${encodeURIComponent(product.prodName || '')}`}
                   className="bg-[#3D6B34] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#2d5226]">
-                  Contact Seller
+                  {t('prod_detail.contact_seller')}
                 </a>
               </div>
             ) : (
@@ -255,7 +257,7 @@ export default function ProductDetail() {
 
             {/* Seller */}
             <div className="text-sm text-gray-500">
-              Sold by <span className="font-semibold text-gray-700">{product.SellerName}</span>
+              {t('prod_detail.sold_by')} <span className="font-semibold text-gray-700">{product.SellerName}</span>
               {product.SellerCity && ` · ${product.SellerCity}`}
               {product.SellerState && `, ${product.SellerState}`}
             </div>
@@ -263,7 +265,7 @@ export default function ProductDetail() {
             {/* Fiber content */}
             {fiberContent.length > 0 && (
               <div className="bg-amber-50 rounded-xl px-4 py-3">
-                <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-1">Fiber Content</p>
+                <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-1">{t('prod_detail.fiber_content')}</p>
                 <p className="text-sm text-amber-900 font-medium">
                   {fiberContent.map((f, i) => (
                     `${f.percent != null ? f.percent + '% ' : ''}${f.type}`
@@ -275,7 +277,7 @@ export default function ProductDetail() {
             {/* Materials */}
             {product.Materials && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Materials</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{t('prod_detail.materials')}</p>
                 <p className="text-sm text-gray-700">{product.Materials}</p>
               </div>
             )}
@@ -283,7 +285,7 @@ export default function ProductDetail() {
             {/* Dimensions */}
             {product.ProdDimensions && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Dimensions</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{t('prod_detail.dimensions')}</p>
                 <p className="text-sm text-gray-700">{product.ProdDimensions}</p>
               </div>
             )}
@@ -291,7 +293,7 @@ export default function ProductDetail() {
             {/* Animals */}
             {(product.ProdAnimalID || product.animals?.length > 0) && (
               <div className="bg-green-50 rounded-xl px-4 py-3 text-sm text-green-800">
-                Made from fiber from our animals
+                {t('prod_detail.made_from_fiber')}
                 {product.animals?.length > 0 && (
                   <span className="ml-1 text-green-600">
                     ({product.animals.map(a => a.AnimalName || a.AnimalID).join(', ')})
@@ -303,7 +305,7 @@ export default function ProductDetail() {
             {/* Sizes */}
             {product.sizes?.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Size</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('prod_detail.size')}</p>
                 <div className="flex flex-wrap gap-2">
                   {product.sizes.map(s => (
                     <button key={s.SizeID}
@@ -325,7 +327,7 @@ export default function ProductDetail() {
             {product.colors?.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                  Color{selectedColor ? `: ${selectedColor.Color}` : ''}
+                  {selectedColor ? t('prod_detail.color_selected', { name: selectedColor.Color }) : t('prod_detail.color')}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {product.colors.map(c => (
@@ -359,7 +361,7 @@ export default function ProductDetail() {
                       ? 'bg-green-100 text-green-700'
                       : 'bg-[#3D6B34] text-white hover:bg-[#2d5226]'
                   }`}>
-                  {added ? '✓ Added to Cart!' : 'Add to Cart'}
+                  {added ? t('prod_detail.added') : t('prod_detail.add_to_cart')}
                 </button>
               </div>
             )}
@@ -367,7 +369,7 @@ export default function ProductDetail() {
             {/* Cart count link */}
             {cartCount > 0 && (
               <Link to="/cart" className="block text-center text-sm text-[#3D6B34] hover:underline">
-                View cart ({cartCount} item{cartCount !== 1 ? 's' : ''}) →
+                {t('prod_detail.view_cart', { count: cartCount })}
               </Link>
             )}
           </div>
@@ -376,7 +378,7 @@ export default function ProductDetail() {
         {/* ── Full Description ── */}
         {product.prodDescription && (
           <div className="mt-10 bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Product Description</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-4">{t('prod_detail.description_heading')}</h2>
             <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{product.prodDescription}</div>
           </div>
         )}
@@ -384,7 +386,7 @@ export default function ProductDetail() {
         {/* ── Related Products ── */}
         {related.length > 0 && (
           <div className="mt-10">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">More from {product.SellerName}</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-4">{t('prod_detail.more_from', { name: product.SellerName })}</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {related.map(p => {
                 const imgUrl = p.ImageURL || null;
@@ -401,7 +403,7 @@ export default function ProductDetail() {
                     <div className="p-3">
                       <p className="text-sm font-semibold text-gray-800 line-clamp-2">{p.Title}</p>
                       <p className="text-sm font-bold text-[#3D6B34] mt-1">
-                        {p.prodCallforPrice ? 'Contact for Price' : `$${price.toFixed(2)}`}
+                        {p.prodCallforPrice ? t('prod_detail.contact_for_price') : `$${price.toFixed(2)}`}
                       </p>
                     </div>
                   </Link>

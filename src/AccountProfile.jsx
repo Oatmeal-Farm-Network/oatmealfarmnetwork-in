@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -391,6 +392,7 @@ function RichTextEditor({ value, onChange }) {
 // ── Logo upload with drag & drop ──────────────────────────────────────────────
 
 function LogoUpload({ businessId, currentLogo, onUploaded }) {
+  const { t } = useTranslation();
   const [dragging,  setDragging]  = useState(false);
   const [uploading, setUploading] = useState(false);
   const [preview,   setPreview]   = useState(currentLogo || null);
@@ -411,7 +413,7 @@ function LogoUpload({ businessId, currentLogo, onUploaded }) {
       setPreview(url);
       onUploaded(url);
     } catch (e) {
-      alert('Logo upload failed: ' + e.message);
+      alert(t('account_profile.logo_upload_error', { message: e.message }));
       setPreview(currentLogo || null);
     } finally {
       setUploading(false);
@@ -442,12 +444,12 @@ function LogoUpload({ businessId, currentLogo, onUploaded }) {
         }}
       >
         {preview ? (
-          <img src={preview} alt="Business logo" style={{ maxHeight: 100, maxWidth: '100%', objectFit: 'contain', borderRadius: 6 }} />
+          <img src={preview} alt={t('account_profile.logo_alt')} style={{ maxHeight: 100, maxWidth: '100%', objectFit: 'contain', borderRadius: 6 }} />
         ) : (
           <div style={{ color: '#9ca3af', fontSize: 36 }}>🖼</div>
         )}
         <p style={{ margin: 0, fontSize: 12, color: uploading ? '#3b82f6' : '#6b7280' }}>
-          {uploading ? 'Uploading…' : dragging ? 'Drop to upload' : preview ? 'Drag & drop or click to replace logo' : 'Drag & drop logo here or click to browse'}
+          {uploading ? t('account_profile.logo_uploading') : dragging ? t('account_profile.logo_drop') : preview ? t('account_profile.logo_replace') : t('account_profile.logo_add')}
         </p>
         <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }}
           onChange={e => { const f = e.target.files[0]; if (f) upload(f); e.target.value = ''; }} />
@@ -472,6 +474,7 @@ const SOCIAL_FIELDS = [
 ];
 
 export default function AccountProfile() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const businessId = searchParams.get('BusinessID');
   const navigate   = useNavigate();
@@ -521,8 +524,8 @@ export default function AccountProfile() {
 
   const validate = () => {
     const e = {};
-    if (!form.BusinessName?.trim()) e.BusinessName = 'Business name is required.';
-    if (!form.ContactEmail?.trim()) e.ContactEmail = 'Email is required.';
+    if (!form.BusinessName?.trim()) e.BusinessName = t('account_profile.error_name_required');
+    if (!form.ContactEmail?.trim()) e.ContactEmail = t('account_profile.error_email_required');
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -543,10 +546,10 @@ export default function AccountProfile() {
         window.scrollTo(0, 0);
       } else {
         const data = await res.json();
-        setErrors({ submit: data.detail || 'An error occurred.' });
+        setErrors({ submit: data.detail || t('account_profile.error_generic') });
       }
     } catch {
-      setErrors({ submit: 'An error occurred. Please try again.' });
+      setErrors({ submit: t('account_profile.error_retry') });
     } finally {
       setSaving(false);
     }
@@ -558,41 +561,41 @@ export default function AccountProfile() {
   const sectionCard = 'bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4';
 
   if (!form || !Business) return (
-    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId} pageTitle="Account Profile" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Account Settings' }, { label: 'Profile' }]}>
-      <div className="text-center py-20 text-gray-400">Loading...</div>
+    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId} pageTitle={t('account_profile.page_title')} breadcrumbs={[{ label: t('account_profile.breadcrumb_dashboard'), to: '/dashboard' }, { label: t('account_profile.breadcrumb_settings') }, { label: t('account_profile.breadcrumb_profile') }]}>
+      <div className="text-center py-20 text-gray-400">{t('account_profile.loading')}</div>
     </AccountLayout>
   );
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId} pageTitle="Account Profile" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Account Settings' }, { label: 'Profile' }]}>
+    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={peopleId} pageTitle={t('account_profile.page_title')} breadcrumbs={[{ label: t('account_profile.breadcrumb_dashboard'), to: '/dashboard' }, { label: t('account_profile.breadcrumb_settings') }, { label: t('account_profile.breadcrumb_profile') }]}>
       <div className="space-y-6 w-full">
 
-        <h1 className="text-2xl font-bold text-gray-800">Account Profile</h1>
+        <h1 className="text-2xl font-bold text-gray-800">{t('account_profile.page_title')}</h1>
 
-        {success && <div className="bg-green-50 border border-green-300 text-green-700 rounded px-4 py-3 text-sm">Profile updated successfully.</div>}
+        {success && <div className="bg-green-50 border border-green-300 text-green-700 rounded px-4 py-3 text-sm">{t('account_profile.success')}</div>}
         {errors.submit && <div className="bg-red-50 border border-red-300 text-red-700 rounded px-4 py-3 text-sm">{errors.submit}</div>}
 
         {/* ── Business Logo ── */}
         <div className={sectionCard}>
-          <h2 className="text-base font-semibold text-gray-700">Business Logo</h2>
+          <h2 className="text-base font-semibold text-gray-700">{t('account_profile.sec_logo')}</h2>
           <LogoUpload businessId={businessId} currentLogo={form.Logo} onUploaded={url => update('Logo', url)} />
         </div>
 
         {/* ── Contact info ── */}
         <div className={sectionCard}>
-          <h2 className="text-base font-semibold text-gray-700">Contact Information</h2>
+          <h2 className="text-base font-semibold text-gray-700">{t('account_profile.sec_contact')}</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className={labelClass}>First Name <span className="text-gray-400 font-normal">(Optional)</span></label>
+              <label className={labelClass}>{t('account_profile.label_first_name')} <span className="text-gray-400 font-normal">{t('account_profile.optional')}</span></label>
               <input type="text" value={form.ContactFirstName || ''} onChange={e => update('ContactFirstName', e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Last Name <span className="text-gray-400 font-normal">(Optional)</span></label>
+              <label className={labelClass}>{t('account_profile.label_last_name')} <span className="text-gray-400 font-normal">{t('account_profile.optional')}</span></label>
               <input type="text" value={form.ContactLastName || ''} onChange={e => update('ContactLastName', e.target.value)} className={inputClass} />
             </div>
             <div className="lg:col-span-2">
-              <label className={labelClass}>Business / Organization Name</label>
+              <label className={labelClass}>{t('account_profile.label_business_name')}</label>
               <input type="text" value={form.BusinessName || ''} onChange={e => update('BusinessName', e.target.value)} className={inputClass} maxLength={100} />
               {errors.BusinessName && <p className={errorClass}>{errors.BusinessName}</p>}
             </div>
@@ -600,27 +603,27 @@ export default function AccountProfile() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Email</label>
+              <label className={labelClass}>{t('account_profile.label_email')}</label>
               <input type="email" value={form.ContactEmail || ''} onChange={e => update('ContactEmail', e.target.value)} className={inputClass} />
               {errors.ContactEmail && <p className={errorClass}>{errors.ContactEmail}</p>}
             </div>
             <div>
-              <label className={labelClass}>Website <span className="text-gray-400 font-normal">(Optional)</span></label>
+              <label className={labelClass}>{t('account_profile.label_website')} <span className="text-gray-400 font-normal">{t('account_profile.optional')}</span></label>
               <input type="text" value={form.BusinessWebsite || ''} onChange={e => update('BusinessWebsite', e.target.value)} className={inputClass} placeholder="https://yourwebsite.com" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className={labelClass}>Phone <span className="text-gray-400 font-normal">(Optional)</span></label>
+              <label className={labelClass}>{t('account_profile.label_phone')} <span className="text-gray-400 font-normal">{t('account_profile.optional')}</span></label>
               <input type="tel" value={form.BusinessPhone || ''} onChange={e => update('BusinessPhone', e.target.value.replace(/[^0-9().\-\s+]/g, ''))} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Cell <span className="text-gray-400 font-normal">(Optional)</span></label>
+              <label className={labelClass}>{t('account_profile.label_cell')} <span className="text-gray-400 font-normal">{t('account_profile.optional')}</span></label>
               <input type="tel" value={form.BusinessCell || ''} onChange={e => update('BusinessCell', e.target.value.replace(/[^0-9().\-\s+]/g, ''))} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Fax <span className="text-gray-400 font-normal">(Optional)</span></label>
+              <label className={labelClass}>{t('account_profile.label_fax')} <span className="text-gray-400 font-normal">{t('account_profile.optional')}</span></label>
               <input type="tel" value={form.BusinessFax || ''} onChange={e => update('BusinessFax', e.target.value.replace(/[^0-9().\-\s+]/g, ''))} className={inputClass} />
             </div>
           </div>
@@ -628,36 +631,36 @@ export default function AccountProfile() {
 
         {/* ── Address ── */}
         <div className={sectionCard}>
-          <h2 className="text-base font-semibold text-gray-700">Address <span className="text-gray-400 font-normal text-sm">(Optional)</span></h2>
+          <h2 className="text-base font-semibold text-gray-700">{t('account_profile.sec_address')} <span className="text-gray-400 font-normal text-sm">{t('account_profile.optional')}</span></h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             <div className="sm:col-span-2 lg:col-span-3">
-              <label className={labelClass}>Mailing Address</label>
+              <label className={labelClass}>{t('account_profile.label_address')}</label>
               <input type="text" value={form.AddressStreet || ''} onChange={e => update('AddressStreet', e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Apartment / Suite</label>
+              <label className={labelClass}>{t('account_profile.label_apt')}</label>
               <input type="text" value={form.AddressApt || ''} onChange={e => update('AddressApt', e.target.value)} className={inputClass} />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className={labelClass}>City</label>
+              <label className={labelClass}>{t('account_profile.label_city')}</label>
               <input type="text" value={form.AddressCity || ''} onChange={e => update('AddressCity', e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Postal Code</label>
+              <label className={labelClass}>{t('account_profile.label_zip')}</label>
               <input type="text" value={form.AddressZip || ''} onChange={e => update('AddressZip', e.target.value)} className={inputClass} maxLength={10} />
             </div>
             <div>
-              <label className={labelClass}>State / Province</label>
+              <label className={labelClass}>{t('account_profile.label_state')}</label>
               <select value={form.StateIndex || ''} onChange={e => update('StateIndex', e.target.value)} className={inputClass}>
-                <option value="">Select...</option>
+                <option value="">{t('account_profile.state_select')}</option>
                 {states.map(s => <option key={s.StateIndex} value={s.StateIndex}>{s.name}</option>)}
               </select>
             </div>
             <div>
-              <label className={labelClass}>Country</label>
+              <label className={labelClass}>{t('account_profile.label_country')}</label>
               <select value={form.country_name || 'USA'} onChange={e => handleCountryChange(e.target.value)} className={inputClass}>
                 <option value="USA">USA</option>
                 <option value="Canada">Canada</option>
@@ -668,8 +671,8 @@ export default function AccountProfile() {
 
         {/* ── Business Description ── */}
         <div className={sectionCard}>
-          <h2 className="text-base font-semibold text-gray-700">Business Description <span className="text-gray-400 font-normal text-sm">(Optional)</span></h2>
-          <p className="text-xs text-gray-400">This appears on your public profile page.</p>
+          <h2 className="text-base font-semibold text-gray-700">{t('account_profile.sec_description')} <span className="text-gray-400 font-normal text-sm">{t('account_profile.optional')}</span></h2>
+          <p className="text-xs text-gray-400">{t('account_profile.description_hint')}</p>
           <RichTextEditor
             value={form.BusinessDescription || ''}
             onChange={val => update('BusinessDescription', val)}
@@ -681,42 +684,42 @@ export default function AccountProfile() {
           <div className={sectionCard}>
             <h2 className="text-base font-semibold text-gray-700 flex items-center gap-2">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="text-[#3D6B34]"><line x1="5" y1="2" x2="5" y2="14"/><path d="M3 2v4a2 2 0 0 0 4 0V2"/><line x1="11" y1="2" x2="11" y2="14"/><path d="M9 2h3a0 0 0 0 1 0 4v0"/></svg>
-              Restaurant Profile <span className="text-gray-400 font-normal text-sm">(Optional)</span>
+              {t('account_profile.sec_restaurant')} <span className="text-gray-400 font-normal text-sm">{t('account_profile.optional')}</span>
             </h2>
-            <p className="text-xs text-gray-400">Helps farmers know who you are when you place orders or save them to My Farms.</p>
+            <p className="text-xs text-gray-400">{t('account_profile.restaurant_hint')}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Cuisine</label>
+                <label className={labelClass}>{t('account_profile.label_cuisine')}</label>
                 <input type="text" value={form.Cuisine || ''} onChange={e => update('Cuisine', e.target.value)}
                   placeholder="e.g. Pacific Northwest, Italian, Farm-to-Table"
                   className={inputClass} maxLength={200} />
               </div>
               <div>
-                <label className={labelClass}>Head Chef</label>
+                <label className={labelClass}>{t('account_profile.label_head_chef')}</label>
                 <input type="text" value={form.HeadChef || ''} onChange={e => update('HeadChef', e.target.value)}
                   placeholder="Chef's name"
                   className={inputClass} maxLength={200} />
               </div>
               <div>
-                <label className={labelClass}>Seating Capacity</label>
+                <label className={labelClass}>{t('account_profile.label_seating')}</label>
                 <input type="number" min="0" value={form.SeatingCapacity || ''} onChange={e => update('SeatingCapacity', e.target.value)}
                   placeholder="e.g. 80"
                   className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Year Opened</label>
+                <label className={labelClass}>{t('account_profile.label_year_opened')}</label>
                 <input type="number" min="1900" max="2100" value={form.YearOpened || ''} onChange={e => update('YearOpened', e.target.value)}
                   placeholder="e.g. 2014"
                   className={inputClass} />
               </div>
               <div className="sm:col-span-2">
-                <label className={labelClass}>Hours</label>
+                <label className={labelClass}>{t('account_profile.label_hours')}</label>
                 <input type="text" value={form.RestaurantHours || ''} onChange={e => update('RestaurantHours', e.target.value)}
                   placeholder="e.g. Tue–Sun 5pm–10pm; closed Mon"
                   className={inputClass} maxLength={500} />
               </div>
               <div className="sm:col-span-2">
-                <label className={labelClass}>Sourcing Philosophy</label>
+                <label className={labelClass}>{t('account_profile.label_sourcing')}</label>
                 <textarea value={form.SourcingPhilosophy || ''} onChange={e => update('SourcingPhilosophy', e.target.value)}
                   placeholder="What do you look for in farm partners? Tell their story."
                   rows={3} className={inputClass} />
@@ -727,7 +730,7 @@ export default function AccountProfile() {
 
         {/* ── Social Media ── */}
         <div className={sectionCard}>
-          <h2 className="text-base font-semibold text-gray-700">Social Media &amp; Links <span className="text-gray-400 font-normal text-sm">(Optional)</span></h2>
+          <h2 className="text-base font-semibold text-gray-700">{t('account_profile.sec_social')} <span className="text-gray-400 font-normal text-sm">{t('account_profile.optional')}</span></h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {SOCIAL_FIELDS.map(({ key, label, placeholder }) => (
               <div key={key}>
@@ -741,7 +744,7 @@ export default function AccountProfile() {
         {/* ── Save ── */}
         <div className="flex justify-end pb-8">
           <button onClick={handleSave} disabled={saving} className="regsubmit2 px-6 py-2 disabled:opacity-60">
-            {saving ? 'Saving...' : 'Update Account'}
+            {saving ? t('account_profile.btn_saving') : t('account_profile.btn_update')}
           </button>
         </div>
 

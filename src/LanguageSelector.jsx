@@ -76,7 +76,6 @@ export default function LanguageSelector() {
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', borderRadius: 6 }}
       >
         <GlobeIcon />
-        <span className="hidden xl:inline">{nativeName}</span>
       </button>
 
       {open && (

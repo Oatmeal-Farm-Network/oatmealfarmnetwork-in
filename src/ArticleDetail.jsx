@@ -1,6 +1,7 @@
 // src/ArticleDetail.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const NEWS_API = import.meta.env.VITE_NEWS_API_URL || import.meta.env.VITE_API_URL || '';
 
@@ -47,6 +48,7 @@ const buildPreviewHtml = (html) => {
 };
 
 const ArticleDetail = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [article, setArticle] = useState(null);
@@ -71,8 +73,8 @@ const ArticleDetail = () => {
     fetchArticle();
   }, [id]);
 
-  if (loading) return <div style={{ paddingTop: '3rem', textAlign: 'center', color: '#6b7280' }}>Loading article...</div>;
-  if (error || !article) return <div style={{ paddingTop: '3rem', textAlign: 'center', color: '#dc2626' }}>{error || 'Article not found.'}</div>;
+  if (loading) return <div style={{ paddingTop: '3rem', textAlign: 'center', color: '#6b7280' }}>{t('article.loading')}</div>;
+  if (error || !article) return <div style={{ paddingTop: '3rem', textAlign: 'center', color: '#dc2626' }}>{error || t('article.not_found')}</div>;
 
   const tokenRaw = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
   const isSignedIn = !!(tokenRaw && tokenRaw !== 'undefined' && tokenRaw !== 'null');
@@ -83,7 +85,7 @@ const ArticleDetail = () => {
     <div style={{ maxWidth: '800px', margin: '0 auto', paddingTop: '2rem', paddingBottom: '3rem', paddingLeft: '2rem', paddingRight: '2rem' }}>
       <button onClick={() => navigate('/app/news')}
         style={{ background: 'none', border: 'none', color: '#819360', cursor: 'pointer', fontWeight: 600, marginBottom: '1rem', fontSize: '0.9rem' }}>
-        ← Back to News
+        {t('article.back_news')}
       </button>
 
       <img src={getHeroImage(article)} alt={article.title}
@@ -108,19 +110,19 @@ const ArticleDetail = () => {
           {!isSignedIn && (
             <div style={{ marginTop: '1.5rem', padding: '1.25rem 1.5rem', background: 'linear-gradient(180deg, #f9fafb 0%, #eef2e8 100%)', border: '1px solid #d6dec5', borderRadius: '12px', textAlign: 'center' }}>
               <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>
-                Sign in to read the full article
+                {t('article.sign_in_title')}
               </div>
               <p style={{ fontSize: '0.85rem', color: '#6b7280', margin: '0 0 0.9rem', lineHeight: 1.5 }}>
-                You're viewing a preview. Members get the full article with images, plus daily news digests on the topics you choose.
+                {t('article.sign_in_body')}
               </p>
               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button onClick={() => navigate('/login')}
                   style={{ padding: '0.55rem 1.25rem', fontSize: '0.85rem', fontWeight: 600, border: 'none', backgroundColor: '#819360', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>
-                  Sign in
+                  {t('article.sign_in_btn')}
                 </button>
                 <button onClick={() => navigate('/register')}
                   style={{ padding: '0.55rem 1.25rem', fontSize: '0.85rem', fontWeight: 600, border: '1px solid #819360', backgroundColor: '#fff', color: '#819360', borderRadius: '6px', cursor: 'pointer' }}>
-                  Create a free account
+                  {t('article.create_account')}
                 </button>
               </div>
             </div>
@@ -134,12 +136,12 @@ const ArticleDetail = () => {
         {isSignedIn && article.link ? (
           <a href={article.link} target="_blank" rel="noopener noreferrer"
             style={{ color: '#819360', fontWeight: 600, textDecoration: 'none', fontSize: '0.9rem' }}>
-            View original at {article.source} →
+            {t('article.view_original', { source: article.source })}
           </a>
         ) : <span />}
         <button onClick={() => navigate('/app/news')}
           style={{ paddingTop: '0.5rem', paddingBottom: '0.5rem', paddingLeft: '1.25rem', paddingRight: '1.25rem', backgroundColor: '#111827', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>
-          ← Back to News
+          {t('article.back_news')}
         </button>
       </div>
 

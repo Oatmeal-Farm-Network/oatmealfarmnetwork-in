@@ -4,6 +4,18 @@ import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const OTF_API = import.meta.env.VITE_OTF_API_URL || import.meta.env.VITE_API_URL || '';
+
+async function syncOTFCommunity(businessId) {
+  try {
+    const token    = localStorage.getItem('access_token') || '';
+    const peopleId = localStorage.getItem('people_id') || '0';
+    await fetch(`${OTF_API}/api/admin/mill/communities/sync-business/${businessId}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'x-people-id': peopleId },
+    });
+  } catch { /* non-blocking */ }
+}
 
 const ACCESS_LEVELS = [
   { id: 1, label: 'View only' },
@@ -90,6 +102,7 @@ export default function AccountTeamMembers() {
       setAddForm({ Email: '', PeopleFirstName: '', PeopleLastName: '', AccessLevelID: 2, Role: 'Staff' });
       setShowAdd(false);
       flash('Team member added.');
+      syncOTFCommunity(BusinessID);
       await loadMembers();
     } catch (e) {
       setError(e.message || 'Add failed.');

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -8,6 +9,7 @@ import Breadcrumbs from './Breadcrumbs';
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function IngredientVarieties() {
+  const { t } = useTranslation();
   const { category, ingredientId } = useParams();
   const [ingredientName, setIngredientName] = useState('');
   const [varieties, setVarieties] = useState(null);
@@ -44,22 +46,22 @@ export default function IngredientVarieties() {
           { label: category ? category.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '', to: `/ingredient-knowledgebase/${category}` },
           { label: ingredientName ? `${ingredientName} Varieties` : 'Varieties' },
         ]} />
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{ingredientName} Varieties</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{ingredientName} {t('ingredient_vars.varieties_suffix')}</h1>
         <p className="text-gray-700 mb-6">
-          Below is a list of all known varieties for {ingredientName}. Click on a variety name to view more detailed nutrient and sourcing information.
+          {t('ingredient_vars.intro', { name: ingredientName })}
         </p>
 
         {varieties === null ? (
-          <div className="text-gray-400 py-12 text-center">Loading...</div>
+          <div className="text-gray-400 py-12 text-center">{t('ingredient_vars.loading')}</div>
         ) : varieties.length === 0 ? (
-          <div className="text-gray-500 py-8 text-center">No varieties found for {ingredientName}.</div>
+          <div className="text-gray-500 py-8 text-center">{t('ingredient_vars.not_found', { name: ingredientName })}</div>
         ) : (
           <div className="overflow-x-auto rounded border border-gray-200 shadow-sm">
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wide">
-                  <th className="px-4 py-3 text-left border-b border-gray-200">Variety Name</th>
-                  <th className="px-4 py-3 text-left border-b border-gray-200">Description</th>
+                  <th className="px-4 py-3 text-left border-b border-gray-200">{t('ingredient_vars.col_name')}</th>
+                  <th className="px-4 py-3 text-left border-b border-gray-200">{t('ingredient_vars.col_description')}</th>
                 </tr>
               </thead>
               <tbody>

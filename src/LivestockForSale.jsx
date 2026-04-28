@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -29,100 +30,101 @@ const US_STATE_ABBR = {
 
 const SIDEBAR_SECTIONS = [
   {
-    label: 'Livestock For Sale',
+    id: 'for_sale',
     items: [
-      { label: 'Alpacas', path: '/marketplaces/livestock/alpacas' },
-      { label: 'Bison', path: '/marketplaces/livestock/bison' },
-      { label: 'Buffalo', path: '/marketplaces/livestock/buffalo' },
-      { label: 'Camels', path: '/marketplaces/livestock/camels' },
-      { label: 'Cattle', path: '/marketplaces/livestock/cattle' },
-      { label: 'Chickens', path: '/marketplaces/livestock/chickens' },
-      { label: 'Crocodiles & Alligators', path: '/marketplaces/livestock/crocodiles' },
-      { label: 'Deer', path: '/marketplaces/livestock/deer' },
-      { label: 'Working Dogs', path: '/marketplaces/livestock/dogs' },
-      { label: 'Donkeys', path: '/marketplaces/livestock/donkeys' },
-      { label: 'Ducks', path: '/marketplaces/livestock/ducks' },
-      { label: 'Emus', path: '/marketplaces/livestock/emus' },
-      { label: 'Geese', path: '/marketplaces/livestock/geese' },
-      { label: 'Goats', path: '/marketplaces/livestock/goats' },
-      { label: 'Guinea Fowl', path: '/marketplaces/livestock/guinea-fowl' },
-      { label: 'Honey Bees', path: '/marketplaces/livestock/honey-bees' },
-      { label: 'Horses', path: '/marketplaces/livestock/horses' },
-      { label: 'Llamas', path: '/marketplaces/livestock/llamas' },
-      { label: 'Musk Ox', path: '/marketplaces/livestock/musk-ox' },
-      { label: 'Ostriches', path: '/marketplaces/livestock/ostriches' },
-      { label: 'Pheasants', path: '/marketplaces/livestock/pheasants' },
-      { label: 'Pigeons', path: '/marketplaces/livestock/pigeons' },
-      { label: 'Pigs', path: '/marketplaces/livestock/pigs' },
-      { label: 'Quails', path: '/marketplaces/livestock/quails' },
-      { label: 'Rabbits', path: '/marketplaces/livestock/rabbits' },
-      { label: 'Sheep', path: '/marketplaces/livestock/sheep' },
-      { label: 'Snails', path: '/marketplaces/livestock/snails' },
-      { label: 'Turkeys', path: '/marketplaces/livestock/turkeys' },
-      { label: 'Yaks', path: '/marketplaces/livestock/yaks' },
+      { key: 'sp_alpacas',     path: '/marketplaces/livestock/alpacas' },
+      { key: 'sp_bison',       path: '/marketplaces/livestock/bison' },
+      { key: 'sp_buffalo',     path: '/marketplaces/livestock/buffalo' },
+      { key: 'sp_camels',      path: '/marketplaces/livestock/camels' },
+      { key: 'sp_cattle',      path: '/marketplaces/livestock/cattle' },
+      { key: 'sp_chickens',    path: '/marketplaces/livestock/chickens' },
+      { key: 'sp_crocodiles',  path: '/marketplaces/livestock/crocodiles' },
+      { key: 'sp_deer',        path: '/marketplaces/livestock/deer' },
+      { key: 'sp_dogs',        path: '/marketplaces/livestock/dogs' },
+      { key: 'sp_donkeys',     path: '/marketplaces/livestock/donkeys' },
+      { key: 'sp_ducks',       path: '/marketplaces/livestock/ducks' },
+      { key: 'sp_emus',        path: '/marketplaces/livestock/emus' },
+      { key: 'sp_geese',       path: '/marketplaces/livestock/geese' },
+      { key: 'sp_goats',       path: '/marketplaces/livestock/goats' },
+      { key: 'sp_guinea_fowl', path: '/marketplaces/livestock/guinea-fowl' },
+      { key: 'sp_honey_bees',  path: '/marketplaces/livestock/honey-bees' },
+      { key: 'sp_horses',      path: '/marketplaces/livestock/horses' },
+      { key: 'sp_llamas',      path: '/marketplaces/livestock/llamas' },
+      { key: 'sp_musk_ox',     path: '/marketplaces/livestock/musk-ox' },
+      { key: 'sp_ostriches',   path: '/marketplaces/livestock/ostriches' },
+      { key: 'sp_pheasants',   path: '/marketplaces/livestock/pheasants' },
+      { key: 'sp_pigeons',     path: '/marketplaces/livestock/pigeons' },
+      { key: 'sp_pigs',        path: '/marketplaces/livestock/pigs' },
+      { key: 'sp_quails',      path: '/marketplaces/livestock/quails' },
+      { key: 'sp_rabbits',     path: '/marketplaces/livestock/rabbits' },
+      { key: 'sp_sheep',       path: '/marketplaces/livestock/sheep' },
+      { key: 'sp_snails',      path: '/marketplaces/livestock/snails' },
+      { key: 'sp_turkeys',     path: '/marketplaces/livestock/turkeys' },
+      { key: 'sp_yaks',        path: '/marketplaces/livestock/yaks' },
     ],
   },
   {
-    label: 'Stud Services',
+    id: 'studs',
     items: [
-      { label: 'Alpaca Studs', path: '/marketplaces/livestock/studs/alpacas' },
-      { label: 'Bison Studs', path: '/marketplaces/livestock/studs/bison' },
-      { label: 'Buffalo Studs', path: '/marketplaces/livestock/studs/buffalo' },
-      { label: 'Camel Studs', path: '/marketplaces/livestock/studs/camels' },
-      { label: 'Cattle Studs', path: '/marketplaces/livestock/studs/cattle' },
-      { label: 'Working Dog Studs', path: '/marketplaces/livestock/studs/dogs' },
-      { label: 'Donkey Studs', path: '/marketplaces/livestock/studs/donkeys' },
-      { label: 'Goat Studs', path: '/marketplaces/livestock/studs/goats' },
-      { label: 'Horse Studs', path: '/marketplaces/livestock/studs/horses' },
-      { label: 'Llama Studs', path: '/marketplaces/livestock/studs/llamas' },
-      { label: 'Pig Studs', path: '/marketplaces/livestock/studs/pigs' },
-      { label: 'Rabbit Studs', path: '/marketplaces/livestock/studs/rabbits' },
-      { label: 'Sheep Studs', path: '/marketplaces/livestock/studs/sheep' },
-      { label: 'Yak Studs', path: '/marketplaces/livestock/studs/yaks' },
+      { key: 'sp_alpaca_studs',  path: '/marketplaces/livestock/studs/alpacas' },
+      { key: 'sp_bison_studs',   path: '/marketplaces/livestock/studs/bison' },
+      { key: 'sp_buffalo_studs', path: '/marketplaces/livestock/studs/buffalo' },
+      { key: 'sp_camel_studs',   path: '/marketplaces/livestock/studs/camels' },
+      { key: 'sp_cattle_studs',  path: '/marketplaces/livestock/studs/cattle' },
+      { key: 'sp_dog_studs',     path: '/marketplaces/livestock/studs/dogs' },
+      { key: 'sp_donkey_studs',  path: '/marketplaces/livestock/studs/donkeys' },
+      { key: 'sp_goat_studs',    path: '/marketplaces/livestock/studs/goats' },
+      { key: 'sp_horse_studs',   path: '/marketplaces/livestock/studs/horses' },
+      { key: 'sp_llama_studs',   path: '/marketplaces/livestock/studs/llamas' },
+      { key: 'sp_pig_studs',     path: '/marketplaces/livestock/studs/pigs' },
+      { key: 'sp_rabbit_studs',  path: '/marketplaces/livestock/studs/rabbits' },
+      { key: 'sp_sheep_studs',   path: '/marketplaces/livestock/studs/sheep' },
+      { key: 'sp_yak_studs',     path: '/marketplaces/livestock/studs/yaks' },
     ],
   },
   {
-    label: 'Ranches',
+    id: 'ranches',
     items: [
-      { label: 'Alpaca Ranches', path: '/marketplaces/livestock/ranches/alpacas' },
-      { label: 'Bees, Honey', path: '/marketplaces/livestock/ranches/honey-bees' },
-      { label: 'Bison Ranches', path: '/marketplaces/livestock/ranches/bison' },
-      { label: 'Buffalo Ranches', path: '/marketplaces/livestock/ranches/buffalo' },
-      { label: 'Camel Ranches', path: '/marketplaces/livestock/ranches/camels' },
-      { label: 'Cattle Ranches', path: '/marketplaces/livestock/ranches/cattle' },
-      { label: 'Chicken Ranches', path: '/marketplaces/livestock/ranches/chickens' },
-      { label: 'Crocodile & Alligator Ranches', path: '/marketplaces/livestock/ranches/crocodiles' },
-      { label: 'Deer Ranches', path: '/marketplaces/livestock/ranches/deer' },
-      { label: 'Working Dog Ranches', path: '/marketplaces/livestock/ranches/dogs' },
-      { label: 'Donkey Ranches', path: '/marketplaces/livestock/ranches/donkeys' },
-      { label: 'Duck Ranches', path: '/marketplaces/livestock/ranches/ducks' },
-      { label: 'Emu Ranches', path: '/marketplaces/livestock/ranches/emus' },
-      { label: 'Geese Ranches', path: '/marketplaces/livestock/ranches/geese' },
-      { label: 'Goat Ranches', path: '/marketplaces/livestock/ranches/goats' },
-      { label: 'Guinea Fowl Ranches', path: '/marketplaces/livestock/ranches/guinea-fowl' },
-      { label: 'Horse Ranches', path: '/marketplaces/livestock/ranches/horses' },
-      { label: 'Llama Ranches', path: '/marketplaces/livestock/ranches/llamas' },
-      { label: 'Musk Ox Ranches', path: '/marketplaces/livestock/ranches/musk-ox' },
-      { label: 'Ostrich Ranches', path: '/marketplaces/livestock/ranches/ostriches' },
-      { label: 'Pheasant Ranches', path: '/marketplaces/livestock/ranches/pheasants' },
-      { label: 'Pig Ranches', path: '/marketplaces/livestock/ranches/pigs' },
-      { label: 'Pigeon Ranches', path: '/marketplaces/livestock/ranches/pigeons' },
-      { label: 'Quail Ranches', path: '/marketplaces/livestock/ranches/quails' },
-      { label: 'Rabbit Ranches', path: '/marketplaces/livestock/ranches/rabbits' },
-      { label: 'Sheep Ranches', path: '/marketplaces/livestock/ranches/sheep' },
-      { label: 'Snail Ranches', path: '/marketplaces/livestock/ranches/snails' },
-      { label: 'Turkey Ranches', path: '/marketplaces/livestock/ranches/turkeys' },
-      { label: 'Yak Ranches', path: '/marketplaces/livestock/ranches/yaks' },
+      { key: 'sp_alpaca_ranches',      path: '/marketplaces/livestock/ranches/alpacas' },
+      { key: 'sp_bees_honey',          path: '/marketplaces/livestock/ranches/honey-bees' },
+      { key: 'sp_bison_ranches',       path: '/marketplaces/livestock/ranches/bison' },
+      { key: 'sp_buffalo_ranches',     path: '/marketplaces/livestock/ranches/buffalo' },
+      { key: 'sp_camel_ranches',       path: '/marketplaces/livestock/ranches/camels' },
+      { key: 'sp_cattle_ranches',      path: '/marketplaces/livestock/ranches/cattle' },
+      { key: 'sp_chicken_ranches',     path: '/marketplaces/livestock/ranches/chickens' },
+      { key: 'sp_crocodile_ranches',   path: '/marketplaces/livestock/ranches/crocodiles' },
+      { key: 'sp_deer_ranches',        path: '/marketplaces/livestock/ranches/deer' },
+      { key: 'sp_dog_ranches',         path: '/marketplaces/livestock/ranches/dogs' },
+      { key: 'sp_donkey_ranches',      path: '/marketplaces/livestock/ranches/donkeys' },
+      { key: 'sp_duck_ranches',        path: '/marketplaces/livestock/ranches/ducks' },
+      { key: 'sp_emu_ranches',         path: '/marketplaces/livestock/ranches/emus' },
+      { key: 'sp_geese_ranches',       path: '/marketplaces/livestock/ranches/geese' },
+      { key: 'sp_goat_ranches',        path: '/marketplaces/livestock/ranches/goats' },
+      { key: 'sp_guinea_fowl_ranches', path: '/marketplaces/livestock/ranches/guinea-fowl' },
+      { key: 'sp_horse_ranches',       path: '/marketplaces/livestock/ranches/horses' },
+      { key: 'sp_llama_ranches',       path: '/marketplaces/livestock/ranches/llamas' },
+      { key: 'sp_musk_ox_ranches',     path: '/marketplaces/livestock/ranches/musk-ox' },
+      { key: 'sp_ostrich_ranches',     path: '/marketplaces/livestock/ranches/ostriches' },
+      { key: 'sp_pheasant_ranches',    path: '/marketplaces/livestock/ranches/pheasants' },
+      { key: 'sp_pig_ranches',         path: '/marketplaces/livestock/ranches/pigs' },
+      { key: 'sp_pigeon_ranches',      path: '/marketplaces/livestock/ranches/pigeons' },
+      { key: 'sp_quail_ranches',       path: '/marketplaces/livestock/ranches/quails' },
+      { key: 'sp_rabbit_ranches',      path: '/marketplaces/livestock/ranches/rabbits' },
+      { key: 'sp_sheep_ranches',       path: '/marketplaces/livestock/ranches/sheep' },
+      { key: 'sp_snail_ranches',       path: '/marketplaces/livestock/ranches/snails' },
+      { key: 'sp_turkey_ranches',      path: '/marketplaces/livestock/ranches/turkeys' },
+      { key: 'sp_yak_ranches',         path: '/marketplaces/livestock/ranches/yaks' },
     ],
   },
 ];
 
 function Sidebar({ collapsed, onToggle, isStuds }) {
-  const defaultOpen = isStuds ? 'Stud Services' : 'Livestock For Sale';
+  const { t } = useTranslation();
+  const defaultOpen = isStuds ? 'studs' : 'for_sale';
   const [openSections, setOpenSections] = useState({ [defaultOpen]: true });
 
-  const toggleSection = (label) => {
-    setOpenSections(prev => ({ ...prev, [label]: !prev[label] }));
+  const toggleSection = (id) => {
+    setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   return (
@@ -150,16 +152,16 @@ function Sidebar({ collapsed, onToggle, isStuds }) {
           gap: '6px',
         }}
       >
-        {!collapsed && <span style={{ fontSize: '12px', fontWeight: 600 }}>Browse</span>}
+        {!collapsed && <span style={{ fontSize: '12px', fontWeight: 600 }}>{t('livestock_mkt.browse')}</span>}
         <span style={{ fontSize: '18px' }}>{collapsed ? '☰' : '✕'}</span>
       </button>
 
       {!collapsed && (
         <div style={{ padding: '8px 0' }}>
           {SIDEBAR_SECTIONS.map(section => (
-            <div key={section.label}>
+            <div key={section.id}>
               <button
-                onClick={() => toggleSection(section.label)}
+                onClick={() => toggleSection(section.id)}
                 style={{
                   width: '100%', padding: '8px 12px', border: 'none',
                   backgroundColor: '#e8e8e0', color: '#333',
@@ -168,13 +170,13 @@ function Sidebar({ collapsed, onToggle, isStuds }) {
                   alignItems: 'center', textTransform: 'uppercase', letterSpacing: '0.5px',
                 }}
               >
-                {section.label}
-                <span>{openSections[section.label] ? '▲' : '▼'}</span>
+                {t(`livestock_mkt.section_${section.id}`)}
+                <span>{openSections[section.id] ? '▲' : '▼'}</span>
               </button>
-              {openSections[section.label] && (
+              {openSections[section.id] && (
                 <ul style={{ listStyle: 'none', margin: 0, padding: '4px 0' }}>
                   {section.items.map(item => (
-                    <li key={item.label}>
+                    <li key={item.key}>
                       <Link
                         to={item.path}
                         style={{
@@ -185,7 +187,7 @@ function Sidebar({ collapsed, onToggle, isStuds }) {
                         onMouseEnter={e => e.currentTarget.style.backgroundColor = '#e5ede5'}
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                       >
-                        {item.label}
+                        {t(`livestock_mkt.${item.key}`)}
                       </Link>
                     </li>
                   ))}
@@ -200,9 +202,10 @@ function Sidebar({ collapsed, onToggle, isStuds }) {
 }
 
 function AnimalCard({ animal, type }) {
+  const { t } = useTranslation();
   const [imgFailed, setImgFailed] = useState(false);
-  const detailUrl = `/livestockmarketplace/Animals/Details.asp?ID=${animal.animal_id}`;
-  const priceLabel = type === 'studs' ? 'Stud Fee' : 'Price';
+  const detailUrl = `/marketplaces/livestock/animal/${animal.animal_id}`;
+  const priceKey = type === 'studs' ? 'stud_fee_label' : 'price_label';
   const priceVal = type === 'studs' ? animal.stud_fee : animal.price;
   const ev = animal.upcoming_event;
   const evDate = ev?.EventStartDate ? new Date(ev.EventStartDate) : null;
@@ -213,14 +216,14 @@ function AnimalCard({ animal, type }) {
   return (
     <div className="card mb-3" style={{ border: 'none', boxShadow: '0 1px 4px rgba(0,0,0,0.12)' }}>
       <div style={{ backgroundColor: '#507033', padding: '8px 12px', borderRadius: '4px 4px 0 0' }}>
-        <a href={detailUrl} style={{ color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}>
+        <Link to={detailUrl} style={{ color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}>
           {animal.full_name}
-        </a>
+        </Link>
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap' }}>
         <div style={{ width: '200px', padding: '12px', flexShrink: 0, textAlign: 'center' }}>
           {!imgFailed && animal.photo ? (
-            <a href={detailUrl}>
+            <Link to={detailUrl}>
               <img
                 src={animal.photo}
                 alt={animal.full_name}
@@ -228,38 +231,38 @@ function AnimalCard({ animal, type }) {
                 onError={() => setImgFailed(true)}
                 style={{ maxHeight: '200px', maxWidth: '100%', objectFit: 'contain', borderRadius: '4px' }}
               />
-            </a>
+            </Link>
           ) : (
             <div style={{ height: '160px', backgroundColor: '#f0f0f0', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontSize: '12px' }}>
-              No Photo
+              {t('livestock_mkt.no_photo')}
             </div>
           )}
         </div>
         <div style={{ flex: 1, padding: '12px', minWidth: '200px' }}>
           <p style={{ margin: '0 0 6px', fontSize: '0.9rem' }}>
-            <strong>{priceLabel}:</strong>{' '}
-            {priceVal ? `$${Math.round(priceVal).toLocaleString()}` : 'Call for Price'}
+            <strong>{t(`livestock_mkt.${priceKey}`)}:</strong>{' '}
+            {priceVal ? `$${Math.round(priceVal).toLocaleString()}` : t('livestock_mkt.call_for_price_lc')}
           </p>
           <p style={{ margin: '0 0 6px', fontSize: '0.9rem' }}>
-            <strong>Breed:</strong> {animal.breeds && animal.breeds.length > 0 ? animal.breeds.join(', ') : 'N/A'}
+            <strong>{t('livestock_mkt.filter_breed')}:</strong> {animal.breeds && animal.breeds.length > 0 ? animal.breeds.join(', ') : 'N/A'}
           </p>
           <p style={{ margin: '0 0 6px', fontSize: '0.9rem' }}>
-            <strong>Location:</strong> {animal.location || 'N/A'}
+            <strong>{t('livestock_mkt.filter_state')}:</strong> {animal.location || 'N/A'}
           </p>
           <p style={{ margin: '0 0 10px', fontSize: '0.9rem' }}>
-            <strong>Seller:</strong> {animal.seller || 'N/A'}
+            <strong>{t('livestock_mkt.filter_ranch')}:</strong> {animal.seller || 'N/A'}
           </p>
           {ev && (
             <Link to={`/events/${ev.EventID}`}
               style={{ display: 'inline-block', marginBottom: '8px', backgroundColor: '#eef3e7', color: '#3D6B34', padding: '4px 10px', borderRadius: '999px', textDecoration: 'none', fontSize: '0.78rem', fontWeight: 600 }}>
-              🎪 See in person at {ev.EventName}{evDateStr ? ` · ${evDateStr}` : ''}
+              🎪 {t('livestock_mkt.see_in_person', { name: ev.EventName })}{evDateStr ? ` · ${evDateStr}` : ''}
             </Link>
           )}
           <div>
-            <a href={detailUrl}
+            <Link to={detailUrl}
               style={{ backgroundColor: '#6c757d', color: '#fff', padding: '5px 14px', borderRadius: '4px', textDecoration: 'none', fontSize: '0.85rem' }}>
-              View Details
-            </a>
+              {t('livestock_mkt.view_details')}
+            </Link>
           </div>
         </div>
       </div>
@@ -268,6 +271,7 @@ function AnimalCard({ animal, type }) {
 }
 
 function Pagination({ page, totalPages, onPageChange }) {
+  const { t } = useTranslation();
   if (totalPages <= 1) return null;
   const pages = [];
   const start = Math.max(1, page - 2);
@@ -275,16 +279,16 @@ function Pagination({ page, totalPages, onPageChange }) {
   for (let i = start; i <= end; i++) pages.push(i);
   return (
     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '16px 0' }}>
-      {page > 1 && <button onClick={() => onPageChange(page - 1)} style={btnStyle}>‹ Prev</button>}
+      {page > 1 && <button onClick={() => onPageChange(page - 1)} style={btnStyle}>{t('livestock_mkt.pagination_prev')}</button>}
       {pages.map(p => (
         <button key={p} onClick={() => onPageChange(p)}
           style={{ ...btnStyle, backgroundColor: p === page ? '#819360' : '#fff', color: p === page ? '#fff' : '#333' }}>
           {p}
         </button>
       ))}
-      {page < totalPages && <button onClick={() => onPageChange(page + 1)} style={btnStyle}>Next ›</button>}
+      {page < totalPages && <button onClick={() => onPageChange(page + 1)} style={btnStyle}>{t('livestock_mkt.pagination_next')}</button>}
       {totalPages > 5 && page < totalPages && (
-        <button onClick={() => onPageChange(totalPages)} style={btnStyle}>Last</button>
+        <button onClick={() => onPageChange(totalPages)} style={btnStyle}>{t('livestock_mkt.pagination_last')}</button>
       )}
     </div>
   );
@@ -297,6 +301,7 @@ const btnStyle = {
 };
 
 export default function LivestockForSale() {
+  const { t } = useTranslation();
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const { pathname } = window.location;
@@ -322,7 +327,6 @@ export default function LivestockForSale() {
     if (window.innerWidth < 768) setSidebarCollapsed(true);
   }, []);
 
-  // Reset all filters when species changes
   useEffect(() => {
     setBreedId(0);
     setStateIndex(0);
@@ -381,15 +385,18 @@ export default function LivestockForSale() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-
-
   const rawLabel = data?.label || slug;
   const fallbackLabel = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
   const label = singularTerm || fallbackLabel;
-  const pageTitle = isStuds ? `${label} Stud Services` : `${label} For Sale`;
+  const pageTitle = isStuds
+    ? `${label} ${t('livestock_mkt.stud_services_suffix')}`
+    : `${label} ${t('livestock_mkt.for_sale_suffix')}`;
   const otherLink = isStuds ? `/marketplaces/livestock/${slug}` : `/marketplaces/livestock/studs/${slug}`;
-  const otherLabel = isStuds ? `${label} For Sale` : `${label} Stud Services`;
-  const priceLabel = isStuds ? 'Stud Fee' : 'Price';
+  const otherLabel = isStuds
+    ? `${label} ${t('livestock_mkt.for_sale_suffix')}`
+    : `${label} ${t('livestock_mkt.stud_services_suffix')}`;
+  const priceFilterMinKey = isStuds ? 'min_stud_fee' : 'min_price';
+  const priceFilterMaxKey = isStuds ? 'max_stud_fee' : 'max_price';
 
   const metaDesc = isStuds
     ? `Browse ${label.toLowerCase()} stud services from ranchers and breeders across the US. Compare fees, genetics, and connect with breeders on Oatmeal Farm Network.`
@@ -418,14 +425,13 @@ export default function LivestockForSale() {
       <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '0.5rem 1rem 0' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: 'Marketplaces', to: '/marketplaces' },
-          { label: 'Livestock', to: '/marketplaces/livestock' },
-          ...(isStuds ? [{ label: 'Stud Services' }] : []),
+          { label: t('livestock_mkt.crumb_marketplaces'), to: '/marketplaces' },
+          { label: t('livestock_mkt.crumb_livestock'), to: '/marketplaces/livestock' },
+          ...(isStuds ? [{ label: t('livestock_mkt.crumb_studs') }] : []),
           { label: pageTitle },
         ]} />
       </div>
 
-      {/* Sidebar + content directly under header */}
       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
 
         <Sidebar
@@ -434,10 +440,8 @@ export default function LivestockForSale() {
           isStuds={isStuds}
         />
 
-        {/* Right side — everything */}
         <div style={{ flex: 1, minWidth: 0 }}>
 
-          {/* Green title bar */}
           <div style={{ backgroundColor: '#507033', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h1 style={{ color: '#fff', margin: 0, fontSize: '1.4rem', fontWeight: 'bold' }}>{pageTitle}</h1>
             <Link to={otherLink} style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
@@ -447,13 +451,12 @@ export default function LivestockForSale() {
 
           <div style={{ display: 'flex', alignItems: 'flex-start', padding: '20px 16px', gap: '24px' }}>
 
-            {/* Search filters */}
             <div style={{ width: '200px', flexShrink: 0 }}>
-  <div>
+              <div>
                 <div style={filterBox}>
-                  <label style={filterLabel}>Breed</label>
+                  <label style={filterLabel}>{t('livestock_mkt.filter_breed')}</label>
                   <select value={breedId} onChange={e => { setBreedId(Number(e.target.value)); setPage(1); }} style={selectStyle}>
-                    <option value={0}>All Breeds</option>
+                    <option value={0}>{t('livestock_mkt.all_breeds')}</option>
                     {filters.breeds.map(b => (
                       <option key={b.id} value={b.id}>{b.name}</option>
                     ))}
@@ -479,9 +482,9 @@ export default function LivestockForSale() {
                   })();
                   return cleanStates.length > 0 && (
                     <div style={filterBox}>
-                      <label style={filterLabel}>State</label>
+                      <label style={filterLabel}>{t('livestock_mkt.filter_state')}</label>
                       <select value={stateIndex} onChange={e => { setStateIndex(Number(e.target.value)); setPage(1); }} style={selectStyle}>
-                        <option value={0}>All States</option>
+                        <option value={0}>{t('livestock_mkt.all_states')}</option>
                         {cleanStates.map(s => (
                           <option key={s.index} value={s.index}>{s.name}</option>
                         ))}
@@ -492,12 +495,12 @@ export default function LivestockForSale() {
 
                 {filters.ranches.length > 0 && (
                   <div style={filterBox}>
-                    <label style={filterLabel}>Ranch</label>
+                    <label style={filterLabel}>{t('livestock_mkt.filter_ranch')}</label>
                     <input
                       type="text"
                       value={ranchSearch}
                       onChange={e => setRanchSearch(e.target.value)}
-                      placeholder="Search ranches…"
+                      placeholder={t('livestock_mkt.search_ranches_ph')}
                       style={inputStyle}
                     />
                     <select
@@ -505,7 +508,7 @@ export default function LivestockForSale() {
                       onChange={e => { setBusinessId(Number(e.target.value)); setPage(1); }}
                       style={{ ...selectStyle, marginTop: 6 }}
                     >
-                      <option value={0}>All Ranches</option>
+                      <option value={0}>{t('livestock_mkt.all_ranches')}</option>
                       {filters.ranches
                         .filter(r => !ranchSearch.trim() || (r.name || '').toLowerCase().includes(ranchSearch.trim().toLowerCase()))
                         .map(r => (
@@ -516,20 +519,20 @@ export default function LivestockForSale() {
                 )}
 
                 <div style={filterBox}>
-                  <label style={filterLabel}>Min {priceLabel}</label>
+                  <label style={filterLabel}>{t(`livestock_mkt.${priceFilterMinKey}`)}</label>
                   <input type="number" value={minPrice} onChange={e => setMinPrice(e.target.value)}
                     placeholder="$0" style={inputStyle} />
                 </div>
 
                 <div style={filterBox}>
-                  <label style={filterLabel}>Max {priceLabel}</label>
+                  <label style={filterLabel}>{t(`livestock_mkt.${priceFilterMaxKey}`)}</label>
                   <input type="number" value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
                     placeholder="Any" style={inputStyle} />
                 </div>
 
                 {slug === 'alpacas' && (
                   <div style={filterBox}>
-                    <label style={filterLabel}>Ancestry</label>
+                    <label style={filterLabel}>{t('livestock_mkt.filter_ancestry')}</label>
                     <select value={ancestry} onChange={e => { setAncestry(e.target.value); setPage(1); }} style={selectStyle}>
                       {ANCESTRY_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
@@ -538,25 +541,23 @@ export default function LivestockForSale() {
 
                 {!isStuds && (
                   <div style={filterBox}>
-                    <label style={filterLabel}>Sort By</label>
+                    <label style={filterLabel}>{t('livestock_mkt.filter_sort')}</label>
                     <select value={sortBy} onChange={e => { setSortBy(e.target.value); setPage(1); }} style={selectStyle}>
-                      <option value="lastupdated">Last Updated</option>
-                      <option value="price">Price</option>
-                      <option value="name">Name</option>
-                      <option value="breed">Breed</option>
+                      <option value="lastupdated">{t('livestock_mkt.sort_last_updated')}</option>
+                      <option value="price">{t('livestock_mkt.sort_price')}</option>
+                      <option value="name">{t('livestock_mkt.sort_name')}</option>
+                      <option value="breed">{t('livestock_mkt.sort_breed')}</option>
                     </select>
                     <select value={orderBy} onChange={e => { setOrderBy(e.target.value); setPage(1); }}
                       style={{ ...selectStyle, marginTop: '4px' }}>
-                      <option value="desc">Descending</option>
-                      <option value="asc">Ascending</option>
+                      <option value="desc">{t('livestock_mkt.sort_desc')}</option>
+                      <option value="asc">{t('livestock_mkt.sort_asc')}</option>
                     </select>
                   </div>
                 )}
-
-</div>
+              </div>
             </div>
 
-            {/* Results */}
             <div style={{ flex: 1, minWidth: 0 }}>
               {loading ? (
                 <div>
@@ -576,13 +577,17 @@ export default function LivestockForSale() {
                 </div>
               ) : !data || data.animals.length === 0 ? (
                 <div style={{ backgroundColor: '#d1ecf1', border: '1px solid #bee5eb', borderRadius: '4px', padding: '16px' }}>
-                  <h4 style={{ margin: '0 0 8px' }}>No Results Found</h4>
-                  <p style={{ margin: 0 }}>Please broaden your search criteria.</p>
+                  <h4 style={{ margin: '0 0 8px' }}>{t('livestock_mkt.no_results')}</h4>
+                  <p style={{ margin: 0 }}>{t('livestock_mkt.broaden_search')}</p>
                 </div>
               ) : (
                 <>
                   <div style={{ color: '#666', fontSize: '0.85rem', marginBottom: '12px' }}>
-                    Showing {((page - 1) * data.per_page) + 1}–{Math.min(page * data.per_page, data.total)} of {data.total} results
+                    {t('livestock_mkt.showing_results', {
+                      from: ((page - 1) * data.per_page) + 1,
+                      to: Math.min(page * data.per_page, data.total),
+                      total: data.total,
+                    })}
                   </div>
                   <Pagination page={page} totalPages={data.total_pages} onPageChange={setPage} />
                   {data.animals.map(animal => (

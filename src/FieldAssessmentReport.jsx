@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -76,10 +77,11 @@ function Bullet({ children }) {
 }
 
 function PriorityBadge({ priority }) {
+  const { t } = useTranslation();
   const map = {
-    high:   { bg: '#FEE2E2', fg: '#991B1B', label: 'High' },
-    medium: { bg: '#FEF3C7', fg: '#92400E', label: 'Medium' },
-    low:    { bg: '#DCFCE7', fg: '#166534', label: 'Low' },
+    high:   { bg: '#FEE2E2', fg: '#991B1B', tKey: 'priority_high'   },
+    medium: { bg: '#FEF3C7', fg: '#92400E', tKey: 'priority_medium' },
+    low:    { bg: '#DCFCE7', fg: '#166534', tKey: 'priority_low'    },
   };
   const s = map[(priority || '').toLowerCase()] || map.medium;
   return (
@@ -87,38 +89,41 @@ function PriorityBadge({ priority }) {
       className="inline-block text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded-full"
       style={{ background: s.bg, color: s.fg }}
     >
-      {s.label}
+      {t('field_assessment.' + s.tKey)}
     </span>
   );
 }
 
 function HealthBadge({ value }) {
+  const { t } = useTranslation();
   const map = {
     good:    { bg: '#DCFCE7', fg: '#166534' },
     fair:    { bg: '#FEF3C7', fg: '#92400E' },
     poor:    { bg: '#FEE2E2', fg: '#991B1B' },
     unknown: { bg: '#E5E7EB', fg: '#374151' },
   };
-  const s = map[(value || '').toLowerCase()] || map.unknown;
+  const key = (value || 'unknown').toLowerCase();
+  const s = map[key] || map.unknown;
   return (
     <span
       className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full"
       style={{ background: s.bg, color: s.fg }}
     >
-      {(value || 'Unknown').toUpperCase()}
+      {t('field_assessment.health_' + (map[key] ? key : 'unknown')).toUpperCase()}
     </span>
   );
 }
 
 // ─── Section renderers ──────────────────────────────────────────────────────
 function ExecSummary({ summary, confidence }) {
+  const { t } = useTranslation();
   return (
     <div className="report-section bg-[#F8F4EA] border border-[#E8DDC2] rounded-xl p-5">
       <div className="flex items-start justify-between flex-wrap gap-3">
-        <h2 className="report-h2 font-lora text-lg font-bold text-gray-900">Executive Summary</h2>
+        <h2 className="report-h2 font-lora text-lg font-bold text-gray-900">{t('field_assessment.exec_summary_title')}</h2>
         {confidence && (
           <span className="text-xs text-gray-500 font-mont">
-            Confidence: <span className="font-bold uppercase">{confidence}</span>
+            {t('field_assessment.exec_confidence')} <span className="font-bold uppercase">{confidence}</span>
           </span>
         )}
       </div>
@@ -128,17 +133,18 @@ function ExecSummary({ summary, confidence }) {
 }
 
 function CurrentStatusSection({ data }) {
+  const { t } = useTranslation();
   if (!data) return null;
   return (
     <div className="report-section">
-      <SectionTitle>Current Status</SectionTitle>
+      <SectionTitle>{t('field_assessment.current_status_title')}</SectionTitle>
       <div className="flex flex-wrap gap-6 mb-3">
         <div>
-          <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">Growth Stage</div>
+          <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">{t('field_assessment.label_growth_stage')}</div>
           <div className="text-base font-mont text-gray-900 mt-1">{data.growth_stage || '—'}</div>
         </div>
         <div>
-          <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">Overall Health</div>
+          <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">{t('field_assessment.label_overall_health')}</div>
           <div className="mt-1"><HealthBadge value={data.overall_health} /></div>
         </div>
       </div>
@@ -152,14 +158,15 @@ function CurrentStatusSection({ data }) {
 }
 
 function SoilSection({ data }) {
+  const { t } = useTranslation();
   if (!data) return null;
   return (
     <div className="report-section">
-      <SectionTitle>Soil &amp; Nutrients</SectionTitle>
+      <SectionTitle>{t('field_assessment.soil_title')}</SectionTitle>
       {data.summary && <p className="text-sm text-gray-800 mb-3 leading-relaxed">{data.summary}</p>}
       {data.concerns?.length > 0 && (
         <>
-          <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold mt-3 mb-1">Concerns</div>
+          <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold mt-3 mb-1">{t('field_assessment.soil_concerns')}</div>
           <ul className="space-y-1 mb-3">
             {data.concerns.map((c, i) => <Bullet key={i}>{c}</Bullet>)}
           </ul>
@@ -167,13 +174,13 @@ function SoilSection({ data }) {
       )}
       {data.recommended_amendments?.length > 0 && (
         <>
-          <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold mt-3 mb-1">Recommended Amendments</div>
+          <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold mt-3 mb-1">{t('field_assessment.soil_amendments')}</div>
           <table className="w-full text-sm border border-gray-200 rounded">
             <thead className="bg-gray-50 text-gray-600 text-left text-xs">
               <tr>
-                <th className="px-3 py-2 font-semibold">Product</th>
-                <th className="px-3 py-2 font-semibold">Rate</th>
-                <th className="px-3 py-2 font-semibold">Reason</th>
+                <th className="px-3 py-2 font-semibold">{t('field_assessment.col_product')}</th>
+                <th className="px-3 py-2 font-semibold">{t('field_assessment.col_rate')}</th>
+                <th className="px-3 py-2 font-semibold">{t('field_assessment.col_reason')}</th>
               </tr>
             </thead>
             <tbody>
@@ -193,10 +200,11 @@ function SoilSection({ data }) {
 }
 
 function WeatherSection({ data }) {
+  const { t } = useTranslation();
   if (!data) return null;
   return (
     <div className="report-section">
-      <SectionTitle>Weather &amp; Climate Outlook</SectionTitle>
+      <SectionTitle>{t('field_assessment.weather_title')}</SectionTitle>
       {data.summary && <p className="text-sm text-gray-800 mb-3 leading-relaxed">{data.summary}</p>}
       {data.key_risks?.length > 0 && (
         <ul className="space-y-1">
@@ -208,14 +216,15 @@ function WeatherSection({ data }) {
 }
 
 function PlantStatusSection({ data }) {
+  const { t } = useTranslation();
   if (!data) return null;
   return (
     <div className="report-section">
-      <SectionTitle>Plant Status Assessment</SectionTitle>
+      <SectionTitle>{t('field_assessment.plant_status_title')}</SectionTitle>
       {data.summary && <p className="text-sm text-gray-800 mb-3 leading-relaxed">{data.summary}</p>}
       {data.issues_observed?.length > 0 && (
         <>
-          <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold mt-3 mb-1">Issues Observed</div>
+          <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold mt-3 mb-1">{t('field_assessment.issues_observed')}</div>
           <ul className="space-y-1">
             {data.issues_observed.map((i, k) => <Bullet key={k}>{i}</Bullet>)}
           </ul>
@@ -226,21 +235,22 @@ function PlantStatusSection({ data }) {
 }
 
 function TreatmentsSection({ items }) {
+  const { t } = useTranslation();
   if (!items?.length) return null;
   return (
     <div className="report-section">
-      <SectionTitle>Treatment Recommendations</SectionTitle>
+      <SectionTitle>{t('field_assessment.treatments_title')}</SectionTitle>
       <div className="space-y-2">
-        {items.map((t, i) => (
+        {items.map((item, i) => (
           <div key={i} className="border border-gray-200 rounded-lg p-3 bg-white">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="flex-1">
-                <div className="font-mont font-semibold text-gray-900">{t.action}</div>
-                {t.timing && <div className="text-xs text-gray-500 mt-0.5">Timing: {t.timing}</div>}
+                <div className="font-mont font-semibold text-gray-900">{item.action}</div>
+                {item.timing && <div className="text-xs text-gray-500 mt-0.5">{t('field_assessment.timing_label', { timing: item.timing })}</div>}
               </div>
-              <PriorityBadge priority={t.priority} />
+              <PriorityBadge priority={item.priority} />
             </div>
-            {t.reason && <p className="text-sm text-gray-700 mt-2 leading-relaxed">{t.reason}</p>}
+            {item.reason && <p className="text-sm text-gray-700 mt-2 leading-relaxed">{item.reason}</p>}
           </div>
         ))}
       </div>
@@ -249,14 +259,15 @@ function TreatmentsSection({ items }) {
 }
 
 function HarvestSection({ data }) {
+  const { t } = useTranslation();
   if (!data) return null;
   return (
     <div className="report-section">
-      <SectionTitle>Harvest / Termination Guidance</SectionTitle>
+      <SectionTitle>{t('field_assessment.harvest_title')}</SectionTitle>
       <p className="text-sm text-gray-800 leading-relaxed">{data.summary}</p>
       {data.applies && data.specific_dates?.length > 0 && (
         <div className="mt-3">
-          <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold mb-1">Target Dates</div>
+          <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold mb-1">{t('field_assessment.target_dates')}</div>
           <div className="flex flex-wrap gap-2">
             {data.specific_dates.map((d, i) => (
               <span key={i} className="px-3 py-1 rounded-full border border-[#3D6B34] text-[#3D6B34] text-sm font-mont font-semibold">
@@ -271,10 +282,11 @@ function HarvestSection({ data }) {
 }
 
 function NextCropsSection({ items }) {
+  const { t } = useTranslation();
   if (!items?.length) return null;
   return (
     <div className="report-section">
-      <SectionTitle>Next-Crop Recommendations</SectionTitle>
+      <SectionTitle>{t('field_assessment.next_crops_title')}</SectionTitle>
       <div className="grid md:grid-cols-2 gap-3">
         {items.map((c, i) => (
           <div key={i} className="border border-gray-200 rounded-lg p-3 bg-white">
@@ -283,7 +295,7 @@ function NextCropsSection({ items }) {
               {c.variety_hint && <span className="text-gray-500 font-normal text-sm"> · {c.variety_hint}</span>}
             </div>
             {c.best_planting_window && (
-              <div className="text-xs text-gray-500 mt-0.5">Plant: {c.best_planting_window}</div>
+              <div className="text-xs text-gray-500 mt-0.5">{t('field_assessment.plant_label', { window: c.best_planting_window })}</div>
             )}
             {c.rationale && <p className="text-sm text-gray-700 mt-2 leading-relaxed">{c.rationale}</p>}
           </div>
@@ -294,11 +306,12 @@ function NextCropsSection({ items }) {
 }
 
 function GapsSection({ items }) {
+  const { t } = useTranslation();
   if (!items?.length) return null;
   return (
     <div className="report-section">
-      <SectionTitle>Data Gaps</SectionTitle>
-      <p className="text-xs text-gray-500 mb-2 italic">Collecting these will sharpen the next assessment.</p>
+      <SectionTitle>{t('field_assessment.gaps_title')}</SectionTitle>
+      <p className="text-xs text-gray-500 mb-2 italic">{t('field_assessment.gaps_desc')}</p>
       <ul className="space-y-1">
         {items.map((g, i) => <Bullet key={i}>{g}</Bullet>)}
       </ul>
@@ -307,22 +320,23 @@ function GapsSection({ items }) {
 }
 
 function ReportHeader({ field, generatedAt }) {
+  const { t } = useTranslation();
   return (
     <div className="border-b border-gray-300 pb-4 mb-2">
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <div className="text-xs uppercase tracking-wide text-[#3D6B34] font-bold">Field Assessment Report</div>
+          <div className="text-xs uppercase tracking-wide text-[#3D6B34] font-bold">{t('field_assessment.header_label')}</div>
           <h1 className="report-h1 font-lora text-3xl font-bold text-gray-900 mt-1">
-            {field?.name || `Field ${field?.field_id}`}
+            {field?.name || t('field_assessment.header_field_fallback', { id: field?.field_id })}
           </h1>
           <div className="mt-1 text-sm text-gray-600 font-mont">
-            {field?.crop_type || 'No crop on file'}
+            {field?.crop_type || t('field_assessment.header_no_crop')}
             {field?.address && <> · {field.address}</>}
             {field?.size_hectares != null && <> · {field.size_hectares} ha</>}
           </div>
         </div>
         <div className="text-right text-xs text-gray-500 font-mont">
-          <div>Prepared by <span className="font-bold text-gray-700">Saige</span></div>
+          <div>{t('field_assessment.header_prepared_by')} <span className="font-bold text-gray-700">Saige</span></div>
           <div>{generatedAt ? new Date(generatedAt).toLocaleString() : ''}</div>
         </div>
       </div>
@@ -332,6 +346,7 @@ function ReportHeader({ field, generatedAt }) {
 
 // ─── Page ───────────────────────────────────────────────────────────────────
 export default function FieldAssessmentReport() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const fieldId = searchParams.get('FieldID');
   const BusinessID = searchParams.get('BusinessID');
@@ -364,7 +379,7 @@ export default function FieldAssessmentReport() {
         setEmptyKnown(true);
       }
     } catch (e) {
-      setError(e.message || 'Failed to load latest assessment');
+      setError(e.message || t('field_assessment.err_load_latest'));
     } finally {
       setLoadingLatest(false);
     }
@@ -389,12 +404,12 @@ export default function FieldAssessmentReport() {
       setData(await res.json());
       setEmptyKnown(false);
     } catch (e) {
-      setError(e.message || 'Failed to load assessment');
+      setError(e.message || t('field_assessment.err_load'));
     }
   }
 
   async function generate() {
-    if (!fieldId) { setError('Select a field first (?FieldID=...)'); return; }
+    if (!fieldId) { setError(t('field_assessment.err_no_field')); return; }
     setGenerating(true);
     setError(null);
     try {
@@ -408,7 +423,7 @@ export default function FieldAssessmentReport() {
       // refresh history list so the new entry shows up at the top
       loadHistory();
     } catch (e) {
-      setError(e.message || 'Failed to generate report');
+      setError(e.message || t('field_assessment.err_generate'));
     } finally {
       setGenerating(false);
     }
@@ -437,11 +452,11 @@ export default function FieldAssessmentReport() {
       Business={Business}
       BusinessID={BusinessID}
       PeopleID={peopleId}
-      pageTitle="Field Assessment Report"
+      pageTitle={t('field_assessment.page_title')}
       breadcrumbs={[
-        { label: 'Dashboard', to: '/dashboard' },
-        { label: 'Precision Ag' },
-        { label: 'Assessment Report' },
+        { label: t('nav.dashboard'), to: '/dashboard' },
+        { label: t('field_assessment.breadcrumb_precision') },
+        { label: t('field_assessment.breadcrumb_assessment') },
       ]}
     >
       <PrintStyles />
@@ -450,18 +465,18 @@ export default function FieldAssessmentReport() {
         {/* Toolbar — hidden in print */}
         <div className="no-print flex items-center justify-between flex-wrap gap-3 mb-4 print:hidden">
           <div>
-            <h1 className="font-lora text-2xl font-bold text-gray-900">Saige Field Assessment</h1>
+            <h1 className="font-lora text-2xl font-bold text-gray-900">{t('field_assessment.heading')}</h1>
             <p className="font-mont text-sm text-gray-500">
               {data && currentIsLatest && genAt && (
-                <>Latest assessment generated {new Date(genAt).toLocaleString()}.</>
+                <>{t('field_assessment.latest_generated', { when: new Date(genAt).toLocaleString() })}</>
               )}
               {data && !currentIsLatest && genAt && (
-                <>Viewing assessment from {new Date(genAt).toLocaleString()}.</>
+                <>{t('field_assessment.viewing_from', { when: new Date(genAt).toLocaleString() })}</>
               )}
               {!data && !loadingLatest && emptyKnown && (
-                <>No assessments yet. Click Generate to create the first one.</>
+                <>{t('field_assessment.no_assessments')}</>
               )}
-              {!data && loadingLatest && <>Loading latest assessment…</>}
+              {!data && loadingLatest && <>{t('field_assessment.loading_latest')}</>}
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -470,11 +485,11 @@ export default function FieldAssessmentReport() {
                 value={reportId || ''}
                 onChange={(e) => loadById(Number(e.target.value))}
                 className="px-3 py-2 rounded-lg border border-gray-300 text-sm font-mont text-gray-700 bg-white"
-                title="View a past assessment"
+                title={t('field_assessment.select_past_title')}
               >
                 {history.map((h, i) => {
                   const when = h.generated_at ? new Date(h.generated_at).toLocaleDateString() : '';
-                  const tag  = i === 0 ? 'Latest' : `#${h.report_id}`;
+                  const tag  = i === 0 ? t('field_assessment.option_latest') : t('field_assessment.option_report', { id: h.report_id });
                   return (
                     <option key={h.report_id} value={h.report_id}>
                       {tag} · {when} · {(h.overall_health || '—').toUpperCase()}
@@ -488,41 +503,41 @@ export default function FieldAssessmentReport() {
               disabled={generating || !fieldId}
               className="px-4 py-2 rounded-lg bg-[#3D6B34] text-white text-sm font-mont font-semibold hover:bg-[#2F5328] disabled:opacity-50"
             >
-              {generating ? 'Generating…' : 'Generate'}
+              {generating ? t('field_assessment.btn_generating') : t('field_assessment.btn_generate')}
             </button>
             <button
               onClick={() => window.print()}
               disabled={!report}
               className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-mont font-semibold hover:bg-gray-50 disabled:opacity-40"
             >
-              🖨 Print
+              {t('field_assessment.btn_print')}
             </button>
           </div>
         </div>
 
         {!fieldId && (
           <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 text-sm">
-            No field selected. Open this page from a field's menu to generate a report.
+            {t('field_assessment.no_field')}
           </div>
         )}
 
         {generating && (
           <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-500">
-            <div className="animate-pulse">Saige is reading field data, weather, soil, and history…</div>
-            <div className="text-xs mt-2 text-gray-400">This usually takes 10–30 seconds.</div>
+            <div className="animate-pulse">{t('field_assessment.generating_msg')}</div>
+            <div className="text-xs mt-2 text-gray-400">{t('field_assessment.generating_hint')}</div>
           </div>
         )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 text-sm">
-            <div className="font-semibold mb-1">Could not load assessment</div>
+            <div className="font-semibold mb-1">{t('field_assessment.error_title')}</div>
             <div className="font-mono text-xs whitespace-pre-wrap">{error}</div>
           </div>
         )}
 
         {data && !report && data.raw_text && (
           <div className="bg-white border border-gray-200 rounded-xl p-6">
-            <div className="text-amber-700 text-sm font-semibold mb-2">Saige replied but the response was not valid JSON.</div>
+            <div className="text-amber-700 text-sm font-semibold mb-2">{t('field_assessment.json_error')}</div>
             <pre className="text-xs whitespace-pre-wrap text-gray-700">{data.raw_text}</pre>
           </div>
         )}
@@ -541,7 +556,7 @@ export default function FieldAssessmentReport() {
             <GapsSection items={report.data_gaps} />
 
             <div className="pt-6 mt-6 border-t border-gray-200 text-[10px] text-gray-400 italic text-center">
-              Generated by Saige · This report is decision-support only and does not replace on-site agronomic judgment.
+              {t('field_assessment.footer')}
             </div>
           </div>
         )}

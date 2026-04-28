@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -17,6 +18,7 @@ function dayKey(iso) {
 }
 
 export default function ConferenceAgenda() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [event, setEvent] = useState(null);
   const [sessions, setSessions] = useState([]);
@@ -48,13 +50,17 @@ export default function ConferenceAgenda() {
   return (
     <div className="min-h-screen bg-[#FAF7EE] py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        <Link to={`/events/${eventId}`} className="text-xs text-gray-500 hover:text-[#3D6B34]">← Back to event</Link>
+        <Link to={`/events/${eventId}`} className="text-xs text-gray-500 hover:text-[#3D6B34]">{t('conference_agenda.back_event')}</Link>
         <h1 className="text-3xl font-semibold text-[#3D6B34] mt-2 mb-1">
-          {event?.EventName || 'Conference'} Agenda
+          {event?.EventName || 'Conference'} {t('conference_agenda.agenda_suffix')}
         </h1>
         <div className="text-sm text-gray-500 mb-6">
-          {sessions.length} session{sessions.length === 1 ? '' : 's'}
-          {tracks.length > 0 && ` across ${tracks.length} track${tracks.length === 1 ? '' : 's'}`}
+          {sessions.length === 1
+            ? t('conference_agenda.session_count_1', { count: sessions.length })
+            : t('conference_agenda.session_count_n', { count: sessions.length })}
+          {tracks.length > 0 && (tracks.length === 1
+            ? t('conference_agenda.track_count_1', { count: tracks.length })
+            : t('conference_agenda.track_count_n', { count: tracks.length }))}
         </div>
 
         {tracks.length > 1 && (
@@ -63,17 +69,17 @@ export default function ConferenceAgenda() {
               className={`text-xs px-3 py-1.5 rounded-full border ${filterTrack === ''
                 ? 'bg-[#3D6B34] text-white border-[#3D6B34]'
                 : 'border-gray-300 text-gray-700 bg-white'}`}>
-              All tracks
+              {t('conference_agenda.all_tracks')}
             </button>
-            {tracks.map(t => (
-              <button key={t.TrackID} onClick={() => setFilterTrack(String(t.TrackID))}
+            {tracks.map(tr => (
+              <button key={tr.TrackID} onClick={() => setFilterTrack(String(tr.TrackID))}
                 className={`text-xs px-3 py-1.5 rounded-full border flex items-center gap-1.5 ${
-                  filterTrack === String(t.TrackID)
+                  filterTrack === String(tr.TrackID)
                     ? 'text-white border-transparent'
                     : 'border-gray-300 text-gray-700 bg-white'}`}
-                style={filterTrack === String(t.TrackID) ? { background: t.TrackColor || '#3D6B34' } : {}}>
-                <span className="inline-block w-2 h-2 rounded-full" style={{ background: t.TrackColor || '#3D6B34' }} />
-                {t.TrackName}
+                style={filterTrack === String(tr.TrackID) ? { background: tr.TrackColor || '#3D6B34' } : {}}>
+                <span className="inline-block w-2 h-2 rounded-full" style={{ background: tr.TrackColor || '#3D6B34' }} />
+                {tr.TrackName}
               </button>
             ))}
           </div>
@@ -81,7 +87,7 @@ export default function ConferenceAgenda() {
 
         {byDay.length === 0 && (
           <div className="bg-white rounded-xl shadow p-6 text-sm text-gray-500">
-            Agenda has not been published yet.
+            {t('conference_agenda.no_agenda')}
           </div>
         )}
 

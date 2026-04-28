@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import RichTextEditor from './RichTextEditor';
 
@@ -18,19 +19,21 @@ const EMPTY_ENTRY = {
 };
 
 function EntryForm({ initial, onSave, onCancel, animals, categories, saving }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(initial || EMPTY_ENTRY);
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(form); }} className="space-y-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
       <div>
-        <label className={lbl}>Entry title</label>
-        <input value={form.EntryTitle} onChange={set('EntryTitle')} required className={inp} placeholder="e.g. Two-ply handspun from Aspen's fleece" />
+        <label className={lbl}>{t('spinoff_reg.label_entry_title')}</label>
+        <input value={form.EntryTitle} onChange={set('EntryTitle')} required className={inp}
+          placeholder={t('spinoff_reg.entry_title_placeholder')} />
       </div>
       {categories.length > 0 && (
         <div>
-          <label className={lbl}>Category</label>
+          <label className={lbl}>{t('spinoff_reg.label_category')}</label>
           <select value={form.CategoryID} onChange={set('CategoryID')} className={inp}>
-            <option value="">-- None --</option>
+            <option value="">{t('spinoff_reg.no_category')}</option>
             {categories.map(c => (
               <option key={c.CategoryID} value={c.CategoryID}>
                 {c.CategoryName}
@@ -42,36 +45,41 @@ function EntryForm({ initial, onSave, onCancel, animals, categories, saving }) {
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className={lbl}>Spinner name</label>
-          <input value={form.SpinnerName} onChange={set('SpinnerName')} className={inp} placeholder="Your name or spinner's name" />
+          <label className={lbl}>{t('spinoff_reg.label_spinner_name')}</label>
+          <input value={form.SpinnerName} onChange={set('SpinnerName')} className={inp}
+            placeholder={t('spinoff_reg.spinner_name_placeholder')} />
         </div>
         <div>
-          <label className={lbl}>Fiber type</label>
-          <input value={form.FiberType} onChange={set('FiberType')} className={inp} placeholder="Alpaca, Wool, Blend…" />
+          <label className={lbl}>{t('spinoff_reg.label_fiber_type')}</label>
+          <input value={form.FiberType} onChange={set('FiberType')} className={inp}
+            placeholder={t('spinoff_reg.fiber_type_placeholder')} />
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className={lbl}>Fiber source (optional)</label>
-          <input value={form.FiberSource} onChange={set('FiberSource')} className={inp} placeholder="Farm or origin" />
+          <label className={lbl}>{t('spinoff_reg.label_fiber_source')}</label>
+          <input value={form.FiberSource} onChange={set('FiberSource')} className={inp}
+            placeholder={t('spinoff_reg.fiber_source_placeholder')} />
         </div>
         <div>
-          <label className={lbl}>Source animal (optional)</label>
+          <label className={lbl}>{t('spinoff_reg.label_source_animal')}</label>
           <select value={form.SourceAnimalID} onChange={set('SourceAnimalID')} className={inp}>
-            <option value="">-- None / mixed --</option>
+            <option value="">{t('spinoff_reg.no_animal')}</option>
             {animals.map(a => <option key={a.ID ?? a.AnimalID} value={a.ID ?? a.AnimalID}>{a.FullName || a.AnimalName}</option>)}
           </select>
         </div>
       </div>
       <div>
-        <label className={lbl}>Notes</label>
+        <label className={lbl}>{t('spinoff_reg.label_notes')}</label>
         <RichTextEditor value={form.Description || ''}
           onChange={(v) => setForm(f => ({ ...f, Description: v }))} minHeight={120} />
       </div>
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
+        <button type="button" onClick={onCancel} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">
+          {t('spinoff_reg.btn_cancel')}
+        </button>
         <button type="submit" disabled={saving} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save Entry'}
+          {saving ? t('spinoff_reg.btn_saving') : t('spinoff_reg.btn_save')}
         </button>
       </div>
     </form>
@@ -79,6 +87,7 @@ function EntryForm({ initial, onSave, onCancel, animals, categories, saving }) {
 }
 
 export default function SpinOffRegister() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [params] = useSearchParams();
   const { BusinessID: ctxBusinessID } = useAccount() || {};
@@ -145,7 +154,7 @@ export default function SpinOffRegister() {
   };
 
   const remove = async (entry) => {
-    if (!confirm(`Remove "${entry.EntryTitle || 'entry'}"?`)) return;
+    if (!confirm(t('spinoff_reg.confirm_remove', { title: entry.EntryTitle || t('spinoff_reg.entry_default_name') }))) return;
     await fetch(`${API}/api/events/spinoff/entries/${entry.EntryID}`, { method: 'DELETE' });
     loadEntries();
   };
@@ -159,18 +168,18 @@ export default function SpinOffRegister() {
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Enter the Spin-Off</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('spinoff_reg.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">
             {event?.EventName || 'Event'}
             {event?.EventLocationCity && ` — ${event.EventLocationCity}, ${event.EventLocationState}`}
           </p>
         </div>
-        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">← Back to Event</Link>
+        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">{t('spinoff_reg.back_event')}</Link>
       </div>
 
       {!configured && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-4 mb-4">
-          The Spin-Off has not yet been configured by the organizer.
+          {t('spinoff_reg.not_configured')}
         </div>
       )}
 
@@ -184,57 +193,57 @@ export default function SpinOffRegister() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-xs">
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Fee per entry</div>
+              <div className="text-gray-500">{t('spinoff_reg.label_fee_per_entry')}</div>
               <div className="font-semibold text-gray-900 text-base">${Number(cfg.CurrentFee || cfg.FeePerEntry || 0).toFixed(2)}</div>
               {cfg.DiscountFeePerEntry != null && cfg.DiscountEndDate && (
                 <div className="text-[11px] text-gray-400">
-                  discount ends {String(cfg.DiscountEndDate).substring(0, 10)}
+                  {t('spinoff_reg.discount_ends', { date: String(cfg.DiscountEndDate).substring(0, 10) })}
                 </div>
               )}
             </div>
             {cfg.MaxEntriesPerRegistrant && (
               <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-gray-500">Max per registrant</div>
+                <div className="text-gray-500">{t('spinoff_reg.label_max_entries')}</div>
                 <div className="font-semibold text-gray-900 text-base">{entries.length} / {cfg.MaxEntriesPerRegistrant}</div>
               </div>
             )}
             {cfg.RegistrationEndDate && (
               <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-gray-500">Registration closes</div>
+                <div className="text-gray-500">{t('spinoff_reg.label_closes')}</div>
                 <div className="font-semibold text-gray-900 text-base">{String(cfg.RegistrationEndDate).substring(0, 10)}</div>
               </div>
             )}
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Your total</div>
+              <div className="text-gray-500">{t('spinoff_reg.label_your_total')}</div>
               <div className="font-semibold text-[#3D6B34] text-base">${total.toFixed(2)}</div>
             </div>
           </div>
 
           {notYetOpen && (
             <div className="bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded-lg p-3 mb-4">
-              Registration opens {String(cfg.RegistrationStartDate).substring(0, 10)}.
+              {t('spinoff_reg.opens', { date: String(cfg.RegistrationStartDate).substring(0, 10) })}
             </div>
           )}
           {closed && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
-              Registration for this Spin-Off has closed.
+              {t('spinoff_reg.closed')}
             </div>
           )}
 
           {err && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">{err}</div>}
 
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">Your entries</h2>
+            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">{t('spinoff_reg.your_entries')}</h2>
             {!adding && !editing && !closed && !notYetOpen && peopleId && (
               <button onClick={() => setAdding(true)} className="text-sm bg-[#3D6B34] text-white px-4 py-1.5 rounded-lg hover:bg-[#2d5226]">
-                + Add Entry
+                {t('spinoff_reg.btn_add_entry')}
               </button>
             )}
           </div>
 
           {!peopleId && (
             <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-3 mb-3">
-              Please <Link to="/login" className="underline">log in</Link> to submit Spin-Off entries.
+              {t('spinoff_reg.login_pre')} <Link to="/login" className="underline">{t('spinoff_reg.login_link')}</Link> {t('spinoff_reg.login_post')}
             </div>
           )}
 
@@ -251,7 +260,7 @@ export default function SpinOffRegister() {
 
           <div className="space-y-2 mt-3">
             {entries.length === 0 && !adding && peopleId && (
-              <div className="text-sm text-gray-500">You have no entries yet.</div>
+              <div className="text-sm text-gray-500">{t('spinoff_reg.no_entries')}</div>
             )}
             {entries.map(e => (
               <div key={e.EntryID} className="bg-white border border-gray-200 rounded-lg p-3">
@@ -272,8 +281,8 @@ export default function SpinOffRegister() {
                     </div>
                     {!closed && (
                       <div className="flex gap-2 mt-1">
-                        <button onClick={() => { setEditing(e); setAdding(false); }} className="text-xs text-gray-500 hover:text-gray-800">Edit</button>
-                        <button onClick={() => remove(e)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                        <button onClick={() => { setEditing(e); setAdding(false); }} className="text-xs text-gray-500 hover:text-gray-800">{t('spinoff_reg.btn_edit')}</button>
+                        <button onClick={() => remove(e)} className="text-xs text-red-500 hover:text-red-700">{t('spinoff_reg.btn_remove')}</button>
                       </div>
                     )}
                   </div>

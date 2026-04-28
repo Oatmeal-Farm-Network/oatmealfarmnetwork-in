@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -8,6 +9,7 @@ import Breadcrumbs from './Breadcrumbs';
 const API = import.meta.env.VITE_API_URL || '';
 
 export default function ServiceDetail() {
+  const { t } = useTranslation();
   const { servicesId } = useParams();
   const navigate = useNavigate();
   const [svc, setSvc]           = useState(null);
@@ -29,7 +31,7 @@ export default function ServiceDetail() {
   if (loading) return (
     <div className="min-h-screen font-sans">
       <Header />
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center text-gray-400">Loading…</div>
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center text-gray-400">{t('service_detail.loading')}</div>
       <Footer />
     </div>
   );
@@ -38,8 +40,8 @@ export default function ServiceDetail() {
     <div className="min-h-screen font-sans">
       <Header />
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <p className="text-gray-500 mb-4">Service not found.</p>
-        <Link to="/services/directory" className="text-[#3D6B34] hover:underline">← Back to Services Directory</Link>
+        <p className="text-gray-500 mb-4">{t('service_detail.not_found')}</p>
+        <Link to="/services/directory" className="text-[#3D6B34] hover:underline">{t('service_detail.back_dir')}</Link>
       </div>
       <Footer />
     </div>
@@ -143,7 +145,7 @@ export default function ServiceDetail() {
             {/* Price */}
             <div className="mb-4">
               {svc.ServiceContactForPrice ? (
-                <span className="text-lg text-gray-500 italic">Contact for Price</span>
+                <span className="text-lg text-gray-500 italic">{t('service_detail.contact_for_price')}</span>
               ) : svc.ServicePrice ? (
                 <span className="text-2xl font-bold text-[#3D6B34]">
                   ${parseFloat(svc.ServicePrice).toLocaleString()}
@@ -170,7 +172,7 @@ export default function ServiceDetail() {
 
             {/* Provider info */}
             <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Service provided by</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">{t('service_detail.provided_by')}</p>
               <Link to={`/profile?BusinessID=${svc.BizID || svc.BusinessID}`}
                 className="font-bold text-gray-800 text-base hover:text-[#3D6B34] no-underline block mb-1">
                 {svc.BusinessName}
@@ -196,7 +198,7 @@ export default function ServiceDetail() {
               )}
               <Link to={`/profile?BusinessID=${svc.BizID || svc.BusinessID}`}
                 className="inline-block mt-1 bg-[#3D6B34] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#2d5226] no-underline transition-colors">
-                View Business Profile
+                {t('service_detail.view_profile')}
               </Link>
             </div>
           </div>

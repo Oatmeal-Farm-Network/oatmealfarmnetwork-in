@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import Header from './Header';
 import Footer from './Footer';
@@ -128,8 +129,16 @@ const ADVISORY_COLORS = {
 
 // ─── THINKING INDICATOR ───────────────────────────────────────────────────────
 function ThinkingDots({ stage }) {
+  const { t } = useTranslation();
   const [msgIdx, setMsgIdx] = useState(0);
-  const msgs = STAGE_MESSAGES[stage] || STAGE_MESSAGES.default;
+  const stageMessages = {
+    default:   t('saige_page.stage_default', { returnObjects: true }),
+    weather:   t('saige_page.stage_weather', { returnObjects: true }),
+    livestock: t('saige_page.stage_livestock', { returnObjects: true }),
+    crops:     t('saige_page.stage_crops', { returnObjects: true }),
+    mixed:     t('saige_page.stage_mixed', { returnObjects: true }),
+  };
+  const msgs = stageMessages[stage] || stageMessages.default;
   useEffect(() => {
     setMsgIdx(0);
     const iv = setInterval(() => setMsgIdx(i => (i + 1) % msgs.length), 1500);
@@ -157,6 +166,7 @@ function ThinkingDots({ stage }) {
 
 // ─── CHAT BUBBLE ─────────────────────────────────────────────────────────────
 function ChatBubble({ message, voiceSupported, onSpeak }) {
+  const { t } = useTranslation();
   const isUser = message.role === 'user';
   return (
     <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: 10 }}>
@@ -187,7 +197,7 @@ function ChatBubble({ message, voiceSupported, onSpeak }) {
           <button
             className="saige-speak"
             onClick={() => onSpeak(message.content)}
-            title="Read aloud"
+            title={t('saige_page.read_aloud_title')}
             style={{
               position: 'absolute', top: 5, right: 5,
               background: 'transparent', border: 'none',
@@ -204,6 +214,7 @@ function ChatBubble({ message, voiceSupported, onSpeak }) {
 
 // ─── QUIZ CARD ────────────────────────────────────────────────────────────────
 function QuizCard({ quiz, selectedOption, customAnswer, onOptionChange, onCustomChange, onSubmit }) {
+  const { t } = useTranslation();
   const canSubmit = selectedOption || customAnswer.trim();
   return (
     <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
@@ -235,11 +246,11 @@ function QuizCard({ quiz, selectedOption, customAnswer, onOptionChange, onCustom
           ))}
         </div>
         <div style={{ borderTop: `1px solid ${SAIGE_BORDER}`, paddingTop: 12, marginBottom: 12 }}>
-          <p style={{ fontSize: 12, color: SAIGE_MUTED, marginBottom: 8 }}>Or write your own answer...</p>
+          <p style={{ fontSize: 12, color: SAIGE_MUTED, marginBottom: 8 }}>{t('saige_page.quiz_or_write')}</p>
           <input type="text" value={customAnswer}
             onChange={e => { onCustomChange(e.target.value); onOptionChange(''); }}
             onKeyDown={e => { if (e.key === 'Enter' && canSubmit) onSubmit(); }}
-            placeholder="Type your answer..."
+            placeholder={t('saige_page.quiz_placeholder')}
             style={{
               width: '100%', padding: '8px 12px', borderRadius: 8, fontSize: 13,
               background: '#fff', border: '1px solid #d1d5db', color: SAIGE_TEXT,
@@ -254,7 +265,7 @@ function QuizCard({ quiz, selectedOption, customAnswer, onOptionChange, onCustom
           cursor: canSubmit ? 'pointer' : 'not-allowed',
           fontWeight: 600, fontSize: 13, transition: 'background 0.15s',
           fontFamily: SAIGE_FONT_BODY,
-        }}>Submit Answer</button>
+        }}>{t('saige_page.btn_submit_answer')}</button>
       </div>
     </div>
   );
@@ -262,6 +273,7 @@ function QuizCard({ quiz, selectedOption, customAnswer, onOptionChange, onCustom
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 function ChatSidebar({ threads, activeThreadId, isCollapsed, isLoading, onToggle, onSelect, onDelete, onNewChat }) {
+  const { t } = useTranslation();
   return (
     <div style={{
       width: isCollapsed ? 0 : 260, minWidth: isCollapsed ? 0 : 260,
@@ -271,7 +283,7 @@ function ChatSidebar({ threads, activeThreadId, isCollapsed, isLoading, onToggle
       fontFamily: SAIGE_FONT_BODY,
     }}>
       <div style={{ padding: '14px 14px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${SAIGE_BORDER}` }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: SAIGE_GREEN_DARK, textTransform: 'uppercase', letterSpacing: 1 }}>Chat history</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: SAIGE_GREEN_DARK, textTransform: 'uppercase', letterSpacing: 1 }}>{t('saige_page.sidebar_heading')}</span>
       </div>
       <div style={{ padding: '10px 10px 6px' }}>
         <button onClick={onNewChat} style={{
@@ -285,23 +297,23 @@ function ChatSidebar({ threads, activeThreadId, isCollapsed, isLoading, onToggle
           onMouseEnter={e => e.currentTarget.style.background = SAIGE_GREEN_DARK}
           onMouseLeave={e => e.currentTarget.style.background = SAIGE_GREEN}
         >
-          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> New Chat
+          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> {t('saige_page.btn_new_chat')}
         </button>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 8px' }}>
         {isLoading && threads.length === 0 && (
-          <p style={{ textAlign: 'center', color: SAIGE_MUTED, fontSize: 12, padding: '20px 0' }}>Loading...</p>
+          <p style={{ textAlign: 'center', color: SAIGE_MUTED, fontSize: 12, padding: '20px 0' }}>{t('saige_page.sidebar_loading')}</p>
         )}
         {!isLoading && threads.length === 0 && (
           <p style={{ textAlign: 'center', color: SAIGE_MUTED, fontSize: 12, padding: '20px 8px', lineHeight: 1.5 }}>
-            No past conversations yet. Start a new chat!
+            {t('saige_page.sidebar_empty')}
           </p>
         )}
-        {threads.map(t => {
-          const isActive = t.thread_id === activeThreadId;
-          const color = t.advisory_type ? ADVISORY_COLORS[t.advisory_type] : null;
+        {threads.map(thread => {
+          const isActive = thread.thread_id === activeThreadId;
+          const color = thread.advisory_type ? ADVISORY_COLORS[thread.advisory_type] : null;
           return (
-            <div key={t.thread_id} onClick={() => onSelect(t.thread_id)}
+            <div key={thread.thread_id} onClick={() => onSelect(thread.thread_id)}
               style={{
                 position: 'relative', padding: '9px 10px', borderRadius: 8, marginBottom: 3,
                 cursor: 'pointer', transition: 'background 0.15s',
@@ -312,18 +324,18 @@ function ChatSidebar({ threads, activeThreadId, isCollapsed, isLoading, onToggle
               onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
             >
               <p style={{ margin: '0 0 4px', fontSize: 13, color: SAIGE_TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 20, fontWeight: isActive ? 600 : 500 }}>
-                {t.preview || 'Empty conversation'}
+                {thread.preview || t('saige_page.thread_empty_preview')}
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: t.status === 'complete' ? SAIGE_GREEN : '#d97706', flexShrink: 0 }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: thread.status === 'complete' ? SAIGE_GREEN : '#d97706', flexShrink: 0 }} />
                 {color && (
                   <span style={{ padding: '1px 6px', borderRadius: 10, fontSize: 10, fontWeight: 600, background: color.bg, color: color.text }}>
-                    {t.advisory_type}
+                    {thread.advisory_type}
                   </span>
                 )}
-                <span style={{ fontSize: 11, color: SAIGE_MUTED, marginLeft: 'auto' }}>{formatRelativeTime(t.updated_at)}</span>
+                <span style={{ fontSize: 11, color: SAIGE_MUTED, marginLeft: 'auto' }}>{formatRelativeTime(thread.updated_at)}</span>
               </div>
-              <button onClick={e => { e.stopPropagation(); onDelete(t.thread_id); }}
+              <button onClick={e => { e.stopPropagation(); onDelete(thread.thread_id); }}
                 style={{
                   position: 'absolute', top: 8, right: 6, padding: '3px', borderRadius: 4,
                   background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af',
@@ -342,17 +354,18 @@ function ChatSidebar({ threads, activeThreadId, isCollapsed, isLoading, onToggle
 
 // ─── ABOUT SAIGE (logged-out view) ───────────────────────────────────────────
 function AboutSaige() {
+  const { t } = useTranslation();
   const features = [
-    { icon: '🧠', title: 'On-Demand Expertise', desc: 'Instant access to specialized AI for soil, livestock, weather, and plant nutrients.' },
-    { icon: '📈', title: 'Smart & Adaptive Learning', desc: 'Short- and long-term memory refine advice over time.' },
-    { icon: '🍽️', title: 'Farm-to-Table Enablement', desc: 'Assists with logistics, negotiations, and orders between farms and restaurants.' },
-    { icon: '🔒', title: 'Trust & Security', desc: 'Built with privacy-first principles and secure data practices.' },
+    { icon: '🧠', title: t('saige_page.feat_expertise_title'), desc: t('saige_page.feat_expertise_desc') },
+    { icon: '📈', title: t('saige_page.feat_learning_title'), desc: t('saige_page.feat_learning_desc') },
+    { icon: '🍽️', title: t('saige_page.feat_f2t_title'), desc: t('saige_page.feat_f2t_desc') },
+    { icon: '🔒', title: t('saige_page.feat_trust_title'), desc: t('saige_page.feat_trust_desc') },
   ];
   const coming = [
-    { icon: '🛒', title: 'Farm-to-Table Marketplace', desc: 'Connects farms directly to consumers and restaurants, streamlining plans and tasks based on real-time demand.' },
-    { icon: '🐄', title: 'Livestock Marketplace', desc: 'A trusted platform for buying and selling livestock.' },
-    { icon: '📊', title: 'Current Market Insights', desc: 'Provides real-time demand signals and pricing trends to help you make smarter business decisions.' },
-    { icon: '🔬', title: 'Complete Data Analysis', desc: 'Turns your farm data into actionable insights, helping you boost efficiency and profitability.' },
+    { icon: '🛒', title: t('saige_page.coming_marketplace_title'), desc: t('saige_page.coming_marketplace_desc') },
+    { icon: '🐄', title: t('saige_page.coming_livestock_title'), desc: t('saige_page.coming_livestock_desc') },
+    { icon: '📊', title: t('saige_page.coming_insights_title'), desc: t('saige_page.coming_insights_desc') },
+    { icon: '🔬', title: t('saige_page.coming_analysis_title'), desc: t('saige_page.coming_analysis_desc') },
   ];
   return (
     <div className="min-h-screen font-sans">
@@ -366,13 +379,13 @@ function AboutSaige() {
               <span className="text-5xl">🌾</span>
               <h1 className="text-5xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>Saige</h1>
             </div>
-            <p className="text-xl font-semibold mb-4" style={{ color: '#86efac' }}>Your AI Agricultural Partner</p>
+            <p className="text-xl font-semibold mb-4" style={{ color: '#86efac' }}>{t('saige_page.about_hero_subtitle')}</p>
             <p className="text-base leading-relaxed mb-6 max-w-lg" style={{ color: '#d1fae5' }}>
-              Saige is more than a chatbot — she's an AI partner guiding farms with planning, insight, and operational know-how.{' '}
-              <Link to="/contact-us" className="underline hover:text-white" style={{ color: '#6ee7b7' }}>Contact Us</Link> to learn more.
+              {t('saige_page.about_hero_body')}{' '}
+              <Link to="/contact-us" className="underline hover:text-white" style={{ color: '#6ee7b7' }}>{t('saige_page.about_hero_contact')}</Link> to learn more.
             </p>
             <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm" style={{ background: 'rgba(234,179,8,0.2)', border: '2px solid #eab308', color: '#fde047' }}>
-              <span className="text-lg">🚀</span> Coming Soon — Stay Tuned!
+              <span className="text-lg">🚀</span> {t('saige_page.about_coming_soon_badge')}
             </div>
           </div>
           <div className="flex-1 max-w-sm w-full">
@@ -408,8 +421,8 @@ function AboutSaige() {
         </div>
       </div>
       <div className="max-w-5xl mx-auto px-6 py-14">
-        <h2 className="text-3xl font-bold text-gray-900 text-center mb-2">What Saige Can Do</h2>
-        <p className="text-gray-500 text-center mb-10">Everything you need to run a smarter, more connected farm.</p>
+        <h2 className="text-3xl font-bold text-gray-900 text-center mb-2">{t('saige_page.about_what_title')}</h2>
+        <p className="text-gray-500 text-center mb-10">{t('saige_page.about_what_sub')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {features.map(f => (
             <div key={f.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex gap-4 items-start">
@@ -420,19 +433,19 @@ function AboutSaige() {
         </div>
       </div>
       <div className="py-14 px-6 text-center" style={{ background: 'linear-gradient(135deg, #0f172a, #14532d)' }}>
-        <h2 className="text-3xl font-bold text-white mb-4">The Future of Farming is Integrated.</h2>
-        <p className="text-gray-300 max-w-2xl mx-auto text-base leading-relaxed">Saige and The OatmealFarmNetwork.com bring the industry together, unifying every step from inventory and logistics to payments and market insights.</p>
+        <h2 className="text-3xl font-bold text-white mb-4">{t('saige_page.about_future_title')}</h2>
+        <p className="text-gray-300 max-w-2xl mx-auto text-base leading-relaxed">{t('saige_page.about_future_body')}</p>
       </div>
       <div className="max-w-5xl mx-auto px-6 py-14">
         <div className="text-center mb-10">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-4" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid #eab308', color: '#d97706' }}>🚀 Coming Soon</span>
-          <h2 className="text-3xl font-bold text-gray-900">What's Coming Next</h2>
-          <p className="text-gray-500 mt-2">We're building the most complete agricultural platform ever made.</p>
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-4" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid #eab308', color: '#d97706' }}>{t('saige_page.about_next_badge')}</span>
+          <h2 className="text-3xl font-bold text-gray-900">{t('saige_page.about_next_title')}</h2>
+          <p className="text-gray-500 mt-2">{t('saige_page.about_next_sub')}</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {coming.map(f => (
             <div key={f.title} className="bg-white rounded-2xl border border-yellow-100 shadow-sm p-6 relative overflow-hidden">
-              <div className="absolute top-3 right-3"><span className="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Coming Soon</span></div>
+              <div className="absolute top-3 right-3"><span className="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">{t('saige_page.about_coming_badge')}</span></div>
               <span className="text-3xl mb-3 block">{f.icon}</span>
               <h3 className="font-bold text-gray-900 text-base mb-2">{f.title}</h3>
               <p className="text-gray-600 text-sm leading-relaxed">{f.desc}</p>
@@ -444,11 +457,11 @@ function AboutSaige() {
         <div className="rounded-2xl p-8 flex flex-col sm:flex-row items-center gap-6" style={{ background: 'linear-gradient(135deg, #14532d, #166534)' }}>
           <span className="text-5xl flex-shrink-0">📁</span>
           <div className="text-center sm:text-left flex-1">
-            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold mb-2" style={{ background: 'rgba(74,222,128,0.2)', color: '#4ade80' }}>✓ Live Now</div>
-            <h3 className="text-xl font-bold text-white mb-2">Food-System Business Directory</h3>
-            <p className="text-green-200 text-sm leading-relaxed">Share your food-focused organization with thousands of interested customers.</p>
+            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold mb-2" style={{ background: 'rgba(74,222,128,0.2)', color: '#4ade80' }}>{t('saige_page.about_live_badge')}</div>
+            <h3 className="text-xl font-bold text-white mb-2">{t('saige_page.about_dir_title')}</h3>
+            <p className="text-green-200 text-sm leading-relaxed">{t('saige_page.about_dir_body')}</p>
           </div>
-          <Link to="/directory" className="flex-shrink-0 bg-white text-green-800 font-bold py-2 px-6 rounded-xl text-sm hover:bg-green-50 transition-colors">Explore Directory →</Link>
+          <Link to="/directory" className="flex-shrink-0 bg-white text-green-800 font-bold py-2 px-6 rounded-xl text-sm hover:bg-green-50 transition-colors">{t('saige_page.about_dir_link')}</Link>
         </div>
       </div>
       <Footer />
@@ -487,6 +500,7 @@ const SAIGE_AUTOSPEAK_KEY = 'saige_auto_speak';
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function SaigePage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { Business, LoadBusiness, BusinessID: contextBusinessID } = useAccount();
 
@@ -526,8 +540,10 @@ export default function SaigePage() {
 
   useEffect(() => { if (BusinessID) LoadBusiness(BusinessID); }, [BusinessID]);
 
+  const welcomeMsg = { role: 'assistant', content: t('saige_page.welcome') };
+
   const [activeThreadId, setActiveThreadId]     = useState('');
-  const [activeChat, setActiveChat]             = useState([WELCOME_MESSAGE]);
+  const [activeChat, setActiveChat]             = useState([welcomeMsg]);
   const [quiz, setQuiz]                         = useState(null);
   const [selectedOption, setSelectedOption]     = useState('');
   const [customAnswer, setCustomAnswer]         = useState('');
@@ -677,8 +693,8 @@ export default function SaigePage() {
       };
       rec.onerror = (e) => {
         if (e.error === 'no-speech' || e.error === 'aborted') return;
-        if (e.error === 'not-allowed') showVoiceError('Microphone permission denied.');
-        else showVoiceError(`Mic error: ${e.error}`);
+        if (e.error === 'not-allowed') showVoiceError(t('saige_page.mic_denied'));
+        else showVoiceError(t('saige_page.mic_error', { error: e.error }));
         stopRecording();
       };
       rec.start();
@@ -686,7 +702,7 @@ export default function SaigePage() {
       isRecordingRef.current = true;
       setRecording(true);
     } catch (err) {
-      showVoiceError('Could not start microphone.');
+      showVoiceError(t('saige_page.mic_start_failed'));
     }
   }, [recording, sttSupported, stopRecording]);
 
@@ -764,7 +780,7 @@ export default function SaigePage() {
       if (messages.length === 0) messages = getLocalMessages(userId, threadId);
       const savedQuiz = getLocalQuiz(userId, threadId);
       setActiveThreadId(threadId);
-      setActiveChat(messages.length > 0 ? messages : [WELCOME_MESSAGE]);
+      setActiveChat(messages.length > 0 ? messages : [welcomeMsg]);
       setQuiz(savedQuiz);
       setSelectedOption('');
       setCustomAnswer('');
@@ -779,7 +795,7 @@ export default function SaigePage() {
     try { await fetch(`${SAIGE_API}/threads/${threadId}?user_id=${userId}`, { method: 'DELETE', headers: getAuthHeaders() }); } catch { /* ok */ }
     if (activeThreadId === threadId) {
       setActiveThreadId(generateThreadId());
-      setActiveChat([WELCOME_MESSAGE]);
+      setActiveChat([welcomeMsg]);
       setQuiz(null); setSelectedOption(''); setCustomAnswer(''); setInput('');
     }
     fetchThreads();
@@ -851,7 +867,7 @@ export default function SaigePage() {
           }
         }
         if (!content?.trim()) {
-          content = data.diagnosis || 'I received your request but encountered an issue. Please try again.';
+          content = data.diagnosis || t('saige_page.err_generic');
         }
         advisoryTypeRef.current = data.advisory_type || null;
         setActiveChat(prev => {
@@ -862,12 +878,12 @@ export default function SaigePage() {
         fetchThreads();
         if (autoSpeak && content) playTTS(content);
       } else if (data.status === 'error') {
-        setActiveChat(prev => [...prev, { role: 'assistant', content: `Sorry, an error occurred: ${data.message || 'Please try again.'}` }]);
+        setActiveChat(prev => [...prev, { role: 'assistant', content: t('saige_page.err_server', { message: data.message || 'Please try again.' }) }]);
       } else {
-        setActiveChat(prev => [...prev, { role: 'assistant', content: 'Thank you for using Saige!' }]);
+        setActiveChat(prev => [...prev, { role: 'assistant', content: t('saige_page.thanks') }]);
       }
     } catch (error) {
-      setActiveChat(prev => [...prev, { role: 'assistant', content: 'Sorry, I could not connect to the server. Please try again.' }]);
+      setActiveChat(prev => [...prev, { role: 'assistant', content: t('saige_page.err_connect') }]);
     } finally {
       setIsThinking(false);
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -891,7 +907,7 @@ export default function SaigePage() {
   if (!isLoggedIn) return <AboutSaige />;
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={userId} pageTitle="Saige AI" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Saige' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={userId} pageTitle={t('saige_page.page_title')} breadcrumbs={[{ label: t('nav.dashboard'), to: '/dashboard' }, { label: t('saige_page.breadcrumb') }]}>
       <div style={{ margin: '-24px', display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 180px)' }}>
 
         <div style={{
@@ -905,19 +921,19 @@ export default function SaigePage() {
               padding: '6px 10px', borderRadius: 6, color: '#fff', fontSize: 16,
               fontWeight: 700, lineHeight: 1,
             }}
-            title={sidebarCollapsed ? 'Show chat history' : 'Hide chat history'}
+            title={sidebarCollapsed ? t('saige_page.toggle_sidebar_show') : t('saige_page.toggle_sidebar_hide')}
           >☰</button>
           <img src="/images/SaigeIcon.png" alt="Saige" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid rgba(255,255,255,0.4)' }} />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontFamily: SAIGE_FONT_HEAD, fontWeight: 700, fontSize: 17, lineHeight: 1.1, color: '#fff' }}>Saige</div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontFamily: SAIGE_FONT_BODY }}>
-              Your AI Agricultural Assistant — crops, livestock, soil, weather &amp; more
+              {t('saige_page.subtitle')}
             </div>
           </div>
           {ttsSupported && (
             <button
               onClick={() => setAndSaveAutoSpeak(!autoSpeak)}
-              title={autoSpeak ? 'Auto-speak ON — Saige reads replies aloud. Click to mute.' : 'Auto-speak OFF — click to have Saige read replies aloud.'}
+              title={autoSpeak ? t('saige_page.autospeak_on_title') : t('saige_page.autospeak_off_title')}
               style={{
                 marginLeft: 'auto',
                 display: 'flex', alignItems: 'center', gap: 6,
@@ -931,7 +947,7 @@ export default function SaigePage() {
               }}
             >
               <span style={{ fontSize: 13 }}>{autoSpeak ? '🔊' : '🔇'}</span>
-              <span>Auto-speak {autoSpeak ? 'on' : 'off'}</span>
+              <span>{autoSpeak ? t('saige_page.autospeak_on') : t('saige_page.autospeak_off')}</span>
             </button>
           )}
         </div>
@@ -993,13 +1009,13 @@ export default function SaigePage() {
                     <span style={{ display: 'inline-block', width: 3, height: 4, background: SAIGE_GREEN, borderRadius: 2, animation: 'saige-wave 1s ease-in-out infinite', animationDelay: '0.15s' }} />
                     <span style={{ display: 'inline-block', width: 3, height: 4, background: SAIGE_GREEN, borderRadius: 2, animation: 'saige-wave 1s ease-in-out infinite', animationDelay: '0.3s' }} />
                   </span>
-                  Saige is speaking…
+                  {t('saige_page.speaking')}
                   <button onClick={stopTTS} style={{
                     marginLeft: 6, padding: '3px 10px', borderRadius: 999,
                     background: SAIGE_GREEN, border: `1px solid ${SAIGE_GREEN_DARK}`,
                     color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer',
                     fontFamily: SAIGE_FONT_BODY,
-                  }}>Stop</button>
+                  }}>{t('saige_page.btn_stop')}</button>
                 </div>
               </div>
             )}
@@ -1010,7 +1026,7 @@ export default function SaigePage() {
                   {sttSupported && (
                     <button
                       onClick={() => (recording ? stopRecording() : startRecording())}
-                      title={recording ? 'Stop recording (will send what you said)' : 'Tap to talk'}
+                      title={recording ? t('saige_page.mic_stop_title') : t('saige_page.mic_start_title')}
                       style={{
                         width: 42, height: 42, flexShrink: 0,
                         borderRadius: '50%', border: 'none', cursor: 'pointer',
@@ -1032,7 +1048,7 @@ export default function SaigePage() {
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && input.trim()) sendMessage(input); }}
-                    placeholder={recording ? 'Listening — speak now…' : 'Ask about crops, livestock, weather, soil health…'}
+                    placeholder={recording ? t('saige_page.input_listening') : t('saige_page.input_placeholder')}
                     style={{
                       flex: 1, padding: '10px 14px', borderRadius: 10,
                       background: '#fff',
@@ -1059,7 +1075,7 @@ export default function SaigePage() {
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                     </svg>
-                    Send
+                    {t('saige_page.btn_send')}
                   </button>
                 </div>
               </div>

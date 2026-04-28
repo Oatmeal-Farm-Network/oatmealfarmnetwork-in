@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -16,6 +17,7 @@ function formatDate(d) {
 }
 
 function AdminSidebar({ ev, eventId, businessId }) {
+  const { t } = useTranslation();
   const typeModule = typeAdminModule(ev.EventType);
   const itemCls = "block text-sm px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700 no-underline border border-transparent hover:border-gray-200";
   const bizQs = businessId ? `?BusinessID=${businessId}` : '';
@@ -24,21 +26,21 @@ function AdminSidebar({ ev, eventId, businessId }) {
       <div className="flex items-center gap-2 mb-3">
         <span className="text-lg">🛠️</span>
         <div>
-          <div className="text-[11px] uppercase tracking-wide text-purple-700 font-semibold">Organizer</div>
-          <div className="text-xs text-gray-500">Admin tools</div>
+          <div className="text-[11px] uppercase tracking-wide text-purple-700 font-semibold">{t('events.admin_label')}</div>
+          <div className="text-xs text-gray-500">{t('events.admin_tools')}</div>
         </div>
       </div>
 
       <div className="mb-3">
         <Link to={`/events/${eventId}/dashboard`}
           className="block text-sm font-semibold px-3 py-2 rounded-lg bg-[#3D6B34] text-white hover:bg-[#2d5226] no-underline text-center">
-          🏠 Admin dashboard
+          {t('events.admin_dashboard')}
         </Link>
       </div>
 
       {typeModule && (
         <div className="mb-3">
-          <div className="text-[11px] uppercase tracking-wide text-gray-400 mb-1 px-2">Event module</div>
+          <div className="text-[11px] uppercase tracking-wide text-gray-400 mb-1 px-2">{t('events.event_module_label')}</div>
           <Link to={`/events/${eventId}/${typeModule.path}${bizQs}`}
             className="block text-sm font-semibold px-3 py-2 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 no-underline">
             {typeModule.label}
@@ -46,23 +48,24 @@ function AdminSidebar({ ev, eventId, businessId }) {
         </div>
       )}
 
-      <div className="text-[11px] uppercase tracking-wide text-gray-400 mb-1 px-2">Attendees</div>
-      <Link to={`/events/${eventId}/checkin`} className={itemCls}>✅ Check-in</Link>
-      <Link to={`/events/${eventId}/broadcast`} className={itemCls}>📣 Broadcast email</Link>
-      <Link to={`/events/${eventId}/analytics`} className={itemCls}>📊 Analytics</Link>
-      <a href={`${API}/api/events/${eventId}/attendees.csv`} className={itemCls}>⬇️ Attendees CSV</a>
+      <div className="text-[11px] uppercase tracking-wide text-gray-400 mb-1 px-2">{t('events.attendees_section')}</div>
+      <Link to={`/events/${eventId}/checkin`} className={itemCls}>{t('events.checkin_link')}</Link>
+      <Link to={`/events/${eventId}/broadcast`} className={itemCls}>{t('events.broadcast_link')}</Link>
+      <Link to={`/events/${eventId}/analytics`} className={itemCls}>{t('events.analytics_link')}</Link>
+      <a href={`${API}/api/events/${eventId}/attendees.csv`} className={itemCls}>{t('events.attendees_csv')}</a>
 
-      <div className="text-[11px] uppercase tracking-wide text-gray-400 mt-3 mb-1 px-2">Calendar</div>
-      <a href={`${API}/api/events/${eventId}/calendar.ics`} className={itemCls}>📅 Export .ics</a>
+      <div className="text-[11px] uppercase tracking-wide text-gray-400 mt-3 mb-1 px-2">{t('events.calendar_section')}</div>
+      <a href={`${API}/api/events/${eventId}/calendar.ics`} className={itemCls}>{t('events.export_ics')}</a>
 
-      <div className="text-[11px] uppercase tracking-wide text-gray-400 mt-3 mb-1 px-2">Event</div>
-      <Link to={`/account/events?edit=${eventId}`} className={itemCls}>✏️ Edit details</Link>
-      <Link to="/account/events" className={itemCls}>↩ All my events</Link>
+      <div className="text-[11px] uppercase tracking-wide text-gray-400 mt-3 mb-1 px-2">{t('events.event_section')}</div>
+      <Link to={`/account/events?edit=${eventId}`} className={itemCls}>{t('events.edit_details')}</Link>
+      <Link to="/account/events" className={itemCls}>{t('events.all_my_events')}</Link>
     </aside>
   );
 }
 
 function PublicFeatureCTAs({ features, ev, eventId }) {
+  const { t } = useTranslation();
   const publics = (features || []).filter(f => f.PublicPath);
   if (publics.length === 0 && !ev.RegistrationRequired && !ev.EventStartDate) return null;
 
@@ -72,7 +75,6 @@ function PublicFeatureCTAs({ features, ev, eventId }) {
   const extras = publics.filter(f =>
     !f.IsCoreModule && f.FeatureKey !== 'calendar_ics' && !isExternal(f.PublicPath));
 
-  // Feature keys that the unified registration wizard handles
   const WIZARD_KEYS = new Set([
     'halter_module', 'fleece_module', 'spinoff_module',
     'fiber_arts_module', 'vendor_fair_module',
@@ -86,7 +88,7 @@ function PublicFeatureCTAs({ features, ev, eventId }) {
           href={`/events/${eventId}/register/wizard`}
           className="w-full block text-center bg-[#3D6B34] text-white font-bold py-3 rounded-xl hover:bg-[#2d5226] transition-colors text-base no-underline"
         >
-          Register for This Event →
+          {t('events.register_btn')}
         </a>
       )}
 
@@ -105,7 +107,7 @@ function PublicFeatureCTAs({ features, ev, eventId }) {
           href={`/events/${eventId}/register`}
           className="w-full block text-center bg-[#3D6B34] text-white font-bold py-3 rounded-xl hover:bg-[#2d5226] transition-colors text-base no-underline"
         >
-          Register for This Event
+          {t('events.register_btn_simple')}
         </a>
       )}
 
@@ -114,7 +116,7 @@ function PublicFeatureCTAs({ features, ev, eventId }) {
           href={`${API}${calendar.PublicPath}`}
           className="w-full block text-center border border-gray-300 text-gray-700 text-sm py-2 rounded-lg hover:bg-gray-50 no-underline"
         >
-          📅 Add to Calendar (.ics)
+          {t('events.add_to_calendar')}
         </a>
       )}
       {!calendar && ev.EventStartDate && (
@@ -122,7 +124,7 @@ function PublicFeatureCTAs({ features, ev, eventId }) {
           href={`${API}/api/events/${eventId}/calendar.ics`}
           className="w-full block text-center border border-gray-300 text-gray-700 text-sm py-2 rounded-lg hover:bg-gray-50 no-underline"
         >
-          Add to Calendar (.ics)
+          {t('events.add_to_calendar_simple')}
         </a>
       )}
 
@@ -142,6 +144,7 @@ function PublicFeatureCTAs({ features, ev, eventId }) {
 }
 
 function FloorPlanCTA({ eventId }) {
+  const { t } = useTranslation();
   const [summary, setSummary] = useState(null);
   useEffect(() => {
     fetch(`${API}/api/events/${eventId}/floor-plan`).then(r => r.ok ? r.json() : null).then(d => {
@@ -157,9 +160,9 @@ function FloorPlanCTA({ eventId }) {
       className="block bg-[#3D6B34] hover:bg-[#2d5226] text-white rounded-xl p-4 no-underline transition-colors">
       <div className="flex items-center justify-between">
         <div>
-          <div className="font-bold">🗺️ Browse the floor plan</div>
+          <div className="font-bold">{t('events.floor_plan_title')}</div>
           <div className="text-xs text-white/80 mt-0.5">
-            {summary.by_status?.available || 0} of {summary.total} booths still available — click to claim yours
+            {t('events.floor_plan_body', { available: summary.by_status?.available || 0, total: summary.total })}
           </div>
         </div>
         <span className="text-2xl">→</span>
@@ -169,6 +172,7 @@ function FloorPlanCTA({ eventId }) {
 }
 
 export default function EventDetail() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const navigate = useNavigate();
   const { language } = useLanguage();
@@ -203,7 +207,7 @@ export default function EventDetail() {
   if (loading) return (
     <div className="min-h-screen font-sans">
       <Header />
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center text-gray-400">Loading…</div>
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center text-gray-400">{t('events.loading_detail')}</div>
       <Footer />
     </div>
   );
@@ -212,8 +216,8 @@ export default function EventDetail() {
     <div className="min-h-screen font-sans">
       <Header />
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <p className="text-gray-500 mb-4">Event not found.</p>
-        <Link to="/events" className="text-[#3D6B34] hover:underline">← Back to Events</Link>
+        <p className="text-gray-500 mb-4">{t('events.not_found')}</p>
+        <Link to="/events" className="text-[#3D6B34] hover:underline">{t('events.back_events')}</Link>
       </div>
       <Footer />
     </div>
@@ -233,6 +237,7 @@ export default function EventDetail() {
   const evCanonical = `https://oatmealfarmnetwork.com/events/${eventId}`;
   const startIso = ev.EventStartDate ? new Date(ev.EventStartDate).toISOString() : undefined;
   const endIso = ev.EventEndDate ? new Date(ev.EventEndDate).toISOString() : startIso;
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <PageMeta
@@ -284,58 +289,52 @@ export default function EventDetail() {
       <div className="max-w-5xl mx-auto px-4 py-8">
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: 'Events', to: '/events' },
+          { label: t('events.title'), to: '/events' },
           { label: ev.EventName },
         ]} />
 
         <div className={`grid grid-cols-1 gap-8 ${isAdmin ? 'lg:grid-cols-5' : 'lg:grid-cols-3'}`}>
 
-          {/* ── Admin sidebar (organizers only) ── */}
           {isAdmin && (
             <div className="lg:col-span-1 order-first">
               <AdminSidebar ev={ev} eventId={eventId} businessId={adminBusinessId} />
             </div>
           )}
 
-          {/* ── Left: main content ── */}
           <div className={`${isAdmin ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-6`}>
 
-            {/* Hero image */}
             {ev.EventImage && (
               <img src={ev.EventImage} alt={ev.EventName}
                 className="w-full rounded-xl object-cover max-h-72"
                 onError={e => e.target.style.display = 'none'} />
             )}
 
-            {/* Title + badges */}
             <div>
               <div className="flex flex-wrap gap-2 mb-2">
                 {ev.EventType && <span className="text-xs bg-gray-100 text-gray-600 font-medium px-3 py-1 rounded-full">{ev.EventType}</span>}
                 {ev.IsFree ? (
-                  <span className="text-xs bg-green-100 text-green-700 font-semibold px-3 py-1 rounded-full">Free</span>
+                  <span className="text-xs bg-green-100 text-green-700 font-semibold px-3 py-1 rounded-full">{t('events.free_badge')}</span>
                 ) : (
-                  <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full">Paid</span>
+                  <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full">{t('events.paid_badge')}</span>
                 )}
                 {ev.RegistrationRequired && (
-                  <span className="text-xs bg-amber-100 text-amber-700 font-semibold px-3 py-1 rounded-full">Registration Required</span>
+                  <span className="text-xs bg-amber-100 text-amber-700 font-semibold px-3 py-1 rounded-full">{t('events.reg_required')}</span>
                 )}
               </div>
               <h1 className="text-2xl font-bold text-gray-800">{ev.EventName}</h1>
-              <p className="text-sm text-gray-500 mt-1">Hosted by {ev.BusinessName}</p>
+              <p className="text-sm text-gray-500 mt-1">{t('events.hosted_by', { name: ev.BusinessName })}</p>
             </div>
 
-            {/* Description */}
             {ev.EventDescription && (
               <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 className="font-bold text-gray-700 mb-3">About This Event</h2>
+                <h2 className="font-bold text-gray-700 mb-3">{t('events.about_event')}</h2>
                 <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{ev.EventDescription}</p>
               </div>
             )}
 
-            {/* Additional dates */}
             {ev.dates?.length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 className="font-bold text-gray-700 mb-3">Schedule</h2>
+                <h2 className="font-bold text-gray-700 mb-3">{t('events.schedule')}</h2>
                 <div className="space-y-2">
                   {ev.dates.map(d => (
                     <div key={d.DateID} className="flex items-center gap-3 text-sm">
@@ -349,20 +348,19 @@ export default function EventDetail() {
               </div>
             )}
 
-            {/* Registration options */}
             {hasOptions && (
               <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 className="font-bold text-gray-700 mb-3">Registration Options</h2>
+                <h2 className="font-bold text-gray-700 mb-3">{t('events.reg_options')}</h2>
                 <div className="divide-y divide-gray-100">
                   {ev.options.map(opt => (
                     <div key={opt.OptionID} className="py-3 flex items-center justify-between gap-3">
                       <div>
                         <p className="font-medium text-gray-800 text-sm">{opt.OptionName}</p>
                         {opt.OptionDescription && <p className="text-xs text-gray-500 mt-0.5">{opt.OptionDescription}</p>}
-                        {opt.MaxQty && <p className="text-xs text-amber-600 mt-0.5">Limit: {opt.MaxQty}</p>}
+                        {opt.MaxQty && <p className="text-xs text-amber-600 mt-0.5">{t('events.opt_limit', { max: opt.MaxQty })}</p>}
                       </div>
                       <span className="font-bold text-[#3D6B34] text-sm shrink-0">
-                        {parseFloat(opt.Price) === 0 ? 'Free' : `$${parseFloat(opt.Price).toFixed(2)}`}
+                        {parseFloat(opt.Price) === 0 ? t('events.free_price') : `$${parseFloat(opt.Price).toFixed(2)}`}
                       </span>
                     </div>
                   ))}
@@ -371,12 +369,10 @@ export default function EventDetail() {
             )}
           </div>
 
-          {/* ── Right: sidebar ── */}
           <div className="space-y-5">
 
-            {/* Date / time card */}
             <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">Event Details</h3>
+              <h3 className="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">{t('events.event_details_label')}</h3>
 
               {ev.EventStartDate && (
                 <div className="flex gap-3 mb-3">
@@ -386,7 +382,7 @@ export default function EventDetail() {
                   <div className="text-sm text-gray-700">
                     <p className="font-medium">{formatDate(ev.EventStartDate)}</p>
                     {ev.EventEndDate && ev.EventEndDate !== ev.EventStartDate && (
-                      <p className="text-gray-500">to {formatDate(ev.EventEndDate)}</p>
+                      <p className="text-gray-500">{t('events.end_date_prefix')} {formatDate(ev.EventEndDate)}</p>
                     )}
                   </div>
                 </div>
@@ -438,30 +434,27 @@ export default function EventDetail() {
                   <svg className="w-5 h-5 text-[#3D6B34] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
                   </svg>
-                  <p className="text-sm text-gray-700">Max {ev.MaxAttendees} attendees · {ev.AttendeeCount || 0} registered</p>
+                  <p className="text-sm text-gray-700">{t('events.max_attendees', { max: ev.MaxAttendees, count: ev.AttendeeCount || 0 })}</p>
                 </div>
               )}
             </div>
 
-            {/* Public feature CTAs — driven by OFNEventFeatures catalog */}
             <PublicFeatureCTAs features={features} ev={ev} eventId={eventId} />
 
-            {/* Floor plan + booth booking — only show when a plan exists */}
             <FloorPlanCTA eventId={eventId} />
 
-            {/* Sponsors — grouped by tier with tier-appropriate logo sizes */}
             {sponsorTiers.length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <p className="text-xs text-gray-400 uppercase tracking-wide mb-3">Thanks to our sponsors</p>
-                {sponsorTiers.map(t => (
-                  <div key={t.TierID} className="mb-4 last:mb-0">
-                    <div className="text-xs font-bold text-[#3D6B34] uppercase tracking-wide mb-2">{t.Name}</div>
-                    <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.max(1, Math.min(t.DisplayColumns || 3, 6))}, minmax(0, 1fr))` }}>
-                      {t.Sponsors.map(s => {
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-3">{t('events.thanks_sponsors')}</p>
+                {sponsorTiers.map(tier => (
+                  <div key={tier.TierID} className="mb-4 last:mb-0">
+                    <div className="text-xs font-bold text-[#3D6B34] uppercase tracking-wide mb-2">{tier.Name}</div>
+                    <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.max(1, Math.min(tier.DisplayColumns || 3, 6))}, minmax(0, 1fr))` }}>
+                      {tier.Sponsors.map(s => {
                         const inner = s.LogoURL ? (
                           <img src={s.LogoURL} alt={s.Name}
                             className="object-contain mx-auto"
-                            style={{ maxWidth: t.LogoSizePx || 200, maxHeight: (t.LogoSizePx || 200) * 0.6 }} />
+                            style={{ maxWidth: tier.LogoSizePx || 200, maxHeight: (tier.LogoSizePx || 200) * 0.6 }} />
                         ) : (
                           <div className="text-sm text-gray-700 font-semibold text-center">{s.Name}</div>
                         );
@@ -484,9 +477,8 @@ export default function EventDetail() {
               </div>
             )}
 
-            {/* Organizer card */}
             <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Organized by</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">{t('events.organized_by')}</p>
               <Link to={`/profile?BusinessID=${ev.BusinessID}`}
                 className="font-bold text-gray-800 hover:text-[#3D6B34] no-underline block">
                 {ev.BusinessName}
@@ -494,7 +486,7 @@ export default function EventDetail() {
             </div>
 
             <Link to="/events" className="block text-sm text-center text-[#3D6B34] hover:underline">
-              ← All Events
+              {t('events.all_events')}
             </Link>
           </div>
         </div>

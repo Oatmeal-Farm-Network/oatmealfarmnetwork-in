@@ -9,7 +9,7 @@ import Breadcrumbs from './Breadcrumbs';
 const ACCENT = '#3D6B34';
 
 const S = ({ children }) => (
-  <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+  <svg width="24" height="24" viewBox="0 0 16 16" fill="none" stroke="currentColor"
     strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
     {children}
   </svg>
@@ -26,8 +26,6 @@ const ICONS = {
   carbon:    <S><path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2z"/><path d="M5.5 8.5c.5 1.5 1.5 2.5 2.5 2.5s2-.8 2-2-.8-1.5-2-1.5-2-.5-2-1.5.8-2 2-2 2 1 2.5 2.5"/><line x1="8" y1="2" x2="8" y2="1"/><line x1="8" y1="14" x2="8" y2="15"/></S>,
   report:    <S><rect x="3" y="1" width="10" height="14" rx="1"/><line x1="6" y1="5" x2="10" y2="5"/><line x1="6" y1="8" x2="10" y2="8"/><line x1="6" y1="11" x2="9" y2="11"/></S>,
   alert:     <S><path d="M8 2L1 14h14z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12.5" r="0.6" fill="currentColor" stroke="none"/></S>,
-  map:       <S><path d="M1 3l5 2 4-2 5 2v10l-5-2-4 2-5-2V3z"/><line x1="6" y1="5" x2="6" y2="15"/><line x1="10" y1="3" x2="10" y2="13"/></S>,
-  water:     <S><path d="M8 14V8"/><path d="M5 10c0-3 3-5 3-8 0 3 3 5 3 8a3 3 0 0 1-6 0z"/></S>,
 };
 
 const STATS_VALUES = ['6', '10+', '24h', '∞'];
@@ -36,16 +34,16 @@ export default function AboutPrecisionAg() {
   const { t } = useTranslation();
 
   const features = [
-    { icon: ICONS.satellite, title: t('precision.feat1_title'), body: t('precision.feat1_body') },
-    { icon: ICONS.climate,   title: t('precision.feat2_title'), body: t('precision.feat2_body') },
-    { icon: ICONS.soil,      title: t('precision.feat3_title'), body: t('precision.feat3_body') },
-    { icon: ICONS.gdd,       title: t('precision.feat4_title'), body: t('precision.feat4_body') },
-    { icon: ICONS.scout,     title: t('precision.feat5_title'), body: t('precision.feat5_body') },
-    { icon: ICONS.zones,     title: t('precision.feat6_title'), body: t('precision.feat6_body') },
-    { icon: ICONS.yield,     title: t('precision.feat7_title'), body: t('precision.feat7_body') },
-    { icon: ICONS.carbon,    title: t('precision.feat8_title'), body: t('precision.feat8_body') },
-    { icon: ICONS.alert,     title: t('precision.feat9_title'), body: t('precision.feat9_body') },
-    { icon: ICONS.report,    title: t('precision.feat10_title'), body: t('precision.feat10_body') },
+    { icon: ICONS.satellite, title: t('precision.feat1_title'),  body: t('precision.feat1_body'),  link: '/oatsense' },
+    { icon: ICONS.climate,   title: t('precision.feat2_title'),  body: t('precision.feat2_body'),  link: '/oatsense' },
+    { icon: ICONS.soil,      title: t('precision.feat3_title'),  body: t('precision.feat3_body'),  link: '/oatsense' },
+    { icon: ICONS.gdd,       title: t('precision.feat4_title'),  body: t('precision.feat4_body'),  link: '/oatsense' },
+    { icon: ICONS.scout,     title: t('precision.feat5_title'),  body: t('precision.feat5_body'),  link: '/oatsense' },
+    { icon: ICONS.zones,     title: t('precision.feat6_title'),  body: t('precision.feat6_body'),  link: '/oatsense' },
+    { icon: ICONS.yield,     title: t('precision.feat7_title'),  body: t('precision.feat7_body'),  link: '/oatsense' },
+    { icon: ICONS.carbon,    title: t('precision.feat8_title'),  body: t('precision.feat8_body'),  link: '/oatsense' },
+    { icon: ICONS.alert,     title: t('precision.feat9_title'),  body: t('precision.feat9_body'),  link: '/oatsense' },
+    { icon: ICONS.report,    title: t('precision.feat10_title'), body: t('precision.feat10_body'), link: '/oatsense' },
   ];
 
   const stats = [
@@ -56,7 +54,7 @@ export default function AboutPrecisionAg() {
   ];
 
   return (
-    <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8' }}>
+    <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title="Precision Agriculture | Oatmeal Farm Network"
         description="Satellite crop monitoring, predictive climate stress, soil intelligence, yield forecasting, and more — all in one integrated precision agriculture platform."
@@ -64,115 +62,151 @@ export default function AboutPrecisionAg() {
       />
       <Header />
 
-      {/* Hero */}
-      <div className="relative text-white py-20 px-4" style={{ backgroundColor: ACCENT }}>
-        <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-white">
-              <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8 1a4.5 4.5 0 0 0-4.5 4.5C3.5 9 8 15 8 15s4.5-6 4.5-9.5A4.5 4.5 0 0 0 8 1z"/>
-                <circle cx="8" cy="5.5" r="1.5"/>
-              </svg>
+      {/* Breadcrumbs */}
+      <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: t('precision.hero_badge') },
+        ]} />
+      </div>
+
+      {/* Hero — photo + gradient overlay matching /for-farms */}
+      <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
+        <div className="relative w-full overflow-hidden rounded-xl">
+          <img
+            src="/images/CoreFeaturesPrecisionAg.webp"
+            alt={t('precision.hero_title')}
+            className="w-full object-cover"
+            style={{ height: '250px', display: 'block' }}
+            loading="eager"
+            onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.78) 45%, rgba(255,255,255,0) 80%)' }}
+          />
+          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
+            <h1
+              style={{
+                color: '#000000',
+                fontFamily: "'Lora','Times New Roman',serif",
+                fontSize: '2rem',
+                fontWeight: 'bold',
+                margin: '0 0 12px',
+                lineHeight: 1.2,
+              }}
+            >
+              {t('precision.hero_title')}
+            </h1>
+            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+              {t('precision.hero_body')}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/oatsense"
+                className="font-bold px-5 py-2 rounded-lg shadow hover:shadow-md transition text-sm"
+                style={{ backgroundColor: ACCENT, color: '#fff' }}
+              >
+                {t('precision.hero_cta1')}
+              </Link>
+              <Link
+                to="/signup"
+                className="font-bold px-5 py-2 rounded-lg border-2 transition hover:bg-gray-50 text-sm"
+                style={{ color: ACCENT, borderColor: ACCENT }}
+              >
+                {t('precision.hero_cta2')}
+              </Link>
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('precision.hero_badge')}</span>
-          </div>
-          <h1 className="text-4xl font-bold mb-3 drop-shadow" style={{ color: '#fff' }}>
-            {t('precision.hero_title')}
-          </h1>
-          <p className="text-lg text-white/95 drop-shadow max-w-2xl">
-            {t('precision.hero_body')}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/oatsense"
-              className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition"
-              style={{ color: ACCENT }}>
-              {t('precision.hero_cta1')}
-            </Link>
-            <Link to="/signup"
-              className="border-2 border-white/60 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-white/10 transition">
-              {t('precision.hero_cta2')}
-            </Link>
           </div>
         </div>
       </div>
 
       {/* Stats bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 py-5 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stats.map(s => (
-            <div key={s.label} className="text-center">
-              <div className="text-2xl font-bold" style={{ color: ACCENT }}>{s.value}</div>
-              <div className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide font-semibold">{s.label}</div>
-            </div>
-          ))}
+      <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
+        <div className="bg-white border border-gray-200 rounded-xl">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-100">
+            {stats.map(s => (
+              <div key={s.label} className="text-center py-4 px-2">
+                <div className="text-2xl font-bold" style={{ color: ACCENT }}>{s.value}</div>
+                <div className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide font-semibold">{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8 grow w-full">
-        <Breadcrumbs items={[
-          { label: 'Home', to: '/' },
-          { label: 'Precision Agriculture' },
-        ]} />
+      {/* Body */}
+      <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
-        <section className="mt-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3"
-              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
+        {/* What is it */}
+        <section className="mb-8">
+          <h2
+            className="text-lg font-bold text-gray-900 mb-3"
+            style={{ fontFamily: "'Lora','Times New Roman',serif" }}
+          >
             {t('precision.what_title')}
           </h2>
-          <p className="text-gray-700 leading-relaxed">
-            {t('precision.what_body')}
-          </p>
+          <p className="text-sm text-gray-700 leading-relaxed max-w-3xl">{t('precision.what_body')}</p>
         </section>
 
-        <section className="mt-10">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4"
-              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            {t('precision.included_title')}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {features.map(f => (
-              <FeatureCard key={f.title} icon={f.icon} title={f.title} body={f.body} />
-            ))}
-          </div>
-        </section>
+        {/* Features grid */}
+        <h2
+          className="text-lg font-bold text-gray-900 mb-5"
+          style={{ fontFamily: "'Lora','Times New Roman',serif" }}
+        >
+          {t('precision.included_title')}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
+          {features.map((f, i) => (
+            <ToolCard key={i} icon={f.icon} title={f.title} body={f.body} link={f.link} />
+          ))}
+        </div>
 
         {/* How it works */}
-        <section className="mt-10">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4"
-              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            {t('precision.how_title')}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Step n="1" title={t('precision.step1_title')} body={t('precision.step1_body')} />
-            <Step n="2" title={t('precision.step2_title')} body={t('precision.step2_body')} />
-            <Step n="3" title={t('precision.step3_title')} body={t('precision.step3_body')} />
-          </div>
-        </section>
+        <h2
+          className="text-lg font-bold text-gray-900 mb-5"
+          style={{ fontFamily: "'Lora','Times New Roman',serif" }}
+        >
+          {t('precision.how_title')}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+          <StepCard n="1" title={t('precision.step1_title')} body={t('precision.step1_body')} />
+          <StepCard n="2" title={t('precision.step2_title')} body={t('precision.step2_body')} />
+          <StepCard n="3" title={t('precision.step3_title')} body={t('precision.step3_body')} />
+        </div>
 
-        {/* CTA */}
-        <section className="mt-10 text-center bg-white border border-gray-200 rounded-2xl p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2"
-              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            {t('precision.cta_title')}
-          </h3>
-          <p className="text-sm text-gray-600 mb-4">
-            {t('precision.cta_body')}
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/oatsense"
-              className="inline-block px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
-              style={{ backgroundColor: ACCENT }}>
+        {/* Bottom CTA — matching /for-farms banner style */}
+        <div
+          className="flex flex-col sm:flex-row items-center justify-between gap-4
+                     bg-white border border-gray-200 rounded-xl px-8 py-6"
+        >
+          <div>
+            <h3
+              className="font-bold text-gray-900 text-base mb-1"
+              style={{ fontFamily: "'Lora','Times New Roman',serif" }}
+            >
+              {t('precision.cta_title')}
+            </h3>
+            <p className="text-sm text-gray-600">{t('precision.cta_body')}</p>
+          </div>
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <Link
+              to="/oatsense"
+              className="px-5 py-2.5 rounded-lg text-white font-bold text-sm shadow hover:shadow-md transition"
+              style={{ backgroundColor: ACCENT }}
+            >
               {t('precision.cta1')}
             </Link>
-            <Link to="/signup"
-              className="inline-block px-6 py-3 rounded-lg font-bold border-2 transition hover:bg-gray-50"
-              style={{ color: ACCENT, borderColor: ACCENT }}>
+            <Link
+              to="/signup"
+              className="px-5 py-2.5 rounded-lg font-bold border-2 text-sm transition hover:bg-gray-50"
+              style={{ color: ACCENT, borderColor: ACCENT }}
+            >
               {t('precision.cta2')}
             </Link>
           </div>
-        </section>
+        </div>
+
       </div>
 
       <Footer />
@@ -180,27 +214,54 @@ export default function AboutPrecisionAg() {
   );
 }
 
-function FeatureCard({ icon, title, body }) {
+// ── ToolCard — matches /for-farms horizontal card style ──────────────
+function ToolCard({ icon, title, body, link }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="flex items-center shrink-0" style={{ color: ACCENT }}>{icon}</span>
-        <h3 className="font-bold text-gray-900">{title}</h3>
+    <div className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200">
+      <Link
+        to={link}
+        className="shrink-0 flex items-center justify-center"
+        style={{ width: '155px', minHeight: '155px', backgroundColor: `${ACCENT}18` }}
+        aria-hidden="true"
+        tabIndex={-1}
+      >
+        <span style={{ color: ACCENT, opacity: 0.85, transform: 'scale(2.2)', display: 'flex' }}>
+          {icon}
+        </span>
+      </Link>
+      <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
+        <div>
+          <Link
+            to={link}
+            className="font-bold text-sm hover:underline"
+            style={{ color: ACCENT }}
+          >
+            {title}
+          </Link>
+          <p className="text-xs text-gray-600 leading-relaxed mt-1">{body}</p>
+        </div>
+        <div className="mt-3">
+          <Link to={link} className="text-xs font-bold hover:underline" style={{ color: ACCENT }}>
+            Open Dashboard →
+          </Link>
+        </div>
       </div>
-      <p className="text-sm text-gray-600 leading-relaxed">{body}</p>
     </div>
   );
 }
 
-function Step({ n, title, body }) {
+// ── StepCard — matches white card style ──────────────────────────────
+function StepCard({ n, title, body }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5">
-      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold mb-3"
-           style={{ backgroundColor: ACCENT }}>
+    <div className="bg-white border border-gray-200 rounded-xl px-5 py-5 shadow-sm">
+      <div
+        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold mb-3"
+        style={{ backgroundColor: ACCENT }}
+      >
         {n}
       </div>
-      <h3 className="font-bold text-gray-900 mb-1">{title}</h3>
-      <p className="text-sm text-gray-600 leading-relaxed">{body}</p>
+      <h3 className="font-bold text-gray-900 text-sm mb-1">{title}</h3>
+      <p className="text-xs text-gray-600 leading-relaxed">{body}</p>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import WebsiteAIAgent from './WebsiteAIAgent';
@@ -586,6 +587,7 @@ let _blockId = 2000;
 const nextId = () => ++_blockId;
 
 function ContentBlockEditor({ value, onChange }) {
+  const { t } = useTranslation();
   const [blocks, setBlocks] = useState(() => parseContentBlocks(value));
 
   const commit = (nb) => { setBlocks(nb); onChange(JSON.stringify(nb)); };
@@ -622,16 +624,16 @@ function ContentBlockEditor({ value, onChange }) {
         <div key={block.id} style={{ marginBottom: '0.75rem', border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
           <div style={hdrStyle}>
             <span style={{ flex: 1, fontSize: '0.68rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {block.type === 'image' ? 'Image Block' : 'Text Block'}
+              {block.type === 'image' ? t('blog_manage.block_image') : t('blog_manage.block_text')}
             </span>
-            <button style={mbtn} onClick={() => moveBlock(block.id, -1)} disabled={idx === 0} title="Move up">↑</button>
-            <button style={mbtn} onClick={() => moveBlock(block.id, 1)} disabled={idx === blocks.length - 1} title="Move down">↓</button>
-            <button style={{ ...mbtn, color: '#C0382B', borderColor: '#fca5a5' }} onClick={() => removeBlock(block.id)} title="Remove block">✕</button>
+            <button style={mbtn} onClick={() => moveBlock(block.id, -1)} disabled={idx === 0} title={t('blog_manage.move_up')}>↑</button>
+            <button style={mbtn} onClick={() => moveBlock(block.id, 1)} disabled={idx === blocks.length - 1} title={t('blog_manage.move_down')}>↓</button>
+            <button style={{ ...mbtn, color: '#C0382B', borderColor: '#fca5a5' }} onClick={() => removeBlock(block.id)} title={t('blog_manage.remove_block')}>✕</button>
           </div>
 
           {block.type === 'image' ? (
             <div style={{ padding: '0.75rem', background: '#fff', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <input style={imgInp} placeholder="Image URL (https://...)" value={block.url || ''}
+              <input style={imgInp} placeholder={t('blog_manage.img_url_placeholder')} value={block.url || ''}
                 onChange={e => updateBlock(block.id, { url: e.target.value })} />
               {block.url && (
                 <div style={{ textAlign: block.align || 'center' }}>
@@ -641,7 +643,7 @@ function ContentBlockEditor({ value, onChange }) {
                   <input
                     value={block.caption || ''}
                     onChange={e => updateBlock(block.id, { caption: e.target.value })}
-                    placeholder="Add a caption…"
+                    placeholder={t('blog_manage.img_caption_placeholder')}
                     style={{
                       display: 'block', width: '100%', boxSizing: 'border-box',
                       border: 'none', borderBottom: '1px dashed #d1d5db',
@@ -654,7 +656,7 @@ function ContentBlockEditor({ value, onChange }) {
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>Align:</span>
+                <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>{t('blog_manage.align_label')}</span>
                 {['left', 'center', 'right'].map(a => (
                   <button key={a} onClick={() => updateBlock(block.id, { align: a })}
                     style={{ padding: '3px 10px', borderRadius: 4, border: '1px solid', fontSize: '0.78rem', cursor: 'pointer',
@@ -664,7 +666,7 @@ function ContentBlockEditor({ value, onChange }) {
                     {a.charAt(0).toUpperCase() + a.slice(1)}
                   </button>
                 ))}
-                <span style={{ fontSize: '0.78rem', color: '#6b7280', marginLeft: 8 }}>Width:</span>
+                <span style={{ fontSize: '0.78rem', color: '#6b7280', marginLeft: 8 }}>{t('blog_manage.width_label')}</span>
                 <select value={block.width || '100%'} onChange={e => updateBlock(block.id, { width: e.target.value })}
                   style={{ fontSize: '0.78rem', border: '1px solid #d1d5db', borderRadius: 4, padding: '3px 5px', background: '#fff', cursor: 'pointer' }}>
                   {['25%', '33%', '50%', '66%', '75%', '100%'].map(w => <option key={w} value={w}>{w}</option>)}
@@ -681,11 +683,11 @@ function ContentBlockEditor({ value, onChange }) {
       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
         <button onClick={() => addBlock('text')}
           style={{ padding: '5px 14px', border: '1px dashed #d1d5db', borderRadius: 6, background: '#f9fafb', fontSize: '0.82rem', color: '#6b7280', cursor: 'pointer', fontWeight: 500 }}>
-          + Text Block
+          {t('blog_manage.btn_add_text')}
         </button>
         <button onClick={() => addBlock('image')}
           style={{ padding: '5px 14px', border: '1px dashed #d1d5db', borderRadius: 6, background: '#f9fafb', fontSize: '0.82rem', color: '#6b7280', cursor: 'pointer', fontWeight: 500 }}>
-          + Image Block
+          {t('blog_manage.btn_add_image')}
         </button>
       </div>
     </div>
@@ -725,6 +727,7 @@ const emptyForm = {
 // ── PostEditor ──────────────────────────────────────────────────
 function PostEditor({ post, businessId, hasWebsite, globalCategories, customCategories,
                       onSave, onCancel }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(post ? {
     title:             post.title || '',
     content:           post.content || '',
@@ -780,7 +783,7 @@ function PostEditor({ post, businessId, hasWebsite, globalCategories, customCate
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.title.trim()) { setError('Title is required'); return; }
+    if (!form.title.trim()) { setError(t('blog_manage.editor_error_title')); return; }
     setSaving(true);
     setError('');
     try {
@@ -800,7 +803,7 @@ function PostEditor({ post, businessId, hasWebsite, globalCategories, customCate
       }
       onSave();
     } catch {
-      setError('Failed to save post. Please try again.');
+      setError(t('blog_manage.editor_error_save'));
     } finally {
       setSaving(false);
     }
@@ -819,7 +822,7 @@ function PostEditor({ post, businessId, hasWebsite, globalCategories, customCate
   return (
     <div style={{ background: '#fff', borderRadius: '10px', border: '1px solid #e5e7eb', padding: '1.5rem' }}>
       <h2 style={{ margin: '0 0 1.25rem', fontSize: '1.1rem', fontWeight: 700, color: '#111827' }}>
-        {post ? 'Edit Post' : 'New Blog Post'}
+        {post ? t('blog_manage.editor_heading_edit') : t('blog_manage.editor_heading_new')}
       </h2>
 
       {error && <div style={{ background: '#fef2f2', color: '#C0382B', padding: '0.5rem 0.75rem', borderRadius: '6px', marginBottom: '1rem', fontSize: '0.85rem' }}>{error}</div>}
@@ -828,16 +831,16 @@ function PostEditor({ post, businessId, hasWebsite, globalCategories, customCate
 
         {/* Title */}
         <div>
-          <label style={labelStyle}>Title</label>
+          <label style={labelStyle}>{t('blog_manage.label_title')}</label>
           <input style={inputStyle} value={form.title}
-            onChange={e => set('title', e.target.value)} placeholder="Post title" />
+            onChange={e => set('title', e.target.value)} placeholder={t('blog_manage.title_placeholder')} />
         </div>
 
         {/* Author row */}
         {savedAuthors.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 200 }}>
-              <label style={labelStyle}>Saved Author <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>(select to auto-fill)</span></label>
+              <label style={labelStyle}>{t('blog_manage.label_saved_author')} <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>{t('blog_manage.author_auto_fill')}</span></label>
               <select
                 style={inputStyle}
                 value={form.author_id ?? ''}
@@ -852,7 +855,7 @@ function PostEditor({ post, businessId, hasWebsite, globalCategories, customCate
                   }));
                 }}
               >
-                <option value="">— None / type manually —</option>
+                <option value="">{t('blog_manage.author_none_manual')}</option>
                 {savedAuthors.map(a => (
                   <option key={a.author_id} value={a.author_id}>{a.name}</option>
                 ))}
@@ -861,28 +864,28 @@ function PostEditor({ post, businessId, hasWebsite, globalCategories, customCate
             <div style={{ paddingTop: '1.25rem' }}>
               <Link to={`/blog/authors/manage?BusinessID=${businessId}`}
                 style={{ fontSize: '0.8rem', color: '#7C5CBF', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                Manage Authors ↗
+                {t('blog_manage.manage_authors')}
               </Link>
             </div>
           </div>
         )}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
           <div>
-            <label style={labelStyle}>Author <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+            <label style={labelStyle}>{t('blog_manage.label_author')} <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>{t('blog_manage.optional')}</span></label>
             <input style={inputStyle} value={form.author}
               onChange={e => { set('author', e.target.value); set('author_id', null); }} placeholder="Author name" />
           </div>
           <div>
-            <label style={labelStyle}>Author Link <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+            <label style={labelStyle}>{t('blog_manage.label_author_link')} <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>{t('blog_manage.optional')}</span></label>
             <input style={inputStyle} value={form.author_link}
               onChange={e => set('author_link', e.target.value)} placeholder="https://..." />
           </div>
           <div>
-            <label style={labelStyle}>Blog Date <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+            <label style={labelStyle}>{t('blog_manage.label_blog_date')} <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>{t('blog_manage.optional')}</span></label>
             <input type="date" style={inputStyle} value={form.published_at}
               onChange={e => set('published_at', e.target.value)} />
             <p style={{ margin: '0.25rem 0 0', fontSize: '0.72rem', color: '#9ca3af' }}>
-              Display date shown on the post. Defaults to today.
+              {t('blog_manage.blog_date_hint')}
             </p>
           </div>
         </div>
@@ -892,25 +895,25 @@ function PostEditor({ post, businessId, hasWebsite, globalCategories, customCate
 
           {/* Public category */}
           <div>
-            <label style={labelStyle}>Public Category</label>
+            <label style={labelStyle}>{t('blog_manage.label_public_cat')}</label>
             <select
               style={inputStyle}
               value={form.blog_cat_id ?? ''}
               onChange={e => set('blog_cat_id', e.target.value ? Number(e.target.value) : null)}
             >
-              <option value="">— Select —</option>
+              <option value="">{t('blog_manage.cat_select')}</option>
               {globalCategories.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
             <p style={{ margin: '0.25rem 0 0', fontSize: '0.72rem', color: '#9ca3af' }}>
-              Shown network-wide in directory &amp; search
+              {t('blog_manage.public_cat_hint')}
             </p>
           </div>
 
           {/* Personal category */}
           <div>
-            <label style={labelStyle}>Personal Category <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+            <label style={labelStyle}>{t('blog_manage.label_personal_cat')} <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>{t('blog_manage.optional')}</span></label>
 
             {/* Dropdown of existing custom cats */}
             <select
@@ -918,23 +921,23 @@ function PostEditor({ post, businessId, hasWebsite, globalCategories, customCate
               value={form.custom_cat_id ?? ''}
               onChange={e => set('custom_cat_id', e.target.value ? Number(e.target.value) : null)}
             >
-              <option value="">— None —</option>
+              <option value="">{t('blog_manage.cat_none')}</option>
               {customCategories.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
             <p style={{ margin: '0.25rem 0 0', fontSize: '0.72rem', color: '#9ca3af' }}>
-              Shown on your website &amp; directory listing ·{' '}
+              {t('blog_manage.personal_cat_hint')}
               <Link to={`/blog/manage?BusinessID=${businessId}&tab=categories`}
                 style={{ color: '#7C5CBF', textDecoration: 'none', fontWeight: 600 }}>
-                Manage categories
+                {t('blog_manage.manage_categories')}
               </Link>
             </p>
           </div>
 
           {/* Cover image */}
           <div>
-            <label style={labelStyle}>Cover Image URL <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+            <label style={labelStyle}>{t('blog_manage.label_cover_image')} <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>{t('blog_manage.optional')}</span></label>
             <input style={inputStyle} value={form.cover_image}
               onChange={e => set('cover_image', e.target.value)} placeholder="https://..." />
           </div>
@@ -942,7 +945,7 @@ function PostEditor({ post, businessId, hasWebsite, globalCategories, customCate
 
         {/* Content */}
         <div>
-          <label style={labelStyle}>Content <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+          <label style={labelStyle}>{t('blog_manage.label_content')} <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400 }}>{t('blog_manage.optional')}</span></label>
           <ContentBlockEditor
             key={post?.blog_id ?? 'new'}
             value={form.content}
@@ -952,32 +955,32 @@ function PostEditor({ post, businessId, hasWebsite, globalCategories, customCate
 
         {/* Flags */}
         <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '0.9rem 1rem' }}>
-          <p style={{ margin: '0 0 0.6rem', fontSize: '0.78rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Publishing Options</p>
+          <p style={{ margin: '0 0 0.6rem', fontSize: '0.78rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('blog_manage.publishing_options')}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem 2rem' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', color: '#374151', cursor: 'pointer' }}>
               <input type="checkbox" checked={form.is_published}
                 onChange={e => set('is_published', e.target.checked)}
                 style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: '#819360' }} />
-              <span><strong>Published</strong> <span style={{ color: '#6b7280', fontWeight: 400 }}>(visible to public)</span></span>
+              <span><strong>{t('blog_manage.flag_published')}</strong> <span style={{ color: '#6b7280', fontWeight: 400 }}>{t('blog_manage.flag_published_hint')}</span></span>
             </label>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', color: '#374151', cursor: 'pointer' }}>
               <input type="checkbox" checked={form.is_featured}
                 onChange={e => set('is_featured', e.target.checked)}
                 style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: '#819360' }} />
-              <strong>Featured</strong>
+              <strong>{t('blog_manage.flag_featured')}</strong>
             </label>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', color: '#374151', cursor: 'pointer' }}>
               <input type="checkbox" checked={form.show_on_directory}
                 onChange={e => set('show_on_directory', e.target.checked)}
                 style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: '#819360' }} />
-              <span><strong>Show on Directory</strong> <span style={{ color: '#6b7280', fontWeight: 400 }}>(OFN network listing)</span></span>
+              <span><strong>{t('blog_manage.flag_directory')}</strong> <span style={{ color: '#6b7280', fontWeight: 400 }}>{t('blog_manage.flag_directory_hint')}</span></span>
             </label>
             {hasWebsite && (
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', color: '#374151', cursor: 'pointer' }}>
                 <input type="checkbox" checked={form.show_on_website}
                   onChange={e => set('show_on_website', e.target.checked)}
                   style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: '#819360' }} />
-                <span><strong>Show on Website</strong> <span style={{ color: '#6b7280', fontWeight: 400 }}>(your custom website)</span></span>
+                <span><strong>{t('blog_manage.flag_website')}</strong> <span style={{ color: '#6b7280', fontWeight: 400 }}>{t('blog_manage.flag_website_hint')}</span></span>
               </label>
             )}
           </div>
@@ -987,15 +990,15 @@ function PostEditor({ post, businessId, hasWebsite, globalCategories, customCate
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem' }}>
         <button onClick={onCancel}
           style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', borderRadius: '6px', padding: '0.5rem 1.25rem', fontSize: '0.9rem', cursor: 'pointer' }}>
-          Cancel
+          {t('blog_manage.btn_cancel')}
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {autoSaveStatus === 'saving' && <span style={{ fontSize: '0.78rem', color: '#9ca3af' }}>Saving…</span>}
-          {autoSaveStatus === 'saved'  && <span style={{ fontSize: '0.78rem', color: '#16a34a' }}>✓ Saved</span>}
-          {autoSaveStatus === 'error'  && <span style={{ fontSize: '0.78rem', color: '#dc2626' }}>Save failed</span>}
+          {autoSaveStatus === 'saving' && <span style={{ fontSize: '0.78rem', color: '#9ca3af' }}>{t('blog_manage.autosave_saving')}</span>}
+          {autoSaveStatus === 'saved'  && <span style={{ fontSize: '0.78rem', color: '#16a34a' }}>{t('blog_manage.autosave_saved')}</span>}
+          {autoSaveStatus === 'error'  && <span style={{ fontSize: '0.78rem', color: '#dc2626' }}>{t('blog_manage.autosave_error')}</span>}
           <button onClick={handleSave} disabled={saving}
             style={{ background: '#819360', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.5rem 1.5rem', fontSize: '0.9rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
-            {saving ? 'Saving...' : 'Save Post'}
+            {saving ? t('blog_manage.btn_saving') : t('blog_manage.btn_save')}
           </button>
         </div>
       </div>
@@ -1005,6 +1008,7 @@ function PostEditor({ post, businessId, hasWebsite, globalCategories, customCate
 
 // ── CategoriesTab ───────────────────────────────────────────────
 function CategoriesTab({ businessId, globalCategories, customCategories, onCustomCategoriesChange }) {
+  const { t } = useTranslation();
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
   const [deleting, setDeleting] = useState(null);
@@ -1021,20 +1025,20 @@ function CategoriesTab({ businessId, globalCategories, customCategories, onCusto
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
       });
-      if (res.status === 409) { setError('That category already exists.'); return; }
+      if (res.status === 409) { setError(t('blog_manage.cat_error_exists')); return; }
       if (!res.ok) throw new Error();
       const created = await res.json();
       onCustomCategoriesChange([...customCategories, created]);
       setNewName('');
     } catch {
-      setError('Failed to add category.');
+      setError(t('blog_manage.cat_error_add'));
     } finally {
       setAdding(false);
     }
   };
 
   const handleDelete = async (cat) => {
-    if (!window.confirm(`Remove "${cat.name}"?`)) return;
+    if (!window.confirm(t('blog_manage.confirm_remove_cat', { name: cat.name }))) return;
     setDeleting(cat.id);
     try {
       await fetch(`${API_URL}/api/blog/categories/custom/${cat.id}?business_id=${businessId}`,
@@ -1051,9 +1055,9 @@ function CategoriesTab({ businessId, globalCategories, customCategories, onCusto
     <div style={{ display: 'grid', gap: '1.5rem', maxWidth: '700px' }}>
       {/* Global */}
       <div style={{ background: '#fff', borderRadius: '10px', border: '1px solid #e5e7eb', padding: '1.25rem' }}>
-        <h3 style={{ margin: '0 0 0.4rem', fontSize: '0.95rem', fontWeight: 700, color: '#111827' }}>Global Categories</h3>
+        <h3 style={{ margin: '0 0 0.4rem', fontSize: '0.95rem', fontWeight: 700, color: '#111827' }}>{t('blog_manage.cat_global_heading')}</h3>
         <p style={{ margin: '0 0 0.9rem', fontSize: '0.82rem', color: '#6b7280' }}>
-          Network-wide categories available to all businesses.
+          {t('blog_manage.cat_global_desc')}
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
           {globalCategories.map(c => (
@@ -1066,21 +1070,21 @@ function CategoriesTab({ businessId, globalCategories, customCategories, onCusto
 
       {/* Custom */}
       <div style={{ background: '#fff', borderRadius: '10px', border: '1px solid #e5e7eb', padding: '1.25rem' }}>
-        <h3 style={{ margin: '0 0 0.4rem', fontSize: '0.95rem', fontWeight: 700, color: '#111827' }}>My Categories</h3>
+        <h3 style={{ margin: '0 0 0.4rem', fontSize: '0.95rem', fontWeight: 700, color: '#111827' }}>{t('blog_manage.cat_custom_heading')}</h3>
         <p style={{ margin: '0 0 0.9rem', fontSize: '0.82rem', color: '#6b7280' }}>
-          Custom categories that appear only on your website and directory listing.
+          {t('blog_manage.cat_custom_desc')}
         </p>
         {error && <div style={{ background: '#fef2f2', color: '#C0382B', padding: '0.4rem 0.75rem', borderRadius: '6px', marginBottom: '0.75rem', fontSize: '0.82rem' }}>{error}</div>}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
           <input style={inputStyle} value={newName} onChange={e => setNewName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAdd()} placeholder="New category name..." />
+            onKeyDown={e => e.key === 'Enter' && handleAdd()} placeholder={t('blog_manage.cat_new_placeholder')} />
           <button onClick={handleAdd} disabled={adding || !newName.trim()}
             style={{ background: '#819360', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.45rem 1rem', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', opacity: adding ? 0.7 : 1, whiteSpace: 'nowrap' }}>
-            + Add
+            {t('blog_manage.btn_add_cat')}
           </button>
         </div>
         {customCategories.length === 0
-          ? <p style={{ fontSize: '0.85rem', color: '#9ca3af', margin: 0 }}>No custom categories yet.</p>
+          ? <p style={{ fontSize: '0.85rem', color: '#9ca3af', margin: 0 }}>{t('blog_manage.cat_none_yet')}</p>
           : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               {customCategories.map(c => (
@@ -1088,7 +1092,7 @@ function CategoriesTab({ businessId, globalCategories, customCategories, onCusto
                   <span style={{ fontSize: '0.88rem', color: '#374151' }}>{c.name}</span>
                   <button onClick={() => handleDelete(c)} disabled={deleting === c.id}
                     style={{ background: '#C0382B', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 9px', fontSize: '0.75rem', cursor: 'pointer', opacity: deleting === c.id ? 0.6 : 1 }}>
-                    Remove
+                    {t('blog_manage.btn_remove')}
                   </button>
                 </div>
               ))}
@@ -1102,6 +1106,7 @@ function CategoriesTab({ businessId, globalCategories, customCategories, onCusto
 
 // ── BlogManage (main) ───────────────────────────────────────────
 export default function BlogManage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('people_id');
@@ -1185,7 +1190,7 @@ export default function BlogManage() {
   }, [BusinessID]);
 
   const handleDelete = async (blogId) => {
-    if (!window.confirm('Delete this post?')) return;
+    if (!window.confirm(t('blog_manage.confirm_delete'))) return;
     setDeleting(blogId);
     try {
       await fetch(`${API_URL}/api/blog/manage/${blogId}?business_id=${BusinessID}`, { method: 'DELETE' });
@@ -1277,11 +1282,11 @@ export default function BlogManage() {
 
   if (view === 'new' || view === 'edit') {
     return (
-      <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={editPost ? 'Edit Post' : 'New Post'} breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Blog' }, { label: 'Manage', to: `/blog/manage?BusinessID=${BusinessID}` }, { label: editPost ? 'Edit Post' : 'New Post' }]}>
+      <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={editPost ? t('blog_manage.page_title_edit') : t('blog_manage.page_title_new')} breadcrumbs={[{ label: t('nav.dashboard'), to: '/dashboard' }, { label: t('blog_manage.breadcrumb_blog') }, { label: t('blog_manage.breadcrumb_manage'), to: `/blog/manage?BusinessID=${BusinessID}` }, { label: editPost ? t('blog_manage.page_title_edit') : t('blog_manage.page_title_new') }]}>
         <div style={{ width: '100%' }}>
           <button onClick={() => { setView('list'); setEditPost(null); }}
             style={{ background: 'none', border: 'none', color: '#819360', cursor: 'pointer', fontSize: '0.85rem', marginBottom: '1rem', padding: 0 }}>
-            ← Back to Posts
+            {t('blog_manage.back_to_posts')}
           </button>
           <PostEditor
             post={editPost}
@@ -1299,19 +1304,19 @@ export default function BlogManage() {
   }
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Manage Blog" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Blog' }, { label: 'Manage' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={t('blog_manage.page_title_manage')} breadcrumbs={[{ label: t('nav.dashboard'), to: '/dashboard' }, { label: t('blog_manage.breadcrumb_blog') }, { label: t('blog_manage.breadcrumb_manage') }]}>
       <div style={{ width: '100%' }}>
 
         {/* ── Header row ── */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <h1 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 700, color: '#111827' }}>Manage Blog</h1>
+          <h1 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 700, color: '#111827' }}>{t('blog_manage.heading')}</h1>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <button style={tabStyle('posts')} onClick={() => setActiveTab('posts')}>Posts</button>
-            <button style={tabStyle('categories')} onClick={() => setActiveTab('categories')}>Categories</button>
+            <button style={tabStyle('posts')} onClick={() => setActiveTab('posts')}>{t('blog_manage.tab_posts')}</button>
+            <button style={tabStyle('categories')} onClick={() => setActiveTab('categories')}>{t('blog_manage.tab_categories')}</button>
             {activeTab === 'posts' && (
               <button onClick={() => { setEditPost(null); setView('new'); }}
                 style={{ background: '#819360', color: '#fff', border: 'none', borderRadius: '7px', padding: '0.4rem 1rem', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>
-                + New Post
+                {t('blog_manage.btn_new_post')}
               </button>
             )}
           </div>
@@ -1333,55 +1338,55 @@ export default function BlogManage() {
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search posts..."
+                placeholder={t('blog_manage.search_placeholder')}
                 style={{ ...ctrlStyle, flex: '1 1 160px', minWidth: '140px' }}
               />
               <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={ctrlStyle}>
-                <option value="">All statuses</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
+                <option value="">{t('blog_manage.filter_all_statuses')}</option>
+                <option value="published">{t('blog_manage.filter_published')}</option>
+                <option value="draft">{t('blog_manage.filter_draft')}</option>
               </select>
               <select value={filterCat} onChange={e => setFilterCat(e.target.value)} style={ctrlStyle}>
-                <option value="">All categories</option>
+                <option value="">{t('blog_manage.filter_all_cats')}</option>
                 {globalCatNames.length > 0 && (
-                  <optgroup label="Global">
+                  <optgroup label={t('blog_manage.optgroup_global')}>
                     {globalCatNames.map(n => <option key={`g:${n}`} value={`g:${n}`}>{n}</option>)}
                   </optgroup>
                 )}
                 {customCatNames.length > 0 && (
-                  <optgroup label="Personal">
+                  <optgroup label={t('blog_manage.optgroup_personal')}>
                     {customCatNames.map(n => <option key={`c:${n}`} value={`c:${n}`}>{n}</option>)}
                   </optgroup>
                 )}
               </select>
               <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={ctrlStyle}>
-                <option value="date_desc">Newest first</option>
-                <option value="date_asc">Oldest first</option>
-                <option value="title_asc">Title A–Z</option>
-                <option value="title_desc">Title Z–A</option>
+                <option value="date_desc">{t('blog_manage.sort_newest')}</option>
+                <option value="date_asc">{t('blog_manage.sort_oldest')}</option>
+                <option value="title_asc">{t('blog_manage.sort_title_az')}</option>
+                <option value="title_desc">{t('blog_manage.sort_title_za')}</option>
               </select>
               {(search || filterStatus || filterCat) && (
                 <button onClick={() => { setSearch(''); setFilterStatus(''); setFilterCat(''); }}
                   style={{ ...ctrlStyle, color: '#C0382B', borderColor: '#fca5a5' }}>
-                  Clear
+                  {t('blog_manage.btn_clear')}
                 </button>
               )}
             </div>
 
-            {loading && <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>Loading posts...</p>}
+            {loading && <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>{t('blog_manage.loading_posts')}</p>}
 
             {!loading && posts.length === 0 && (
               <div style={{ textAlign: 'center', padding: '3rem', background: '#fff', borderRadius: '10px', border: '1px solid #e5e7eb' }}>
-                <p style={{ color: '#9ca3af', marginBottom: '1rem' }}>No blog posts yet.</p>
+                <p style={{ color: '#9ca3af', marginBottom: '1rem' }}>{t('blog_manage.no_posts')}</p>
                 <button onClick={() => { setEditPost(null); setView('new'); }}
                   style={{ background: '#819360', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.5rem 1.1rem', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
-                  Write Your First Post
+                  {t('blog_manage.btn_write_first')}
                 </button>
               </div>
             )}
 
             {!loading && posts.length > 0 && visiblePosts.length === 0 && (
-              <p style={{ color: '#9ca3af', fontSize: '0.88rem', padding: '1.5rem 0' }}>No posts match your filters.</p>
+              <p style={{ color: '#9ca3af', fontSize: '0.88rem', padding: '1.5rem 0' }}>{t('blog_manage.no_match')}</p>
             )}
 
             {/* ── Post list ── */}
@@ -1420,16 +1425,16 @@ export default function BlogManage() {
                           {post.is_published && (
                             <Link to={`/blog/${post.blog_id}`} target="_blank"
                               style={{ fontSize: '0.75rem', color: '#819360', textDecoration: 'none', padding: '0.2rem 0.5rem', border: '1px solid #819360', borderRadius: '5px', whiteSpace: 'nowrap' }}>
-                              View ↗
+                              {t('blog_manage.btn_view')}
                             </Link>
                           )}
                           <button onClick={() => { setEditPost(post); setView('edit'); }}
                             style={{ fontSize: '0.75rem', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '5px', padding: '0.2rem 0.5rem', cursor: 'pointer', color: '#374151' }}>
-                            Edit
+                            {t('blog_manage.btn_edit')}
                           </button>
                           <button onClick={() => handleDelete(post.blog_id)} disabled={deleting === post.blog_id}
                             style={{ fontSize: '0.75rem', background: '#C0382B', border: 'none', borderRadius: '5px', padding: '0.2rem 0.5rem', cursor: 'pointer', color: '#fff', opacity: deleting === post.blog_id ? 0.6 : 1 }}>
-                            Delete
+                            {t('blog_manage.btn_delete')}
                           </button>
                         </div>
                       </div>
@@ -1443,7 +1448,7 @@ export default function BlogManage() {
                           const hov = hoveredPublish === post.blog_id;
                           return (
                             <button
-                              title={post.is_published ? 'Click to unpublish' : 'Click to publish'}
+                              title={post.is_published ? t('blog_manage.toggle_unpublish_title') : t('blog_manage.toggle_publish_title')}
                               onClick={() => handleTogglePublish(post)}
                               onMouseEnter={() => setHoveredPublish(post.blog_id)}
                               onMouseLeave={() => setHoveredPublish(null)}
@@ -1459,7 +1464,7 @@ export default function BlogManage() {
                                 boxShadow: `0 0 0 1px ${post.is_published ? (hov ? '#fca5a5' : '#86efac') : (hov ? '#86efac' : '#e5e7eb')}`,
                                 opacity: busy ? 0.6 : 1,
                               }}>
-                              {busy ? '…' : post.is_published ? (hov ? '○ Unpublish' : '● Published') : (hov ? '● Publish' : '○ Draft')}
+                              {busy ? '…' : post.is_published ? (hov ? t('blog_manage.status_unpublish') : t('blog_manage.status_published')) : (hov ? t('blog_manage.status_publish') : t('blog_manage.status_draft'))}
                             </button>
                           );
                         })()}
@@ -1469,7 +1474,7 @@ export default function BlogManage() {
                           background: post.is_featured ? '#fef9c3' : '#f9fafb',
                           color: post.is_featured ? '#854d0e' : '#9ca3af',
                           border: `1px solid ${post.is_featured ? '#fde68a' : '#e5e7eb'}` }}>
-                          {post.is_featured ? '★ Featured' : '☆ Not Featured'}
+                          {post.is_featured ? t('blog_manage.badge_featured') : t('blog_manage.badge_not_featured')}
                         </span>
 
                         {/* Show on Directory */}
@@ -1477,7 +1482,7 @@ export default function BlogManage() {
                           background: post.show_on_directory ? '#dbeafe' : '#f9fafb',
                           color: post.show_on_directory ? '#1d4ed8' : '#9ca3af',
                           border: `1px solid ${post.show_on_directory ? '#93c5fd' : '#e5e7eb'}` }}>
-                          {post.show_on_directory ? '● Directory' : '○ Directory'}
+                          {post.show_on_directory ? t('blog_manage.badge_directory_on') : t('blog_manage.badge_directory_off')}
                         </span>
 
                         {/* Show on Website */}
@@ -1485,7 +1490,7 @@ export default function BlogManage() {
                           background: post.show_on_website ? '#f0fdf4' : '#f9fafb',
                           color: post.show_on_website ? '#166534' : '#9ca3af',
                           border: `1px solid ${post.show_on_website ? '#86efac' : '#e5e7eb'}` }}>
-                          {post.show_on_website ? '● Website' : '○ Website'}
+                          {post.show_on_website ? t('blog_manage.badge_website_on') : t('blog_manage.badge_website_off')}
                         </span>
 
                         {/* Divider */}
@@ -1517,7 +1522,7 @@ export default function BlogManage() {
 
             {!loading && visiblePosts.length > 0 && (
               <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.75rem' }}>
-                Showing {visiblePosts.length} of {posts.length} post{posts.length !== 1 ? 's' : ''}
+                {t(posts.length !== 1 ? 'blog_manage.showing_count_plural' : 'blog_manage.showing_count', { visible: visiblePosts.length, total: posts.length })}
               </p>
             )}
           </>

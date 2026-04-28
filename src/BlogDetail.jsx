@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -71,6 +72,7 @@ function renderContent(content) {
 }
 
 export default function BlogDetail() {
+  const { t } = useTranslation();
   const { postId } = useParams();
   const { language } = useLanguage();
   const [post, setPost] = useState(null);
@@ -142,9 +144,9 @@ export default function BlogDetail() {
   const ranchLocation = ranch ? [ranch.address_city, ranch.address_state].filter(Boolean).join(', ') : '';
 
   const PROFILE_TABS = profileBase ? [
-    { key: 'home',  label: 'Home',                  href: `${profileBase}?tab=home` },
-    { key: 'blog',  label: `Blog (${blogCount})`,   href: `${profileBase}?tab=blog` },
-    { key: 'contact', label: 'Contact',             href: `${profileBase}?tab=contact` },
+    { key: 'home',    label: t('blog.tab_home'),                    href: `${profileBase}?tab=home` },
+    { key: 'blog',    label: t('blog.tab_blog', { count: blogCount }), href: `${profileBase}?tab=blog` },
+    { key: 'contact', label: t('blog.tab_contact'),                 href: `${profileBase}?tab=contact` },
   ] : [];
 
   return (
@@ -173,24 +175,23 @@ export default function BlogDetail() {
         <div style={{ paddingTop: '0.75rem' }}>
           <Breadcrumbs items={[
             { label: 'Home', to: '/' },
-            { label: 'Blog', to: '/blog' },
+            { label: t('blog.title'), to: '/blog' },
             ...(post?.business_name ? [{ label: post.business_name, to: profileBase }] : []),
             { label: post?.title || 'Post' },
           ]} />
         </div>
 
-        {loading && <p style={{ color: '#9ca3af', textAlign: 'center', padding: '3rem 0' }}>Loading...</p>}
+        {loading && <p style={{ color: '#9ca3af', textAlign: 'center', padding: '3rem 0' }}>{t('blog.loading_post')}</p>}
 
         {notFound && !loading && (
           <div style={{ textAlign: 'center', padding: '3rem' }}>
-            <h2 style={{ color: '#374151' }}>Post Not Found</h2>
-            <p style={{ color: '#9ca3af' }}>This post may have been removed or is no longer published.</p>
+            <h2 style={{ color: '#374151' }}>{t('blog.post_not_found')}</h2>
+            <p style={{ color: '#9ca3af' }}>{t('blog.post_removed')}</p>
           </div>
         )}
 
         {post && !loading && (
           <>
-            {/* ── Profile header ── */}
             <div style={{ textAlign: 'center', padding: '28px 0 16px', borderBottom: '1px solid #eee' }}>
               {ranch?.header_image ? (
                 <img src={ranch.header_image} alt={post.business_name}
@@ -207,7 +208,6 @@ export default function BlogDetail() {
               {ranchLocation && <p style={{ color: '#888', margin: 0, fontSize: '0.95rem' }}>{ranchLocation}</p>}
             </div>
 
-            {/* ── Profile tab nav ── */}
             <div style={{ display: 'flex', borderBottom: '2px solid #e0e0e0', overflowX: 'auto', marginBottom: '32px' }}>
               {PROFILE_TABS.map(tab => {
                 const isActive = tab.key === 'blog';
@@ -233,13 +233,12 @@ export default function BlogDetail() {
               })}
             </div>
 
-            {/* ── Article content — centered, readable width ── */}
             <div style={{ maxWidth: '780px', margin: '0 auto' }}>
               <Link
                 to={profileBase ? `${profileBase}?tab=blog` : '/blog'}
                 style={{ color: '#7C5CBF', textDecoration: 'none', fontSize: '0.85rem', display: 'inline-block', marginBottom: '1.5rem' }}
               >
-                ← Back to {post.business_name}'s Blog
+                {t('blog.back_to_blog', { name: post.business_name })}
               </Link>
 
               <article>
@@ -266,7 +265,7 @@ export default function BlogDetail() {
                 </h2>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.75rem', paddingBottom: '1.75rem', borderBottom: '1px solid #e5e7eb', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.88rem', color: '#6b7280' }}>By</span>
+                  <span style={{ fontSize: '0.88rem', color: '#6b7280' }}>{t('blog.by_label')}</span>
                   {post.author ? (
                     post.author_id ? (
                       <Link to={`/blog/authors/${post.author_id}`} style={{ fontSize: '0.88rem', color: '#7C5CBF', fontWeight: 600, textDecoration: 'none' }}>
@@ -303,13 +302,13 @@ export default function BlogDetail() {
                     to={profileBase || `/directory/${post.business_id}`}
                     style={{ display: 'inline-block', background: '#819360', color: '#fff', textDecoration: 'none', padding: '0.55rem 1.25rem', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600 }}
                   >
-                    View {post.business_name}'s Profile
+                    {t('blog.view_profile', { name: post.business_name })}
                   </Link>
                   <Link
                     to={profileBase ? `${profileBase}?tab=blog` : '/blog'}
                     style={{ marginLeft: '1rem', color: '#7C5CBF', textDecoration: 'none', fontSize: '0.9rem' }}
                   >
-                    More from {post.business_name} →
+                    {t('blog.more_from', { name: post.business_name })}
                   </Link>
                 </div>
               </article>

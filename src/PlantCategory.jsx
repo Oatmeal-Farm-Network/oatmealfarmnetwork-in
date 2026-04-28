@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -45,6 +46,7 @@ function plantImgSrc(plant) {
 }
 
 export default function PlantCategory() {
+  const { t } = useTranslation();
   const { category } = useParams();
   const { language } = useLanguage();
   const [plants, setPlants] = useState(null);
@@ -69,7 +71,7 @@ export default function PlantCategory() {
   if (!cat) return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <Header />
-      <div className="text-center py-20 text-gray-500">Category not found: {category}</div>
+      <div className="text-center py-20 text-gray-500">{t('plant_cat.not_found', { category })}</div>
       <Footer />
     </div>
   );
@@ -126,8 +128,7 @@ export default function PlantCategory() {
               {cat.label}
             </h1>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
-              Browse {cat.label.toLowerCase()} plant varieties. Click any plant to explore its varietals,
-              growing requirements, soil preferences, and nutritional data.
+              {t('plant_cat.hero_browse', { name: t('plant_cat.cat_label_' + category.replace(/-/g, '_'), cat.label).toLowerCase() })}
             </p>
           </div>
         </div>
@@ -135,7 +136,7 @@ export default function PlantCategory() {
 
       <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
-        <h2 className="text-lg font-bold text-gray-900 mb-5">{cat.label} Plant Types</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-5">{t('plant_cat.section_heading', { name: t('plant_cat.cat_label_' + category.replace(/-/g, '_'), cat.label) })}</h2>
 
         {plants === null ? (
           /* Skeleton placeholders */
@@ -153,7 +154,7 @@ export default function PlantCategory() {
             ))}
           </div>
         ) : plants.length === 0 ? (
-          <div className="text-gray-500 py-12 text-center">No plants found for {cat.dbType}</div>
+          <div className="text-gray-500 py-12 text-center">{t('plant_cat.no_plants', { type: cat.dbType })}</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {plants.map((plant, index) => (
@@ -186,7 +187,7 @@ export default function PlantCategory() {
                       {plant.plant_name}
                     </Link>
                     <p className="text-xs font-semibold mt-0.5 mb-2" style={{ color: '#819360' }}>
-                      {plant.variety_count > 0 ? `${plant.variety_count.toLocaleString()} Varieties` : '—'}
+                      {plant.variety_count > 0 ? t('plant_cat.variety_count', { count: plant.variety_count.toLocaleString() }) : '—'}
                     </p>
                     <p className="text-xs text-gray-600 leading-relaxed">{plant.plant_description}</p>
                   </div>
@@ -196,7 +197,7 @@ export default function PlantCategory() {
                       className="text-xs font-bold hover:underline"
                       style={{ color: '#3D6B34' }}
                     >
-                      EXPLORE →
+                      {t('plant_cat.explore_arrow')}
                     </Link>
                   </div>
                 </div>

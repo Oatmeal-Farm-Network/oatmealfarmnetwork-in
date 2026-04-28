@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import RichTextEditor from './RichTextEditor';
 
@@ -12,6 +13,7 @@ const btnGhost = "px-4 py-1.5 text-sm border border-gray-300 rounded-lg";
 const BOOTH_SIZES = ['Small', 'Medium', 'Large'];
 
 function ApplyForm({ cfg, initial, onSave, onCancel, saving }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     BusinessName: '', ContactName: '', ContactEmail: '', ContactPhone: '',
     BoothSize: 'Medium', ProductCategories: '', Description: '', WebsiteURL: '',
@@ -34,25 +36,28 @@ function ApplyForm({ cfg, initial, onSave, onCancel, saving }) {
     <form onSubmit={(e) => { e.preventDefault(); onSave(form); }}
       className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div><label className={lbl}>Business name *</label>
+        <div><label className={lbl}>{t('vendor_fair.label_business_name')}</label>
           <input required value={form.BusinessName} onChange={set('BusinessName')} className={inp} /></div>
-        <div><label className={lbl}>Website (optional)</label>
-          <input value={form.WebsiteURL} onChange={set('WebsiteURL')} className={inp} placeholder="https://" /></div>
-        <div><label className={lbl}>Contact name</label>
+        <div><label className={lbl}>{t('vendor_fair.label_website')}</label>
+          <input value={form.WebsiteURL} onChange={set('WebsiteURL')} className={inp}
+            placeholder={t('vendor_fair.website_placeholder')} /></div>
+        <div><label className={lbl}>{t('vendor_fair.label_contact_name')}</label>
           <input value={form.ContactName} onChange={set('ContactName')} className={inp} /></div>
-        <div><label className={lbl}>Contact email</label>
+        <div><label className={lbl}>{t('vendor_fair.label_contact_email')}</label>
           <input type="email" value={form.ContactEmail} onChange={set('ContactEmail')} className={inp} /></div>
-        <div><label className={lbl}>Contact phone</label>
+        <div><label className={lbl}>{t('vendor_fair.label_contact_phone')}</label>
           <input value={form.ContactPhone} onChange={set('ContactPhone')} className={inp} /></div>
-        <div><label className={lbl}>Booth size</label>
+        <div><label className={lbl}>{t('vendor_fair.label_booth_size')}</label>
           <select value={form.BoothSize} onChange={set('BoothSize')} className={inp}>
-            {BOOTH_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+            {BOOTH_SIZES.map(s => (
+              <option key={s} value={s}>{t(`vendor_fair.booth_size_${s.toLowerCase()}`)}</option>
+            ))}
           </select></div>
       </div>
-      <div><label className={lbl}>Product categories</label>
+      <div><label className={lbl}>{t('vendor_fair.label_product_categories')}</label>
         <input value={form.ProductCategories} onChange={set('ProductCategories')} className={inp}
-          placeholder="Yarn, Fiber, Alpaca Products, Jewelry…" /></div>
-      <div><label className={lbl}>Description</label>
+          placeholder={t('vendor_fair.product_categories_placeholder')} /></div>
+      <div><label className={lbl}>{t('vendor_fair.label_description')}</label>
         <RichTextEditor value={form.Description || ''}
           onChange={(v) => setForm(f => ({ ...f, Description: v }))} minHeight={150} />
       </div>
@@ -60,23 +65,23 @@ function ApplyForm({ cfg, initial, onSave, onCancel, saving }) {
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={form.NeedsElectricity}
             onChange={(e) => setForm(f => ({ ...f, NeedsElectricity: e.target.checked }))} />
-          Need electricity (+${Number(cfg?.ElectricityFee || 0).toFixed(2)})
+          {t('vendor_fair.needs_electricity', { amount: Number(cfg?.ElectricityFee || 0).toFixed(2) })}
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={form.NeedsTable}
             onChange={(e) => setForm(f => ({ ...f, NeedsTable: e.target.checked }))} />
-          Need table rental (+${Number(cfg?.TableFee || 0).toFixed(2)})
+          {t('vendor_fair.needs_table', { amount: Number(cfg?.TableFee || 0).toFixed(2) })}
         </label>
-        <div><label className={lbl}>Requested location (optional)</label>
+        <div><label className={lbl}>{t('vendor_fair.label_location')}</label>
           <input value={form.RequestedLocation} onChange={set('RequestedLocation')} className={inp}
-            placeholder="Corner spot, near entrance, by spinning demo…" /></div>
+            placeholder={t('vendor_fair.location_placeholder')} /></div>
       </div>
       <div className="flex justify-between items-center flex-wrap gap-3">
-        <div className="text-sm">Estimated booth fee: <span className="font-bold text-[#3D6B34]">${fee.toFixed(2)}</span></div>
+        <div className="text-sm">{t('vendor_fair.fee_estimate')} <span className="font-bold text-[#3D6B34]">${fee.toFixed(2)}</span></div>
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onCancel} className={btnGhost}>Cancel</button>
+          <button type="button" onClick={onCancel} className={btnGhost}>{t('vendor_fair.btn_cancel')}</button>
           <button type="submit" disabled={saving} className={btn}>
-            {saving ? 'Submitting…' : 'Submit Application'}
+            {saving ? t('vendor_fair.btn_submitting') : t('vendor_fair.btn_submit')}
           </button>
         </div>
       </div>
@@ -85,6 +90,7 @@ function ApplyForm({ cfg, initial, onSave, onCancel, saving }) {
 }
 
 export default function VendorFairApply() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [params] = useSearchParams();
   const { BusinessID: ctxBusinessID, Business } = useAccount() || {};
@@ -126,7 +132,7 @@ export default function VendorFairApply() {
   };
 
   const withdraw = async (a) => {
-    if (!confirm(`Withdraw application for ${a.BusinessName}?`)) return;
+    if (!confirm(t('vendor_fair.confirm_withdraw', { name: a.BusinessName }))) return;
     await fetch(`${API}/api/events/vendor-fair/applications/${a.AppID}`, { method: 'DELETE' });
     load();
   };
@@ -143,18 +149,18 @@ export default function VendorFairApply() {
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vendor Application</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('vendor_fair.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">
             {event?.EventName || 'Event'}
             {event?.EventLocationCity && ` — ${event.EventLocationCity}, ${event.EventLocationState}`}
           </p>
         </div>
-        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">← Back to Event</Link>
+        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">{t('vendor_fair.back_event')}</Link>
       </div>
 
       {!configured && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-4 mb-4">
-          The vendor fair has not yet been set up by the organizer.
+          {t('vendor_fair.not_configured')}
         </div>
       )}
 
@@ -168,25 +174,25 @@ export default function VendorFairApply() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-xs">
           {cfg.BoothFeeSmall > 0 && (
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Small booth</div>
+              <div className="text-gray-500">{t('vendor_fair.label_small_booth')}</div>
               <div className="font-semibold text-gray-900 text-base">${Number(cfg.BoothFeeSmall).toFixed(2)}</div>
             </div>
           )}
           {cfg.BoothFeeMedium > 0 && (
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Medium booth</div>
+              <div className="text-gray-500">{t('vendor_fair.label_medium_booth')}</div>
               <div className="font-semibold text-gray-900 text-base">${Number(cfg.BoothFeeMedium).toFixed(2)}</div>
             </div>
           )}
           {cfg.BoothFeeLarge > 0 && (
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Large booth</div>
+              <div className="text-gray-500">{t('vendor_fair.label_large_booth')}</div>
               <div className="font-semibold text-gray-900 text-base">${Number(cfg.BoothFeeLarge).toFixed(2)}</div>
             </div>
           )}
           {cfg.ApplicationEndDate && (
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Applications close</div>
+              <div className="text-gray-500">{t('vendor_fair.label_apps_close')}</div>
               <div className="font-semibold text-gray-900 text-base">{String(cfg.ApplicationEndDate).substring(0, 10)}</div>
             </div>
           )}
@@ -195,7 +201,7 @@ export default function VendorFairApply() {
 
       {closed && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
-          Applications for this vendor fair have closed.
+          {t('vendor_fair.closed')}
         </div>
       )}
 
@@ -203,14 +209,14 @@ export default function VendorFairApply() {
 
       {!peopleId && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-3 mb-3">
-          Please <Link to="/login" className="underline">log in</Link> to apply as a vendor.
+          {t('vendor_fair.login_pre')} <Link to="/login" className="underline">{t('vendor_fair.login_link')}</Link> {t('vendor_fair.login_post')}
         </div>
       )}
 
       <div className="flex justify-between items-center mb-3">
-        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">Your applications ({apps.length})</h2>
+        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">{t('vendor_fair.your_apps', { count: apps.length })}</h2>
         {!adding && !closed && peopleId && configured && (
-          <button onClick={() => setAdding(true)} className={btn}>+ Apply</button>
+          <button onClick={() => setAdding(true)} className={btn}>{t('vendor_fair.btn_apply')}</button>
         )}
       </div>
 
@@ -221,7 +227,7 @@ export default function VendorFairApply() {
 
       <div className="space-y-2 mt-3">
         {apps.length === 0 && !adding && peopleId && (
-          <div className="text-sm text-gray-500">You haven't applied yet.</div>
+          <div className="text-sm text-gray-500">{t('vendor_fair.no_apps')}</div>
         )}
         {apps.map(a => (
           <div key={a.AppID} className="bg-white border border-gray-200 rounded-lg p-3">
@@ -234,11 +240,15 @@ export default function VendorFairApply() {
                     a.Status === 'approved' ? 'bg-green-100 text-green-700'
                     : a.Status === 'rejected' ? 'bg-red-100 text-red-700'
                     : 'bg-yellow-100 text-yellow-700'}`}>{a.Status}</span>
-                  {a.BoothNumber && <span className="text-xs font-mono bg-gray-100 px-2 py-0.5 rounded">booth {a.BoothNumber}</span>}
+                  {a.BoothNumber && (
+                    <span className="text-xs font-mono bg-gray-100 px-2 py-0.5 rounded">
+                      {t('vendor_fair.booth_label', { number: a.BoothNumber })}
+                    </span>
+                  )}
                 </div>
                 {a.ProductCategories && <div className="text-xs text-gray-600 mt-1">{a.ProductCategories}</div>}
                 {a.OrganizerNotes && (
-                  <div className="text-xs italic text-gray-500 mt-1">Organizer: {a.OrganizerNotes}</div>
+                  <div className="text-xs italic text-gray-500 mt-1">{t('vendor_fair.organizer_label')} {a.OrganizerNotes}</div>
                 )}
               </div>
               <div className="text-right">
@@ -247,7 +257,7 @@ export default function VendorFairApply() {
                   {a.PaidStatus}
                 </div>
                 {a.Status === 'pending' && !closed && (
-                  <button onClick={() => withdraw(a)} className="text-xs text-red-500 hover:text-red-700 mt-1">Withdraw</button>
+                  <button onClick={() => withdraw(a)} className="text-xs text-red-500 hover:text-red-700 mt-1">{t('vendor_fair.withdraw')}</button>
                 )}
               </div>
             </div>

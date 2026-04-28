@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -21,6 +22,7 @@ function dateRange(start, end) {
 }
 
 export default function EventsList() {
+  const { t } = useTranslation();
   const { language } = useLanguage();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,32 +67,31 @@ export default function EventsList() {
       >
         <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
         <div className="relative max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2 drop-shadow" style={{ color: '#fff' }}>Upcoming Events</h1>
-          <p className="text-white drop-shadow">Workshops, markets, farm tours, and more from our member farms.</p>
+          <h1 className="text-3xl font-bold mb-2 drop-shadow" style={{ color: '#fff' }}>{t('events.title')}</h1>
+          <p className="text-white drop-shadow">{t('events.subtitle')}</p>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8 flex-grow w-full">
+      <div className="max-w-5xl mx-auto px-4 py-8 grow w-full">
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: 'Events' },
+          { label: t('events.title') },
         ]} />
 
-        {/* Search */}
         <div className="mb-6">
           <input
             value={filter}
             onChange={e => setFilter(e.target.value)}
-            placeholder="Search events by name, type, location, or organizer…"
+            placeholder={t('events.search_placeholder')}
             className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#3D6B34]"
           />
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Loading events…</div>
+          <div className="text-center py-20 text-gray-400">{t('events.loading')}</div>
         ) : filtered.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-16 text-center text-gray-400">
-            {filter ? 'No events match your search.' : 'No upcoming events at this time. Check back soon!'}
+            {filter ? t('events.no_match') : t('events.no_events')}
           </div>
         ) : (
           <div className="space-y-5">
@@ -100,7 +101,6 @@ export default function EventsList() {
                 to={`/events/${ev.EventID}`}
                 className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all flex gap-5 p-5 no-underline group"
               >
-                {/* Image */}
                 {ev.EventImage ? (
                   <img src={ev.EventImage} alt={ev.EventName}
                     className="w-24 h-24 rounded-lg object-cover shrink-0"
@@ -109,23 +109,22 @@ export default function EventsList() {
                   <div className="w-24 h-24 rounded-lg bg-[#3D6B34]/10 flex items-center justify-center shrink-0 text-3xl">🎪</div>
                 )}
 
-                {/* Info */}
-                <div className="flex-grow min-w-0">
+                <div className="grow min-w-0">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div>
                       <h3 className="font-bold text-gray-800 text-lg group-hover:text-[#3D6B34] transition-colors mb-0.5">
                         {ev.EventName}
                       </h3>
-                      <p className="text-xs text-gray-500 mb-1">Hosted by {ev.BusinessName}</p>
+                      <p className="text-xs text-gray-500 mb-1">{t('events.hosted_by', { name: ev.BusinessName })}</p>
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {ev.IsFree ? (
-                        <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">Free</span>
+                        <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">{t('events.free_badge')}</span>
                       ) : (
-                        <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded-full">Paid</span>
+                        <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded-full">{t('events.paid_badge')}</span>
                       )}
                       {ev.RegistrationRequired ? (
-                        <span className="text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">Registration Required</span>
+                        <span className="text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">{t('events.reg_required')}</span>
                       ) : null}
                       {ev.EventType && (
                         <span className="text-xs bg-gray-100 text-gray-600 font-medium px-2 py-0.5 rounded-full">{ev.EventType}</span>
@@ -133,7 +132,6 @@ export default function EventsList() {
                     </div>
                   </div>
 
-                  {/* Date + Location row */}
                   <div className="flex items-center gap-4 text-sm text-gray-500 mt-1 flex-wrap">
                     {(ev.EventStartDate || ev.EventEndDate) && (
                       <span className="flex items-center gap-1">
@@ -156,7 +154,7 @@ export default function EventsList() {
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
                         </svg>
-                        {ev.AttendeeCount} registered
+                        {t('events.registered_count', { count: ev.AttendeeCount })}
                       </span>
                     )}
                   </div>

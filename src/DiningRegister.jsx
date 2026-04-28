@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import RichTextEditor from './RichTextEditor';
 
@@ -10,6 +11,7 @@ const lbl = "block text-xs font-medium text-gray-500 mb-1";
 const COURSE_ORDER = ['Appetizer', 'Salad', 'Soup', 'Main', 'Side', 'Dessert', 'Beverage'];
 
 export default function DiningRegister() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [params] = useSearchParams();
   const { BusinessID: ctxBusinessID } = useAccount() || {};
@@ -75,7 +77,7 @@ export default function DiningRegister() {
   const submit = async (e) => {
     e.preventDefault();
     setErr('');
-    if (!form.GuestName) { setErr('Your name is required'); return; }
+    if (!form.GuestName) { setErr(t('dining_reg.error_name_required')); return; }
     setSaving(true);
     try {
       const body = {
@@ -126,18 +128,18 @@ export default function DiningRegister() {
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reserve your seats</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('dining_reg.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">
             {event?.EventName || 'Event'}
             {event?.EventLocationCity && ` — ${event.EventLocationCity}, ${event.EventLocationState}`}
           </p>
         </div>
-        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">← Back to Event</Link>
+        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">{t('dining_reg.back_event')}</Link>
       </div>
 
       {!configured && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-4 mb-4">
-          Dining details have not yet been configured by the organizer.
+          {t('dining_reg.not_configured')}
         </div>
       )}
 
@@ -150,24 +152,24 @@ export default function DiningRegister() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-xs">
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Adult seat</div>
+              <div className="text-gray-500">{t('dining_reg.label_adult_seat')}</div>
               <div className="font-semibold text-gray-900 text-base">${Number(cfg.PricePerSeat || 0).toFixed(2)}</div>
             </div>
             {cfg.ChildPricePerSeat != null && (
               <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-gray-500">Child (≤{cfg.ChildAgeLimit})</div>
+                <div className="text-gray-500">{t('dining_reg.label_child_age', { age: cfg.ChildAgeLimit })}</div>
                 <div className="font-semibold text-gray-900 text-base">${Number(cfg.ChildPricePerSeat).toFixed(2)}</div>
               </div>
             )}
             {cfg.MealTime && (
               <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-gray-500">Meal time</div>
+                <div className="text-gray-500">{t('dining_reg.label_meal_time')}</div>
                 <div className="font-semibold text-gray-900 text-sm">{cfg.MealTime}</div>
               </div>
             )}
             {seatsLeft != null && (
               <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-gray-500">Seats remaining</div>
+                <div className="text-gray-500">{t('dining_reg.label_seats_remaining')}</div>
                 <div className={`font-semibold text-base ${sellout ? 'text-red-600' : 'text-[#3D6B34]'}`}>
                   {Math.max(0, seatsLeft)}
                 </div>
@@ -176,28 +178,28 @@ export default function DiningRegister() {
           </div>
 
           {cfg.DressCode && (
-            <div className="text-xs text-gray-500 mb-4">Dress code: {cfg.DressCode}</div>
+            <div className="text-xs text-gray-500 mb-4">{t('dining_reg.dress_code_prefix')} {cfg.DressCode}</div>
           )}
 
           {closed && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
-              Registration has closed.
+              {t('dining_reg.reg_closed')}
             </div>
           )}
           {sellout && !closed && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
-              This dinner is sold out.
+              {t('dining_reg.sold_out')}
             </div>
           )}
 
           {myRegs.length > 0 && (
             <div className="bg-[#f6f8f3] border border-[#3D6B34]/20 rounded-lg p-4 mb-4">
-              <h3 className="text-sm font-bold text-[#3D6B34] mb-2">Your reservations</h3>
+              <h3 className="text-sm font-bold text-[#3D6B34] mb-2">{t('dining_reg.your_reservations')}</h3>
               <div className="space-y-2">
                 {myRegs.map(r => (
                   <div key={r.RegID} className="text-sm">
                     <span className="font-medium">{r.GuestName}</span>
-                    <span className="text-gray-500"> · party of {r.PartySize}{r.TableNumber ? ` · Table ${r.TableNumber}` : ''}</span>
+                    <span className="text-gray-500"> {t('dining_reg.party_of', { size: r.PartySize })}{r.TableNumber ? ` ${t('dining_reg.table_label', { number: r.TableNumber })}` : ''}</span>
                     <span className={`ml-2 text-[11px] px-2 py-0.5 rounded ${r.PaidStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                       {r.PaidStatus}
                     </span>
@@ -210,28 +212,28 @@ export default function DiningRegister() {
           {!closed && !sellout && (
             <form onSubmit={submit} className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
               {err && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{err}</div>}
-              {ok && <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3">Reservation confirmed.</div>}
+              {ok && <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3">{t('dining_reg.confirmed')}</div>}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className={lbl}>Your name</label>
+                  <label className={lbl}>{t('dining_reg.label_your_name')}</label>
                   <input value={form.GuestName} onChange={e => setForm(f => ({ ...f, GuestName: e.target.value }))} required className={inp} />
                 </div>
                 <div>
-                  <label className={lbl}>Email</label>
+                  <label className={lbl}>{t('dining_reg.label_email')}</label>
                   <input type="email" value={form.GuestEmail} onChange={e => setForm(f => ({ ...f, GuestEmail: e.target.value }))} className={inp} />
                 </div>
                 <div>
-                  <label className={lbl}>Phone</label>
+                  <label className={lbl}>{t('dining_reg.label_phone')}</label>
                   <input value={form.GuestPhone} onChange={e => setForm(f => ({ ...f, GuestPhone: e.target.value }))} className={inp} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className={lbl}>Party size</label>
+                    <label className={lbl}>{t('dining_reg.label_party_size')}</label>
                     <input type="number" min="1" value={form.PartySize} onChange={e => setForm(f => ({ ...f, PartySize: e.target.value }))} className={inp} />
                   </div>
                   <div>
-                    <label className={lbl}>Of which children</label>
+                    <label className={lbl}>{t('dining_reg.label_children')}</label>
                     <input type="number" min="0" value={form.ChildCount} onChange={e => setForm(f => ({ ...f, ChildCount: e.target.value }))} className={inp} />
                   </div>
                 </div>
@@ -244,7 +246,7 @@ export default function DiningRegister() {
 
               {courses.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Menu choices</h3>
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('dining_reg.menu_choices')}</h3>
                   <div className="space-y-3">
                     {courses.map(course => (
                       <div key={course}>
@@ -282,25 +284,25 @@ export default function DiningRegister() {
               )}
 
               <div>
-                <label className={lbl}>Dietary restrictions / allergies</label>
-                <input value={form.DietaryRestrictions} onChange={e => setForm(f => ({ ...f, DietaryRestrictions: e.target.value }))} className={inp} placeholder="e.g. Peanut allergy, gluten-free" />
+                <label className={lbl}>{t('dining_reg.label_dietary')}</label>
+                <input value={form.DietaryRestrictions} onChange={e => setForm(f => ({ ...f, DietaryRestrictions: e.target.value }))} className={inp} placeholder={t('dining_reg.dietary_placeholder')} />
               </div>
               <div>
-                <label className={lbl}>Special requests</label>
+                <label className={lbl}>{t('dining_reg.label_special_requests')}</label>
                 <RichTextEditor value={form.SpecialRequests}
                   onChange={(v) => setForm(f => ({ ...f, SpecialRequests: v }))} minHeight={100} />
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <div className="text-lg font-semibold text-[#3D6B34]">Total ${fee.toFixed(2)}</div>
+                <div className="text-lg font-semibold text-[#3D6B34]">{t('dining_reg.total_display', { amount: fee.toFixed(2) })}</div>
               </div>
 
               <div className="flex justify-end gap-3">
                 <Link to={`/events/${eventId}`} className="px-5 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 no-underline">
-                  Cancel
+                  {t('dining_reg.btn_cancel')}
                 </Link>
                 <button type="submit" disabled={saving} className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
-                  {saving ? 'Saving…' : 'Reserve Seats'}
+                  {saving ? t('dining_reg.btn_saving') : t('dining_reg.btn_reserve')}
                 </button>
               </div>
             </form>

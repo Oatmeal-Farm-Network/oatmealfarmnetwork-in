@@ -51,13 +51,13 @@ export function AccountProvider({ children }) {
         const list = Array.isArray(data) ? data : [];
         setBusinesses(list);
         if (list.length === 0) return;
-        const stored = parseInt(localStorage.getItem('selected_business_id') || '', 10);
-        const pick =
-          list.find(b => (b.BusinessID ?? b.businessId ?? b.id) === urlBusinessID) ||
-          list.find(b => (b.BusinessID ?? b.businessId ?? b.id) === stored) ||
-          list[0];
-        const id = pick.BusinessID ?? pick.businessId ?? pick.id;
-        if (id) LoadBusiness(id);
+        // Only auto-load if the URL explicitly specifies a BusinessID.
+        // No fallback to stored or list[0] — user must select an account after login.
+        const pick = list.find(b => (b.BusinessID ?? b.businessId ?? b.id) === urlBusinessID);
+        if (pick) {
+          const id = pick.BusinessID ?? pick.businessId ?? pick.id;
+          if (id) LoadBusiness(id);
+        }
       })
       .catch(() => {});
   }, []);

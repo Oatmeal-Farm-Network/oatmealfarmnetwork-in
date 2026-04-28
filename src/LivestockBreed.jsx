@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -9,6 +10,7 @@ import { useLanguage } from './LanguageContext';
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function LivestockBreed() {
+  const { t } = useTranslation();
   const { species, breedId } = useParams();
   const { language } = useLanguage();
   const [breed, setBreed] = useState(null);
@@ -106,7 +108,7 @@ export default function LivestockBreed() {
                     textDecoration: 'none',
                   }}
                 >
-                  ← All {label} Breeds
+                  {t('livestock_breed.all_breeds', { label })}
                 </Link>
               </div>
             </>
@@ -124,7 +126,7 @@ export default function LivestockBreed() {
             ))}
           </div>
         ) : !breed ? (
-          <div className="text-gray-500 py-12 text-center">Breed not found.</div>
+          <div className="text-gray-500 py-12 text-center">{t('livestock_breed.not_found')}</div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 overflow-hidden">
             {/* Floated breed image */}

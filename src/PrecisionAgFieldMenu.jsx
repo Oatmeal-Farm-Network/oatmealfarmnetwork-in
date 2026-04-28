@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -45,43 +46,43 @@ const ICONS = {
 
 const SECTIONS = [
   {
-    label: 'Planning',
+    tKey: 'sec_planning',
     items: [
-      { icon: ICONS.fieldDetail,   label: 'Field Detail',  path: '/precision-ag/analyses' },
-      { icon: ICONS.cropRotation,  label: 'Crop Rotation', path: '/precision-ag/crop-rotation' },
-      { icon: ICONS.soilSamples,   label: 'Soil Samples',  path: '/precision-ag/soil-samples' },
-      { icon: ICONS.zoning,        label: 'Zoning',        path: '/precision-ag/analysis/zoning' },
-      { icon: ICONS.prescriptions, label: 'Prescriptions', path: '/precision-ag/prescriptions' },
+      { icon: ICONS.fieldDetail,   tKey: 'item_field_detail',  path: '/precision-ag/analyses' },
+      { icon: ICONS.cropRotation,  tKey: 'item_crop_rotation', path: '/precision-ag/crop-rotation' },
+      { icon: ICONS.soilSamples,   tKey: 'item_soil_samples',  path: '/precision-ag/soil-samples' },
+      { icon: ICONS.zoning,        tKey: 'item_zoning',        path: '/precision-ag/analysis/zoning' },
+      { icon: ICONS.prescriptions, tKey: 'item_prescriptions', path: '/precision-ag/prescriptions' },
     ],
   },
   {
-    label: 'Management',
+    tKey: 'sec_management',
     items: [
-      { icon: ICONS.alerts,         label: 'Alerts',              path: '/precision-ag/alerts' },
-      { icon: ICONS.agronomy,       label: 'Agronomy AI',         path: '/precision-ag/agronomy' },
-      { icon: ICONS.cropStatus,     label: 'Crop Status',         path: '/precision-ag/analysis/crop-status' },
-      { icon: ICONS.visualizations, label: 'Visualizations',      path: '/precision-ag/visualizations' },
-      { icon: ICONS.cropDetection,  label: 'Crop Detection',      path: '/precision-ag/crop-detection' },
-      { icon: ICONS.maturity,       label: 'Maturity',            path: '/precision-ag/analyses', tab: 'maturity' },
-      { icon: ICONS.climate,        label: 'Climate Forecast',    path: '/precision-ag/analyses', tab: 'climate' },
-      { icon: ICONS.yieldForecast,  label: 'Yield Forecast',      path: '/precision-ag/yield-forecast' },
-      { icon: ICONS.gdd,            label: 'Growing Degree Days', path: '/precision-ag/gdd' },
-      { icon: ICONS.irrigation,     label: 'Irrigation',          path: '/precision-ag/irrigation' },
-      { icon: ICONS.waterUse,       label: 'Water Use',           path: '/precision-ag/water-use' },
+      { icon: ICONS.alerts,         tKey: 'item_alerts',              path: '/precision-ag/alerts' },
+      { icon: ICONS.agronomy,       tKey: 'item_agronomy_ai',         path: '/precision-ag/agronomy' },
+      { icon: ICONS.cropStatus,     tKey: 'item_crop_status',         path: '/precision-ag/analysis/crop-status' },
+      { icon: ICONS.visualizations, tKey: 'item_visualizations',      path: '/precision-ag/visualizations' },
+      { icon: ICONS.cropDetection,  tKey: 'item_crop_detection',      path: '/precision-ag/crop-detection' },
+      { icon: ICONS.maturity,       tKey: 'item_maturity',            path: '/precision-ag/analyses', tab: 'maturity' },
+      { icon: ICONS.climate,        tKey: 'item_climate_forecast',    path: '/precision-ag/analyses', tab: 'climate' },
+      { icon: ICONS.yieldForecast,  tKey: 'item_yield_forecast',      path: '/precision-ag/yield-forecast' },
+      { icon: ICONS.gdd,            tKey: 'item_growing_degree_days', path: '/precision-ag/gdd' },
+      { icon: ICONS.irrigation,     tKey: 'item_irrigation',          path: '/precision-ag/irrigation' },
+      { icon: ICONS.waterUse,       tKey: 'item_water_use',           path: '/precision-ag/water-use' },
     ],
   },
   {
-    label: 'Analysis & Records',
+    tKey: 'sec_analysis',
     items: [
-      { icon: ICONS.report,       label: 'Assessment Report', path: '/precision-ag/assessment-report' },
-      { icon: ICONS.report,       label: 'Reports',           path: '/precision-ag/reports' },
-      { icon: ICONS.carbon,       label: 'Carbon',            path: '/precision-ag/carbon' },
-      { icon: ICONS.benchmark,    label: 'Benchmark',         path: '/precision-ag/benchmark' },
-      { icon: ICONS.journal,      label: 'Field Journal',     path: '/precision-ag/field-journal' },
-      { icon: ICONS.activityLog,  label: 'Activity Log',      path: '/precision-ag/activity-log' },
-      { icon: ICONS.histograms,   label: 'Histograms',        path: '/precision-ag/analyses', tab: 'histograms' },
-      { icon: ICONS.multiLayer,   label: 'Multi-layer',       path: '/precision-ag/analysis/multi-layer' },
-      { icon: ICONS.maps,         label: 'Maps',              path: '/precision-ag/analysis/maps' },
+      { icon: ICONS.report,       tKey: 'item_assessment_report', path: '/precision-ag/assessment-report' },
+      { icon: ICONS.report,       tKey: 'item_reports',           path: '/precision-ag/reports' },
+      { icon: ICONS.carbon,       tKey: 'item_carbon',            path: '/precision-ag/carbon' },
+      { icon: ICONS.benchmark,    tKey: 'item_benchmark',         path: '/precision-ag/benchmark' },
+      { icon: ICONS.journal,      tKey: 'item_field_journal',     path: '/precision-ag/field-journal' },
+      { icon: ICONS.activityLog,  tKey: 'item_activity_log',      path: '/precision-ag/activity-log' },
+      { icon: ICONS.histograms,   tKey: 'item_histograms',        path: '/precision-ag/analyses', tab: 'histograms' },
+      { icon: ICONS.multiLayer,   tKey: 'item_multi_layer',       path: '/precision-ag/analysis/multi-layer' },
+      { icon: ICONS.maps,         tKey: 'item_maps',              path: '/precision-ag/analysis/maps' },
     ],
   },
 ];
@@ -111,6 +112,7 @@ function Row({ to, icon, label, expanded, active }) {
 }
 
 export default function PrecisionAgFieldMenu({ menuExpanded, setMenuExpanded }) {
+  const { t } = useTranslation();
   const { Expanded: accountExpanded, BusinessID: ctxBusinessID } = useAccount() || {};
   const loc = useLocation();
   const [searchParams] = useSearchParams();
@@ -152,7 +154,7 @@ export default function PrecisionAgFieldMenu({ menuExpanded, setMenuExpanded }) 
       <button
         onClick={() => setMenuExpanded(!menuExpanded)}
         className="flex items-center justify-end px-3 py-2 text-gray-400 hover:text-gray-600 hover:bg-white/20 transition-all border-b border-gray-300/30 shrink-0"
-        title={menuExpanded ? 'Collapse field menu' : 'Expand field menu'}
+        title={menuExpanded ? t('precision_ag_menu.collapse_title') : t('precision_ag_menu.expand_title')}
       >
         {menuExpanded ? (
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -171,9 +173,9 @@ export default function PrecisionAgFieldMenu({ menuExpanded, setMenuExpanded }) 
 
       {menuExpanded && (
         <div className="px-3 py-3 border-b border-gray-300/50 shrink-0">
-          <p className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">Field</p>
+          <p className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">{t('precision_ag_menu.field_label')}</p>
           <p className="text-gray-800 text-xs font-semibold truncate mt-0.5">
-            {field?.name || field?.fieldname || field?.FieldName || `Field ${fieldId}`}
+            {field?.name || field?.fieldname || field?.FieldName || t('precision_ag_menu.field_fallback', { id: fieldId })}
           </p>
           {(field?.crop_type || field?.croptype) && (
             <p className="text-gray-500 text-[11px] truncate">{field.crop_type || field.croptype}</p>
@@ -183,10 +185,10 @@ export default function PrecisionAgFieldMenu({ menuExpanded, setMenuExpanded }) 
 
       <nav className="flex flex-col gap-0.5 p-2 grow overflow-y-auto">
         {SECTIONS.map(section => (
-          <div key={section.label} className="mt-2">
+          <div key={section.tKey} className="mt-2">
             {menuExpanded && (
               <div className="text-[10px] uppercase tracking-wide text-gray-400 px-3 pt-2 pb-1">
-                {section.label}
+                {t('precision_ag_menu.' + section.tKey)}
               </div>
             )}
             {section.items.map(item => (
@@ -194,7 +196,7 @@ export default function PrecisionAgFieldMenu({ menuExpanded, setMenuExpanded }) 
                 key={`${item.path}|${item.tab || ''}`}
                 to={buildUrl(item.path, businessId, fieldId, item.tab)}
                 icon={item.icon}
-                label={item.label}
+                label={t('precision_ag_menu.' + item.tKey)}
                 expanded={menuExpanded}
                 active={isActive(item)}
               />
@@ -206,7 +208,7 @@ export default function PrecisionAgFieldMenu({ menuExpanded, setMenuExpanded }) 
           <Row
             to={`/precision-ag/fields?BusinessID=${businessId || ''}`}
             icon={ICONS.allFields}
-            label="All Fields"
+            label={t('precision_ag_menu.all_fields')}
             expanded={menuExpanded}
           />
         </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -68,6 +69,7 @@ function imgSrc(ingredient) {
 const EAGER_COUNT = 4;
 
 function IngredientCard({ ing, category, index }) {
+  const { t } = useTranslation();
   const src = imgSrc(ing);
   const name = ing.name || ing.IngredientName || '';
   const description = ing.description || ing.IngredientDescription || '';
@@ -104,7 +106,7 @@ function IngredientCard({ ing, category, index }) {
           </Link>
           {hasVarieties && (
             <p className="text-xs font-semibold mt-0.5 mb-2" style={{ color: '#819360' }}>
-              {ing.variety_count} {ing.variety_count === 1 ? 'Variety' : 'Varieties'}
+              {ing.variety_count} {ing.variety_count === 1 ? t('ingredient_cat.variety_singular') : t('ingredient_cat.variety_plural')}
             </p>
           )}
           {description && (
@@ -117,7 +119,7 @@ function IngredientCard({ ing, category, index }) {
         </div>
         <div className="mt-3">
           <Link to={linkTo} className="text-xs font-bold hover:underline" style={{ color: '#3D6B34' }}>
-            EXPLORE →
+            {t('ingredient_cat.explore_arrow')}
           </Link>
         </div>
       </div>
@@ -126,6 +128,7 @@ function IngredientCard({ ing, category, index }) {
 }
 
 export default function IngredientCategory() {
+  const { t } = useTranslation();
   const { category } = useParams();
   const { language } = useLanguage();
   const [catName, setCatName]       = useState('');
@@ -232,7 +235,7 @@ export default function IngredientCategory() {
                   textDecoration: 'none',
                 }}
               >
-                ← All Categories
+                {t('ingredient_cat.back_btn')}
               </Link>
             </div>
           </div>
@@ -245,10 +248,10 @@ export default function IngredientCategory() {
         {/* Section heading + search */}
         <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
           <h2 className="text-lg font-bold text-gray-900">
-            {displayName} Ingredient Types
+            {displayName} {t('ingredient_cat.ingredient_types')}
             {filtered && (
               <span className="text-sm font-normal text-gray-400 ml-2">
-                {filtered.length} ingredient{filtered.length !== 1 ? 's' : ''}
+                {filtered.length} {filtered.length !== 1 ? t('ingredient_cat.ingredients') : t('ingredient_cat.ingredient')}
               </span>
             )}
           </h2>
@@ -258,7 +261,7 @@ export default function IngredientCategory() {
               type="search"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search ingredients…"
+              placeholder={t('ingredient_cat.search_placeholder')}
               className="border border-gray-300 rounded-lg text-sm text-gray-700 outline-none"
               style={{ padding: '0.4rem 0.75rem', width: 220 }}
             />
@@ -267,10 +270,10 @@ export default function IngredientCategory() {
 
         {/* Grid */}
         {filtered === null ? (
-          <div className="text-center text-gray-400 py-16">Loading…</div>
+          <div className="text-center text-gray-400 py-16">{t('ingredient_cat.loading')}</div>
         ) : filtered.length === 0 ? (
           <div className="text-center text-gray-500 py-16">
-            {search ? `No results for "${search}"` : 'No ingredients found.'}
+            {search ? t('ingredient_cat.no_results', { search }) : t('ingredient_cat.no_ingredients')}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

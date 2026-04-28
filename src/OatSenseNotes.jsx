@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -13,19 +14,19 @@ const CI = ({ children }) => (
 );
 
 const CATEGORIES = [
-  { value: 'Observation',       label: 'Observation',       icon: <CI><ellipse cx="8" cy="8" rx="6" ry="4"/><circle cx="8" cy="8" r="2"/><circle cx="8" cy="8" r="0.8" fill="currentColor" stroke="none"/></CI>,  color: '#6D8E22', bg: '#f0f5e8' },
-  { value: 'Planting',          label: 'Planting',          icon: <CI><path d="M8 14V9"/><path d="M4 6c0-2.5 2-4 4-4s4 1.5 4 4-2 3-4 3-4-.5-4-3z"/></CI>,  color: '#2E7D32', bg: '#e8f5e9' },
-  { value: 'Spray Application', label: 'Spray Application', icon: <CI><path d="M4 13V7a4 4 0 0 1 8 0v6"/><line x1="6" y1="7" x2="10" y2="7"/><path d="M8 4V2"/><line x1="6" y1="13" x2="10" y2="13"/></CI>,  color: '#1565C0', bg: '#e3f2fd' },
-  { value: 'Irrigation',        label: 'Irrigation',        icon: <CI><path d="M8 2c0 4-5 6-5 9a5 5 0 0 0 10 0c0-3-5-5-5-9z"/></CI>,  color: '#0277BD', bg: '#e1f5fe' },
-  { value: 'Harvest',           label: 'Harvest',           icon: <CI><path d="M2 12c2-2 4-2 6 0s4 2 6 0"/><path d="M5 9a3 3 0 0 1 6 0"/><line x1="8" y1="6" x2="8" y2="2"/></CI>,  color: '#F57F17', bg: '#fffde7' },
-  { value: 'Scouting',          label: 'Scouting',          icon: <CI><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></CI>,  color: '#6A1B9A', bg: '#f3e5f5' },
-  { value: 'Pest',              label: 'Pest',              icon: <CI><ellipse cx="8" cy="9" rx="3" ry="4"/><circle cx="8" cy="4" r="2"/><path d="M5 6l-2-2M11 6l2-2M5 10l-2 1M11 10l2 1"/></CI>,  color: '#B71C1C', bg: '#ffebee' },
-  { value: 'Disease',           label: 'Disease',           icon: <CI><circle cx="8" cy="8" r="5"/><circle cx="6" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="8" cy="10" r="1" fill="currentColor" stroke="none"/></CI>,  color: '#AD1457', bg: '#fce4ec' },
-  { value: 'Weed',              label: 'Weed',              icon: <CI><path d="M8 14V8"/><path d="M8 10c0-3 3-5 5-4"/><path d="M8 8c0-3-3-5-5-4"/></CI>,  color: '#388E3C', bg: '#e8f5e9' },
-  { value: 'Nutrient',          label: 'Nutrient',          icon: <CI><path d="M6 2h4l1 4H5z"/><path d="M5 6l-1 7h8l-1-7"/></CI>, color: '#5D4037', bg: '#efebe9' },
-  { value: 'Equipment',         label: 'Equipment',         icon: <CI><path d="M13 3a3.5 3.5 0 0 0-4.2 3.5L2.5 12.5a1.5 1.5 0 1 0 2 2L10 9a3.5 3.5 0 1 0 3-6z"/><circle cx="12.5" cy="3.5" r="1"/></CI>,  color: '#4E342E', bg: '#efebe9' },
-  { value: 'Weather',           label: 'Weather',           icon: <CI><path d="M11 6a3 3 0 0 0-6 0 2.5 2.5 0 0 0 0 5h6a2.5 2.5 0 0 0 0-5z"/></CI>, color: '#0288D1', bg: '#e1f5fe' },
-  { value: 'General',           label: 'General',           icon: <CI><rect x="4" y="2" width="8" height="12" rx="1"/><path d="M6 2V1h4v1"/><line x1="6" y1="6" x2="10" y2="6"/><line x1="6" y1="8.5" x2="10" y2="8.5"/></CI>,  color: '#546E7A', bg: '#eceff1' },
+  { value: 'Observation',       tKey: 'cat_observation',       icon: <CI><ellipse cx="8" cy="8" rx="6" ry="4"/><circle cx="8" cy="8" r="2"/><circle cx="8" cy="8" r="0.8" fill="currentColor" stroke="none"/></CI>,  color: '#6D8E22', bg: '#f0f5e8' },
+  { value: 'Planting',          tKey: 'cat_planting',          icon: <CI><path d="M8 14V9"/><path d="M4 6c0-2.5 2-4 4-4s4 1.5 4 4-2 3-4 3-4-.5-4-3z"/></CI>,  color: '#2E7D32', bg: '#e8f5e9' },
+  { value: 'Spray Application', tKey: 'cat_spray_application', icon: <CI><path d="M4 13V7a4 4 0 0 1 8 0v6"/><line x1="6" y1="7" x2="10" y2="7"/><path d="M8 4V2"/><line x1="6" y1="13" x2="10" y2="13"/></CI>,  color: '#1565C0', bg: '#e3f2fd' },
+  { value: 'Irrigation',        tKey: 'cat_irrigation',        icon: <CI><path d="M8 2c0 4-5 6-5 9a5 5 0 0 0 10 0c0-3-5-5-5-9z"/></CI>,  color: '#0277BD', bg: '#e1f5fe' },
+  { value: 'Harvest',           tKey: 'cat_harvest',           icon: <CI><path d="M2 12c2-2 4-2 6 0s4 2 6 0"/><path d="M5 9a3 3 0 0 1 6 0"/><line x1="8" y1="6" x2="8" y2="2"/></CI>,  color: '#F57F17', bg: '#fffde7' },
+  { value: 'Scouting',          tKey: 'cat_scouting',          icon: <CI><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></CI>,  color: '#6A1B9A', bg: '#f3e5f5' },
+  { value: 'Pest',              tKey: 'cat_pest',              icon: <CI><ellipse cx="8" cy="9" rx="3" ry="4"/><circle cx="8" cy="4" r="2"/><path d="M5 6l-2-2M11 6l2-2M5 10l-2 1M11 10l2 1"/></CI>,  color: '#B71C1C', bg: '#ffebee' },
+  { value: 'Disease',           tKey: 'cat_disease',           icon: <CI><circle cx="8" cy="8" r="5"/><circle cx="6" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="8" cy="10" r="1" fill="currentColor" stroke="none"/></CI>,  color: '#AD1457', bg: '#fce4ec' },
+  { value: 'Weed',              tKey: 'cat_weed',              icon: <CI><path d="M8 14V8"/><path d="M8 10c0-3 3-5 5-4"/><path d="M8 8c0-3-3-5-5-4"/></CI>,  color: '#388E3C', bg: '#e8f5e9' },
+  { value: 'Nutrient',          tKey: 'cat_nutrient',          icon: <CI><path d="M6 2h4l1 4H5z"/><path d="M5 6l-1 7h8l-1-7"/></CI>, color: '#5D4037', bg: '#efebe9' },
+  { value: 'Equipment',         tKey: 'cat_equipment',         icon: <CI><path d="M13 3a3.5 3.5 0 0 0-4.2 3.5L2.5 12.5a1.5 1.5 0 1 0 2 2L10 9a3.5 3.5 0 1 0 3-6z"/><circle cx="12.5" cy="3.5" r="1"/></CI>,  color: '#4E342E', bg: '#efebe9' },
+  { value: 'Weather',           tKey: 'cat_weather',           icon: <CI><path d="M11 6a3 3 0 0 0-6 0 2.5 2.5 0 0 0 0 5h6a2.5 2.5 0 0 0 0-5z"/></CI>, color: '#0288D1', bg: '#e1f5fe' },
+  { value: 'General',           tKey: 'cat_general',           icon: <CI><rect x="4" y="2" width="8" height="12" rx="1"/><path d="M6 2V1h4v1"/><line x1="6" y1="6" x2="10" y2="6"/><line x1="6" y1="8.5" x2="10" y2="8.5"/></CI>,  color: '#546E7A', bg: '#eceff1' },
 ];
 
 // Scouting-style categories surface severity/GPS/photo inputs and a severity badge.
@@ -67,6 +68,7 @@ function groupByDate(notes) {
 
 // ─── NoteForm ─────────────────────────────────────────────────────────────────
 function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSave, onCancel }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(
     editNote
       ? {
@@ -97,7 +99,7 @@ function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSa
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!form.title.trim() || !form.content.trim()) { setError('Title and content are required.'); return; }
+    if (!form.title.trim() || !form.content.trim()) { setError(t('oatsense_notes.form_error_required')); return; }
     setSaving(true); setError('');
     try {
       const url    = editNote ? `${API_URL}/api/notes/${editNote.note_id}` : `${API_URL}/api/notes`;
@@ -135,9 +137,9 @@ function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSa
 
       {!editNote && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Field</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('oatsense_notes.form_label_field')}</label>
           <select value={fieldId} onChange={e => setFieldId(e.target.value)} className={inputCls} required>
-            <option value="">— Select a field —</option>
+            <option value="">{t('oatsense_notes.form_select_field')}</option>
             {fields.map(f => {
               const id = f.fieldid ?? f.id;
               return <option key={id} value={id}>{f.name}</option>;
@@ -148,51 +150,51 @@ function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSa
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('oatsense_notes.form_label_date')}</label>
           <input type="date" name="note_date" value={form.note_date} onChange={handleChange} className={inputCls} required />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('oatsense_notes.form_label_category')}</label>
           <select name="category" value={form.category} onChange={handleChange} className={inputCls}>
             {CATEGORIES.map(c => (
-              <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
+              <option key={c.value} value={c.value}>{c.icon} {t('oatsense_notes.' + c.tKey)}</option>
             ))}
           </select>
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t('oatsense_notes.form_label_title')}</label>
         <input type="text" name="title" value={form.title} onChange={handleChange}
-          placeholder="e.g. First signs of aphid pressure on north edge"
+          placeholder={t('oatsense_notes.form_title_placeholder')}
           className={inputCls} required />
       </div>
 
       {SCOUTING_CATEGORIES.has(form.category) && (
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-3">
-          <div className="text-xs font-semibold font-mont text-gray-500 uppercase tracking-wide">Scouting details (optional)</div>
+          <div className="text-xs font-semibold font-mont text-gray-500 uppercase tracking-wide">{t('oatsense_notes.form_scouting_details')}</div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Severity</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('oatsense_notes.form_label_severity')}</label>
               <select name="severity" value={form.severity} onChange={handleChange} className={inputCls}>
-                <option value="">— None —</option>
-                {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
+                <option value="">{t('oatsense_notes.form_severity_none')}</option>
+                {SEVERITIES.map(s => <option key={s} value={s}>{t('oatsense_notes.sev_' + s.toLowerCase())}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Photo URL</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('oatsense_notes.form_label_photo_url')}</label>
               <input type="url" name="image_url" value={form.image_url} onChange={handleChange}
                 placeholder="https://…"
                 className={inputCls} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Latitude</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('oatsense_notes.form_label_latitude')}</label>
               <input type="number" step="any" name="latitude" value={form.latitude} onChange={handleChange}
                 placeholder="e.g. 42.34521"
                 className={inputCls} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Longitude</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('oatsense_notes.form_label_longitude')}</label>
               <input type="number" step="any" name="longitude" value={form.longitude} onChange={handleChange}
                 placeholder="e.g. -85.12734"
                 className={inputCls} />
@@ -202,28 +204,28 @@ function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSa
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Journal Entry</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t('oatsense_notes.form_label_content')}</label>
         <textarea
           ref={textareaRef}
           name="content"
           value={form.content}
           onChange={handleChange}
-          placeholder="Record what you observed, applied, or decided today. Include rates, equipment settings, field conditions, or anything you'd want to remember next season..."
+          placeholder={t('oatsense_notes.form_content_placeholder')}
           className={`${inputCls} resize-none overflow-hidden min-h-[120px]`}
           required
         />
-        <div className="text-xs text-gray-400 mt-1 text-right">{form.content.length} characters</div>
+        <div className="text-xs text-gray-400 mt-1 text-right">{t('oatsense_notes.form_char_count', { count: form.content.length })}</div>
       </div>
 
       <div className="flex justify-end gap-3 pt-1">
         <button type="button" onClick={onCancel}
           className="px-5 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">
-          Cancel
+          {t('oatsense_notes.btn_cancel')}
         </button>
         <button type="submit" disabled={saving}
           className="px-6 py-2 rounded-lg text-white text-sm font-semibold transition disabled:opacity-50"
           style={{ background: '#819360' }}>
-          {saving ? 'Saving…' : editNote ? 'Save Changes' : 'Add Entry'}
+          {saving ? t('oatsense_notes.btn_saving') : editNote ? t('oatsense_notes.btn_save_changes') : t('oatsense_notes.btn_add_entry')}
         </button>
       </div>
     </form>
@@ -232,6 +234,7 @@ function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSa
 
 // ─── NoteCard ─────────────────────────────────────────────────────────────────
 function NoteCard({ note, fieldName, onEdit, onDelete }) {
+  const { t } = useTranslation();
   const [expanded,      setExpanded]      = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const cat    = getCat(note.category);
@@ -245,7 +248,7 @@ function NoteCard({ note, fieldName, onEdit, onDelete }) {
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full font-mont"
                 style={{ background: cat.bg, color: cat.color, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                {cat.icon} {cat.label}
+                {cat.icon} {t('oatsense_notes.' + cat.tKey)}
               </span>
               {note.severity && (
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full font-mont"
@@ -267,20 +270,20 @@ function NoteCard({ note, fieldName, onEdit, onDelete }) {
           <div className="flex items-center gap-1 shrink-0">
             <button onClick={() => onEdit(note)}
               className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
-              title="Edit">
+              title={t('oatsense_notes.card_edit_title')}>
               <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 2l3 3-8 8H3v-3z"/></svg>
             </button>
             {confirmDelete ? (
               <div className="flex items-center gap-1">
                 <button onClick={() => onDelete(note.note_id)}
-                  className="text-xs px-2 py-1 bg-red-600 text-white rounded-lg font-medium">Delete</button>
+                  className="text-xs px-2 py-1 bg-red-600 text-white rounded-lg font-medium">{t('oatsense_notes.btn_delete')}</button>
                 <button onClick={() => setConfirmDelete(false)}
-                  className="text-xs px-2 py-1 border border-gray-200 rounded-lg text-gray-500">Cancel</button>
+                  className="text-xs px-2 py-1 border border-gray-200 rounded-lg text-gray-500">{t('oatsense_notes.btn_cancel_delete')}</button>
               </div>
             ) : (
               <button onClick={() => setConfirmDelete(true)}
                 className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500 transition"
-                title="Delete">
+                title={t('oatsense_notes.card_delete_title')}>
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="2 4 4 4 14 4"/><path d="M5 4V2.5h6V4"/><path d="M4 4l1 9h6l1-9"/></svg>
               </button>
             )}
@@ -293,12 +296,13 @@ function NoteCard({ note, fieldName, onEdit, onDelete }) {
         {isLong && (
           <button onClick={() => setExpanded(p => !p)}
             className="mt-1.5 text-xs text-[#6D8E22] font-mont font-semibold hover:underline">
-            {expanded ? 'Show less' : 'Read more'}
+            {expanded ? t('oatsense_notes.btn_show_less') : t('oatsense_notes.btn_read_more')}
           </button>
         )}
         {note.image_url && (
           <img src={note.image_url} alt="Note attachment"
             className="mt-3 w-48 h-32 object-cover rounded-lg border border-gray-100"
+            alt={t('oatsense_notes.img_alt')}
             onError={e => e.currentTarget.style.display = 'none'} />
         )}
       </div>
@@ -308,6 +312,7 @@ function NoteCard({ note, fieldName, onEdit, onDelete }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function OatSenseNotes() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate    = useNavigate();
   const businessId  = (() => {
@@ -348,7 +353,7 @@ export default function OatSenseNotes() {
     fetch(`${API_URL}/api/notes?${params}`)
       .then(r => r.json())
       .then(data => { setNotes(Array.isArray(data) ? data : []); setError(''); })
-      .catch(() => setError('Could not load notes.'))
+      .catch(() => setError(t('oatsense_notes.error_load')))
       .finally(() => setLoadingNotes(false));
   }, [businessId, activeField, catFilter]);
 
@@ -395,24 +400,24 @@ export default function OatSenseNotes() {
     ? fields.find(f => String(f.fieldid ?? f.id) === String(activeField))
     : null;
 
-  if (!Business) return <div className="p-8 text-gray-500 font-mont">Loading…</div>;
+  if (!Business) return <div className="p-8 text-gray-500 font-mont">{t('oatsense.loading')}</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID} pageTitle="Field Journal" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'OatSense' }, { label: 'Field Journal' }]}>
+    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID} pageTitle={t('oatsense_notes.page_title')} breadcrumbs={[{ label: t('nav.dashboard'), to: '/dashboard' }, { label: t('oatsense_notes.breadcrumb_oatsense') }, { label: t('oatsense_notes.breadcrumb_journal') }]}>
       <div className="max-w-4xl mx-auto pb-20">
 
         {/* Page header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="font-lora text-3xl font-bold text-gray-900">Field Journal</h1>
+            <h1 className="font-lora text-3xl font-bold text-gray-900">{t('oatsense_notes.heading')}</h1>
             <p className="text-gray-500 font-mont text-sm mt-1">
-              Record observations, applications, and decisions for every field.
+              {t('oatsense_notes.subheading')}
             </p>
           </div>
           <button onClick={openNew}
             className="px-5 py-2.5 rounded-lg font-mont font-semibold text-white text-sm shadow-sm transition-all hover:opacity-90"
             style={{ background: '#819360' }}>
-            + New Entry
+            {t('oatsense_notes.btn_new_entry')}
           </button>
         </div>
 
@@ -420,7 +425,7 @@ export default function OatSenseNotes() {
         {showForm && (
           <div className="bg-white rounded-xl border-2 border-[#6D8E22] shadow-lg p-6 mb-8">
             <h2 className="font-lora font-bold text-gray-900 text-lg mb-4">
-              {editNote ? `Editing — ${editNote.title}` : 'New Journal Entry'}
+              {editNote ? t('oatsense_notes.editing_title', { title: editNote.title }) : t('oatsense_notes.new_entry_heading')}
             </h2>
             <NoteForm
               fields={fields}
@@ -438,13 +443,13 @@ export default function OatSenseNotes() {
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 mb-6 space-y-3">
           {/* Field selector */}
           <div className="flex items-center gap-3">
-            <span className="text-xs font-mont font-semibold text-gray-400 uppercase tracking-wide w-12">Field</span>
+            <span className="text-xs font-mont font-semibold text-gray-400 uppercase tracking-wide w-12">{t('oatsense_notes.filter_field_label')}</span>
             <select
               value={activeField}
               onChange={e => setActiveField(e.target.value)}
               className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-mont focus:outline-none focus:ring-2 focus:ring-[#6D8E22] transition flex-1 max-w-xs"
             >
-              <option value="all">All Fields</option>
+              <option value="all">{t('oatsense_notes.filter_all_fields')}</option>
               {fields.map(f => {
                 const id = f.fieldid ?? f.id;
                 return <option key={id} value={id}>{f.name}</option>;
@@ -454,18 +459,18 @@ export default function OatSenseNotes() {
               <button
                 onClick={() => navigate(`/precision-ag/analyses?BusinessID=${businessId}&FieldID=${activeField}`)}
                 className="text-xs font-mont font-semibold text-[#6D8E22] hover:underline ml-auto">
-                View Field Analysis →
+                {t('oatsense_notes.view_analysis_link')}
               </button>
             )}
           </div>
 
           {/* Category pills */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs font-mont font-semibold text-gray-400 uppercase tracking-wide w-12">Type</span>
+            <span className="text-xs font-mont font-semibold text-gray-400 uppercase tracking-wide w-12">{t('oatsense_notes.filter_type_label')}</span>
             <button
               onClick={() => setCatFilter('all')}
               className={`px-3 py-1 rounded-full text-xs font-mont font-semibold transition ${catFilter === 'all' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-              All
+              {t('oatsense_notes.filter_all')}
             </button>
             {CATEGORIES.map(c => (
               <button key={c.value}
@@ -474,7 +479,7 @@ export default function OatSenseNotes() {
                 style={catFilter === c.value
                   ? { background: c.color, color: 'white', display: 'inline-flex', alignItems: 'center', gap: 3 }
                   : { background: c.bg, color: c.color, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                {c.icon} {c.label}
+                {c.icon} {t('oatsense_notes.' + c.tKey)}
               </button>
             ))}
           </div>
@@ -501,7 +506,7 @@ export default function OatSenseNotes() {
 
         {/* Notes timeline */}
         {loadingNotes ? (
-          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm">Loading entries…</div>
+          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm">{t('oatsense_notes.loading_entries')}</div>
         ) : error ? (
           <div className="text-center py-16 text-red-500 font-mont text-sm">{error}</div>
         ) : notes.length === 0 ? (
@@ -509,17 +514,17 @@ export default function OatSenseNotes() {
             <div className="flex justify-center mb-4 text-gray-300">
             <svg width="56" height="56" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="1" width="10" height="14" rx="1"/><path d="M5 1V0h6v1"/><line x1="5" y1="5" x2="11" y2="5"/><line x1="5" y1="7.5" x2="11" y2="7.5"/><line x1="5" y1="10" x2="9" y2="10"/></svg>
           </div>
-            <div className="font-lora text-2xl text-gray-700 mb-2">No entries yet</div>
+            <div className="font-lora text-2xl text-gray-700 mb-2">{t('oatsense_notes.no_entries_heading')}</div>
             <div className="font-mont text-sm text-gray-400 mb-6">
               {catFilter !== 'all' || activeField !== 'all'
-                ? 'No entries match the current filters.'
-                : 'Start recording observations, spray applications, and field decisions.'}
+                ? t('oatsense_notes.no_entries_filters')
+                : t('oatsense_notes.no_entries_empty')}
             </div>
             {catFilter === 'all' && activeField === 'all' && (
               <button onClick={openNew}
                 className="px-6 py-2.5 rounded-lg text-white font-mont font-semibold text-sm"
                 style={{ background: '#819360' }}>
-                Write Your First Entry
+                {t('oatsense_notes.btn_first_entry')}
               </button>
             )}
           </div>
@@ -548,7 +553,7 @@ export default function OatSenseNotes() {
               </div>
             ))}
             <div className="text-center text-xs text-gray-300 font-mont pt-4">
-              {notes.length} {notes.length === 1 ? 'entry' : 'entries'} total
+              {t(notes.length === 1 ? 'oatsense_notes.entries_count_one' : 'oatsense_notes.entries_count_other', { count: notes.length })}
             </div>
           </div>
         )}

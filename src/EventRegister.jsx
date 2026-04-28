@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -18,6 +19,7 @@ const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:ou
 const lbl = "block text-xs font-medium text-gray-500 mb-1";
 
 export default function EventRegister() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const navigate = useNavigate();
   const PeopleID = localStorage.getItem('people_id');
@@ -28,7 +30,7 @@ export default function EventRegister() {
   const [form, setForm] = useState({
     AttendeeFirstName: '', AttendeeLastName: '', AttendeeEmail: '', AttendeePhone: '', Notes: '',
   });
-  const [step, setStep] = useState(1); // 1 = fill form, 2 = review, 3 = done
+  const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(null);
   const [error, setError] = useState('');
@@ -59,7 +61,7 @@ export default function EventRegister() {
     e.preventDefault();
     setError('');
     if (!form.AttendeeFirstName || !form.AttendeeLastName || !form.AttendeeEmail) {
-      setError('Please fill in your first name, last name, and email.');
+      setError(t('event_reg.error_required'));
       return;
     }
     setStep(2);
@@ -87,11 +89,11 @@ export default function EventRegister() {
         setStep(3);
         window.scrollTo(0, 0);
       } else {
-        setError('Registration failed. Please try again.');
+        setError(t('event_reg.error_failed'));
         setStep(1);
       }
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError(t('event_reg.error_generic'));
       setStep(1);
     }
     setSubmitting(false);
@@ -99,7 +101,7 @@ export default function EventRegister() {
 
   if (loading) return (
     <div className="min-h-screen font-sans"><Header />
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center text-gray-400">Loading…</div>
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center text-gray-400">{t('event_reg.loading')}</div>
       <Footer />
     </div>
   );
@@ -107,8 +109,8 @@ export default function EventRegister() {
   if (!ev) return (
     <div className="min-h-screen font-sans"><Header />
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <p className="text-gray-500 mb-4">Event not found.</p>
-        <Link to="/events" className="text-[#3D6B34] hover:underline">← Back to Events</Link>
+        <p className="text-gray-500 mb-4">{t('event_reg.not_found')}</p>
+        <Link to="/events" className="text-[#3D6B34] hover:underline">{t('event_reg.back_events')}</Link>
       </div>
       <Footer />
     </div>
@@ -127,14 +129,14 @@ export default function EventRegister() {
       <div className="max-w-2xl mx-auto px-4 py-8">
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: 'Events', to: '/events' },
+          { label: t('events.title'), to: '/events' },
           { label: ev.EventName, to: `/events/${eventId}` },
-          { label: 'Register' },
+          { label: t('event_reg.crumb_register') },
         ]} />
 
         {/* Step indicator */}
         <div className="flex items-center gap-2 mb-6">
-          {['Your Info', 'Review Order', 'Confirmed'].map((label, i) => (
+          {[t('event_reg.step_your_info'), t('event_reg.step_review'), t('event_reg.step_confirmed')].map((stepLabel, i) => (
             <React.Fragment key={i}>
               <div className={`flex items-center gap-2 ${step === i + 1 ? 'text-[#3D6B34]' : step > i + 1 ? 'text-green-600' : 'text-gray-400'}`}>
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 ${
@@ -144,7 +146,7 @@ export default function EventRegister() {
                 }`}>
                   {step > i + 1 ? '✓' : i + 1}
                 </div>
-                <span className="text-xs font-medium hidden sm:inline">{label}</span>
+                <span className="text-xs font-medium hidden sm:inline">{stepLabel}</span>
               </div>
               {i < 2 && <div className={`flex-1 h-px ${step > i + 1 ? 'bg-green-300' : 'bg-gray-200'}`} />}
             </React.Fragment>
@@ -158,44 +160,42 @@ export default function EventRegister() {
         {/* ── STEP 1: Fill out form ── */}
         {step === 1 && (
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h1 className="text-xl font-bold text-gray-800 mb-1">Register for Event</h1>
+            <h1 className="text-xl font-bold text-gray-800 mb-1">{t('event_reg.step1_title')}</h1>
             <p className="text-sm text-gray-500 mb-6">{ev.EventName}</p>
 
             <form onSubmit={goToReview}>
-              {/* Attendee info */}
               <div className="mb-6">
-                <h2 className="text-sm font-bold text-gray-600 uppercase tracking-wide mb-3">Your Information</h2>
+                <h2 className="text-sm font-bold text-gray-600 uppercase tracking-wide mb-3">{t('event_reg.section_your_info')}</h2>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <label className={lbl}>First Name</label>
+                    <label className={lbl}>{t('event_reg.label_first_name')}</label>
                     <input value={form.AttendeeFirstName} onChange={set('AttendeeFirstName')} className={inp} required />
                   </div>
                   <div>
-                    <label className={lbl}>Last Name</label>
+                    <label className={lbl}>{t('event_reg.label_last_name')}</label>
                     <input value={form.AttendeeLastName} onChange={set('AttendeeLastName')} className={inp} required />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <label className={lbl}>Email</label>
+                    <label className={lbl}>{t('event_reg.label_email')}</label>
                     <input type="email" value={form.AttendeeEmail} onChange={set('AttendeeEmail')} className={inp} required />
                   </div>
                   <div>
-                    <label className={lbl}>Phone <span className="text-gray-400 font-normal">(Optional)</span></label>
+                    <label className={lbl}>{t('event_reg.label_phone')} <span className="text-gray-400 font-normal">{t('event_reg.optional_hint')}</span></label>
                     <input value={form.AttendeePhone} onChange={set('AttendeePhone')} className={inp} />
                   </div>
                 </div>
                 <div>
-                  <label className={lbl}>Notes / Special Requests <span className="text-gray-400 font-normal">(Optional)</span></label>
+                  <label className={lbl}>{t('event_reg.label_notes')} <span className="text-gray-400 font-normal">{t('event_reg.optional_hint')}</span></label>
                   <RichTextEditor value={form.Notes || ''}
                     onChange={(v) => setForm(f => ({ ...f, Notes: v }))} minHeight={120} />
                 </div>
               </div>
 
-              {/* Options */}
               {hasOptions && (
                 <div className="mb-6">
-                  <h2 className="text-sm font-bold text-gray-600 uppercase tracking-wide mb-3">Registration Options</h2>
+                  <h2 className="text-sm font-bold text-gray-600 uppercase tracking-wide mb-3">{t('event_reg.section_reg_options')}</h2>
                   <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
                     {ev.options.map(opt => (
                       <div key={opt.OptionID} className="p-4 flex items-center justify-between gap-4">
@@ -203,8 +203,8 @@ export default function EventRegister() {
                           <p className="font-medium text-sm text-gray-800">{opt.OptionName}</p>
                           {opt.OptionDescription && <p className="text-xs text-gray-500 mt-0.5">{opt.OptionDescription}</p>}
                           <p className="text-sm font-bold text-[#3D6B34] mt-1">
-                            {parseFloat(opt.Price) === 0 ? 'Free' : `$${parseFloat(opt.Price).toFixed(2)}`}
-                            {opt.MaxQty && <span className="text-gray-400 font-normal text-xs ml-1">(limit {opt.MaxQty})</span>}
+                            {parseFloat(opt.Price) === 0 ? t('event_reg.free_label') : `$${parseFloat(opt.Price).toFixed(2)}`}
+                            {opt.MaxQty && <span className="text-gray-400 font-normal text-xs ml-1">{t('event_reg.limit_hint', { count: opt.MaxQty })}</span>}
                           </p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
@@ -222,7 +222,7 @@ export default function EventRegister() {
 
               {hasOptions && (
                 <div className="flex items-center justify-between py-3 border-t border-gray-200 mb-5">
-                  <span className="font-bold text-gray-700">Order Total</span>
+                  <span className="font-bold text-gray-700">{t('event_reg.order_total')}</span>
                   <span className="font-bold text-xl text-[#3D6B34]">${total.toFixed(2)}</span>
                 </div>
               )}
@@ -230,11 +230,11 @@ export default function EventRegister() {
               <div className="flex justify-end gap-3">
                 <Link to={`/events/${eventId}`}
                   className="px-5 py-3 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 no-underline flex items-center">
-                  Cancel
+                  {t('event_reg.btn_cancel')}
                 </Link>
                 <button type="submit"
                   className="bg-[#3D6B34] text-white font-bold px-8 py-3 rounded-xl hover:bg-[#2d5226] transition-colors">
-                  Review Order →
+                  {t('event_reg.btn_review')}
                 </button>
               </div>
             </form>
@@ -244,10 +244,9 @@ export default function EventRegister() {
         {/* ── STEP 2: Review order ── */}
         {step === 2 && (
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h1 className="text-xl font-bold text-gray-800 mb-1">Review Your Order</h1>
-            <p className="text-sm text-gray-500 mb-6">Please confirm the details below before completing your registration.</p>
+            <h1 className="text-xl font-bold text-gray-800 mb-1">{t('event_reg.step2_title')}</h1>
+            <p className="text-sm text-gray-500 mb-6">{t('event_reg.step2_subtitle')}</p>
 
-            {/* Event info */}
             <div className="bg-gray-50 rounded-xl p-4 mb-5">
               <p className="font-bold text-gray-800">{ev.EventName}</p>
               {ev.EventStartDate && <p className="text-sm text-gray-500 mt-0.5">{formatDate(ev.EventStartDate)}</p>}
@@ -256,25 +255,23 @@ export default function EventRegister() {
               )}
             </div>
 
-            {/* Registrant info */}
             <div className="mb-5">
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Registrant</h3>
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('event_reg.section_registrant')}</h3>
               <p className="text-sm font-medium text-gray-800">{form.AttendeeFirstName} {form.AttendeeLastName}</p>
               <p className="text-sm text-gray-600">{form.AttendeeEmail}</p>
               {form.AttendeePhone && <p className="text-sm text-gray-600">{form.AttendeePhone}</p>}
               {form.Notes && (
                 <div className="mt-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                  <p className="text-xs text-amber-700"><strong>Notes:</strong> {form.Notes}</p>
+                  <p className="text-xs text-amber-700"><strong>{t('event_reg.notes_label')}</strong> {form.Notes}</p>
                 </div>
               )}
             </div>
 
-            {/* Items */}
             {hasOptions && (
               <div className="mb-5">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Registration Items</h3>
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('event_reg.section_items')}</h3>
                 {selectedItems.length === 0 ? (
-                  <p className="text-sm text-gray-400 italic">No items selected (free registration)</p>
+                  <p className="text-sm text-gray-400 italic">{t('event_reg.no_items_selected')}</p>
                 ) : (
                   <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
                     {selectedItems.map(opt => (
@@ -284,12 +281,12 @@ export default function EventRegister() {
                           <span className="text-gray-500 ml-2">× {qtys[opt.OptionID]}</span>
                         </div>
                         <span className="font-bold text-gray-700">
-                          {parseFloat(opt.Price) === 0 ? 'Free' : `$${(parseFloat(opt.Price) * qtys[opt.OptionID]).toFixed(2)}`}
+                          {parseFloat(opt.Price) === 0 ? t('event_reg.free_label') : `$${(parseFloat(opt.Price) * qtys[opt.OptionID]).toFixed(2)}`}
                         </span>
                       </div>
                     ))}
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
-                      <span className="font-bold text-gray-700">Total</span>
+                      <span className="font-bold text-gray-700">{t('event_reg.total_label')}</span>
                       <span className="font-bold text-lg text-[#3D6B34]">${total.toFixed(2)}</span>
                     </div>
                   </div>
@@ -299,24 +296,24 @@ export default function EventRegister() {
 
             {total === 0 && !hasOptions && (
               <div className="mb-5 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700 font-medium">
-                ✓ This is a free event — no payment required.
+                {t('event_reg.free_event_msg')}
               </div>
             )}
 
             {total > 0 && (
               <div className="mb-5 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
-                <strong>Payment:</strong> The organizer will contact you with payment instructions after registration.
+                <strong>{t('event_reg.payment_note_label')}</strong> {t('event_reg.payment_note_body')}
               </div>
             )}
 
             <div className="flex justify-end gap-3">
               <button onClick={() => { setStep(1); window.scrollTo(0,0); }}
                 className="px-5 py-3 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
-                ← Back
+                {t('event_reg.btn_back')}
               </button>
               <button onClick={submit} disabled={submitting}
                 className="bg-[#3D6B34] text-white font-bold px-8 py-3 rounded-xl hover:bg-[#2d5226] disabled:opacity-50 transition-colors">
-                {submitting ? 'Submitting…' : 'Confirm Registration'}
+                {submitting ? t('event_reg.btn_submitting') : t('event_reg.btn_confirm')}
               </button>
             </div>
           </div>
@@ -326,16 +323,16 @@ export default function EventRegister() {
         {step === 3 && done && (
           <div className="bg-white rounded-2xl border border-gray-200 p-10 shadow-sm text-center">
             <div className="text-5xl mb-4">✅</div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">You're Registered!</h1>
-            <p className="text-gray-500 mb-1">Registration #{done.RegID}</p>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">{t('event_reg.step3_title')}</h1>
+            <p className="text-gray-500 mb-1">{t('event_reg.step3_reg_number', { id: done.RegID })}</p>
             <p className="text-gray-700 font-medium mb-2">{ev.EventName}</p>
             {ev.EventStartDate && <p className="text-sm text-gray-500 mb-4">{formatDate(ev.EventStartDate)}</p>}
             {done.TotalAmount > 0 && (
-              <p className="text-lg font-bold text-[#3D6B34] mb-4">Total: ${parseFloat(done.TotalAmount).toFixed(2)}</p>
+              <p className="text-lg font-bold text-[#3D6B34] mb-4">{t('event_reg.step3_total', { amount: parseFloat(done.TotalAmount).toFixed(2) })}</p>
             )}
             <p className="text-sm text-gray-500 mb-4">
-              A confirmation has been noted for <strong>{form.AttendeeEmail}</strong>.
-              {done.TotalAmount > 0 && ' The organizer will contact you with payment details.'}
+              {t('event_reg.step3_confirm_pre')} <strong>{form.AttendeeEmail}</strong>.
+              {done.TotalAmount > 0 && t('event_reg.step3_confirm_payment')}
             </p>
             <div className="flex flex-col items-center mb-6">
               <img
@@ -344,11 +341,11 @@ export default function EventRegister() {
                 width="180" height="180"
                 className="border border-gray-200 rounded-lg p-2 bg-white"
               />
-              <div className="text-xs text-gray-500 mt-2">Show this at check-in</div>
+              <div className="text-xs text-gray-500 mt-2">{t('event_reg.step3_qr_hint')}</div>
             </div>
             <div className="flex gap-3 justify-center">
-              <Link to={`/events/${eventId}`} className="text-[#3D6B34] hover:underline text-sm">← Back to Event</Link>
-              <Link to="/events" className="text-[#3D6B34] hover:underline text-sm">All Events</Link>
+              <Link to={`/events/${eventId}`} className="text-[#3D6B34] hover:underline text-sm">{t('event_reg.step3_back_event')}</Link>
+              <Link to="/events" className="text-[#3D6B34] hover:underline text-sm">{t('event_reg.step3_all_events')}</Link>
             </div>
           </div>
         )}

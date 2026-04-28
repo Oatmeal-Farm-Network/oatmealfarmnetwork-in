@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -35,6 +36,7 @@ const CATEGORIES = [
 const EAGER_COUNT = 4;
 
 export default function PlantKnowledgebase() {
+  const { t } = useTranslation();
   const [counts, setCounts] = useState({});
   const [total, setTotal]   = useState(0);
 
@@ -85,18 +87,17 @@ export default function PlantKnowledgebase() {
           <div className="hidden md:block absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }} />
           <div className="hidden md:flex absolute inset-0 flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
             <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 12px', lineHeight: 1.2 }}>
-              Online Plant Knowledgebase
+              {t('plant_kb.title')}
             </h1>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 8px', lineHeight: 1.6 }}>
-              There are thousands of varieties of plants grown for food, we have documented{' '}
-              <strong>{total > 0 ? `${total.toLocaleString()} Varieties` : '…'}</strong>{' '}
-              so far. We have the mission to list them all here.
+              {t('plant_kb.hero_body_pre')}{' '}
+              <strong>{total > 0 ? t('plant_kb.hero_count', { count: total.toLocaleString() }) : '…'}</strong>{' '}
+              {t('plant_kb.hero_body_post')}
             </p>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
-              We are consistently adding more information and photos to the list, and we are always finding more varieties.
-              If you would like to help out with photos, descriptions, or correcting errors please{' '}
-              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>Contact Us</Link>
-              {' '}and let us know — the more people we have helping, the more complete the information.
+              {t('plant_kb.hero_body2_pre')}{' '}
+              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>{t('plant_kb.contact_us')}</Link>
+              {' '}{t('plant_kb.hero_body2_post')}
             </p>
           </div>
         </div>
@@ -104,16 +105,16 @@ export default function PlantKnowledgebase() {
         {/* Text below image — mobile only */}
         <div className="md:hidden bg-white px-5 py-4 rounded-b-xl border border-t-0 border-gray-200">
           <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.4rem', fontWeight: 'bold', margin: '0 0 8px', lineHeight: 1.2 }}>
-            Online Plant Knowledgebase
+            {t('plant_kb.title')}
           </h1>
           <p style={{ color: '#111111', fontSize: '0.85rem', margin: '0 0 6px', lineHeight: 1.6 }}>
-            There are thousands of varieties of plants grown for food, we have documented{' '}
-            <strong>{total > 0 ? `${total.toLocaleString()} Varieties` : '…'}</strong>{' '}
-            so far.
+            {t('plant_kb.hero_mobile_body_pre')}{' '}
+            <strong>{total > 0 ? t('plant_kb.hero_count', { count: total.toLocaleString() }) : '…'}</strong>{' '}
+            {t('plant_kb.hero_mobile_body_post')}
           </p>
           <p style={{ color: '#111111', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
-            If you'd like to help with photos or descriptions, please{' '}
-            <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>Contact Us</Link>.
+            {t('plant_kb.hero_mobile_body2_pre')}{' '}
+            <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>{t('plant_kb.contact_us')}</Link>.
           </p>
         </div>
 
@@ -122,12 +123,13 @@ export default function PlantKnowledgebase() {
       <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
         {/* ── Section heading ── */}
-        <h2 className="text-lg font-bold text-gray-900 mb-5">Categories of Food Plants</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-5">{t('plant_kb.section_heading')}</h2>
 
         {/* ── 2-column grid of horizontal cards (image left, text right) ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {CATEGORIES.map((cat, index) => {
             const count = counts[cat.key] || 0;
+            const catKey = cat.key.toLowerCase().replace(/\s+/g, '_');
             return (
               <div
                 key={cat.key}
@@ -154,15 +156,15 @@ export default function PlantKnowledgebase() {
                       className="font-bold text-sm hover:underline"
                       style={{ color: '#3D6B34' }}
                     >
-                      {cat.label}
+                      {t('plant_kb.cat_label_' + catKey, cat.label)}
                     </Link>
                     <p
                       className="text-xs font-semibold mt-0.5 mb-2"
                       style={{ color: '#819360' }}
                     >
-                      {count > 0 ? `${count.toLocaleString()} Varieties` : '—'}
+                      {count > 0 ? t('plant_kb.variety_count', { count: count.toLocaleString() }) : '—'}
                     </p>
-                    <p className="text-xs text-gray-600 leading-relaxed">{cat.desc}</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">{t('plant_kb.cat_desc_' + catKey, cat.desc)}</p>
                   </div>
                   <div className="mt-3">
                     <Link
@@ -170,7 +172,7 @@ export default function PlantKnowledgebase() {
                       className="text-xs font-bold hover:underline"
                       style={{ color: '#3D6B34' }}
                     >
-                      EXPLORE →
+                      {t('plant_kb.explore_arrow')}
                     </Link>
                   </div>
                 </div>

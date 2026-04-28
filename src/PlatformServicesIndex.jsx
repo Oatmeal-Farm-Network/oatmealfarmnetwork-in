@@ -3,6 +3,7 @@
 // Route: /platform
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -11,6 +12,7 @@ import Breadcrumbs from './Breadcrumbs';
 const API = import.meta.env.VITE_API_URL || '';
 
 export default function PlatformServicesIndex() {
+  const { t } = useTranslation();
   const [services, setServices] = useState([]);
   const [loading, setLoading]   = useState(true);
 
@@ -37,32 +39,29 @@ export default function PlatformServicesIndex() {
       <div className="relative bg-[#3D6B34] text-white py-16 px-4 bg-center bg-cover">
         <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
         <div className="relative max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2 drop-shadow" style={{ color: '#fff' }}>Our Services</h1>
-          <p className="text-white drop-shadow">
-            Everything we build — AI agents, marketplaces, websites, events, and precision-ag tools —
-            working together for the people who grow, raise, cook, and sell real food.
-          </p>
+          <h1 className="text-3xl font-bold mb-2 drop-shadow" style={{ color: '#fff' }}>{t('platform_svc.title')}</h1>
+          <p className="text-white drop-shadow">{t('platform_svc.body')}</p>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
+      <div className="max-w-6xl mx-auto px-4 py-8 grow w-full">
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: 'Services' },
+          { label: t('platform_svc.title') },
         ]} />
 
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Loading…</div>
+          <div className="text-center py-20 text-gray-400">{t('platform_svc.loading')}</div>
         ) : (
           <>
             {agents.length > 0 && (
               <section className="mt-2">
                 <h2 className="text-xl font-bold text-gray-900 mb-4"
                     style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-                  Meet the Agents
+                  {t('platform_svc.agents_title')}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {agents.map(s => <ServiceCard key={s.ServiceID} s={s} tall />)}
+                  {agents.map(s => <ServiceCard key={s.ServiceID} s={s} tall learnMore={t('platform_svc.learn_more')} />)}
                 </div>
               </section>
             )}
@@ -71,17 +70,17 @@ export default function PlatformServicesIndex() {
               <section className="mt-10">
                 <h2 className="text-xl font-bold text-gray-900 mb-4"
                     style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-                  Platform Services
+                  {t('platform_svc.platform_title')}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {platform.map(s => <ServiceCard key={s.ServiceID} s={s} />)}
+                  {platform.map(s => <ServiceCard key={s.ServiceID} s={s} learnMore={t('platform_svc.learn_more')} />)}
                 </div>
               </section>
             )}
 
             {services.length === 0 && (
               <div className="bg-white rounded-xl border border-gray-200 p-16 text-center text-gray-400">
-                No services are currently published.
+                {t('platform_svc.no_services')}
               </div>
             )}
           </>
@@ -93,7 +92,7 @@ export default function PlatformServicesIndex() {
   );
 }
 
-function ServiceCard({ s, tall }) {
+function ServiceCard({ s, tall, learnMore }) {
   const accent = s.AccentColor || '#3D6B34';
   const to = s.RoutePath || `/platform/${s.Slug}`;
   return (
@@ -107,7 +106,7 @@ function ServiceCard({ s, tall }) {
           {s.IconEmoji || '✦'}
         </div>
         <div className="min-w-0">
-          <h3 className="font-bold text-lg text-gray-900 group-hover:text-[color:var(--accent)] transition-colors truncate"
+          <h3 className="font-bold text-lg text-gray-900 group-hover:text-(--accent) transition-colors truncate"
               style={{ ['--accent']: accent }}>
             {s.Title}
           </h3>
@@ -127,7 +126,7 @@ function ServiceCard({ s, tall }) {
       )}
       <div className="mt-auto pt-3">
         <span className="text-xs font-semibold" style={{ color: accent }}>
-          Learn more →
+          {learnMore}
         </span>
       </div>
     </Link>

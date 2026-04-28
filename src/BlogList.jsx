@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import AccountLayout from './AccountLayout';
@@ -36,6 +37,7 @@ const CATEGORY_COLORS = {
 };
 
 function PostCard({ post }) {
+  const { t } = useTranslation();
   const catColor = CATEGORY_COLORS[post.category] || '#6b7280';
   const date = (post.published_at || post.created_at)
     ? new Date(post.published_at || post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -65,7 +67,7 @@ function PostCard({ post }) {
           <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{date}</span>
           {post.business_name && (
             <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-              · By <Link to={`/directory/${post.business_id}`} style={{ color: '#7C5CBF', textDecoration: 'none', fontWeight: 600 }}>{post.business_name}</Link>
+              · {t('blog.by_label')} <Link to={`/directory/${post.business_id}`} style={{ color: '#7C5CBF', textDecoration: 'none', fontWeight: 600 }}>{post.business_name}</Link>
             </span>
           )}
         </div>
@@ -81,7 +83,7 @@ function PostCard({ post }) {
         )}
         <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
           <Link to={`/blog/${post.blog_id}`} style={{ fontSize: '0.83rem', color: '#819360', fontWeight: 600, textDecoration: 'none' }}>
-            Read more →
+            {t('blog.read_more')}
           </Link>
         </div>
       </div>
@@ -90,6 +92,7 @@ function PostCard({ post }) {
 }
 
 function BlogListContent() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -129,16 +132,16 @@ function BlogListContent() {
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '1rem 1.5rem 2rem', width: '100%', boxSizing: 'border-box' }}>
       <Breadcrumbs items={[
         { label: 'Home', to: '/' },
-        { label: 'Blog' },
+        { label: t('blog.title') },
       ]} />
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#111827', margin: '0 0 0.5rem' }}>Blogs</h1>
-        <p style={{ color: '#6b7280', fontSize: '0.95rem', margin: 0 }}>Stories, tips, and updates from food lovers across the network</p>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#111827', margin: '0 0 0.5rem' }}>{t('blog.title')}</h1>
+        <p style={{ color: '#6b7280', fontSize: '0.95rem', margin: 0 }}>{t('blog.subtitle')}</p>
       </div>
 
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <input
-          placeholder="Search posts..."
+          placeholder={t('blog.search_placeholder')}
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{ flex: 1, minWidth: '200px', padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.9rem' }}
@@ -148,7 +151,7 @@ function BlogListContent() {
             onClick={() => setSearchParams({})}
             style={{ padding: '0.35rem 0.85rem', borderRadius: '20px', border: '1px solid', fontSize: '0.82rem', cursor: 'pointer', fontWeight: activeCategory ? 400 : 700, background: activeCategory ? '#f9fafb' : '#819360', color: activeCategory ? '#374151' : '#fff', borderColor: activeCategory ? '#d1d5db' : '#819360' }}
           >
-            All
+            {t('blog.all_label')}
           </button>
           {categories.map(cat => (
             <button
@@ -162,9 +165,9 @@ function BlogListContent() {
         </div>
       </div>
 
-      {loading && <p style={{ textAlign: 'center', color: '#9ca3af', padding: '3rem 0' }}>Loading posts...</p>}
+      {loading && <p style={{ textAlign: 'center', color: '#9ca3af', padding: '3rem 0' }}>{t('blog.loading')}</p>}
       {!loading && filtered.length === 0 && (
-        <p style={{ textAlign: 'center', color: '#9ca3af', padding: '3rem 0' }}>No posts found.</p>
+        <p style={{ textAlign: 'center', color: '#9ca3af', padding: '3rem 0' }}>{t('blog.no_posts')}</p>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -179,7 +182,6 @@ export default function BlogList() {
   const { Business, businesses, LoadBusiness } = useAccount();
   const isLoggedIn = !!localStorage.getItem('access_token');
 
-  // Prefer BusinessID from URL, fall back to first business in context
   const urlBusinessID = searchParams.get('BusinessID');
   const BusinessID = urlBusinessID || (businesses?.[0]?.BusinessID ?? null);
   const PeopleID = localStorage.getItem('people_id');

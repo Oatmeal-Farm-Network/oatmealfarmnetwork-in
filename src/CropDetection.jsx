@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import maplibregl from 'maplibre-gl';
 import { Protocol, PMTiles } from 'pmtiles';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -162,6 +163,7 @@ function SoilPie({ soil }) {
 
 // ─── SAVE FIELD MODAL ─────────────────────────────────────────────────────────
 function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, businessId, peopleId }) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
@@ -176,8 +178,8 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
   }, [open, fieldData]);
 
   const handleSave = async () => {
-    if (!name.trim()) { setError('Field name is required'); return; }
-    if (!drawnPolygon || drawnPolygon.length < 3) { setError('No field boundary drawn'); return; }
+    if (!name.trim()) { setError(t('crop_detection.error_name_required')); return; }
+    if (!drawnPolygon || drawnPolygon.length < 3) { setError(t('crop_detection.error_no_boundary')); return; }
     setSaving(true);
     setError('');
 
@@ -229,7 +231,7 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
       onSave(data.id);
       onClose();
     } catch (e) {
-      setError(e.message || 'Save failed');
+      setError(e.message || t('crop_detection.error_save_failed'));
     } finally {
       setSaving(false);
     }
@@ -247,18 +249,18 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
         boxShadow: '0 24px 60px rgba(0,0,0,0.2)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: 0 }}>💾 Save Field</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: 0 }}>💾 {t('crop_detection.save_modal_title')}</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#6b7280' }}>✕</button>
         </div>
 
         {drawnPolygon?.length > 2 && (
           <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#166534' }}>
-            ✓ Field boundary drawn — {calcPolygonAcres(drawnPolygon)} acres
+            ✓ {t('crop_detection.save_modal_boundary', { acres: calcPolygonAcres(drawnPolygon) })}
           </div>
         )}
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Field Name</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{t('crop_detection.save_label_name')}</label>
           <input
             value={name} onChange={e => setName(e.target.value)}
             placeholder="e.g. North Corn Field"
@@ -267,7 +269,7 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Description <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{t('crop_detection.save_label_description')} <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>{t('crop_detection.save_optional')}</span></label>
           <textarea
             value={description} onChange={e => setDescription(e.target.value)}
             placeholder="Notes about this field…"
@@ -284,14 +286,14 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
 
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onClose} style={{ flex: 1, padding: '12px', background: '#f3f4f6', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 14, color: '#374151' }}>
-            Cancel
+            {t('crop_detection.btn_cancel')}
           </button>
           <button onClick={handleSave} disabled={saving} style={{
             flex: 2, padding: '12px', background: saving ? '#7aab72' : '#819360',
             border: 'none', borderRadius: 8, cursor: saving ? 'not-allowed' : 'pointer',
             fontWeight: 600, fontSize: 14, color: 'white',
           }}>
-            {saving ? '⟳ Saving…' : '💾 Save Field'}
+            {saving ? `⟳ ${t('crop_detection.btn_saving')}` : `💾 ${t('crop_detection.save_modal_title')}`}
           </button>
         </div>
       </div>
@@ -301,6 +303,7 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
 
 // ─── ANALYSIS DRAWER ─────────────────────────────────────────────────────────
 function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, businessID }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const scoreColor = !fieldData?.healthData ? '#9ca3af'
     : fieldData.healthData.score > 75 ? '#10b981'
@@ -335,8 +338,8 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
             <div style={{ fontSize: 12, color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
               📍 {fieldData.location.lat.toFixed(4)}°, {fieldData.location.lon.toFixed(4)}°
               <span style={{ margin: '0 4px' }}>•</span>
-              {fieldData.acres} Acres
-              {fieldData.county && <><span style={{ margin: '0 4px' }}>•</span>{fieldData.county} County</>}
+              {fieldData.acres} {t('crop_detection.drawer_acres')}
+              {fieldData.county && <><span style={{ margin: '0 4px' }}>•</span>{fieldData.county} {t('crop_detection.drawer_county')}</>}
             </div>
           </div>
 
@@ -352,7 +355,7 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
               boxShadow: '0 4px 12px rgba(26,35,126,0.3)',
             }}
           >
-            ➕ Add Field to My Account
+            ➕ {t('crop_detection.drawer_add_to_account')}
           </button>
 
           {/* Save Field Button — shown when a polygon has been drawn */}
@@ -368,7 +371,7 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
                 boxShadow: '0 4px 12px rgba(21,128,61,0.3)',
               }}
             >
-              💾 Save This Field ({calcPolygonAcres(drawnPolygon)} ac)
+              💾 {t('crop_detection.drawer_save_field', { acres: calcPolygonAcres(drawnPolygon) })}
             </button>
           )}
 
@@ -376,13 +379,13 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
           {fieldData.healthData && (
             <div style={{ background: 'linear-gradient(135deg,#f0f9ff,#e0f2fe)', border: '1px solid #bae6fd', borderRadius: 12, padding: 18, marginBottom: 14 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                ⚡ Soil Health Analysis
+                ⚡ {t('crop_detection.drawer_health_title')}
               </div>
               <div style={{ display: 'flex', gap: 16 }}>
                 <div style={{ width: 96, height: 96, borderRadius: '50%', border: `6px solid ${scoreColor}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'white', flexShrink: 0 }}>
                   <span style={{ fontSize: 26, fontWeight: 800, color: '#111827', lineHeight: 1 }}>{fieldData.healthData.score.toFixed(0)}</span>
                   <span style={{ fontSize: 10, color: '#6b7280', fontWeight: 600, marginTop: 2 }}>
-                    {fieldData.healthData.score > 75 ? 'Excellent' : fieldData.healthData.score > 50 ? 'Fair' : 'Poor'}
+                    {fieldData.healthData.score > 75 ? t('crop_detection.score_excellent') : fieldData.healthData.score > 50 ? t('crop_detection.score_fair') : t('crop_detection.score_poor')}
                   </span>
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -401,14 +404,14 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
           {fieldData.depthSummaries?.length > 0 && fieldData.depthSummaries.map((entry, idx) => (
             <div key={`${entry.depth}-${idx}`} style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 18, marginBottom: 14 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                🥧 Soil Composition <span style={{ fontWeight: 500, textTransform: 'none', color: '#6b7280' }}>({entry.depth})</span>
+                🥧 {t('crop_detection.drawer_soil_composition')} <span style={{ fontWeight: 500, textTransform: 'none', color: '#6b7280' }}>({entry.depth})</span>
               </div>
               <SoilPie soil={entry.soil} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
                 {[
-                  ['💧', 'pH Level', entry.soil.ph?.toFixed(1) || '—', '#3b82f6'],
-                  ['🌿', 'Carbon', `${entry.soil.soc?.toFixed(1) || '—'} g/kg`, '#10b981'],
-                  ['📊', 'Clay', `${entry.soil.clay?.toFixed(1) || '—'}%`, '#8b5cf6'],
+                  ['💧', t('crop_detection.drawer_ph'), entry.soil.ph?.toFixed(1) || '—', '#3b82f6'],
+                  ['🌿', t('crop_detection.drawer_carbon'), `${entry.soil.soc?.toFixed(1) || '—'} g/kg`, '#10b981'],
+                  ['📊', t('crop_detection.drawer_clay'), `${entry.soil.clay?.toFixed(1) || '—'}%`, '#8b5cf6'],
                 ].map(([icon, label, val]) => (
                   <div key={label} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 8px', textAlign: 'center' }}>
                     <div style={{ fontSize: 16 }}>{icon}</div>
@@ -423,7 +426,7 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
           {/* Fertilizer */}
           {fieldData.fertilizerPlan?.length > 0 && (
             <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 18, marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>🧫 Fertilizer Recommendations</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>🧫 {t('crop_detection.drawer_fertilizer_title')}</div>
               {fieldData.fertilizerPlan.map((plan, i) => (
                 <div key={i} style={{ background: '#fefce8', border: '1px solid #fde68a', borderRadius: 8, padding: 14, marginBottom: i < fieldData.fertilizerPlan.length - 1 ? 10 : 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -431,12 +434,12 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
                     <span style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>{plan.priority}</span>
                   </div>
                   <div style={{ display: 'flex', gap: 16, marginBottom: 8, fontSize: 12, color: '#78350f' }}>
-                    <span>Current: <strong>{plan.current}</strong></span>
-                    <span>Target: <strong>{plan.target}</strong></span>
+                    <span>{t('crop_detection.drawer_current', { value: plan.current })}</span>
+                    <span>{t('crop_detection.drawer_target', { value: plan.target })}</span>
                   </div>
                   <div style={{ fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>
-                    <strong>Apply:</strong> {plan.amount} of {plan.fertilizer}<br />
-                    <em>Timing: {plan.timing}</em>
+                    {t('crop_detection.drawer_apply', { amount: plan.amount, fertilizer: plan.fertilizer })}<br />
+                    <em>{t('crop_detection.drawer_timing', { timing: plan.timing })}</em>
                   </div>
                 </div>
               ))}
@@ -446,13 +449,13 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
           {/* Crop Recommendations */}
           {fieldData.recommendations?.length > 0 && (
             <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 18, marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>📈 Best Crop Matches</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>📈 {t('crop_detection.drawer_crop_matches')}</div>
               {fieldData.recommendations.slice(0, 5).map((rec, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: '#f9fafb', border: '1px solid #f3f4f6', borderRadius: 8, marginBottom: 6 }}>
                   <div style={{ width: 22, height: 22, background: '#1a237e', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>#{i + 1}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937' }}>{rec.name}</div>
-                    <div style={{ fontSize: 11, color: '#6b7280' }}>{rec.reason || 'Suitable for soil conditions'}</div>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>{rec.reason || t('crop_detection.drawer_suitable')}</div>
                   </div>
                   <div style={{
                     padding: '3px 8px', borderRadius: 4, fontSize: 12, fontWeight: 700,
@@ -467,7 +470,7 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
           {/* Crop History */}
           {fieldData.history && Object.keys(fieldData.history).length > 0 && (
             <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 18 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>🌾 Crop Rotation History (2009–2024)</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>🌾 {t('crop_detection.drawer_history_title')}</div>
               <div style={{ maxHeight: 300, overflowY: 'auto', paddingRight: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {Object.entries(fieldData.history).sort(([a], [b]) => parseInt(b) - parseInt(a)).map(([year, info]) => (
                   <div key={year} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -494,6 +497,7 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function CropDetection() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const BusinessID = searchParams.get('BusinessID');
@@ -618,7 +622,7 @@ export default function CropDetection() {
   const finishDrawing = useCallback(() => {
     const pts = drawnPointsRef.current;
     if (pts.length < 3) {
-      alert('Draw at least 3 points to define a field boundary.');
+      alert(t('crop_detection.alert_draw_points'));
       return;
     }
     setDrawnPolygon([...pts]);
@@ -677,7 +681,7 @@ export default function CropDetection() {
       });
     } catch (e) {
       console.error('Analysis error:', e);
-      alert('Analysis failed. Ensure the Cloud Function is active.');
+      alert(t('crop_detection.alert_analysis_failed'));
     } finally {
       setLoading(false);
     }
@@ -716,19 +720,19 @@ export default function CropDetection() {
     el.innerHTML = `
       <h3 style="margin:0 0 10px;color:#1e293b;font-size:17px;font-weight:700">${cropName}</h3>
       <div style="font-size:13px;color:#64748b;margin-bottom:14px">
-        <div><strong style="color:#475569">Acres:</strong> ${acres}</div>
-        <div><strong style="color:#475569">County:</strong> ${props.CNTY || 'N/A'}</div>
+        <div><strong style="color:#475569">${t('crop_detection.popup_acres')}</strong> ${acres}</div>
+        <div><strong style="color:#475569">${t('crop_detection.popup_county')}</strong> ${props.CNTY || 'N/A'}</div>
       </div>
     `;
     const btn = document.createElement('button');
-    btn.innerText = 'Run Field Analysis';
+    btn.innerText = t('crop_detection.popup_run_analysis');
     btn.style.cssText = 'width:100%;padding:12px 16px;background:#819360;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px';
     btn.onclick = (ev) => { ev.preventDefault(); fetchAnalysis(lat, lon, cropName, props); };
     el.appendChild(btn);
 
     if (BusinessID) {
       const addBtn = document.createElement('button');
-      addBtn.innerText = '➕ Add Field';
+      addBtn.innerText = `➕ ${t('crop_detection.popup_add_field')}`;
       addBtn.style.cssText = 'width:100%;padding:10px 16px;margin-top:8px;background:linear-gradient(135deg,#1a237e,#283593);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px';
       addBtn.onclick = (ev) => {
         ev.preventDefault();
@@ -971,15 +975,15 @@ export default function CropDetection() {
   };
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Crop Detection" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Crops' }, { label: 'Detection' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={t('crop_detection.page_title')} breadcrumbs={[{ label: t('nav.dashboard'), to: '/dashboard' }, { label: t('crop_detection.breadcrumb_crops') }, { label: t('crop_detection.breadcrumb_detection') }]}>
       <div style={{ margin: '-24px', display: 'flex', flexDirection: 'column' }}>
 
         {/* Title bar */}
         <div style={{ padding: '12px 24px', background: 'white', borderBottom: '1px solid #e8e0d5', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           <span style={{ fontSize: 22 }}>🌾</span>
           <div>
-            <div style={{ fontFamily: 'Georgia,serif', fontWeight: 700, fontSize: 17, color: '#2c1a0e' }}>Crop Detection</div>
-            <div style={{ fontSize: 12, color: '#8b7355' }}>Zoom in and click any colored field to analyze soil health, fertilizer needs, and view crop rotation history (2009–2024)</div>
+            <div style={{ fontFamily: 'Georgia,serif', fontWeight: 700, fontSize: 17, color: '#2c1a0e' }}>{t('crop_detection.heading')}</div>
+            <div style={{ fontSize: 12, color: '#8b7355' }}>{t('crop_detection.subtitle')}</div>
           </div>
         </div>
 
@@ -996,14 +1000,12 @@ export default function CropDetection() {
               fontSize: 13.5, fontWeight: 500,
             }}>
               <span style={{ fontSize: 20 }}>👉</span>
-              <span>
-                Click a colored field on the map to select it, then tap <strong>Add Field</strong> in the popup.
-              </span>
+              <span>{t('crop_detection.add_field_hint')}</span>
               <button
                 onClick={() => setShowAddFieldHint(false)}
                 style={{ background: 'rgba(255,255,255,0.18)', border: 'none', color: 'white',
                   borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
-              >Got it</button>
+              >{t('crop_detection.hint_got_it')}</button>
             </div>
           )}
 
@@ -1013,21 +1015,21 @@ export default function CropDetection() {
             <div style={{ padding: '18px 16px 14px', background: 'linear-gradient(135deg,#1a237e,#283593)', color: 'white', display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 20 }}>🗺</span>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>Crop & Soil Analytics</div>
-                <div style={{ fontSize: 11, opacity: 0.8 }}>USDA Cropland Data 2024</div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>{t('crop_detection.panel_title')}</div>
+                <div style={{ fontSize: 11, opacity: 0.8 }}>{t('crop_detection.panel_subtitle')}</div>
               </div>
             </div>
 
             <div style={{ padding: '14px 14px 0' }}>
               {/* Search */}
               <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-                📍 Find Location
+                📍 {t('crop_detection.find_location')}
               </div>
               <div style={{ position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '2px solid #e2e8f0', borderRadius: 10, padding: '10px 12px', background: 'white' }}>
                   <span style={{ color: '#64748b', fontSize: 14 }}>🔍</span>
                   <input
-                    type="text" placeholder="Street address, city, state, or ZIP…" value={address}
+                    type="text" placeholder={t('crop_detection.search_placeholder')} value={address}
                     onChange={e => handleAddressChange(e.target.value)}
                     onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                     style={{ border: 'none', background: 'transparent', flex: 1, outline: 'none', fontSize: 13, color: '#1e293b' }}
@@ -1059,7 +1061,7 @@ export default function CropDetection() {
               {/* ── Field Drawing Controls ── */}
               <div style={{ marginTop: 16, marginBottom: 4 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-                  ✏️ Define Field Boundary
+                  ✏️ {t('crop_detection.define_boundary')}
                 </div>
 
                 {!drawMode && drawnPolygon.length === 0 && (
@@ -1068,28 +1070,28 @@ export default function CropDetection() {
                     border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 13,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>
-                    ✏️ Draw Field
+                    ✏️ {t('crop_detection.btn_draw')}
                   </button>
                 )}
 
                 {drawMode && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: '#1e40af', lineHeight: 1.5 }}>
-                      <strong>Click on the map</strong> to place boundary points.<br />
-                      Place at least 3 points, then click <strong>Finish</strong>.
+                      <strong>{t('crop_detection.draw_instructions')}</strong><br />
+                      {t('crop_detection.draw_instructions2')}
                     </div>
                     <div style={{ fontSize: 12, color: '#6b7280', textAlign: 'center' }}>
-                      {drawnPointsRef.current.length} point{drawnPointsRef.current.length !== 1 ? 's' : ''} placed
+                      {t(drawnPointsRef.current.length === 1 ? 'crop_detection.points_one' : 'crop_detection.points_other', { count: drawnPointsRef.current.length })}
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button onClick={cancelDrawing} style={{
                         flex: 1, padding: '9px', background: '#f3f4f6', border: 'none',
                         borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 12, color: '#374151',
-                      }}>✕ Cancel</button>
+                      }}>✕ {t('crop_detection.btn_cancel')}</button>
                       <button onClick={finishDrawing} style={{
                         flex: 2, padding: '9px', background: '#166534', color: 'white',
                         border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 12,
-                      }}>✓ Finish Drawing</button>
+                      }}>✓ {t('crop_detection.btn_finish')}</button>
                     </div>
                   </div>
                 )}
@@ -1097,17 +1099,17 @@ export default function CropDetection() {
                 {!drawMode && drawnPolygon.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: '#166534' }}>
-                      ✓ Field boundary drawn — <strong>{calcPolygonAcres(drawnPolygon)} acres</strong>
+                      ✓ {t('crop_detection.boundary_drawn', { acres: calcPolygonAcres(drawnPolygon) })}
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button onClick={startDrawing} style={{
                         flex: 1, padding: '9px', background: '#f3f4f6', border: 'none',
                         borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 12, color: '#374151',
-                      }}>↺ Redraw</button>
+                      }}>↺ {t('crop_detection.btn_redraw')}</button>
                       <button onClick={() => setShowSaveModal(true)} style={{
                         flex: 2, padding: '9px', background: '#166534', color: 'white',
                         border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 12,
-                      }}>💾 Save Field</button>
+                      }}>💾 {t('crop_detection.btn_save_field')}</button>
                     </div>
                   </div>
                 )}
@@ -1117,7 +1119,7 @@ export default function CropDetection() {
             {/* Legend */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
-                🌈 Crop Legend (2024)
+                🌈 {t('crop_detection.legend_title')}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 10px' }}>
                 {Object.entries(CROP_COLORS).map(([code, color]) => (
@@ -1130,7 +1132,7 @@ export default function CropDetection() {
             </div>
 
             <div style={{ padding: '8px 14px', background: '#f9fafb', borderTop: '1px solid #e5e7eb', fontSize: 10, color: '#9ca3af' }}>
-              GCP Cloud Functions · USDA CDL 2024 · OpenStreetMap
+              {t('crop_detection.footer')}
             </div>
           </div>
 
@@ -1148,7 +1150,7 @@ export default function CropDetection() {
               boxShadow: '0 4px 16px rgba(0,0,0,0.2)', backdropFilter: 'blur(4px)',
               pointerEvents: 'none',
             }}>
-              ✏️ Click to add boundary points · {drawnPointsRef.current.length} placed
+              ✏️ {t('crop_detection.draw_hint', { count: drawnPointsRef.current.length })}
             </div>
           )}
 
@@ -1175,8 +1177,8 @@ export default function CropDetection() {
                   animation: 'cdspin 1s linear infinite',
                 }}>⟳</div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Analyzing Field</div>
-                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 3 }}>Fetching soil & crop data…</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>{t('crop_detection.loading_title')}</div>
+                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 3 }}>{t('crop_detection.loading_subtitle')}</div>
                 </div>
               </div>
             </div>
@@ -1198,7 +1200,7 @@ export default function CropDetection() {
       <SaveFieldModal
         open={showSaveModal}
         onClose={() => setShowSaveModal(false)}
-        onSave={(id) => { setSavedFieldId(id); alert(`✓ Field saved successfully (ID: ${id})`); }}
+        onSave={(id) => { setSavedFieldId(id); alert(`✓ ${t('crop_detection.alert_saved', { id })}`); }}
         fieldData={fieldData}
         drawnPolygon={drawnPolygon}
         businessId={BusinessID}

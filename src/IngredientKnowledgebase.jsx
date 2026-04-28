@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -62,6 +63,7 @@ function imgSrc(cat) {
 }
 
 export default function IngredientKnowledgebase() {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [totals, setTotals] = useState({ varieties: 0, ingredients: 0 });
   const [loading, setLoading] = useState(true);
@@ -114,22 +116,21 @@ export default function IngredientKnowledgebase() {
           <div className="hidden md:block absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }} />
           <div className="hidden md:flex absolute inset-0 flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
             <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 12px', lineHeight: 1.2 }}>
-              Ingredient Knowledgebase
+              {t('ingredient_kb.title')}
             </h1>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 8px', lineHeight: 1.6 }}>
-              There are thousands of Ingredients, we have documented{' '}
+              {t('ingredient_kb.hero_body_pre')}{' '}
               <strong>
                 {totals.varieties > 0
-                  ? `${totals.varieties.toLocaleString()} varieties of ${totals.ingredients.toLocaleString()} Ingredients`
+                  ? t('ingredient_kb.hero_count', { varieties: totals.varieties.toLocaleString(), ingredients: totals.ingredients.toLocaleString() })
                   : '…'}
               </strong>{' '}
-              so far. We have the mission to list them all here.
+              {t('ingredient_kb.hero_body_post')}
             </p>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
-              We are consistently adding more information and photos to the list. If you would like to help out with photos,
-              descriptions, or correcting errors please{' '}
-              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>Contact Us</Link>
-              {' '}and let us know — the more people we have helping, the more complete the information.
+              {t('ingredient_kb.hero_body2_pre')}{' '}
+              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>{t('ingredient_kb.contact_us')}</Link>
+              {' '}{t('ingredient_kb.hero_body2_post')}
             </p>
           </div>
         </div>
@@ -137,20 +138,20 @@ export default function IngredientKnowledgebase() {
         {/* Text below image — mobile only */}
         <div className="md:hidden bg-white px-5 py-4 rounded-b-xl border border-t-0 border-gray-200">
           <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.4rem', fontWeight: 'bold', margin: '0 0 8px', lineHeight: 1.2 }}>
-            Ingredient Knowledgebase
+            {t('ingredient_kb.title')}
           </h1>
           <p style={{ color: '#111111', fontSize: '0.85rem', margin: '0 0 6px', lineHeight: 1.6 }}>
-            We have documented{' '}
+            {t('ingredient_kb.hero_mobile_body_pre')}{' '}
             <strong>
               {totals.varieties > 0
-                ? `${totals.varieties.toLocaleString()} varieties of ${totals.ingredients.toLocaleString()} Ingredients`
+                ? t('ingredient_kb.hero_count', { varieties: totals.varieties.toLocaleString(), ingredients: totals.ingredients.toLocaleString() })
                 : '…'}
             </strong>{' '}
-            so far.
+            {t('ingredient_kb.hero_mobile_body_post')}
           </p>
           <p style={{ color: '#111111', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
-            If you'd like to help with photos or descriptions, please{' '}
-            <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>Contact Us</Link>.
+            {t('ingredient_kb.hero_mobile_body2_pre')}{' '}
+            <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>{t('ingredient_kb.contact_us')}</Link>.
           </p>
         </div>
 
@@ -159,7 +160,7 @@ export default function IngredientKnowledgebase() {
       <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
         {/* ── Section heading ── */}
-        <h2 className="text-lg font-bold text-gray-900 mb-5">Categories of Ingredients</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-5">{t('ingredient_kb.section_heading')}</h2>
 
         {/* ── 2-column grid of horizontal cards ── */}
         {loading ? (
@@ -180,6 +181,7 @@ export default function IngredientKnowledgebase() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {categories.map((cat, index) => {
               const desc = cat.description || getDesc(cat.name);
+              const descKey = cat.name.toLowerCase().replace(/\s*&\s*/g, '_and_').replace(/\s+/g, '_');
               return (
                 <div
                   key={cat.id}
@@ -213,9 +215,9 @@ export default function IngredientKnowledgebase() {
                         className="text-xs font-semibold mt-0.5 mb-2"
                         style={{ color: '#819360' }}
                       >
-                        {cat.ingredient_count > 0 ? `${cat.ingredient_count.toLocaleString()} Ingredients` : '—'}
+                        {cat.ingredient_count > 0 ? t('ingredient_kb.ingredient_count', { count: cat.ingredient_count.toLocaleString() }) : '—'}
                       </p>
-                      <p className="text-xs text-gray-600 leading-relaxed">{desc}</p>
+                      <p className="text-xs text-gray-600 leading-relaxed">{desc ? t('ingredient_kb.cat_desc_' + descKey, desc) : null}</p>
                     </div>
                     <div className="mt-3">
                       <Link
@@ -223,7 +225,7 @@ export default function IngredientKnowledgebase() {
                         className="text-xs font-bold hover:underline"
                         style={{ color: '#3D6B34' }}
                       >
-                        EXPLORE →
+                        {t('ingredient_kb.explore_arrow')}
                       </Link>
                     </div>
                   </div>

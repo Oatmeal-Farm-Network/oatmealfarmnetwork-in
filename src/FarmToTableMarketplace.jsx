@@ -2,6 +2,7 @@
 // Farm-to-Restaurant Marketplace — browse meat, produce & value-added products
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -12,25 +13,25 @@ import { useLanguage } from './LanguageContext';
 const API = import.meta.env.VITE_API_URL || '';
 
 const PRODUCT_TYPES = [
-  { key: 'all',            label: 'All Products',     emoji: '🛒' },
-  { key: 'produce',        label: 'Produce',           emoji: '🥬' },
-  { key: 'meat',           label: 'Meat',              emoji: '🥩' },
-  { key: 'processed_food', label: 'Value-Added',       emoji: '🫙' },
-  { key: 'service',        label: 'Services',          emoji: '🛠️' },
+  { key: 'all',            emoji: '🛒' },
+  { key: 'produce',        emoji: '🥬' },
+  { key: 'meat',           emoji: '🥩' },
+  { key: 'processed_food', emoji: '🫙' },
+  { key: 'service',        emoji: '🛠️' },
 ];
 
 const SORT_OPTIONS = [
-  { key: 'newest',         label: 'Newest First' },
-  { key: 'price_asc',      label: 'Price: Low → High' },
-  { key: 'price_desc',     label: 'Price: High → Low' },
-  { key: 'name_asc',       label: 'Name A–Z' },
+  { key: 'newest' },
+  { key: 'price_asc' },
+  { key: 'price_desc' },
+  { key: 'name_asc' },
 ];
 
 const AVAILABILITY_OPTIONS = [
-  { key: '',   label: 'Any time' },
-  { key: '0',  label: 'Available today' },
-  { key: '7',  label: 'This week' },
-  { key: '30', label: 'This month' },
+  { key: '',   tkey: 'avail_any' },
+  { key: '0',  tkey: 'avail_today' },
+  { key: '7',  tkey: 'avail_week' },
+  { key: '30', tkey: 'avail_month' },
 ];
 
 // US state codes — enough coverage for restaurant buyers to filter by region
@@ -65,6 +66,7 @@ function cartCount(cart) {
 }
 
 export default function FarmToTableMarketplace() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { language } = useLanguage();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('access_token'));
@@ -110,7 +112,7 @@ export default function FarmToTableMarketplace() {
       setShowSignIn(false);
       setSignInError('');
     } catch {
-      setSignInError('Unable to connect. Please try again.');
+      setSignInError(t('farm_mkt.connect_error'));
     } finally {
       setSignInLoading(false);
     }
@@ -158,7 +160,7 @@ export default function FarmToTableMarketplace() {
     try {
       if (wasSaved) {
         await fetch(`${API}/api/marketplace/saved-farms?buyer_business_id=${restaurantBusinessId}&farm_business_id=${farmBusinessId}`, { method: 'DELETE' });
-        showToast('Removed from My Farms');
+        showToast(t('farm_mkt.toast_removed_farm'));
       } else {
         await fetch(`${API}/api/marketplace/saved-farms`, {
           method: 'POST',
@@ -169,7 +171,7 @@ export default function FarmToTableMarketplace() {
             AddedByPeopleID: peopleId ? parseInt(peopleId) : null,
           }),
         });
-        showToast('Saved to My Farms');
+        showToast(t('farm_mkt.toast_saved_farm'));
       }
     } catch {
       // Revert on failure
@@ -195,7 +197,7 @@ export default function FarmToTableMarketplace() {
   const submitStandingOrder = async ({ frequency, dayOfWeek, quantity, notes }) => {
     if (!standingTarget || !restaurantBusinessId) return;
     const parsed = parseListingId(standingTarget.ListingID);
-    if (!parsed) { showToast('Could not identify product.'); return; }
+    if (!parsed) { showToast(t('farm_mkt.toast_product_error')); return; }
     try {
       const res = await fetch(`${API}/api/marketplace/standing-orders`, {
         method: 'POST',
@@ -216,9 +218,9 @@ export default function FarmToTableMarketplace() {
       });
       if (!res.ok) throw new Error();
       setStandingTarget(null);
-      showToast('Standing order created');
+      showToast(t('farm_mkt.toast_standing_created'));
     } catch {
-      showToast('Could not create standing order');
+      showToast(t('farm_mkt.toast_standing_error'));
     }
   };
 
@@ -243,7 +245,7 @@ export default function FarmToTableMarketplace() {
         const data = await res.json();
         setListings(Array.isArray(data) ? data : (data.listings || []));
       } catch (e) {
-        setError('Could not load products. Please try again.');
+        setError(t('farm_mkt.error_load'));
         console.error(e);
       } finally {
         setLoading(false);
@@ -284,7 +286,7 @@ export default function FarmToTableMarketplace() {
       saveCart(next);
       return next;
     });
-    showToast(`${listing.Title} added to cart`);
+    showToast(t('farm_mkt.toast_added', { title: listing.Title }));
   }, []);
 
   const removeFromCart = useCallback((listingId) => {
@@ -372,8 +374,8 @@ export default function FarmToTableMarketplace() {
       <div className="mx-auto px-4 pt-2 md:pt-6" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: 'Marketplaces', to: '/marketplaces' },
-          { label: 'Farm-to-Table' },
+          { label: t('farm_mkt.crumb_marketplaces'), to: '/marketplaces' },
+          { label: t('farm_mkt.crumb_farm_to_table') },
         ]} />
 
         {/* Image — shorter on mobile, taller on desktop */}
@@ -389,13 +391,13 @@ export default function FarmToTableMarketplace() {
           <div className="hidden md:block absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }} />
           <div className="hidden md:flex absolute inset-0 flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
             <p style={{ color: '#3D6B34', fontFamily: "'Lora','Times New Roman',serif", fontSize: '0.85rem', fontWeight: '600', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Farm to Table
+              {t('farm_mkt.hero_eyebrow')}
             </p>
             <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
-              Farm-to-Table Marketplace
+              {t('farm_mkt.hero_title')}
             </h1>
             <p style={{ color: '#111111', fontSize: '0.88rem', margin: 0, lineHeight: 1.5 }}>
-              Order fresh produce, pasture-raised meat, and value-added products directly from local farms. No middlemen.
+              {t('farm_mkt.hero_body')}
             </p>
           </div>
         </div>
@@ -403,13 +405,13 @@ export default function FarmToTableMarketplace() {
         {/* Text below image — mobile only */}
         <div className="md:hidden bg-white px-5 py-4 rounded-b-xl border border-t-0 border-gray-200">
           <p style={{ color: '#3D6B34', fontFamily: "'Lora','Times New Roman',serif", fontSize: '0.75rem', fontWeight: '600', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Farm to Table
+            {t('farm_mkt.hero_eyebrow')}
           </p>
           <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.4rem', fontWeight: 'bold', margin: '0 0 8px', lineHeight: 1.2 }}>
-            Farm-to-Table Marketplace
+            {t('farm_mkt.hero_title')}
           </h1>
           <p style={{ color: '#111111', fontSize: '0.85rem', margin: 0, lineHeight: 1.5 }}>
-            Order fresh produce, pasture-raised meat, and value-added products directly from local farms.
+            {t('farm_mkt.hero_body_mobile')}
           </p>
         </div>
 
@@ -420,16 +422,16 @@ export default function FarmToTableMarketplace() {
         <div className="px-4 py-3 flex flex-wrap items-center gap-3">
           {/* Type pills */}
           <div className="flex gap-2 flex-wrap">
-            {PRODUCT_TYPES.map(t => (
+            {PRODUCT_TYPES.map(pt => (
               <button
-                key={t.key}
-                onClick={() => setTypeFilter(t.key)}
+                key={pt.key}
+                onClick={() => setTypeFilter(pt.key)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all"
-              style={typeFilter === t.key
+              style={typeFilter === pt.key
                 ? { backgroundColor: '#3D6B34', color: '#fff', borderColor: '#3D6B34' }
                 : { backgroundColor: '#fff', color: '#3D6B34', borderColor: '#3D6B34' }}
               >
-                {t.label}
+                {pt.emoji} {t('farm_mkt.type_' + pt.key)}
               </button>
             ))}
           </div>
@@ -444,13 +446,13 @@ export default function FarmToTableMarketplace() {
             >
               <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${organicOnly ? 'translate-x-5' : 'translate-x-0.5'}`} />
             </div>
-            Organic Only
+            {t('farm_mkt.organic_only')}
           </label>
 
           {/* Search */}
           <input
             type="search"
-            placeholder="Search products…"
+            placeholder={t('farm_mkt.search_placeholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="border border-gray-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-[#819360] w-44"
@@ -462,7 +464,7 @@ export default function FarmToTableMarketplace() {
             onChange={e => setSort(e.target.value)}
             className="border border-gray-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-[#819360] bg-white"
           >
-            {SORT_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+            {SORT_OPTIONS.map(o => <option key={o.key} value={o.key}>{t('farm_mkt.sort_' + o.key)}</option>)}
           </select>
 
           {/* Cart button */}
@@ -470,7 +472,7 @@ export default function FarmToTableMarketplace() {
             onClick={() => document.getElementById('cart-drawer').classList.toggle('translate-x-full')}
             className="relative bg-[#2d3a1e] text-white px-4 py-1.5 rounded-xl text-sm font-bold hover:bg-[#3f5229] transition-colors flex items-center gap-2"
           >
-            🛒 Cart
+            🛒 {t('farm_mkt.cart_btn')}
             {count > 0 && (
               <span className="absolute -top-1.5 -right-1.5 bg-[#A3301E] text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
                 {count}
@@ -481,70 +483,66 @@ export default function FarmToTableMarketplace() {
 
         {/* ── Restaurant / bulk buyer filters (secondary row) ── */}
         <div className="px-4 pb-3 flex flex-wrap items-center gap-3 text-xs">
-          <span className="font-semibold uppercase tracking-wider text-gray-500">For buyers:</span>
+          <span className="font-semibold uppercase tracking-wider text-gray-500">{t('farm_mkt.for_buyers')}</span>
 
           {isRestaurant && (
             <>
               <span
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
                 style={{ backgroundColor: '#fff4d6', color: '#8a6a0a' }}
-                title="You're signed in as a Restaurant — wholesale prices are shown when available."
               >
-                Wholesale view
+                {t('farm_mkt.wholesale_view')}
               </span>
               <button
                 onClick={() => navigate('/restaurant/farms')}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[#3D6B34] border border-[#3D6B34] hover:bg-[#e8f0dc]"
-                title="View the farms you've saved"
               >
-                My Farms ({savedFarmIds.size})
+                {t('farm_mkt.my_farms', { count: savedFarmIds.size })}
               </button>
               <button
                 onClick={() => navigate('/restaurant/standing-orders')}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[#3D6B34] border border-[#3D6B34] hover:bg-[#e8f0dc]"
-                title="Manage your recurring orders"
               >
-                Standing Orders
+                {t('farm_mkt.standing_orders_link')}
               </button>
               <button
                 onClick={() => navigate('/restaurant/digest')}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[#3D6B34] border border-[#3D6B34] hover:bg-[#e8f0dc]"
-                title="Weekly email digest of available products"
               >
-                Weekly Digest
+                {t('farm_mkt.weekly_digest')}
               </button>
             </>
           )}
 
           <label className="flex items-center gap-1.5 text-gray-700">
-            <span>Available</span>
+            <span>{t('farm_mkt.available_label')}</span>
             <select
               value={availableWithin}
               onChange={e => setAvailableWithin(e.target.value)}
               className="border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:border-[#819360]"
             >
-              {AVAILABILITY_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+              {AVAILABILITY_OPTIONS.map(o => <option key={o.key} value={o.key}>{t('farm_mkt.' + o.tkey)}</option>)}
             </select>
           </label>
 
           <label className="flex items-center gap-1.5 text-gray-700">
-            <span>State</span>
+            <span>{t('farm_mkt.state_label')}</span>
             <select
               value={stateFilter}
               onChange={e => setStateFilter(e.target.value)}
               className="border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:border-[#819360]"
             >
-              {STATE_OPTIONS.map(s => <option key={s} value={s}>{s || 'Any'}</option>)}
+              {STATE_OPTIONS.map(s => <option key={s} value={s}>{s || t('farm_mkt.any_state')}</option>)}
             </select>
           </label>
 
           <label className="flex items-center gap-1.5 text-gray-700">
-            <span>Min qty</span>
+            <span>{t('farm_mkt.min_qty_label')}</span>
             <input
               type="number"
               min="0"
               step="1"
-              placeholder="e.g. 20"
+              placeholder={t('farm_mkt.qty_placeholder')}
               value={minQty}
               onChange={e => setMinQty(e.target.value)}
               className="border border-gray-300 rounded-lg px-2 py-1 text-xs w-20 focus:outline-none focus:border-[#819360]"
@@ -556,7 +554,7 @@ export default function FarmToTableMarketplace() {
               onClick={() => { setAvailableWithin(''); setStateFilter(''); setMinQty(''); }}
               className="text-xs text-[#A3301E] underline hover:text-[#8a2718]"
             >
-              Clear buyer filters
+              {t('farm_mkt.clear_buyer_filters')}
             </button>
           )}
         </div>
@@ -580,12 +578,12 @@ export default function FarmToTableMarketplace() {
         ) : error ? (
           <div className="text-center py-20">
             <p className="text-red-500 font-semibold mb-4">{error}</p>
-            <button onClick={() => setTypeFilter('all')} className="text-sm text-[#819360] underline">Try again</button>
+            <button onClick={() => setTypeFilter('all')} className="text-sm text-[#819360] underline">{t('farm_mkt.try_again')}</button>
           </div>
         ) : listings.length === 0 ? (
           <div className="text-center py-24 text-gray-400">
-            <p className="text-xl font-semibold text-gray-600">No products found</p>
-            <p className="text-sm mt-2">Try adjusting your filters</p>
+            <p className="text-xl font-semibold text-gray-600">{t('farm_mkt.no_products')}</p>
+            <p className="text-sm mt-2">{t('farm_mkt.no_products_body')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5">
@@ -618,7 +616,7 @@ export default function FarmToTableMarketplace() {
         className="fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 translate-x-full transition-transform duration-300 flex flex-col"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-bold text-gray-800">Your Cart ({count})</h2>
+          <h2 className="text-lg font-bold text-gray-800">{t('farm_mkt.cart_title', { count })}</h2>
           <button
             onClick={() => document.getElementById('cart-drawer').classList.add('translate-x-full')}
             className="text-gray-400 hover:text-gray-700 text-2xl leading-none"
@@ -628,8 +626,8 @@ export default function FarmToTableMarketplace() {
         <div className="flex-grow overflow-y-auto px-5 py-4 space-y-4">
           {cart.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
-              <p className="font-semibold">Your cart is empty</p>
-              <p className="text-sm mt-1">Browse products and add items</p>
+              <p className="font-semibold">{t('farm_mkt.cart_empty')}</p>
+              <p className="text-sm mt-1">{t('farm_mkt.cart_empty_body')}</p>
             </div>
           ) : cart.map(item => (
             <div key={item.ListingID} className="flex gap-3 items-start bg-gray-50 rounded-xl p-3">
@@ -652,7 +650,7 @@ export default function FarmToTableMarketplace() {
                   <button onClick={() => updateQty(item.ListingID, +1, item.quantityAvailable)}
                     className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 text-sm font-bold flex items-center justify-center">+</button>
                   <button onClick={() => removeFromCart(item.ListingID)}
-                    className="ml-auto text-xs text-red-400 hover:text-red-600">Remove</button>
+                    className="ml-auto text-xs text-red-400 hover:text-red-600">{t('farm_mkt.cart_remove')}</button>
                 </div>
               </div>
             </div>
@@ -662,29 +660,29 @@ export default function FarmToTableMarketplace() {
         {cart.length > 0 && (
           <div className="px-5 py-4 border-t border-gray-200 bg-white">
             <div className="flex justify-between text-sm text-gray-600 mb-1">
-              <span>Subtotal</span>
+              <span>{t('farm_mkt.subtotal')}</span>
               <span>${cartTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm text-gray-400 mb-4">
-              <span>Service fee (2.5%)</span>
+              <span>{t('farm_mkt.service_fee')}</span>
               <span>${(cartTotal * 0.025).toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-bold text-lg mb-4">
-              <span>Total</span>
+              <span>{t('farm_mkt.cart_total')}</span>
               <span className="text-[#819360]">${(cartTotal * 1.025).toFixed(2)}</span>
             </div>
 
             {/* Inline sign-in form — expands when not logged in */}
             {!isLoggedIn && showSignIn && (
               <div className="mb-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
-                <p className="text-sm font-bold text-gray-700 mb-3">Sign in to place your order</p>
+                <p className="text-sm font-bold text-gray-700 mb-3">{t('farm_mkt.sign_in_title')}</p>
                 {signInError && (
                   <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">{signInError}</p>
                 )}
                 <form onSubmit={handleSignIn} className="space-y-3">
                   <input
                     type="email"
-                    placeholder="Email address"
+                    placeholder={t('farm_mkt.email_placeholder')}
                     value={signInEmail}
                     onChange={e => setSignInEmail(e.target.value)}
                     required
@@ -692,7 +690,7 @@ export default function FarmToTableMarketplace() {
                   />
                   <input
                     type="password"
-                    placeholder="Password"
+                    placeholder={t('farm_mkt.pass_placeholder')}
                     value={signInPass}
                     onChange={e => setSignInPass(e.target.value)}
                     required
@@ -703,12 +701,12 @@ export default function FarmToTableMarketplace() {
                     disabled={signInLoading}
                     className="w-full bg-[#A3301E] hover:bg-[#8a2718] text-white font-bold py-2.5 rounded-lg text-sm uppercase tracking-wider disabled:opacity-60"
                   >
-                    {signInLoading ? 'Signing In...' : 'Sign In & Place Order'}
+                    {signInLoading ? t('farm_mkt.signing_in') : t('farm_mkt.sign_in_place_order')}
                   </button>
                 </form>
                 <p className="text-center text-xs text-gray-400 mt-2">
-                  No account?{' '}
-                  <a href="/signup" className="text-[#819360] font-semibold hover:underline">Sign Up</a>
+                  {t('farm_mkt.no_account')}{' '}
+                  <a href="/signup" className="text-[#819360] font-semibold hover:underline">{t('farm_mkt.sign_up')}</a>
                 </p>
               </div>
             )}
@@ -718,14 +716,14 @@ export default function FarmToTableMarketplace() {
                 onClick={checkout}
                 className="w-full bg-[#2d3a1e] hover:bg-[#3f5229] text-white font-bold py-3 rounded-xl text-sm uppercase tracking-wider transition-colors"
               >
-                Place Order
+                {t('farm_mkt.place_order')}
               </button>
             ) : !showSignIn ? (
               <button
                 onClick={() => setShowSignIn(true)}
                 className="w-full bg-[#2d3a1e] hover:bg-[#3f5229] text-white font-bold py-3 rounded-xl text-sm uppercase tracking-wider transition-colors"
               >
-                Place Order
+                {t('farm_mkt.place_order')}
               </button>
             ) : null}
           </div>
@@ -759,6 +757,7 @@ export default function FarmToTableMarketplace() {
 
 // ── Standing-order setup modal ───────────────────────────────────────────────
 function StandingOrderModal({ listing, onCancel, onSubmit }) {
+  const { t } = useTranslation();
   const [frequency, setFrequency] = useState('weekly');
   const [dayOfWeek, setDayOfWeek] = useState(1); // Mon default
   const [quantity,  setQuantity]  = useState(1);
@@ -775,29 +774,29 @@ function StandingOrderModal({ listing, onCancel, onSubmit }) {
   return (
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={onCancel}>
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5" onClick={e => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-gray-900 mb-1">Standing order</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-1">{t('farm_mkt.standing_title')}</h2>
         <p className="text-sm text-gray-600 mb-4 truncate">
           {listing.Title} <span className="text-gray-400">· {listing.SellerName}</span>
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Frequency</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">{t('farm_mkt.freq_label')}</label>
             <select value={frequency} onChange={e => setFrequency(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-              <option value="weekly">Weekly</option>
-              <option value="biweekly">Every 2 weeks</option>
-              <option value="monthly">Monthly</option>
+              <option value="weekly">{t('farm_mkt.freq_weekly')}</option>
+              <option value="biweekly">{t('farm_mkt.freq_biweekly')}</option>
+              <option value="monthly">{t('farm_mkt.freq_monthly')}</option>
             </select>
           </div>
 
           {frequency !== 'monthly' && (
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Day of week</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">{t('farm_mkt.day_label')}</label>
               <select value={dayOfWeek} onChange={e => setDayOfWeek(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                {['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((d,i) =>
-                  <option key={d} value={i}>{d}</option>
+                {[0,1,2,3,4,5,6].map(i =>
+                  <option key={i} value={i}>{t('farm_mkt.day_' + i)}</option>
                 )}
               </select>
             </div>
@@ -805,7 +804,7 @@ function StandingOrderModal({ listing, onCancel, onSubmit }) {
 
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Quantity per delivery {listing.UnitLabel ? `(${listing.UnitLabel})` : ''}
+              {t('farm_mkt.qty_per_delivery')}{listing.UnitLabel ? ' ' + t('farm_mkt.qty_unit_suffix', { unit: listing.UnitLabel }) : ''}
             </label>
             <input type="number" min="0.25" step="0.25" value={quantity}
               onChange={e => setQuantity(e.target.value)} required
@@ -813,20 +812,20 @@ function StandingOrderModal({ listing, onCancel, onSubmit }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Notes (optional)</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">{t('farm_mkt.notes_label')}</label>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-              placeholder="e.g. drop at back door, ring bell"
+              placeholder={t('farm_mkt.notes_placeholder')}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={onCancel}
               className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-lg">
-              Cancel
+              {t('farm_mkt.cancel')}
             </button>
             <button type="submit" disabled={saving}
               className="px-4 py-2 text-sm font-bold text-white bg-[#3D6B34] hover:bg-[#2d5225] rounded-lg disabled:opacity-60">
-              {saving ? 'Creating…' : 'Create standing order'}
+              {saving ? t('farm_mkt.creating') : t('farm_mkt.create')}
             </button>
           </div>
         </form>
@@ -837,6 +836,7 @@ function StandingOrderModal({ listing, onCancel, onSubmit }) {
 
 // ── Product Card ──────────────────────────────────────────────────────────────
 function ProductCard({ listing: l, inCart, onAdd, onView, isRestaurant = false, isSaved = false, onToggleSave = null, onMakeStanding = null }) {
+  const { t } = useTranslation();
   const wholesale = l.WholesalePrice ? parseFloat(l.WholesalePrice) : null;
   const retail    = l.UnitPrice      ? parseFloat(l.UnitPrice)      : 0;
   const showWholesaleHeadline = isRestaurant && wholesale && wholesale < retail;
@@ -852,19 +852,19 @@ function ProductCard({ listing: l, inCart, onAdd, onView, isRestaurant = false, 
           </div>
         )}
         {l.IsOrganic && (
-          <span className="absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide" style={{ backgroundColor: '#3D6B34' }}>Organic</span>
+          <span className="absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide" style={{ backgroundColor: '#3D6B34' }}>{t('farm_mkt.organic_badge')}</span>
         )}
         {l.QuantityAvailable <= 0 && (
           <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-            <span className="font-bold text-gray-500 text-sm">Out of Stock</span>
+            <span className="font-bold text-gray-500 text-sm">{t('farm_mkt.out_of_stock')}</span>
           </div>
         )}
         {onToggleSave && (
           <button
             onClick={(e) => { e.stopPropagation(); onToggleSave(); }}
             className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center text-base"
-            title={isSaved ? 'Remove from My Farms' : 'Save this farm to My Farms'}
-            aria-label={isSaved ? 'Remove from My Farms' : 'Save to My Farms'}
+            title={isSaved ? t('farm_mkt.remove_farm_title') : t('farm_mkt.save_farm_title')}
+            aria-label={isSaved ? t('farm_mkt.remove_farm_aria') : t('farm_mkt.save_farm_aria')}
           >
             {isSaved ? '❤️' : '🤍'}
           </button>
@@ -895,12 +895,12 @@ function ProductCard({ listing: l, inCart, onAdd, onView, isRestaurant = false, 
           )}
           {l.PickupAvailable ? (
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#e8f0dc', color: '#3D6B34' }}>
-              Pickup
+              {t('farm_mkt.pickup_badge')}
             </span>
           ) : null}
           {l.ShippingAvailable ? (
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#e8f0dc', color: '#3D6B34' }}>
-              Delivery
+              {t('farm_mkt.delivery_badge')}
             </span>
           ) : null}
         </div>
@@ -933,11 +933,11 @@ function ProductCard({ listing: l, inCart, onAdd, onView, isRestaurant = false, 
                 ? { backgroundColor: '#e8f0dc', color: '#3D6B34', border: '2px solid #819360' }
                 : { backgroundColor: '#3D6B34', color: '#fff', border: '2px solid #3D6B34' }}
             >
-              {inCart ? `In Cart (${inCart.quantity})` : 'Add to Cart'}
+              {inCart ? t('farm_mkt.in_cart', { count: inCart.quantity }) : t('farm_mkt.add_to_cart')}
             </button>
           ) : (
             <button disabled className="w-full py-2 rounded-lg text-sm font-semibold bg-gray-100 text-gray-400 cursor-not-allowed">
-              Out of Stock
+              {t('farm_mkt.out_of_stock')}
             </button>
           )}
 
@@ -945,9 +945,8 @@ function ProductCard({ listing: l, inCart, onAdd, onView, isRestaurant = false, 
             <button
               onClick={onMakeStanding}
               className="mt-2 w-full py-1.5 rounded-lg text-xs font-semibold border border-[#3D6B34] text-[#3D6B34] hover:bg-[#e8f0dc]"
-              title="Set up a recurring weekly/biweekly/monthly purchase from this farm"
             >
-              Make this a standing order
+              {t('farm_mkt.make_standing_order_btn')}
             </button>
           )}
         </div>

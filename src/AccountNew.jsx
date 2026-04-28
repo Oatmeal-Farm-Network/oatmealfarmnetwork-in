@@ -6,7 +6,20 @@ import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const OTF_API = import.meta.env.VITE_OTF_API_URL || import.meta.env.VITE_API_URL || '';
 const FORM_MAX_WIDTH = '640px';
+
+async function createOTFCommunity(businessId, businessName) {
+  try {
+    const token   = localStorage.getItem('access_token') || '';
+    const peopleId = localStorage.getItem('people_id') || '0';
+    await fetch(`${OTF_API}/api/admin/mill/communities`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-people-id': peopleId },
+      body: JSON.stringify({ name: businessName, linkedType: 'business', linkedId: businessId }),
+    });
+  } catch { /* non-blocking */ }
+}
 
 const money = (n, ccy = 'USD') =>
   new Intl.NumberFormat(undefined, { style: 'currency', currency: ccy }).format(Number(n) || 0);
@@ -113,6 +126,7 @@ export default function AccountNew() {
       const data = await res.json();
       if (res.ok) {
         setCreatedBusinessId(data.BusinessID);
+        createOTFCommunity(data.BusinessID, form.BusinessName || '');
         setStep(2);
       } else {
         setErrors({ submit: data.detail || 'An error occurred. Please try again.' });

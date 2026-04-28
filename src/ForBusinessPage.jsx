@@ -8,7 +8,7 @@ import Breadcrumbs from './Breadcrumbs';
 
 // ── Shared SVG wrapper ───────────────────────────────────────────
 const S = ({ children }) => (
-  <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+  <svg width="24" height="24" viewBox="0 0 16 16" fill="none" stroke="currentColor"
     strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
     {children}
   </svg>
@@ -32,73 +32,88 @@ const I = {
 };
 
 // ── Static (non-text) data per type ─────────────────────────────
+// Shared image references mirroring the home page constants
+const IMG_PRECISION  = '/images/CoreFeaturesPrecisionAg.webp';
+const IMG_SAIGE      = '/images/SaigeBanner.webp';
+const IMG_LIVESTOCK  = '/images/HomepageLivestockMarketplace.webp';
+const IMG_FARM2TABLE = '/images/CoreFeaturesFarm2Table.webp';
+const IMG_WEBSITE    = '/images/HomeCustomWebsiteSystem.webp';
+const IMG_EVENTS     = '/images/EventsHeader.webp';
+const IMG_ASSOC      = '/images/CoreFeaturesAssociationSupport.webp';
+const IMG_RESTAURANTS= '/images/Restaurants.webp';
+const IMG_DIRECTORY  = '/images/AboutDirectoryImage.webp';
+
 const TYPE_DATA = {
   farms: {
-    key:    'farms',
-    color:  '#3D6B34',
-    cta1To: '/oatsense',
-    cta2To: '/signup',
-    dir:    '/directory/farms-ranches',
+    key:     'farms',
+    color:   '#3D6B34',
+    heroImg: '/images/FarmsPageHeader.webp',
+    cta1To:  '/oatsense',
+    cta2To:  '/signup',
+    dir:     '/directory/farms-ranches',
     tools: [
-      { icon: I.satellite, link: '/platform/precision-ag' },
-      { icon: I.saige,     link: '/platform/saige' },
-      { icon: I.livestock, link: '/marketplaces/livestock' },
-      { icon: I.market,    link: '/marketplaces/farm-to-table' },
-      { icon: I.website,   link: '/website-builder' },
-      { icon: I.directory, link: '/directory/farms-ranches' },
-      { icon: I.events,    link: '/event-registration' },
-      { icon: I.assoc,     link: '/agriculture-support' },
+      { icon: I.satellite, img: IMG_PRECISION,  link: '/platform/precision-ag' },
+      { icon: I.saige,     img: IMG_SAIGE,      link: '/platform/saige' },
+      { icon: I.livestock, img: IMG_LIVESTOCK,  link: '/marketplaces/livestock' },
+      { icon: I.market,    img: IMG_FARM2TABLE, link: '/marketplaces/farm-to-table' },
+      { icon: I.website,   img: IMG_WEBSITE,    link: '/website-builder' },
+      { icon: I.directory, img: IMG_DIRECTORY,  link: '/directory/farms-ranches' },
+      { icon: I.events,    img: IMG_EVENTS,     link: '/event-registration' },
+      { icon: I.assoc,     img: IMG_ASSOC,      link: '/agriculture-support' },
     ],
   },
   ranches: {
-    key:    'ranches',
-    color:  '#7C5A3A',
-    cta1To: '/marketplaces/livestock',
-    cta2To: '/signup',
-    dir:    '/directory/farms-ranches',
+    key:     'ranches',
+    color:   '#7C5A3A',
+    heroImg: '/images/RanchesHeader.webp',
+    cta1To:  '/marketplaces/livestock',
+    cta2To:  '/signup',
+    dir:     '/directory/farms-ranches',
     tools: [
-      { icon: I.livestock, link: '/marketplaces/livestock' },
-      { icon: I.saige,     link: '/platform/saige' },
-      { icon: I.satellite, link: '/platform/precision-ag' },
-      { icon: I.website,   link: '/website-builder' },
-      { icon: I.directory, link: '/directory/farms-ranches' },
-      { icon: I.events,    link: '/event-registration' },
-      { icon: I.assoc,     link: '/agriculture-support' },
-      { icon: I.market,    link: '/marketplaces/farm-to-table' },
+      { icon: I.livestock, img: IMG_LIVESTOCK,  link: '/marketplaces/livestock' },
+      { icon: I.saige,     img: IMG_SAIGE,      link: '/platform/saige' },
+      { icon: I.satellite, img: IMG_PRECISION,  link: '/platform/precision-ag' },
+      { icon: I.website,   img: IMG_WEBSITE,    link: '/website-builder' },
+      { icon: I.directory, img: IMG_DIRECTORY,  link: '/directory/farms-ranches' },
+      { icon: I.events,    img: IMG_EVENTS,     link: '/event-registration' },
+      { icon: I.assoc,     img: IMG_ASSOC,      link: '/agriculture-support' },
+      { icon: I.market,    img: IMG_FARM2TABLE, link: '/marketplaces/farm-to-table' },
     ],
   },
   'artisan-producers': {
-    key:    'artisan',
-    color:  '#7C3F8B',
-    cta1To: '/marketplaces/farm-to-table',
-    cta2To: '/signup',
-    dir:    '/directory/artisan-producers',
+    key:     'artisan',
+    color:   '#7C3F8B',
+    heroImg: '/images/ArtisanProducers.webp',
+    cta1To:  '/marketplaces/farm-to-table',
+    cta2To:  '/signup',
+    dir:     '/directory/artisan-producers',
     tools: [
-      { icon: I.market,    link: '/marketplaces/farm-to-table' },
-      { icon: I.rosemarie, link: '/platform/rosemarie' },
-      { icon: I.source,    link: '/marketplaces/farm-to-table' },
-      { icon: I.website,   link: '/website-builder' },
-      { icon: I.blog,      link: '/website-builder' },
-      { icon: I.directory, link: '/directory/artisan-producers' },
-      { icon: I.events,    link: '/event-registration' },
-      { icon: I.assoc,     link: '/agriculture-support' },
+      { icon: I.market,    img: IMG_FARM2TABLE, link: '/marketplaces/farm-to-table' },
+      { icon: I.rosemarie, img: IMG_SAIGE,      link: '/platform/rosemarie' },
+      { icon: I.source,    img: IMG_FARM2TABLE, link: '/marketplaces/farm-to-table' },
+      { icon: I.website,   img: IMG_WEBSITE,    link: '/website-builder' },
+      { icon: I.blog,                           link: '/website-builder' },
+      { icon: I.directory, img: IMG_DIRECTORY,  link: '/directory/artisan-producers' },
+      { icon: I.events,    img: IMG_EVENTS,     link: '/event-registration' },
+      { icon: I.assoc,     img: IMG_ASSOC,      link: '/agriculture-support' },
     ],
   },
   restaurants: {
-    key:    'restaurants',
-    color:  '#2f7d4a',
-    cta1To: '/marketplaces/farm-to-table',
-    cta2To: '/signup',
-    dir:    '/directory/restaurants',
+    key:     'restaurants',
+    color:   '#2f7d4a',
+    heroImg: '/images/Restaurants.webp',
+    cta1To:  '/marketplaces/farm-to-table',
+    cta2To:  '/signup',
+    dir:     '/directory/restaurants',
     tools: [
-      { icon: I.pantry,    link: '/chef-pantry' },
-      { icon: I.market,    link: '/marketplaces/farm-to-table' },
-      { icon: I.pairsley,  link: '/platform/pairsley' },
-      { icon: I.website,   link: '/website-builder' },
-      { icon: I.directory, link: '/directory/restaurants' },
-      { icon: I.events,    link: '/event-registration' },
-      { icon: I.blog,      link: '/website-builder' },
-      { icon: I.assoc,     link: '/agriculture-support' },
+      { icon: I.pantry,    img: IMG_RESTAURANTS, link: '/chef-pantry' },
+      { icon: I.market,    img: IMG_FARM2TABLE,  link: '/marketplaces/farm-to-table' },
+      { icon: I.pairsley,  img: IMG_SAIGE,       link: '/platform/pairsley' },
+      { icon: I.website,   img: IMG_WEBSITE,     link: '/website-builder' },
+      { icon: I.directory, img: IMG_DIRECTORY,   link: '/directory/restaurants' },
+      { icon: I.events,    img: IMG_EVENTS,      link: '/event-registration' },
+      { icon: I.blog,                            link: '/website-builder' },
+      { icon: I.assoc,     img: IMG_ASSOC,       link: '/agriculture-support' },
     ],
   },
 };
@@ -112,11 +127,13 @@ export default function ForBusinessPage({ type }) {
   const cfg = {
     title:     t(`for_biz.${p}_title`),
     color:     data.color,
+    heroImg:   data.heroImg,
     heroTitle: t(`for_biz.${p}_hero_title`),
     heroSub:   t(`for_biz.${p}_hero_sub`),
     what:      t(`for_biz.${p}_what`),
     tools: data.tools.map((tool, i) => ({
       icon:  tool.icon,
+      img:   tool.img || null,
       title: t(`for_biz.${p}_tool${i + 1}_title`),
       body:  t(`for_biz.${p}_tool${i + 1}_body`),
       link:  tool.link,
@@ -128,7 +145,7 @@ export default function ForBusinessPage({ type }) {
   };
 
   return (
-    <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8' }}>
+    <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title={`${cfg.heroTitle} | Oatmeal Farm Network`}
         description={cfg.heroSub}
@@ -136,75 +153,127 @@ export default function ForBusinessPage({ type }) {
       />
       <Header />
 
-      {/* Hero */}
-      <div className="relative text-white py-20 px-4" style={{ backgroundColor: cfg.color }}>
-        <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
-        <div className="relative max-w-5xl mx-auto">
-          <span className="text-xs font-bold uppercase tracking-widest text-white/80">Oatmeal Farm Network</span>
-          <h1 className="text-4xl font-bold mt-2 mb-3 drop-shadow">{cfg.heroTitle}</h1>
-          <p className="text-lg text-white/95 drop-shadow max-w-2xl">{cfg.heroSub}</p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to={cfg.cta1.to}
-              className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition"
-              style={{ color: cfg.color }}>
-              {cfg.cta1.label}
-            </Link>
-            <Link to={cfg.cta2.to}
-              className="border-2 border-white/60 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-white/10 transition">
-              {cfg.cta2.label}
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-4 py-8 grow w-full">
+      {/* ── Breadcrumbs ── */}
+      <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
           { label: cfg.title },
         ]} />
+      </div>
 
-        <section className="mt-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3"
-              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
+      {/* ── Hero — photo with gradient overlay, matching /directory ── */}
+      <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
+        <div className="relative w-full overflow-hidden rounded-xl">
+          <img
+            src={cfg.heroImg}
+            alt={cfg.heroTitle}
+            className="w-full object-cover"
+            style={{ height: '250px', display: 'block' }}
+            loading="eager"
+            onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
+          />
+          {/* Gradient overlay — same formula as /directory */}
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.78) 45%, rgba(255,255,255,0) 80%)' }}
+          />
+          {/* Text content */}
+          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
+            <h1
+              style={{
+                color: '#000000',
+                fontFamily: "'Lora','Times New Roman',serif",
+                fontSize: '2rem',
+                fontWeight: 'bold',
+                margin: '0 0 12px',
+                lineHeight: 1.2,
+              }}
+            >
+              {cfg.heroTitle}
+            </h1>
+            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+              {cfg.heroSub}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to={cfg.cta1.to}
+                className="font-bold px-5 py-2 rounded-lg shadow hover:shadow-md transition text-sm"
+                style={{ backgroundColor: cfg.color, color: '#fff' }}
+              >
+                {cfg.cta1.label}
+              </Link>
+              <Link
+                to={cfg.cta2.to}
+                className="font-bold px-5 py-2 rounded-lg border-2 transition hover:bg-gray-50 text-sm"
+                style={{ color: cfg.color, borderColor: cfg.color }}
+              >
+                {cfg.cta2.label}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Body ── */}
+      <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
+
+        {/* What is OFN */}
+        <section className="mb-8">
+          <h2
+            className="text-lg font-bold text-gray-900 mb-3"
+            style={{ fontFamily: "'Lora','Times New Roman',serif" }}
+          >
             {t('for_biz.what_ofn')}
           </h2>
-          <p className="text-gray-700 leading-relaxed">{cfg.what}</p>
+          <p className="text-sm text-gray-700 leading-relaxed max-w-3xl">{cfg.what}</p>
         </section>
 
-        <section className="mt-10">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4"
-              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            {t('for_biz.tools_included')}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {cfg.tools.map(tool => (
-              <ToolCard key={tool.title} icon={tool.icon} title={tool.title} body={tool.body}
-                link={tool.link} cta={tool.cta} color={cfg.color} />
-            ))}
+        {/* Tools grid — horizontal cards matching /directory style */}
+        <h2
+          className="text-lg font-bold text-gray-900 mb-5"
+          style={{ fontFamily: "'Lora','Times New Roman',serif" }}
+        >
+          {t('for_biz.tools_included')}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {cfg.tools.map((tool, i) => (
+            <ToolCard key={i} icon={tool.icon} img={tool.img} title={tool.title} body={tool.body}
+              link={tool.link} cta={tool.cta} color={cfg.color} />
+          ))}
+        </div>
+
+        {/* Bottom CTA — matches directory's "Want to add your business?" tone */}
+        <div
+          className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4
+                     bg-white border border-gray-200 rounded-xl px-8 py-6"
+        >
+          <div>
+            <h3
+              className="font-bold text-gray-900 text-base mb-1"
+              style={{ fontFamily: "'Lora','Times New Roman',serif" }}
+            >
+              {t('for_biz.ready_title')}
+            </h3>
+            <p className="text-sm text-gray-600">{t('for_biz.ready_body')}</p>
           </div>
-        </section>
-
-        <section className="mt-10 text-center bg-white border border-gray-200 rounded-2xl p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2"
-              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            {t('for_biz.ready_title')}
-          </h3>
-          <p className="text-sm text-gray-600 mb-5">
-            {t('for_biz.ready_body')}
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/signup"
-              className="px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
-              style={{ backgroundColor: cfg.color }}>
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <Link
+              to="/signup"
+              className="px-5 py-2.5 rounded-lg text-white font-bold text-sm shadow hover:shadow-md transition"
+              style={{ backgroundColor: cfg.color }}
+            >
               {t('for_biz.create_free')}
             </Link>
-            <Link to={cfg.dir}
-              className="px-6 py-3 rounded-lg font-bold border-2 transition hover:bg-gray-50"
-              style={{ color: cfg.color, borderColor: cfg.color }}>
+            <Link
+              to={cfg.dir}
+              className="px-5 py-2.5 rounded-lg font-bold border-2 text-sm transition hover:bg-gray-50"
+              style={{ color: cfg.color, borderColor: cfg.color }}
+            >
               {t('for_biz.browse_directory')}
             </Link>
           </div>
-        </section>
+        </div>
+
       </div>
 
       <Footer />
@@ -212,18 +281,51 @@ export default function ForBusinessPage({ type }) {
   );
 }
 
-function ToolCard({ icon, title, body, link, cta, color }) {
+// ── ToolCard — horizontal layout matching /directory cards ────────
+function ToolCard({ icon, img, title, body, link, cta, color }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="flex items-center shrink-0" style={{ color }}>{icon}</span>
-        <h3 className="font-bold text-gray-900">{title}</h3>
-      </div>
-      <p className="text-sm text-gray-600 leading-relaxed flex-1">{body}</p>
-      <div className="mt-3">
-        <Link to={link} className="text-xs font-bold hover:underline" style={{ color }}>
-          {cta} →
-        </Link>
+    <div className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200">
+      {/* Left: image or icon block — same 155px width as directory photo column */}
+      <Link
+        to={link}
+        className="shrink-0 flex items-center justify-center"
+        style={{ width: '155px', minHeight: '155px', backgroundColor: img ? undefined : `${color}18` }}
+        aria-hidden="true"
+        tabIndex={-1}
+      >
+        {img ? (
+          <img
+            src={img}
+            alt={title}
+            className="w-full h-full object-cover"
+            style={{ width: '155px', height: '155px' }}
+            loading="lazy"
+            onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
+          />
+        ) : (
+          <span style={{ color, opacity: 0.85, transform: 'scale(2.2)', display: 'flex' }}>
+            {icon}
+          </span>
+        )}
+      </Link>
+
+      {/* Right: text — same padding/layout as directory */}
+      <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
+        <div>
+          <Link
+            to={link}
+            className="font-bold text-sm hover:underline"
+            style={{ color: '#3D6B34' }}
+          >
+            {title}
+          </Link>
+          <p className="text-xs text-gray-600 leading-relaxed mt-1">{body}</p>
+        </div>
+        <div className="mt-3">
+          <Link to={link} className="text-xs font-bold hover:underline" style={{ color }}>
+            {cta} →
+          </Link>
+        </div>
       </div>
     </div>
   );

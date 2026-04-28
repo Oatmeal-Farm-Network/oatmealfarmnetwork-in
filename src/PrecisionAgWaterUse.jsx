@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { useFields, API_URL } from './precisionAgUtils';
@@ -45,6 +46,7 @@ function SeriesChart({ rows }) {
 }
 
 export default function PrecisionAgWaterUse() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const fieldId = searchParams.get('FieldID');
   const BusinessID = searchParams.get('BusinessID');
@@ -73,7 +75,7 @@ export default function PrecisionAgWaterUse() {
         const rows = ((ser || {}).wapor || {}).series || ((ser || {}).wapor || {}).rows || [];
         setSeries(Array.isArray(rows) ? rows : []);
       })
-      .catch(e => setError(e.message || 'Failed to load water use'))
+      .catch(e => setError(e.message || t('precision_ag_water.error_load')))
       .finally(() => setLoading(false));
   }, [fieldId]);
 
@@ -84,31 +86,31 @@ export default function PrecisionAgWaterUse() {
       Business={Business}
       BusinessID={BusinessID}
       PeopleID={typeof window !== 'undefined' ? localStorage.getItem('people_id') : null}
-      pageTitle="Water Use"
+      pageTitle={t('precision_ag_water.page_title')}
       breadcrumbs={[
-        { label: 'Dashboard', to: '/dashboard' },
-        { label: 'Precision Ag' },
-        { label: 'Water Use' },
+        { label: t('nav.dashboard'), to: '/dashboard' },
+        { label: t('precision_ag_water.breadcrumb_precision') },
+        { label: t('precision_ag_water.page_title') },
       ]}
     >
       <div className="max-w-4xl mx-auto">
         <div className="mb-4">
-          <h1 className="font-lora text-2xl font-bold text-gray-900">Crop Water Use</h1>
+          <h1 className="font-lora text-2xl font-bold text-gray-900">{t('precision_ag_water.heading')}</h1>
           <p className="font-mont text-sm text-gray-500">
-            Actual evapotranspiration (ETa) from FAO WaPOR / OpenET satellite data
-            {field?.name && <> for <span className="font-semibold">{field.name}</span></>}.
+            {t('precision_ag_water.subheading')}
+            {field?.name && <> {t('precision_ag_water.subheading_for_field', { name: field.name })}</>}.
           </p>
         </div>
 
         {!fieldId && (
           <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 text-sm">
-            No field selected. Open this page from a field's menu.
+            {t('precision_ag_water.no_field')}
           </div>
         )}
 
         {loading && (
           <div className="bg-white border border-gray-200 rounded-xl p-6 text-center text-gray-500">
-            Loading WaPOR / OpenET data…
+            {t('precision_ag_water.loading')}
           </div>
         )}
 
@@ -122,43 +124,41 @@ export default function PrecisionAgWaterUse() {
           <>
             <div className="grid md:grid-cols-2 gap-4 mb-6">
               <div className="bg-white border border-gray-200 rounded-xl p-5">
-                <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">Latest Actual ET</div>
+                <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">{t('precision_ag_water.latest_et_label')}</div>
                 <div className="text-3xl font-mont font-bold text-sky-700 mt-1">
                   {latestValue != null ? `${latestValue.toFixed(2)} mm` : '—'}
                 </div>
                 {snapshot?.date && (
-                  <div className="text-xs text-gray-500 mt-1">As of {snapshot.date}</div>
+                  <div className="text-xs text-gray-500 mt-1">{t('precision_ag_water.as_of', { date: snapshot.date })}</div>
                 )}
                 {snapshot?.units && snapshot.units !== 'mm' && (
-                  <div className="text-xs text-gray-500 mt-1">Units: {snapshot.units}</div>
+                  <div className="text-xs text-gray-500 mt-1">{t('precision_ag_water.units', { units: snapshot.units })}</div>
                 )}
               </div>
 
               <div className="bg-white border border-gray-200 rounded-xl p-5">
-                <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">Source</div>
+                <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">{t('precision_ag_water.source_label')}</div>
                 <div className="text-base font-mont text-gray-900 mt-1">
-                  {snapshot?.source || snapshot?.model || 'WaPOR / OpenET'}
+                  {snapshot?.source || snapshot?.model || t('precision_ag_water.source_default')}
                 </div>
                 <div className="text-xs text-gray-500 mt-2 leading-relaxed">
-                  ETa is the actual water leaving the field as crop transpiration plus soil evaporation —
-                  the model-independent answer to "how much water is the crop using right now."
+                  {t('precision_ag_water.eta_desc')}
                 </div>
               </div>
             </div>
 
             <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">Recent Series</h2>
+              <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">{t('precision_ag_water.recent_series')}</h2>
               {series?.length ? (
                 <SeriesChart rows={series} />
               ) : (
-                <div className="text-sm text-gray-500">No time series available — the field may be outside coverage.</div>
+                <div className="text-sm text-gray-500">{t('precision_ag_water.no_series')}</div>
               )}
             </div>
 
             {(!snapshot && !series?.length) && (
               <div className="mt-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 text-sm">
-                No WaPOR / OpenET data is available for this field. The field may be outside the coverage area
-                or the upstream service is currently unreachable.
+                {t('precision_ag_water.no_data')}
               </div>
             )}
           </>

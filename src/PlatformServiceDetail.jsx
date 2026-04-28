@@ -1,11 +1,9 @@
 // src/PlatformServiceDetail.jsx
 // Generic DB-driven detail page for a platform service.
 // Route: /platform/:slug  (fallback when the slug has no custom About page)
-//
-// Rich editorial content for each service lives in SERVICE_CONTENT keyed by slug,
-// so the DB stays lean (title + tagline + summary) and polish lives in code.
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -14,7 +12,6 @@ import Breadcrumbs from './Breadcrumbs';
 const API = import.meta.env.VITE_API_URL || '';
 
 // Extended editorial content for platform-managed service slugs.
-// The DB row's Title/Tagline/Summary still drive the hero; these add depth.
 const SERVICE_CONTENT = {
   'website-builder': {
     intro: "Launch a professional farm website in an afternoon — not three months. The Oatmeal Farm Network Website Builder is drag-and-drop, but every widget is farm-aware, so your product inventory, ranch profile, blog, and events stay in sync with the rest of your account without any copy-paste.",
@@ -73,6 +70,7 @@ const SERVICE_CONTENT = {
 };
 
 export default function PlatformServiceDetail() {
+  const { t } = useTranslation();
   const { slug } = useParams();
   const navigate = useNavigate();
   const [svc, setSvc] = useState(null);
@@ -104,14 +102,14 @@ export default function PlatformServiceDetail() {
       <Header />
 
       {loading ? (
-        <div className="flex-grow flex items-center justify-center text-gray-400">Loading…</div>
+        <div className="grow flex items-center justify-center text-gray-400">{t('platform_svc.loading')}</div>
       ) : notFound || !svc ? (
-        <div className="flex-grow max-w-3xl mx-auto px-4 py-16 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Service not found</h1>
-          <p className="text-gray-600 mb-4">We couldn't find a service at that address.</p>
+        <div className="grow max-w-3xl mx-auto px-4 py-16 text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('platform_svc.not_found_title')}</h1>
+          <p className="text-gray-600 mb-4">{t('platform_svc.not_found_body')}</p>
           <button onClick={() => navigate('/platform')}
             className="px-4 py-2 rounded-lg bg-[#3D6B34] text-white font-semibold">
-            See all services
+            {t('platform_svc.see_all')}
           </button>
         </div>
       ) : (
@@ -132,10 +130,10 @@ export default function PlatformServiceDetail() {
             </div>
           </div>
 
-          <div className="max-w-5xl mx-auto px-4 py-8 flex-grow w-full">
+          <div className="max-w-5xl mx-auto px-4 py-8 grow w-full">
             <Breadcrumbs items={[
               { label: 'Home', to: '/' },
-              { label: 'Services', to: '/platform' },
+              { label: t('platform_svc.title'), to: '/platform' },
               { label: svc.Title },
             ]} />
 
@@ -173,10 +171,10 @@ export default function PlatformServiceDetail() {
 
             {!content && (
               <div className="mt-8 bg-white border border-gray-200 rounded-xl p-6 text-sm text-gray-600">
-                More details about {svc.Title} are coming soon. In the meantime, explore the rest of our services.
+                {t('platform_svc.coming_soon', { title: svc.Title })}
                 <div className="mt-3">
                   <Link to="/platform" className="font-semibold" style={{ color: accent }}>
-                    ← Back to all services
+                    {t('platform_svc.back_all')}
                   </Link>
                 </div>
               </div>

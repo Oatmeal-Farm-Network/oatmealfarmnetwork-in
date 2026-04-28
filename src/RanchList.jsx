@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -7,9 +8,10 @@ import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+// id used for open-state management; items are species proper names (not translated)
 const SIDEBAR_SECTIONS = [
   {
-    label: 'Livestock For Sale',
+    id: 'for_sale',
     items: [
       { label: 'Alpacas', path: '/marketplaces/livestock/alpacas' },
       { label: 'Bison', path: '/marketplaces/livestock/bison' },
@@ -43,7 +45,7 @@ const SIDEBAR_SECTIONS = [
     ],
   },
   {
-    label: 'Stud Services',
+    id: 'studs',
     items: [
       { label: 'Alpaca Studs', path: '/marketplaces/livestock/studs/alpacas' },
       { label: 'Bison Studs', path: '/marketplaces/livestock/studs/bison' },
@@ -62,7 +64,7 @@ const SIDEBAR_SECTIONS = [
     ],
   },
   {
-    label: 'Ranches',
+    id: 'ranches',
     items: [
       { label: 'Alpaca Ranches', path: '/marketplaces/livestock/ranches/alpacas' },
       { label: 'Bees, Honey', path: '/marketplaces/livestock/ranches/honey-bees' },
@@ -108,8 +110,14 @@ const SOCIAL_ICONS = [
 ];
 
 function Sidebar({ collapsed, onToggle }) {
-  const [openSections, setOpenSections] = useState({ 'Ranches': true });
-  const toggle = (label) => setOpenSections(prev => ({ ...prev, [label]: !prev[label] }));
+  const { t } = useTranslation();
+  const SECTION_LABELS = {
+    for_sale: t('ranch_list.sidebar_for_sale'),
+    studs:    t('ranch_list.stud_services'),
+    ranches:  t('ranch_list.sidebar_ranches'),
+  };
+  const [openSections, setOpenSections] = useState({ ranches: true });
+  const toggle = (id) => setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
 
   return (
     <div style={{
@@ -124,24 +132,24 @@ function Sidebar({ collapsed, onToggle }) {
         color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px',
         display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between',
       }}>
-        {!collapsed && <span style={{ fontSize: '12px', fontWeight: 600 }}>Browse</span>}
+        {!collapsed && <span style={{ fontSize: '12px', fontWeight: 600 }}>{t('ranch_list.browse')}</span>}
         <span style={{ fontSize: '18px' }}>{collapsed ? '☰' : '✕'}</span>
       </button>
       {!collapsed && (
         <div style={{ padding: '8px 0' }}>
           {SIDEBAR_SECTIONS.map(section => (
-            <div key={section.label}>
-              <button onClick={() => toggle(section.label)} style={{
+            <div key={section.id}>
+              <button onClick={() => toggle(section.id)} style={{
                 width: '100%', padding: '8px 12px', border: 'none',
                 backgroundColor: '#e8e8e0', color: '#333', fontWeight: '700',
                 fontSize: '12px', textAlign: 'left', cursor: 'pointer',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 textTransform: 'uppercase', letterSpacing: '0.5px',
               }}>
-                {section.label}
-                <span>{openSections[section.label] ? '▲' : '▼'}</span>
+                {SECTION_LABELS[section.id]}
+                <span>{openSections[section.id] ? '▲' : '▼'}</span>
               </button>
-              {openSections[section.label] && (
+              {openSections[section.id] && (
                 <ul style={{ listStyle: 'none', margin: 0, padding: '4px 0' }}>
                   {section.items.map(item => (
                     <li key={item.label}>
@@ -163,13 +171,13 @@ function Sidebar({ collapsed, onToggle }) {
 }
 
 function RanchCard({ ranch }) {
+  const { t } = useTranslation();
   const [logoFailed, setLogoFailed] = useState(false);
   const profileUrl = `/marketplaces/livestock/ranch/${ranch.business_id}`;
   const location = [ranch.city, ranch.state, ranch.country].filter(Boolean).join(', ');
 
   return (
     <div style={{ marginBottom: '16px', border: 'none', boxShadow: '0 1px 4px rgba(0,0,0,0.12)', borderRadius: '4px', overflow: 'hidden' }}>
-      {/* Name bar */}
       <div style={{ backgroundColor: '#441c15', padding: '8px 16px' }}>
         <Link to={profileUrl} style={{ color: '#fff', fontWeight: 600, fontSize: '1rem', textDecoration: 'none' }}>
           {ranch.business_name}
@@ -177,7 +185,6 @@ function RanchCard({ ranch }) {
       </div>
 
       <div style={{ display: 'flex', padding: '12px', gap: '16px', backgroundColor: '#fff' }}>
-        {/* Logo */}
         <div style={{ width: '180px', flexShrink: 0, textAlign: 'center' }}>
           {!logoFailed && ranch.logo ? (
             <Link to={profileUrl}>
@@ -187,30 +194,27 @@ function RanchCard({ ranch }) {
             </Link>
           ) : (
             <div style={{ height: '80px', backgroundColor: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ccc', fontSize: '12px', borderRadius: '4px' }}>
-              No Logo
+              {t('ranch_list.no_logo')}
             </div>
           )}
         </div>
 
-        {/* Details */}
         <div style={{ flex: 1 }}>
           {location && <p style={{ margin: '0 0 6px', fontSize: '0.9rem', color: '#555' }}>{location}</p>}
 
-          {/* Animal/stud indicators */}
           <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
             {ranch.has_animals && (
               <span style={{ fontSize: '11px', backgroundColor: '#507033', color: '#fff', padding: '2px 8px', borderRadius: '10px' }}>
-                Animals For Sale
+                {t('ranch_list.animals_for_sale')}
               </span>
             )}
             {ranch.has_studs && (
               <span style={{ fontSize: '11px', backgroundColor: '#e59a24', color: '#fff', padding: '2px 8px', borderRadius: '10px' }}>
-                Stud Services
+                {t('ranch_list.stud_services')}
               </span>
             )}
           </div>
 
-          {/* Social icons */}
           <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexWrap: 'wrap' }}>
             {SOCIAL_ICONS.map(s => ranch[s.key] ? (
               <a key={s.key} href={ranch[s.key]} target="_blank" rel="noopener noreferrer">
@@ -220,15 +224,14 @@ function RanchCard({ ranch }) {
             ) : null)}
           </div>
 
-          {/* Buttons */}
           <div style={{ display: 'flex', gap: '8px' }}>
             <Link to={`${profileUrl}?tab=contact`}
               style={{ backgroundColor: '#6c757d', color: '#fff', padding: '5px 14px', borderRadius: '4px', textDecoration: 'none', fontSize: '0.85rem' }}>
-              Contact Ranch
+              {t('ranch_list.contact_ranch')}
             </Link>
             <Link to={profileUrl}
               style={{ backgroundColor: '#e59a24', color: '#fff', padding: '5px 14px', borderRadius: '4px', textDecoration: 'none', fontSize: '0.85rem' }}>
-              Profile
+              {t('ranch_list.profile')}
             </Link>
           </div>
         </div>
@@ -238,19 +241,20 @@ function RanchCard({ ranch }) {
 }
 
 function Pagination({ page, totalPages, onPageChange }) {
+  const { t } = useTranslation();
   if (totalPages <= 1) return null;
   const pages = [];
   for (let i = Math.max(1, page - 2); i <= Math.min(totalPages, page + 2); i++) pages.push(i);
   return (
     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '16px 0' }}>
-      {page > 1 && <button onClick={() => onPageChange(page - 1)} style={btnStyle}>‹ Prev</button>}
+      {page > 1 && <button onClick={() => onPageChange(page - 1)} style={btnStyle}>{t('ranch_list.prev')}</button>}
       {pages.map(p => (
         <button key={p} onClick={() => onPageChange(p)}
           style={{ ...btnStyle, backgroundColor: p === page ? '#507033' : '#fff', color: p === page ? '#fff' : '#333' }}>
           {p}
         </button>
       ))}
-      {page < totalPages && <button onClick={() => onPageChange(page + 1)} style={btnStyle}>Next ›</button>}
+      {page < totalPages && <button onClick={() => onPageChange(page + 1)} style={btnStyle}>{t('ranch_list.next')}</button>}
     </div>
   );
 }
@@ -258,6 +262,7 @@ function Pagination({ page, totalPages, onPageChange }) {
 const btnStyle = { padding: '5px 12px', border: '1px solid #ccc', borderRadius: '8px', backgroundColor: '#fff', cursor: 'pointer', fontSize: '0.85rem' };
 
 export default function RanchList() {
+  const { t } = useTranslation();
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const [data, setData] = useState(null);
@@ -321,25 +326,23 @@ export default function RanchList() {
           { label: 'Home', to: '/' },
           { label: 'Marketplaces', to: '/marketplaces' },
           { label: 'Livestock', to: '/marketplaces/livestock' },
-          { label: 'Ranches' },
+          { label: t('ranch_list.breadcrumb_ranches') },
           { label: `${label} Ranches` },
         ]} />
       </div>
       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
         <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(p => !p)} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Title bar */}
           <div style={{ backgroundColor: '#441c15', padding: '12px 24px' }}>
             <h1 style={{ color: '#fff', margin: 0, fontSize: '1.4rem', fontWeight: 'bold' }}>
               {label} Ranches
             </h1>
           </div>
 
-          {/* Search bar above results */}
           <div style={{ padding: '16px 16px 0' }}>
             <input type="text" value={nameFilter}
               onChange={e => { setNameFilter(e.target.value); setPage(1); }}
-              placeholder="Search by ranch name..."
+              placeholder={t('ranch_list.search_placeholder')}
               style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '0.9rem', width: '300px', maxWidth: '100%' }} />
           </div>
 
@@ -361,13 +364,13 @@ export default function RanchList() {
                 ))
               ) : !data || data.ranches.length === 0 ? (
                 <div style={{ backgroundColor: '#d1ecf1', border: '1px solid #bee5eb', borderRadius: '4px', padding: '16px' }}>
-                  <h4 style={{ margin: '0 0 8px' }}>No Ranches Found</h4>
-                  <p style={{ margin: 0 }}>No {label} ranches are currently listed. Try broadening your search.</p>
+                  <h4 style={{ margin: '0 0 8px' }}>{t('ranch_list.no_ranches_title')}</h4>
+                  <p style={{ margin: 0 }}>{t('ranch_list.no_ranches_body', { label })}</p>
                 </div>
               ) : (
                 <>
                   <div style={{ color: '#666', fontSize: '0.85rem', marginBottom: '12px' }}>
-                    {data.total} ranch{data.total !== 1 ? 'es' : ''} found
+                    {t('ranch_list.ranches_found', { count: data.total })}
                   </div>
                   <Pagination page={page} totalPages={data.total_pages} onPageChange={setPage} />
                   {data.ranches.map(ranch => <RanchCard key={ranch.business_id} ranch={ranch} />)}
@@ -382,6 +385,3 @@ export default function RanchList() {
     </div>
   );
 }
-
-const filterLabel = { display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#555', marginBottom: '4px', textTransform: 'uppercase' };
-const inputStyle = { width: '100%', padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '0.85rem', boxSizing: 'border-box' };

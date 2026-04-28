@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -14,6 +15,7 @@ const fmtDate = (s) => {
 };
 
 function AnalysisCard({ title, data, thumb, loading, onRun, runLabel, uploadSlot }) {
+  const { t } = useTranslation();
   return (
     <div className="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
@@ -24,7 +26,7 @@ function AnalysisCard({ title, data, thumb, loading, onRun, runLabel, uploadSlot
             disabled={loading}
             className="text-xs px-2.5 py-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
           >
-            {loading ? 'Analyzing…' : runLabel}
+            {loading ? t('biomass_panel.analyzing') : runLabel}
           </button>
         )}
       </div>
@@ -44,15 +46,15 @@ function AnalysisCard({ title, data, thumb, loading, onRun, runLabel, uploadSlot
             <span className="text-sm font-normal text-gray-500 ml-1">kg DM/ha</span>
           </div>
           <div className="mt-1 text-xs text-gray-500">
-            Confidence {fmtPct(data.confidence)} · {fmtDate(data.captured_at)}
+            {t('biomass_panel.confidence', { pct: fmtPct(data.confidence), date: fmtDate(data.captured_at) })}
           </div>
           {data.model_version && (
-            <div className="text-[10px] text-gray-400 mt-0.5">model {data.model_version}</div>
+            <div className="text-[10px] text-gray-400 mt-0.5">{t('biomass_panel.model_version', { version: data.model_version })}</div>
           )}
         </>
       ) : (
         <div className="text-xs text-gray-400 italic py-3">
-          {loading ? 'Analyzing…' : 'No analysis yet'}
+          {loading ? t('biomass_panel.analyzing') : t('biomass_panel.no_data')}
         </div>
       )}
 
@@ -62,6 +64,7 @@ function AnalysisCard({ title, data, thumb, loading, onRun, runLabel, uploadSlot
 }
 
 export default function BiomassPanel({ fieldId, onClose }) {
+  const { t } = useTranslation();
   const [state, setState] = useState({ satellite: null, upload: null, history: [] });
   const [loadingSat, setLoadingSat] = useState(false);
   const [loadingUpload, setLoadingUpload] = useState(false);
@@ -100,7 +103,7 @@ export default function BiomassPanel({ fieldId, onClose }) {
       }
       await refresh();
     } catch (e) {
-      setError(`Satellite analysis failed: ${e.message || e}`);
+      setError(t('biomass_panel.error_satellite', { message: e.message || e }));
     } finally {
       setLoadingSat(false);
     }
@@ -123,7 +126,7 @@ export default function BiomassPanel({ fieldId, onClose }) {
       }
       await refresh();
     } catch (e) {
-      setError(`Upload analysis failed: ${e.message || e}`);
+      setError(t('biomass_panel.error_upload', { message: e.message || e }));
     } finally {
       setLoadingUpload(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -143,7 +146,7 @@ export default function BiomassPanel({ fieldId, onClose }) {
       setResolved(data);
       await refresh();
     } catch (e) {
-      setError(`Could not improve confidence: ${e.message || e}`);
+      setError(t('biomass_panel.error_confidence', { message: e.message || e }));
     } finally {
       setLoadingResolve(false);
     }
@@ -157,11 +160,11 @@ export default function BiomassPanel({ fieldId, onClose }) {
       <div className="flex items-center justify-between mb-3">
         <div className="font-semibold text-sm text-gray-800 flex items-center gap-1.5">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="text-[#3D6B34]"><path d="M8 14V9"/><path d="M4 6c0-2.5 2-4 4-4s4 1.5 4 4-2 3-4 3-4-.5-4-3z"/></svg>
-          Biomass Estimate
+          {t('biomass_panel.title')}
         </div>
         {onClose && (
           <button onClick={onClose} className="text-xs text-gray-500 hover:text-gray-700">
-            Close
+            {t('biomass_panel.close')}
           </button>
         )}
       </div>
@@ -174,15 +177,15 @@ export default function BiomassPanel({ fieldId, onClose }) {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <AnalysisCard
-          title="Satellite"
+          title={t('biomass_panel.card_satellite')}
           data={state.satellite}
           thumb={state.satellite?.image_url}
           loading={loadingSat}
           onRun={runSatellite}
-          runLabel={state.satellite ? 'Re-run' : 'Analyze'}
+          runLabel={state.satellite ? t('biomass_panel.run_rerun') : t('biomass_panel.run_analyze')}
         />
         <AnalysisCard
-          title="Your photo"
+          title={t('biomass_panel.card_photo')}
           data={state.upload}
           thumb={state.upload?.image_url}
           loading={loadingUpload}
@@ -204,7 +207,7 @@ export default function BiomassPanel({ fieldId, onClose }) {
                     : 'bg-indigo-600 text-white hover:bg-indigo-700'
                 }`}
               >
-                {loadingUpload ? 'Analyzing…' : (state.upload ? 'Upload another' : 'Upload photo')}
+                {loadingUpload ? t('biomass_panel.analyzing') : (state.upload ? t('biomass_panel.upload_another') : t('biomass_panel.upload_photo'))}
               </label>
             </div>
           }
@@ -213,10 +216,10 @@ export default function BiomassPanel({ fieldId, onClose }) {
 
       {bothExist && (
         <div className="mt-3 text-xs text-gray-600 bg-white border border-gray-200 rounded px-2.5 py-2">
-          <span className="font-semibold">Combined:</span>{' '}
-          avg {fmt((state.satellite.biomass_kg_per_ha + state.upload.biomass_kg_per_ha) / 2)} kg DM/ha
+          <span className="font-semibold">{t('biomass_panel.combined_label')}</span>{' '}
+          {t('biomass_panel.combined_avg', { value: fmt((state.satellite.biomass_kg_per_ha + state.upload.biomass_kg_per_ha) / 2) })}
           {' · '}
-          Δ {fmt(Math.abs(state.satellite.biomass_kg_per_ha - state.upload.biomass_kg_per_ha))} kg/ha between methods
+          {t('biomass_panel.combined_delta', { value: fmt(Math.abs(state.satellite.biomass_kg_per_ha - state.upload.biomass_kg_per_ha)) })}
         </div>
       )}
 
@@ -226,12 +229,10 @@ export default function BiomassPanel({ fieldId, onClose }) {
             <div>
               <div className="font-semibold mb-1 flex items-center gap-1">
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2L1 14h14z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12.5" r="0.6" fill="currentColor" stroke="none"/></svg>
-                Low satellite confidence ({fmtPct(state.satellite.confidence)})
+                {t('biomass_panel.low_confidence_title', { pct: fmtPct(state.satellite.confidence) })}
               </div>
               <div className="leading-relaxed">
-                The NDVI signal is weak — usually because the canopy is sparse or the latest cloud-free
-                pass was suboptimal. Averaging several recent satellite passes will reduce the noise and
-                raise confidence.
+                {t('biomass_panel.low_confidence_body')}
               </div>
             </div>
             <button
@@ -239,7 +240,7 @@ export default function BiomassPanel({ fieldId, onClose }) {
               disabled={loadingResolve}
               className="shrink-0 text-xs px-2.5 py-1.5 rounded-md bg-amber-600 text-white hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
             >
-              {loadingResolve ? 'Working…' : 'Improve confidence'}
+              {loadingResolve ? t('biomass_panel.working') : t('biomass_panel.improve_confidence')}
             </button>
           </div>
         </div>
@@ -249,10 +250,10 @@ export default function BiomassPanel({ fieldId, onClose }) {
         <div className="mt-3 text-xs bg-emerald-50 border border-emerald-200 text-emerald-900 rounded px-2.5 py-2">
           <div className="font-semibold mb-1 flex items-center gap-1">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3,8 6,11 13,4"/></svg>
-            Combined estimate from {resolved.n_samples} pass(es)
+            {t('biomass_panel.resolved_title', { n: resolved.n_samples })}
           </div>
           <div>
-            {fmt(resolved.averaged_biomass_kg_per_ha)} kg DM/ha · confidence {fmtPct(resolved.averaged_confidence)}
+            {t('biomass_panel.resolved_body', { value: fmt(resolved.averaged_biomass_kg_per_ha), pct: fmtPct(resolved.averaged_confidence) })}
           </div>
         </div>
       )}

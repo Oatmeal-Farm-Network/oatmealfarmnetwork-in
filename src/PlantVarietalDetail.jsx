@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -11,6 +12,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const na = v => (v === null || v === undefined || v === '') ? 'N/A' : v;
 
 function DetailItem({ label, value, description, impact }) {
+  const { t } = useTranslation();
   return (
     <li className="mb-4 text-center">
       <div className="text-sm text-gray-800">
@@ -20,13 +22,14 @@ function DetailItem({ label, value, description, impact }) {
         <p className="text-xs text-gray-500 mt-1">{description}</p>
       )}
       {impact && impact !== 'N/A' && (
-        <p className="text-xs text-gray-500 italic mt-1"><em>Impact:</em> {impact}</p>
+        <p className="text-xs text-gray-500 italic mt-1"><em>{t('plant_varietal_detail.impact_prefix')}</em> {impact}</p>
       )}
     </li>
   );
 }
 
 export default function PlantVarietalDetail() {
+  const { t } = useTranslation();
   const { varietyId } = useParams();
   const { language } = useLanguage();
   const [detail, setDetail] = useState(null);
@@ -53,7 +56,7 @@ export default function PlantVarietalDetail() {
   if (loading) return (
     <div className="min-h-screen font-sans">
       <Header />
-      <div className="text-center py-20 text-gray-400">Loading...</div>
+      <div className="text-center py-20 text-gray-400">{t('plant_varietal_detail.loading')}</div>
       <Footer />
     </div>
   );
@@ -61,14 +64,14 @@ export default function PlantVarietalDetail() {
   if (!detail) return (
     <div className="min-h-screen font-sans">
       <Header />
-      <div className="text-center py-20 text-gray-500">Varietal not found.</div>
+      <div className="text-center py-20 text-gray-500">{t('plant_varietal_detail.not_found')}</div>
       <Footer />
     </div>
   );
 
   const waterDisplay = (detail.water_min == null || detail.water_max == null)
     ? 'N/A'
-    : `${detail.water_min} - ${detail.water_max} inches per week`;
+    : t('plant_varietal_detail.water_per_week', { min: detail.water_min, max: detail.water_max });
 
   const zone = detail.zone
     ? `${detail.zone}${detail.temp_start != null ? ` (Min: ${detail.temp_start}°F, Max: ${detail.temp_end}°F)` : ''}`
@@ -115,45 +118,45 @@ export default function PlantVarietalDetail() {
 
           {/* Growing Environment */}
           <div className="rounded border border-gray-200 p-6 shadow-sm bg-white">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Growing Environment</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">{t('plant_varietal_detail.growing_env_heading')}</h2>
             <ul className="list-none p-0 m-0">
               <DetailItem
-                label="Soil Texture"
+                label={t('plant_varietal_detail.label_soil_texture')}
                 value={detail.soil_texture}
                 description={detail.soil_texture_description}
               />
               <DetailItem
-                label="pH Range"
+                label={t('plant_varietal_detail.label_ph_range')}
                 value={detail.ph_range}
                 description={detail.ph_range_description}
               />
               <DetailItem
-                label="Organic Matter"
+                label={t('plant_varietal_detail.label_organic_matter')}
                 value={detail.organic_matter}
                 description={detail.organic_matter_description}
               />
               <DetailItem
-                label="Salinity Level"
+                label={t('plant_varietal_detail.label_salinity_level')}
                 value={detail.salinity_level ? `${detail.salinity_level} (${na(detail.salinity_classification)})` : null}
                 description={detail.salinity_description}
                 impact={detail.salinity_impact}
               />
-              <DetailItem label="Hardiness Zone" value={zone} />
+              <DetailItem label={t('plant_varietal_detail.label_hardiness_zone')} value={zone} />
               <DetailItem
-                label="Humidity"
+                label={t('plant_varietal_detail.label_humidity')}
                 value={detail.humidity_classification}
                 description={detail.humidity_description}
                 impact={detail.humidity_impact}
               />
-              <DetailItem label="Water Requirement" value={waterDisplay} />
+              <DetailItem label={t('plant_varietal_detail.label_water_req')} value={waterDisplay} />
             </ul>
           </div>
 
           {/* Nutrient Profile */}
           <div className="rounded border border-gray-200 p-6 shadow-sm bg-white">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Nutrient Profile</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">{t('plant_varietal_detail.nutrient_heading')}</h2>
             {nutrients.length === 0 ? (
-              <p className="text-sm text-gray-400">No nutrient data available.</p>
+              <p className="text-sm text-gray-400">{t('plant_varietal_detail.no_nutrients')}</p>
             ) : (
               <ul className="list-none p-0 m-0">
                 {nutrients.map((n, i) => (

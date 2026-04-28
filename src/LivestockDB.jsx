@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -42,6 +43,7 @@ const SPECIES = [
 const EAGER_COUNT = 4;
 
 export default function LivestockDB() {
+  const { t } = useTranslation();
   const [counts, setCounts] = useState({});
   const [total, setTotal] = useState(0);
 
@@ -89,18 +91,17 @@ export default function LivestockDB() {
           <div className="hidden md:block absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }} />
           <div className="hidden md:flex absolute inset-0 flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
             <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 12px', lineHeight: 1.2 }}>
-              Livestock Database
+              {t('livestock_db.title')}
             </h1>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 8px', lineHeight: 1.6 }}>
-              There are thousands of breeds of livestock, we have documented{' '}
-              <strong>{total > 0 ? `${total.toLocaleString()} Breeds` : '…'}</strong>{' '}
-              so far. We have the mission to list them all here.
+              {t('livestock_db.hero_body_pre')}{' '}
+              <strong>{total > 0 ? t('livestock_db.hero_count', { count: total.toLocaleString() }) : '…'}</strong>{' '}
+              {t('livestock_db.hero_body_post')}
             </p>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
-              We are consistently adding more information and photos to the list. If you would like to help out with photos,
-              descriptions, or correcting errors please{' '}
-              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>Contact Us</Link>
-              {' '}and let us know — the more people we have helping, the more complete the information.
+              {t('livestock_db.hero_body2_pre')}{' '}
+              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>{t('livestock_db.contact_us')}</Link>
+              {' '}{t('livestock_db.hero_body2_post')}
             </p>
           </div>
         </div>
@@ -108,16 +109,16 @@ export default function LivestockDB() {
         {/* Text below image — mobile only */}
         <div className="md:hidden bg-white px-5 py-4 rounded-b-xl border border-t-0 border-gray-200">
           <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.4rem', fontWeight: 'bold', margin: '0 0 8px', lineHeight: 1.2 }}>
-            Livestock Database
+            {t('livestock_db.title')}
           </h1>
           <p style={{ color: '#111111', fontSize: '0.85rem', margin: '0 0 6px', lineHeight: 1.6 }}>
-            There are thousands of breeds of livestock, we have documented{' '}
-            <strong>{total > 0 ? `${total.toLocaleString()} Breeds` : '…'}</strong>{' '}
-            so far.
+            {t('livestock_db.hero_body_pre')}{' '}
+            <strong>{total > 0 ? t('livestock_db.hero_count', { count: total.toLocaleString() }) : '…'}</strong>{' '}
+            {t('livestock_db.hero_body_mobile_post')}
           </p>
           <p style={{ color: '#111111', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
-            If you'd like to help with photos or descriptions, please{' '}
-            <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>Contact Us</Link>.
+            {t('livestock_db.hero_body2_mobile_pre')}{' '}
+            <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>{t('livestock_db.contact_us')}</Link>.
           </p>
         </div>
 
@@ -126,12 +127,13 @@ export default function LivestockDB() {
       <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
         {/* ── Section heading ── */}
-        <h2 className="text-lg font-bold text-gray-900 mb-5">Species of Livestock</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-5">{t('livestock_db.species_heading')}</h2>
 
         {/* ── 2-column grid of horizontal cards ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {SPECIES.map((s, index) => {
             const count = counts[s.slug] || 0;
+            const slugKey = s.slug.replace(/-/g, '_');
             // Single-breed species — skip the breed-list page and go straight to About
             const SINGLE_BREED_SLUGS = new Set(['emus', 'ostriches']);
             const target = SINGLE_BREED_SLUGS.has(s.slug) ? `/livestock/${s.slug}/about` : `/livestock/${s.slug}`;
@@ -144,7 +146,7 @@ export default function LivestockDB() {
                 <Link to={target} className="shrink-0 overflow-hidden" style={{ width: '155px', height: '155px' }}>
                   <img
                     src={s.img}
-                    alt={s.label}
+                    alt={t('livestock_db.species_' + slugKey + '_label', s.label)}
                     width="155"
                     height="155"
                     loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
@@ -162,15 +164,15 @@ export default function LivestockDB() {
                       className="font-bold text-sm hover:underline"
                       style={{ color: '#3D6B34' }}
                     >
-                      {s.label}
+                      {t('livestock_db.species_' + slugKey + '_label', s.label)}
                     </Link>
                     <p
                       className="text-xs font-semibold mt-0.5 mb-2"
                       style={{ color: '#819360' }}
                     >
-                      {count > 0 ? `${count.toLocaleString()} Breeds` : '—'}
+                      {count > 0 ? t('livestock_db.breed_count', { count: count.toLocaleString() }) : '—'}
                     </p>
-                    <p className="text-xs text-gray-600 leading-relaxed">{s.desc}</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">{t('livestock_db.species_' + slugKey + '_desc', s.desc)}</p>
                   </div>
                   <div className="mt-3">
                     <Link
@@ -178,7 +180,7 @@ export default function LivestockDB() {
                       className="text-xs font-bold hover:underline"
                       style={{ color: '#3D6B34' }}
                     >
-                      EXPLORE →
+                      {t('livestock_db.explore_arrow')}
                     </Link>
                   </div>
                 </div>
