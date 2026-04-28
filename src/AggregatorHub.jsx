@@ -12,16 +12,33 @@ import { useAccount } from './AccountContext';
 
 const API = import.meta.env.VITE_API_URL || '';
 
+const S = ({ children }) => (
+  <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+    strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-[#3D6B34]">
+    {children}
+  </svg>
+);
+
 const TILES = [
-  { slug: 'farms',     icon: '🌱', title: 'Farm Network',
+  { slug: 'farms',
+    icon: <S><path d="M8 14V9"/><path d="M4 6c0-2.5 2-4 4-4s4 1.5 4 4-2 3-4 3-4-.5-4-3z"/></S>,
+    title: 'Farm Network',
     desc: 'Partner farms, contracts, input distribution (saplings, tunnels, training).' },
-  { slug: 'produce',   icon: '🫐', title: 'Procurement & Inventory',
+  { slug: 'produce',
+    icon: <S><path d="M2 5h12l-1.5 7H3.5z"/><path d="M5.5 5L6.5 2M10.5 5l-1-3"/><circle cx="5.5" cy="13.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="10.5" cy="13.5" r="0.8" fill="currentColor" stroke="none"/></S>,
+    title: 'Procurement & Inventory',
     desc: 'Goods receipts, residue testing, cold-storage stock, QC status.' },
-  { slug: 'logistics', icon: '🚛', title: 'Logistics',
+  { slug: 'logistics',
+    icon: <S><rect x="1" y="7" width="10" height="6" rx="1"/><path d="M11 9h2l2 2v2h-4V9z"/><circle cx="4" cy="13.5" r="1.2"/><circle cx="12" cy="13.5" r="1.2"/><line x1="1" y1="4" x2="9" y2="4"/><line x1="3" y1="2" x2="3" y2="7"/><line x1="7" y1="2" x2="7" y2="7"/></S>,
+    title: 'Logistics',
     desc: 'Dispatch, drivers, cold-chain temperature log, breach alerts.' },
-  { slug: 'sales',     icon: '🛒', title: 'B2B & D2C Sales',
+  { slug: 'sales',
+    icon: <S><line x1="5" y1="2" x2="5" y2="14"/><path d="M3 2v4a2 2 0 0 0 4 0V2"/><line x1="11" y1="2" x2="11" y2="14"/><path d="M9 2h3a0 0 0 0 1 0 4v0"/></S>,
+    title: 'B2B & D2C Sales',
     desc: 'Retail/restaurant accounts plus Zepto / Swiggy / own-app channels.' },
-  { slug: 'esg',       icon: '🌍', title: 'ESG Reports',
+  { slug: 'esg',
+    icon: <S><circle cx="8" cy="8" r="6"/><path d="M8 2c-2 1.5-3 3.5-3 6s1 4.5 3 6"/><path d="M8 2c2 1.5 3 3.5 3 6s-1 4.5-3 6"/><line x1="2" y1="8" x2="14" y2="8"/></S>,
+    title: 'ESG Reports',
     desc: 'Audit-ready proof of sustainable practices — auto-pulled from sourcing, cold chain, inputs; manual metrics for the rest. PDF export.' },
 ];
 
@@ -78,8 +95,8 @@ export default function AggregatorHub() {
 
         {(breaches > 0 || onHold > 0) && (
           <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 text-sm text-amber-900 flex flex-wrap gap-x-4 gap-y-1">
-            {breaches > 0 && <span>⚠️ <strong>{breaches}</strong> cold-chain breach{breaches === 1 ? '' : 'es'} in the last 7 days</span>}
-            {onHold > 0 && <span>🛑 <strong>{onHold}</strong> inventory item{onHold === 1 ? '' : 's'} on hold / quarantine</span>}
+            {breaches > 0 && <span><strong>{breaches}</strong> cold-chain breach{breaches === 1 ? '' : 'es'} in the last 7 days</span>}
+            {onHold > 0 && <span><strong>{onHold}</strong> inventory item{onHold === 1 ? '' : 's'} on hold / quarantine</span>}
           </div>
         )}
 
@@ -132,8 +149,8 @@ export default function AggregatorHub() {
             {TILES.map(t => (
               <Link key={t.slug}
                     to={`/aggregator/${t.slug}?BusinessID=${BusinessID}`}
-                    className="bg-white border border-gray-200 rounded-xl p-4 flex gap-3 hover:border-[#819360] hover:shadow-sm transition">
-                <div className="text-3xl shrink-0">{t.icon}</div>
+                    className="bg-white border border-gray-200 rounded-xl p-4 flex items-start gap-3 hover:border-[#819360] hover:shadow-sm transition">
+                <div className="mt-0.5">{t.icon}</div>
                 <div>
                   <div className="font-semibold text-gray-900">{t.title}</div>
                   <div className="text-xs text-gray-600 mt-0.5">{t.desc}</div>

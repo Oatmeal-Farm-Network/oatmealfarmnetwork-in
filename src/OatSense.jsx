@@ -107,7 +107,7 @@ export default function OatSense() {
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-[18px] text-black">{field.name}</div>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-red-600 shrink-0">📍</span>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M8 1a4.5 4.5 0 0 0-4.5 4.5C3.5 9 8 15 8 15s4.5-6 4.5-9.5A4.5 4.5 0 0 0 8 1z"/><circle cx="8" cy="5.5" r="1.5"/></svg>
                     <span className="font-semibold text-[16px] text-black shrink-0">Location:</span>
                     <span className="text-[16px] text-black truncate">{field.address}</span>
                   </div>

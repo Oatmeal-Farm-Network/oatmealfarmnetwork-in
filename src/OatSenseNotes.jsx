@@ -5,20 +5,27 @@ import { useAccount } from './AccountContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const CI = ({ children }) => (
+  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+    strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', flexShrink: 0 }}>
+    {children}
+  </svg>
+);
+
 const CATEGORIES = [
-  { value: 'Observation',       label: 'Observation',       icon: '👁️',  color: '#6D8E22', bg: '#f0f5e8' },
-  { value: 'Planting',          label: 'Planting',          icon: '🌱',  color: '#2E7D32', bg: '#e8f5e9' },
-  { value: 'Spray Application', label: 'Spray Application', icon: '🧪',  color: '#1565C0', bg: '#e3f2fd' },
-  { value: 'Irrigation',        label: 'Irrigation',        icon: '💧',  color: '#0277BD', bg: '#e1f5fe' },
-  { value: 'Harvest',           label: 'Harvest',           icon: '🌾',  color: '#F57F17', bg: '#fffde7' },
-  { value: 'Scouting',          label: 'Scouting',          icon: '🔍',  color: '#6A1B9A', bg: '#f3e5f5' },
-  { value: 'Pest',              label: 'Pest',              icon: '🐛',  color: '#B71C1C', bg: '#ffebee' },
-  { value: 'Disease',           label: 'Disease',           icon: '🦠',  color: '#AD1457', bg: '#fce4ec' },
-  { value: 'Weed',              label: 'Weed',              icon: '🌿',  color: '#388E3C', bg: '#e8f5e9' },
-  { value: 'Nutrient',          label: 'Nutrient',          icon: '⚗️', color: '#5D4037', bg: '#efebe9' },
-  { value: 'Equipment',         label: 'Equipment',         icon: '🔧',  color: '#4E342E', bg: '#efebe9' },
-  { value: 'Weather',           label: 'Weather',           icon: '🌤️', color: '#0288D1', bg: '#e1f5fe' },
-  { value: 'General',           label: 'General',           icon: '📋',  color: '#546E7A', bg: '#eceff1' },
+  { value: 'Observation',       label: 'Observation',       icon: <CI><ellipse cx="8" cy="8" rx="6" ry="4"/><circle cx="8" cy="8" r="2"/><circle cx="8" cy="8" r="0.8" fill="currentColor" stroke="none"/></CI>,  color: '#6D8E22', bg: '#f0f5e8' },
+  { value: 'Planting',          label: 'Planting',          icon: <CI><path d="M8 14V9"/><path d="M4 6c0-2.5 2-4 4-4s4 1.5 4 4-2 3-4 3-4-.5-4-3z"/></CI>,  color: '#2E7D32', bg: '#e8f5e9' },
+  { value: 'Spray Application', label: 'Spray Application', icon: <CI><path d="M4 13V7a4 4 0 0 1 8 0v6"/><line x1="6" y1="7" x2="10" y2="7"/><path d="M8 4V2"/><line x1="6" y1="13" x2="10" y2="13"/></CI>,  color: '#1565C0', bg: '#e3f2fd' },
+  { value: 'Irrigation',        label: 'Irrigation',        icon: <CI><path d="M8 2c0 4-5 6-5 9a5 5 0 0 0 10 0c0-3-5-5-5-9z"/></CI>,  color: '#0277BD', bg: '#e1f5fe' },
+  { value: 'Harvest',           label: 'Harvest',           icon: <CI><path d="M2 12c2-2 4-2 6 0s4 2 6 0"/><path d="M5 9a3 3 0 0 1 6 0"/><line x1="8" y1="6" x2="8" y2="2"/></CI>,  color: '#F57F17', bg: '#fffde7' },
+  { value: 'Scouting',          label: 'Scouting',          icon: <CI><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></CI>,  color: '#6A1B9A', bg: '#f3e5f5' },
+  { value: 'Pest',              label: 'Pest',              icon: <CI><ellipse cx="8" cy="9" rx="3" ry="4"/><circle cx="8" cy="4" r="2"/><path d="M5 6l-2-2M11 6l2-2M5 10l-2 1M11 10l2 1"/></CI>,  color: '#B71C1C', bg: '#ffebee' },
+  { value: 'Disease',           label: 'Disease',           icon: <CI><circle cx="8" cy="8" r="5"/><circle cx="6" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="8" cy="10" r="1" fill="currentColor" stroke="none"/></CI>,  color: '#AD1457', bg: '#fce4ec' },
+  { value: 'Weed',              label: 'Weed',              icon: <CI><path d="M8 14V8"/><path d="M8 10c0-3 3-5 5-4"/><path d="M8 8c0-3-3-5-5-4"/></CI>,  color: '#388E3C', bg: '#e8f5e9' },
+  { value: 'Nutrient',          label: 'Nutrient',          icon: <CI><path d="M6 2h4l1 4H5z"/><path d="M5 6l-1 7h8l-1-7"/></CI>, color: '#5D4037', bg: '#efebe9' },
+  { value: 'Equipment',         label: 'Equipment',         icon: <CI><path d="M13 3a3.5 3.5 0 0 0-4.2 3.5L2.5 12.5a1.5 1.5 0 1 0 2 2L10 9a3.5 3.5 0 1 0 3-6z"/><circle cx="12.5" cy="3.5" r="1"/></CI>,  color: '#4E342E', bg: '#efebe9' },
+  { value: 'Weather',           label: 'Weather',           icon: <CI><path d="M11 6a3 3 0 0 0-6 0 2.5 2.5 0 0 0 0 5h6a2.5 2.5 0 0 0 0-5z"/></CI>, color: '#0288D1', bg: '#e1f5fe' },
+  { value: 'General',           label: 'General',           icon: <CI><rect x="4" y="2" width="8" height="12" rx="1"/><path d="M6 2V1h4v1"/><line x1="6" y1="6" x2="10" y2="6"/><line x1="6" y1="8.5" x2="10" y2="8.5"/></CI>,  color: '#546E7A', bg: '#eceff1' },
 ];
 
 // Scouting-style categories surface severity/GPS/photo inputs and a severity badge.
@@ -237,7 +244,7 @@ function NoteCard({ note, fieldName, onEdit, onDelete }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full font-mont"
-                style={{ background: cat.bg, color: cat.color }}>
+                style={{ background: cat.bg, color: cat.color, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 {cat.icon} {cat.label}
               </span>
               {note.severity && (
@@ -259,8 +266,10 @@ function NoteCard({ note, fieldName, onEdit, onDelete }) {
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <button onClick={() => onEdit(note)}
-              className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition text-sm"
-              title="Edit">✏️</button>
+              className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
+              title="Edit">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 2l3 3-8 8H3v-3z"/></svg>
+            </button>
             {confirmDelete ? (
               <div className="flex items-center gap-1">
                 <button onClick={() => onDelete(note.note_id)}
@@ -270,8 +279,10 @@ function NoteCard({ note, fieldName, onEdit, onDelete }) {
               </div>
             ) : (
               <button onClick={() => setConfirmDelete(true)}
-                className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500 transition text-sm"
-                title="Delete">🗑</button>
+                className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500 transition"
+                title="Delete">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="2 4 4 4 14 4"/><path d="M5 4V2.5h6V4"/><path d="M4 4l1 9h6l1-9"/></svg>
+              </button>
             )}
           </div>
         </div>
@@ -461,8 +472,8 @@ export default function OatSenseNotes() {
                 onClick={() => setCatFilter(catFilter === c.value ? 'all' : c.value)}
                 className="px-3 py-1 rounded-full text-xs font-mont font-semibold transition"
                 style={catFilter === c.value
-                  ? { background: c.color, color: 'white' }
-                  : { background: c.bg, color: c.color }}>
+                  ? { background: c.color, color: 'white', display: 'inline-flex', alignItems: 'center', gap: 3 }
+                  : { background: c.bg, color: c.color, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 {c.icon} {c.label}
               </button>
             ))}
@@ -472,12 +483,18 @@ export default function OatSenseNotes() {
         {/* Active field banner */}
         {activeFieldObj && (
           <div className="flex items-center gap-3 bg-[#f0f5e8] border border-[#c5d98a] rounded-xl px-5 py-3 mb-6 flex-wrap">
-            <span className="text-[#6D8E22] font-lora font-bold">📍 {activeFieldObj.name}</span>
+            <span className="text-[#6D8E22] font-lora font-bold flex items-center gap-1">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 1a4.5 4.5 0 0 0-4.5 4.5C3.5 9 8 15 8 15s4.5-6 4.5-9.5A4.5 4.5 0 0 0 8 1z"/><circle cx="8" cy="5.5" r="1.5"/></svg>
+              {activeFieldObj.name}
+            </span>
             {activeFieldObj.crop_type && (
-              <span className="text-sm text-gray-500 font-mont">🌱 {activeFieldObj.crop_type}</span>
+              <span className="text-sm text-gray-500 font-mont flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 14V9"/><path d="M4 6c0-2.5 2-4 4-4s4 1.5 4 4-2 3-4 3-4-.5-4-3z"/></svg>
+                {activeFieldObj.crop_type}
+              </span>
             )}
             {activeFieldObj.field_size_hectares && (
-              <span className="text-sm text-gray-500 font-mont">📏 {activeFieldObj.field_size_hectares} ha</span>
+              <span className="text-sm text-gray-500 font-mont">{activeFieldObj.field_size_hectares} ha</span>
             )}
           </div>
         )}
@@ -489,7 +506,9 @@ export default function OatSenseNotes() {
           <div className="text-center py-16 text-red-500 font-mont text-sm">{error}</div>
         ) : notes.length === 0 ? (
           <div className="text-center py-24">
-            <div className="text-6xl mb-4">📓</div>
+            <div className="flex justify-center mb-4 text-gray-300">
+            <svg width="56" height="56" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="1" width="10" height="14" rx="1"/><path d="M5 1V0h6v1"/><line x1="5" y1="5" x2="11" y2="5"/><line x1="5" y1="7.5" x2="11" y2="7.5"/><line x1="5" y1="10" x2="9" y2="10"/></svg>
+          </div>
             <div className="font-lora text-2xl text-gray-700 mb-2">No entries yet</div>
             <div className="font-mont text-sm text-gray-400 mb-6">
               {catFilter !== 'all' || activeField !== 'all'

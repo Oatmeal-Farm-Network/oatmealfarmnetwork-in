@@ -679,7 +679,10 @@ export default function AccountProfile() {
         {/* ── Restaurant Profile ── shown only when this business is a Restaurant */}
         {isRestaurantBusiness && (
           <div className={sectionCard}>
-            <h2 className="text-base font-semibold text-gray-700">🍽️ Restaurant Profile <span className="text-gray-400 font-normal text-sm">(Optional)</span></h2>
+            <h2 className="text-base font-semibold text-gray-700 flex items-center gap-2">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="text-[#3D6B34]"><line x1="5" y1="2" x2="5" y2="14"/><path d="M3 2v4a2 2 0 0 0 4 0V2"/><line x1="11" y1="2" x2="11" y2="14"/><path d="M9 2h3a0 0 0 0 1 0 4v0"/></svg>
+              Restaurant Profile <span className="text-gray-400 font-normal text-sm">(Optional)</span>
+            </h2>
             <p className="text-xs text-gray-400">Helps farmers know who you are when you place orders or save them to My Farms.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

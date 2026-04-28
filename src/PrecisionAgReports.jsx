@@ -120,11 +120,15 @@ export default function PrecisionAgReports() {
           <div className="flex items-center gap-2">
             <button onClick={emailLatest} disabled={!selectedFieldId || emailing}
               className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#6D8E22] text-[#6D8E22] text-sm font-mont font-semibold rounded-lg hover:bg-[#f5f8eb] disabled:opacity-50">
-              {emailing ? '⏳ Sending…' : '✉ Email Latest Analysis'}
+              {emailing ? 'Sending…' : (
+                <><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="12" height="9" rx="1"/><path d="M2 4l6 5 6-5"/></svg> Email Latest Analysis</>
+              )}
             </button>
             <button onClick={downloadExcel} disabled={!selectedFieldId || downloading}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#6D8E22] text-white text-sm font-mont font-semibold rounded-lg hover:bg-[#5a7519] disabled:opacity-50">
-              {downloading ? '⏳ Preparing…' : '↓ Download Excel Report'}
+              {downloading ? 'Preparing…' : (
+                <><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v9"/><polyline points="5 8 8 11 11 8"/><line x1="2" y1="14" x2="14" y2="14"/></svg> Download Excel Report</>
+              )}
             </button>
           </div>
         </div>

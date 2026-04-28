@@ -254,7 +254,10 @@ const DirectoryDetail = function () {
     };
 
     const businessType = DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID[directoryType] || directoryType;
-    const pageTitle    = directoryType
+    const PAGE_TITLE_OVERRIDES = {
+        'farms-ranches': 'Farms & Ranches',
+    };
+    const pageTitle = PAGE_TITLE_OVERRIDES[directoryType] ?? directoryType
         .replace(/-/g, ' ')
         .split(' ')
         .map(w => w.charAt(0).toUpperCase() + w.slice(1))

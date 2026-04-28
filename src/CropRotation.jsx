@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
@@ -361,6 +361,7 @@ export default function CropRotation() {
   const [editEntry,   setEditEntry]   = useState(null);
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState('');
+  const autoOpenedRef = useRef(false);
 
   useEffect(() => { if (businessId) LoadBusiness(businessId); }, [businessId]);
 
@@ -378,6 +379,7 @@ export default function CropRotation() {
 
   useEffect(() => {
     if (!businessId || !activeField) return;
+    autoOpenedRef.current = false;
     setLoading(true);
     fetch(`${API_URL}/api/crop-rotation?business_id=${businessId}&field_id=${activeField}`)
       .then(r => r.json())
@@ -385,6 +387,15 @@ export default function CropRotation() {
       .catch(() => setError('Could not load rotation data.'))
       .finally(() => setLoading(false));
   }, [businessId, activeField]);
+
+  // Auto-open the form when the field has no entries yet
+  useEffect(() => {
+    if (!loading && !error && entries.length === 0 && activeField && !autoOpenedRef.current) {
+      autoOpenedRef.current = true;
+      setEditEntry(null);
+      setShowForm(true);
+    }
+  }, [loading, error, entries.length, activeField]);
 
   useEffect(() => {
     const next = new URLSearchParams(searchParams);
@@ -486,24 +497,43 @@ export default function CropRotation() {
               <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm">Loading rotation history…</div>
             ) : error ? (
               <div className="text-center py-16 text-red-500 font-mont text-sm">{error}</div>
-            ) : entries.length === 0 ? (
-              <div className="text-center py-24">
-                <div className="text-6xl mb-4">🌱</div>
-                <div className="font-lora text-2xl text-gray-700 mb-2">No rotation history yet</div>
-                <div className="font-mont text-sm text-gray-400 mb-6">
-                  Start by adding your first season entry to begin tracking this field's crop rotation.
-                </div>
-                <button onClick={openNew}
-                  className="px-6 py-2.5 rounded-lg text-white font-mont font-semibold text-sm"
-                  style={{ background: '#819360' }}>
-                  Add First Season
-                </button>
-              </div>
-            ) : (
+            ) : entries.length === 0 ? null : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                {/* Left: Timeline */}
+                {/* Left: Current season + Timeline */}
                 <div className="lg:col-span-2">
+                  {/* Most recent entry — featured */}
+                  {sortedEntries[0] && (() => {
+                    const cur = sortedEntries[0];
+                    const s = getCropStyle(cur.crop_name);
+                    return (
+                      <div className="rounded-xl border-2 p-5 mb-6 flex items-start justify-between gap-4"
+                        style={{ borderColor: s.border, background: s.bg }}>
+                        <div>
+                          <div className="text-xs font-mont font-semibold uppercase tracking-widest mb-1"
+                            style={{ color: s.text, opacity: 0.7 }}>Current / Most Recent Season</div>
+                          <div className="font-lora font-bold text-2xl mb-1" style={{ color: s.text }}>
+                            {s.icon} {cur.crop_name}
+                            {cur.is_cover_crop && <span className="ml-2 text-xs px-2 py-0.5 rounded-full font-mont font-semibold bg-cyan-100 text-cyan-700">Cover Crop</span>}
+                          </div>
+                          {cur.variety && <div className="text-sm font-mont mb-1" style={{ color: s.text }}>{cur.variety}</div>}
+                          <div className="flex flex-wrap gap-4 text-xs font-mont mt-2" style={{ color: s.text, opacity: 0.8 }}>
+                            <span className="font-semibold">{cur.season_year}</span>
+                            {cur.planting_date && <span>🌱 Planted {cur.planting_date}</span>}
+                            {cur.harvest_date  && <span>🌾 Harvested {cur.harvest_date}</span>}
+                            {cur.yield_amount  && <span>📊 {cur.yield_amount} {cur.yield_unit}</span>}
+                          </div>
+                          {cur.notes && <p className="text-xs font-mont mt-2" style={{ color: s.text, opacity: 0.75 }}>{cur.notes}</p>}
+                        </div>
+                        <button onClick={() => handleEdit(cur)}
+                          className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-mont font-semibold border transition hover:opacity-80"
+                          style={{ borderColor: s.border, color: s.text, background: 'rgba(255,255,255,0.5)' }}>
+                          Edit
+                        </button>
+                      </div>
+                    );
+                  })()}
+
                   <h2 className="font-lora font-bold text-gray-900 text-xl mb-4">Season History</h2>
                   <div>
                     {sortedEntries.map(entry => (

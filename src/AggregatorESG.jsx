@@ -23,7 +23,36 @@ const btn = "px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg hover:bg-[#2
 const btnGhost = "px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50";
 
 const CATEGORIES = ['environmental', 'social', 'governance'];
-const CAT_ICON = { environmental: '🌍', social: '🤝', governance: '⚖️' };
+
+const S = ({ children, size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor"
+    strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    {children}
+  </svg>
+);
+
+const ICONS = {
+  environmental: <S><path d="M3 13c1-5 4-8 9-9"/><path d="M3 13c2-3 5-5 9-6"/></S>,
+  social:        <S><circle cx="5.5" cy="5" r="2"/><circle cx="10.5" cy="5" r="2"/><path d="M1 14c0-2.5 1.8-3.5 4.5-3.5h5c2.7 0 4.5 1 4.5 3.5"/></S>,
+  governance:    <S><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="6" x2="14" y2="6"/><path d="M2 6l2.5 4.5a2.5 2.5 0 0 0 4.5 0L11.5 6"/><path d="M7 6l2.5 4.5a2.5 2.5 0 0 0 4.5 0L16.5 6"/></S>,
+  sourcing:      <S><path d="M8 14V9"/><path d="M4 6c0-2.5 2-4 4-4s4 1.5 4 4-2 3-4 3-4-.5-4-3z"/></S>,
+  procurement:   <S><path d="M2 5l6-3 6 3v6l-6 3-6-3V5z"/><path d="M8 2v12"/><path d="M2 5l6 3 6-3"/></S>,
+  inputs:        <S><path d="M14 2l-1.5 1.5L11 2l-1.5 1.5"/><path d="M5 9l4-4 1 1-4 4-1-1z"/><circle cx="4" cy="12" r="1.5"/></S>,
+  coldchain:     <S><line x1="8" y1="1" x2="8" y2="15"/><line x1="1" y1="8" x2="15" y2="8"/><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></S>,
+  waste:         <S><polyline points="2 4 4 4 14 4"/><path d="M5 4V2.5h6V4"/><path d="M4 4l1 9h6l1-9"/></S>,
+  sensors:       <S><circle cx="8" cy="11" r="1.2" fill="currentColor" stroke="none"/><path d="M5.2 8.5a4 4 0 0 1 5.6 0"/><path d="M2.5 6a8 8 0 0 1 11 0"/></S>,
+  clipboard:     <S><rect x="4" y="3" width="8" height="11" rx="1"/><path d="M6 3V2h4v1"/><line x1="6" y1="7" x2="10" y2="7"/><line x1="6" y1="9.5" x2="10" y2="9.5"/></S>,
+  document:      <S><path d="M4 2h6l4 4v10H4V2z"/><polyline points="10 2 10 6 14 6"/><line x1="6" y1="9" x2="10" y2="9"/><line x1="6" y1="11.5" x2="9" y2="11.5"/></S>,
+  paperclip:     <S><path d="M13 5L7 11a2.5 2.5 0 0 1-3.5-3.5l6-6a1.5 1.5 0 0 1 2.1 2.1L5.5 9.7a.5.5 0 0 1-.7-.7L11 3"/></S>,
+  check:         <S><circle cx="8" cy="8" r="6"/><polyline points="5 8 7 10 11 6"/></S>,
+  download:      <S><path d="M8 2v9"/><polyline points="5 8 8 11 11 8"/><line x1="2" y1="14" x2="14" y2="14"/></S>,
+};
+
+const CAT_SVG = {
+  environmental: ICONS.environmental,
+  social:        ICONS.social,
+  governance:    ICONS.governance,
+};
 const SUGGESTED_KEYS = {
   environmental: [
     ['renewable_energy_pct', '% of operations on renewable energy', '%'],
@@ -68,7 +97,7 @@ function LiveTab({ businessId }) {
     fetch(`${API}/api/esg/${businessId}/live?start=${start}&end=${end}`)
       .then(r => r.json()).then(d => { setData(d); setLoading(false); });
   };
-  useEffect(refresh, [businessId, start, end]);
+  useEffect(() => { refresh(); }, [businessId, start, end]);
 
   if (loading) return <div className="text-sm text-gray-500">Loading…</div>;
 
@@ -83,8 +112,8 @@ function LiveTab({ businessId }) {
 
   const card = (title, icon, children) => (
     <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-lg">{icon}</span>
+      <div className="flex items-center gap-2 mb-3 text-[#3D6B34]">
+        {icon}
         <strong className="text-gray-900">{title}</strong>
       </div>
       <div className="space-y-1 text-sm">{children}</div>
@@ -108,7 +137,7 @@ function LiveTab({ businessId }) {
       </div>
 
       <div className="grid md:grid-cols-2 gap-3">
-        {card('Sourcing transparency', '🌱', <>
+        {card('Sourcing transparency', ICONS.sourcing, <>
           {kv('Active partner farms',    src.active_farms ?? 0)}
           {kv('Certified farms',         `${src.farms_certified ?? 0} (${src.certified_pct ?? 0}%)`)}
           {(src.certifications || []).length > 0 && (
@@ -123,7 +152,7 @@ function LiveTab({ businessId }) {
           )}
         </>)}
 
-        {card('Procurement & residue', '🫐', <>
+        {card('Procurement & residue', ICONS.procurement, <>
           {kv('Purchase records',        proc.purchase_count ?? 0)}
           {kv('Quantity received',       `${fmtKg(proc.kg_received)} kg`)}
           {kv('Spend',                   `$${fmt$(proc.spend)}`)}
@@ -132,7 +161,7 @@ function LiveTab({ businessId }) {
           {kv('Residue pass rate',       fmtPct(proc.residue_pass_rate_pct))}
         </>)}
 
-        {card('Inputs distributed to farms', '🧰', <>
+        {card('Inputs distributed to farms', ICONS.inputs, <>
           {(inputs.by_type || []).length > 0
             ? (inputs.by_type || []).map(r => (
                 <div key={r.InputType} className="flex justify-between text-xs">
@@ -147,18 +176,18 @@ function LiveTab({ businessId }) {
           </div>
         </>)}
 
-        {card('Cold chain integrity', '❄️', <>
+        {card('Cold chain integrity', ICONS.coldchain, <>
           {kv('Dispatches logged',     cold.dispatches ?? 0)}
           {kv('Cold-chain breaches',   cold.breaches ?? 0, 'lower is better')}
           {kv('Integrity rate',        fmtPct(cold.integrity_pct))}
         </>)}
 
-        {card('Waste signal', '🗑️', <>
+        {card('Waste signal', ICONS.waste, <>
           {kv('Items quarantined / discarded', waste.items_quarantined_or_discarded ?? 0)}
           {kv('Kg quarantined / discarded',    fmtKg(waste.kg_quarantined_or_discarded))}
         </>)}
 
-        {card('Sensor data (IoT)', '📡', <>
+        {card('Sensor data (IoT)', ICONS.sensors, <>
           {sensors.length > 0
             ? sensors.map(r => (
                 <div key={r.sensor_type} className="flex justify-between text-xs">
@@ -172,15 +201,15 @@ function LiveTab({ businessId }) {
 
       {manual.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-lg">📋</span>
+          <div className="flex items-center gap-2 mb-3 text-[#3D6B34]">
+            {ICONS.clipboard}
             <strong className="text-gray-900">Manual ESG metrics for this period</strong>
             <span className="text-xs text-gray-500">({manual.length})</span>
           </div>
           <div className="space-y-2">
             {manual.map(m => (
               <div key={m.MetricID} className="flex items-start gap-2 text-sm border-b border-gray-100 pb-2">
-                <span>{CAT_ICON[m.Category] || '📋'}</span>
+                <span className="text-[#3D6B34] mt-0.5">{CAT_SVG[m.Category] || ICONS.clipboard}</span>
                 <div className="flex-1">
                   <div className="font-semibold text-gray-900">{m.Label}</div>
                   <div className="text-xs text-gray-500">
@@ -260,7 +289,7 @@ function MetricsTab({ businessId }) {
     const qs = filter ? `?category=${filter}` : '';
     fetch(`${API}/api/esg/${businessId}/metrics${qs}`).then(r => r.json()).then(setList);
   };
-  useEffect(refresh, [businessId, filter]);
+  useEffect(() => { refresh(); }, [businessId, filter]);
 
   const save = async (m) => {
     const isEdit = !!m.MetricID;
@@ -295,7 +324,7 @@ function MetricsTab({ businessId }) {
           <MetricForm key={m.MetricID} metric={editing} onSave={save} onCancel={() => setEdit(null)} />
         ) : (
           <div key={m.MetricID} className="bg-white border border-gray-200 rounded-xl p-3 flex items-start gap-3">
-            <div className="text-2xl shrink-0">{CAT_ICON[m.Category] || '📋'}</div>
+            <div className="shrink-0 text-[#3D6B34] mt-0.5">{CAT_SVG[m.Category] || ICONS.clipboard}</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <strong className="text-gray-900">{m.Label}</strong>
@@ -309,7 +338,7 @@ function MetricsTab({ businessId }) {
               </div>
               {m.EvidenceURL && (
                 <div className="text-xs text-gray-500 mt-0.5">
-                  📎 <a href={m.EvidenceURL} target="_blank" rel="noreferrer" className="text-[#3D6B34] hover:underline">{m.EvidenceURL}</a>
+                  <span className="inline-flex items-center gap-1"><span className="text-[#3D6B34]">{ICONS.paperclip}</span><a href={m.EvidenceURL} target="_blank" rel="noreferrer" className="text-[#3D6B34] hover:underline">{m.EvidenceURL}</a></span>
                 </div>
               )}
               {m.Notes && <div className="text-xs text-gray-500 mt-0.5">{m.Notes}</div>}
@@ -374,12 +403,12 @@ function GenerateTab({ businessId, onSaved }) {
 
       {result && (
         <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">✅</span>
+          <div className="flex items-center gap-2 text-emerald-700">
+            {ICONS.check}
             <strong className="text-emerald-900">Saved as report #{result.ReportID}</strong>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <a href={`${API}/api/esg/reports/${result.ReportID}/pdf`} target="_blank" rel="noreferrer" className={btn}>⬇ Download PDF</a>
+            <a href={`${API}/api/esg/reports/${result.ReportID}/pdf`} target="_blank" rel="noreferrer" className={btn + ' inline-flex items-center gap-1.5'}>{ICONS.download} Download PDF</a>
             <a href={`${API}/api/esg/reports/${result.ReportID}/html`} target="_blank" rel="noreferrer" className={btnGhost}>View HTML</a>
             <a href={`${API}/api/esg/reports/${result.ReportID}`} target="_blank" rel="noreferrer" className={btnGhost}>View JSON</a>
           </div>
@@ -394,8 +423,8 @@ function GenerateTab({ businessId, onSaved }) {
 // ─────────────────────────────────────────────────────────────────
 function ReportsTab({ businessId, refreshKey }) {
   const [list, setList] = useState([]);
-  const refresh = () => fetch(`${API}/api/esg/${businessId}/reports`).then(r => r.json()).then(setList);
-  useEffect(refresh, [businessId, refreshKey]);
+  const refresh = () => { fetch(`${API}/api/esg/${businessId}/reports`).then(r => r.json()).then(setList); };
+  useEffect(() => { refresh(); }, [businessId, refreshKey]);
 
   const del = async (id) => {
     if (!window.confirm('Delete this saved report? This cannot be undone (the snapshot data is gone).')) return;
@@ -408,7 +437,7 @@ function ReportsTab({ businessId, refreshKey }) {
       {list.length === 0 && <div className="text-sm text-gray-500 italic">No saved reports yet. Use the Generate tab to create your first audit-ready snapshot.</div>}
       {list.map(r => (
         <div key={r.ReportID} className="bg-white border border-gray-200 rounded-xl p-3 flex items-start gap-3">
-          <div className="text-2xl shrink-0">📄</div>
+          <div className="shrink-0 text-[#3D6B34] mt-0.5">{ICONS.document}</div>
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-gray-900">{r.Title || `Report #${r.ReportID}`}</div>
             <div className="text-xs text-gray-600 mt-0.5">
@@ -460,7 +489,7 @@ export default function AggregatorESG() {
         { label: 'ESG Reports' },
       ]}
     >
-      <div className="max-w-6xl mx-auto p-5 space-y-4">
+      <div className="p-5 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="font-lora text-2xl font-bold text-gray-900">ESG Reports</h1>

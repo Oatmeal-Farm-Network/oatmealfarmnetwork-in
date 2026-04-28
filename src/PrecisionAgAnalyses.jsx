@@ -851,7 +851,7 @@ function WeatherTab({ weather, field }) {
       {/* Wind direction rose (real Open-Meteo hourly data, 30d default) */}
       <div>
         <SectionTitle>Wind Direction Rose</SectionTitle>
-        <WindRose fieldId={fieldId} />
+        <WindRose fieldId={field?.fieldid || field?.id} />
       </div>
 
       {/* Temperature trend */}

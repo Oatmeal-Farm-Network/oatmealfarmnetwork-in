@@ -8,14 +8,25 @@ const SEVERITY_STYLE = {
   warn:     { bg: '#FEF3C7', border: '#FBBF24', text: '#92400E', dot: '#F59E0B', label: 'Warning' },
 };
 
+const KI = ({ children }) => (
+  <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+    strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    {children}
+  </svg>
+);
+
 const KIND_LABEL = {
-  heatwave:    { label: 'Heatwave',          icon: '🔥' },
-  frost:       { label: 'Frost / Hard Freeze', icon: '❄️' },
-  cold_snap:   { label: 'Cold Snap',         icon: '🥶' },
-  high_vpd:    { label: 'High VPD / Drought Stress', icon: '🌵' },
-  heavy_rain:  { label: 'Heavy Rain',        icon: '🌧️' },
-  high_wind:   { label: 'High Wind',         icon: '💨' },
+  heatwave:   { label: 'Heatwave',                  icon: <KI><path d="M8 1v2M8 13v2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M1 8h2M13 8h2M3.5 12.5l1.4-1.4M11.1 4.9l1.4-1.4"/><circle cx="8" cy="8" r="3"/></KI> },
+  frost:      { label: 'Frost / Hard Freeze',        icon: <KI><line x1="8" y1="1" x2="8" y2="15"/><line x1="1" y1="8" x2="15" y2="8"/><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></KI> },
+  cold_snap:  { label: 'Cold Snap',                  icon: <KI><path d="M8 2v12M5 5l3-3 3 3M5 11l3 3 3-3M2 8l3-3-3 3M14 8l-3-3 3 3"/></KI> },
+  high_vpd:   { label: 'High VPD / Drought Stress',  icon: <KI><path d="M8 14V8"/><path d="M5 10c0-3 3-5 3-8 0 3 3 5 3 8a3 3 0 0 1-6 0z"/><line x1="4" y1="6" x2="12" y2="6" strokeDasharray="1.5 1.5"/></KI> },
+  heavy_rain: { label: 'Heavy Rain',                 icon: <KI><path d="M3 9a5 5 0 0 1 10 0 3 3 0 0 1 0 6H3a3 3 0 0 1 0-6z"/><line x1="5" y1="13" x2="4" y2="15"/><line x1="8" y1="13" x2="7" y2="15"/><line x1="11" y1="13" x2="10" y2="15"/></KI> },
+  high_wind:  { label: 'High Wind',                  icon: <KI><path d="M2 8h9a2 2 0 1 0-2-2"/><path d="M2 11h6a2 2 0 1 1-2 2"/><path d="M2 5h5a2 2 0 1 0-2-2"/></KI> },
 };
+
+const WarnIcon = () => (
+  <KI><path d="M8 2L1 14h14z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12.5" r="0.6" fill="currentColor" stroke="none"/></KI>
+);
 
 function fmtRelative(hours) {
   if (hours == null) return '—';
@@ -61,12 +72,12 @@ function MiniSpark({ rows, valueKey, lo, hi, color }) {
 
 function StressEventCard({ ev }) {
   const style = SEVERITY_STYLE[ev.severity] || SEVERITY_STYLE.warn;
-  const kind  = KIND_LABEL[ev.kind] || { label: ev.kind, icon: '⚠️' };
+  const kind  = KIND_LABEL[ev.kind] || { label: ev.kind, icon: <WarnIcon /> };
   return (
     <div className="rounded-lg border p-4" style={{ background: style.bg, borderColor: style.border }}>
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-xl leading-none">{kind.icon}</span>
+          <span style={{ color: style.text }}>{kind.icon}</span>
           <div>
             <div className="font-mont font-bold text-sm" style={{ color: style.text }}>
               {kind.label}

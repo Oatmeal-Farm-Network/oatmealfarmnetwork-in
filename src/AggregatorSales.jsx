@@ -76,8 +76,8 @@ function B2BAccountsTab({ businessId }) {
   const [editing, setEdit] = useState(null);
   const [adding, setAdd]   = useState(false);
 
-  const refresh = () => fetch(`${API}/api/aggregator/${businessId}/b2b/accounts`).then(r => r.json()).then(setList);
-  useEffect(refresh, [businessId]);
+  const refresh = () => { fetch(`${API}/api/aggregator/${businessId}/b2b/accounts`).then(r => r.json()).then(setList); };
+  useEffect(() => { refresh(); }, [businessId]);
 
   const save = async (a) => {
     const isEdit = !!a.AccountID;
@@ -187,8 +187,8 @@ function B2BOrdersTab({ businessId, accounts }) {
   const [editing, setEdit] = useState(null);
   const [adding, setAdd]   = useState(false);
 
-  const refresh = () => fetch(`${API}/api/aggregator/${businessId}/b2b/orders`).then(r => r.json()).then(setList);
-  useEffect(refresh, [businessId]);
+  const refresh = () => { fetch(`${API}/api/aggregator/${businessId}/b2b/orders`).then(r => r.json()).then(setList); };
+  useEffect(() => { refresh(); }, [businessId]);
 
   const save = async (o) => {
     const isEdit = !!o.OrderID;
@@ -309,7 +309,7 @@ function D2COrdersTab({ businessId }) {
     const qs = channelF ? `?channel=${channelF}` : '';
     fetch(`${API}/api/aggregator/${businessId}/d2c/orders${qs}`).then(r => r.json()).then(setList);
   };
-  useEffect(refresh, [businessId, channelF]);
+  useEffect(() => { refresh(); }, [businessId, channelF]);
 
   const save = async (o) => {
     const isEdit = !!o.OrderID;

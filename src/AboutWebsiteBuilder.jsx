@@ -9,6 +9,21 @@ import Breadcrumbs from './Breadcrumbs';
 
 const ACCENT = '#3D6B34';
 
+const SI = ({ children }) => (
+  <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+    strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+    {children}
+  </svg>
+);
+const FEAT_ICONS = {
+  widgets: <SI><rect x="1" y="1" width="6" height="6" rx="0.5"/><rect x="9" y="1" width="6" height="6" rx="0.5"/><rect x="1" y="9" width="6" height="6" rx="0.5"/><rect x="9" y="9" width="6" height="6" rx="0.5"/></SI>,
+  source:  <SI><circle cx="8" cy="8" r="2"/><path d="M3 8H1M15 8h-2M8 3V1M8 15v-2"/><circle cx="3.5" cy="3.5" r="1"/><circle cx="12.5" cy="3.5" r="1"/><circle cx="3.5" cy="12.5" r="1"/><circle cx="12.5" cy="12.5" r="1"/></SI>,
+  domain:  <SI><circle cx="8" cy="8" r="6"/><path d="M8 2c-2 1.5-3 3.5-3 6s1 4.5 3 6"/><path d="M8 2c2 1.5 3 3.5 3 6s-1 4.5-3 6"/><line x1="2" y1="8" x2="14" y2="8"/></SI>,
+  mobile:  <SI><rect x="4" y="1" width="8" height="14" rx="1.5"/><circle cx="8" cy="12.5" r="0.8" fill="currentColor" stroke="none"/></SI>,
+  blog:    <SI><path d="M11 2l3 3-8 8H3v-3z"/><line x1="9" y1="4" x2="12" y2="7"/></SI>,
+  hero:    <SI><rect x="1" y="2" width="14" height="10" rx="1"/><path d="M5 14h6"/></SI>,
+};
+
 export default function AboutWebsiteBuilder() {
   return (
     <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8' }}>
@@ -24,7 +39,9 @@ export default function AboutWebsiteBuilder() {
         <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
         <div className="relative max-w-5xl mx-auto">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-3xl">🖥️</div>
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-white">
+              <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="2" width="14" height="10" rx="1"/><line x1="4" y1="15" x2="12" y2="15"/><line x1="8" y1="12" x2="8" y2="15"/></svg>
+            </div>
             <span className="text-xs font-bold uppercase tracking-widest text-white/90">Platform Service</span>
           </div>
           <h1 className="text-4xl font-bold mb-3 drop-shadow" style={{ color: '#fff' }}>Website Builder</h1>
@@ -38,15 +55,15 @@ export default function AboutWebsiteBuilder() {
               style={{ color: ACCENT }}>
               Build your site →
             </Link>
-            <Link to="/account"
+            <Link to="/signup"
               className="border-2 border-white/60 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-white/10 transition">
-              Open my account
+              Open An Account
             </Link>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8 flex-grow w-full">
+      <div className="max-w-5xl mx-auto px-4 py-8 grow w-full">
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
           { label: 'Website Builder' },
@@ -58,7 +75,7 @@ export default function AboutWebsiteBuilder() {
             What it does
           </h2>
           <p className="text-gray-700 leading-relaxed">
-            A drag-and-drop site builder tuned for farms, ranches, and artisan producers.
+            A drag-and-drop site builder tuned for over 25 types of organizations.
             Pick from farm-aware widgets that already know about your inventory, your animals,
             your events, and your blog posts — drop them onto a page and they populate themselves.
             No copy-paste. No re-entering data.
@@ -71,17 +88,17 @@ export default function AboutWebsiteBuilder() {
             What's included
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Feature icon="🧩" title="Widgets tuned to farms"
+            <Feature icon={FEAT_ICONS.widgets} title="Widgets tuned to farms"
               body="Product catalogs, animal-of-the-week, upcoming events, blog feeds, testimonials, contact forms, photo galleries — all drag-and-drop." />
-            <Feature icon="🔗" title="One source of truth"
+            <Feature icon={FEAT_ICONS.source} title="One source of truth"
               body="Add an animal or list a product once, and it appears on your website, your OFN directory profile, and the marketplace automatically." />
-            <Feature icon="🌐" title="Custom domains"
+            <Feature icon={FEAT_ICONS.domain} title="Custom domains"
               body="Point your own domain at your OFN site in minutes. SSL is automatic; DNS is straightforward — we walk you through it." />
-            <Feature icon={<img src="/images/LavendirIcon.png" alt="Lavendir" className="w-6 h-6 inline-block" />} title="Lavendir AI help built in"
+            <Feature icon={<img src="/images/LavendirIcon.png" alt="Lavendir" className="w-5 h-5" />} title="Lavendir AI help built in"
               body="Need a new page? Ask Lavendir, our design-assistant AI, to draft it for you. Publishing still requires your review." />
-            <Feature icon="📱" title="Mobile-first"
+            <Feature icon={FEAT_ICONS.mobile} title="Mobile-first"
               body="Every layout is responsive by default. Preview desktop, tablet, and phone side-by-side before you publish." />
-            <Feature icon="📝" title="Built-in blog"
+            <Feature icon={FEAT_ICONS.blog} title="Built-in blog"
               body="Your OFN blog lives on your website and in the OFN directory. Write once, reach both audiences." />
           </div>
         </section>
@@ -111,7 +128,7 @@ function Feature({ icon, title, body }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4">
       <div className="flex items-center gap-2 mb-1">
-        <span className="text-xl">{icon}</span>
+        <span className="text-[#3D6B34] flex items-center shrink-0">{icon}</span>
         <h3 className="font-bold text-gray-900">{title}</h3>
       </div>
       <p className="text-sm text-gray-600">{body}</p>

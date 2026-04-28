@@ -155,7 +155,10 @@ export default function BiomassPanel({ fieldId, onClose }) {
   return (
     <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-3">
       <div className="flex items-center justify-between mb-3">
-        <div className="font-semibold text-sm text-gray-800">🌱 Biomass Estimate</div>
+        <div className="font-semibold text-sm text-gray-800 flex items-center gap-1.5">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="text-[#3D6B34]"><path d="M8 14V9"/><path d="M4 6c0-2.5 2-4 4-4s4 1.5 4 4-2 3-4 3-4-.5-4-3z"/></svg>
+          Biomass Estimate
+        </div>
         {onClose && (
           <button onClick={onClose} className="text-xs text-gray-500 hover:text-gray-700">
             Close
@@ -221,7 +224,10 @@ export default function BiomassPanel({ fieldId, onClose }) {
         <div className="mt-3 text-xs bg-amber-50 border border-amber-200 text-amber-900 rounded px-2.5 py-2">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="font-semibold mb-1">⚠ Low satellite confidence ({fmtPct(state.satellite.confidence)})</div>
+              <div className="font-semibold mb-1 flex items-center gap-1">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2L1 14h14z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12.5" r="0.6" fill="currentColor" stroke="none"/></svg>
+                Low satellite confidence ({fmtPct(state.satellite.confidence)})
+              </div>
               <div className="leading-relaxed">
                 The NDVI signal is weak — usually because the canopy is sparse or the latest cloud-free
                 pass was suboptimal. Averaging several recent satellite passes will reduce the noise and
@@ -241,8 +247,9 @@ export default function BiomassPanel({ fieldId, onClose }) {
 
       {resolved && (
         <div className="mt-3 text-xs bg-emerald-50 border border-emerald-200 text-emerald-900 rounded px-2.5 py-2">
-          <div className="font-semibold mb-1">
-            ✓ Combined estimate from {resolved.n_samples} pass(es)
+          <div className="font-semibold mb-1 flex items-center gap-1">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3,8 6,11 13,4"/></svg>
+            Combined estimate from {resolved.n_samples} pass(es)
           </div>
           <div>
             {fmt(resolved.averaged_biomass_kg_per_ha)} kg DM/ha · confidence {fmtPct(resolved.averaged_confidence)}

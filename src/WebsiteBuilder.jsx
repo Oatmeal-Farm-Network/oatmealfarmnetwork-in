@@ -10,40 +10,47 @@ const API = import.meta.env.VITE_API_URL;
 const SITE_BASE_URL = 'https://www.OatmealFarmNetwork.com';
 
 // ── Block type catalogue ─────────────────────────────────────────
+const BI = ({ children }) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+    strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+    {children}
+  </svg>
+);
+
 const BLOCK_TYPES = [
-  { type: 'hero',           icon: '🖼️',  label: 'Hero Banner',        desc: 'Full-width hero with image, headline & CTA' },
-  { type: 'slideshow',      icon: '🎞️',  label: 'Slideshow',           desc: 'Auto-rotating image slideshow with optional captions' },
-  { type: 'about',          icon: '🏡',  label: 'About Us',           desc: 'About section with text and image' },
-  { type: 'content',        icon: '📄',  label: '1 Column Widget',    desc: 'Heading, text, and optional image' },
-  { type: 'content_2col',   icon: '📰',  label: '2 Column Widget',    desc: 'Two side-by-side content columns (stack on mobile)' },
-  { type: 'content_4col',   icon: '🗂️',  label: '4 Column Widget',    desc: 'Four side-by-side content columns (stack on mobile)' },
-  { type: 'livestock',      icon: '🐄',  label: 'Livestock For Sale', desc: 'Animals listed for sale from your inventory' },
-  { type: 'studs',          icon: '🐂',  label: 'Stud Services',      desc: 'Stud animals available for breeding' },
-  { type: 'produce',        icon: '🥕',  label: 'Produce',            desc: 'Fresh produce from your inventory' },
-  { type: 'meat',           icon: '🥩',  label: 'Meat',               desc: 'Meat inventory available for sale' },
-  { type: 'processed_food', icon: '🫙',  label: 'Processed Foods',    desc: 'Value-added & processed food products' },
-  { type: 'services',       icon: '🔧',  label: 'Services',           desc: 'Services your business offers' },
-  { type: 'marketplace',    icon: '🛒',  label: 'Marketplace',        desc: 'All active marketplace listings' },
-  { type: 'gallery',        icon: '🖼️',  label: 'Photo Gallery',      desc: 'Photo gallery from your albums' },
-  { type: 'blog',           icon: '📝',  label: 'Blog Posts',         desc: 'Latest blog posts' },
-  { type: 'events',         icon: '🎪',  label: 'Upcoming Events',    desc: 'Your published upcoming events with dates and Register CTAs' },
-  { type: 'contact',        icon: '📬',  label: 'Contact',            desc: 'Contact information and form' },
-  { type: 'links',          icon: '🔗',  label: 'Links',              desc: 'Icon links with title and description' },
-  { type: 'testimonials',    icon: '🤝',  label: 'All Testimonials',   desc: 'Display all testimonials from your customers' },
-  { type: 'testimonial_random', icon: '💬', label: 'Random Testimonial', desc: 'Show a single random testimonial' },
-  { type: 'packages',       icon: '📦',  label: 'Package Deals',      desc: 'Bundled animal packages with pricing & savings' },
-  { type: 'member_directory', icon: '👥', label: 'Member Directory',   desc: 'Searchable directory of association members (association widget)' },
-  { type: 'pedigree_search',  icon: '🧬', label: 'Pedigree / Registry Search', desc: 'Public registry lookup by name or reg number (association widget)' },
-  { type: 'fee_schedule',     icon: '💲', label: 'Fee Schedule',       desc: 'Dues & registration fees in a clean table (association widget)' },
-  { type: 'hours_of_operation', icon: '🕒', label: 'Hours of Operation', desc: 'Weekly hours table — restaurants, vets, markets, tasting rooms' },
-  { type: 'faq',            icon: '❓',  label: 'FAQ',                 desc: 'Accordion FAQ — questions and answers' },
-  { type: 'features',       icon: '⭐',  label: 'Features / Services', desc: 'Icon-box card grid — what you offer / why choose us' },
-  { type: 'team',           icon: '👥',  label: 'Team / Staff',        desc: 'Photo cards for your team members' },
-  { type: 'pricing',        icon: '💲',  label: 'Pricing / Plans',     desc: 'Column-based pricing tiers or rate cards' },
-  { type: 'sponsors',       icon: '🏆',  label: 'Sponsors',           desc: 'Sponsor logo grid with names and links' },
-  { type: 'cta',            icon: '📣',  label: 'CTA Banner',         desc: 'Full-width call-to-action bar with headline + button' },
-  { type: 'map_location',   icon: '📍',  label: 'Map & Location',     desc: 'Address block with optional embedded map' },
-  { type: 'divider',        icon: '➖',  label: 'Spacer / Divider',   desc: 'Visual separator between sections' },
+  { type: 'hero',           icon: <BI><rect x="1" y="2" width="14" height="10" rx="1"/><line x1="1" y1="9" x2="15" y2="9"/><path d="M5 14h6"/></BI>, label: 'Hero Banner',        desc: 'Full-width hero with image, headline & CTA' },
+  { type: 'slideshow',      icon: <BI><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="4" y1="13" x2="4" y2="15"/><line x1="8" y1="13" x2="8" y2="15"/><line x1="12" y1="13" x2="12" y2="15"/><circle cx="8" cy="14" r="0.7" fill="currentColor" stroke="none"/></BI>, label: 'Slideshow',           desc: 'Auto-rotating image slideshow with optional captions' },
+  { type: 'about',          icon: <BI><path d="M2 8L8 2l6 6"/><path d="M3.5 7V14h3.5v-3.5h2V14H13V7"/></BI>, label: 'About Us',           desc: 'About section with text and image' },
+  { type: 'content',        icon: <BI><rect x="3" y="1" width="10" height="14" rx="1"/><line x1="5" y1="5" x2="11" y2="5"/><line x1="5" y1="7.5" x2="11" y2="7.5"/><line x1="5" y1="10" x2="9" y2="10"/></BI>, label: '1 Column Widget',    desc: 'Heading, text, and optional image' },
+  { type: 'content_2col',   icon: <BI><rect x="1" y="2" width="6" height="12" rx="1"/><rect x="9" y="2" width="6" height="12" rx="1"/></BI>, label: '2 Column Widget',    desc: 'Two side-by-side content columns (stack on mobile)' },
+  { type: 'content_4col',   icon: <BI><rect x="1" y="2" width="3" height="12" rx="0.5"/><rect x="5" y="2" width="3" height="12" rx="0.5"/><rect x="9" y="2" width="3" height="12" rx="0.5"/><rect x="13" y="2" width="3" height="12" rx="0.5"/></BI>, label: '4 Column Widget',    desc: 'Four side-by-side content columns (stack on mobile)' },
+  { type: 'livestock',      icon: <BI><ellipse cx="8" cy="10" rx="4.5" ry="3"/><circle cx="4.5" cy="6" r="1.5"/><circle cx="8" cy="5" r="1.5"/><circle cx="11.5" cy="6" r="1.5"/></BI>, label: 'Livestock For Sale', desc: 'Animals listed for sale from your inventory' },
+  { type: 'studs',          icon: <BI><ellipse cx="8" cy="10" rx="4.5" ry="3"/><circle cx="4.5" cy="6" r="1.5"/><circle cx="8" cy="5" r="1.5"/><circle cx="11.5" cy="6" r="1.5"/><path d="M8 3.5V2"/><path d="M6.8 2.5l2.4 0"/></BI>, label: 'Stud Services',      desc: 'Stud animals available for breeding' },
+  { type: 'produce',        icon: <BI><path d="M8 14V9"/><path d="M4 6c0-2.5 2-4 4-4s4 1.5 4 4-2 3-4 3-4-.5-4-3z"/></BI>, label: 'Produce',            desc: 'Fresh produce from your inventory' },
+  { type: 'meat',           icon: <BI><path d="M10 3a4 4 0 0 1 3 6.5L9.5 13H6.5L3 9.5A4 4 0 0 1 6 3z"/><circle cx="8" cy="7" r="1.5"/></BI>, label: 'Meat',               desc: 'Meat inventory available for sale' },
+  { type: 'processed_food', icon: <BI><rect x="4" y="5" width="8" height="9" rx="1"/><path d="M6 5V3h4v2"/><line x1="4" y1="8" x2="12" y2="8"/></BI>, label: 'Processed Foods',    desc: 'Value-added & processed food products' },
+  { type: 'services',       icon: <BI><path d="M13 3a3.5 3.5 0 0 0-4.2 3.5L2.5 12.5a1.5 1.5 0 1 0 2 2L10 9a3.5 3.5 0 1 0 3-6z"/><circle cx="12.5" cy="3.5" r="1"/></BI>, label: 'Services',           desc: 'Services your business offers' },
+  { type: 'marketplace',    icon: <BI><path d="M2 5h12l-1.5 7H3.5z"/><path d="M5.5 5L6.5 2M10.5 5l-1-3"/><circle cx="5.5" cy="13.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="10.5" cy="13.5" r="0.8" fill="currentColor" stroke="none"/></BI>, label: 'Marketplace',        desc: 'All active marketplace listings' },
+  { type: 'gallery',        icon: <BI><rect x="1" y="1" width="6" height="6" rx="0.5"/><rect x="9" y="1" width="6" height="6" rx="0.5"/><rect x="1" y="9" width="6" height="6" rx="0.5"/><rect x="9" y="9" width="6" height="6" rx="0.5"/></BI>, label: 'Photo Gallery',      desc: 'Photo gallery from your albums' },
+  { type: 'blog',           icon: <BI><path d="M11 2l3 3-8 8H3v-3z"/><line x1="9" y1="4" x2="12" y2="7"/></BI>, label: 'Blog Posts',         desc: 'Latest blog posts' },
+  { type: 'events',         icon: <BI><rect x="2" y="3" width="12" height="11" rx="1"/><line x1="2" y1="7" x2="14" y2="7"/><line x1="5" y1="1" x2="5" y2="5"/><line x1="11" y1="1" x2="11" y2="5"/></BI>, label: 'Upcoming Events',    desc: 'Your published upcoming events with dates and Register CTAs' },
+  { type: 'contact',        icon: <BI><rect x="2" y="4" width="12" height="9" rx="1"/><path d="M2 4l6 5 6-5"/></BI>, label: 'Contact',            desc: 'Contact information and form' },
+  { type: 'links',          icon: <BI><path d="M6 9a3 3 0 0 0 4.5 0L12 7.5A3 3 0 0 0 7.5 3L6 4.5"/><path d="M10 7a3 3 0 0 0-4.5 0L4 8.5A3 3 0 0 0 8.5 13L10 11.5"/></BI>, label: 'Links',              desc: 'Icon links with title and description' },
+  { type: 'testimonials',    icon: <BI><path d="M3 3h10v7H3z"/><path d="M5 10v3l4-3"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="8" x2="9" y2="8"/></BI>, label: 'All Testimonials',   desc: 'Display all testimonials from your customers' },
+  { type: 'testimonial_random', icon: <BI><path d="M2 3h12v8H2z"/><path d="M5 11v3l4-3"/><circle cx="6" cy="7" r="0.8" fill="currentColor" stroke="none"/><circle cx="8" cy="7" r="0.8" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="0.8" fill="currentColor" stroke="none"/></BI>, label: 'Random Testimonial', desc: 'Show a single random testimonial' },
+  { type: 'packages',       icon: <BI><path d="M2 5l6-3 6 3v6l-6 3-6-3z"/><line x1="8" y1="2" x2="8" y2="14"/><path d="M2 5l6 3 6-3"/></BI>, label: 'Package Deals',      desc: 'Bundled animal packages with pricing & savings' },
+  { type: 'member_directory', icon: <BI><circle cx="5.5" cy="5" r="2"/><circle cx="10.5" cy="5" r="2"/><path d="M1 14c0-2.5 2-3.5 4.5-3.5h5c2.5 0 4.5 1 4.5 3.5"/></BI>, label: 'Member Directory',   desc: 'Searchable directory of association members (association widget)' },
+  { type: 'pedigree_search',  icon: <BI><circle cx="5" cy="11" r="3"/><circle cx="11" cy="5" r="3"/><line x1="8" y1="8" x2="5" y2="11"/><circle cx="8" cy="8" r="0.8" fill="currentColor" stroke="none"/></BI>, label: 'Pedigree / Registry Search', desc: 'Public registry lookup by name or reg number (association widget)' },
+  { type: 'fee_schedule',     icon: <BI><rect x="2" y="3" width="12" height="10" rx="1"/><line x1="2" y1="7" x2="14" y2="7"/><line x1="7" y1="3" x2="7" y2="13"/></BI>, label: 'Fee Schedule',       desc: 'Dues & registration fees in a clean table (association widget)' },
+  { type: 'hours_of_operation', icon: <BI><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2"/></BI>, label: 'Hours of Operation', desc: 'Weekly hours table — restaurants, vets, markets, tasting rooms' },
+  { type: 'faq',            icon: <BI><circle cx="8" cy="8" r="6"/><path d="M6 6a2 2 0 0 1 4 0c0 1.5-2 2-2 3.5"/><circle cx="8" cy="12" r="0.6" fill="currentColor" stroke="none"/></BI>, label: 'FAQ',                 desc: 'Accordion FAQ — questions and answers' },
+  { type: 'features',       icon: <BI><polygon points="8,1.5 10,6 15,6 11,9.5 12.5,14 8,11.5 3.5,14 5,9.5 1,6 6,6"/></BI>, label: 'Features / Services', desc: 'Icon-box card grid — what you offer / why choose us' },
+  { type: 'team',           icon: <BI><circle cx="8" cy="5" r="2.5"/><path d="M2 14c0-3 2.5-5 6-5s6 2 6 5"/></BI>, label: 'Team / Staff',        desc: 'Photo cards for your team members' },
+  { type: 'pricing',        icon: <BI><path d="M9 2H14V7L8 13l-5-5z"/><circle cx="11.5" cy="4.5" r="1" fill="currentColor" stroke="none"/></BI>, label: 'Pricing / Plans',     desc: 'Column-based pricing tiers or rate cards' },
+  { type: 'sponsors',       icon: <BI><path d="M8 2l1.5 3.5L13 6l-2.5 2.5.6 3.5L8 10.5l-3.1 1.5.6-3.5L3 6l3.5-.5z"/></BI>, label: 'Sponsors',           desc: 'Sponsor logo grid with names and links' },
+  { type: 'cta',            icon: <BI><rect x="1" y="5" width="14" height="6" rx="1"/><line x1="4" y1="8" x2="10" y2="8"/><polyline points="8,6 10,8 8,10"/></BI>, label: 'CTA Banner',         desc: 'Full-width call-to-action bar with headline + button' },
+  { type: 'map_location',   icon: <BI><path d="M8 1a4.5 4.5 0 0 0-4.5 4.5C3.5 9 8 15 8 15s4.5-6 4.5-9.5A4.5 4.5 0 0 0 8 1z"/><circle cx="8" cy="5.5" r="1.5"/></BI>, label: 'Map & Location',     desc: 'Address block with optional embedded map' },
+  { type: 'divider',        icon: <BI><line x1="1" y1="8" x2="15" y2="8" strokeDasharray="2 2"/></BI>, label: 'Spacer / Divider',   desc: 'Visual separator between sections' },
 ];
 
 const defaultBlockData = {
@@ -2840,11 +2847,11 @@ function SimpleBlockPreview({ block, site, businessId, onFieldSave }) {
   }
 
   // Data-backed blocks: livestock, produce, services, etc.
-  const meta = BLOCK_TYPES.find(b => b.type === bt) || { icon: '📦', label: bt };
+  const meta = BLOCK_TYPES.find(b => b.type === bt) || { icon: null, label: bt };
   return (
     <BlockWrap>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '2rem', marginBottom: '0.4rem' }}>{meta.icon}</div>
+        <div style={{ display: 'flex', justifyContent: 'center', color: '#3D6B34', marginBottom: '0.4rem' }}>{meta.icon}</div>
         <div style={{ fontWeight: 700, fontSize: '1.1rem', color: primary, marginBottom: '0.25rem' }}>
           {d.heading || meta.label}
         </div>
@@ -5688,11 +5695,11 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
   }
 
   // ── Generic data blocks ──
-  const meta = BLOCK_TYPES.find(b => b.type === bt) || { icon: '📦', label: bt };
+  const meta = BLOCK_TYPES.find(b => b.type === bt) || { icon: null, label: bt };
   return (
     <div style={{ padding: 16 }}>
-      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 4, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
-        {meta.icon} {meta.label}
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 4, paddingBottom: 10, borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ color: '#3D6B34', display: 'flex' }}>{meta.icon}</span>{meta.label}
       </div>
       <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 14, lineHeight: 1.5 }}>
         This block pulls live data from your account automatically.
@@ -7119,7 +7126,7 @@ export default function WebsiteBuilder() {
                         onMouseEnter={e => e.currentTarget.style.background = '#f0fdf4'}
                         onMouseLeave={e => e.currentTarget.style.background = '#fff'}
                       >
-                        <span style={{ fontSize: 20 }}>{bt.icon}</span>
+                        <span style={{ display: 'flex', color: '#3D6B34' }}>{bt.icon}</span>
                         <span style={{ fontSize: 10, fontWeight: 500, color: '#374151', lineHeight: 1.2 }}>{bt.label}</span>
                       </button>
                     ))}

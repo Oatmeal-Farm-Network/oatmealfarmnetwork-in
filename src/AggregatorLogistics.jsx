@@ -22,7 +22,18 @@ const btnGhost = "px-3 py-1.5 text-sm border border-gray-300 text-gray-700 round
 
 const ORDER_TYPES = ['b2b', 'd2c', 'inbound'];
 const STATUSES    = ['scheduled', 'in_transit', 'delivered', 'failed'];
-const ORDER_TYPE_ICON = { b2b: '🏬', d2c: '🛵', inbound: '🚜' };
+
+const S = ({ children }) => (
+  <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+    strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-[#3D6B34]">
+    {children}
+  </svg>
+);
+const ORDER_TYPE_ICON = {
+  b2b:     <S><rect x="2" y="5" width="12" height="9" rx="1"/><path d="M5 5V3a3 3 0 0 1 6 0v2"/><line x1="8" y1="8" x2="8" y2="11"/></S>,
+  d2c:     <S><rect x="1" y="7" width="10" height="6" rx="1"/><path d="M11 9h2l2 2v2h-4V9z"/><circle cx="4" cy="13.5" r="1.2"/><circle cx="12" cy="13.5" r="1.2"/></S>,
+  inbound: <S><path d="M8 2v9"/><polyline points="5 8 8 11 11 8"/><rect x="2" y="12" width="12" height="2" rx="0.5"/></S>,
+};
 
 const fmtDT = (s) => s ? new Date(s).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }) : '';
 
@@ -165,16 +176,16 @@ export default function AggregatorLogistics() {
           ) : (
             <div key={r.DispatchID}
                  className={`border rounded-xl p-3 flex items-start gap-3 ${r.ColdChainBreach ? 'bg-red-50 border-red-300' : 'bg-white border-gray-200'}`}>
-              <div className="text-2xl shrink-0">{ORDER_TYPE_ICON[r.OrderType] || '🚛'}</div>
+              <div className="shrink-0 mt-0.5">{ORDER_TYPE_ICON[r.OrderType] || ORDER_TYPE_ICON.b2b}</div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <strong className="text-gray-900 capitalize">{r.OrderType}</strong>
                   {r.OrderID && <span className="text-xs text-gray-500">order #{r.OrderID}</span>}
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${statusColor(r.Status)}`}>{r.Status}</span>
-                  {r.ColdChainBreach && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-200 text-red-900 font-semibold uppercase">⚠ breach</span>}
+                  {r.ColdChainBreach && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-200 text-red-900 font-semibold uppercase">breach</span>}
                 </div>
                 <div className="text-xs text-gray-700 mt-0.5">
-                  {r.VehicleID && `🚐 ${r.VehicleID}`}
+                  {r.VehicleID && `Vehicle: ${r.VehicleID}`}
                   {r.DriverName && ` · ${r.DriverName}`}
                   {r.DriverPhone && ` (${r.DriverPhone})`}
                 </div>

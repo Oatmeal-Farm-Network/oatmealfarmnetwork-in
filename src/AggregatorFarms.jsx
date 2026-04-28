@@ -26,6 +26,16 @@ const RECOVERY_MODELS = ['deduct_from_payout', 'grant', 'loan'];
 const fmt$ = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
+const S = ({ children }) => (
+  <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+    strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-[#3D6B34]">
+    {children}
+  </svg>
+);
+const IconFarm     = () => <S><path d="M8 14V9"/><path d="M4 6c0-2.5 2-4 4-4s4 1.5 4 4-2 3-4 3-4-.5-4-3z"/></S>;
+const IconContract = () => <S><path d="M4 2h8l2 2v10H4V2z"/><line x1="6" y1="7" x2="10" y2="7"/><line x1="6" y1="9.5" x2="10" y2="9.5"/><line x1="6" y1="12" x2="8" y2="12"/></S>;
+const IconInputs   = () => <S><path d="M13 3a3.5 3.5 0 0 0-4.2 3.5L2.5 12.5a1.5 1.5 0 1 0 2 2L10 9a3.5 3.5 0 1 0 3-6z"/><circle cx="12.5" cy="3.5" r="1"/></S>;
+
 // ─────────────────────────────────────────────────────────────────
 // Farm form
 // ─────────────────────────────────────────────────────────────────
@@ -122,7 +132,7 @@ function FarmsTab({ businessId }) {
           <FarmForm key={f.FarmID} farm={editing} onSave={save} onCancel={() => setEdit(null)} />
         ) : (
           <div key={f.FarmID} className="bg-white border border-gray-200 rounded-xl p-3 flex items-start gap-3">
-            <div className="text-2xl shrink-0">🌱</div>
+            <div className="shrink-0 mt-0.5"><IconFarm /></div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <strong className="text-gray-900">{f.FarmName}</strong>
@@ -230,7 +240,7 @@ function ContractsTab({ businessId, farms }) {
           <ContractForm key={c.ContractID} contract={editing} farms={farms} onSave={save} onCancel={() => setEdit(null)} />
         ) : (
           <div key={c.ContractID} className="bg-white border border-gray-200 rounded-xl p-3 flex items-start gap-3">
-            <div className="text-2xl shrink-0">📜</div>
+            <div className="shrink-0 mt-0.5"><IconContract /></div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <strong className="text-gray-900">{c.FarmName || `Farm #${c.FarmID}`}</strong>
@@ -348,7 +358,7 @@ function InputsTab({ businessId, farms }) {
           <InputForm key={i.InputID} input={editing} farms={farms} onSave={save} onCancel={() => setEdit(null)} />
         ) : (
           <div key={i.InputID} className="bg-white border border-gray-200 rounded-xl p-3 flex items-start gap-3">
-            <div className="text-2xl shrink-0">🧰</div>
+            <div className="shrink-0 mt-0.5"><IconInputs /></div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <strong className="text-gray-900">{i.FarmName || `Farm #${i.FarmID}`}</strong>

@@ -45,7 +45,7 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <FeatureBox title="Food-System Directory" description="From seed to supper, connect with every part of the food system in our directory of 25 categories." imgSrc="/images/DirectoryHome.webp" link="/directory" />
             <FeatureBox title="Saige" description="Boost your farm's success with Saige's AI-powered insights for weather, soil, pests, and livestock." imgSrc="/images/CharlieHome.png" link="/saige" />
-            <FeatureBox title="Livestock Marketplace" description="Buy and sell livestock online with our marketplace filled with 28 species of Livestock." imgSrc="/images/HomepageLivestockMarketplace.webp" link="/marketplace" />
+            <FeatureBox title="Livestock Marketplace" description="Buy and sell livestock online with our marketplace filled with 28 species of Livestock." imgSrc="/images/HomepageLivestockMarketplace.webp" link="/marketplaces/livestock" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <FeatureBox title="Plant Knowledgebase" description="Explore detailed profiles for over 4,000 food plant varieties." imgSrc="/images/PlantDBHome.webp" link="/plants" />

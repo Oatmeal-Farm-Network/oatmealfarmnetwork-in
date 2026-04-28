@@ -373,7 +373,9 @@ export default function Accounting() {
   if (!isSetup) return (
     <AccountLayout BusinessID={businessId} PeopleID={peopleId} pageTitle="Accounting">
       <div className="max-w-lg mx-auto mt-16 text-center">
-        <div className="text-6xl mb-4">📊</div>
+        <div className="flex justify-center mb-4 text-gray-300">
+          <svg width="56" height="56" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="6" width="3" height="8"/><rect x="6.5" y="3" width="3" height="11"/><rect x="12" y="1" width="3" height="13"/></svg>
+        </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Set up Accounting</h2>
         <p className="text-gray-500 mb-6">
           Initialize the chart of accounts and fiscal periods for <strong>{business?.BusinessName}</strong>.

@@ -622,7 +622,7 @@ function ContentBlockEditor({ value, onChange }) {
         <div key={block.id} style={{ marginBottom: '0.75rem', border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
           <div style={hdrStyle}>
             <span style={{ flex: 1, fontSize: '0.68rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {block.type === 'image' ? '🖼 Image Block' : '¶ Text Block'}
+              {block.type === 'image' ? 'Image Block' : 'Text Block'}
             </span>
             <button style={mbtn} onClick={() => moveBlock(block.id, -1)} disabled={idx === 0} title="Move up">↑</button>
             <button style={mbtn} onClick={() => moveBlock(block.id, 1)} disabled={idx === blocks.length - 1} title="Move down">↓</button>

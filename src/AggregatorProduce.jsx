@@ -25,6 +25,15 @@ const fmt$  = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionD
 const fmtKg = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 1 });
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
+const S = ({ children }) => (
+  <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+    strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-[#3D6B34]">
+    {children}
+  </svg>
+);
+const IconPurchase = () => <S><path d="M2 5l6-3 6 3v6l-6 3-6-3V5z"/><path d="M8 2v12"/><path d="M2 5l6 3 6-3"/><path d="M8 8l-2-1"/></S>;
+const IconCold     = () => <S><line x1="8" y1="1" x2="8" y2="15"/><line x1="1" y1="8" x2="15" y2="8"/><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></S>;
+
 // ─────────────────────────────────────────────────────────────────
 // Purchase form + tab
 // ─────────────────────────────────────────────────────────────────
@@ -168,7 +177,7 @@ function PurchasesTab({ businessId, farms }) {
                         onSave={save} onCancel={() => setEdit(null)} />
         ) : (
           <div key={p.PurchaseID} className="bg-white border border-gray-200 rounded-xl p-3 flex items-start gap-3">
-            <div className="text-2xl shrink-0">📥</div>
+            <div className="shrink-0 mt-0.5"><IconPurchase /></div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <strong className="text-gray-900">{p.FarmName || `Farm #${p.FarmID}`}</strong>
@@ -274,7 +283,7 @@ function InventoryTab({ businessId }) {
           <InventoryEditForm key={r.InventoryID} row={editing} onSave={save} onCancel={() => setEdit(null)} />
         ) : (
           <div key={r.InventoryID} className={`border rounded-xl p-3 flex items-start gap-3 ${tempBreach(r) ? 'bg-red-50 border-red-300' : 'bg-white border-gray-200'}`}>
-            <div className="text-2xl shrink-0">❄️</div>
+            <div className="shrink-0 mt-0.5"><IconCold /></div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <strong className="text-gray-900">{r.CropType || '—'}</strong>
@@ -283,7 +292,7 @@ function InventoryTab({ businessId }) {
                 {r.Grade && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-semibold uppercase">{r.Grade}</span>}
                 {r.ResidueTestStatus && <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${r.ResidueTestStatus === 'passed' ? 'bg-emerald-100 text-emerald-800' : r.ResidueTestStatus === 'failed' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>residue: {r.ResidueTestStatus}</span>}
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${qcColor(r.QCStatus)}`}>QC: {r.QCStatus}</span>
-                {tempBreach(r) && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-200 text-red-900 font-semibold uppercase">⚠ temp breach</span>}
+                {tempBreach(r) && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-200 text-red-900 font-semibold uppercase">temp breach</span>}
               </div>
               <div className="text-xs text-gray-600 mt-0.5">
                 {r.ColdStorageUnit && `${r.ColdStorageUnit} · `}
