@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useLanguage } from './LanguageContext';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -20,16 +21,17 @@ function dateRange(start, end) {
 }
 
 export default function EventsList() {
+  const { language } = useLanguage();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
-    fetch(`${API}/api/events`)
+    fetch(`${API}/api/events?lang=${language}`)
       .then(r => r.ok ? r.json() : [])
       .then(d => { setEvents(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [language]);
 
   const filtered = events.filter(e =>
     !filter ||

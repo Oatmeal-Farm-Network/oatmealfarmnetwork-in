@@ -5,12 +5,14 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useLanguage } from './LanguageContext';
 
 const API = import.meta.env.VITE_API_URL || '';
 
 export default function MarketplaceProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const isLoggedIn = !!localStorage.getItem('access_token');
   const peopleId = localStorage.getItem('people_id');
 
@@ -23,14 +25,14 @@ export default function MarketplaceProduct() {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API}/api/marketplace/catalog/${id}`);
+        const res = await fetch(`${API}/api/marketplace/catalog/${id}?lang=${language}`);
         if (!res.ok) throw new Error();
         setListing(await res.json());
       } catch { setListing(null); }
       finally { setLoading(false); }
     };
     if (id) load();
-  }, [id]);
+  }, [id, language]);
 
   const addToCart = async () => {
     if (!isLoggedIn) { navigate('/login'); return; }

@@ -5,6 +5,7 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
+import { useLanguage } from './LanguageContext';
 import { typeAdminModule } from './eventTypeAdminMap';
 
 const API = import.meta.env.VITE_API_URL || '';
@@ -170,6 +171,7 @@ function FloorPlanCTA({ eventId }) {
 export default function EventDetail() {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [ev, setEv] = useState(null);
   const [loading, setLoading] = useState(true);
   const [features, setFeatures] = useState([]);
@@ -178,11 +180,11 @@ export default function EventDetail() {
   const myBusinesses = accountCtx.businesses || [];
 
   useEffect(() => {
-    fetch(`${API}/api/events/${eventId}`)
+    fetch(`${API}/api/events/${eventId}?lang=${language}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { setEv(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [eventId]);
+  }, [eventId, language]);
 
   useEffect(() => {
     fetch(`${API}/api/events/${eventId}/features`)

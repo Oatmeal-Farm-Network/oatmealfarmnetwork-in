@@ -7,6 +7,7 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
+import { useLanguage } from './LanguageContext';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -65,6 +66,7 @@ function cartCount(cart) {
 
 export default function FarmToTableMarketplace() {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('access_token'));
   const peopleId   = localStorage.getItem('people_id');
 
@@ -234,6 +236,7 @@ export default function FarmToTableMarketplace() {
         if (minQty)                 params.set('min_quantity', minQty);
         if (stateFilter)            params.set('state', stateFilter);
         params.set('sort', sort);
+        params.set('lang', language);
 
         const res = await fetch(`${API}/api/marketplace/catalog?${params}`);
         if (!res.ok) throw new Error(`Server error ${res.status}`);
@@ -247,7 +250,7 @@ export default function FarmToTableMarketplace() {
       }
     };
     load();
-  }, [typeFilter, organicOnly, sort, search, availableWithin, minQty, stateFilter]);
+  }, [typeFilter, organicOnly, sort, search, availableWithin, minQty, stateFilter, language]);
 
   // ── Cart actions ───────────────────────────────────────────────────────────
   const showToast = (msg) => {
@@ -391,22 +394,9 @@ export default function FarmToTableMarketplace() {
             <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
               Farm-to-Table Marketplace
             </h1>
-            <p style={{ color: '#111111', fontSize: '0.88rem', margin: '0 0 14px', lineHeight: 1.5 }}>
+            <p style={{ color: '#111111', fontSize: '0.88rem', margin: 0, lineHeight: 1.5 }}>
               Order fresh produce, pasture-raised meat, and value-added products directly from local farms. No middlemen.
             </p>
-            <div>
-              <button
-                onClick={() => document.getElementById('cart-drawer').classList.toggle('translate-x-full')}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#3D6B34', color: '#fff', fontSize: '0.8rem', fontWeight: 'bold', padding: '7px 18px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
-              >
-                🛒 Cart
-                {count > 0 && (
-                  <span style={{ backgroundColor: '#fff', color: '#3D6B34', fontSize: '0.7rem', fontWeight: 'bold', padding: '1px 7px', borderRadius: '999px' }}>
-                    {count}
-                  </span>
-                )}
-              </button>
-            </div>
           </div>
         </div>
 
@@ -418,27 +408,16 @@ export default function FarmToTableMarketplace() {
           <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.4rem', fontWeight: 'bold', margin: '0 0 8px', lineHeight: 1.2 }}>
             Farm-to-Table Marketplace
           </h1>
-          <p style={{ color: '#111111', fontSize: '0.85rem', margin: '0 0 10px', lineHeight: 1.5 }}>
+          <p style={{ color: '#111111', fontSize: '0.85rem', margin: 0, lineHeight: 1.5 }}>
             Order fresh produce, pasture-raised meat, and value-added products directly from local farms.
           </p>
-          <button
-            onClick={() => document.getElementById('cart-drawer').classList.toggle('translate-x-full')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#3D6B34', color: '#fff', fontSize: '0.8rem', fontWeight: 'bold', padding: '7px 18px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
-          >
-            🛒 Cart
-            {count > 0 && (
-              <span style={{ backgroundColor: '#fff', color: '#3D6B34', fontSize: '0.7rem', fontWeight: 'bold', padding: '1px 7px', borderRadius: '999px' }}>
-                {count}
-              </span>
-            )}
-          </button>
         </div>
 
       </div>
 
       {/* ── Filters bar ── */}
       <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
-        <div className="mx-auto px-4 py-3 flex flex-wrap items-center gap-3" style={{ maxWidth: '1300px' }}>
+        <div className="px-4 py-3 flex flex-wrap items-center gap-3">
           {/* Type pills */}
           <div className="flex gap-2 flex-wrap">
             {PRODUCT_TYPES.map(t => (
@@ -450,7 +429,7 @@ export default function FarmToTableMarketplace() {
                 ? { backgroundColor: '#3D6B34', color: '#fff', borderColor: '#3D6B34' }
                 : { backgroundColor: '#fff', color: '#3D6B34', borderColor: '#3D6B34' }}
               >
-                <span>{t.emoji}</span> {t.label}
+                {t.label}
               </button>
             ))}
           </div>
@@ -501,7 +480,7 @@ export default function FarmToTableMarketplace() {
         </div>
 
         {/* ── Restaurant / bulk buyer filters (secondary row) ── */}
-        <div className="mx-auto px-4 pb-3 flex flex-wrap items-center gap-3 text-xs" style={{ maxWidth: '1300px' }}>
+        <div className="px-4 pb-3 flex flex-wrap items-center gap-3 text-xs">
           <span className="font-semibold uppercase tracking-wider text-gray-500">For buyers:</span>
 
           {isRestaurant && (
@@ -511,28 +490,28 @@ export default function FarmToTableMarketplace() {
                 style={{ backgroundColor: '#fff4d6', color: '#8a6a0a' }}
                 title="You're signed in as a Restaurant — wholesale prices are shown when available."
               >
-                🍽️ Wholesale view
+                Wholesale view
               </span>
               <button
                 onClick={() => navigate('/restaurant/farms')}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[#3D6B34] border border-[#3D6B34] hover:bg-[#e8f0dc]"
                 title="View the farms you've saved"
               >
-                ❤️ My Farms ({savedFarmIds.size})
+                My Farms ({savedFarmIds.size})
               </button>
               <button
                 onClick={() => navigate('/restaurant/standing-orders')}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[#3D6B34] border border-[#3D6B34] hover:bg-[#e8f0dc]"
                 title="Manage your recurring orders"
               >
-                🔁 Standing Orders
+                Standing Orders
               </button>
               <button
                 onClick={() => navigate('/restaurant/digest')}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[#3D6B34] border border-[#3D6B34] hover:bg-[#e8f0dc]"
                 title="Weekly email digest of available products"
               >
-                📬 Weekly Digest
+                Weekly Digest
               </button>
             </>
           )}
@@ -584,9 +563,9 @@ export default function FarmToTableMarketplace() {
       </div>
 
       {/* ── Products grid ── */}
-      <main className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
+      <main className="px-4 py-8">
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
                 <div className="h-44 bg-gray-200" />
@@ -605,12 +584,11 @@ export default function FarmToTableMarketplace() {
           </div>
         ) : listings.length === 0 ? (
           <div className="text-center py-24 text-gray-400">
-            <p className="text-5xl mb-4">🌾</p>
             <p className="text-xl font-semibold text-gray-600">No products found</p>
             <p className="text-sm mt-2">Try adjusting your filters</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5">
             {listings.map(l => (
               <ProductCard
                 key={l.ListingID}
@@ -650,7 +628,6 @@ export default function FarmToTableMarketplace() {
         <div className="flex-grow overflow-y-auto px-5 py-4 space-y-4">
           {cart.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
-              <p className="text-4xl mb-3">🛒</p>
               <p className="font-semibold">Your cart is empty</p>
               <p className="text-sm mt-1">Browse products and add items</p>
             </div>
@@ -798,7 +775,7 @@ function StandingOrderModal({ listing, onCancel, onSubmit }) {
   return (
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={onCancel}>
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5" onClick={e => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-gray-900 mb-1">🔁 Standing order</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-1">Standing order</h2>
         <p className="text-sm text-gray-600 mb-4 truncate">
           {listing.Title} <span className="text-gray-400">· {listing.SellerName}</span>
         </p>
@@ -908,22 +885,22 @@ function ProductCard({ listing: l, inCart, onAdd, onView, isRestaurant = false, 
         <div className="flex flex-wrap gap-1 mb-3">
           {formatAvailability(l.AvailableDate) && (
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#fff4d6', color: '#8a6a0a' }}>
-              📅 {formatAvailability(l.AvailableDate)}
+              {formatAvailability(l.AvailableDate)}
             </span>
           )}
           {l.QuantityAvailable > 0 && (
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-              📦 {Number(l.QuantityAvailable)} {l.UnitLabel || 'avail'}
+              {Number(l.QuantityAvailable)} {l.UnitLabel || 'avail'}
             </span>
           )}
           {l.PickupAvailable ? (
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#e8f0dc', color: '#3D6B34' }}>
-              🚜 Pickup
+              Pickup
             </span>
           ) : null}
           {l.ShippingAvailable ? (
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#e8f0dc', color: '#3D6B34' }}>
-              🚚 Delivery
+              Delivery
             </span>
           ) : null}
         </div>
@@ -956,7 +933,7 @@ function ProductCard({ listing: l, inCart, onAdd, onView, isRestaurant = false, 
                 ? { backgroundColor: '#e8f0dc', color: '#3D6B34', border: '2px solid #819360' }
                 : { backgroundColor: '#3D6B34', color: '#fff', border: '2px solid #3D6B34' }}
             >
-              {inCart ? `✓ In Cart (${inCart.quantity})` : 'Add to Cart'}
+              {inCart ? `In Cart (${inCart.quantity})` : 'Add to Cart'}
             </button>
           ) : (
             <button disabled className="w-full py-2 rounded-lg text-sm font-semibold bg-gray-100 text-gray-400 cursor-not-allowed">
@@ -970,7 +947,7 @@ function ProductCard({ listing: l, inCart, onAdd, onView, isRestaurant = false, 
               className="mt-2 w-full py-1.5 rounded-lg text-xs font-semibold border border-[#3D6B34] text-[#3D6B34] hover:bg-[#e8f0dc]"
               title="Set up a recurring weekly/biweekly/monthly purchase from this farm"
             >
-              🔁 Make this a standing order
+              Make this a standing order
             </button>
           )}
         </div>

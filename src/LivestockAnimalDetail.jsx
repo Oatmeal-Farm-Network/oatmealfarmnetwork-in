@@ -7,6 +7,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useLanguage } from './LanguageContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -796,6 +797,7 @@ export function LivestockAnimalDetailContent({
 // ── Main component ────────────────────────────────────────────────────────────
 export default function LivestockAnimalDetail() {
   const { id } = useParams();
+  const { language } = useLanguage();
   const [animal, setAnimal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -804,7 +806,7 @@ export default function LivestockAnimalDetail() {
     window.scrollTo(0, 0);
     setLoading(true);
     setNotFound(false);
-    fetch(`${API_URL}/api/marketplace/animal/${id}`)
+    fetch(`${API_URL}/api/marketplace/animal/${id}?lang=${language}`)
       .then(r => {
         if (!r.ok) { setNotFound(true); return null; }
         return r.json();
@@ -814,7 +816,7 @@ export default function LivestockAnimalDetail() {
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, language]);
 
   if (loading) return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
