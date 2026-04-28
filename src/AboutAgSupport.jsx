@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -16,89 +17,49 @@ const S = ({ children }) => (
   </svg>
 );
 
-const EVENT_FEATURES = [
-  {
-    icon: <S><rect x="1" y="3" width="14" height="11" rx="1"/><path d="M5 3V1M11 3V1"/><line x1="1" y1="7" x2="15" y2="7"/></S>,
-    title: 'Every ag event type',
-    body: 'Livestock shows, fiber festivals, farm tours, auctions, vendor fairs, conferences, workshops, farm dinners, competitions, certifications — each has its own registration flow tuned to what you need to collect.',
-  },
-  {
-    icon: <S><rect x="2" y="4" width="12" height="9" rx="1"/><path d="M5 4V2.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V4"/><line x1="8" y1="8" x2="8" y2="11"/><line x1="6" y1="9.5" x2="10" y2="9.5"/></S>,
-    title: 'Tickets, meals & add-ons',
-    body: 'Sell multiple ticket tiers, meal plans, and optional packages in one checkout. Promo codes, waitlists, and refund handling are all built in.',
-  },
-  {
-    icon: <S><path d="M3 5h10M3 8h7M3 11h5"/><rect x="1" y="2" width="14" height="12" rx="1"/></S>,
-    title: 'Branded registration pages',
-    body: 'Each event gets a fully branded public page with your logo, schedule, and description. Attendees register directly — no third-party redirects.',
-  },
-  {
-    icon: <S><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/><line x1="13" y1="4" x2="15" y2="4"/><line x1="14" y1="3" x2="14" y2="5"/></S>,
-    title: 'Check-in & nametags',
-    body: 'Scan QR codes on arrival, print nametags, barn cards, and class sheets from the same dashboard. Broadcast day-of announcements to checked-in attendees.',
-  },
-  {
-    icon: <S><path d="M8 2L1 14h14z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12.5" r="0.6" fill="currentColor" stroke="none"/></S>,
-    title: 'Judge & speaker portals',
-    body: 'Competition events include a judge portal for livestock, fleece, and fiber arts classes. Conferences get speaker portals, agenda builders, and certificate printing.',
-  },
-  {
-    icon: <S><path d="M2 12 L5 7 L8 9 L11 4 L14 6"/><line x1="2" y1="14" x2="14" y2="14"/></S>,
-    title: 'Real-time analytics & payouts',
-    body: 'Watch registration and revenue in real time. Stripe payouts go directly to your account — no waiting on a middleman to cut a check after the event.',
-  },
-  {
-    icon: <S><path d="M2 4h12v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4z"/><path d="M2 4l6 5 6-5"/></S>,
-    title: 'Mailing list & follow-ups',
-    body: 'Every registration builds a clean attendee list you own. Send follow-ups, year-over-year invitations, and newsletters directly from the platform.',
-  },
-  {
-    icon: <S><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></S>,
-    title: 'Lead retrieval for exhibitors',
-    body: 'Exhibitors can scan attendee badges to capture leads instantly. Export contacts at the close of each show for seamless follow-up.',
-  },
+// Icons only (JSX stays at module level)
+const EVENT_ICONS = [
+  <S><rect x="1" y="3" width="14" height="11" rx="1"/><path d="M5 3V1M11 3V1"/><line x1="1" y1="7" x2="15" y2="7"/></S>,
+  <S><rect x="2" y="4" width="12" height="9" rx="1"/><path d="M5 4V2.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V4"/><line x1="8" y1="8" x2="8" y2="11"/><line x1="6" y1="9.5" x2="10" y2="9.5"/></S>,
+  <S><path d="M3 5h10M3 8h7M3 11h5"/><rect x="1" y="2" width="14" height="12" rx="1"/></S>,
+  <S><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/><line x1="13" y1="4" x2="15" y2="4"/><line x1="14" y1="3" x2="14" y2="5"/></S>,
+  <S><path d="M8 2L1 14h14z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12.5" r="0.6" fill="currentColor" stroke="none"/></S>,
+  <S><path d="M2 12 L5 7 L8 9 L11 4 L14 6"/><line x1="2" y1="14" x2="14" y2="14"/></S>,
+  <S><path d="M2 4h12v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4z"/><path d="M2 4l6 5 6-5"/></S>,
+  <S><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></S>,
 ];
 
-const ASSOC_FEATURES = [
-  {
-    icon: <S><rect x="1" y="2" width="14" height="10" rx="1"/><line x1="4" y1="15" x2="12" y2="15"/><line x1="8" y1="12" x2="8" y2="15"/></S>,
-    title: 'Custom association website',
-    body: 'Your association gets a fully custom website powered by the OFN Website Builder — drag-and-drop, farm-aware widgets, custom domain, built-in blog, and SSL. No developer required.',
-  },
-  {
-    icon: <S><circle cx="8" cy="8" r="6"/><path d="M8 2c-2 1.5-3 3.5-3 6s1 4.5 3 6"/><path d="M8 2c2 1.5 3 3.5 3 6s-1 4.5-3 6"/><line x1="2" y1="8" x2="14" y2="8"/></S>,
-    title: 'OFN directory listing',
-    body: 'Your organization appears in the Oatmeal Farm Network directory, putting you in front of thousands of farms, ranches, producers, and consumers actively using the platform.',
-  },
-  {
-    icon: <S><rect x="1" y="3" width="14" height="11" rx="1"/><path d="M5 3V1M11 3V1"/><line x1="1" y1="7" x2="15" y2="7"/></S>,
-    title: 'Integrated event management',
-    body: 'Run your annual show, field day, or conference on the same platform as your website. Registration pages link directly from your site with no extra setup.',
-  },
-  {
-    icon: <S><path d="M11 2l3 3-8 8H3v-3z"/><line x1="9" y1="4" x2="12" y2="7"/></S>,
-    title: 'Built-in blog & news',
-    body: 'Post breed news, policy updates, and member spotlights. Your blog lives on your website and appears in the OFN news feed — one post, two audiences.',
-  },
-  {
-    icon: <S><path d="M2 13 L5 8 L8 10 L11 5 L14 7"/><path d="M11 5 L14 5 L14 8"/><line x1="2" y1="15" x2="14" y2="15"/></S>,
-    title: 'Platform fee revenue share',
-    body: 'Associations earn a share of platform fees generated by their members — a passive revenue stream that grows as your member base uses OFN tools.',
-  },
-  {
-    icon: <S><circle cx="6" cy="5" r="2.5"/><circle cx="11" cy="10" r="2.5"/><path d="M8.5 5H13a1 1 0 0 1 1 1v1"/><path d="M7.5 10H3a1 1 0 0 1-1-1V8"/></S>,
-    title: 'Member management',
-    body: 'Members join your association through OFN and link their farm or business profile to your organization. Track membership, send broadcasts, and stay connected.',
-  },
-];
-
-const EVENT_TYPES = [
-  'Livestock shows', 'Fiber festivals', 'Conferences', 'Competitions',
-  'Auctions', 'Farm tours', 'Vendor fairs', 'Farm dinners',
-  'Workshops', 'RSVP events', 'Certifications', 'Field days',
+const ASSOC_ICONS = [
+  <S><rect x="1" y="2" width="14" height="10" rx="1"/><line x1="4" y1="15" x2="12" y2="15"/><line x1="8" y1="12" x2="8" y2="15"/></S>,
+  <S><circle cx="8" cy="8" r="6"/><path d="M8 2c-2 1.5-3 3.5-3 6s1 4.5 3 6"/><path d="M8 2c2 1.5 3 3.5 3 6s-1 4.5-3 6"/><line x1="2" y1="8" x2="14" y2="8"/></S>,
+  <S><rect x="1" y="3" width="14" height="11" rx="1"/><path d="M5 3V1M11 3V1"/><line x1="1" y1="7" x2="15" y2="7"/></S>,
+  <S><path d="M11 2l3 3-8 8H3v-3z"/><line x1="9" y1="4" x2="12" y2="7"/></S>,
+  <S><path d="M2 13 L5 8 L8 10 L11 5 L14 7"/><path d="M11 5 L14 5 L14 8"/><line x1="2" y1="15" x2="14" y2="15"/></S>,
+  <S><circle cx="6" cy="5" r="2.5"/><circle cx="11" cy="10" r="2.5"/><path d="M8.5 5H13a1 1 0 0 1 1 1v1"/><path d="M7.5 10H3a1 1 0 0 1-1-1V8"/></S>,
 ];
 
 export default function AboutAgSupport() {
+  const { t } = useTranslation();
+
+  const eventFeatures = EVENT_ICONS.map((icon, i) => ({
+    icon,
+    title: t(`ag_support.ef${i + 1}_title`),
+    body:  t(`ag_support.ef${i + 1}_body`),
+  }));
+
+  const assocFeatures = ASSOC_ICONS.map((icon, i) => ({
+    icon,
+    title: t(`ag_support.af${i + 1}_title`),
+    body:  t(`ag_support.af${i + 1}_body`),
+  }));
+
+  const eventTypes = [
+    t('ag_support.et1'),  t('ag_support.et2'),  t('ag_support.et3'),
+    t('ag_support.et4'),  t('ag_support.et5'),  t('ag_support.et6'),
+    t('ag_support.et7'),  t('ag_support.et8'),  t('ag_support.et9'),
+    t('ag_support.et10'), t('ag_support.et11'), t('ag_support.et12'),
+  ];
+
   return (
     <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
@@ -119,22 +80,21 @@ export default function AboutAgSupport() {
                 <path d="M8 1L2 4v4c0 3.5 2.5 6.5 6 7.5C14 14.5 14 8 14 8V4L8 1z"/>
               </svg>
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-white/90">Platform Service</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('ag_support.hero_badge')}</span>
           </div>
-          <h1 className="text-4xl font-bold mb-3 drop-shadow">Agriculture Support</h1>
+          <h1 className="text-4xl font-bold mb-3 drop-shadow">{t('ag_support.hero_title')}</h1>
           <p className="text-lg text-white/95 drop-shadow max-w-2xl">
-            Turnkey event registration and custom digital tools for associations, shows, and ag organizations —
-            built from the ground up for livestock, fiber, and food-system communities.
+            {t('ag_support.hero_body')}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link to="/events/add"
               className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition"
               style={{ color: ACCENT }}>
-              Host an event →
+              {t('ag_support.hero_cta1')}
             </Link>
             <Link to="/signup"
               className="border-2 border-white/60 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-white/10 transition">
-              Open An Account
+              {t('ag_support.hero_cta2')}
             </Link>
           </div>
         </div>
@@ -157,28 +117,26 @@ export default function AboutAgSupport() {
             </span>
             <h2 className="text-2xl font-bold text-gray-900"
                 style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-              Event Registration
+              {t('ag_support.events_h')}
             </h2>
           </div>
           <p className="text-gray-700 leading-relaxed mt-2 mb-6">
-            Most event platforms don't understand livestock shows, fiber festivals, or farm tours.
-            Ours was built for exactly these — with the right registration fields, the right check-in
-            tools, and the right post-event workflow for the ag world.
+            {t('ag_support.events_body')}
           </p>
 
           {/* Event type pills */}
           <div className="flex flex-wrap gap-2 mb-8">
-            {EVENT_TYPES.map(t => (
-              <span key={t}
+            {eventTypes.map(label => (
+              <span key={label}
                 className="text-xs font-semibold px-3 py-1 rounded-full border"
                 style={{ background: GOLD_LIGHT, borderColor: GOLD, color: GOLD }}>
-                {t}
+                {label}
               </span>
             ))}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {EVENT_FEATURES.map(f => (
+            {eventFeatures.map(f => (
               <FeatureCard key={f.title} icon={f.icon} title={f.title} body={f.body} accent={GOLD} />
             ))}
           </div>
@@ -187,16 +145,16 @@ export default function AboutAgSupport() {
             <Link to="/events/add"
               className="px-5 py-2.5 rounded-lg text-white font-bold shadow hover:shadow-md transition text-sm"
               style={{ backgroundColor: GOLD }}>
-              Host an event →
+              {t('ag_support.events_cta1')}
             </Link>
             <Link to="/events"
               className="px-5 py-2.5 rounded-lg font-bold border-2 transition hover:bg-yellow-50 text-sm"
               style={{ borderColor: GOLD, color: GOLD }}>
-              See upcoming events
+              {t('ag_support.events_cta2')}
             </Link>
             <Link to="/platform/events"
               className="px-5 py-2.5 rounded-lg font-bold border border-gray-300 text-gray-600 hover:bg-gray-50 transition text-sm">
-              Learn more about Events
+              {t('ag_support.events_cta3')}
             </Link>
           </div>
         </section>
@@ -214,17 +172,15 @@ export default function AboutAgSupport() {
             </span>
             <h2 className="text-2xl font-bold text-gray-900"
                 style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-              Association Website & Digital Tools
+              {t('ag_support.assoc_h')}
             </h2>
           </div>
           <p className="text-gray-700 leading-relaxed mt-2 mb-6">
-            Breed registries, fiber guilds, grower co-ops, and food-system associations get a full
-            digital home on OFN — a custom website, directory presence, event tools, and a revenue
-            share from the platform fees their members generate.
+            {t('ag_support.assoc_body')}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {ASSOC_FEATURES.map(f => (
+            {assocFeatures.map(f => (
               <FeatureCard key={f.title} icon={f.icon} title={f.title} body={f.body} accent={ACCENT} />
             ))}
           </div>
@@ -233,12 +189,12 @@ export default function AboutAgSupport() {
             <Link to="/website-builder"
               className="px-5 py-2.5 rounded-lg text-white font-bold shadow hover:shadow-md transition text-sm"
               style={{ backgroundColor: ACCENT }}>
-              See the Website Builder →
+              {t('ag_support.assoc_cta1')}
             </Link>
             <Link to="/signup"
               className="px-5 py-2.5 rounded-lg font-bold border-2 transition hover:bg-green-50 text-sm"
               style={{ borderColor: ACCENT, color: ACCENT }}>
-              Open An Account
+              {t('ag_support.assoc_cta2')}
             </Link>
           </div>
         </section>
@@ -247,21 +203,21 @@ export default function AboutAgSupport() {
         <section className="mt-12 text-center bg-white border border-gray-200 rounded-2xl p-8">
           <h3 className="text-2xl font-bold text-gray-900 mb-2"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            Ready to get started?
+            {t('ag_support.cta_title')}
           </h3>
           <p className="text-sm text-gray-600 mb-5">
-            Free to join. Simple RSVPs are always free to host. Paid events carry a low platform fee.
+            {t('ag_support.cta_body')}
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/events/add"
               className="px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
               style={{ backgroundColor: GOLD }}>
-              Host your first event →
+              {t('ag_support.cta1')}
             </Link>
             <Link to="/signup"
               className="px-6 py-3 rounded-lg font-bold border-2 transition hover:bg-green-50"
               style={{ color: ACCENT, borderColor: ACCENT }}>
-              Create a free account
+              {t('ag_support.cta2')}
             </Link>
           </div>
         </section>

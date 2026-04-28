@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -25,6 +26,7 @@ const SOCIAL_LINKS = [
 
 // ── Contact form ──────────────────────────────────────────────────────────────
 function ContactForm({ ranch }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', state: '', country: '', message: '' });
   const [answer, setAnswer] = useState('');
   const [sent, setSent] = useState(false);
@@ -40,16 +42,16 @@ function ContactForm({ ranch }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-    if (!form.firstName || !form.lastName || !form.email) { setError('Please fill in all required fields.'); return; }
-    if (parseInt(answer) !== q.answer) { setError('Math answer is incorrect.'); return; }
+    if (!form.firstName || !form.lastName || !form.email) { setError(t('org_profile.form_error_fields')); return; }
+    if (parseInt(answer) !== q.answer) { setError(t('org_profile.form_error_math')); return; }
     setSent(true);
   };
 
   if (sent) return (
     <div style={{ backgroundColor: '#d4edda', border: '1px solid #c3e6cb', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
       <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✓</div>
-      <h3 style={{ color: '#155724', margin: '0 0 8px' }}>Message Sent!</h3>
-      <p style={{ color: '#155724', margin: 0 }}>Thank you for contacting {ranch.business_name}. They will be in touch soon.</p>
+      <h3 style={{ color: '#155724', margin: '0 0 8px' }}>{t('org_profile.form_sent_title')}</h3>
+      <p style={{ color: '#155724', margin: 0 }}>{t('org_profile.form_sent_body', { name: ranch.business_name })}</p>
     </div>
   );
 
@@ -58,33 +60,33 @@ function ContactForm({ ranch }) {
       {error && <div style={{ backgroundColor: '#f8d7da', border: '1px solid #f5c6cb', borderRadius: '4px', padding: '12px', marginBottom: '16px', color: '#721c24', fontSize: '0.9rem' }}>{error}</div>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
         <div>
-          <label style={formLabel}>First Name</label>
+          <label style={formLabel}>{t('org_profile.form_first_name')}</label>
           <input value={form.firstName} onChange={set('firstName')} required style={formInput} />
         </div>
         <div>
-          <label style={formLabel}>Last Name</label>
+          <label style={formLabel}>{t('org_profile.form_last_name')}</label>
           <input value={form.lastName} onChange={set('lastName')} required style={formInput} />
         </div>
       </div>
       <div style={{ marginBottom: '12px' }}>
-        <label style={formLabel}>Email</label>
+        <label style={formLabel}>{t('org_profile.form_email')}</label>
         <input type="email" value={form.email} onChange={set('email')} required style={formInput} />
       </div>
       <div style={{ marginBottom: '12px' }}>
-        <label style={formLabel}>Phone <span style={{ color: '#999', fontWeight: 400 }}>(Optional)</span></label>
+        <label style={formLabel}>{t('org_profile.form_phone')} <span style={{ color: '#999', fontWeight: 400 }}>{t('org_profile.form_phone_opt')}</span></label>
         <input type="tel" value={form.phone} onChange={set('phone')} style={formInput} />
       </div>
       <div style={{ marginBottom: '12px' }}>
-        <label style={formLabel}>State / Province <span style={{ color: '#999', fontWeight: 400 }}>(Optional)</span></label>
+        <label style={formLabel}>{t('org_profile.form_state')} <span style={{ color: '#999', fontWeight: 400 }}>{t('org_profile.form_state_opt')}</span></label>
         <input value={form.state} onChange={set('state')} style={formInput} />
       </div>
       <div style={{ marginBottom: '12px' }}>
-        <label style={formLabel}>Questions / Comments <span style={{ color: '#999', fontWeight: 400 }}>(Optional)</span></label>
+        <label style={formLabel}>{t('org_profile.form_message')} <span style={{ color: '#999', fontWeight: 400 }}>{t('org_profile.form_message_opt')}</span></label>
         <textarea value={form.message} onChange={set('message')} rows={5} style={{ ...formInput, resize: 'vertical' }} />
       </div>
       <div style={{ backgroundColor: '#f8f8f8', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
-        <p style={{ margin: '0 0 10px', fontWeight: 600, fontSize: '0.9rem' }}>Human Verification</p>
-        <p style={{ margin: '0 0 10px', fontSize: '0.85rem', color: '#666' }}>Answer the simple math question below.</p>
+        <p style={{ margin: '0 0 10px', fontWeight: 600, fontSize: '0.9rem' }}>{t('org_profile.form_verify')}</p>
+        <p style={{ margin: '0 0 10px', fontSize: '0.85rem', color: '#666' }}>{t('org_profile.form_verify_body')}</p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{q.a} + {q.b} =</span>
           <input type="number" value={answer} onChange={e => setAnswer(e.target.value)}
@@ -93,7 +95,7 @@ function ContactForm({ ranch }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button type="submit" style={{ padding: '12px 32px', backgroundColor: '#819360', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}>
-          Send Message
+          {t('org_profile.form_send')}
         </button>
       </div>
     </form>
@@ -102,6 +104,7 @@ function ContactForm({ ranch }) {
 
 // ── Animal card ───────────────────────────────────────────────────────────────
 function AnimalCard({ animal, isStuds }) {
+  const { t } = useTranslation();
   const [imgFailed, setImgFailed] = useState(false);
   const detailUrl = `/livestockmarketplace/Animals/Details.asp?ID=${animal.animal_id}`;
   const priceVal = isStuds ? animal.stud_fee : animal.price;
@@ -116,7 +119,7 @@ function AnimalCard({ animal, isStuds }) {
               style={{ width: '100%', height: '160px', objectFit: 'contain' }} />
           </a>
         ) : (
-          <div style={{ color: '#ccc', fontSize: '12px', textAlign: 'center' }}>No Photo</div>
+          <div style={{ color: '#ccc', fontSize: '12px', textAlign: 'center' }}>{t('org_profile.no_photo')}</div>
         )}
       </div>
       <div style={{ padding: '12px' }}>
@@ -125,10 +128,10 @@ function AnimalCard({ animal, isStuds }) {
         </a>
         {animal.breeds?.length > 0 && <p style={{ margin: '0 0 4px', fontSize: '0.8rem', color: '#888' }}>{animal.breeds.join(', ')}</p>}
         <p style={{ margin: '0 0 8px', fontSize: '0.85rem', fontWeight: 600, color: '#507033' }}>
-          {priceVal ? `$${Math.round(priceVal).toLocaleString()}` : 'Call for Price'}
+          {priceVal ? `$${Math.round(priceVal).toLocaleString()}` : t('org_profile.call_for_price')}
         </p>
         <a href={detailUrl} style={{ fontSize: '0.8rem', color: '#fff', backgroundColor: '#6c757d', padding: '4px 10px', borderRadius: '4px', textDecoration: 'none' }}>
-          View Details
+          {t('org_profile.view_details')}
         </a>
       </div>
     </div>
@@ -137,6 +140,7 @@ function AnimalCard({ animal, isStuds }) {
 
 // ── Animals tab ───────────────────────────────────────────────────────────────
 function AnimalsTab({ businessId, isStuds }) {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -164,7 +168,9 @@ function AnimalsTab({ businessId, isStuds }) {
   );
 
   if (!data || data.animals.length === 0) return (
-    <p style={{ color: '#888', padding: '20px 0' }}>No {isStuds ? 'stud' : 'sale'} listings at this time.</p>
+    <p style={{ color: '#888', padding: '20px 0' }}>
+      {isStuds ? t('org_profile.no_stud_animals') : t('org_profile.no_sale_animals')}
+    </p>
   );
 
   return (
@@ -175,8 +181,8 @@ function AnimalsTab({ businessId, isStuds }) {
       </div>
       {data.total_pages > 1 && (
         <div style={{ display: 'flex', gap: '4px' }}>
-          {page > 1 && <button onClick={() => setPage(p => p - 1)} style={btnStyle}>‹ Prev</button>}
-          {page < data.total_pages && <button onClick={() => setPage(p => p + 1)} style={btnStyle}>Next ›</button>}
+          {page > 1 && <button onClick={() => setPage(p => p - 1)} style={btnStyle}>{t('org_profile.prev')}</button>}
+          {page < data.total_pages && <button onClick={() => setPage(p => p + 1)} style={btnStyle}>{t('org_profile.next')}</button>}
         </div>
       )}
     </div>
@@ -185,6 +191,7 @@ function AnimalsTab({ businessId, isStuds }) {
 
 // ── Services tab ──────────────────────────────────────────────────────────────
 function ServicesTab({ businessId }) {
+  const { t } = useTranslation();
   const [services, setServices] = useState([]);
   const [loading, setLoading]   = useState(true);
 
@@ -195,8 +202,8 @@ function ServicesTab({ businessId }) {
       .catch(() => setLoading(false));
   }, [businessId]);
 
-  if (loading) return <div style={{ color: '#888', padding: '20px 0' }}>Loading services…</div>;
-  if (!services.length) return <p style={{ color: '#888', padding: '20px 0' }}>No services listed at this time.</p>;
+  if (loading) return <div style={{ color: '#888', padding: '20px 0' }}>{t('org_profile.loading_services')}</div>;
+  if (!services.length) return <p style={{ color: '#888', padding: '20px 0' }}>{t('org_profile.no_services')}</p>;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -220,7 +227,7 @@ function ServicesTab({ businessId }) {
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             {svc.ServiceContactForPrice ? (
-              <span style={{ fontSize: '0.85rem', color: '#888', fontStyle: 'italic' }}>Contact for Price</span>
+              <span style={{ fontSize: '0.85rem', color: '#888', fontStyle: 'italic' }}>{t('org_profile.contact_for_price')}</span>
             ) : svc.ServicePrice ? (
               <span style={{ fontSize: '1rem', fontWeight: 700, color: '#507033' }}>${parseFloat(svc.ServicePrice).toLocaleString()}</span>
             ) : null}
@@ -234,7 +241,8 @@ function ServicesTab({ businessId }) {
 
 // ── Produce tab ───────────────────────────────────────────────────────────────
 function ProduceTab({ items }) {
-  if (!items.length) return <p style={{ color: '#888', padding: '20px 0' }}>No produce listed at this time.</p>;
+  const { t } = useTranslation();
+  if (!items.length) return <p style={{ color: '#888', padding: '20px 0' }}>{t('org_profile.no_produce')}</p>;
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
       {items.map(p => (
@@ -259,7 +267,8 @@ function ProduceTab({ items }) {
 
 // ── Meat tab ──────────────────────────────────────────────────────────────────
 function MeatTab({ items }) {
-  if (!items.length) return <p style={{ color: '#888', padding: '20px 0' }}>No meat listed at this time.</p>;
+  const { t } = useTranslation();
+  if (!items.length) return <p style={{ color: '#888', padding: '20px 0' }}>{t('org_profile.no_meat')}</p>;
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
       {items.map(m => (
@@ -282,7 +291,8 @@ function MeatTab({ items }) {
 
 // ── Processed food / value-added tab ─────────────────────────────────────────
 function ProcessedFoodTab({ items }) {
-  if (!items.length) return <p style={{ color: '#888', padding: '20px 0' }}>No value-added products listed at this time.</p>;
+  const { t } = useTranslation();
+  if (!items.length) return <p style={{ color: '#888', padding: '20px 0' }}>{t('org_profile.no_value_added')}</p>;
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
       {items.map(f => (
@@ -305,7 +315,8 @@ function ProcessedFoodTab({ items }) {
 
 // ── Small-farm products tab ───────────────────────────────────────────────────
 function SFProductsTab({ items }) {
-  if (!items.length) return <p style={{ color: '#888', padding: '20px 0' }}>No products listed at this time.</p>;
+  const { t } = useTranslation();
+  if (!items.length) return <p style={{ color: '#888', padding: '20px 0' }}>{t('org_profile.no_products')}</p>;
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
       {items.map(p => (
@@ -353,6 +364,7 @@ function blogExcerpt(content, wordLimit = 100) {
 }
 
 function BlogPostCard({ post }) {
+  const { t } = useTranslation();
   const catColor = BLOG_CATEGORY_COLORS[post.category] || '#6b7280';
   const date = (post.published_at || post.created_at)
     ? new Date(post.published_at || post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -390,7 +402,7 @@ function BlogPostCard({ post }) {
         )}
         <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
           <Link to={`/blog/${post.blog_id}`} style={{ fontSize: '0.83rem', color: '#819360', fontWeight: 600, textDecoration: 'none' }}>
-            Read more →
+            {t('org_profile.read_more')}
           </Link>
         </div>
       </div>
@@ -399,6 +411,7 @@ function BlogPostCard({ post }) {
 }
 
 function BlogTab({ posts }) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
 
@@ -412,13 +425,13 @@ function BlogTab({ posts }) {
     return matchesCat && matchesSearch;
   });
 
-  if (!posts.length) return <p style={{ color: '#888', padding: '20px 0' }}>No blog posts at this time.</p>;
+  if (!posts.length) return <p style={{ color: '#888', padding: '20px 0' }}>{t('org_profile.no_blog')}</p>;
 
   return (
     <div>
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <input
-          placeholder="Search posts..."
+          placeholder={t('org_profile.search_posts')}
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{ flex: 1, minWidth: '200px', padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.9rem' }}
@@ -429,7 +442,7 @@ function BlogTab({ posts }) {
               onClick={() => setActiveCategory('')}
               style={{ padding: '0.35rem 0.85rem', borderRadius: '20px', border: '1px solid', fontSize: '0.82rem', cursor: 'pointer', fontWeight: activeCategory ? 400 : 700, background: activeCategory ? '#f9fafb' : '#819360', color: activeCategory ? '#374151' : '#fff', borderColor: activeCategory ? '#d1d5db' : '#819360' }}
             >
-              All
+              {t('org_profile.all_posts')}
             </button>
             {categories.map(cat => (
               <button
@@ -443,7 +456,7 @@ function BlogTab({ posts }) {
           </div>
         )}
       </div>
-      {filtered.length === 0 && <p style={{ color: '#9ca3af', padding: '2rem 0' }}>No posts found.</p>}
+      {filtered.length === 0 && <p style={{ color: '#9ca3af', padding: '2rem 0' }}>{t('org_profile.no_posts_found')}</p>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {filtered.map(post => <BlogPostCard key={post.blog_id} post={post} />)}
       </div>
@@ -453,7 +466,8 @@ function BlogTab({ posts }) {
 
 // ── Events tab ────────────────────────────────────────────────────────────────
 function EventsTab({ events }) {
-  if (!events.length) return <p style={{ color: '#888', padding: '20px 0' }}>No upcoming events at this time.</p>;
+  const { t } = useTranslation();
+  if (!events.length) return <p style={{ color: '#888', padding: '20px 0' }}>{t('org_profile.no_events')}</p>;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {events.map(ev => {
@@ -484,6 +498,7 @@ function EventsTab({ events }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function OrgProfile() {
+  const { t } = useTranslation();
   const { businessId: urlBusinessId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const routerLocation = useLocation();
@@ -502,22 +517,16 @@ export default function OrgProfile() {
 
   const navigate = useNavigate();
   const activeTab = searchParams.get('tab') || 'home';
-  // Preserve router state when switching tabs so directoryBusiness isn't lost
   const setTab = (tab) => navigate(
     { pathname: routerLocation.pathname, search: `?tab=${tab}` },
     { state: routerLocation.state, replace: true }
   );
 
-  // Restaurant-buyer "save this farm" state — only relevant when the viewer is a restaurant
-  // looking at a different business's profile.
   const restaurantBusinessId = Array.isArray(businesses)
     ? businesses.find(b => (b.BusinessType || '').toLowerCase() === 'restaurant')?.BusinessID
     : null;
   const [isSavedFarm, setIsSavedFarm] = useState(false);
 
-  // Business ID can come from URL param (/ranch/:businessId),
-  // router state (directory Profile button), the logged-in user's first business,
-  // or the last selected business stored in localStorage
   const directoryBusiness = routerLocation.state?.business || null;
   const businessId = urlBusinessId
     || directoryBusiness?.BusinessID
@@ -525,7 +534,6 @@ export default function OrgProfile() {
     || localStorage.getItem('selected_business_id');
 
   useEffect(() => {
-    // If directory passed full business object, use it directly
     if (directoryBusiness && !urlBusinessId) {
       const b = directoryBusiness;
       setRanch({
@@ -583,23 +591,16 @@ export default function OrgProfile() {
         .then(d => d && setCounts(p => ({ ...p, services: Array.isArray(d) ? d.length : 0 })))
         .catch(() => {});
 
-      // Food inventory — stored for tabs + sourcing card gate
       fetch(`${API_URL}/api/produce/inventory?BusinessID=${businessId}`).then(r => r.ok ? r.json() : []).then(d => setProduceItems(Array.isArray(d) ? d : [])).catch(() => {});
       fetch(`${API_URL}/api/meat/inventory?BusinessID=${businessId}`).then(r => r.ok ? r.json() : []).then(d => setMeatItems(Array.isArray(d) ? d : [])).catch(() => {});
       fetch(`${API_URL}/api/processed-food/inventory?BusinessID=${businessId}`).then(r => r.ok ? r.json() : []).then(d => setProcessedFoodItems(Array.isArray(d) ? d : [])).catch(() => {});
 
-      // Small-farm products
       fetch(`${API_URL}/api/sfproducts/?business_id=${businessId}`).then(r => r.ok ? r.json() : []).then(d => setSfProductItems(Array.isArray(d) ? d : [])).catch(() => {});
-
-      // Blog posts
       fetch(`${API_URL}/api/blog/posts?business_id=${businessId}&limit=50`).then(r => r.ok ? r.json() : []).then(d => setBlogPosts(Array.isArray(d) ? d : [])).catch(() => {});
-
-      // Upcoming events
       fetch(`${API_URL}/api/events?business_id=${businessId}`).then(r => r.ok ? r.json() : []).then(d => setUpcomingEvents(Array.isArray(d) ? d : [])).catch(() => {});
     }
   }, [businessId]);
 
-  // Fetch saved-farm membership when this profile belongs to a different business than the viewer's restaurant.
   useEffect(() => {
     if (!restaurantBusinessId || !businessId) { setIsSavedFarm(false); return; }
     if (parseInt(restaurantBusinessId) === parseInt(businessId)) { setIsSavedFarm(false); return; }
@@ -649,26 +650,26 @@ export default function OrgProfile() {
     <div className="min-h-screen font-sans">
       <Header />
       <div style={{ textAlign: 'center', padding: '80px 16px' }}>
-        <p style={{ color: '#888', marginBottom: '16px' }}>Organization not found.</p>
-        <Link to="/marketplaces/livestock" style={{ color: '#507033' }}>← Back to Marketplace</Link>
+        <p style={{ color: '#888', marginBottom: '16px' }}>{t('org_profile.not_found')}</p>
+        <Link to="/marketplaces/livestock" style={{ color: '#507033' }}>{t('org_profile.back_marketplace')}</Link>
       </div>
       <Footer />
     </div>
   );
 
   const TABS = [
-    { key: 'home',          label: 'Home',                                            show: true },
-    { key: 'blog',          label: `Blog (${blogPosts.length})`,                      show: blogPosts.length > 0 },
-    { key: 'events',        label: `Events (${upcomingEvents.length})`,               show: upcomingEvents.length > 0 },
-    { key: 'animals',       label: `Animals For Sale (${counts.for_sale})`,           show: counts.for_sale > 0 },
-    { key: 'studs',         label: `Stud Services (${counts.studs})`,                 show: counts.studs > 0 },
-    { key: 'produce',       label: `Produce (${produceItems.length})`,                show: produceItems.length > 0 },
-    { key: 'meat',          label: `Meat (${meatItems.length})`,                      show: meatItems.length > 0 },
-    { key: 'processedFood', label: `Value Added (${processedFoodItems.length})`,      show: processedFoodItems.length > 0 },
-    { key: 'sfProducts',    label: `Products (${sfProductItems.length})`,             show: sfProductItems.length > 0 },
-    { key: 'services',      label: `Services (${counts.services})`,                   show: counts.services > 0 },
-    { key: 'contact',       label: 'Contact',                                          show: true },
-  ].filter(t => t.show);
+    { key: 'home',          label: t('org_profile.tab_home'),                                               show: true },
+    { key: 'blog',          label: t('org_profile.tab_blog',        { count: blogPosts.length }),           show: blogPosts.length > 0 },
+    { key: 'events',        label: t('org_profile.tab_events',      { count: upcomingEvents.length }),      show: upcomingEvents.length > 0 },
+    { key: 'animals',       label: t('org_profile.tab_animals',     { count: counts.for_sale }),            show: counts.for_sale > 0 },
+    { key: 'studs',         label: t('org_profile.tab_studs',       { count: counts.studs }),               show: counts.studs > 0 },
+    { key: 'produce',       label: t('org_profile.tab_produce',     { count: produceItems.length }),        show: produceItems.length > 0 },
+    { key: 'meat',          label: t('org_profile.tab_meat',        { count: meatItems.length }),           show: meatItems.length > 0 },
+    { key: 'processedFood', label: t('org_profile.tab_value_added', { count: processedFoodItems.length }), show: processedFoodItems.length > 0 },
+    { key: 'sfProducts',    label: t('org_profile.tab_products',    { count: sfProductItems.length }),      show: sfProductItems.length > 0 },
+    { key: 'services',      label: t('org_profile.tab_services',    { count: counts.services }),            show: counts.services > 0 },
+    { key: 'contact',       label: t('org_profile.tab_contact'),                                            show: true },
+  ].filter(tab => tab.show);
 
   const location = [ranch.address_city, ranch.address_state].filter(Boolean).join(', ');
   const activeSocials = SOCIAL_LINKS.filter(s => ranch[s.key]);
@@ -761,7 +762,7 @@ export default function OrgProfile() {
                   }}
                   title="Printable 'Sourced From' card for menus, table tents, and social"
                 >
-                  🖨️ Get sourcing card
+                  {t('org_profile.get_sourcing_card')}
                 </a>
               )}
               {restaurantBusinessId && parseInt(restaurantBusinessId) !== parseInt(ranch.business_id) && (
@@ -777,15 +778,14 @@ export default function OrgProfile() {
                     borderRadius: '6px',
                     cursor: 'pointer',
                   }}
-                  title={isSavedFarm ? 'Saved to your My Farms list' : 'Save this farm for quick re-ordering'}
+                  title={isSavedFarm ? t('org_profile.saved_to_farms') : t('org_profile.save_to_farms')}
                 >
-                  {isSavedFarm ? '❤️ Saved to My Farms' : '🤍 Save to My Farms'}
+                  {isSavedFarm ? t('org_profile.saved_to_farms') : t('org_profile.save_to_farms')}
                 </button>
               )}
             </div>
           )}
 
-          {/* ── Restaurant facts strip — only when fields are set ── */}
           {(ranch.cuisine || ranch.head_chef || ranch.seating_capacity || ranch.year_opened || ranch.restaurant_hours) && (
             <div style={{
               marginTop: '16px',
@@ -838,11 +838,9 @@ export default function OrgProfile() {
         {/* ── Home tab ── */}
         {activeTab === 'home' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1400px' }}>
-
-            {/* About card — first */}
             {(ranch.home_heading || ranch.description || ranch.home_text || ranch.home_text2) && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-bold mb-3" style={{ color: '#507033' }}>About {ranch.business_name}</h2>
+                <h2 className="text-lg font-bold mb-3" style={{ color: '#507033' }}>{t('org_profile.biz_about')} {ranch.business_name}</h2>
                 {ranch.description && (
                   <div className="prose prose-sm max-w-none text-sm text-gray-700 leading-relaxed mb-3"
                     dangerouslySetInnerHTML={{ __html: ranch.description }} />
@@ -858,7 +856,6 @@ export default function OrgProfile() {
               </div>
             )}
 
-            {/* Business Information card — below about */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
               {(ranch.logo || ranch.header_image) && (
                 <div className="flex justify-center mb-4">
@@ -870,27 +867,27 @@ export default function OrgProfile() {
                   />
                 </div>
               )}
-              <h3 className="text-base font-bold mb-4" style={{ color: '#507033' }}>Business Information</h3>
+              <h3 className="text-base font-bold mb-4" style={{ color: '#507033' }}>{t('org_profile.biz_info')}</h3>
               <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm text-gray-700 mb-4">
                 <div className="flex flex-col">
-                  <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Business Name</dt>
+                  <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('org_profile.biz_name_label')}</dt>
                   <dd className="mt-0.5 font-medium">{ranch.business_name}</dd>
                 </div>
                 {location && (
                   <div className="flex flex-col">
-                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Location</dt>
+                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('org_profile.location_label')}</dt>
                     <dd className="mt-0.5 font-medium">{location}</dd>
                   </div>
                 )}
                 {(ranch.contact_first_name || ranch.contact_last_name) && (
                   <div className="flex flex-col">
-                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Contact</dt>
+                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('org_profile.contact_label')}</dt>
                     <dd className="mt-0.5 font-medium">{[ranch.contact_first_name, ranch.contact_last_name].filter(Boolean).join(' ')}</dd>
                   </div>
                 )}
                 {ranch.phone && (
                   <div className="flex flex-col">
-                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Phone</dt>
+                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('org_profile.phone_label')}</dt>
                     <dd className="mt-0.5 font-medium">
                       <a href={`tel:${ranch.phone}`} style={{ color: '#507033', textDecoration: 'none' }}>{ranch.phone}</a>
                     </dd>
@@ -898,7 +895,7 @@ export default function OrgProfile() {
                 )}
                 {ranch.website && (
                   <div className="flex flex-col">
-                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Website</dt>
+                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('org_profile.website_label')}</dt>
                     <dd className="mt-0.5">
                       <a href={ranch.website.startsWith('http') ? ranch.website : `https://${ranch.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#507033', wordBreak: 'break-all' }}>{ranch.website}</a>
                     </dd>
@@ -917,42 +914,22 @@ export default function OrgProfile() {
                 </div>
               )}
             </div>
-
           </div>
         )}
 
-        {/* ── Animals for sale tab ── */}
         {activeTab === 'animals' && <AnimalsTab businessId={businessId} isStuds={false} />}
-
-        {/* ── Stud services tab ── */}
         {activeTab === 'studs' && <AnimalsTab businessId={businessId} isStuds={true} />}
-
-        {/* ── Services tab ── */}
         {activeTab === 'services' && <ServicesTab businessId={businessId} />}
-
-        {/* ── Blog tab ── */}
         {activeTab === 'blog' && <BlogTab posts={blogPosts} />}
-
-        {/* ── Events tab ── */}
         {activeTab === 'events' && <EventsTab events={upcomingEvents} />}
-
-        {/* ── Produce tab ── */}
         {activeTab === 'produce' && <ProduceTab items={produceItems} />}
-
-        {/* ── Meat tab ── */}
         {activeTab === 'meat' && <MeatTab items={meatItems} />}
-
-        {/* ── Value-added products tab ── */}
         {activeTab === 'processedFood' && <ProcessedFoodTab items={processedFoodItems} />}
-
-        {/* ── Small-farm products tab ── */}
         {activeTab === 'sfProducts' && <SFProductsTab items={sfProductItems} />}
 
         {/* ── About / Contact tab ── */}
         {activeTab === 'contact' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1400px' }}>
-
-            {/* Business Information card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
               {(ranch.logo || ranch.header_image) && (
                 <div className="flex justify-center mb-4">
@@ -964,21 +941,21 @@ export default function OrgProfile() {
                   />
                 </div>
               )}
-              <h3 className="text-base font-bold mb-4" style={{ color: '#507033' }}>Business Information</h3>
+              <h3 className="text-base font-bold mb-4" style={{ color: '#507033' }}>{t('org_profile.biz_info')}</h3>
               <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm text-gray-700 mb-4">
                 <div className="flex flex-col">
-                  <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Business Name</dt>
+                  <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('org_profile.biz_name_label')}</dt>
                   <dd className="mt-0.5 font-medium">{ranch.business_name}</dd>
                 </div>
                 {location && (
                   <div className="flex flex-col">
-                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Location</dt>
+                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('org_profile.location_label')}</dt>
                     <dd className="mt-0.5 font-medium">{location}</dd>
                   </div>
                 )}
                 {ranch.address_street && (
                   <div className="flex flex-col col-span-2">
-                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Address</dt>
+                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('org_profile.address_label')}</dt>
                     <dd className="mt-0.5 font-medium">
                       {[ranch.address_street, `${location} ${ranch.address_zip}`.trim(), ranch.address_country].filter(Boolean).join(', ')}
                     </dd>
@@ -986,13 +963,13 @@ export default function OrgProfile() {
                 )}
                 {(ranch.contact_first_name || ranch.contact_last_name) && (
                   <div className="flex flex-col">
-                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Contact</dt>
+                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('org_profile.contact_label')}</dt>
                     <dd className="mt-0.5 font-medium">{[ranch.contact_first_name, ranch.contact_last_name].filter(Boolean).join(' ')}</dd>
                   </div>
                 )}
                 {ranch.phone && (
                   <div className="flex flex-col">
-                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Phone</dt>
+                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('org_profile.phone_label')}</dt>
                     <dd className="mt-0.5 font-medium">
                       <a href={`tel:${ranch.phone}`} style={{ color: '#507033', textDecoration: 'none' }}>{ranch.phone}</a>
                     </dd>
@@ -1000,7 +977,7 @@ export default function OrgProfile() {
                 )}
                 {ranch.website && (
                   <div className="flex flex-col">
-                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Website</dt>
+                    <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('org_profile.website_label')}</dt>
                     <dd className="mt-0.5">
                       <a href={ranch.website.startsWith('http') ? ranch.website : `https://${ranch.website}`} target="_blank" rel="noopener noreferrer" style={{ color: '#507033', wordBreak: 'break-all' }}>{ranch.website}</a>
                     </dd>
@@ -1020,14 +997,12 @@ export default function OrgProfile() {
               )}
             </div>
 
-            {/* Contact form */}
             <div style={{ backgroundColor: '#fff', border: '1px solid #e8e8e8', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', color: '#333' }}>
-                Contact {ranch.business_name}
+                {t('org_profile.contact_form_title', { name: ranch.business_name })}
               </h3>
               <ContactForm ranch={ranch} />
             </div>
-
           </div>
         )}
       </div>

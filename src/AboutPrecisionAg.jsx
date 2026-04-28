@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -29,67 +30,31 @@ const ICONS = {
   water:     <S><path d="M8 14V8"/><path d="M5 10c0-3 3-5 3-8 0 3 3 5 3 8a3 3 0 0 1-6 0z"/></S>,
 };
 
-const FEATURES = [
-  {
-    icon: ICONS.satellite,
-    title: 'Satellite Crop Monitoring',
-    body: 'Track field health from space using six vegetation indices — NDVI, NDRE, EVI, GNDVI, MSAVI2, and NDWI. View color-coded maps, run time-series analyses, and catch crop stress weeks before it becomes yield loss.',
-  },
-  {
-    icon: ICONS.climate,
-    title: 'Predictive Climate Stress',
-    body: 'Get ahead of heatwaves, hard freezes, high-VPD drought events, heavy rain, and damaging wind. Each forecast includes onset timing, duration, peak intensity, and AI-generated recommended actions tailored to your crop type.',
-  },
-  {
-    icon: ICONS.soil,
-    title: 'Soil & Irrigation Intelligence',
-    body: 'Log soil samples with pH, N, P, K, calcium, magnesium, CEC, and organic matter. Pair that with irrigation deficit forecasts — urgency levels tell you exactly when and how much to water, field by field.',
-  },
-  {
-    icon: ICONS.gdd,
-    title: 'Growing Degree Days & Maturity',
-    body: 'Accumulate GDD against crop-specific models and watch milestone markers — emergence, tillering, flowering, grain fill, maturity — update in real time. Harvest timing predictions are recalculated as the season progresses.',
-  },
-  {
-    icon: ICONS.scout,
-    title: 'Field Scouting & Activity Log',
-    body: 'Record pest, disease, weed, nutrient, and irrigation observations with severity ratings and GPS coordinates. The activity log captures every field operation — spray, fertilize, tillage, irrigation, harvest — in a searchable timeline.',
-  },
-  {
-    icon: ICONS.zones,
-    title: 'Management Zones & Prescriptions',
-    body: 'Automatically segment your fields into high, medium, and low performance zones using k-means clustering on your satellite indices. Generate variable-rate application prescriptions for seed, fertilizer, or chemicals from those zones.',
-  },
-  {
-    icon: ICONS.yield,
-    title: 'Yield Forecasting',
-    body: 'Predict end-of-season yield with high, medium, or low confidence based on NDVI trends, GDD accumulation, and historical baselines. Track forecast accuracy over time to calibrate the model to your specific conditions.',
-  },
-  {
-    icon: ICONS.carbon,
-    title: 'Carbon & Crop Rotation',
-    body: 'Monitor soil organic matter trends and get a carbon sequestration score that reflects your management practices. Plan multi-year crop rotations to optimize soil health, reduce pest pressure, and meet sustainability goals.',
-  },
-  {
-    icon: ICONS.alert,
-    title: 'Smart Alert Dashboard',
-    body: 'All critical signals — NDVI decline, pest or disease flags, irrigation urgency, frost risk — surface in one prioritized alert feed. Color-coded severity means you know at a glance what needs attention today versus this week.',
-  },
-  {
-    icon: ICONS.report,
-    title: 'Professional Field Reports',
-    body: 'Generate print-ready or emailable field assessment reports with health scores, satellite analysis summaries, soil data, and agronomic recommendations. Share directly with agronomists, lenders, or buyers.',
-  },
-];
-
-const STATS = [
-  { value: '6', label: 'Vegetation indices' },
-  { value: '10+', label: 'Analysis modules' },
-  { value: '24h', label: 'Climate forecast horizon' },
-  { value: '∞', label: 'Fields per account' },
-];
+const STATS_VALUES = ['6', '10+', '24h', '∞'];
 
 export default function AboutPrecisionAg() {
+  const { t } = useTranslation();
+
+  const features = [
+    { icon: ICONS.satellite, title: t('precision.feat1_title'), body: t('precision.feat1_body') },
+    { icon: ICONS.climate,   title: t('precision.feat2_title'), body: t('precision.feat2_body') },
+    { icon: ICONS.soil,      title: t('precision.feat3_title'), body: t('precision.feat3_body') },
+    { icon: ICONS.gdd,       title: t('precision.feat4_title'), body: t('precision.feat4_body') },
+    { icon: ICONS.scout,     title: t('precision.feat5_title'), body: t('precision.feat5_body') },
+    { icon: ICONS.zones,     title: t('precision.feat6_title'), body: t('precision.feat6_body') },
+    { icon: ICONS.yield,     title: t('precision.feat7_title'), body: t('precision.feat7_body') },
+    { icon: ICONS.carbon,    title: t('precision.feat8_title'), body: t('precision.feat8_body') },
+    { icon: ICONS.alert,     title: t('precision.feat9_title'), body: t('precision.feat9_body') },
+    { icon: ICONS.report,    title: t('precision.feat10_title'), body: t('precision.feat10_body') },
+  ];
+
+  const stats = [
+    { value: STATS_VALUES[0], label: t('precision.stat1_lbl') },
+    { value: STATS_VALUES[1], label: t('precision.stat2_lbl') },
+    { value: STATS_VALUES[2], label: t('precision.stat3_lbl') },
+    { value: STATS_VALUES[3], label: t('precision.stat4_lbl') },
+  ];
+
   return (
     <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
@@ -111,24 +76,23 @@ export default function AboutPrecisionAg() {
                 <circle cx="8" cy="5.5" r="1.5"/>
               </svg>
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-white/90">Platform Service</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('precision.hero_badge')}</span>
           </div>
           <h1 className="text-4xl font-bold mb-3 drop-shadow" style={{ color: '#fff' }}>
-            Precision Agriculture
+            {t('precision.hero_title')}
           </h1>
           <p className="text-lg text-white/95 drop-shadow max-w-2xl">
-            Satellite imagery, climate forecasting, soil intelligence, and yield prediction — unified
-            into one platform that turns field data into decisions you can act on today.
+            {t('precision.hero_body')}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link to="/oatsense"
               className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition"
               style={{ color: ACCENT }}>
-              Open OatSense Dashboard →
+              {t('precision.hero_cta1')}
             </Link>
             <Link to="/signup"
               className="border-2 border-white/60 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-white/10 transition">
-              Open An Account
+              {t('precision.hero_cta2')}
             </Link>
           </div>
         </div>
@@ -137,7 +101,7 @@ export default function AboutPrecisionAg() {
       {/* Stats bar */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 py-5 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {STATS.map(s => (
+          {stats.map(s => (
             <div key={s.label} className="text-center">
               <div className="text-2xl font-bold" style={{ color: ACCENT }}>{s.value}</div>
               <div className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide font-semibold">{s.label}</div>
@@ -155,23 +119,20 @@ export default function AboutPrecisionAg() {
         <section className="mt-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-3"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            What it does
+            {t('precision.what_title')}
           </h2>
           <p className="text-gray-700 leading-relaxed">
-            OatSense is OFN's precision agriculture suite — a full set of tools that connect satellite
-            imagery, weather models, soil records, and field observations into a single coherent picture
-            of your operation. Whether you're managing one field or fifty, the platform scales with you
-            and keeps every decision grounded in real data.
+            {t('precision.what_body')}
           </p>
         </section>
 
         <section className="mt-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-4"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            What's included
+            {t('precision.included_title')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {FEATURES.map(f => (
+            {features.map(f => (
               <FeatureCard key={f.title} icon={f.icon} title={f.title} body={f.body} />
             ))}
           </div>
@@ -181,15 +142,12 @@ export default function AboutPrecisionAg() {
         <section className="mt-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-4"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            How it works
+            {t('precision.how_title')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Step n="1" title="Add your fields"
-              body="Draw field boundaries on the map or enter coordinates. Assign a crop type, planting date, and any soil data you have on hand." />
-            <Step n="2" title="Data populates automatically"
-              body="Satellite passes update your vegetation indices on every clear-sky overpass. Weather models pull hourly forecasts for your exact coordinates." />
-            <Step n="3" title="Act on what matters"
-              body="Alerts surface the highest-priority issues. Reports package everything for your agronomist, lender, or co-op in one click." />
+            <Step n="1" title={t('precision.step1_title')} body={t('precision.step1_body')} />
+            <Step n="2" title={t('precision.step2_title')} body={t('precision.step2_body')} />
+            <Step n="3" title={t('precision.step3_title')} body={t('precision.step3_body')} />
           </div>
         </section>
 
@@ -197,21 +155,21 @@ export default function AboutPrecisionAg() {
         <section className="mt-10 text-center bg-white border border-gray-200 rounded-2xl p-8">
           <h3 className="text-2xl font-bold text-gray-900 mb-2"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            Ready to see your fields from space?
+            {t('precision.cta_title')}
           </h3>
           <p className="text-sm text-gray-600 mb-4">
-            Free with any OFN account. Add your first field and get your first satellite analysis in minutes.
+            {t('precision.cta_body')}
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/oatsense"
               className="inline-block px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
               style={{ backgroundColor: ACCENT }}>
-              Open OatSense →
+              {t('precision.cta1')}
             </Link>
             <Link to="/signup"
               className="inline-block px-6 py-3 rounded-lg font-bold border-2 transition hover:bg-gray-50"
               style={{ color: ACCENT, borderColor: ACCENT }}>
-              Create a free account
+              {t('precision.cta2')}
             </Link>
           </div>
         </section>

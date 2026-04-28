@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -26,57 +27,6 @@ const ICONS = {
   heart:   <S><path d="M8 13s-6-3.5-6-7a4 4 0 0 1 6-3.5A4 4 0 0 1 14 6c0 3.5-6 7-6 7z"/></S>,
 };
 
-const FEATURES = [
-  {
-    icon: ICONS.market,
-    title: 'Farm-to-Table Marketplace',
-    body: 'Browse produce, meat, and processed goods from farms in your region. Filter by category, distance, or farm. Every listing shows current availability, unit price, and minimum order — no cold calls, no guesswork.',
-    cta: { label: 'Browse the marketplace', to: '/marketplaces/farm-to-table' },
-  },
-  {
-    icon: ICONS.heart,
-    title: 'My Farms',
-    body: 'Save the farms you work with most into a curated shortlist. Quickly re-order from your trusted suppliers, check their current availability, and track your buying history — all in one place.',
-    cta: { label: 'My saved farms', to: '/restaurant/farms' },
-  },
-  {
-    icon: ICONS.repeat,
-    title: 'Standing Orders',
-    body: 'Set up recurring weekly, biweekly, or monthly orders with your go-to farms. Choose the day of delivery, quantity, and product — and adjust on the fly when something is short or something new comes in.',
-    cta: { label: 'Manage standing orders', to: '/restaurant/standing-orders' },
-  },
-  {
-    icon: ICONS.mail,
-    title: 'Weekly Harvest Digest',
-    body: 'Subscribe to a weekly email that shows everything available from OFN farms right now — or limit it to just your saved farms. Arrive at Monday prep with a clear picture of what\'s ripe and ready.',
-    cta: { label: 'Set up your digest', to: '/restaurant/digest' },
-  },
-  {
-    icon: ICONS.recipe,
-    title: 'Recipe Library',
-    body: 'Store your recipes in a structured library tied to your pantry. Attach ingredient quantities, methods, and tags — and pull up any recipe instantly when you\'re costing a menu or training a new cook.',
-    cta: { label: 'Open chef dashboard', to: '/chef' },
-  },
-  {
-    icon: ICONS.cost,
-    title: 'Plate Costing',
-    body: 'Cost any recipe against live wholesale prices from your saved farms. Get a per-plate food cost, food-cost percentage, and suggested menu price at your target margin — updated automatically when farm prices change.',
-    cta: { label: 'Open chef dashboard', to: '/chef' },
-  },
-  {
-    icon: ICONS.truck,
-    title: 'Order Tracking',
-    body: 'See all your pending and in-transit orders in one view. Farms mark orders confirmed and shipped with tracking details — and you\'ll get a notification the moment something changes.',
-    cta: { label: 'Open chef dashboard', to: '/chef' },
-  },
-  {
-    icon: ICONS.pairsley,
-    title: 'Pairsley — Your AI Kitchen Partner',
-    body: 'Pairsley rides along on every chef page. Ask what\'s available from your farms this week, get a seasonal menu drafted around what\'s ripe, cost a plate in real time, or set up a standing order — all from one conversation.',
-    cta: { label: 'About Pairsley', to: '/platform/pairsley' },
-  },
-];
-
 const QUOTES = [
   '"What\'s coming in from my saved farms this week?"',
   '"Draft three specials built around the fennel that just hit."',
@@ -86,7 +36,34 @@ const QUOTES = [
   '"Update our website description to focus on our farm relationships."',
 ];
 
+const FEAT_LINKS = [
+  '/marketplaces/farm-to-table',
+  '/restaurant/farms',
+  '/restaurant/standing-orders',
+  '/restaurant/digest',
+  '/chef',
+  '/chef',
+  '/chef',
+  '/platform/pairsley',
+];
+
 export default function AboutChefPantry() {
+  const { t } = useTranslation();
+
+  const features = FEAT_LINKS.map((to, i) => ({
+    icon: [ICONS.market, ICONS.heart, ICONS.repeat, ICONS.mail, ICONS.recipe, ICONS.cost, ICONS.truck, ICONS.pairsley][i],
+    title: t(`chef_pantry.feat${i + 1}_title`),
+    body:  t(`chef_pantry.feat${i + 1}_body`),
+    cta:   { label: t(`chef_pantry.feat${i + 1}_cta`), to },
+  }));
+
+  const stats = [
+    { v: '25+',        l: t('chef_pantry.stat1_l') },
+    { v: t('chef_pantry.stat2_v'), l: t('chef_pantry.stat2_l') },
+    { v: t('chef_pantry.stat3_v'), l: t('chef_pantry.stat3_l') },
+    { v: t('chef_pantry.stat4_v'), l: t('chef_pantry.stat4_l') },
+  ];
+
   return (
     <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
@@ -109,23 +86,19 @@ export default function AboutChefPantry() {
                 <line x1="5" y1="14" x2="11" y2="14"/>
               </svg>
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-white/90">Platform Service</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('chef_pantry.hero_badge')}</span>
           </div>
-          <h1 className="text-4xl font-bold mb-3 drop-shadow">Chef's Digital Pantry</h1>
-          <p className="text-lg text-white/95 drop-shadow max-w-2xl">
-            A complete sourcing and kitchen management suite that connects your restaurant directly
-            to the farms that supply it — marketplace, standing orders, weekly digest, recipes,
-            plate costing, and Pairsley AI, all in one place.
-          </p>
+          <h1 className="text-4xl font-bold mb-3 drop-shadow">{t('chef_pantry.hero_title')}</h1>
+          <p className="text-lg text-white/95 drop-shadow max-w-2xl">{t('chef_pantry.hero_body')}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link to="/chef"
               className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition"
               style={{ color: ACCENT }}>
-              Open Chef Dashboard →
+              {t('chef_pantry.hero_cta1')}
             </Link>
             <Link to="/signup"
               className="border-2 border-white/60 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-white/10 transition">
-              Open An Account
+              {t('chef_pantry.hero_cta2')}
             </Link>
           </div>
         </div>
@@ -134,12 +107,7 @@ export default function AboutChefPantry() {
       {/* Stats bar */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 py-5 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          {[
-            { v: '25+', l: 'Food categories' },
-            { v: 'Live', l: 'Farm inventory' },
-            { v: 'Weekly', l: 'Harvest digest' },
-            { v: 'Real-time', l: 'Plate costing' },
-          ].map(s => (
+          {stats.map(s => (
             <div key={s.l}>
               <div className="text-2xl font-bold" style={{ color: ACCENT }}>{s.v}</div>
               <div className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide font-semibold">{s.l}</div>
@@ -151,44 +119,35 @@ export default function AboutChefPantry() {
       <div className="max-w-5xl mx-auto px-4 py-8 grow w-full">
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: "Chef's Digital Pantry" },
+          { label: t('chef_pantry.hero_title') },
         ]} />
 
         <section className="mt-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-3"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            What it does
+            {t('chef_pantry.what_title')}
           </h2>
-          <p className="text-gray-700 leading-relaxed">
-            The Chef's Digital Pantry is OFN's end-to-end toolkit for food-service professionals.
-            It connects your kitchen directly to farms in your region, gives you a clear view of
-            what's available and at what price, and takes the friction out of sourcing local ingredients
-            at scale — whether you're running a single bistro or a multi-location group.
-          </p>
+          <p className="text-gray-700 leading-relaxed">{t('chef_pantry.what_body')}</p>
         </section>
 
         <section className="mt-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-4"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            What's included
+            {t('chef_pantry.included_title')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {FEATURES.map(f => (
+            {features.map(f => (
               <FeatureCard key={f.title} icon={f.icon} title={f.title} body={f.body} cta={f.cta} />
             ))}
           </div>
         </section>
 
-        {/* Ask Pairsley */}
         <section className="mt-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-4"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            Ask Pairsley anything
+            {t('chef_pantry.pairsley_title')}
           </h2>
-          <p className="text-gray-600 text-sm mb-4">
-            Pairsley is available as a floating chat bubble on every chef and restaurant page.
-            Here are a few things you can ask her right now:
-          </p>
+          <p className="text-gray-600 text-sm mb-4">{t('chef_pantry.pairsley_body')}</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {QUOTES.map((q, i) => (
               <div key={i}
@@ -199,41 +158,34 @@ export default function AboutChefPantry() {
           </div>
         </section>
 
-        {/* How it works */}
         <section className="mt-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-4"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            How it works
+            {t('chef_pantry.how_title')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Step n="1" title="Browse & save farms"
-              body="Search the marketplace, discover farms near you, and save your favorites to My Farms for quick reordering." />
-            <Step n="2" title="Order on your schedule"
-              body="Place one-off orders or set up standing orders. Subscribe to the weekly harvest digest to plan your menu before you order." />
-            <Step n="3" title="Cost your menu"
-              body="Load your recipes into the Chef Dashboard, attach ingredients, and get a live food-cost breakdown at your target margin." />
+            <Step n="1" title={t('chef_pantry.step1_title')} body={t('chef_pantry.step1_body')} />
+            <Step n="2" title={t('chef_pantry.step2_title')} body={t('chef_pantry.step2_body')} />
+            <Step n="3" title={t('chef_pantry.step3_title')} body={t('chef_pantry.step3_body')} />
           </div>
         </section>
 
-        {/* CTA */}
         <section className="mt-10 text-center bg-white border border-gray-200 rounded-2xl p-8">
           <h3 className="text-2xl font-bold text-gray-900 mb-2"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            Ready to source smarter?
+            {t('chef_pantry.cta_title')}
           </h3>
-          <p className="text-sm text-gray-600 mb-5">
-            Free with any OFN restaurant account. Browse the marketplace without an account — sign up to save farms, place orders, and unlock Pairsley.
-          </p>
+          <p className="text-sm text-gray-600 mb-5">{t('chef_pantry.cta_body')}</p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/marketplaces/farm-to-table"
               className="px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
               style={{ backgroundColor: ACCENT }}>
-              Browse the marketplace →
+              {t('chef_pantry.cta1')}
             </Link>
             <Link to="/signup"
               className="px-6 py-3 rounded-lg font-bold border-2 transition hover:bg-green-50"
               style={{ color: ACCENT, borderColor: ACCENT }}>
-              Create a free account
+              {t('chef_pantry.cta2')}
             </Link>
           </div>
         </section>

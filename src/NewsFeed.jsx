@@ -1,6 +1,7 @@
 // src/NewsFeed.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import './NewsFeed.css';
 
 const CATEGORIES = ['All', 'Markets', 'Weather', 'Policy', 'AgTech', 'Livestock', 'General'];
@@ -18,6 +19,7 @@ const API = import.meta.env.VITE_NEWS_API_URL || import.meta.env.VITE_API_URL ||
 
 const NewsFeed = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -54,7 +56,7 @@ const NewsFeed = () => {
         setArticles(data.articles || []);
       } catch (err) {
         console.error('News fetch error:', err);
-        setError('Unable to load news. Please try again later.');
+        setError(t('news.error'));
       } finally {
         setLoading(false);
       }
@@ -92,9 +94,9 @@ const NewsFeed = () => {
         body: JSON.stringify(prefs),
       });
       if (!r.ok) throw new Error('Save failed');
-      setPrefsMsg('Saved.');
+      setPrefsMsg(t('news.prefs_saved_msg'));
     } catch {
-      setPrefsMsg('Could not save. Try again.');
+      setPrefsMsg(t('news.prefs_error_msg'));
     } finally {
       setPrefsSaving(false);
     }
@@ -110,9 +112,9 @@ const NewsFeed = () => {
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.detail || 'Failed');
-      setPrefsMsg(`Preview sent to ${data.to}`);
+      setPrefsMsg(t('news.preview_sent', { to: data.to }));
     } catch (err) {
-      setPrefsMsg(err.message || 'Failed to send preview.');
+      setPrefsMsg(err.message || t('news.prefs_error_msg'));
     } finally {
       setPrefsSaving(false);
     }
@@ -159,9 +161,9 @@ const NewsFeed = () => {
     const diffMs = now.getTime() - date.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    if (diffHours < 1) return 'Just now';
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffHours < 1) return t('news.just_now');
+    if (diffHours < 24) return t('news.hours_ago', { h: diffHours });
+    if (diffDays < 7) return t('news.days_ago', { d: diffDays });
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
@@ -183,15 +185,15 @@ const NewsFeed = () => {
     <div className="news-page">
       <section className="news-header">
         <div className="news-header-inner" style={{ position: 'relative' }}>
-          <h1>Agriculture News</h1>
-          <p>Live updates from USDA, Farm Journal, Brownfield Ag, AGDAILY and more.</p>
+          <h1>{t('news.header_title')}</h1>
+          <p>{t('news.header_body')}</p>
           {syncStatus?.lastSync && (
             <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
-              Last synced: {new Date(syncStatus.lastSync).toLocaleString()} · {syncStatus.articleCount} articles
+              {t('news.last_synced')} {new Date(syncStatus.lastSync).toLocaleString()} · {syncStatus.articleCount} articles
               {isAdmin && (
                 <button onClick={handleSync} disabled={syncing}
                   style={{ marginLeft: '0.75rem', fontSize: '0.7rem', paddingTop: '2px', paddingBottom: '2px', paddingLeft: '8px', paddingRight: '8px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>
-                  {syncing ? 'Syncing...' : '🔄 Sync Now'}
+                  {syncing ? t('news.syncing') : t('news.sync_now')}
                 </button>
               )}
             </div>
@@ -202,14 +204,14 @@ const NewsFeed = () => {
                 onClick={openPrefs}
                 style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', fontWeight: 600, border: '1px solid #819360', backgroundColor: '#fff', color: '#819360', borderRadius: '6px', cursor: 'pointer' }}
               >
-                ⚙ News Preferences
+                {t('news.prefs_btn')}
               </button>
             ) : (
               <button
                 onClick={() => navigate('/login')}
                 style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', fontWeight: 600, border: 'none', backgroundColor: '#819360', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}
               >
-                Sign in for full articles & daily digest
+                {t('news.signin_btn')}
               </button>
             )}
           </div>
@@ -218,21 +220,21 @@ const NewsFeed = () => {
 
       <section className="news-controls">
         <div className="news-controls-row">
-          <input className="news-input" placeholder="Search headlines or sources..." value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input className="news-input" placeholder={t('news.search_placeholder')} value={query} onChange={(e) => setQuery(e.target.value)} />
           <select className="news-input" value={category} onChange={(e) => setCategory(e.target.value)}>
             {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
           <select className="news-input" value={sort} onChange={(e) => setSort(e.target.value)}>
-            <option>Newest</option>
-            <option>Oldest</option>
+            <option value="Newest">{t('news.sort_newest')}</option>
+            <option value="Oldest">{t('news.sort_oldest')}</option>
           </select>
         </div>
       </section>
 
       <section className="news-grid">
-        {loading && <div className="news-empty"><p>Loading agriculture news...</p></div>}
+        {loading && <div className="news-empty"><p>{t('news.loading')}</p></div>}
         {error && <div className="news-empty" style={{ color: '#b91c1c' }}><p>{error}</p></div>}
-        {!loading && !error && filtered.length === 0 && <div className="news-empty">No articles match your filters.</div>}
+        {!loading && !error && filtered.length === 0 && <div className="news-empty">{t('news.no_articles')}</div>}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
           {filtered.map((a, i) => (
@@ -276,30 +278,28 @@ const NewsFeed = () => {
             style={{ background: '#fff', borderRadius: '12px', maxWidth: '520px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: '1.75rem', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ margin: 0, fontSize: '1.35rem', color: '#111827' }}>News Preferences</h2>
+              <h2 style={{ margin: 0, fontSize: '1.35rem', color: '#111827' }}>{t('news.prefs_title')}</h2>
               <button onClick={() => setPrefsOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#9ca3af', cursor: 'pointer', lineHeight: 1 }}>×</button>
             </div>
 
             {!isSignedIn ? (
               <div>
-                <p style={{ color: '#4b5563', lineHeight: 1.6 }}>
-                  Sign in to choose news categories and opt in to a daily (or weekly) email digest with the top 5 stories.
-                </p>
+                <p style={{ color: '#4b5563', lineHeight: 1.6 }}>{t('news.prefs_signin_body')}</p>
                 <button
                   onClick={() => navigate('/login')}
                   style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem', backgroundColor: '#819360', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}
                 >
-                  Sign in
+                  {t('news.prefs_signin_btn')}
                 </button>
               </div>
             ) : (
               <>
                 <div style={{ marginBottom: '1.25rem' }}>
                   <label style={{ display: 'block', fontWeight: 600, color: '#111827', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                    Categories I want to see
+                    {t('news.prefs_categories_label')}
                   </label>
                   <p style={{ margin: '0 0 0.6rem', color: '#6b7280', fontSize: '0.8rem' }}>
-                    Leave empty for all categories.
+                    {t('news.prefs_categories_hint')}
                   </p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                     {CATEGORIES.filter(c => c !== 'All').map(c => {
@@ -328,23 +328,23 @@ const NewsFeed = () => {
 
                 <div style={{ marginBottom: '1.25rem' }}>
                   <label style={{ display: 'block', fontWeight: 600, color: '#111827', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                    Email digest
+                    {t('news.prefs_digest_label')}
                   </label>
                   <select
                     value={prefs.emailFrequency}
                     onChange={(e) => setPrefs(p => ({ ...p, emailFrequency: e.target.value }))}
                     style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.9rem', border: '1px solid #d1d5db', borderRadius: '6px', background: '#fff' }}
                   >
-                    <option value="off">Off — don't email me</option>
-                    <option value="daily">Daily — top 5 stories</option>
-                    <option value="weekly">Weekly — top 5 stories</option>
+                    <option value="off">{t('news.digest_off')}</option>
+                    <option value="daily">{t('news.digest_daily')}</option>
+                    <option value="weekly">{t('news.digest_weekly')}</option>
                   </select>
                 </div>
 
                 {prefs.emailFrequency !== 'off' && (
                   <div style={{ marginBottom: '1.25rem' }}>
                     <label style={{ display: 'block', fontWeight: 600, color: '#111827', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                      Preferred delivery hour (UTC)
+                      {t('news.prefs_hour_label')}
                     </label>
                     <select
                       value={prefs.preferredHour}
@@ -360,7 +360,7 @@ const NewsFeed = () => {
 
                 {prefs.lastSentAt && (
                   <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '1rem' }}>
-                    Last digest sent: {new Date(prefs.lastSentAt).toLocaleString()}
+                    {t('news.last_digest_sent')} {new Date(prefs.lastSentAt).toLocaleString()}
                   </div>
                 )}
 
@@ -377,21 +377,21 @@ const NewsFeed = () => {
                       disabled={prefsSaving}
                       style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem', fontWeight: 600, border: '1px solid #819360', backgroundColor: '#fff', color: '#819360', borderRadius: '6px', cursor: 'pointer' }}
                     >
-                      Send preview now
+                      {t('news.prefs_preview')}
                     </button>
                   )}
                   <button
                     onClick={() => setPrefsOpen(false)}
                     style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem', fontWeight: 600, border: '1px solid #d1d5db', backgroundColor: '#fff', color: '#4b5563', borderRadius: '6px', cursor: 'pointer' }}
                   >
-                    Cancel
+                    {t('news.prefs_cancel')}
                   </button>
                   <button
                     onClick={savePrefs}
                     disabled={prefsSaving}
                     style={{ padding: '0.55rem 1.4rem', fontSize: '0.85rem', fontWeight: 600, border: 'none', backgroundColor: '#819360', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}
                   >
-                    {prefsSaving ? 'Saving…' : 'Save'}
+                    {prefsSaving ? t('news.prefs_saving') : t('news.prefs_save')}
                   </button>
                 </div>
               </>

@@ -31,94 +31,101 @@ const I = {
   source:    <S><path d="M4 8h8M8 4l4 4-4 4"/></S>,
 };
 
-// ── Page configs ─────────────────────────────────────────────────
-const CONFIGS = {
+// ── Static (non-text) data per type ─────────────────────────────
+const TYPE_DATA = {
   farms: {
-    title: 'For Farms',
-    color: '#3D6B34',
-    heroTitle: 'OFN for Farms',
-    heroSub: 'Everything a modern farm operation needs — from satellite field monitoring to selling your harvest directly to chefs and consumers.',
-    what: 'Whether you grow vegetables, raise livestock, or do both, OFN gives your farm a full digital toolkit: precision agriculture, AI advisory, direct-to-consumer sales, a custom website, and connections to the broader food system.',
+    key:    'farms',
+    color:  '#3D6B34',
+    cta1To: '/oatsense',
+    cta2To: '/signup',
+    dir:    '/directory/farms-ranches',
     tools: [
-      { icon: I.satellite, title: 'Precision Agriculture', body: 'Monitor every field from space using six vegetation indices. Track crop health, soil moisture, GDD accumulation, and climate stress events in real time.', link: '/platform/precision-ag', cta: 'Learn about OatSense' },
-      { icon: I.saige,     title: 'Saige — AI Farm Advisor', body: 'Ask Saige anything about your crops, soil, livestock, weather risk, or markets. She reads your field records and gives answers grounded in your actual operation.', link: '/platform/saige', cta: 'Meet Saige' },
-      { icon: I.livestock, title: 'Livestock Marketplace', body: 'List your animals for sale to verified buyers across the country. Browse genetics, connect with breeders, and manage the whole transaction on-platform.', link: '/marketplaces/livestock', cta: 'Browse livestock' },
-      { icon: I.market,    title: 'Farm-to-Table Marketplace', body: 'Sell your produce, eggs, meat, and artisan goods directly to restaurants and consumers. Set your own prices, manage orders, and get paid through Stripe.', link: '/marketplaces/farm-to-table', cta: 'Browse marketplace' },
-      { icon: I.website,   title: 'Custom Farm Website', body: 'Launch a professional farm website in an afternoon. Farm-aware widgets pull your inventory, animals, events, and blog automatically — no copy-pasting required.', link: '/website-builder', cta: 'See Website Builder' },
-      { icon: I.directory, title: 'OFN Directory Listing', body: 'Your farm appears in the OFN food-system directory, putting you in front of chefs, consumers, and buyers actively searching for local producers.', link: '/directory/farms-ranches', cta: 'View directory' },
-      { icon: I.events,    title: 'Event Registration', body: 'Host farm tours, field days, workshops, and CSA open houses through OFN. Handle tickets, check-in, and post-event follow-ups without a separate platform.', link: '/event-registration', cta: 'See event tools' },
-      { icon: I.assoc,     title: 'Association Support', body: 'Connect your farm to breed registries, grower cooperatives, and food-system associations that share the platform fees their members generate.', link: '/agriculture-support', cta: 'Learn more' },
+      { icon: I.satellite, link: '/platform/precision-ag' },
+      { icon: I.saige,     link: '/platform/saige' },
+      { icon: I.livestock, link: '/marketplaces/livestock' },
+      { icon: I.market,    link: '/marketplaces/farm-to-table' },
+      { icon: I.website,   link: '/website-builder' },
+      { icon: I.directory, link: '/directory/farms-ranches' },
+      { icon: I.events,    link: '/event-registration' },
+      { icon: I.assoc,     link: '/agriculture-support' },
     ],
-    cta1: { label: 'Open OatSense →', to: '/oatsense' },
-    cta2: { label: 'Create a free account', to: '/signup' },
-    dir: '/directory/farms-ranches',
   },
   ranches: {
-    title: 'For Ranches',
-    color: '#7C5A3A',
-    heroTitle: 'OFN for Ranches',
-    heroSub: 'A full toolkit for livestock operations — buy and sell animals, monitor pastures, manage breeding records, and connect with the associations that matter to your herd.',
-    what: 'OFN was built with ranching in mind. The livestock marketplace supports 28 species. The AI advisor knows parasite management and breeding calendars. The precision ag suite monitors pasture health from space. And your ranch gets a custom website that stays in sync with your records.',
+    key:    'ranches',
+    color:  '#7C5A3A',
+    cta1To: '/marketplaces/livestock',
+    cta2To: '/signup',
+    dir:    '/directory/farms-ranches',
     tools: [
-      { icon: I.livestock, title: 'Livestock Marketplace', body: 'Buy and sell across 28 species with verified animal profiles, complete health histories, and genetics data. The most data-rich livestock marketplace in agriculture.', link: '/marketplaces/livestock', cta: 'Browse livestock' },
-      { icon: I.saige,     title: 'Saige — AI Ranch Advisor', body: 'Nutrition plans, parasite management calendars, breeding schedules, and livestock health guidance — all tuned to your herd and region.', link: '/platform/saige', cta: 'Meet Saige' },
-      { icon: I.satellite, title: 'Pasture Monitoring', body: 'Track pasture health and biomass across every paddock with satellite imagery. Know which pastures are stressed before your animals show it.', link: '/platform/precision-ag', cta: 'Learn about OatSense' },
-      { icon: I.website,   title: 'Custom Ranch Website', body: 'A professional ranch website that pulls your animal listings, events, and blog directly from your OFN account — no duplicate data entry.', link: '/website-builder', cta: 'See Website Builder' },
-      { icon: I.directory, title: 'OFN Directory Listing', body: 'Get found by buyers, breeders, and associations searching the OFN directory for ranches like yours.', link: '/directory/farms-ranches', cta: 'View directory' },
-      { icon: I.events,    title: 'Event Registration', body: 'Run livestock shows, auctions, breed showcases, and ranch tours through OFN — with judge portals, barn card printing, and direct Stripe payouts.', link: '/event-registration', cta: 'See event tools' },
-      { icon: I.assoc,     title: 'Breed Association Tools', body: 'Connect your ranch to breed registries and associations on OFN. Share your animals\' registry records directly from your account.', link: '/agriculture-support', cta: 'Learn more' },
-      { icon: I.market,    title: 'Farm-to-Table Marketplace', body: 'List your grass-fed beef, pastured pork, and specialty meats directly to restaurants and consumers looking for traceable, local sources.', link: '/marketplaces/farm-to-table', cta: 'Browse marketplace' },
+      { icon: I.livestock, link: '/marketplaces/livestock' },
+      { icon: I.saige,     link: '/platform/saige' },
+      { icon: I.satellite, link: '/platform/precision-ag' },
+      { icon: I.website,   link: '/website-builder' },
+      { icon: I.directory, link: '/directory/farms-ranches' },
+      { icon: I.events,    link: '/event-registration' },
+      { icon: I.assoc,     link: '/agriculture-support' },
+      { icon: I.market,    link: '/marketplaces/farm-to-table' },
     ],
-    cta1: { label: 'Browse livestock →', to: '/marketplaces/livestock' },
-    cta2: { label: 'Create a free account', to: '/signup' },
-    dir: '/directory/farms-ranches',
   },
   'artisan-producers': {
-    title: 'For Artisan Producers',
-    color: '#7C3F8B',
-    heroTitle: 'OFN for Artisan Producers',
-    heroSub: 'A dedicated marketplace, AI craft assistant, and professional website — built for mills, bakers, cheesemakers, and every kind of small-batch producer.',
-    what: 'OFN gives artisan producers a direct channel to restaurants and consumers, a curated ingredient sourcing network, and an AI assistant who actually understands your craft. Rosemarie knows flour extraction rates, curd cuts, and fermentation schedules — and she keeps it tied to your actual shop.',
+    key:    'artisan',
+    color:  '#7C3F8B',
+    cta1To: '/marketplaces/farm-to-table',
+    cta2To: '/signup',
+    dir:    '/directory/artisan-producers',
     tools: [
-      { icon: I.market,    title: 'Farm-to-Table Marketplace', body: 'Sell your processed foods, specialty goods, and artisan products directly to chefs, restaurants, and consumers. Set your own prices and manage orders on your schedule.', link: '/marketplaces/farm-to-table', cta: 'Browse marketplace' },
-      { icon: I.rosemarie, title: 'Rosemarie — AI Craft Assistant', body: 'Get production guidance, manage incoming wholesale orders, track par levels, and source raw ingredients — all from one conversation. Rosemarie knows your craft.', link: '/platform/rosemarie', cta: 'Meet Rosemarie' },
-      { icon: I.source,    title: 'Source Farm Ingredients', body: 'Browse live listings for grain, dairy, fruit, honey, and specialty crops from farms across OFN. Filter by ingredient, region, and certification.', link: '/marketplaces/farm-to-table', cta: 'Source ingredients' },
-      { icon: I.website,   title: 'Custom Producer Website', body: 'A professional website with your product catalog, story, and blog built in. Your OFN product listings populate your site automatically — no duplicate entry.', link: '/website-builder', cta: 'See Website Builder' },
-      { icon: I.blog,      title: 'Built-in Blog', body: 'Share your process, your sourcing story, and seasonal releases. Your blog lives on your website and in the OFN directory — one post, two audiences.', link: '/website-builder', cta: 'See Website Builder' },
-      { icon: I.directory, title: 'OFN Directory Listing', body: 'Appear in the artisan producers section of the OFN food-system directory, searchable by product type, region, and specialty.', link: '/directory/artisan-producers', cta: 'View directory' },
-      { icon: I.events,    title: 'Event Registration', body: 'Host workshops, vendor fair booths, farm dinners, and tasting events through OFN. Collect registrations, manage capacity, and follow up with attendees.', link: '/event-registration', cta: 'See event tools' },
-      { icon: I.assoc,     title: 'Guild & Association Connections', body: 'Connect with food-craft guilds, grower cooperatives, and producer associations that support artisan businesses at every scale.', link: '/agriculture-support', cta: 'Learn more' },
+      { icon: I.market,    link: '/marketplaces/farm-to-table' },
+      { icon: I.rosemarie, link: '/platform/rosemarie' },
+      { icon: I.source,    link: '/marketplaces/farm-to-table' },
+      { icon: I.website,   link: '/website-builder' },
+      { icon: I.blog,      link: '/website-builder' },
+      { icon: I.directory, link: '/directory/artisan-producers' },
+      { icon: I.events,    link: '/event-registration' },
+      { icon: I.assoc,     link: '/agriculture-support' },
     ],
-    cta1: { label: 'Browse marketplace →', to: '/marketplaces/farm-to-table' },
-    cta2: { label: 'Create a free account', to: '/signup' },
-    dir: '/directory/artisan-producers',
   },
   restaurants: {
-    title: 'For Restaurants',
-    color: '#2f7d4a',
-    heroTitle: 'OFN for Restaurants',
-    heroSub: 'A complete sourcing platform that connects your kitchen directly to the farms that supply it — with an AI sous chef built in.',
-    what: 'OFN gives restaurants a single place to discover local farms, manage sourcing relationships, plan menus around what\'s in season, cost plates against live prices, and build a professional online presence — all with Pairsley, your AI food-service partner, riding along on every page.',
+    key:    'restaurants',
+    color:  '#2f7d4a',
+    cta1To: '/marketplaces/farm-to-table',
+    cta2To: '/signup',
+    dir:    '/directory/restaurants',
     tools: [
-      { icon: I.pantry,    title: "Chef's Digital Pantry", body: 'Your complete sourcing suite — farm marketplace, saved farms, standing orders, weekly harvest digest, recipe library, and plate costing in one dashboard.', link: '/chef-pantry', cta: "See the Chef's Pantry" },
-      { icon: I.market,    title: 'Farm-to-Table Marketplace', body: 'Browse fresh produce, pastured meats, specialty dairy, and artisan goods from farms in your region. Filter by product, distance, and availability.', link: '/marketplaces/farm-to-table', cta: 'Browse marketplace' },
-      { icon: I.pairsley,  title: 'Pairsley — AI Kitchen Partner', body: 'Ask Pairsley what\'s available from your farms this week, get a seasonal menu drafted, cost a plate, or set up a standing order — all from one conversation.', link: '/platform/pairsley', cta: 'Meet Pairsley' },
-      { icon: I.website,   title: 'Custom Restaurant Website', body: 'A professional restaurant website with your story, menu, farm partners, and blog. Lavendir AI can scrape your existing site and help you rebuild it on OFN.', link: '/website-builder', cta: 'See Website Builder' },
-      { icon: I.directory, title: 'OFN Directory Listing', body: 'Your restaurant appears in the OFN food-system directory alongside the farms and producers you source from — a natural fit for farm-to-table positioning.', link: '/directory/restaurants', cta: 'View directory' },
-      { icon: I.events,    title: 'Event Registration', body: 'Host farm dinners, tasting events, chef\'s table experiences, and cooking workshops through OFN — with ticketing, meal selection, and seating management.', link: '/event-registration', cta: 'See event tools' },
-      { icon: I.blog,      title: 'Sourcing Blog', body: 'Tell your farm relationship story. A built-in blog lets you highlight your suppliers, seasonal specials, and the provenance behind your menu.', link: '/website-builder', cta: 'See Website Builder' },
-      { icon: I.assoc,     title: 'Association & Guild Connections', body: 'Connect with culinary guilds, slow food chapters, and farm-to-table associations that support restaurant and chef communities on OFN.', link: '/agriculture-support', cta: 'Learn more' },
+      { icon: I.pantry,    link: '/chef-pantry' },
+      { icon: I.market,    link: '/marketplaces/farm-to-table' },
+      { icon: I.pairsley,  link: '/platform/pairsley' },
+      { icon: I.website,   link: '/website-builder' },
+      { icon: I.directory, link: '/directory/restaurants' },
+      { icon: I.events,    link: '/event-registration' },
+      { icon: I.blog,      link: '/website-builder' },
+      { icon: I.assoc,     link: '/agriculture-support' },
     ],
-    cta1: { label: 'Browse the marketplace →', to: '/marketplaces/farm-to-table' },
-    cta2: { label: 'Create a free account', to: '/signup' },
-    dir: '/directory/restaurants',
   },
 };
 
 export default function ForBusinessPage({ type }) {
-  const cfg = CONFIGS[type];
   const { t } = useTranslation();
-  if (!cfg) return null;
+  const data = TYPE_DATA[type];
+  if (!data) return null;
+
+  const p = data.key;
+  const cfg = {
+    title:     t(`for_biz.${p}_title`),
+    color:     data.color,
+    heroTitle: t(`for_biz.${p}_hero_title`),
+    heroSub:   t(`for_biz.${p}_hero_sub`),
+    what:      t(`for_biz.${p}_what`),
+    tools: data.tools.map((tool, i) => ({
+      icon:  tool.icon,
+      title: t(`for_biz.${p}_tool${i + 1}_title`),
+      body:  t(`for_biz.${p}_tool${i + 1}_body`),
+      link:  tool.link,
+      cta:   t(`for_biz.${p}_tool${i + 1}_cta`),
+    })),
+    cta1: { label: t(`for_biz.${p}_cta1`), to: data.cta1To },
+    cta2: { label: t(`for_biz.${p}_cta2`), to: data.cta2To },
+    dir: data.dir,
+  };
 
   return (
     <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8' }}>
@@ -170,9 +177,9 @@ export default function ForBusinessPage({ type }) {
             {t('for_biz.tools_included')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {cfg.tools.map(t => (
-              <ToolCard key={t.title} icon={t.icon} title={t.title} body={t.body}
-                link={t.link} cta={t.cta} color={cfg.color} />
+            {cfg.tools.map(tool => (
+              <ToolCard key={tool.title} icon={tool.icon} title={tool.title} body={tool.body}
+                link={tool.link} cta={tool.cta} color={cfg.color} />
             ))}
           </div>
         </section>

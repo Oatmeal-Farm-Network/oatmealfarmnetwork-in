@@ -2,6 +2,7 @@
 // Route: /platform/website-builder
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -25,6 +26,7 @@ const FEAT_ICONS = {
 };
 
 export default function AboutWebsiteBuilder() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
@@ -42,22 +44,21 @@ export default function AboutWebsiteBuilder() {
             <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-white">
               <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="2" width="14" height="10" rx="1"/><line x1="4" y1="15" x2="12" y2="15"/><line x1="8" y1="12" x2="8" y2="15"/></svg>
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-white/90">Platform Service</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('web_build.hero_badge')}</span>
           </div>
-          <h1 className="text-4xl font-bold mb-3 drop-shadow" style={{ color: '#fff' }}>Website Builder</h1>
+          <h1 className="text-4xl font-bold mb-3 drop-shadow" style={{ color: '#fff' }}>{t('web_build.hero_title')}</h1>
           <p className="text-lg text-white/95 drop-shadow max-w-2xl">
-            Launch a professional farm website in an afternoon — not three months. Every widget is farm-aware,
-            so your inventory, ranch profile, blog, and events stay in sync with the rest of your account.
+            {t('web_build.hero_body')}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link to="/website/builder"
               className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition"
               style={{ color: ACCENT }}>
-              Build your site →
+              {t('web_build.hero_cta1')}
             </Link>
             <Link to="/signup"
               className="border-2 border-white/60 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-white/10 transition">
-              Open An Account
+              {t('web_build.hero_cta2')}
             </Link>
           </div>
         </div>
@@ -72,49 +73,40 @@ export default function AboutWebsiteBuilder() {
         <section className="mt-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-3"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            What it does
+            {t('web_build.what_title')}
           </h2>
           <p className="text-gray-700 leading-relaxed">
-            A drag-and-drop site builder tuned for over 25 types of organizations.
-            Pick from farm-aware widgets that already know about your inventory, your animals,
-            your events, and your blog posts — drop them onto a page and they populate themselves.
-            No copy-paste. No re-entering data.
+            {t('web_build.what_body')}
           </p>
         </section>
 
         <section className="mt-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-4"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            What's included
+            {t('web_build.included_title')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Feature icon={FEAT_ICONS.widgets} title="Widgets tuned to farms"
-              body="Product catalogs, animal-of-the-week, upcoming events, blog feeds, testimonials, contact forms, photo galleries — all drag-and-drop." />
-            <Feature icon={FEAT_ICONS.source} title="One source of truth"
-              body="Add an animal or list a product once, and it appears on your website, your OFN directory profile, and the marketplace automatically." />
-            <Feature icon={FEAT_ICONS.domain} title="Custom domains"
-              body="Point your own domain at your OFN site in minutes. SSL is automatic; DNS is straightforward — we walk you through it." />
-            <Feature icon={<img src="/images/LavendirIcon.png" alt="Lavendir" className="w-5 h-5" />} title="Lavendir AI help built in"
-              body="Need a new page? Ask Lavendir, our design-assistant AI, to draft it for you. Publishing still requires your review." />
-            <Feature icon={FEAT_ICONS.mobile} title="Mobile-first"
-              body="Every layout is responsive by default. Preview desktop, tablet, and phone side-by-side before you publish." />
-            <Feature icon={FEAT_ICONS.blog} title="Built-in blog"
-              body="Your OFN blog lives on your website and in the OFN directory. Write once, reach both audiences." />
+            <Feature icon={FEAT_ICONS.widgets} title={t('web_build.feat1_title')} body={t('web_build.feat1_body')} />
+            <Feature icon={FEAT_ICONS.source}  title={t('web_build.feat2_title')} body={t('web_build.feat2_body')} />
+            <Feature icon={FEAT_ICONS.domain}  title={t('web_build.feat3_title')} body={t('web_build.feat3_body')} />
+            <Feature icon={<img src="/images/LavendirIcon.png" alt="Lavendir" className="w-5 h-5" />} title={t('web_build.feat4_title')} body={t('web_build.feat4_body')} />
+            <Feature icon={FEAT_ICONS.mobile}  title={t('web_build.feat5_title')} body={t('web_build.feat5_body')} />
+            <Feature icon={FEAT_ICONS.blog}    title={t('web_build.feat6_title')} body={t('web_build.feat6_body')} />
           </div>
         </section>
 
         <section className="mt-10 text-center bg-white border border-gray-200 rounded-2xl p-8">
           <h3 className="text-2xl font-bold text-gray-900 mb-2"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            Ready to build?
+            {t('web_build.cta_title')}
           </h3>
           <p className="text-sm text-gray-600 mb-4">
-            Free with any OFN account. Start from a template and publish in under an hour.
+            {t('web_build.cta_body')}
           </p>
           <Link to="/website/builder"
             className="inline-block px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
             style={{ backgroundColor: ACCENT }}>
-            Build your site →
+            {t('web_build.cta')}
           </Link>
         </section>
       </div>
