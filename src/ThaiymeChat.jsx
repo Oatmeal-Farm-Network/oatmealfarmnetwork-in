@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useLanguage } from './LanguageContext';
 
 const API = import.meta.env.VITE_API_URL || '';
 const AGENT_NAME   = 'Thaiyme';
@@ -70,6 +71,7 @@ function _saveStored(scope, msgs) {
 
 // ── Main widget ─────────────────────────────────────────────────
 export default function ThaiymeChat({ businessId, eventId, page }) {
+  const { language } = useLanguage();
   const storageKey = _storageKey({ businessId, eventId });
 
   const [open, setOpen]                 = useState(false);
@@ -152,6 +154,7 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
           event_id:    eventId || null,
           page:        page || null,
           messages:    next,
+          language:    language || 'en',
         }),
       });
       if (!res.ok) {
@@ -174,7 +177,7 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages, businessId, eventId, page]);
+  }, [input, loading, messages, businessId, eventId, page, language]);
 
   // ── Confirm / cancel a proposed mutation ─────────────────────
   const confirmProposal = useCallback(async (msgIdx, proposalIdx) => {

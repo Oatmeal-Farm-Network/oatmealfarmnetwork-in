@@ -11,6 +11,7 @@
  * the backend.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLanguage } from './LanguageContext';
 
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
 const PAIRSLEY_GREEN = '#2f7d4a';
@@ -81,6 +82,7 @@ function Bubble({ role, content }) {
 // ─── Chat panel (inner) ──────────────────────────────────────────────────────
 
 function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscreen }) {
+  const { language } = useLanguage();
   const [threadId, setThreadId]   = useState(() => {
     return localStorage.getItem(threadStorageKey(peopleId, businessId)) || null;
   });
@@ -146,6 +148,7 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
           user_input: text,
           thread_id: tid,
           business_id: businessId ? Number(businessId) : null,
+          language: language || 'en',
         }),
       });
       if (!r.ok) {

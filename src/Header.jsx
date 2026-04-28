@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAccount } from './AccountContext';
 import NotificationBell from './NotificationBell';
 import CartBell from './CartBell';
+import LanguageSelector from './LanguageSelector';
 
 const Header = () => {
   const { businesses } = useAccount();
@@ -308,6 +309,7 @@ const Header = () => {
                 <li><Link to="/contact-us" className="nav-link">Contact</Link></li>
                 <li className="flex items-center"><CartBell /></li>
                 <li className="flex items-center"><NotificationBell /></li>
+                <li className="flex items-center"><LanguageSelector /></li>
                 <li><button onClick={handleLogout} className="nav-link">Log Out</button></li>
               </>
             ) : (
@@ -315,6 +317,7 @@ const Header = () => {
                 <li><Link to="/saige" className="nav-link">Saige</Link></li>
                 <li><Link to="/about" className="nav-link">About</Link></li>
                 <li><Link to="/contact-us" className="nav-link">Contact</Link></li>
+                <li className="flex items-center"><LanguageSelector /></li>
                 <li><Link to="/login" className="nav-link">Login</Link></li>
                 <li><Link to="/signup" className="nav-link">Join</Link></li>
               </>
@@ -415,6 +418,7 @@ const Header = () => {
                 <li><Link to="/saige" onClick={() => setIsOpen(false)} className="!text-white block">Saige</Link></li>
                 <li><Link to="/about" onClick={() => setIsOpen(false)} className="!text-white block">About Us</Link></li>
                 <li><Link to="/contact-us" onClick={() => setIsOpen(false)} className="!text-white block">Contact</Link></li>
+                <li className="flex justify-center"><LanguageSelector /></li>
                 <li><Link to="/login" onClick={() => setIsOpen(false)} className="!text-white block">Login</Link></li>
                 <li><Link to="/signup" onClick={() => setIsOpen(false)} className="!text-white block">Sign Up</Link></li>
               </>

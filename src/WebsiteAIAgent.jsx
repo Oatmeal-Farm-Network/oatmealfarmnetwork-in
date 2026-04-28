@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { useAccount } from './AccountContext';
+import { useLanguage } from './LanguageContext';
 
 const API = import.meta.env.VITE_API_URL;
 const AGENT_NAME = 'Lavendir';
@@ -278,6 +279,7 @@ function _saveStoredChat(businessId, messages) {
 // ── Main component ────────────────────────────────────────────────
 export default function WebsiteAIAgent({ websiteId, businessId, currentView, autoOpen = false }) {
   const { Expanded: sidebarExpanded } = useAccount();
+  const { language } = useLanguage();
   const sidebarWidth = sidebarExpanded ? 208 : 64;
   const location = useLocation();
 
@@ -428,6 +430,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
           business_id: businessId,
           messages: newMessages,
           current_page: currentView,
+          language: language || 'en',
         }),
       });
       if (!res.ok) throw new Error('Chat failed');

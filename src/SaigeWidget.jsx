@@ -11,6 +11,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAccount } from './AccountContext';
+import { useLanguage } from './LanguageContext';
 
 const SAIGE_API   = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
 const SAIGE_GREEN = '#3D6B34';
@@ -55,7 +56,7 @@ function Bubble({ role, content }) {
 
 // ── Chat panel ────────────────────────────────────────────────────────────────
 
-function ChatPanel({ businessId, fieldId, pageContext, onClose, onToggleFullscreen, fullscreen, sidebarWidth }) {
+function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onToggleFullscreen, fullscreen, sidebarWidth }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput]       = useState('');
   const [sending, setSending]   = useState(false);
@@ -98,6 +99,7 @@ function ChatPanel({ businessId, fieldId, pageContext, onClose, onToggleFullscre
           thread_id: threadId,
           business_id: businessId ? String(businessId) : null,
           field_id: fieldId ? String(fieldId) : null,
+          language: language || 'en',
         }),
       });
       if (!res.ok) throw new Error(`Server error (${res.status})`);
@@ -125,7 +127,7 @@ function ChatPanel({ businessId, fieldId, pageContext, onClose, onToggleFullscre
     } finally {
       setSending(false);
     }
-  }, [input, messages, sending, threadId, businessId, fieldId, pageContext]);
+  }, [input, messages, sending, threadId, businessId, fieldId, pageContext, language]);
 
   const onKey = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
@@ -319,6 +321,7 @@ const chipStyle = {
 
 export default function SaigeWidget({ businessId, fieldId, pageContext }) {
   const { Expanded: sidebarExpanded } = useAccount();
+  const { language } = useLanguage();
   const sidebarWidth = sidebarExpanded ? 208 : 64;
   const [open, setOpen]           = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -370,6 +373,7 @@ export default function SaigeWidget({ businessId, fieldId, pageContext }) {
           businessId={businessId}
           fieldId={fieldId}
           pageContext={pageContext}
+          language={language}
           fullscreen={fullscreen}
           sidebarWidth={sidebarWidth}
           onClose={() => { setOpen(false); setFullscreen(false); }}

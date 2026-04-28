@@ -35,6 +35,7 @@ function SaigeWidgetGlobal() {
 }
 import './index.css'
 import { AccountProvider } from './AccountContext';
+import { LanguageProvider } from './LanguageContext';
 import SaigeWidget from './SaigeWidget';
 import "./AnimalAddWizard.css";
 import AnimalEdit from "./AnimalEdit";
@@ -236,6 +237,12 @@ const AboutWebsiteBuilder = lazyWithReload(() => import('./AboutWebsiteBuilder.j
 const AboutMarketplace = lazyWithReload(() => import('./AboutMarketplace.jsx'))
 const AboutEvents = lazyWithReload(() => import('./AboutEvents.jsx'))
 const AboutCropMonitor = lazyWithReload(() => import('./AboutCropMonitor.jsx'))
+const AboutPrecisionAg = lazyWithReload(() => import('./AboutPrecisionAg.jsx'))
+const AboutAgSupport = lazyWithReload(() => import('./AboutAgSupport.jsx'))
+const AboutAIAgents = lazyWithReload(() => import('./AboutAIAgents.jsx'))
+const AboutChefPantry = lazyWithReload(() => import('./AboutChefPantry.jsx'))
+const AboutEventRegistration = lazyWithReload(() => import('./AboutEventRegistration.jsx'))
+const ForBusinessPage = lazyWithReload(() => import('./ForBusinessPage.jsx'))
 const AboutDirectory = lazyWithReload(() => import('./AboutDirectory.jsx'))
 const ServicesAdd = lazyWithReload(() => import('./ServicesAdd.jsx'))
 const ServicesSuggestCategory = lazyWithReload(() => import('./ServicesSuggestCategory.jsx'))
@@ -252,6 +259,7 @@ const LivestockAnimalProgeny = lazyWithReload(() => import('./LivestockAnimalPro
 const RanchList = lazyWithReload(() => import('./RanchList.jsx'))
 const OrgProfile = lazyWithReload(() => import('./OrgProfile.jsx'))
 const Accounting = lazyWithReload(() => import('./Accounting.jsx'))
+const Properties = lazyWithReload(() => import('./Properties.jsx'))
 const TestimonialsManage = lazyWithReload(() => import('./TestimonialsManage.jsx'))
 const TestimonialsRequest = lazyWithReload(() => import('./TestimonialsRequest.jsx'))
 const ProvenanceCard = lazyWithReload(() => import('./ProvenanceCard.jsx'))
@@ -305,6 +313,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <ScrollToTop />
     <Suspense fallback={null}><InstallPrompt /></Suspense>
+    <LanguageProvider>
     <AccountProvider>
       <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>}>
         {/* On a custom domain every path renders the public site — no OFN chrome, no auth routes */}
@@ -412,7 +421,17 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/platform/saige" element={<AboutSaige />} />
           <Route path="/platform/rosemarie" element={<AboutRosemarie />} />
           <Route path="/platform/pairsley" element={<AboutPairsley />} />
+          <Route path="/platform/precision-ag" element={<AboutPrecisionAg />} />
+          <Route path="/agriculture-support" element={<AboutAgSupport />} />
+          <Route path="/ai-agents" element={<AboutAIAgents />} />
+          <Route path="/chef-pantry" element={<AboutChefPantry />} />
+          <Route path="/event-registration" element={<AboutEventRegistration />} />
+          <Route path="/for-farms" element={<ForBusinessPage type="farms" />} />
+          <Route path="/for-ranches" element={<ForBusinessPage type="ranches" />} />
+          <Route path="/for-artisan-producers" element={<ForBusinessPage type="artisan-producers" />} />
+          <Route path="/for-restaurants" element={<ForBusinessPage type="restaurants" />} />
           <Route path="/platform/website-builder" element={<AboutWebsiteBuilder />} />
+          <Route path="/website-builder" element={<AboutWebsiteBuilder />} />
           <Route path="/platform/marketplace" element={<AboutMarketplace />} />
           <Route path="/platform/events" element={<AboutEvents />} />
           <Route path="/platform/crop-monitor" element={<AboutCropMonitor />} />
@@ -527,6 +546,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/blog" element={<BlogList />} />
 
           {/* Public marketplace (anyone can browse) */}
+          <Route path="/marketplace" element={<Navigate to="/marketplaces/farm-to-table" replace />} />
           <Route path="/marketplace/products/:id" element={<ProductDetail />} />
           <Route path="/marketplace/products" element={<ProductsMarketplace />} />
           <Route path="/marketplace/:id" element={<MarketplaceProduct />} />
@@ -548,11 +568,16 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           {/* Accounting */}
           <Route path="/accounting" element={<RequireAuth><Accounting /></RequireAuth>} />
 
+          {/* Properties */}
+          <Route path="/properties" element={<RequireAuth><Properties /></RequireAuth>} />
+          <Route path="/properties/add" element={<RequireAuth><Properties /></RequireAuth>} />
+
         </Routes>
         <SaigeWidgetGlobal />
         </AppShell>
         )} {/* end isCustomDomain ternary */}
       </Suspense>
     </AccountProvider>
+    </LanguageProvider>
   </BrowserRouter>
 )
