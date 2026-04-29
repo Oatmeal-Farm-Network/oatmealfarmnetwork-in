@@ -259,8 +259,8 @@ export default function ForBusinessPage({ type }) {
           <div className="flex flex-wrap gap-3 shrink-0">
             <Link
               to="/signup"
-              className="px-5 py-2.5 rounded-lg text-white font-bold text-sm shadow hover:shadow-md transition"
-              style={{ backgroundColor: cfg.color }}
+              className="px-5 py-2.5 rounded-lg font-bold text-sm shadow hover:shadow-md transition"
+              style={{ backgroundColor: cfg.color, color: '#fff' }}
             >
               {t('for_biz.create_free')}
             </Link>

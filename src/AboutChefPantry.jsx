@@ -105,19 +105,19 @@ export default function AboutChefPantry() {
                   <line x1="5" y1="14" x2="11" y2="14"/>
                 </svg>
               </div>
-              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.88)' }}>{t('chef_pantry.hero_badge')}</span>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#ffffff' }}>{t('chef_pantry.hero_badge')}</span>
             </div>
             <h1 style={{ color: '#ffffff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
               {t('chef_pantry.hero_title')}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+            <p style={{ color: '#ffffff', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
               {t('chef_pantry.hero_body')}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link to="/chef" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
                 {t('chef_pantry.hero_cta1')}
               </Link>
-              <Link to="/signup" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: 'rgba(255,255,255,0.55)', color: '#ffffff' }}>
+              <Link to="/signup" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: '#ffffff', color: '#ffffff' }}>
                 {t('chef_pantry.hero_cta2')}
               </Link>
             </div>

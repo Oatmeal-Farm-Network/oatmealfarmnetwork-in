@@ -74,22 +74,22 @@ export default function AboutRosemarie() {
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c0 0-6 6-6 11a6 6 0 0 0 12 0c0-5-6-11-6-11z"/></svg>
               </div>
-              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.88)' }}>{t('rosemarie.hero_badge')}</span>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#ffffff' }}>{t('rosemarie.hero_badge')}</span>
             </div>
             <h1 style={{ color: '#ffffff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
               {t('rosemarie.hero_title')}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: '0.92rem', margin: '0 0 4px', lineHeight: 1.6 }}>
+            <p style={{ color: '#ffffff', fontSize: '0.92rem', margin: '0 0 4px', lineHeight: 1.6 }}>
               {t('rosemarie.hero_body')}
             </p>
-            <p style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.84rem', margin: '0 0 16px', lineHeight: 1.5, fontStyle: 'italic' }}>
+            <p style={{ color: '#ffffff', fontSize: '0.84rem', margin: '0 0 16px', lineHeight: 1.5, fontStyle: 'italic' }}>
               {t('rosemarie.hero_note')}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link to="/account" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
                 {t('rosemarie.hero_cta1')}
               </Link>
-              <Link to="/marketplaces/farm-to-table" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: 'rgba(255,255,255,0.55)', color: '#ffffff' }}>
+              <Link to="/marketplaces/farm-to-table" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: '#ffffff', color: '#ffffff' }}>
                 {t('rosemarie.hero_cta2')}
               </Link>
             </div>

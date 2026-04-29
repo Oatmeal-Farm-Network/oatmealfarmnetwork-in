@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -57,6 +58,7 @@ function Modal({ title, onClose, children }) {
 }
 
 function PropertyForm({ property, onSave, onCancel }) {
+  const { t } = useTranslation();
   const blank = {
     Address: '', City: '', State: '', Zip: '', Country: 'US',
     PropertyType: 'Residential', ListingType: 'For Sale',
@@ -69,39 +71,39 @@ function PropertyForm({ property, onSave, onCancel }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="md:col-span-2"><label className={lbl}>Street address *</label><input className={inp} value={s.Address} onChange={set('Address')} placeholder="123 Farmland Rd" /></div>
-        <div><label className={lbl}>City *</label><input className={inp} value={s.City} onChange={set('City')} /></div>
+        <div className="md:col-span-2"><label className={lbl}>{t('properties.lbl_address')}</label><input className={inp} value={s.Address} onChange={set('Address')} placeholder="123 Farmland Rd" /></div>
+        <div><label className={lbl}>{t('properties.lbl_city')}</label><input className={inp} value={s.City} onChange={set('City')} /></div>
         <div className="grid grid-cols-2 gap-2">
-          <div><label className={lbl}>State</label><input className={inp} value={s.State} onChange={set('State')} placeholder="TX" /></div>
-          <div><label className={lbl}>ZIP</label><input className={inp} value={s.Zip} onChange={set('Zip')} /></div>
+          <div><label className={lbl}>{t('properties.lbl_state')}</label><input className={inp} value={s.State} onChange={set('State')} placeholder="TX" /></div>
+          <div><label className={lbl}>{t('properties.lbl_zip')}</label><input className={inp} value={s.Zip} onChange={set('Zip')} /></div>
         </div>
-        <div><label className={lbl}>Property type</label>
+        <div><label className={lbl}>{t('properties.lbl_property_type')}</label>
           <select className={inp} value={s.PropertyType} onChange={set('PropertyType')}>
-            {PROPERTY_TYPES.map(t => <option key={t}>{t}</option>)}
+            {PROPERTY_TYPES.map(typ => <option key={typ}>{typ}</option>)}
           </select>
         </div>
-        <div><label className={lbl}>Listing type</label>
+        <div><label className={lbl}>{t('properties.lbl_listing_type')}</label>
           <select className={inp} value={s.ListingType} onChange={set('ListingType')}>
-            {LISTING_TYPES.map(t => <option key={t}>{t}</option>)}
+            {LISTING_TYPES.map(typ => <option key={typ}>{typ}</option>)}
           </select>
         </div>
-        <div><label className={lbl}>Sale price</label><input className={inp} type="number" value={s.Price} onChange={set('Price')} placeholder="450000" /></div>
-        <div><label className={lbl}>Rent / month</label><input className={inp} type="number" value={s.RentPrice} onChange={set('RentPrice')} placeholder="2500" /></div>
-        <div><label className={lbl}>Bedrooms</label><input className={inp} type="number" value={s.Bedrooms} onChange={set('Bedrooms')} /></div>
-        <div><label className={lbl}>Bathrooms</label><input className={inp} type="number" step="0.5" value={s.Bathrooms} onChange={set('Bathrooms')} /></div>
-        <div><label className={lbl}>Sq ft</label><input className={inp} type="number" value={s.SqFt} onChange={set('SqFt')} /></div>
-        <div><label className={lbl}>Acres</label><input className={inp} type="number" step="0.01" value={s.Acres} onChange={set('Acres')} /></div>
-        <div><label className={lbl}>MLS #</label><input className={inp} value={s.MLSNumber} onChange={set('MLSNumber')} /></div>
+        <div><label className={lbl}>{t('properties.lbl_sale_price')}</label><input className={inp} type="number" value={s.Price} onChange={set('Price')} placeholder="450000" /></div>
+        <div><label className={lbl}>{t('properties.lbl_rent_price')}</label><input className={inp} type="number" value={s.RentPrice} onChange={set('RentPrice')} placeholder="2500" /></div>
+        <div><label className={lbl}>{t('properties.lbl_bedrooms')}</label><input className={inp} type="number" value={s.Bedrooms} onChange={set('Bedrooms')} /></div>
+        <div><label className={lbl}>{t('properties.lbl_bathrooms')}</label><input className={inp} type="number" step="0.5" value={s.Bathrooms} onChange={set('Bathrooms')} /></div>
+        <div><label className={lbl}>{t('properties.lbl_sqft')}</label><input className={inp} type="number" value={s.SqFt} onChange={set('SqFt')} /></div>
+        <div><label className={lbl}>{t('properties.lbl_acres')}</label><input className={inp} type="number" step="0.01" value={s.Acres} onChange={set('Acres')} /></div>
+        <div><label className={lbl}>{t('properties.lbl_mls')}</label><input className={inp} value={s.MLSNumber} onChange={set('MLSNumber')} /></div>
         <div className="grid grid-cols-2 gap-2">
-          <div><label className={lbl}>Listed</label><input className={inp} type="date" value={s.ListingDate} onChange={set('ListingDate')} /></div>
-          <div><label className={lbl}>Expires</label><input className={inp} type="date" value={s.ExpiryDate} onChange={set('ExpiryDate')} /></div>
+          <div><label className={lbl}>{t('properties.lbl_listed')}</label><input className={inp} type="date" value={s.ListingDate} onChange={set('ListingDate')} /></div>
+          <div><label className={lbl}>{t('properties.lbl_expires')}</label><input className={inp} type="date" value={s.ExpiryDate} onChange={set('ExpiryDate')} /></div>
         </div>
-        <div className="md:col-span-2"><label className={lbl}>Description</label><textarea className={inp} rows={3} value={s.Description} onChange={set('Description')} /></div>
+        <div className="md:col-span-2"><label className={lbl}>{t('properties.lbl_description')}</label><textarea className={inp} rows={3} value={s.Description} onChange={set('Description')} /></div>
       </div>
       <div className="flex justify-end gap-2 pt-2">
-        <button onClick={onCancel} className={btnGhost}>Cancel</button>
+        <button onClick={onCancel} className={btnGhost}>{t('properties.btn_cancel')}</button>
         <button onClick={() => onSave(s)} disabled={!s.Address || !s.City} className={btn}>
-          {property ? 'Save changes' : 'Add property'}
+          {property ? t('properties.btn_save_changes') : t('properties.btn_add')}
         </button>
       </div>
     </div>
@@ -109,6 +111,7 @@ function PropertyForm({ property, onSave, onCancel }) {
 }
 
 function PropertyCard({ p, onEdit, onDelete }) {
+  const { t } = useTranslation();
   const price = p.ListingType === 'For Rent' ? (p.RentPrice ? `${fmt$(p.RentPrice)}/mo` : null) : (p.Price ? fmt$(p.Price) : null);
   const typeIcon = p.PropertyType === 'Commercial' || p.PropertyType === 'Industrial' || p.PropertyType === 'Multi-Family'
     ? ICONS.building
@@ -137,11 +140,11 @@ function PropertyCard({ p, onEdit, onDelete }) {
 
         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-gray-600">
           {price && <span className="font-bold text-gray-900 text-sm">{price}</span>}
-          {p.Bedrooms && <span className="flex items-center gap-1">{ICONS.bed} {p.Bedrooms} bd</span>}
-          {p.Bathrooms && <span className="flex items-center gap-1">{ICONS.bath} {p.Bathrooms} ba</span>}
-          {p.SqFt && <span className="flex items-center gap-1">{ICONS.area} {Number(p.SqFt).toLocaleString()} sqft</span>}
-          {p.Acres && <span>{Number(p.Acres).toLocaleString()} acres</span>}
-          {p.MLSNumber && <span className="text-gray-400">MLS #{p.MLSNumber}</span>}
+          {p.Bedrooms && <span className="flex items-center gap-1">{ICONS.bed} {p.Bedrooms} {t('properties.unit_bd')}</span>}
+          {p.Bathrooms && <span className="flex items-center gap-1">{ICONS.bath} {p.Bathrooms} {t('properties.unit_ba')}</span>}
+          {p.SqFt && <span className="flex items-center gap-1">{ICONS.area} {Number(p.SqFt).toLocaleString()} {t('properties.unit_sqft')}</span>}
+          {p.Acres && <span>{Number(p.Acres).toLocaleString()} {t('properties.unit_acres')}</span>}
+          {p.MLSNumber && <span className="text-gray-400">{t('properties.mls_num', { n: p.MLSNumber })}</span>}
         </div>
 
         {p.Description && (
@@ -150,14 +153,15 @@ function PropertyCard({ p, onEdit, onDelete }) {
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
-        <button onClick={onEdit} className="text-gray-400 hover:text-[#3D6B34] transition" title="Edit">{ICONS.edit}</button>
-        <button onClick={onDelete} className="text-gray-400 hover:text-red-600 transition" title="Delete">{ICONS.trash}</button>
+        <button onClick={onEdit} className="text-gray-400 hover:text-[#3D6B34] transition" title={t('properties.btn_edit')}>{ICONS.edit}</button>
+        <button onClick={onDelete} className="text-gray-400 hover:text-red-600 transition" title={t('properties.btn_delete')}>{ICONS.trash}</button>
       </div>
     </div>
   );
 }
 
 export default function Properties() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const { BusinessID: ctxBID } = useAccount();
   const BusinessID = params.get('BusinessID') || ctxBID;
@@ -189,14 +193,14 @@ export default function Properties() {
       body: JSON.stringify(data),
     });
     if (r.ok) { setModal(null); load(); }
-    else alert('Save failed — the properties API may not be set up yet.');
+    else alert(t('properties.err_save_failed'));
   };
 
   const del = async (id) => {
-    if (!window.confirm('Delete this property listing?')) return;
+    if (!window.confirm(t('properties.confirm_delete'))) return;
     const r = await fetch(`${API}/api/properties/${id}`, { method: 'DELETE' });
     if (r.ok) load();
-    else alert('Delete failed.');
+    else alert(t('properties.err_delete_failed'));
   };
 
   const filtered = list.filter(p =>
@@ -208,29 +212,31 @@ export default function Properties() {
   const activeRent = list.filter(p => p.ListingType === 'For Rent').length;
   const sold       = list.filter(p => p.ListingType === 'Sold' || p.ListingType === 'Rented').length;
 
+  const kpis = [
+    [t('properties.kpi_for_sale'), activeSale, 'bg-green-50 border-green-200 text-green-900'],
+    [t('properties.kpi_for_rent'), activeRent, 'bg-blue-50 border-blue-200 text-blue-900'],
+    [t('properties.kpi_sold'), sold, 'bg-gray-50 border-gray-200 text-gray-700'],
+  ];
+
   return (
     <AccountLayout
-      pageTitle="Properties"
-      breadcrumbs={[{ label: 'Account', to: '/account' }, { label: 'Properties' }]}
+      pageTitle={t('properties.page_title')}
+      breadcrumbs={[{ label: t('properties.breadcrumb_account'), to: '/account' }, { label: t('properties.breadcrumb_properties') }]}
     >
       <div className="p-5 space-y-4">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <h1 className="font-lora text-2xl font-bold text-gray-900">Property Listings</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage your real estate listings — for sale, for rent, and sold properties.</p>
+            <h1 className="font-lora text-2xl font-bold text-gray-900">{t('properties.heading')}</h1>
+            <p className="text-sm text-gray-500 mt-1">{t('properties.subheading')}</p>
           </div>
           <button onClick={() => setModal('add')} className={btn + ' flex items-center gap-1.5'}>
-            {ICONS.plus} Add property
+            {ICONS.plus} {t('properties.btn_add')}
           </button>
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-3 gap-3">
-          {[
-            ['For Sale', activeSale, 'bg-green-50 border-green-200 text-green-900'],
-            ['For Rent', activeRent, 'bg-blue-50 border-blue-200 text-blue-900'],
-            ['Sold / Rented', sold, 'bg-gray-50 border-gray-200 text-gray-700'],
-          ].map(([label, val, cls]) => (
+          {kpis.map(([label, val, cls]) => (
             <div key={label} className={`border rounded-xl p-4 ${cls}`}>
               <div className="text-[10px] uppercase font-semibold opacity-70">{label}</div>
               <div className="text-2xl font-bold mt-1">{val}</div>
@@ -241,24 +247,24 @@ export default function Properties() {
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2">
           <select className={inp + ' max-w-[180px]'} value={typeF} onChange={e => setTypeF(e.target.value)}>
-            <option value="">All types</option>
-            {PROPERTY_TYPES.map(t => <option key={t}>{t}</option>)}
+            <option value="">{t('properties.filter_all_types')}</option>
+            {PROPERTY_TYPES.map(typ => <option key={typ}>{typ}</option>)}
           </select>
           <select className={inp + ' max-w-[180px]'} value={listingF} onChange={e => setListingF(e.target.value)}>
-            <option value="">All statuses</option>
-            {LISTING_TYPES.map(t => <option key={t}>{t}</option>)}
+            <option value="">{t('properties.filter_all_statuses')}</option>
+            {LISTING_TYPES.map(typ => <option key={typ}>{typ}</option>)}
           </select>
           {(typeF || listingF) && (
             <button onClick={() => { setTypeF(''); setListingF(''); }} className="text-xs text-gray-500 hover:text-gray-700 underline">
-              Clear
+              {t('properties.btn_clear')}
             </button>
           )}
-          <span className="text-xs text-gray-400 ml-auto">{filtered.length} listing{filtered.length !== 1 ? 's' : ''}</span>
+          <span className="text-xs text-gray-400 ml-auto">{t('properties.listing_count', { n: filtered.length, s: filtered.length !== 1 ? 's' : '' })}</span>
         </div>
 
         {/* List */}
         {loading ? (
-          <div className="text-center py-16 text-gray-400">Loading…</div>
+          <div className="text-center py-16 text-gray-400">{t('properties.loading')}</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
             <div className="flex justify-center mb-3 text-gray-300">
@@ -267,16 +273,14 @@ export default function Properties() {
               </svg>
             </div>
             <p className="text-lg font-bold text-gray-700">
-              {list.length === 0 ? 'No properties yet' : 'No listings match your filters'}
+              {list.length === 0 ? t('properties.empty_none') : t('properties.empty_filtered')}
             </p>
             <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
-              {list.length === 0
-                ? 'Add your first property listing using the button above.'
-                : 'Try adjusting the type or status filters.'}
+              {list.length === 0 ? t('properties.empty_none_hint') : t('properties.empty_filtered_hint')}
             </p>
             {list.length === 0 && (
               <button onClick={() => setModal('add')} className={btn + ' mt-4 inline-flex items-center gap-1.5'}>
-                {ICONS.plus} Add property
+                {ICONS.plus} {t('properties.btn_add')}
               </button>
             )}
           </div>
@@ -296,7 +300,7 @@ export default function Properties() {
 
       {modal && (
         <Modal
-          title={modal === 'add' ? 'Add property' : `Edit — ${modal.Address}`}
+          title={modal === 'add' ? t('properties.modal_add') : t('properties.modal_edit', { address: modal.Address })}
           onClose={() => setModal(null)}
         >
           <PropertyForm

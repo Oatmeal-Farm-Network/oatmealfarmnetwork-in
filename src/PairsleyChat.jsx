@@ -11,6 +11,7 @@
  * the backend.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageContext';
 
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
@@ -82,6 +83,7 @@ function Bubble({ role, content }) {
 // ─── Chat panel (inner) ──────────────────────────────────────────────────────
 
 function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscreen }) {
+  const { t } = useTranslation();
   const { language } = useLanguage();
   const [threadId, setThreadId]   = useState(() => {
     return localStorage.getItem(threadStorageKey(peopleId, businessId)) || null;
@@ -95,10 +97,10 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
 
   const ensureThread = useCallback(() => {
     if (threadId) return threadId;
-    const t = newThreadId();
-    setThreadId(t);
-    localStorage.setItem(threadStorageKey(peopleId, businessId), t);
-    return t;
+    const tid = newThreadId();
+    setThreadId(tid);
+    localStorage.setItem(threadStorageKey(peopleId, businessId), tid);
+    return tid;
   }, [threadId, peopleId, businessId]);
 
   // Load historical messages for this thread from Firestore
@@ -159,16 +161,16 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
       setMessages([...nextMsgs, { role: 'assistant', content: data.response || '(no response)' }]);
     } catch (e) {
       setError(e.message || 'Failed');
-      setMessages([...nextMsgs, { role: 'assistant', content: `I couldn't send that — ${e.message}` }]);
+      setMessages([...nextMsgs, { role: 'assistant', content: t('pairsley_chat.err_send_failed', { msg: e.message }) }]);
     } finally {
       setSending(false);
     }
   };
 
   const newConversation = () => {
-    const t = newThreadId();
-    setThreadId(t);
-    localStorage.setItem(threadStorageKey(peopleId, businessId), t);
+    const tid = newThreadId();
+    setThreadId(tid);
+    localStorage.setItem(threadStorageKey(peopleId, businessId), tid);
     setMessages([]);
   };
 
@@ -211,30 +213,28 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
           <LeafMark size={22} />
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: 15 }}>Pairsley</div>
-            <div style={{ fontSize: 11, opacity: 0.9 }}>Your kitchen's AI sous-chef</div>
+            <div style={{ fontSize: 11, opacity: 0.9 }}>{t('pairsley_chat.tagline')}</div>
           </div>
-          <button onClick={newConversation} style={hdrBtn} title="New conversation">New</button>
-          <button onClick={onToggleFullscreen} style={hdrBtn} title={fullscreen ? 'Exit full screen' : 'Full screen'}>
+          <button onClick={newConversation} style={hdrBtn} title={t('pairsley_chat.btn_new_title')}>{t('pairsley_chat.btn_new')}</button>
+          <button onClick={onToggleFullscreen} style={hdrBtn} title={fullscreen ? t('pairsley_chat.btn_exit_fullscreen') : t('pairsley_chat.btn_fullscreen')}>
             {fullscreen ? '⤢' : '⤡'}
           </button>
-          <button onClick={onClose} style={hdrBtn} title="Close">×</button>
+          <button onClick={onClose} style={hdrBtn} title={t('pairsley_chat.btn_close')}>×</button>
         </div>
 
         {/* Messages */}
         <div ref={scrollRef} style={{
           flex: 1, padding: 12, overflowY: 'auto', background: '#fafaf9',
         }}>
-          {loadingHist && <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>Loading past conversation…</div>}
+          {loadingHist && <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>{t('pairsley_chat.loading_history')}</div>}
           {!loadingHist && !messages.length && (
             <div style={{ fontSize: 13, color: '#4b5563', padding: '16px 8px', lineHeight: 1.6 }}>
-              Hi chef — I'm Pairsley. Ask me to cost a recipe, pull what's in season nearby,
-              check your par levels, or tidy up your restaurant profile. I'll look things up
-              against live OFN data before I answer.
+              {t('pairsley_chat.greeting')}
             </div>
           )}
           {messages.map((m, i) => <Bubble key={i} role={m.role} content={m.content} />)}
           {sending && (
-            <div style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>Pairsley is thinking…</div>
+            <div style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>{t('pairsley_chat.thinking')}</div>
           )}
           {error && (
             <div style={{ fontSize: 12, color: '#991b1b', marginTop: 6 }}>{error}</div>
@@ -251,7 +251,7 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKey}
-            placeholder="Ask Pairsley anything about your kitchen…"
+            placeholder={t('pairsley_chat.placeholder')}
             style={{
               flex: 1, resize: 'none', border: '1px solid #d1d5db', borderRadius: 8,
               padding: '8px 10px', fontSize: 13.5, fontFamily: 'inherit',
@@ -268,7 +268,7 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
               opacity: input.trim() && !sending ? 1 : 0.6,
             }}
           >
-            Send
+            {t('pairsley_chat.btn_send')}
           </button>
         </div>
       </div>
@@ -285,6 +285,7 @@ const hdrBtn = {
 // ─── Launcher bubble ─────────────────────────────────────────────────────────
 
 export default function PairsleyChat({ businessId }) {
+  const { t } = useTranslation();
   const [open, setOpen]           = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const peopleId = useMemo(() => (
@@ -303,7 +304,7 @@ export default function PairsleyChat({ businessId }) {
       {/* Launcher */}
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-label="Open Pairsley chat"
+        aria-label={t('pairsley_chat.launcher_aria')}
         style={{
           position: 'fixed', bottom: 20, right: 20, zIndex: 9999,
           width: 58, height: 58, borderRadius: '50%',
@@ -312,7 +313,7 @@ export default function PairsleyChat({ businessId }) {
           cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}
-        title="Chat with Pairsley"
+        title={t('pairsley_chat.launcher_title')}
       >
         <LeafMark size={30} />
       </button>

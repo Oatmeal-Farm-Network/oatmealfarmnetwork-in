@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-[#819360]";
-const lbl = "block text-xs font-medium text-gray-500 mb-1";
 
 export default function JudgePortal() {
+  const { t } = useTranslation();
   const { accessCode } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,7 +21,7 @@ export default function JudgePortal() {
     setLoading(true);
     fetch(`${API}/api/events/competition/judge/${accessCode}`)
       .then(r => {
-        if (!r.ok) throw new Error('Invalid access code');
+        if (!r.ok) throw new Error(t('judge_portal.err_invalid_code'));
         return r.json();
       })
       .then(d => {
@@ -65,12 +66,12 @@ export default function JudgePortal() {
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-[#FAF7EE] flex items-center justify-center text-sm text-gray-500">Loading…</div>;
+  if (loading) return <div className="min-h-screen bg-[#FAF7EE] flex items-center justify-center text-sm text-gray-500">{t('judge_portal.loading')}</div>;
   if (err) return (
     <div className="min-h-screen bg-[#FAF7EE] flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow p-6 max-w-md text-center">
         <div className="text-lg font-semibold text-red-600 mb-2">{err}</div>
-        <p className="text-sm text-gray-600">This access code is invalid or has been revoked. Contact the event organizer.</p>
+        <p className="text-sm text-gray-600">{t('judge_portal.err_revoked')}</p>
       </div>
     </div>
   );
@@ -85,7 +86,7 @@ export default function JudgePortal() {
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-baseline justify-between">
           <div>
             <div className="text-xs text-gray-500">{data.Event.EventName}</div>
-            <div className="font-semibold text-[#3D6B34]">Judge — {data.Judge.JudgeName}</div>
+            <div className="font-semibold text-[#3D6B34]">{t('judge_portal.judge_label', { name: data.Judge.JudgeName })}</div>
           </div>
           {data.Judge.Credentials && (
             <div className="text-xs text-gray-400">{data.Judge.Credentials}</div>
@@ -96,7 +97,7 @@ export default function JudgePortal() {
       <div className="max-w-5xl mx-auto p-4">
         {data.Categories.length === 0 && (
           <div className="bg-white rounded-xl shadow p-6 text-sm text-gray-600">
-            No categories assigned yet. Check back once the organizer has set up the rubric.
+            {t('judge_portal.no_categories')}
           </div>
         )}
 
@@ -104,7 +105,7 @@ export default function JudgePortal() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-1 space-y-3">
               <div>
-                <div className="text-xs uppercase text-gray-500 mb-2">Categories</div>
+                <div className="text-xs uppercase text-gray-500 mb-2">{t('judge_portal.categories_heading')}</div>
                 <div className="space-y-1">
                   {data.Categories.map(c => (
                     <button key={c.CategoryID}
@@ -114,7 +115,7 @@ export default function JudgePortal() {
                         : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>
                       {c.CategoryName}
                       <div className={`text-xs mt-0.5 ${c.CategoryID === activeCat ? 'text-white/80' : 'text-gray-500'}`}>
-                        {c.Entries.length} {c.Entries.length === 1 ? 'entry' : 'entries'}
+                        {c.Entries.length} {c.Entries.length === 1 ? t('judge_portal.entry_singular') : t('judge_portal.entry_plural')}
                       </div>
                     </button>
                   ))}
@@ -123,7 +124,7 @@ export default function JudgePortal() {
 
               {cat && (
                 <div>
-                  <div className="text-xs uppercase text-gray-500 mb-2">Entries</div>
+                  <div className="text-xs uppercase text-gray-500 mb-2">{t('judge_portal.entries_heading')}</div>
                   <div className="space-y-1">
                     {cat.Entries.map(e => {
                       const scoredCount = (cat.Criteria || []).filter(cr =>
@@ -157,7 +158,7 @@ export default function JudgePortal() {
               {entry ? (
                 <div className="bg-white rounded-xl shadow p-5">
                   <div className="mb-4 pb-3 border-b border-gray-100">
-                    <div className="text-xs text-gray-500">Entry {entry.EntryNumber || entry.EntryID}</div>
+                    <div className="text-xs text-gray-500">{t('judge_portal.entry_label', { n: entry.EntryNumber || entry.EntryID })}</div>
                     <div className="text-lg font-semibold text-gray-800">{entry.EntrantName}</div>
                     {entry.EntryTitle && <div className="text-sm text-gray-600">{entry.EntryTitle}</div>}
                     {entry.EntryNotes && (
@@ -170,7 +171,7 @@ export default function JudgePortal() {
 
                   <div className="space-y-4">
                     {cat.Criteria.length === 0 && (
-                      <div className="text-sm text-gray-500">No rubric criteria defined yet.</div>
+                      <div className="text-sm text-gray-500">{t('judge_portal.no_criteria')}</div>
                     )}
                     {cat.Criteria.map(cr => {
                       const key = `${entry.EntryID}:${cr.CriterionID}`;
@@ -182,15 +183,15 @@ export default function JudgePortal() {
                               <div className="font-medium text-sm">{cr.CriterionName}</div>
                               {cr.Description && <div className="text-xs text-gray-500">{cr.Description}</div>}
                             </div>
-                            <div className="text-xs text-gray-500 shrink-0 ml-3">max {cr.MaxPoints} · weight {cr.Weight}</div>
+                            <div className="text-xs text-gray-500 shrink-0 ml-3">{t('judge_portal.criterion_info', { max: cr.MaxPoints, weight: cr.Weight })}</div>
                           </div>
                           <div className="flex gap-2 items-start">
                             <input type="number" step="0.01" min="0" max={cr.MaxPoints}
-                              className={inp + ' max-w-[110px]'} placeholder="Points"
+                              className={inp + ' max-w-[110px]'} placeholder={t('judge_portal.placeholder_points')}
                               value={s.Points ?? ''}
                               onChange={e => setScores(x => ({ ...x, [key]: { ...(x[key] || {}), Points: e.target.value } }))}
                               onBlur={() => saveScore(entry.EntryID, cr)} />
-                            <textarea rows={1} className={inp} placeholder="Comment (optional)"
+                            <textarea rows={1} className={inp} placeholder={t('judge_portal.placeholder_comment')}
                               value={s.Comment || ''}
                               onChange={e => setScores(x => ({ ...x, [key]: { ...(x[key] || {}), Comment: e.target.value } }))}
                               onBlur={() => saveScore(entry.EntryID, cr)} />
@@ -205,7 +206,7 @@ export default function JudgePortal() {
                 </div>
               ) : (
                 <div className="bg-white rounded-xl shadow p-5 text-sm text-gray-500">
-                  Select an entry to begin scoring.
+                  {t('judge_portal.hint_select_entry')}
                 </div>
               )}
             </div>

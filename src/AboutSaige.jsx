@@ -51,19 +51,19 @@ export default function AboutSaige() {
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></svg>
               </div>
-              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.88)' }}>{t('saige.hero_badge')}</span>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#ffffff' }}>{t('saige.hero_badge')}</span>
             </div>
             <h1 style={{ color: '#ffffff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
               {t('saige.hero_title')}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+            <p style={{ color: '#ffffff', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
               {t('saige.hero_body')}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link to="/saige" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
                 {t('saige.hero_cta1')}
               </Link>
-              <Link to="/signup" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: 'rgba(255,255,255,0.55)', color: '#ffffff' }}>
+              <Link to="/signup" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: '#ffffff', color: '#ffffff' }}>
                 {t('saige.hero_cta2')}
               </Link>
             </div>

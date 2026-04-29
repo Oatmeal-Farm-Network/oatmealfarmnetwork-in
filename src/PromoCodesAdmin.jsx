@@ -1,23 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import EventAdminLayout from './EventAdminLayout';
 
 const API = import.meta.env.VITE_API_URL || '';
 
 function authHeaders() {
-  const t = localStorage.getItem('access_token');
-  return t ? { Authorization: `Bearer ${t}` } : {};
+  const tok = localStorage.getItem('access_token');
+  return tok ? { Authorization: `Bearer ${tok}` } : {};
 }
 
-const FEATURE_SCOPES = [
-  { value: '', label: '— Whole cart —' },
-  { value: 'halter',     label: 'Halter entries only' },
-  { value: 'fleece',     label: 'Fleece entries only' },
-  { value: 'spinoff',    label: 'Spin-off entries only' },
-  { value: 'fiber-arts', label: 'Fiber arts entries only' },
-  { value: 'meal',       label: 'Meal tickets only' },
-  { value: 'vendor',     label: 'Vendor booths only' },
-];
+const FEATURE_SCOPE_KEYS = {
+  '':           'whole_cart',
+  'halter':     'halter',
+  'fleece':     'fleece',
+  'spinoff':    'spinoff',
+  'fiber-arts': 'fiber_arts',
+  'meal':       'meal',
+  'vendor':     'vendor',
+};
+
+const FEATURE_SCOPE_VALUES = ['', 'halter', 'fleece', 'spinoff', 'fiber-arts', 'meal', 'vendor'];
 
 const EMPTY = {
   Code: '',
@@ -34,6 +37,7 @@ const EMPTY = {
 };
 
 export default function PromoCodesAdmin() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [codes, setCodes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,8 +63,8 @@ export default function PromoCodesAdmin() {
       body: JSON.stringify(data),
     });
     if (!res.ok) {
-      const t = await res.text();
-      alert(`Save failed: ${t}`);
+      const txt = await res.text();
+      alert(t('promo_codes.err_save_failed', { msg: txt }));
       return;
     }
     setEditing(null);
@@ -68,7 +72,7 @@ export default function PromoCodesAdmin() {
   };
 
   const deleteCode = async (c) => {
-    if (!confirm(`Deactivate code "${c.Code}"?`)) return;
+    if (!confirm(t('promo_codes.confirm_deactivate', { code: c.Code }))) return;
     await fetch(`${API}/api/events/promo-codes/${c.CodeID}`, {
       method: 'DELETE', headers: authHeaders(),
     });
@@ -80,37 +84,35 @@ export default function PromoCodesAdmin() {
       <div className="max-w-5xl">
         <div className="flex items-start justify-between gap-4 mb-2">
           <div>
-            <h1 className="text-2xl font-semibold text-[#3D6B34]">Promo Codes & Discounts</h1>
+            <h1 className="text-2xl font-semibold text-[#3D6B34]">{t('promo_codes.heading')}</h1>
             <p className="text-sm text-gray-600 mt-1">
-              Create discount codes for marketing, comp tickets, or group rates.
-              Mark a code <strong>Auto-apply</strong> to run an automatic early-bird
-              discount — attendees get it without typing anything.
+              {t('promo_codes.intro')}
             </p>
           </div>
           <button onClick={() => setEditing({ ...EMPTY })}
             className="text-xs px-3 py-1.5 rounded-lg bg-[#3D6B34] text-white hover:bg-[#2f5226] whitespace-nowrap">
-            + New code
+            {t('promo_codes.btn_new')}
           </button>
         </div>
 
         {loading ? (
-          <div className="bg-white rounded-xl shadow p-6 text-sm text-gray-500">Loading…</div>
+          <div className="bg-white rounded-xl shadow p-6 text-sm text-gray-500">{t('promo_codes.loading')}</div>
         ) : codes.length === 0 ? (
           <div className="bg-white rounded-xl shadow p-8 text-center text-sm text-gray-500">
-            No promo codes yet. Create one above to enable discounts.
+            {t('promo_codes.empty')}
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-[10px] uppercase text-gray-500">
                 <tr>
-                  <th className="text-left px-4 py-2 font-semibold">Code</th>
-                  <th className="text-left px-4 py-2 font-semibold">Discount</th>
-                  <th className="text-left px-4 py-2 font-semibold">Scope</th>
-                  <th className="text-left px-4 py-2 font-semibold">Uses</th>
-                  <th className="text-left px-4 py-2 font-semibold">Valid</th>
-                  <th className="text-left px-4 py-2 font-semibold">Flags</th>
-                  <th className="text-right px-4 py-2 font-semibold">Actions</th>
+                  <th className="text-left px-4 py-2 font-semibold">{t('promo_codes.th_code')}</th>
+                  <th className="text-left px-4 py-2 font-semibold">{t('promo_codes.th_discount')}</th>
+                  <th className="text-left px-4 py-2 font-semibold">{t('promo_codes.th_scope')}</th>
+                  <th className="text-left px-4 py-2 font-semibold">{t('promo_codes.th_uses')}</th>
+                  <th className="text-left px-4 py-2 font-semibold">{t('promo_codes.th_valid')}</th>
+                  <th className="text-left px-4 py-2 font-semibold">{t('promo_codes.th_flags')}</th>
+                  <th className="text-right px-4 py-2 font-semibold">{t('promo_codes.th_actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -121,23 +123,25 @@ export default function PromoCodesAdmin() {
                       {c.DiscountType === 'percent' ? `${Number(c.DiscountValue)}%` : `$${Number(c.DiscountValue).toFixed(2)}`}
                     </td>
                     <td className="px-4 py-2 text-xs text-gray-600">
-                      {c.FeatureScope || 'Whole cart'}
+                      {c.FeatureScope
+                        ? t(`promo_codes.scope_${FEATURE_SCOPE_KEYS[c.FeatureScope] || 'whole_cart'}`, { defaultValue: c.FeatureScope })
+                        : t('promo_codes.scope_whole_cart')}
                     </td>
                     <td className="px-4 py-2 text-xs text-gray-600">
                       {c.UsesSoFar || 0}{c.MaxUses ? ` / ${c.MaxUses}` : ''}
                     </td>
                     <td className="px-4 py-2 text-xs text-gray-500">
-                      {c.ValidFrom ? new Date(c.ValidFrom).toLocaleDateString() : 'Now'}
+                      {c.ValidFrom ? new Date(c.ValidFrom).toLocaleDateString() : t('promo_codes.valid_now')}
                       {' → '}
                       {c.ValidUntil ? new Date(c.ValidUntil).toLocaleDateString() : '∞'}
                     </td>
                     <td className="px-4 py-2 text-xs">
-                      {c.AutoApply && <span className="inline-block bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Auto</span>}
-                      {!c.IsActive && <span className="inline-block bg-gray-100 text-gray-500 px-2 py-0.5 rounded ml-1">Off</span>}
+                      {c.AutoApply && <span className="inline-block bg-amber-100 text-amber-700 px-2 py-0.5 rounded">{t('promo_codes.flag_auto')}</span>}
+                      {!c.IsActive && <span className="inline-block bg-gray-100 text-gray-500 px-2 py-0.5 rounded ml-1">{t('promo_codes.flag_off')}</span>}
                     </td>
                     <td className="px-4 py-2 text-right whitespace-nowrap">
-                      <button onClick={() => setEditing(c)} className="text-xs text-[#3D6B34] hover:underline mr-3">Edit</button>
-                      <button onClick={() => deleteCode(c)} className="text-xs text-red-600 hover:underline">Deactivate</button>
+                      <button onClick={() => setEditing(c)} className="text-xs text-[#3D6B34] hover:underline mr-3">{t('promo_codes.btn_edit')}</button>
+                      <button onClick={() => deleteCode(c)} className="text-xs text-red-600 hover:underline">{t('promo_codes.btn_deactivate')}</button>
                     </td>
                   </tr>
                 ))}
@@ -153,56 +157,59 @@ export default function PromoCodesAdmin() {
 }
 
 function CodeEditor({ code, onSave, onClose }) {
+  const { t } = useTranslation();
   const [d, setD] = useState({ ...code });
   const set = (k, v) => setD(p => ({ ...p, [k]: v }));
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-5">
         <h2 className="text-lg font-semibold text-[#3D6B34] mb-3">
-          {code.CodeID ? `Edit ${code.Code}` : 'New promo code'}
+          {code.CodeID ? t('promo_codes.modal_edit', { code: code.Code }) : t('promo_codes.modal_new')}
         </h2>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <Label title="Code (e.g. EARLYBIRD)">
+          <Label title={t('promo_codes.lbl_code')}>
             <input className="border rounded px-3 py-2 w-full font-mono uppercase"
               disabled={!!code.CodeID}
               value={d.Code} onChange={e => set('Code', e.target.value.toUpperCase())} />
           </Label>
-          <Label title="Description (internal)">
+          <Label title={t('promo_codes.lbl_description')}>
             <input className="border rounded px-3 py-2 w-full"
               value={d.Description || ''} onChange={e => set('Description', e.target.value)} />
           </Label>
-          <Label title="Discount type">
+          <Label title={t('promo_codes.lbl_discount_type')}>
             <select className="border rounded px-3 py-2 w-full" value={d.DiscountType}
               onChange={e => set('DiscountType', e.target.value)}>
-              <option value="percent">Percent off</option>
-              <option value="flat">Flat $ off</option>
+              <option value="percent">{t('promo_codes.discount_percent')}</option>
+              <option value="flat">{t('promo_codes.discount_flat')}</option>
             </select>
           </Label>
-          <Label title={`Value ${d.DiscountType === 'percent' ? '(%)' : '($)'}`}>
+          <Label title={d.DiscountType === 'percent' ? t('promo_codes.lbl_value_percent') : t('promo_codes.lbl_value_flat')}>
             <input type="number" step="0.01" className="border rounded px-3 py-2 w-full"
               value={d.DiscountValue} onChange={e => set('DiscountValue', e.target.value)} />
           </Label>
-          <Label title="Scope">
+          <Label title={t('promo_codes.lbl_scope')}>
             <select className="border rounded px-3 py-2 w-full" value={d.FeatureScope || ''}
               onChange={e => set('FeatureScope', e.target.value)}>
-              {FEATURE_SCOPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+              {FEATURE_SCOPE_VALUES.map(v => (
+                <option key={v} value={v}>{t(`promo_codes.scope_${FEATURE_SCOPE_KEYS[v]}`)}</option>
+              ))}
             </select>
           </Label>
-          <Label title="Min cart total ($, optional)">
+          <Label title={t('promo_codes.lbl_min_cart')}>
             <input type="number" step="0.01" className="border rounded px-3 py-2 w-full"
               value={d.MinCartTotal || ''} onChange={e => set('MinCartTotal', e.target.value)} />
           </Label>
-          <Label title="Max uses (optional)">
+          <Label title={t('promo_codes.lbl_max_uses')}>
             <input type="number" className="border rounded px-3 py-2 w-full"
               value={d.MaxUses || ''} onChange={e => set('MaxUses', e.target.value)} />
           </Label>
           <div />
-          <Label title="Valid from (optional)">
+          <Label title={t('promo_codes.lbl_valid_from')}>
             <input type="datetime-local" className="border rounded px-3 py-2 w-full"
               value={(d.ValidFrom || '').substring(0, 16)}
               onChange={e => set('ValidFrom', e.target.value)} />
           </Label>
-          <Label title="Valid until (optional)">
+          <Label title={t('promo_codes.lbl_valid_until')}>
             <input type="datetime-local" className="border rounded px-3 py-2 w-full"
               value={(d.ValidUntil || '').substring(0, 16)}
               onChange={e => set('ValidUntil', e.target.value)} />
@@ -210,18 +217,18 @@ function CodeEditor({ code, onSave, onClose }) {
           <label className="col-span-2 flex items-center gap-2 mt-2">
             <input type="checkbox" checked={!!d.AutoApply}
               onChange={e => set('AutoApply', e.target.checked)} />
-            <span className="text-sm">Auto-apply (early bird — applied silently in the wizard)</span>
+            <span className="text-sm">{t('promo_codes.chk_auto_apply')}</span>
           </label>
           <label className="col-span-2 flex items-center gap-2">
             <input type="checkbox" checked={d.IsActive !== false}
               onChange={e => set('IsActive', e.target.checked)} />
-            <span className="text-sm">Active</span>
+            <span className="text-sm">{t('promo_codes.chk_active')}</span>
           </label>
         </div>
         <div className="flex justify-end gap-2 mt-5">
-          <button onClick={onClose} className="text-sm px-4 py-2 rounded border border-gray-300">Cancel</button>
+          <button onClick={onClose} className="text-sm px-4 py-2 rounded border border-gray-300">{t('promo_codes.btn_cancel')}</button>
           <button onClick={() => onSave(d)} className="text-sm px-4 py-2 rounded bg-[#3D6B34] text-white">
-            {code.CodeID ? 'Save' : 'Create'}
+            {code.CodeID ? t('promo_codes.btn_save') : t('promo_codes.btn_create')}
           </button>
         </div>
       </div>

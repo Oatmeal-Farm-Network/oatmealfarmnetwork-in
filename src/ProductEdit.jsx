@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -41,6 +42,7 @@ const EMPTY_PHOTOS = {
 };
 
 export default function ProductEdit() {
+  const { t } = useTranslation();
   const { prodId } = useParams(); // undefined for /products/add
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
@@ -173,7 +175,7 @@ export default function ProductEdit() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(createBody),
       });
-      if (!res.ok) { setSaving(false); alert('Failed to create product.'); return; }
+      if (!res.ok) { setSaving(false); alert(t('product_edit.err_create_failed')); return; }
       const created = await res.json();
       activeProdId = created.ProdID;
     } else {
@@ -182,7 +184,7 @@ export default function ProductEdit() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(basePayload),
       });
-      if (!res.ok) { setSaving(false); alert('Failed to save product.'); return; }
+      if (!res.ok) { setSaving(false); alert(t('product_edit.err_save_failed')); return; }
     }
 
     // Save photos (even if empty, to keep in sync)
@@ -195,7 +197,7 @@ export default function ProductEdit() {
     }
 
     setSaving(false);
-    setSavedMsg('Saved.');
+    setSavedMsg(t('product_edit.saved'));
     if (isNew && activeProdId) {
       navigate(`/products/edit/${activeProdId}?BusinessID=${BusinessID}`, { replace: true });
     }
@@ -209,59 +211,59 @@ export default function ProductEdit() {
       Business={Business}
       BusinessID={BusinessID}
       PeopleID={PeopleID}
-      pageTitle={isNew ? 'Add Product' : 'Edit Product'}
+      pageTitle={isNew ? t('product_edit.page_title_add') : t('product_edit.page_title_edit')}
       breadcrumbs={[
-        { label: 'Dashboard', to: '/dashboard' },
-        { label: 'Products', to: `/products?BusinessID=${BusinessID}` },
-        { label: isNew ? 'Add' : 'Edit' },
+        { label: t('product_edit.breadcrumb_dashboard'), to: '/dashboard' },
+        { label: t('product_edit.breadcrumb_products'), to: `/products?BusinessID=${BusinessID}` },
+        { label: isNew ? t('product_edit.breadcrumb_add') : t('product_edit.breadcrumb_edit') },
       ]}
     >
       <div className="max-w-5xl mx-auto space-y-6">
         {loading ? (
-          <div className="text-center py-12 text-gray-400">Loading product...</div>
+          <div className="text-center py-12 text-gray-400">{t('product_edit.loading')}</div>
         ) : (
         <form onSubmit={handleSave} className="space-y-6">
 
           {/* Basics */}
           <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Basics</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-4">{t('product_edit.section_basics')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className={labelCls}>Product Name *</label>
+                <label className={labelCls}>{t('product_edit.lbl_name')}</label>
                 <input required type="text" value={form.prodName} onChange={e => set('prodName', e.target.value)} className={inputCls} />
               </div>
               <div className="md:col-span-2">
-                <label className={labelCls}>Short Description</label>
+                <label className={labelCls}>{t('product_edit.lbl_short_description')}</label>
                 <input type="text" value={form.prodShortDescription} onChange={e => set('prodShortDescription', e.target.value)} className={inputCls} maxLength={255} />
               </div>
               <div className="md:col-span-2">
-                <label className={labelCls}>Full Description</label>
+                <label className={labelCls}>{t('product_edit.lbl_description')}</label>
                 <textarea value={form.prodDescription} onChange={e => set('prodDescription', e.target.value)} className={`${inputCls} min-h-[120px]`} />
               </div>
               <div>
-                <label className={labelCls}>Category</label>
+                <label className={labelCls}>{t('product_edit.lbl_category')}</label>
                 <select value={form.prodCategoryId} onChange={e => { set('prodCategoryId', e.target.value); set('prodSubCategoryId', ''); }} className={inputCls}>
-                  <option value="">Select category</option>
+                  <option value="">{t('product_edit.option_select_category')}</option>
                   {categories.map(c => (
                     <option key={c.CatID} value={c.CatID}>{c.CatName}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Subcategory</label>
+                <label className={labelCls}>{t('product_edit.lbl_subcategory')}</label>
                 <select value={form.prodSubCategoryId} onChange={e => set('prodSubCategoryId', e.target.value)} className={inputCls} disabled={!subcategories.length}>
-                  <option value="">Select subcategory</option>
+                  <option value="">{t('product_edit.option_select_subcategory')}</option>
                   {subcategories.map(s => (
                     <option key={s.SubCatID} value={s.SubCatID}>{s.SubCatName}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Made In</label>
+                <label className={labelCls}>{t('product_edit.lbl_made_in')}</label>
                 <input type="text" value={form.prodMadeIn} onChange={e => set('prodMadeIn', e.target.value)} className={inputCls} placeholder="e.g. Oregon, USA" />
               </div>
               <div>
-                <label className={labelCls}>Materials</label>
+                <label className={labelCls}>{t('product_edit.lbl_materials')}</label>
                 <input type="text" value={form.Materials} onChange={e => set('Materials', e.target.value)} className={inputCls} placeholder="e.g. 100% wool" />
               </div>
             </div>
@@ -269,67 +271,67 @@ export default function ProductEdit() {
 
           {/* Pricing & Inventory */}
           <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Pricing & Inventory</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-4">{t('product_edit.section_pricing')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className={labelCls}>Price (USD) *</label>
+                <label className={labelCls}>{t('product_edit.lbl_price')}</label>
                 <div className="flex items-center border border-gray-300 rounded overflow-hidden focus-within:border-[#819360]">
                   <span className="px-2 text-gray-400 text-sm bg-gray-50 border-r border-gray-300">$</span>
                   <input required type="number" value={form.prodPrice} onChange={e => set('prodPrice', e.target.value)} className="px-2 py-1.5 text-sm focus:outline-none w-full" step="0.01" min="0" />
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Sale Price (USD)</label>
+                <label className={labelCls}>{t('product_edit.lbl_sale_price')}</label>
                 <div className="flex items-center border border-gray-300 rounded overflow-hidden focus-within:border-[#819360]">
                   <span className="px-2 text-gray-400 text-sm bg-gray-50 border-r border-gray-300">$</span>
                   <input type="number" value={form.SalePrice} onChange={e => set('SalePrice', e.target.value)} className="px-2 py-1.5 text-sm focus:outline-none w-full" step="0.01" min="0" />
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Quantity Available</label>
+                <label className={labelCls}>{t('product_edit.lbl_quantity')}</label>
                 <input type="number" value={form.ProdQuantityAvailable} onChange={e => set('ProdQuantityAvailable', e.target.value)} className={inputCls} min="0" />
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <input id="saleActive" type="checkbox" checked={!!form.prodSaleIsActive} onChange={e => set('prodSaleIsActive', e.target.checked ? 1 : 0)} />
-                <label htmlFor="saleActive" className="text-sm text-gray-700">Sale is active / featured</label>
+                <label htmlFor="saleActive" className="text-sm text-gray-700">{t('product_edit.chk_sale_active')}</label>
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <input id="callForPrice" type="checkbox" checked={!!form.prodCallforPrice} onChange={e => set('prodCallforPrice', e.target.checked ? 1 : 0)} />
-                <label htmlFor="callForPrice" className="text-sm text-gray-700">Call for price</label>
+                <label htmlFor="callForPrice" className="text-sm text-gray-700">{t('product_edit.chk_call_for_price')}</label>
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <input id="customOrder" type="checkbox" checked={!!form.prodCustomorder} onChange={e => set('prodCustomorder', e.target.checked ? 1 : 0)} />
-                <label htmlFor="customOrder" className="text-sm text-gray-700">Custom / made-to-order</label>
+                <label htmlFor="customOrder" className="text-sm text-gray-700">{t('product_edit.chk_custom_order')}</label>
               </div>
             </div>
           </div>
 
           {/* Shipping & Handling */}
           <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Shipping & Handling</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-4">{t('product_edit.section_shipping')}</h2>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="col-span-2 md:col-span-5 flex items-center gap-2">
                 <input id="prodShip" type="checkbox" checked={!!form.prodShip} onChange={e => set('prodShip', e.target.checked ? 1 : 0)} />
-                <label htmlFor="prodShip" className="text-sm text-gray-700">This product ships (vs. local pickup only)</label>
+                <label htmlFor="prodShip" className="text-sm text-gray-700">{t('product_edit.chk_ships')}</label>
               </div>
               <div>
-                <label className={labelCls}>Weight (lbs)</label>
+                <label className={labelCls}>{t('product_edit.lbl_weight')}</label>
                 <input type="number" value={form.prodWeight} onChange={e => set('prodWeight', e.target.value)} className={inputCls} step="0.01" min="0" />
               </div>
               <div>
-                <label className={labelCls}>Length (in)</label>
+                <label className={labelCls}>{t('product_edit.lbl_length')}</label>
                 <input type="number" value={form.prodLength} onChange={e => set('prodLength', e.target.value)} className={inputCls} step="0.1" min="0" />
               </div>
               <div>
-                <label className={labelCls}>Width (in)</label>
+                <label className={labelCls}>{t('product_edit.lbl_width')}</label>
                 <input type="number" value={form.prodWidth} onChange={e => set('prodWidth', e.target.value)} className={inputCls} step="0.1" min="0" />
               </div>
               <div>
-                <label className={labelCls}>Height (in)</label>
+                <label className={labelCls}>{t('product_edit.lbl_height')}</label>
                 <input type="number" value={form.prodHeight} onChange={e => set('prodHeight', e.target.value)} className={inputCls} step="0.1" min="0" />
               </div>
               <div>
-                <label className={labelCls}>Dimensions (text)</label>
+                <label className={labelCls}>{t('product_edit.lbl_dimensions')}</label>
                 <input type="text" value={form.ProdDimensions} onChange={e => set('ProdDimensions', e.target.value)} className={inputCls} placeholder='e.g. 12" x 8" x 4"' />
               </div>
             </div>
@@ -337,8 +339,8 @@ export default function ProductEdit() {
 
           {/* Photos */}
           <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Photos</h2>
-            <p className="text-xs text-gray-500 mb-3">Paste up to 8 image URLs. First image is the cover photo on the marketplace.</p>
+            <h2 className="text-lg font-bold text-gray-800 mb-4">{t('product_edit.section_photos')}</h2>
+            <p className="text-xs text-gray-500 mb-3">{t('product_edit.photos_hint')}</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {[1,2,3,4,5,6,7,8].map(n => {
                 const key = `ProductImage${n}`;
@@ -364,17 +366,17 @@ export default function ProductEdit() {
 
           {/* Visibility */}
           <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Marketplace Visibility</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-4">{t('product_edit.section_visibility')}</h2>
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <input id="publish" type="checkbox" checked={!!form.Publishproduct} onChange={e => set('Publishproduct', e.target.checked ? 1 : 0)} />
-                <label htmlFor="publish" className="text-sm text-gray-700">Show on the Products Marketplace (unchecked = hidden from buyers)</label>
+                <label htmlFor="publish" className="text-sm text-gray-700">{t('product_edit.chk_publish')}</label>
               </div>
               <div className="flex items-center gap-2">
                 <input id="forSale" type="checkbox" checked={!!form.ProdForSale} onChange={e => set('ProdForSale', e.target.checked ? 1 : 0)} />
-                <label htmlFor="forSale" className="text-sm text-gray-700">For sale (can be added to cart &amp; checked out via Stripe)</label>
+                <label htmlFor="forSale" className="text-sm text-gray-700">{t('product_edit.chk_for_sale')}</label>
               </div>
-              <p className="text-xs text-gray-500">Payments route through the platform Stripe account; seller payout and platform fee are handled per THE OAT settings.</p>
+              <p className="text-xs text-gray-500">{t('product_edit.visibility_note')}</p>
             </div>
           </div>
 
@@ -382,10 +384,10 @@ export default function ProductEdit() {
           <div className="flex justify-end items-center gap-3">
             {savedMsg && <span className="text-sm text-green-700">{savedMsg}</span>}
             <button type="button" onClick={() => navigate(`/products?BusinessID=${BusinessID}`)} className="text-sm px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50">
-              Cancel
+              {t('product_edit.btn_cancel')}
             </button>
             <button type="submit" disabled={saving} className="regsubmit2" style={{ minWidth: '160px' }}>
-              {saving ? 'Saving...' : isNew ? 'Create Product' : 'Save Changes'}
+              {saving ? t('product_edit.btn_saving') : isNew ? t('product_edit.btn_create') : t('product_edit.btn_save')}
             </button>
           </div>
 

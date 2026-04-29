@@ -62,19 +62,19 @@ export default function AboutDirectory() {
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
               </div>
-              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.88)' }}>{t('dir_about.hero_badge')}</span>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#ffffff' }}>{t('dir_about.hero_badge')}</span>
             </div>
             <h1 style={{ color: '#ffffff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
               {t('dir_about.hero_title')}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+            <p style={{ color: '#ffffff', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
               {t('dir_about.hero_body')}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link to="/directory" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
                 {t('dir_about.hero_cta1')}
               </Link>
-              <Link to="/account" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: 'rgba(255,255,255,0.55)', color: '#ffffff' }}>
+              <Link to="/account" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: '#ffffff', color: '#ffffff' }}>
                 {t('dir_about.hero_cta2')}
               </Link>
             </div>

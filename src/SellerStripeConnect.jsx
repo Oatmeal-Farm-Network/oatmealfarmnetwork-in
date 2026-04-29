@@ -3,16 +3,18 @@
 // Status flows: not started → in progress → connected (payouts + charges enabled).
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 
 const API = import.meta.env.VITE_API_URL || '';
 
 function authHeaders() {
-  const t = localStorage.getItem('access_token');
-  return t ? { Authorization: `Bearer ${t}` } : {};
+  const tok = localStorage.getItem('access_token');
+  return tok ? { Authorization: `Bearer ${tok}` } : {};
 }
 
 export default function SellerStripeConnect() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const businessId = params.get('BusinessID');
   const justReturned = params.get('return') === '1';
@@ -72,7 +74,7 @@ export default function SellerStripeConnect() {
       if (data.onboarding_url) {
         window.location.href = data.onboarding_url;
       } else {
-        throw new Error('No onboarding URL returned');
+        throw new Error(t('stripe_connect.err_no_url'));
       }
     } catch (e) {
       setErr(e.message || String(e));
@@ -102,17 +104,13 @@ export default function SellerStripeConnect() {
   const content = (
     <div className="max-w-2xl mx-auto py-6 px-4 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-800">Stripe Connect</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Connect your Stripe account to receive payouts for marketplace sales. Oatmeal Farm Network
-          uses Stripe Connect Express — you'll enter your bank details on Stripe's secure onboarding
-          flow and return here when done.
-        </p>
+        <h1 className="text-2xl font-bold text-gray-800">{t('stripe_connect.heading')}</h1>
+        <p className="text-sm text-gray-600 mt-1">{t('stripe_connect.intro')}</p>
       </div>
 
       {!businessId && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 text-sm text-yellow-800">
-          No <code>BusinessID</code> in URL. Open this page from a business dashboard.
+          {t('stripe_connect.no_business_id')}
         </div>
       )}
 
@@ -123,32 +121,32 @@ export default function SellerStripeConnect() {
       )}
 
       {loading ? (
-        <div className="text-sm text-gray-400">Loading status…</div>
+        <div className="text-sm text-gray-400">{t('stripe_connect.loading')}</div>
       ) : status && businessId ? (
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5 space-y-4">
           <StatusRow
-            label="Stripe account"
+            label={t('stripe_connect.lbl_account')}
             ok={status.connected}
             okText={status.account_id}
-            notText="Not yet created"
+            notText={t('stripe_connect.not_created')}
           />
           <StatusRow
-            label="Onboarding complete"
+            label={t('stripe_connect.lbl_onboarding')}
             ok={status.onboarding_complete}
-            okText="Completed"
-            notText="Needs more info"
+            okText={t('stripe_connect.onboarding_complete')}
+            notText={t('stripe_connect.onboarding_incomplete')}
           />
           <StatusRow
-            label="Charges enabled"
+            label={t('stripe_connect.lbl_charges')}
             ok={status.charges_enabled}
-            okText="Yes — you can receive payments"
-            notText="Not yet"
+            okText={t('stripe_connect.charges_yes')}
+            notText={t('stripe_connect.not_yet')}
           />
           <StatusRow
-            label="Payouts enabled"
+            label={t('stripe_connect.lbl_payouts')}
             ok={status.payouts_enabled}
-            okText="Yes — Stripe can transfer funds to your bank"
-            notText="Not yet"
+            okText={t('stripe_connect.payouts_yes')}
+            notText={t('stripe_connect.not_yet')}
           />
 
           <div className="flex gap-3 justify-end pt-3 border-t border-gray-100">
@@ -158,7 +156,7 @@ export default function SellerStripeConnect() {
                 disabled={busy}
                 className="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
-                Refresh status
+                {t('stripe_connect.btn_refresh')}
               </button>
             )}
             <button
@@ -167,12 +165,12 @@ export default function SellerStripeConnect() {
               className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#3D6B34] text-white hover:bg-[#2f5328] disabled:opacity-50"
             >
               {busy
-                ? 'Opening Stripe…'
+                ? t('stripe_connect.btn_opening')
                 : !status.connected
-                  ? 'Connect with Stripe'
+                  ? t('stripe_connect.btn_connect')
                   : status.onboarding_complete
-                    ? 'Update Stripe details'
-                    : 'Continue onboarding'}
+                    ? t('stripe_connect.btn_update')
+                    : t('stripe_connect.btn_continue')}
             </button>
           </div>
         </div>

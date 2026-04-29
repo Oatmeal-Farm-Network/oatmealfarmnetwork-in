@@ -1,6 +1,7 @@
 // src/OrderDetail.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -15,6 +16,7 @@ const statusColors = {
 };
 
 export default function OrderDetail() {
+  const { t } = useTranslation();
   const { orderId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -53,7 +55,7 @@ export default function OrderDetail() {
   if (loading) return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <Header />
-      <div className="text-center py-20 text-gray-400">Loading order...</div>
+      <div className="text-center py-20 text-gray-400">{t('order_detail.loading')}</div>
       <Footer />
     </div>
   );
@@ -61,29 +63,39 @@ export default function OrderDetail() {
   if (!order) return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <Header />
-      <div className="text-center py-20 text-gray-400">Order not found.</div>
+      <div className="text-center py-20 text-gray-400">{t('order_detail.not_found')}</div>
       <Footer />
     </div>
   );
+
+  const deliveryLabel = order.DeliveryMethod === 'pickup'
+    ? t('order_detail.delivery_pickup')
+    : order.DeliveryMethod === 'local_delivery'
+      ? t('order_detail.delivery_local')
+      : t('order_detail.delivery_shipping');
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
       <PageMeta
         title={`Order #${order.order_id || orderId} | Oatmeal Farm Network`}
-        description="View order details and status."
+        description={t('order_detail.meta_description')}
         noIndex
       />
       <Header />
 
       <div className="flex-grow py-8">
         <div className="max-w-3xl mx-auto px-4 space-y-6">
-          <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'My Orders', to: '/orders' }, { label: `Order #${order.order_id || orderId}` }]} />
-          <button onClick={() => navigate('/orders')} className="text-sm text-[#819360] font-semibold hover:underline">← All Orders</button>
+          <Breadcrumbs items={[
+            { label: t('order_detail.breadcrumb_home'), to: '/' },
+            { label: t('order_detail.breadcrumb_orders'), to: '/orders' },
+            { label: t('order_detail.breadcrumb_order', { n: order.order_id || orderId }) },
+          ]} />
+          <button onClick={() => navigate('/orders')} className="text-sm text-[#819360] font-semibold hover:underline">{t('order_detail.btn_all_orders')}</button>
 
           {isNew && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-              <p className="text-green-700 font-bold text-lg">Order Placed Successfully! 🎉</p>
-              <p className="text-green-600 text-sm">Sellers will review and confirm your items. You'll be notified by email.</p>
+              <p className="text-green-700 font-bold text-lg">{t('order_detail.order_placed_heading')}</p>
+              <p className="text-green-600 text-sm">{t('order_detail.order_placed_body')}</p>
             </div>
           )}
 
@@ -97,24 +109,24 @@ export default function OrderDetail() {
               <div className="text-right">
                 <Badge status={order.OrderStatus} />
                 <p className="text-2xl font-bold text-[#819360] mt-1">${parseFloat(order.TotalAmount).toFixed(2)}</p>
-                <p className="text-xs text-gray-400">Payment: <Badge status={order.PaymentStatus} /></p>
+                <p className="text-xs text-gray-400">{t('order_detail.payment_label')} <Badge status={order.PaymentStatus} /></p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 mt-4 text-sm text-gray-600">
-              <div><span className="text-gray-400">Delivery:</span> {order.DeliveryMethod === 'pickup' ? '🏪 Pickup' : order.DeliveryMethod === 'local_delivery' ? '🚛 Local Delivery' : '📦 Shipping'}</div>
-              {order.DeliveryAddress && <div><span className="text-gray-400">Address:</span> {order.DeliveryAddress}</div>}
-              {order.RequestedDeliveryDate && <div><span className="text-gray-400">Requested:</span> {new Date(order.RequestedDeliveryDate).toLocaleDateString()}</div>}
+              <div><span className="text-gray-400">{t('order_detail.delivery_label')}</span> {deliveryLabel}</div>
+              {order.DeliveryAddress && <div><span className="text-gray-400">{t('order_detail.address_label')}</span> {order.DeliveryAddress}</div>}
+              {order.RequestedDeliveryDate && <div><span className="text-gray-400">{t('order_detail.requested_label')}</span> {new Date(order.RequestedDeliveryDate).toLocaleDateString()}</div>}
             </div>
           </div>
 
           {/* Payment action */}
           {(showPay || order.PaymentStatus === 'authorized') && order.OrderStatus !== 'cancelled' && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center">
-              <p className="font-bold text-amber-800 mb-2">Payment Required</p>
-              <p className="text-sm text-amber-600 mb-4">Your order is confirmed. Complete payment to proceed.</p>
+              <p className="font-bold text-amber-800 mb-2">{t('order_detail.payment_required_heading')}</p>
+              <p className="text-sm text-amber-600 mb-4">{t('order_detail.payment_required_body')}</p>
               <button className="bg-[#819360] text-white font-bold px-8 py-3 rounded-xl hover:bg-[#3D6B35]"
-                onClick={() => alert('Stripe payment UI will be integrated here.')}>
-                Pay ${parseFloat(order.TotalAmount).toFixed(2)}
+                onClick={() => alert(t('order_detail.stripe_placeholder'))}>
+                {t('order_detail.btn_pay', { amount: parseFloat(order.TotalAmount).toFixed(2) })}
               </button>
             </div>
           )}
@@ -122,14 +134,12 @@ export default function OrderDetail() {
           {/* Order items */}
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
-              <h2 className="font-bold text-gray-700">Order Items</h2>
+              <h2 className="font-bold text-gray-700">{t('order_detail.order_items_heading')}</h2>
             </div>
             <div className="divide-y divide-gray-100">
               {(order.items || []).map(item => (
                 <div key={item.OrderItemID} className="p-5">
                   <div className="flex items-start gap-4">
-
-                    {/* Image — only show if URL exists, no fallback icon */}
                     {item.ImageURL ? (
                       <img
                         src={item.ImageURL}
@@ -139,7 +149,6 @@ export default function OrderDetail() {
                     ) : (
                       <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0" />
                     )}
-
                     <div className="flex-grow">
                       <div className="flex justify-between items-start">
                         <div>
@@ -153,7 +162,7 @@ export default function OrderDetail() {
                               className="inline-flex items-center gap-1 text-xs text-[#3D6B34] hover:underline mt-1"
                               title="Printable 'Sourced From' card for menus and social"
                             >
-                              🖨️ Sourcing card
+                              {t('order_detail.sourcing_card')}
                             </a>
                           )}
                         </div>
@@ -164,16 +173,16 @@ export default function OrderDetail() {
                       </div>
                       <div className="flex items-center gap-3 mt-2">
                         <Badge status={item.SellerStatus} />
-                        {item.TrackingNumber && <span className="text-xs text-gray-500">Tracking: {item.TrackingNumber}</span>}
-                        {item.EstimatedDeliveryDate && <span className="text-xs text-gray-400">Est. delivery: {new Date(item.EstimatedDeliveryDate).toLocaleDateString()}</span>}
+                        {item.TrackingNumber && <span className="text-xs text-gray-500">{t('order_detail.tracking', { n: item.TrackingNumber })}</span>}
+                        {item.EstimatedDeliveryDate && <span className="text-xs text-gray-400">{t('order_detail.est_delivery', { date: new Date(item.EstimatedDeliveryDate).toLocaleDateString() })}</span>}
                       </div>
                       {item.RejectionReason && (
-                        <p className="text-sm text-red-500 mt-2 bg-red-50 px-3 py-1 rounded">Reason: {item.RejectionReason}</p>
+                        <p className="text-sm text-red-500 mt-2 bg-red-50 px-3 py-1 rounded">{t('order_detail.rejection_reason', { reason: item.RejectionReason })}</p>
                       )}
                       {item.SellerStatus === 'shipped' && (
                         <button onClick={() => confirmDelivery(item.OrderItemID)}
                           className="mt-2 text-sm bg-green-600 text-white px-4 py-1.5 rounded-lg font-semibold hover:bg-green-700">
-                          ✓ Confirm Delivery
+                          {t('order_detail.btn_confirm_delivery')}
                         </button>
                       )}
                     </div>
@@ -186,10 +195,10 @@ export default function OrderDetail() {
           {/* Totals */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>${parseFloat(order.Subtotal).toFixed(2)}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Service Fee (2.5%)</span><span>${parseFloat(order.PlatformFee).toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">{t('order_detail.subtotal')}</span><span>${parseFloat(order.Subtotal).toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">{t('order_detail.service_fee')}</span><span>${parseFloat(order.PlatformFee).toFixed(2)}</span></div>
               <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-lg">
-                <span>Total</span><span className="text-[#819360]">${parseFloat(order.TotalAmount).toFixed(2)}</span>
+                <span>{t('order_detail.total')}</span><span className="text-[#819360]">${parseFloat(order.TotalAmount).toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -197,7 +206,7 @@ export default function OrderDetail() {
           {/* Status history */}
           {order.history && order.history.length > 0 && (
             <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="font-bold text-gray-700 mb-3">Order Timeline</h3>
+              <h3 className="font-bold text-gray-700 mb-3">{t('order_detail.timeline_heading')}</h3>
               <div className="space-y-3">
                 {order.history.map((h, i) => (
                   <div key={h.HistoryID || i} className="flex items-start gap-3">

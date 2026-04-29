@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
 const apiBase = import.meta.env.VITE_API_URL || '';
 
 export default function ServicesSuggestCategory() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
@@ -58,14 +60,14 @@ export default function ServicesSuggestCategory() {
   };
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Suggest Category" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Services' }, { label: 'Suggest Category' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={t('services_suggest.page_title')} breadcrumbs={[{ label: t('services_suggest.breadcrumb_dashboard'), to: '/dashboard' }, { label: t('services_suggest.breadcrumb_services') }, { label: t('services_suggest.breadcrumb_suggest') }]}>
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6" style={{ maxWidth: 1300 }}>
 
         <div style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 22, color: '#2c1a0e', marginBottom: 6 }}>
-          Suggest a New Service Category
+          {t('services_suggest.heading')}
         </div>
         <p style={{ color: '#7a6a5a', fontSize: 14, marginBottom: 24 }}>
-          If you can't find the right category for your service, let us know what you'd like added. We'll review your suggestion and notify you if it's added.
+          {t('services_suggest.intro')}
         </p>
 
         {submitted ? (
@@ -74,10 +76,10 @@ export default function ServicesSuggestCategory() {
             borderRadius: 8, padding: '20px 24px', marginBottom: 24,
           }}>
             <div style={{ fontWeight: 700, color: '#4a7c3f', fontSize: 15, marginBottom: 4 }}>
-              ✓ Thanks for your suggestion!
+              {t('services_suggest.success_heading')}
             </div>
             <p style={{ color: '#5a7a54', fontSize: 14, margin: 0 }}>
-              We'll review it and let you know if we add the category.
+              {t('services_suggest.success_body')}
             </p>
           </div>
         ) : (
@@ -85,7 +87,7 @@ export default function ServicesSuggestCategory() {
             {/* Business name (read-only) */}
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontWeight: 600, fontSize: 13, color: '#5a3e2b', marginBottom: 5 }}>
-                Business Name
+                {t('services_suggest.lbl_business_name')}
               </label>
               <input
                 value={Business?.BusinessName || ''}
@@ -97,13 +99,13 @@ export default function ServicesSuggestCategory() {
             {/* Suggested Categories */}
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontWeight: 600, fontSize: 13, color: '#5a3e2b', marginBottom: 5 }}>
-                Suggested Categories
+                {t('services_suggest.lbl_categories')}
               </label>
               <textarea
                 value={form.Categories}
                 onChange={e => set('Categories', e.target.value)}
                 rows={3}
-                placeholder="e.g. Equine Therapy, Agritourism..."
+                placeholder={t('services_suggest.placeholder_categories')}
                 style={{ ...inputStyle, resize: 'vertical' }}
               />
             </div>
@@ -111,13 +113,13 @@ export default function ServicesSuggestCategory() {
             {/* Suggested Sub-Categories */}
             <div style={{ marginBottom: 24 }}>
               <label style={{ display: 'block', fontWeight: 600, fontSize: 13, color: '#5a3e2b', marginBottom: 5 }}>
-                Suggested Sub-Categories
+                {t('services_suggest.lbl_subcategories')}
               </label>
               <textarea
                 value={form.SubCategories}
                 onChange={e => set('SubCategories', e.target.value)}
                 rows={3}
-                placeholder="e.g. Trail Rides, Farm Tours..."
+                placeholder={t('services_suggest.placeholder_subcategories')}
                 style={{ ...inputStyle, resize: 'vertical' }}
               />
             </div>
@@ -132,7 +134,7 @@ export default function ServicesSuggestCategory() {
                   color: '#8b7355', cursor: 'pointer',
                 }}
               >
-                Cancel
+                {t('services_suggest.btn_cancel')}
               </button>
               <button
                 onClick={submit}
@@ -144,7 +146,7 @@ export default function ServicesSuggestCategory() {
                   cursor: saving || !form.Categories.trim() ? 'not-allowed' : 'pointer',
                 }}
               >
-                {saving ? 'Sending…' : 'Send Suggestion'}
+                {saving ? t('services_suggest.btn_sending') : t('services_suggest.btn_submit')}
               </button>
             </div>
           </>
@@ -158,7 +160,7 @@ export default function ServicesSuggestCategory() {
               padding: '10px 24px', fontWeight: 700, fontSize: 14, cursor: 'pointer',
             }}
           >
-            Back to Services
+            {t('services_suggest.btn_back')}
           </button>
         )}
 
