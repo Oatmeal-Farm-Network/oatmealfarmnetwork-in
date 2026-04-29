@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import RichTextEditor from './RichTextEditor';
 
@@ -19,19 +20,20 @@ const EMPTY_ENTRY = {
 };
 
 function EntryForm({ initial, onSave, onCancel, animals, divisions, saving }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(initial || EMPTY_ENTRY);
-  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+  const set = (k) => (ev) => setForm(f => ({ ...f, [k]: ev.target.value }));
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave(form); }} className="space-y-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+    <form onSubmit={(ev) => { ev.preventDefault(); onSave(form); }} className="space-y-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
       <div>
-        <label className={lbl}>Fleece / animal name</label>
-        <input value={form.FleeceName} onChange={set('FleeceName')} required className={inp} placeholder="e.g. Aspen's 2026 blanket" />
+        <label className={lbl}>{t('fleece_register.lbl_fleece_name')}</label>
+        <input value={form.FleeceName} onChange={set('FleeceName')} required className={inp} placeholder={t('fleece_register.placeholder_fleece')} />
       </div>
       {divisions.length > 0 && (
         <div>
-          <label className={lbl}>Division</label>
+          <label className={lbl}>{t('fleece_register.lbl_division')}</label>
           <select value={form.DivisionID} onChange={set('DivisionID')} className={inp}>
-            <option value="">-- None --</option>
+            <option value="">{t('fleece_register.option_none')}</option>
             {divisions.map(d_ => (
               <option key={d_.DivisionID} value={d_.DivisionID}>
                 {d_.DivisionName}
@@ -44,40 +46,40 @@ function EntryForm({ initial, onSave, onCancel, animals, divisions, saving }) {
       )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
-          <label className={lbl}>Breed</label>
-          <input value={form.Breed} onChange={set('Breed')} className={inp} placeholder="Huacaya, Suri, Merino…" />
+          <label className={lbl}>{t('fleece_register.lbl_breed')}</label>
+          <input value={form.Breed} onChange={set('Breed')} className={inp} placeholder={t('fleece_register.placeholder_breed')} />
         </div>
         <div>
-          <label className={lbl}>Color</label>
-          <input value={form.Color} onChange={set('Color')} className={inp} placeholder="White, Fawn, Black…" />
+          <label className={lbl}>{t('fleece_register.lbl_color')}</label>
+          <input value={form.Color} onChange={set('Color')} className={inp} placeholder={t('fleece_register.placeholder_color')} />
         </div>
         <div>
-          <label className={lbl}>Source animal (optional)</label>
+          <label className={lbl}>{t('fleece_register.lbl_source_animal')}</label>
           <select value={form.SourceAnimalID} onChange={set('SourceAnimalID')} className={inp}>
-            <option value="">-- None --</option>
+            <option value="">{t('fleece_register.option_none')}</option>
             {animals.map(a => <option key={a.ID ?? a.AnimalID} value={a.ID ?? a.AnimalID}>{a.FullName || a.AnimalName}</option>)}
           </select>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className={lbl}>Micron (optional)</label>
-          <input value={form.Micron} onChange={set('Micron')} className={inp} placeholder="e.g. 22.4" />
+          <label className={lbl}>{t('fleece_register.lbl_micron')}</label>
+          <input value={form.Micron} onChange={set('Micron')} className={inp} placeholder={t('fleece_register.placeholder_micron')} />
         </div>
         <div>
-          <label className={lbl}>Staple length (optional)</label>
-          <input value={form.StapleLength} onChange={set('StapleLength')} className={inp} placeholder='e.g. 4.5"' />
+          <label className={lbl}>{t('fleece_register.lbl_staple')}</label>
+          <input value={form.StapleLength} onChange={set('StapleLength')} className={inp} placeholder={t('fleece_register.placeholder_staple')} />
         </div>
       </div>
       <div>
-        <label className={lbl}>Notes</label>
+        <label className={lbl}>{t('fleece_register.lbl_notes')}</label>
         <RichTextEditor value={form.Description || ''}
           onChange={(v) => setForm(f => ({ ...f, Description: v }))} minHeight={120} />
       </div>
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
+        <button type="button" onClick={onCancel} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">{t('fleece_register.btn_cancel')}</button>
         <button type="submit" disabled={saving} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save Fleece'}
+          {saving ? t('fleece_register.btn_saving') : t('fleece_register.btn_save')}
         </button>
       </div>
     </form>
@@ -85,6 +87,7 @@ function EntryForm({ initial, onSave, onCancel, animals, divisions, saving }) {
 }
 
 export default function FleeceRegister() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [params] = useSearchParams();
   const { BusinessID: ctxBusinessID } = useAccount() || {};
@@ -138,7 +141,7 @@ export default function FleeceRegister() {
           });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
-        throw new Error(j.detail || 'Save failed');
+        throw new Error(j.detail || t('fleece_register.err_save_failed'));
       }
       setAdding(false);
       setEditing(null);
@@ -151,12 +154,12 @@ export default function FleeceRegister() {
   };
 
   const remove = async (entry) => {
-    if (!confirm(`Remove "${entry.FleeceName || 'fleece'}"?`)) return;
+    if (!confirm(t('fleece_register.confirm_remove', { name: entry.FleeceName || t('fleece_register.fleece_fallback') }))) return;
     await fetch(`${API}/api/events/fleece/entries/${entry.EntryID}`, { method: 'DELETE' });
     loadEntries();
   };
 
-  const total = entries.reduce((s, e) => s + Number(e.EntryFee || 0), 0);
+  const total = entries.reduce((s, entry) => s + Number(entry.EntryFee || 0), 0);
   const configured = cfg?.configured;
   const closed = configured && cfg?.RegistrationEndDate && new Date(cfg.RegistrationEndDate) < new Date();
   const notYetOpen = configured && cfg?.RegistrationStartDate && new Date(cfg.RegistrationStartDate) > new Date();
@@ -165,18 +168,18 @@ export default function FleeceRegister() {
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Enter the Fleece Show</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('fleece_register.heading')}</h1>
           <p className="text-sm text-gray-500 mt-1">
             {event?.EventName || 'Event'}
             {event?.EventLocationCity && ` — ${event.EventLocationCity}, ${event.EventLocationState}`}
           </p>
         </div>
-        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">← Back to Event</Link>
+        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">{t('fleece_register.btn_back')}</Link>
       </div>
 
       {!configured && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-4 mb-4">
-          The fleece show has not yet been configured by the organizer.
+          {t('fleece_register.not_configured')}
         </div>
       )}
 
@@ -190,57 +193,57 @@ export default function FleeceRegister() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-xs">
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Fee per fleece</div>
+              <div className="text-gray-500">{t('fleece_register.stat_fee')}</div>
               <div className="font-semibold text-gray-900 text-base">${Number(cfg.CurrentFee || cfg.FeePerFleece || 0).toFixed(2)}</div>
               {cfg.DiscountFeePerFleece != null && cfg.DiscountEndDate && (
                 <div className="text-[11px] text-gray-400">
-                  discount ends {String(cfg.DiscountEndDate).substring(0, 10)}
+                  {t('fleece_register.discount_ends', { date: String(cfg.DiscountEndDate).substring(0, 10) })}
                 </div>
               )}
             </div>
             {cfg.MaxFleecesPerRegistrant && (
               <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-gray-500">Max per registrant</div>
+                <div className="text-gray-500">{t('fleece_register.stat_max')}</div>
                 <div className="font-semibold text-gray-900 text-base">{entries.length} / {cfg.MaxFleecesPerRegistrant}</div>
               </div>
             )}
             {cfg.RegistrationEndDate && (
               <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-gray-500">Registration closes</div>
+                <div className="text-gray-500">{t('fleece_register.stat_reg_closes')}</div>
                 <div className="font-semibold text-gray-900 text-base">{String(cfg.RegistrationEndDate).substring(0, 10)}</div>
               </div>
             )}
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Your total</div>
+              <div className="text-gray-500">{t('fleece_register.stat_total')}</div>
               <div className="font-semibold text-[#3D6B34] text-base">${total.toFixed(2)}</div>
             </div>
           </div>
 
           {notYetOpen && (
             <div className="bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded-lg p-3 mb-4">
-              Registration opens {String(cfg.RegistrationStartDate).substring(0, 10)}.
+              {t('fleece_register.not_yet_open', { date: String(cfg.RegistrationStartDate).substring(0, 10) })}
             </div>
           )}
           {closed && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
-              Registration for this fleece show has closed.
+              {t('fleece_register.closed')}
             </div>
           )}
 
           {err && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">{err}</div>}
 
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">Your fleeces</h2>
+            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">{t('fleece_register.your_fleeces_heading')}</h2>
             {!adding && !editing && !closed && !notYetOpen && peopleId && (
               <button onClick={() => setAdding(true)} className="text-sm bg-[#3D6B34] text-white px-4 py-1.5 rounded-lg hover:bg-[#2d5226]">
-                + Add Fleece
+                {t('fleece_register.btn_add')}
               </button>
             )}
           </div>
 
           {!peopleId && (
             <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-3 mb-3">
-              Please <Link to="/login" className="underline">log in</Link> to submit fleeces.
+              {t('fleece_register.login_prompt')} <Link to="/login" className="underline">{t('fleece_register.login_link')}</Link> {t('fleece_register.login_suffix')}
             </div>
           )}
 
@@ -257,29 +260,29 @@ export default function FleeceRegister() {
 
           <div className="space-y-2 mt-3">
             {entries.length === 0 && !adding && peopleId && (
-              <div className="text-sm text-gray-500">You have no fleeces entered yet.</div>
+              <div className="text-sm text-gray-500">{t('fleece_register.no_entries')}</div>
             )}
-            {entries.map(e => (
-              <div key={e.EntryID} className="bg-white border border-gray-200 rounded-lg p-3">
+            {entries.map(entry => (
+              <div key={entry.EntryID} className="bg-white border border-gray-200 rounded-lg p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900">{e.FleeceName || e.AnimalName}</div>
+                    <div className="font-medium text-gray-900">{entry.FleeceName || entry.AnimalName}</div>
                     <div className="text-xs text-gray-500 mt-0.5">
-                      {[e.DivisionName, e.Breed, e.Color, e.Micron && `${e.Micron}μ`, e.StapleLength].filter(Boolean).join(' • ')}
+                      {[entry.DivisionName, entry.Breed, entry.Color, entry.Micron && `${entry.Micron}μ`, entry.StapleLength].filter(Boolean).join(' • ')}
                     </div>
-                    {e.Description && <div className="text-xs text-gray-600 mt-1">{e.Description}</div>}
-                    {e.Placement && <div className="text-xs font-semibold text-[#3D6B34] mt-1">🏆 {e.Placement}{e.Score != null && ` • Score ${e.Score}`}</div>}
-                    {e.JudgeNotes && <div className="text-xs italic text-gray-500 mt-0.5">Judge: {e.JudgeNotes}</div>}
+                    {entry.Description && <div className="text-xs text-gray-600 mt-1">{entry.Description}</div>}
+                    {entry.Placement && <div className="text-xs font-semibold text-[#3D6B34] mt-1">🏆 {entry.Placement}{entry.Score != null && ` • ${t('fleece_register.score_label', { n: entry.Score })}`}</div>}
+                    {entry.JudgeNotes && <div className="text-xs italic text-gray-500 mt-0.5">{t('fleece_register.judge_prefix')} {entry.JudgeNotes}</div>}
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <div className="text-sm font-medium">${Number(e.EntryFee || 0).toFixed(2)}</div>
-                    <div className={`text-[11px] px-2 py-0.5 rounded ${e.PaidStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                      {e.PaidStatus || 'pending'}
+                    <div className="text-sm font-medium">${Number(entry.EntryFee || 0).toFixed(2)}</div>
+                    <div className={`text-[11px] px-2 py-0.5 rounded ${entry.PaidStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                      {entry.PaidStatus || t('fleece_register.status_pending')}
                     </div>
                     {!closed && (
                       <div className="flex gap-2 mt-1">
-                        <button onClick={() => { setEditing(e); setAdding(false); }} className="text-xs text-gray-500 hover:text-gray-800">Edit</button>
-                        <button onClick={() => remove(e)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                        <button onClick={() => { setEditing(entry); setAdding(false); }} className="text-xs text-gray-500 hover:text-gray-800">{t('fleece_register.btn_edit')}</button>
+                        <button onClick={() => remove(entry)} className="text-xs text-red-500 hover:text-red-700">{t('fleece_register.btn_remove')}</button>
                       </div>
                     )}
                   </div>

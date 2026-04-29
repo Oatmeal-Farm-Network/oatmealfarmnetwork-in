@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import EventAdminLayout from './EventAdminLayout';
 import { useAccount } from './AccountContext';
@@ -16,29 +17,47 @@ const EMPTY = {
   EventWebsite: '', IsPublished: true, IsFree: true, RegistrationRequired: false, MaxAttendees: '',
 };
 
-// Rough descriptions for common event types — anything not listed falls back to a generic blurb.
 const EVENT_TYPE_META = {
-  'Free Event':                        { icon: '🎉', desc: 'Open, no-cost gathering — no registration fees.' },
-  'Basic Event':                       { icon: '📋', desc: 'General event with optional registration and ticket tiers.' },
-  'Conference':                        { icon: '🎤', desc: 'Multi-session professional gathering with a schedule.' },
-  'Seminar':                           { icon: '🎓', desc: 'Focused educational talk or class, often single-session.' },
-  'Webinar/Online Class':              { icon: '💻', desc: 'Virtual event streamed to remote attendees.' },
-  'Workshop/Clinic':                   { icon: '🛠️', desc: 'Hands-on, skills-based training session.' },
-  'Networking Event':                  { icon: '🤝', desc: 'Informal gathering for connection and introductions.' },
-  'Dining Event':                      { icon: '🍽️', desc: 'Meal-centric event — dinners, tastings, luncheons.' },
-  'Farm Tour/Open House':              { icon: '🚜', desc: 'Guided tour or open day at a farm or ranch.' },
-  'Competition/Judging':               { icon: '🏆', desc: 'Generic competition or contest with judged results.' },
-  'Halter Show':                       { icon: '🦙', desc: 'Livestock halter show — animals, pens, classes, judging.' },
-  'Basic Animal or Fleece Show':       { icon: '🐑', desc: 'Per-fleece entries with breed/color/micron, fee window, judging.' },
-  'Spin-Off':                          { icon: '🧶', desc: 'Fleece-only spin-off competition.' },
-  'Alpaca Cottage Industry Fleece Show': { icon: '✂️', desc: 'Cottage industry fiber arts show with handmade entries.' },
-  'Auction':                           { icon: '💰', desc: 'Live, silent, online, or stud-service auction with bidding.' },
-  'Market/Vendor Fair':                { icon: '🛍️', desc: 'Vendor fair — booth applications, fees, and approvals.' },
+  'Free Event':                          { icon: '🎉' },
+  'Basic Event':                         { icon: '📋' },
+  'Conference':                          { icon: '🎤' },
+  'Seminar':                             { icon: '🎓' },
+  'Webinar/Online Class':                { icon: '💻' },
+  'Workshop/Clinic':                     { icon: '🛠️' },
+  'Networking Event':                    { icon: '🤝' },
+  'Dining Event':                        { icon: '🍽️' },
+  'Farm Tour/Open House':                { icon: '🚜' },
+  'Competition/Judging':                 { icon: '🏆' },
+  'Halter Show':                         { icon: '🦙' },
+  'Basic Animal or Fleece Show':         { icon: '🐑' },
+  'Spin-Off':                            { icon: '🧶' },
+  'Alpaca Cottage Industry Fleece Show': { icon: '✂️' },
+  'Auction':                             { icon: '💰' },
+  'Market/Vendor Fair':                  { icon: '🛍️' },
 };
-const DEFAULT_META = { icon: '📅', desc: 'Event with optional registration and ticket tiers.' };
+const DEFAULT_META = { icon: '📅' };
 
-// ── Event Type Picker (step 1 of create flow) ─────────────────────────────────
+const TYPE_KEY_MAP = {
+  'Free Event': 'free_event',
+  'Basic Event': 'basic_event',
+  'Conference': 'conference',
+  'Seminar': 'seminar',
+  'Webinar/Online Class': 'webinar',
+  'Workshop/Clinic': 'workshop',
+  'Networking Event': 'networking',
+  'Dining Event': 'dining',
+  'Farm Tour/Open House': 'farm_tour',
+  'Competition/Judging': 'competition',
+  'Halter Show': 'halter',
+  'Basic Animal or Fleece Show': 'fleece',
+  'Spin-Off': 'spinoff',
+  'Alpaca Cottage Industry Fleece Show': 'fiber_arts',
+  'Auction': 'auction',
+  'Market/Vendor Fair': 'vendor_fair',
+};
+
 function EventTypePicker({ onSelect, onCancel }) {
+  const { t } = useTranslation();
   const [eventTypes, setEventTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
@@ -50,53 +69,56 @@ function EventTypePicker({ onSelect, onCancel }) {
       .catch(() => setLoading(false));
   }, []);
 
-  const filtered = eventTypes.filter(t =>
-    !filter || t.EventType.toLowerCase().includes(filter.toLowerCase())
+  const filtered = eventTypes.filter(et =>
+    !filter || et.EventType.toLowerCase().includes(filter.toLowerCase())
   );
+
+  const typeDesc = (typeName) =>
+    t(`events_manage.type_desc_${TYPE_KEY_MAP[typeName] || 'default'}`);
 
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="font-bold text-gray-700 text-lg mb-1">What kind of event are you creating?</h2>
-          <p className="text-sm text-gray-500">Pick a type to unlock the right fields and admin tools.</p>
+          <h2 className="font-bold text-gray-700 text-lg mb-1">{t('events_manage.type_picker_heading')}</h2>
+          <p className="text-sm text-gray-500">{t('events_manage.type_picker_desc')}</p>
         </div>
         <div className="text-xs text-gray-400">
-          <span className="text-[#3D6B34] font-semibold">Step 1 of 2</span> · Choose type
+          <span className="text-[#3D6B34] font-semibold">{t('events_manage.step_1_of_2')}</span> · {t('events_manage.step_1_label')}
         </div>
       </div>
 
       <input
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
-        placeholder="Search event types…"
+        placeholder={t('events_manage.placeholder_search_types')}
         className={inp + " max-w-md"}
       />
 
       {loading ? (
-        <div className="text-gray-400 text-sm py-8 text-center">Loading event types…</div>
+        <div className="text-gray-400 text-sm py-8 text-center">{t('events_manage.loading_types')}</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtered.map(t => {
-            const meta = EVENT_TYPE_META[t.EventType] || DEFAULT_META;
+          {filtered.map(et => {
+            const meta = EVENT_TYPE_META[et.EventType] || DEFAULT_META;
             return (
               <button
-                key={t.EventTypeID}
+                key={et.EventTypeID}
                 type="button"
-                onClick={() => onSelect(t.EventType)}
+                onClick={() => onSelect(et.EventType)}
                 className="text-left bg-white border border-gray-200 rounded-xl p-4 hover:border-[#3D6B34] hover:shadow-sm transition-all group"
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-800 group-hover:text-[#3D6B34]">{t.EventType}</div>
-                    <div className="text-xs text-gray-500 mt-1 leading-snug">{meta.desc}</div>
+                    <div className="font-semibold text-gray-800 group-hover:text-[#3D6B34]">{et.EventType}</div>
+                    <div className="text-xs text-gray-500 mt-1 leading-snug">{typeDesc(et.EventType)}</div>
                   </div>
                 </div>
               </button>
             );
           })}
           {filtered.length === 0 && (
-            <div className="col-span-full text-sm text-gray-400 text-center py-8">No matching event types.</div>
+            <div className="col-span-full text-sm text-gray-400 text-center py-8">{t('events_manage.no_matching_types')}</div>
           )}
         </div>
       )}
@@ -104,7 +126,7 @@ function EventTypePicker({ onSelect, onCancel }) {
       <div className="flex justify-start pt-2">
         <button type="button" onClick={onCancel}
           className="px-5 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
-          Cancel
+          {t('events_manage.btn_cancel')}
         </button>
       </div>
     </div>
@@ -116,9 +138,8 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-// ── Event Form ────────────────────────────────────────────────────────────────
 function EventForm({ initial, onSave, onCancel, onChangeType, saving }) {
-  // Backend returns NULL for unset text columns — coerce to '' so inputs stay controlled.
+  const { t } = useTranslation();
   const hydrate = (src) => {
     const merged = { ...EMPTY, ...(src || {}) };
     for (const k of Object.keys(EMPTY)) {
@@ -130,21 +151,18 @@ function EventForm({ initial, onSave, onCancel, onChangeType, saving }) {
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
   const setB = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.checked }));
 
-  const meta = EVENT_TYPE_META[form.EventType] || DEFAULT_META;
-
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(form); }} className="space-y-5">
-      {/* Selected type banner */}
       {form.EventType && (
         <div className="bg-[#f6f8f3] border border-[#3D6B34]/20 rounded-lg px-4 py-3 flex items-center gap-3">
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-gray-500 uppercase tracking-wide">Event Type</div>
+            <div className="text-xs text-gray-500 uppercase tracking-wide">{t('events_manage.lbl_event_type')}</div>
             <div className="font-semibold text-gray-800">{form.EventType}</div>
           </div>
           {onChangeType && (
             <button type="button" onClick={onChangeType}
               className="text-xs text-[#3D6B34] hover:underline font-semibold shrink-0">
-              Change type
+              {t('events_manage.btn_change_type')}
             </button>
           )}
         </div>
@@ -152,93 +170,90 @@ function EventForm({ initial, onSave, onCancel, onChangeType, saving }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
-          <label className={lbl}>Event Name</label>
-          <input value={form.EventName} onChange={set('EventName')} className={inp} required placeholder="e.g. Summer Farm Tour" />
+          <label className={lbl}>{t('events_manage.lbl_event_name')}</label>
+          <input value={form.EventName} onChange={set('EventName')} className={inp} required placeholder={t('events_manage.placeholder_event_name')} />
         </div>
         <div className="md:col-span-2">
-          <label className={lbl}>Event Image URL</label>
-          <input value={form.EventImage} onChange={set('EventImage')} className={inp} placeholder="https://…" />
+          <label className={lbl}>{t('events_manage.lbl_event_image')}</label>
+          <input value={form.EventImage} onChange={set('EventImage')} className={inp} placeholder={t('events_manage.placeholder_url')} />
         </div>
         <div>
-          <label className={lbl}>Start Date</label>
+          <label className={lbl}>{t('events_manage.lbl_start_date')}</label>
           <input type="date" value={form.EventStartDate ? form.EventStartDate.substring(0,10) : ''} onChange={set('EventStartDate')} className={inp} />
         </div>
         <div>
-          <label className={lbl}>End Date</label>
+          <label className={lbl}>{t('events_manage.lbl_end_date')}</label>
           <input type="date" value={form.EventEndDate ? form.EventEndDate.substring(0,10) : ''} onChange={set('EventEndDate')} className={inp} />
         </div>
         <div className="md:col-span-2">
-          <label className={lbl}>Description</label>
+          <label className={lbl}>{t('events_manage.lbl_description')}</label>
           <RichTextEditor value={form.EventDescription}
             onChange={(v) => setForm(f => ({ ...f, EventDescription: v }))} minHeight={180} />
         </div>
       </div>
 
-      {/* Location */}
       <div>
-        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Location</h3>
+        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">{t('events_manage.section_location')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="md:col-span-2">
-            <label className={lbl}>Venue Name</label>
-            <input value={form.EventLocationName} onChange={set('EventLocationName')} className={inp} placeholder="e.g. Sunflower Community Farm" />
+            <label className={lbl}>{t('events_manage.lbl_venue')}</label>
+            <input value={form.EventLocationName} onChange={set('EventLocationName')} className={inp} placeholder={t('events_manage.placeholder_venue')} />
           </div>
           <div className="md:col-span-2">
-            <label className={lbl}>Street Address</label>
+            <label className={lbl}>{t('events_manage.lbl_street')}</label>
             <input value={form.EventLocationStreet} onChange={set('EventLocationStreet')} className={inp} />
           </div>
           <div>
-            <label className={lbl}>City</label>
+            <label className={lbl}>{t('events_manage.lbl_city')}</label>
             <input value={form.EventLocationCity} onChange={set('EventLocationCity')} className={inp} />
           </div>
           <div>
-            <label className={lbl}>State</label>
-            <input value={form.EventLocationState} onChange={set('EventLocationState')} className={inp} placeholder="e.g. OR" />
+            <label className={lbl}>{t('events_manage.lbl_state')}</label>
+            <input value={form.EventLocationState} onChange={set('EventLocationState')} className={inp} placeholder={t('events_manage.placeholder_state')} />
           </div>
           <div>
-            <label className={lbl}>ZIP</label>
+            <label className={lbl}>{t('events_manage.lbl_zip')}</label>
             <input value={form.EventLocationZip} onChange={set('EventLocationZip')} className={inp} />
           </div>
         </div>
       </div>
 
-      {/* Contact */}
       <div>
-        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Contact</h3>
+        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">{t('events_manage.section_contact')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <label className={lbl}>Email</label>
+            <label className={lbl}>{t('events_manage.lbl_email')}</label>
             <input type="email" value={form.EventContactEmail} onChange={set('EventContactEmail')} className={inp} />
           </div>
           <div>
-            <label className={lbl}>Phone</label>
+            <label className={lbl}>{t('events_manage.lbl_phone')}</label>
             <input value={form.EventPhone} onChange={set('EventPhone')} className={inp} />
           </div>
           <div>
-            <label className={lbl}>Website</label>
-            <input value={form.EventWebsite} onChange={set('EventWebsite')} className={inp} placeholder="https://…" />
+            <label className={lbl}>{t('events_manage.lbl_website')}</label>
+            <input value={form.EventWebsite} onChange={set('EventWebsite')} className={inp} placeholder={t('events_manage.placeholder_url')} />
           </div>
         </div>
       </div>
 
-      {/* Settings */}
       <div>
-        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Settings</h3>
+        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">{t('events_manage.section_settings')}</h3>
         <div className="flex flex-wrap gap-6">
           <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
             <input type="checkbox" checked={form.IsPublished} onChange={setB('IsPublished')} className="w-4 h-4 accent-green-600" />
-            Published (visible to public)
+            {t('events_manage.lbl_published')}
           </label>
           <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
             <input type="checkbox" checked={form.IsFree} onChange={setB('IsFree')} className="w-4 h-4 accent-green-600" />
-            Free Event
+            {t('events_manage.lbl_free')}
           </label>
           <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
             <input type="checkbox" checked={form.RegistrationRequired} onChange={setB('RegistrationRequired')} className="w-4 h-4 accent-green-600" />
-            Registration Required
+            {t('events_manage.lbl_reg_required')}
           </label>
           <div>
-            <label className={lbl}>Max Attendees</label>
-            <input type="number" min="1" value={form.MaxAttendees} onChange={set('MaxAttendees')} className={`${inp} w-28`} placeholder="Unlimited" />
+            <label className={lbl}>{t('events_manage.lbl_max_attendees')}</label>
+            <input type="number" min="1" value={form.MaxAttendees} onChange={set('MaxAttendees')} className={`${inp} w-28`} placeholder={t('events_manage.placeholder_unlimited')} />
           </div>
         </div>
       </div>
@@ -246,19 +261,19 @@ function EventForm({ initial, onSave, onCancel, onChangeType, saving }) {
       <div className="flex justify-end items-center gap-3 pt-2">
         <button type="button" onClick={onCancel}
           className="px-5 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
-          Cancel
+          {t('events_manage.btn_cancel')}
         </button>
         <button type="submit" disabled={saving}
           className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
-          {saving ? 'Saving…' : (initial?.EventID ? 'Save Changes' : 'Save Event')}
+          {saving ? t('events_manage.btn_saving') : (initial?.EventID ? t('events_manage.btn_save_changes') : t('events_manage.btn_save_event'))}
         </button>
       </div>
     </form>
   );
 }
 
-// ── Date / Time Slots Editor ──────────────────────────────────────────────────
 function DateSlotsEditor({ eventId }) {
+  const { t } = useTranslation();
   const [dates, setDates] = useState([]);
   const [adding, setAdding] = useState(false);
   const [newDate, setNewDate] = useState({ EventDate: '', StartTime: '', EndTime: '' });
@@ -281,7 +296,7 @@ function DateSlotsEditor({ eventId }) {
   };
 
   const del = async (id) => {
-    if (!confirm('Remove this date?')) return;
+    if (!confirm(t('events_manage.confirm_remove_date'))) return;
     await fetch(`${API}/api/events/dates/${id}`, { method: 'DELETE' });
     load();
   };
@@ -289,12 +304,12 @@ function DateSlotsEditor({ eventId }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">Schedule / Date Slots</h3>
-        <button onClick={() => setAdding(true)} className="text-xs text-[#3D6B34] hover:underline font-semibold">+ Add Date</button>
+        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">{t('events_manage.dates_heading')}</h3>
+        <button onClick={() => setAdding(true)} className="text-xs text-[#3D6B34] hover:underline font-semibold">{t('events_manage.btn_add_date')}</button>
       </div>
 
       {dates.length === 0 && !adding && (
-        <p className="text-sm text-gray-400">No additional date slots. Add specific session times here.</p>
+        <p className="text-sm text-gray-400">{t('events_manage.no_dates')}</p>
       )}
 
       <div className="space-y-1.5">
@@ -313,24 +328,24 @@ function DateSlotsEditor({ eventId }) {
         <div className="mt-3 bg-gray-50 rounded-lg p-3 space-y-2">
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className={lbl}>Date</label>
+              <label className={lbl}>{t('events_manage.lbl_date')}</label>
               <input type="date" value={newDate.EventDate}
                 onChange={e => setNewDate(d => ({ ...d, EventDate: e.target.value }))} className={inp} />
             </div>
             <div>
-              <label className={lbl}>Start Time</label>
+              <label className={lbl}>{t('events_manage.lbl_start_time')}</label>
               <input type="time" value={newDate.StartTime}
                 onChange={e => setNewDate(d => ({ ...d, StartTime: e.target.value }))} className={inp} />
             </div>
             <div>
-              <label className={lbl}>End Time</label>
+              <label className={lbl}>{t('events_manage.lbl_end_time')}</label>
               <input type="time" value={newDate.EndTime}
                 onChange={e => setNewDate(d => ({ ...d, EndTime: e.target.value }))} className={inp} />
             </div>
           </div>
           <div className="flex gap-2">
-            <button onClick={add} className="text-sm bg-[#3D6B34] text-white px-4 py-1.5 rounded-lg hover:bg-[#2d5226]">Add</button>
-            <button onClick={() => setAdding(false)} className="text-sm border border-gray-200 px-4 py-1.5 rounded-lg text-gray-600 hover:bg-gray-100">Cancel</button>
+            <button onClick={add} className="text-sm bg-[#3D6B34] text-white px-4 py-1.5 rounded-lg hover:bg-[#2d5226]">{t('events_manage.btn_add')}</button>
+            <button onClick={() => setAdding(false)} className="text-sm border border-gray-200 px-4 py-1.5 rounded-lg text-gray-600 hover:bg-gray-100">{t('events_manage.btn_cancel')}</button>
           </div>
         </div>
       )}
@@ -338,8 +353,8 @@ function DateSlotsEditor({ eventId }) {
   );
 }
 
-// ── Registration Options Editor ───────────────────────────────────────────────
 function OptionsEditor({ eventId }) {
+  const { t } = useTranslation();
   const [opts, setOpts] = useState([]);
   const [adding, setAdding] = useState(false);
   const [newOpt, setNewOpt] = useState({ OptionName: '', OptionDescription: '', Price: '', MaxQty: '' });
@@ -362,7 +377,7 @@ function OptionsEditor({ eventId }) {
   };
 
   const del = async (id) => {
-    if (!confirm('Delete this option?')) return;
+    if (!confirm(t('events_manage.confirm_delete_option'))) return;
     await fetch(`${API}/api/events/options/${id}`, { method: 'DELETE' });
     load();
   };
@@ -370,12 +385,12 @@ function OptionsEditor({ eventId }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">Registration Options / Tickets</h3>
-        <button onClick={() => setAdding(true)} className="text-xs text-[#3D6B34] hover:underline font-semibold">+ Add Option</button>
+        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">{t('events_manage.opts_heading')}</h3>
+        <button onClick={() => setAdding(true)} className="text-xs text-[#3D6B34] hover:underline font-semibold">{t('events_manage.btn_add_option')}</button>
       </div>
 
       {opts.length === 0 && !adding && (
-        <p className="text-sm text-gray-400">No options yet. Add ticket types or registration items.</p>
+        <p className="text-sm text-gray-400">{t('events_manage.no_options')}</p>
       )}
 
       <div className="space-y-2">
@@ -386,9 +401,9 @@ function OptionsEditor({ eventId }) {
               {opt.OptionDescription && <span className="text-xs text-gray-500 ml-2">{opt.OptionDescription}</span>}
             </div>
             <span className="text-sm font-bold text-[#3D6B34] shrink-0">
-              {parseFloat(opt.Price) === 0 ? 'Free' : `$${parseFloat(opt.Price).toFixed(2)}`}
+              {parseFloat(opt.Price) === 0 ? t('events_manage.price_free') : `$${parseFloat(opt.Price).toFixed(2)}`}
             </span>
-            {opt.MaxQty && <span className="text-xs text-gray-400">max {opt.MaxQty}</span>}
+            {opt.MaxQty && <span className="text-xs text-gray-400">{t('events_manage.max_qty', { n: opt.MaxQty })}</span>}
             <button onClick={() => del(opt.OptionID)} className="text-xs text-red-400 hover:text-red-600">✕</button>
           </div>
         ))}
@@ -397,14 +412,14 @@ function OptionsEditor({ eventId }) {
       {adding && (
         <div className="mt-3 bg-gray-50 rounded-lg p-3 space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <input value={newOpt.OptionName} onChange={e => setNewOpt(o => ({ ...o, OptionName: e.target.value }))} className={inp} placeholder="Option name" />
-            <input value={newOpt.OptionDescription} onChange={e => setNewOpt(o => ({ ...o, OptionDescription: e.target.value }))} className={inp} placeholder="Description (optional)" />
-            <input type="number" step="0.01" min="0" value={newOpt.Price} onChange={e => setNewOpt(o => ({ ...o, Price: e.target.value }))} className={inp} placeholder="Price (0 = Free)" />
-            <input type="number" min="1" value={newOpt.MaxQty} onChange={e => setNewOpt(o => ({ ...o, MaxQty: e.target.value }))} className={inp} placeholder="Max qty (optional)" />
+            <input value={newOpt.OptionName} onChange={e => setNewOpt(o => ({ ...o, OptionName: e.target.value }))} className={inp} placeholder={t('events_manage.placeholder_opt_name')} />
+            <input value={newOpt.OptionDescription} onChange={e => setNewOpt(o => ({ ...o, OptionDescription: e.target.value }))} className={inp} placeholder={t('events_manage.placeholder_opt_desc')} />
+            <input type="number" step="0.01" min="0" value={newOpt.Price} onChange={e => setNewOpt(o => ({ ...o, Price: e.target.value }))} className={inp} placeholder={t('events_manage.placeholder_price')} />
+            <input type="number" min="1" value={newOpt.MaxQty} onChange={e => setNewOpt(o => ({ ...o, MaxQty: e.target.value }))} className={inp} placeholder={t('events_manage.placeholder_max_qty')} />
           </div>
           <div className="flex gap-2">
-            <button onClick={add} className="text-sm bg-[#3D6B34] text-white px-4 py-1.5 rounded-lg hover:bg-[#2d5226]">Add</button>
-            <button onClick={() => setAdding(false)} className="text-sm border border-gray-200 px-4 py-1.5 rounded-lg text-gray-600 hover:bg-gray-100">Cancel</button>
+            <button onClick={add} className="text-sm bg-[#3D6B34] text-white px-4 py-1.5 rounded-lg hover:bg-[#2d5226]">{t('events_manage.btn_add')}</button>
+            <button onClick={() => setAdding(false)} className="text-sm border border-gray-200 px-4 py-1.5 rounded-lg text-gray-600 hover:bg-gray-100">{t('events_manage.btn_cancel')}</button>
           </div>
         </div>
       )}
@@ -412,8 +427,8 @@ function OptionsEditor({ eventId }) {
   );
 }
 
-// ── Registrations List ────────────────────────────────────────────────────────
 function RegistrationsList({ eventId }) {
+  const { t } = useTranslation();
   const [regs, setRegs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddresses, setShowAddresses] = useState(false);
@@ -444,7 +459,7 @@ function RegistrationsList({ eventId }) {
   };
 
   const deleteReg = async (regId) => {
-    if (!confirm('Delete this registration?')) return;
+    if (!confirm(t('events_manage.confirm_delete_reg'))) return;
     await fetch(`${API}/api/events/registrations/${regId}`, { method: 'DELETE' });
     load();
   };
@@ -452,7 +467,7 @@ function RegistrationsList({ eventId }) {
   const printList = () => {
     const w = window.open('', '_blank');
     w.document.write(`
-      <html><head><title>Registrations</title>
+      <html><head><title>${t('events_manage.print_title')}</title>
       <style>
         body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
@@ -463,12 +478,12 @@ function RegistrationsList({ eventId }) {
         h2 { margin-bottom: 4px; }
         .meta { color: #666; font-size: 11px; margin-bottom: 12px; }
       </style></head><body>
-      <h2>Event Registrations</h2>
-      <div class="meta">Printed: ${new Date().toLocaleDateString()}</div>
+      <h2>${t('events_manage.print_title')}</h2>
+      <div class="meta">${t('events_manage.print_printed', { date: new Date().toLocaleDateString() })}</div>
       <table>
         <tr>
-          <th>Date</th><th>Name</th><th>Email</th><th>Phone</th>
-          ${showAddresses ? '' : ''}<th>Items</th><th>Total</th><th>Status</th>
+          <th>${t('events_manage.col_date')}</th><th>${t('events_manage.col_name')}</th><th>${t('events_manage.lbl_email')}</th><th>${t('events_manage.lbl_phone')}</th>
+          <th>${t('events_manage.col_items')}</th><th>${t('events_manage.col_total')}</th><th>${t('events_manage.col_status')}</th>
         </tr>
         ${regs.map(r => `
           <tr>
@@ -482,7 +497,7 @@ function RegistrationsList({ eventId }) {
           </tr>
         `).join('')}
         <tr class="total-row">
-          <td colspan="5" style="text-align:right">Total Income:</td>
+          <td colspan="5" style="text-align:right">${t('events_manage.total_income')}</td>
           <td>$${regs.reduce((s, r) => s + parseFloat(r.TotalAmount || 0), 0).toFixed(2)}</td>
           <td></td>
         </tr>
@@ -493,7 +508,7 @@ function RegistrationsList({ eventId }) {
     w.print();
   };
 
-  if (loading) return <div className="text-gray-400 text-sm py-4">Loading registrations…</div>;
+  if (loading) return <div className="text-gray-400 text-sm py-4">{t('events_manage.loading_regs')}</div>;
 
   const totalIncome = regs.reduce((s, r) => s + parseFloat(r.TotalAmount || 0), 0);
 
@@ -501,33 +516,33 @@ function RegistrationsList({ eventId }) {
     <div>
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">
-          Registrations ({regs.length})
+          {t('events_manage.regs_heading', { n: regs.length })}
         </h3>
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
             <input type="checkbox" checked={showAddresses} onChange={e => setShowAddresses(e.target.checked)} className="w-3.5 h-3.5" />
-            Show contact details
+            {t('events_manage.show_contact')}
           </label>
           <button onClick={printList} className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 px-2 py-1 rounded hover:bg-gray-50">
-            Print / Export
+            {t('events_manage.btn_print_export')}
           </button>
         </div>
       </div>
 
       {regs.length === 0 ? (
-        <p className="text-sm text-gray-400">No registrations yet.</p>
+        <p className="text-sm text-gray-400">{t('events_manage.no_regs')}</p>
       ) : (
         <>
           <div className="overflow-x-auto rounded-xl border border-gray-200">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
-                  <th className="text-left py-2 px-3">Name</th>
-                  {showAddresses && <th className="text-left py-2 px-3">Contact</th>}
-                  <th className="text-left py-2 px-3">Items</th>
-                  <th className="text-right py-2 px-3">Total</th>
-                  <th className="text-left py-2 px-3">Status</th>
-                  <th className="text-left py-2 px-3">Date</th>
+                  <th className="text-left py-2 px-3">{t('events_manage.col_name')}</th>
+                  {showAddresses && <th className="text-left py-2 px-3">{t('events_manage.col_contact')}</th>}
+                  <th className="text-left py-2 px-3">{t('events_manage.col_items')}</th>
+                  <th className="text-right py-2 px-3">{t('events_manage.col_total')}</th>
+                  <th className="text-left py-2 px-3">{t('events_manage.col_status')}</th>
+                  <th className="text-left py-2 px-3">{t('events_manage.col_date')}</th>
                   <th className="py-2 px-3"></th>
                 </tr>
               </thead>
@@ -568,31 +583,30 @@ function RegistrationsList({ eventId }) {
                         <div className="flex items-center gap-1">
                           {r.PaymentStatus !== 'paid' ? (
                             <button onClick={() => markPaid(r.RegID)}
-                              className="text-xs text-green-600 hover:underline whitespace-nowrap">Mark paid</button>
+                              className="text-xs text-green-600 hover:underline whitespace-nowrap">{t('events_manage.btn_mark_paid')}</button>
                           ) : (
                             <button onClick={() => markPending(r.RegID)}
-                              className="text-xs text-gray-400 hover:text-gray-600 whitespace-nowrap">Unmark</button>
+                              className="text-xs text-gray-400 hover:text-gray-600 whitespace-nowrap">{t('events_manage.btn_unmark')}</button>
                           )}
                           <span className="text-gray-200">|</span>
                           <button onClick={() => deleteReg(r.RegID)}
-                            className="text-xs text-red-400 hover:text-red-600">Delete</button>
+                            className="text-xs text-red-400 hover:text-red-600">{t('events_manage.btn_delete')}</button>
                         </div>
                       </td>
                     </tr>
-                    {/* Expanded detail row */}
                     {expandedReg === r.RegID && (
                       <tr>
                         <td colSpan={showAddresses ? 7 : 6} className="bg-blue-50 px-4 py-3 text-sm border-y border-blue-100">
                           <div className="flex flex-wrap gap-6">
                             <div>
-                              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Contact</p>
+                              <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t('events_manage.detail_contact_label')}</p>
                               <p className="text-gray-800">{r.AttendeeFirstName} {r.AttendeeLastName}</p>
                               <p className="text-gray-600">{r.AttendeeEmail}</p>
                               {r.AttendeePhone && <p className="text-gray-600">{r.AttendeePhone}</p>}
                             </div>
                             {(r.items || []).length > 0 && (
                               <div>
-                                <p className="text-xs font-bold text-gray-500 uppercase mb-1">Registered Items</p>
+                                <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t('events_manage.detail_items_label')}</p>
                                 {r.items.map((item, i) => (
                                   <p key={i} className="text-gray-700">
                                     {item.Quantity}× {item.OptionName}
@@ -603,7 +617,7 @@ function RegistrationsList({ eventId }) {
                             )}
                             {r.Notes && (
                               <div>
-                                <p className="text-xs font-bold text-gray-500 uppercase mb-1">Notes</p>
+                                <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t('events_manage.detail_notes_label')}</p>
                                 <p className="text-gray-700">{r.Notes}</p>
                               </div>
                             )}
@@ -617,7 +631,7 @@ function RegistrationsList({ eventId }) {
               {totalIncome > 0 && (
                 <tfoot>
                   <tr className="border-t-2 border-gray-200 bg-gray-50">
-                    <td colSpan={showAddresses ? 3 : 2} className="py-2 px-3 text-xs font-bold text-gray-500 text-right uppercase">Total Income:</td>
+                    <td colSpan={showAddresses ? 3 : 2} className="py-2 px-3 text-xs font-bold text-gray-500 text-right uppercase">{t('events_manage.total_income')}</td>
                     <td className="py-2 px-3 font-bold text-[#3D6B34] text-right">${totalIncome.toFixed(2)}</td>
                     <td colSpan={showAddresses ? 3 : 2}></td>
                   </tr>
@@ -631,8 +645,8 @@ function RegistrationsList({ eventId }) {
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
 export default function EventsManage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('people_id');
@@ -640,11 +654,11 @@ export default function EventsManage() {
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [formStep, setFormStep] = useState(null); // null | 'type' | 'details'
+  const [formStep, setFormStep] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
-  const [draftType, setDraftType] = useState(''); // holds type between step 1 and step 2
+  const [draftType, setDraftType] = useState('');
   const [expandedEvent, setExpandedEvent] = useState(null);
-  const [activeTab, setActiveTab] = useState({}); // eventId → 'dates' | 'options' | 'registrations'
+  const [activeTab, setActiveTab] = useState({});
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
@@ -695,7 +709,7 @@ export default function EventsManage() {
   };
 
   const save = async (form) => {
-    if (!BusinessID) { alert('An organization must be selected before saving an event.'); return; }
+    if (!BusinessID) { alert(t('events_manage.err_no_org')); return; }
     setSaving(true);
     try {
       const payload = { ...form, BusinessID: parseInt(BusinessID), PeopleID: PeopleID ? parseInt(PeopleID) : null };
@@ -727,14 +741,14 @@ export default function EventsManage() {
   };
 
   const cloneEvent = async (ev) => {
-    const name = prompt(`Clone event as:`, `${ev.EventName} (Copy)`);
+    const name = prompt(t('events_manage.prompt_clone'), `${ev.EventName} (Copy)`);
     if (!name) return;
     const res = await fetch(`${API}/api/events/${ev.EventID}/clone`, {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ EventName: name }),
     });
     if (res.ok) loadEvents();
-    else alert('Clone failed');
+    else alert(t('events_manage.err_clone_failed'));
   };
 
   const getTab = (eventId) => activeTab[eventId] || 'registrations';
@@ -744,41 +758,39 @@ export default function EventsManage() {
   const Wrapper = editingId ? EventAdminLayout : AccountLayout;
   const wrapperProps = editingId
     ? { eventId: String(editingId) }
-    : { Business, BusinessID, PeopleID, pageTitle: 'My Events', breadcrumbs: [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Events' }, { label: 'Manage' }] };
+    : { Business, BusinessID, PeopleID, pageTitle: t('events_manage.my_events_heading'), breadcrumbs: [{ label: t('events_manage.breadcrumb_dashboard'), to: '/dashboard' }, { label: t('events_manage.breadcrumb_events') }, { label: t('events_manage.breadcrumb_manage') }] };
 
   return (
     <Wrapper {...wrapperProps}>
       <div className="max-w-5xl mx-auto space-y-6">
 
-        {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h1 className="text-2xl font-bold text-gray-800">
-            {editingEvent ? `Edit: ${editingEvent.EventName}` : 'My Events'}
+            {editingEvent ? t('events_manage.edit_page_title', { name: editingEvent.EventName }) : t('events_manage.my_events_heading')}
           </h1>
           {!editingEvent && (
             <div className="flex gap-2">
               <Link to="/events" className="border border-gray-200 text-sm text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 no-underline">
-                Browse Events
+                {t('events_manage.btn_browse')}
               </Link>
               <Link to="/events/analytics" className="border border-indigo-200 text-sm text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-50 no-underline">
-                Analytics
+                {t('events_manage.btn_analytics')}
               </Link>
               <Link to={`/events/add?BusinessID=${BusinessID || ''}`}
                 style={{ color: '#fff' }}
                 className="bg-[#3D6B34] font-semibold px-5 py-2 rounded-lg hover:bg-[#2d5226] no-underline">
-                + Create Event
+                {t('events_manage.btn_create_event')}
               </Link>
             </div>
           )}
           {editingEvent && (
             <Link to={`/events/${editingEvent.EventID}/dashboard`}
               className="text-sm text-gray-500 hover:text-gray-700 no-underline">
-              ← Back to event dashboard
+              {t('events_manage.btn_back_to_dashboard')}
             </Link>
           )}
         </div>
 
-        {/* Step 1 — type picker (create flow only) */}
         {formStep === 'type' && !editingEvent && (
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <EventTypePicker
@@ -788,16 +800,17 @@ export default function EventsManage() {
           </div>
         )}
 
-        {/* Step 2 — event details */}
         {formStep === 'details' && (
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
               <h2 className="font-bold text-gray-700 text-lg">
-                {editingEvent ? `Edit: ${editingEvent.EventName}` : 'New Event — Details'}
+                {editingEvent
+                  ? t('events_manage.edit_event_heading', { name: editingEvent.EventName })
+                  : t('events_manage.new_event_heading')}
               </h2>
               {!editingEvent && (
                 <div className="text-xs text-gray-400">
-                  <span className="text-[#3D6B34] font-semibold">Step 2 of 2</span> · Enter details
+                  <span className="text-[#3D6B34] font-semibold">{t('events_manage.step_2_of_2')}</span> · {t('events_manage.step_2_label')}
                 </div>
               )}
             </div>
@@ -811,25 +824,23 @@ export default function EventsManage() {
           </div>
         )}
 
-        {/* Events list — hidden when editing a specific event */}
         {!editingEvent && (
         loading ? (
-          <div className="text-center py-12 text-gray-400">Loading…</div>
+          <div className="text-center py-12 text-gray-400">{t('events_manage.loading')}</div>
         ) : events.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
-            <p className="mb-4">No events yet. Create your first event to get started.</p>
+            <p className="mb-4">{t('events_manage.no_events')}</p>
           </div>
         ) : (
           <div className="space-y-4">
             {events.map(ev => (
               <div key={ev.EventID} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                {/* Event row */}
                 <div className="p-4 flex items-center gap-4 flex-wrap">
                   <div className="flex-grow min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
                       <h3 className="font-bold text-gray-800">{ev.EventName}</h3>
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ev.IsPublished ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {ev.IsPublished ? 'Published' : 'Draft'}
+                        {ev.IsPublished ? t('events_manage.status_published') : t('events_manage.status_draft')}
                       </span>
                       {ev.EventType && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{ev.EventType}</span>}
                     </div>
@@ -838,129 +849,127 @@ export default function EventsManage() {
                         <span>{formatDate(ev.EventStartDate)}{ev.EventEndDate && ev.EventEndDate !== ev.EventStartDate ? ` – ${formatDate(ev.EventEndDate)}` : ''}</span>
                       )}
                       {ev.EventLocationCity && <span>{[ev.EventLocationCity, ev.EventLocationState].filter(Boolean).join(', ')}</span>}
-                      <span>{ev.AttendeeCount || 0} registered</span>
+                      <span>{ev.AttendeeCount || 0} {t('events_manage.registered_suffix')}</span>
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <Link to={`/events/${ev.EventID}/dashboard`}
                       style={{ color: '#fff' }}
                       className="text-xs bg-[#3D6B34] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#2d5226] no-underline">
-                      Dashboard
+                      {t('events_manage.btn_dashboard')}
                     </Link>
                     <Link to={`/events/${ev.EventID}`} target="_blank"
                       className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 no-underline">
-                      Preview ↗
+                      {t('events_manage.btn_preview')}
                     </Link>
                     {ev.EventType === 'Alpaca Cottage Industry Fleece Show' && (
                       <Link to={`/events/${ev.EventID}/admin/fiber-arts?BusinessID=${BusinessID}`}
                         className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
-                        Fiber Arts Admin
+                        {t('events_manage.btn_fiber_arts_admin')}
                       </Link>
                     )}
                     {ev.EventType === 'Halter Show' && (
                       <Link to={`/events/${ev.EventID}/admin/halter?BusinessID=${BusinessID}`}
                         className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
-                        Halter Show Admin
+                        {t('events_manage.btn_halter_admin')}
                       </Link>
                     )}
                     {ev.EventType === 'Basic Animal or Fleece Show' && (
                       <Link to={`/events/${ev.EventID}/admin/fleece?BusinessID=${BusinessID}`}
                         className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
-                        Fleece Show Admin
+                        {t('events_manage.btn_fleece_admin')}
                       </Link>
                     )}
                     {ev.EventType === 'Spin-Off' && (
                       <Link to={`/events/${ev.EventID}/admin/spinoff?BusinessID=${BusinessID}`}
                         className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
-                        Spin-Off Admin
+                        {t('events_manage.btn_spinoff_admin')}
                       </Link>
                     )}
                     {ev.EventType === 'Auction' && (
                       <Link to={`/events/${ev.EventID}/admin/auction?BusinessID=${BusinessID}`}
                         className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
-                        Auction Admin
+                        {t('events_manage.btn_auction_admin')}
                       </Link>
                     )}
                     {ev.EventType === 'Market/Vendor Fair' && (
                       <Link to={`/events/${ev.EventID}/admin/vendor-fair?BusinessID=${BusinessID}`}
                         className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
-                        Vendor Fair Admin
+                        {t('events_manage.btn_vendor_fair_admin')}
                       </Link>
                     )}
                     {ev.EventType === 'Dining Event' && (
                       <Link to={`/events/${ev.EventID}/admin/dining?BusinessID=${BusinessID}`}
                         className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
-                        Dining Admin
+                        {t('events_manage.btn_dining_admin')}
                       </Link>
                     )}
                     {ev.EventType === 'Farm Tour/Open House' && (
                       <Link to={`/events/${ev.EventID}/admin/tour?BusinessID=${BusinessID}`}
                         className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
-                        Farm Tour Admin
+                        {t('events_manage.btn_tour_admin')}
                       </Link>
                     )}
                     {['Seminar', 'Free Event', 'Basic Event', 'Workshop/Clinic', 'Webinar/Online Class', 'Networking Event'].includes(ev.EventType) && (
                       <Link to={`/events/${ev.EventID}/admin/simple?BusinessID=${BusinessID}`}
                         className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
-                        {ev.EventType} Admin
+                        {t('events_manage.btn_type_admin', { type: ev.EventType })}
                       </Link>
                     )}
                     {ev.EventType === 'Conference' && (
                       <Link to={`/events/${ev.EventID}/admin/conference?BusinessID=${BusinessID}`}
                         className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
-                        Conference Admin
+                        {t('events_manage.btn_conference_admin')}
                       </Link>
                     )}
                     {ev.EventType === 'Competition/Judging' && (
                       <Link to={`/events/${ev.EventID}/admin/competition?BusinessID=${BusinessID}`}
                         className="text-xs text-purple-600 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 no-underline">
-                        Competition Admin
+                        {t('events_manage.btn_competition_admin')}
                       </Link>
                     )}
                     <Link to={`/events/${ev.EventID}/checkin`}
                       className="text-xs text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg hover:bg-emerald-50 no-underline">
-                      Check-In
+                      {t('events_manage.btn_checkin')}
                     </Link>
                     <Link to={`/events/${ev.EventID}/broadcast`}
                       className="text-xs text-amber-700 border border-amber-200 px-3 py-1.5 rounded-lg hover:bg-amber-50 no-underline">
-                      Broadcast
+                      {t('events_manage.btn_broadcast')}
                     </Link>
                     <Link to={`/events/${ev.EventID}/analytics`}
                       className="text-xs text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50 no-underline">
-                      Analytics
+                      {t('events_manage.btn_analytics')}
                     </Link>
                     <a href={`${API}/api/events/${ev.EventID}/attendees.csv`}
                       className="text-xs text-gray-700 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 no-underline">
-                      CSV
+                      {t('events_manage.btn_csv')}
                     </a>
                     <button onClick={() => cloneEvent(ev)}
                       className="text-xs text-gray-700 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">
-                      Clone
+                      {t('events_manage.btn_clone')}
                     </button>
                     <button onClick={() => openEdit(ev)}
                       className="text-xs text-blue-600 border border-blue-100 px-3 py-1.5 rounded-lg hover:bg-blue-50">
-                      Edit
+                      {t('events_manage.btn_edit')}
                     </button>
                     <button onClick={() => setExpandedEvent(expandedEvent === ev.EventID ? null : ev.EventID)}
                       className="text-xs text-[#3D6B34] border border-[#3D6B34]/20 px-3 py-1.5 rounded-lg hover:bg-[#3D6B34]/5">
-                      {expandedEvent === ev.EventID ? 'Close ▲' : 'Manage ▼'}
+                      {expandedEvent === ev.EventID ? t('events_manage.btn_close_panel') : t('events_manage.btn_manage_panel')}
                     </button>
                     <button onClick={() => deleteEvent(ev)}
                       className="text-xs text-white px-3 py-1.5 rounded-lg" style={{ background: '#C0382B' }}>
-                      Delete
+                      {t('events_manage.btn_delete')}
                     </button>
                   </div>
                 </div>
 
-                {/* Management panel */}
                 {expandedEvent === ev.EventID && (
                   <div className="border-t border-gray-100 bg-gray-50">
-                    {/* Tabs */}
                     <div className="flex border-b border-gray-200 bg-white">
                       {[
-                        { id: 'registrations', label: `Registrations (${ev.AttendeeCount || 0})` },
-                        { id: 'options', label: 'Ticket Options' },
-                        { id: 'dates', label: 'Date Slots' },
+                        { id: 'registrations', label: t('events_manage.tab_registrations', { n: ev.AttendeeCount || 0 }) },
+                        { id: 'options', label: t('events_manage.tab_options') },
+                        { id: 'dates', label: t('events_manage.tab_dates') },
                       ].map(tab => (
                         <button
                           key={tab.id}
@@ -995,19 +1004,17 @@ export default function EventsManage() {
              onClick={() => setConfirmDelete(null)}>
           <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-5"
                onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-bold text-gray-900 mb-2">Delete event?</h3>
-            <p className="text-sm text-gray-600 mb-5">
-              Are you sure you want to delete <span className="font-semibold">"{confirmDelete.EventName}"</span>?
-              This cannot be undone.
-            </p>
+            <h3 className="font-bold text-gray-900 mb-2">{t('events_manage.confirm_delete_heading')}</h3>
+            <p className="text-sm text-gray-600 mb-5"
+               dangerouslySetInnerHTML={{ __html: t('events_manage.confirm_delete_body', { name: confirmDelete.EventName }) }} />
             <div className="flex justify-end items-center gap-3">
               <button onClick={() => setConfirmDelete(null)}
                       className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
-                Cancel
+                {t('events_manage.btn_cancel')}
               </button>
               <button onClick={doDelete}
                       className="bg-red-600 text-white font-semibold px-5 py-2 rounded-lg text-sm hover:bg-red-700">
-                Delete
+                {t('events_manage.btn_delete')}
               </button>
             </div>
           </div>
