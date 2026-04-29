@@ -366,7 +366,8 @@
       "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/public/locales/en/translation.json','utf8'\\)\\); console.log\\('OK'\\)\")",
       "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/public/locales/en/translation.json','utf8'\\)\\); const keys=Object.keys\\(j\\); console.log\\('Total keys:', keys.length\\); console.log\\('Last 5:', keys.slice\\(-5\\).join\\(', '\\)\\);\")",
       "Bash(node -e \"const fs=require\\('fs'\\); const content=fs.readFileSync\\('f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/public/locales/en/translation.json','utf8'\\); const lines=content.split\\('\\\\n'\\); console.log\\('Total lines:', lines.length\\); console.log\\('Last 10 lines:'\\); lines.slice\\(-10\\).forEach\\(\\(l,i\\) => console.log\\(lines.length-10+i+1, JSON.stringify\\(l\\)\\)\\);\")",
-      "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/public/locales/en/translation.json','utf8'\\)\\); console.log\\(Object.keys\\(j\\).slice\\(-8\\).join\\(', '\\)\\)\")"
+      "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/public/locales/en/translation.json','utf8'\\)\\); console.log\\(Object.keys\\(j\\).slice\\(-8\\).join\\(', '\\)\\)\")",
+      "Bash(node f:/tmp/add_halter_keys.js)"
     ],
     "additionalDirectories": [
       "\\tmp"
