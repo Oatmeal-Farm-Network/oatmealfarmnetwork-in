@@ -519,7 +519,7 @@ export default function CropRotation() {
         {/* No field selected */}
         {!activeField ? (
           <div className="text-center py-24">
-            <div className="text-5xl mb-4">🔄</div>
+            <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
             <div className="font-lora text-xl text-gray-700">{t('crop_rotation.select_field_prompt')}</div>
           </div>
         ) : (

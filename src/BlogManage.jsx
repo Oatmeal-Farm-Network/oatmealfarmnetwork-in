@@ -1406,7 +1406,7 @@ export default function BlogManage() {
                     {cover
                       ? <img src={cover} alt="" onError={e => e.target.style.display = 'none'}
                           style={{ width: 56, height: 44, objectFit: 'cover', borderRadius: 5, flexShrink: 0, marginTop: 2 }} />
-                      : <div style={{ width: 56, height: 44, background: '#f3f4f6', borderRadius: 5, flexShrink: 0, marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>📝</div>
+                      : <div style={{ width: 56, height: 44, background: '#f3f4f6', borderRadius: 5, flexShrink: 0, marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
                     }
 
                     {/* Main content */}

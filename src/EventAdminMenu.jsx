@@ -84,7 +84,7 @@ function Row({ to, href, icon, label, expanded, active }) {
   const style = active ? { color: '#fff' } : undefined;
   const content = (
     <>
-      <span className="w-5 text-center shrink-0 text-base leading-none">{icon}</span>
+      <span className="w-5 flex items-center justify-center shrink-0">{icon}</span>
       {expanded && <span className="text-sm whitespace-nowrap truncate">{label}</span>}
     </>
   );
@@ -175,7 +175,7 @@ export default function EventAdminMenu({
 
       <nav className="flex flex-col gap-0.5 p-2 flex-grow overflow-y-auto">
         <Row
-          to={dashboardPath} icon="🏠" label="Dashboard"
+          to={dashboardPath} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>} label="Dashboard"
           expanded={menuExpanded}
           active={loc.pathname === dashboardPath}
         />
@@ -243,34 +243,34 @@ export default function EventAdminMenu({
           {menuExpanded && (
             <div className="text-[10px] uppercase tracking-wide text-gray-400 px-3 pt-2 pb-1">Money</div>
           )}
-          <Row to={`/events/${eventId}/admin/registrations`} icon="💳" label="Registrations & Carts"
+          <Row to={`/events/${eventId}/admin/registrations`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>} label="Registrations & Carts"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/admin/registrations`} />
-          <Row to={`/events/${eventId}/admin/meals`} icon="🍽️" label="Meal Tickets"
+          <Row to={`/events/${eventId}/admin/meals`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>} label="Meal Tickets"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/admin/meals`} />
-          <Row to={`/events/${eventId}/admin/promo-codes`} icon="🏷️" label="Promo Codes"
+          <Row to={`/events/${eventId}/admin/promo-codes`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>} label="Promo Codes"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/admin/promo-codes`} />
-          <Row to={`/events/${eventId}/admin/waitlist`} icon="⏳" label="Waitlist"
+          <Row to={`/events/${eventId}/admin/waitlist`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} label="Waitlist"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/admin/waitlist`} />
-          <Row to={`/events/${eventId}/admin/abandoned-carts`} icon="🛒" label="Abandoned Carts"
+          <Row to={`/events/${eventId}/admin/abandoned-carts`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>} label="Abandoned Carts"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/admin/abandoned-carts`} />
-          <Row to={`/events/${eventId}/admin/sponsorship`} icon="🏆" label="Sponsorship"
+          <Row to={`/events/${eventId}/admin/sponsorship`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>} label="Sponsorship"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/admin/sponsorship`} />
-          <Row to={appendBiz(`/events/${eventId}/leads`, businessId)} icon="📇" label="My Leads (exhibitor)"
+          <Row to={appendBiz(`/events/${eventId}/leads`, businessId)} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>} label="My Leads (exhibitor)"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/leads`} />
-          <Row to={`/events/${eventId}/admin/floor-plan`} icon="🗺️" label="Floor Plan"
+          <Row to={`/events/${eventId}/admin/floor-plan`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>} label="Floor Plan"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/admin/floor-plan`} />
-          <Row to={`/events/${eventId}/admin/booth-services`} icon="⚡" label="Booth Services"
+          <Row to={`/events/${eventId}/admin/booth-services`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>} label="Booth Services"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/admin/booth-services`} />
-          <Row to={`/events/${eventId}/admin/coi`} icon="📜" label="COI / Insurance"
+          <Row to={`/events/${eventId}/admin/coi`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>} label="COI / Insurance"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/admin/coi`} />
         </div>
@@ -279,13 +279,13 @@ export default function EventAdminMenu({
           {menuExpanded && (
             <div className="text-[10px] uppercase tracking-wide text-gray-400 px-3 pt-2 pb-1">Communications</div>
           )}
-          <Row to={`/events/${eventId}/admin/mailing-list`} icon="📧" label="Mailing List"
+          <Row to={`/events/${eventId}/admin/mailing-list`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>} label="Mailing List"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/admin/mailing-list`} />
-          <Row to={`/events/${eventId}/admin/exports`} icon="⬇️" label="Exports & Schedules"
+          <Row to={`/events/${eventId}/admin/exports`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>} label="Exports & Schedules"
             expanded={menuExpanded}
             active={loc.pathname === `/events/${eventId}/admin/exports`} />
-          <Row to={`/events/${eventId}/admin/print`} icon="🖨️" label="Printouts"
+          <Row to={`/events/${eventId}/admin/print`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>} label="Printouts"
             expanded={menuExpanded}
             active={loc.pathname.startsWith(`/events/${eventId}/admin/print`)} />
         </div>
@@ -294,11 +294,11 @@ export default function EventAdminMenu({
           {menuExpanded && (
             <div className="text-[10px] uppercase tracking-wide text-gray-400 px-3 pt-2 pb-1">Event</div>
           )}
-          <Row to={`/events/${eventId}`} icon="👁️" label="Public Page"
+          <Row to={`/events/${eventId}`} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>} label="Public Page"
             expanded={menuExpanded} />
-          <Row to={appendBiz(`/events/manage?edit=${eventId}`, businessId)} icon="✏️" label="Edit details"
+          <Row to={appendBiz(`/events/manage?edit=${eventId}`, businessId)} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>} label="Edit details"
             expanded={menuExpanded} />
-          <Row to={appendBiz('/events/manage', businessId)} icon="↩" label="All my events"
+          <Row to={appendBiz('/events/manage', businessId)} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>} label="All my events"
             expanded={menuExpanded} />
         </div>
 

@@ -96,7 +96,7 @@ export default function PrecisionAgBenchmark() {
           <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
         ) : !data || fields.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
-            <div className="text-5xl mb-4">📊</div>
+            <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
             <div className="font-lora text-xl text-gray-600 mb-2">No fields found</div>
             <div className="font-mont text-sm text-gray-400">Add fields and run satellite analyses to compare performance.</div>
           </div>
@@ -119,7 +119,7 @@ export default function PrecisionAgBenchmark() {
 
             {/* Peer group coming soon */}
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-              <span className="text-xl mt-0.5">🌐</span>
+              <span className="flex items-start mt-0.5"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
               <div>
                 <div className="font-mont text-sm font-semibold text-blue-800">County &amp; Network Benchmarks — Coming Soon</div>
                 <div className="font-mont text-xs text-blue-600 mt-0.5">
@@ -131,7 +131,7 @@ export default function PrecisionAgBenchmark() {
             {/* Best performer callout */}
             {topField?.ndvi != null && (
               <div className="bg-[#6D8E22]/5 border border-[#6D8E22]/30 rounded-xl p-4 flex items-center gap-3">
-                <div className="text-3xl">🏆</div>
+                <div className="flex items-center"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6D8E22" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg></div>
                 <div>
                   <div className="font-mont text-sm font-bold text-[#6D8E22]">
                     Best performer: {topField.name}

@@ -27,7 +27,7 @@ export default function AboutSaige() {
         <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
         <div className="relative max-w-5xl mx-auto">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-3xl">🌾</div>
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></svg></div>
             <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('saige.hero_badge')}</span>
           </div>
           <h1 className="text-4xl font-bold mb-3 drop-shadow" style={{ color: '#fff' }}>{t('saige.hero_title')}</h1>
@@ -73,12 +73,12 @@ export default function AboutSaige() {
             {t('saige.cap_title')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Capability icon="🌱" title={t('saige.cap1_title')} body={t('saige.cap1_body')} />
-            <Capability icon="🐄" title={t('saige.cap2_title')} body={t('saige.cap2_body')} />
-            <Capability icon="☁️" title={t('saige.cap3_title')} body={t('saige.cap3_body')} />
-            <Capability icon="📈" title={t('saige.cap4_title')} body={t('saige.cap4_body')} />
-            <Capability icon="📝" title={t('saige.cap5_title')} body={t('saige.cap5_body')} />
-            <Capability icon="🗂️" title={t('saige.cap6_title')} body={t('saige.cap6_body')} />
+            <Capability icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0 0 6"/><rect x="9" y="8" width="6" height="8" rx="1"/><path d="M7 15v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2"/></svg>} title={t('saige.cap1_title')} body={t('saige.cap1_body')} />
+            <Capability icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="14" rx="7" ry="5"/><path d="M5 14c0-1-1-3-1-5a3 3 0 0 1 6 0"/><path d="M19 14c0-1 1-3 1-5a3 3 0 0 0-6 0"/></svg>} title={t('saige.cap2_title')} body={t('saige.cap2_body')} />
+            <Capability icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>} title={t('saige.cap3_title')} body={t('saige.cap3_body')} />
+            <Capability icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>} title={t('saige.cap4_title')} body={t('saige.cap4_body')} />
+            <Capability icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>} title={t('saige.cap5_title')} body={t('saige.cap5_body')} />
+            <Capability icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>} title={t('saige.cap6_title')} body={t('saige.cap6_body')} />
           </div>
         </section>
 
@@ -150,7 +150,7 @@ function Capability({ icon, title, body }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4">
       <div className="flex items-center gap-2 mb-1">
-        <span className="text-xl">{icon}</span>
+        <span className="flex items-center">{icon}</span>
         <h3 className="font-bold text-gray-900">{title}</h3>
       </div>
       <p className="text-sm text-gray-600">{body}</p>

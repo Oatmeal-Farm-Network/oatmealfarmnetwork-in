@@ -226,7 +226,7 @@ export default function ProcessedFoodInventory() {
         {/* Empty state */}
         {!loading && !error && filtered.length === 0 && (
           <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
-            <p className="text-4xl mb-3">🫙</p>
+            <div className="flex justify-center mb-3"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2h8l1 7H7L8 2z"/><path d="M7 9c0 7 2 11 5 11s5-4 5-11"/></svg></div>
             <p className="text-gray-500 font-medium">No processed food items yet</p>
             <p className="text-gray-400 text-sm mt-1">Add jams, sauces, baked goods, and more</p>
             <button onClick={openAdd} className="mt-5 bg-[#819360] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#6a7a4f] transition-colors">

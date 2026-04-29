@@ -194,7 +194,7 @@ function FarmCard({ farm, onRemove }) {
 function EmptyState({ title, body, cta }) {
   return (
     <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-      <div className="text-5xl mb-3">🌾</div>
+      <div className="flex justify-center mb-3"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V12"/><path d="M17 8c0 2.5-2 4-5 4S7 10.5 7 8c0-3 2.5-5 5-5s5 2 5 5z"/><line x1="12" y1="22" x2="4" y2="22"/><line x1="12" y1="22" x2="20" y2="22"/></svg></div>
       <p className="text-lg font-bold text-gray-700">{title}</p>
       <p className="text-sm text-gray-500 mt-2 max-w-md mx-auto">{body}</p>
       {cta && <div className="mt-4">{cta}</div>}

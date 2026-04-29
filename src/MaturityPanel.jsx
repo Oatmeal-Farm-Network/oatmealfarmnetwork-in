@@ -547,7 +547,7 @@ export default function MaturityPanel({ fieldId, businessId }) {
 
         {sortedSamples.length === 0 && !showSampleForm ? (
           <div className="mt-4 flex flex-col items-center gap-3 py-6 bg-gray-50 rounded-lg">
-            <div className="text-3xl">🌿</div>
+            <div className="flex items-center"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 22"/><path d="M9.5 9.5s1-3 4.5-5c0 0 1 3-1 7"/><path d="M3.82 22s1.5-3.5 8.18-4.5"/></svg></div>
             <p className="text-sm text-gray-600 text-center max-w-sm">
               Start tracking maturity by logging a sample. Enter Brix, firmness, pH, or anthocyanin readings.
             </p>

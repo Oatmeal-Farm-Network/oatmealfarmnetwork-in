@@ -288,7 +288,7 @@ export default function PrecisionAgCropStatus() {
             <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading analyses…</div>
           ) : sorted.length === 0 ? (
             <div className="text-center py-24">
-              <div className="text-5xl mb-4">📡</div>
+              <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4.9 4.9A10 10 0 1 0 19.1 19.1"/><path d="M16.24 7.76A6 6 0 1 0 7.76 16.24"/><path d="M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><line x1="12" y1="12" x2="21" y2="21"/></svg></div>
               <div className="font-lora text-xl text-gray-600 mb-2">No analysis data</div>
               <div className="font-mont text-sm text-gray-400">
                 {fields.length === 0 ? 'No fields found for this account.' : 'Run an analysis on this field to see index trends.'}

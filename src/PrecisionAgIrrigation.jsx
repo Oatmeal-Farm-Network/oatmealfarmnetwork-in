@@ -5,9 +5,9 @@ import { useAccount } from './AccountContext';
 import { useFields, API_URL } from './precisionAgUtils';
 
 const URGENCY_STYLE = {
-  high:   { bg: '#FEE2E2', text: '#B91C1C', label: 'Irrigate Now',    icon: '🚨' },
-  medium: { bg: '#FEF3C7', text: '#92400E', label: 'Consider Soon',   icon: '⚠️' },
-  low:    { bg: '#D1FAE5', text: '#065F46', label: 'No Action Needed', icon: '✅' },
+  high:   { bg: '#FEE2E2', text: '#B91C1C', label: 'Irrigate Now',    icon: <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#B91C1C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
+  medium: { bg: '#FEF3C7', text: '#92400E', label: 'Consider Soon',   icon: <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#92400E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> },
+  low:    { bg: '#D1FAE5', text: '#065F46', label: 'No Action Needed', icon: <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#065F46" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> },
 };
 
 function WaterDeficitChart({ daily }) {
@@ -138,7 +138,7 @@ export default function PrecisionAgIrrigation() {
           <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
         ) : !data ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
-            <div className="text-5xl mb-4">💧</div>
+            <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div>
             <div className="font-lora text-xl text-gray-600">No data available</div>
             <div className="font-mont text-sm text-gray-400 mt-1">Ensure the field has coordinates set.</div>
           </div>
@@ -147,7 +147,7 @@ export default function PrecisionAgIrrigation() {
             {/* Recommendation banner */}
             <div className="rounded-xl p-5 flex items-center gap-4"
               style={{ background: urgencyStyle.bg }}>
-              <div className="text-4xl">{urgencyStyle.icon}</div>
+              <div className="flex items-center">{urgencyStyle.icon}</div>
               <div>
                 <div className="font-lora text-xl font-bold" style={{ color: urgencyStyle.text }}>
                   {data.recommendation}

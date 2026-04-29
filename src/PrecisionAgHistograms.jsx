@@ -158,7 +158,7 @@ export default function PrecisionAgHistograms() {
           <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
         ) : analyses.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
-            <div className="text-5xl mb-4">📊</div>
+            <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
             <div className="font-lora text-xl text-gray-600 mb-2">No analysis data</div>
             <div className="font-mont text-sm text-gray-400">Run an analysis on this field to generate histogram data.</div>
           </div>

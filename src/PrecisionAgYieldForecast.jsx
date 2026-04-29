@@ -112,12 +112,12 @@ export default function PrecisionAgYieldForecast() {
           <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
         ) : !data ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
-            <div className="text-5xl mb-4">🌾</div>
+            <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V12"/><path d="M17 8c0 2.5-2 4-5 4S7 10.5 7 8c0-3 2.5-5 5-5s5 2 5 5z"/><line x1="12" y1="22" x2="4" y2="22"/><line x1="12" y1="22" x2="20" y2="22"/></svg></div>
             <div className="font-lora text-xl text-gray-600">No forecast available</div>
           </div>
         ) : data.forecast_kgha == null ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
-            <div className="text-5xl mb-4">📡</div>
+            <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4.9 4.9A10 10 0 1 0 19.1 19.1"/><path d="M16.24 7.76A6 6 0 1 0 7.76 16.24"/><path d="M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><line x1="12" y1="12" x2="21" y2="21"/></svg></div>
             <div className="font-lora text-xl text-gray-600 mb-2">No satellite analyses yet</div>
             <div className="font-mont text-sm text-gray-400">{data.message}</div>
           </div>

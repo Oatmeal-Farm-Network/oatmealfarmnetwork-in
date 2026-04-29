@@ -33,9 +33,9 @@ const SEV_STYLE = {
 };
 
 const URGENCY_STYLE = {
-  high:   { bg: '#FEF2F2', border: '#FECACA', text: '#991B1B', icon: '🚨', msg: 'Irrigate now — water deficit critical' },
-  medium: { bg: '#FFFBEB', border: '#FDE68A', text: '#92400E', icon: '💧', msg: 'Consider irrigating within 2–3 days' },
-  low:    { bg: '#F0FDF4', border: '#BBF7D0', text: '#166534', icon: '✅', msg: 'No irrigation needed' },
+  high:   { bg: '#FEF2F2', border: '#FECACA', text: '#991B1B', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#991B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, msg: 'Irrigate now — water deficit critical' },
+  medium: { bg: '#FFFBEB', border: '#FDE68A', text: '#92400E', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L5 10a7 7 0 1 0 14 0L12 2z"/></svg>, msg: 'Consider irrigating within 2–3 days' },
+  low:    { bg: '#F0FDF4', border: '#BBF7D0', text: '#166534', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>, msg: 'No irrigation needed' },
 };
 
 function NDVIMiniBar({ value }) {
@@ -114,7 +114,7 @@ export default function SaigeFieldsCard() {
           alignItems: 'center',
           gap: 8,
         }}>
-          <span style={{ fontSize: 16 }}>{urgencyStyle.icon}</span>
+          <span style={{ display:'inline-flex', alignItems:'center' }}>{urgencyStyle.icon}</span>
           <span style={{ fontSize: 12, fontWeight: 700, color: urgencyStyle.text, fontFamily: 'var(--font-mont, sans-serif)' }}>
             {urgencyStyle.msg}
             {bestField && ` — ${bestField.name}`}
@@ -137,7 +137,12 @@ export default function SaigeFieldsCard() {
             fontFamily: 'var(--font-mont, sans-serif)',
             marginBottom: 6,
           }}>
-            {hasCritical ? '🚨' : '⚠️'} {totalAlerts} active alert{totalAlerts !== 1 ? 's' : ''}
+            <span style={{display:'inline-flex',alignItems:'center',gap:4,verticalAlign:'middle'}}>
+              {hasCritical
+                ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>}
+              {totalAlerts} active alert{totalAlerts !== 1 ? 's' : ''}
+            </span>
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {['critical', 'high', 'medium', 'low'].map(sev => {

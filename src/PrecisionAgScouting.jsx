@@ -8,14 +8,22 @@ const CATEGORIES = ['General', 'Pest', 'Disease', 'Weed', 'Irrigation', 'Nutrien
 const SEVERITIES = ['Low', 'Medium', 'High', 'Critical'];
 
 const SEV_COLOR = { Low: '#10B981', Medium: '#F59E0B', High: '#F97316', Critical: '#EF4444' };
-const CAT_ICON  = { General: '📋', Pest: '🐛', Disease: '🦠', Weed: '🌿', Irrigation: '💧', Nutrient: '⚗️', Weather: '⛈️' };
+const CAT_ICON = {
+  General:   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
+  Pest:      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8c-1 0-2 .5-2 1.5S11 11 12 11s2-.5 2-1.5S13 8 12 8z"/><path d="M12 11v5"/><path d="M7 8l-3-2"/><path d="M17 8l3-2"/><path d="M9.5 16.5L7 19"/><path d="M14.5 16.5L17 19"/><ellipse cx="12" cy="9" rx="4" ry="5"/></svg>,
+  Disease:   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>,
+  Weed:      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></svg>,
+  Irrigation:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L5 10a7 7 0 1 0 14 0L12 2z"/></svg>,
+  Nutrient:  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>,
+  Weather:   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="8" y1="13" x2="8" y2="15"/><line x1="16" y1="19" x2="16" y2="21"/><line x1="16" y1="13" x2="16" y2="15"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="12" y1="15" x2="12" y2="17"/></svg>,
+};
 
 function ScoutCard({ scout, onDelete }) {
   const [confirming, setConfirming] = useState(false);
   const sevColor = SEV_COLOR[scout.severity] || '#9CA3AF';
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4">
-      <div className="flex-shrink-0 text-2xl w-10 text-center">{CAT_ICON[scout.category] || '📋'}</div>
+      <div className="flex-shrink-0 w-10 flex items-center justify-center text-gray-500">{CAT_ICON[scout.category] || CAT_ICON.General}</div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap mb-1">
           <span className="font-mont text-sm font-semibold text-gray-800">{scout.category}</span>
@@ -247,7 +255,7 @@ export default function PrecisionAgScouting() {
           <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
-            <div className="text-5xl mb-4">🔍</div>
+            <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
             <div className="font-lora text-xl text-gray-600 mb-2">{scouts.length === 0 ? 'No observations yet' : 'No observations in this category'}</div>
             <div className="font-mont text-sm text-gray-400">
               {scouts.length === 0 ? 'Click "Add Observation" to log your first scouting note.' : 'Try selecting a different category.'}

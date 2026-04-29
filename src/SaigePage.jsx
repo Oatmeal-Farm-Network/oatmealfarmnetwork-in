@@ -356,16 +356,16 @@ function ChatSidebar({ threads, activeThreadId, isCollapsed, isLoading, onToggle
 function AboutSaige() {
   const { t } = useTranslation();
   const features = [
-    { icon: '🧠', title: t('saige_page.feat_expertise_title'), desc: t('saige_page.feat_expertise_desc') },
-    { icon: '📈', title: t('saige_page.feat_learning_title'), desc: t('saige_page.feat_learning_desc') },
-    { icon: '🍽️', title: t('saige_page.feat_f2t_title'), desc: t('saige_page.feat_f2t_desc') },
-    { icon: '🔒', title: t('saige_page.feat_trust_title'), desc: t('saige_page.feat_trust_desc') },
+    { icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6D8E22" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.3 4.7-3.3 6L15 17H9l-.7-2C6.3 13.7 5 11.5 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/><line x1="9.5" y1="17" x2="9.5" y2="21"/><line x1="14.5" y1="17" x2="14.5" y2="21"/></svg>, title: t('saige_page.feat_expertise_title'), desc: t('saige_page.feat_expertise_desc') },
+    { icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6D8E22" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>, title: t('saige_page.feat_learning_title'), desc: t('saige_page.feat_learning_desc') },
+    { icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6D8E22" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="8" y2="2"/><line x1="8" y1="22" x2="8" y2="12"/><path d="M8 12a4 4 0 0 1 0-6"/><line x1="16" y1="22" x2="16" y2="18"/><line x1="16" y1="2" x2="16" y2="12"/><path d="M16 12a4 4 0 0 0 0 6"/></svg>, title: t('saige_page.feat_f2t_title'), desc: t('saige_page.feat_f2t_desc') },
+    { icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6D8E22" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>, title: t('saige_page.feat_trust_title'), desc: t('saige_page.feat_trust_desc') },
   ];
   const coming = [
-    { icon: '🛒', title: t('saige_page.coming_marketplace_title'), desc: t('saige_page.coming_marketplace_desc') },
-    { icon: '🐄', title: t('saige_page.coming_livestock_title'), desc: t('saige_page.coming_livestock_desc') },
-    { icon: '📊', title: t('saige_page.coming_insights_title'), desc: t('saige_page.coming_insights_desc') },
-    { icon: '🔬', title: t('saige_page.coming_analysis_title'), desc: t('saige_page.coming_analysis_desc') },
+    { icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>, title: t('saige_page.coming_marketplace_title'), desc: t('saige_page.coming_marketplace_desc') },
+    { icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 9c0 4-4 7-7 9-3-2-7-5-7-9a7 7 0 0 1 14 0z"/><circle cx="12" cy="9" r="2.5"/></svg>, title: t('saige_page.coming_livestock_title'), desc: t('saige_page.coming_livestock_desc') },
+    { icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>, title: t('saige_page.coming_insights_title'), desc: t('saige_page.coming_insights_desc') },
+    { icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>, title: t('saige_page.coming_analysis_title'), desc: t('saige_page.coming_analysis_desc') },
   ];
   return (
     <div className="min-h-screen font-sans">
@@ -376,7 +376,7 @@ function AboutSaige() {
         <div className="relative max-w-5xl mx-auto px-6 py-16 flex flex-col md:flex-row items-center gap-10" style={{ minHeight: '480px' }}>
           <div className="flex-1 text-center md:text-left">
             <div className="flex items-center gap-3 mb-4 justify-center md:justify-start">
-              <span className="text-5xl">🌾</span>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V12"/><path d="M17 8c0 2.5-2 4-5 4S7 10.5 7 8c0-3 2.5-5 5-5s5 2 5 5z"/><line x1="12" y1="22" x2="4" y2="22"/><line x1="12" y1="22" x2="20" y2="22"/></svg>
               <h1 className="text-5xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>Saige</h1>
             </div>
             <p className="text-xl font-semibold mb-4" style={{ color: '#86efac' }}>{t('saige_page.about_hero_subtitle')}</p>
@@ -385,7 +385,7 @@ function AboutSaige() {
               <Link to="/contact-us" className="underline hover:text-white" style={{ color: '#6ee7b7' }}>{t('saige_page.about_hero_contact')}</Link> to learn more.
             </p>
             <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm" style={{ background: 'rgba(234,179,8,0.2)', border: '2px solid #eab308', color: '#fde047' }}>
-              <span className="text-lg">🚀</span> {t('saige_page.about_coming_soon_badge')}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> {t('saige_page.about_coming_soon_badge')}
             </div>
           </div>
           <div className="flex-1 max-w-sm w-full">
@@ -426,7 +426,7 @@ function AboutSaige() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {features.map(f => (
             <div key={f.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex gap-4 items-start">
-              <span className="text-3xl flex-shrink-0">{f.icon}</span>
+              <span className="flex-shrink-0 flex items-center">{f.icon}</span>
               <div><h3 className="font-bold text-gray-900 text-base mb-1">{f.title}</h3><p className="text-gray-600 text-sm leading-relaxed">{f.desc}</p></div>
             </div>
           ))}
@@ -446,7 +446,7 @@ function AboutSaige() {
           {coming.map(f => (
             <div key={f.title} className="bg-white rounded-2xl border border-yellow-100 shadow-sm p-6 relative overflow-hidden">
               <div className="absolute top-3 right-3"><span className="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">{t('saige_page.about_coming_badge')}</span></div>
-              <span className="text-3xl mb-3 block">{f.icon}</span>
+              <span className="mb-3 flex items-center">{f.icon}</span>
               <h3 className="font-bold text-gray-900 text-base mb-2">{f.title}</h3>
               <p className="text-gray-600 text-sm leading-relaxed">{f.desc}</p>
             </div>
@@ -455,7 +455,7 @@ function AboutSaige() {
       </div>
       <div className="max-w-5xl mx-auto px-6 pb-14">
         <div className="rounded-2xl p-8 flex flex-col sm:flex-row items-center gap-6" style={{ background: 'linear-gradient(135deg, #14532d, #166534)' }}>
-          <span className="text-5xl flex-shrink-0">📁</span>
+          <span className="flex-shrink-0 flex items-center"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
           <div className="text-center sm:text-left flex-1">
             <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold mb-2" style={{ background: 'rgba(74,222,128,0.2)', color: '#4ade80' }}>{t('saige_page.about_live_badge')}</div>
             <h3 className="text-xl font-bold text-white mb-2">{t('saige_page.about_dir_title')}</h3>

@@ -17,17 +17,24 @@ const TYPE_COLOR = {
   Other:        '#9CA3AF',
 };
 const TYPE_ICON = {
-  Spray: '🛢️', Fertilize: '🌿', Tillage: '🚜', Irrigation: '💧',
-  Harvest: '🌾', Planting: '🌱', Scouting: '🔍', 'Soil Sample': '🧪', Other: '📋',
+  Spray:        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v6"/><path d="M4.93 10.93l4.24 4.24"/><path d="M2 18h6"/><circle cx="12" cy="18" r="4"/><path d="M12 14v-2"/></svg>,
+  Fertilize:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></svg>,
+  Tillage:      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
+  Irrigation:   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L5 10a7 7 0 1 0 14 0L12 2z"/></svg>,
+  Harvest:      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 11a9 9 0 0 0 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><path d="M20 4H4v16"/></svg>,
+  Planting:     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7 20s4-6 4-10a4 4 0 0 0-8 0c0 4 4 10 4 10z"/><path d="M7 20h10"/><path d="M13 12s2-3 5-3"/></svg>,
+  Scouting:     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+  'Soil Sample':<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>,
+  Other:        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>,
 };
 
 function ActivityRow({ item, onDelete }) {
   const color = TYPE_COLOR[item.activity_type] || '#9CA3AF';
-  const icon = TYPE_ICON[item.activity_type] || '📋';
+  const icon = TYPE_ICON[item.activity_type] || TYPE_ICON.Other;
   return (
     <div className="flex items-start gap-3 p-4 border-b border-gray-50 hover:bg-gray-50 last:border-0">
-      <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0"
-        style={{ background: color + '18' }}>
+      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{ background: color + '18', color }}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -162,7 +169,7 @@ export default function PrecisionAgActivityLog() {
               }}
               disabled={gpsLoading}
               className="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-mont font-semibold rounded-lg hover:bg-gray-50 disabled:opacity-50">
-              {gpsLoading ? 'Getting GPS…' : '📍 Quick Note'}
+              {gpsLoading ? 'Getting GPS…' : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline',verticalAlign:'middle',marginRight:4}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Quick Note</>}
             </button>
             <button onClick={() => { setForm(EMPTY_FORM); setShowForm(p => !p); }}
               className="px-5 py-2.5 bg-[#6D8E22] text-white text-sm font-mont font-semibold rounded-lg hover:bg-[#5a7519]">
@@ -269,7 +276,7 @@ export default function PrecisionAgActivityLog() {
           <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
-            <div className="text-5xl mb-4">📋</div>
+            <div className="mb-4 flex justify-center"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></div>
             <div className="font-lora text-xl text-gray-600 mb-2">No activities logged</div>
             <div className="font-mont text-sm text-gray-400">Start by logging a field operation above.</div>
           </div>

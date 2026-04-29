@@ -554,15 +554,18 @@ const HAS_ALPACA_PERCENTS  = [2];
 const LLAMA_IDS            = [4];
 const ALPACA_FRACTIONS     = ["Full","7/8","3/4","5/8","1/2","3/8","1/4","1/8","1/16","1/32","1/64","Unknown"];
 
+const _SvgStep = ({ d, children }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+);
 const STEPS = [
-  { id: 1, label: "Basics",        icon: "🐾" },
-  { id: 2, label: "General Facts", icon: "📋" },
-  { id: 3, label: "Ancestry",      icon: "🌳" },
-  { id: 4, label: "Fiber Facts",   icon: "🧵" },
-  { id: 5, label: "Description",   icon: "📝" },
-  { id: 6, label: "Awards",        icon: "🏆" },
-  { id: 7, label: "Pricing",       icon: "💰" },
-  { id: 8, label: "Photos",        icon: "📷" },
+  { id: 1, label: "Basics",        icon: <_SvgStep><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></_SvgStep> },
+  { id: 2, label: "General Facts", icon: <_SvgStep><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></_SvgStep> },
+  { id: 3, label: "Ancestry",      icon: <_SvgStep><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></_SvgStep> },
+  { id: 4, label: "Fiber Facts",   icon: <_SvgStep><path d="M4 4l16 16"/><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/></_SvgStep> },
+  { id: 5, label: "Description",   icon: <_SvgStep><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></_SvgStep> },
+  { id: 6, label: "Awards",        icon: <_SvgStep><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></_SvgStep> },
+  { id: 7, label: "Pricing",       icon: <_SvgStep><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></_SvgStep> },
+  { id: 8, label: "Photos",        icon: <_SvgStep><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></_SvgStep> },
 ];
 
 const INITIAL_FORM_DATA = {
@@ -1903,7 +1906,7 @@ export default function AnimalAddWizard() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
             padding: '10px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0',
             borderRadius: 8, marginBottom: 12, fontSize: '0.82rem', color: '#166534' }}>
-            <span>✅ Your progress has been restored from your last session.</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Your progress has been restored from your last session.</span>
             <button
               type="button"
               onClick={() => { setFormData(INITIAL_FORM_DATA); setCurrentStepId(1); sessionStorage.removeItem(draftKey); setDraftRestored(false); }}
@@ -1923,7 +1926,7 @@ export default function AnimalAddWizard() {
           {step?.id===6 && <Step6Awards       formData={formData} onChange={handleChange} />}
           {step?.id===7 && <Step7Pricing      formData={formData} onChange={handleChange} errors={errors} />}
           {step?.id===8 && <Step8Photos       formData={formData} onChange={handleChange} subscriptionLevel={subscriptionLevel} />}
-          {errors.submit && <div className="submit-error">⚠️ {errors.submit}</div>}
+          {errors.submit && <div className="submit-error" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>{errors.submit}</div>}
         </div>
 
         <div className="wizard-nav">

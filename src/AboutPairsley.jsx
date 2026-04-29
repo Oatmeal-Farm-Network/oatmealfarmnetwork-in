@@ -13,21 +13,23 @@ const ACCENT = '#2f7d4a';
 export default function AboutPairsley() {
   const { t } = useTranslation();
 
+  const S = (p) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}/>;
   const capabilities = [
-    { icon: '🥬', title: t('pairsley.cap1_title'), body: t('pairsley.cap1_body') },
-    { icon: '📋', title: t('pairsley.cap2_title'), body: t('pairsley.cap2_body') },
-    { icon: '💵', title: t('pairsley.cap3_title'), body: t('pairsley.cap3_body') },
-    { icon: '🤝', title: t('pairsley.cap4_title'), body: t('pairsley.cap4_body') },
-    { icon: '🛒', title: t('pairsley.cap5_title'), body: t('pairsley.cap5_body') },
-    { icon: '⚙️', title: t('pairsley.cap6_title'), body: t('pairsley.cap6_body') },
+    { icon: <S><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></S>, title: t('pairsley.cap1_title'), body: t('pairsley.cap1_body') },
+    { icon: <S><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></S>, title: t('pairsley.cap2_title'), body: t('pairsley.cap2_body') },
+    { icon: <S><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></S>, title: t('pairsley.cap3_title'), body: t('pairsley.cap3_body') },
+    { icon: <S><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></S>, title: t('pairsley.cap4_title'), body: t('pairsley.cap4_body') },
+    { icon: <S><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></S>, title: t('pairsley.cap5_title'), body: t('pairsley.cap5_body') },
+    { icon: <S><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M2 12h2M20 12h2"/></S>, title: t('pairsley.cap6_title'), body: t('pairsley.cap6_body') },
   ];
 
+  const TS = (p) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}/>;
   const tiles = [
-    { to: '/marketplaces/farm-to-table', icon: '🛒', title: t('pairsley.tile1_title'), body: t('pairsley.tile1_body') },
-    { to: '/restaurant/farms',           icon: '❤️', title: t('pairsley.tile2_title'), body: t('pairsley.tile2_body') },
-    { to: '/restaurant/standing-orders', icon: '🔁', title: t('pairsley.tile3_title'), body: t('pairsley.tile3_body') },
-    { to: '/restaurant/digest',          icon: '📬', title: t('pairsley.tile4_title'), body: t('pairsley.tile4_body') },
-    { to: '/chef/dashboard',             icon: '👨‍🍳', title: t('pairsley.tile5_title'), body: t('pairsley.tile5_body') },
+    { to: '/marketplaces/farm-to-table', icon: <TS><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></TS>, title: t('pairsley.tile1_title'), body: t('pairsley.tile1_body') },
+    { to: '/restaurant/farms',           icon: <TS><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></TS>, title: t('pairsley.tile2_title'), body: t('pairsley.tile2_body') },
+    { to: '/restaurant/standing-orders', icon: <TS><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></TS>, title: t('pairsley.tile3_title'), body: t('pairsley.tile3_body') },
+    { to: '/restaurant/digest',          icon: <TS><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></TS>, title: t('pairsley.tile4_title'), body: t('pairsley.tile4_body') },
+    { to: '/chef/dashboard',             icon: <TS><path d="M20 7a4 4 0 0 0-4-4 4 4 0 0 0-4 4 4 4 0 0 0-4-4 4 4 0 0 0-4 4 4 4 0 0 0 4 4h8a4 4 0 0 0 4-4z"/><path d="M8 11v9h8v-9"/></TS>, title: t('pairsley.tile5_title'), body: t('pairsley.tile5_body') },
   ];
 
   return (
@@ -44,7 +46,7 @@ export default function AboutPairsley() {
         <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
         <div className="relative max-w-5xl mx-auto">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-3xl">🍳</div>
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg></div>
             <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('pairsley.hero_badge')}</span>
           </div>
           <h1 className="text-4xl font-bold mb-3 drop-shadow" style={{ color: '#fff' }}>{t('pairsley.hero_title')}</h1>

@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+const IcoUsers = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+const IcoEdit  = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+const IcoDel   = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>;
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -191,11 +194,11 @@ export default function Dashboard() {
                       <td style={tdStyle}>
                         <div className="flex items-center gap-2">
                           <Link to={`/account/users?PeopleID=${peopleId}&BusinessID=${b.BusinessID}`} title="Users">
-                            <img src="/icons/Account.svg" width="20" alt="Users" onError={e => e.target.style.display='none'} />
+                            <IcoUsers />
                           </Link>
                           <span className="text-gray-300">|</span>
                           <Link to={`/account/profile?BusinessID=${b.BusinessID}`} title="Edit">
-                            <img src="/icons/Edit.svg" width="20" alt="Edit" onError={e => e.target.style.display='none'} />
+                            <IcoEdit />
                           </Link>
                           <span className="text-gray-300">|</span>
                           <button
@@ -207,7 +210,7 @@ export default function Dashboard() {
                             }}
                             className="bg-transparent border-0 p-0 cursor-pointer"
                           >
-                            <img src="/icons/Delete.svg" width="20" alt="Delete" onError={e => e.target.style.display='none'} />
+                            <IcoDel />
                           </button>
                         </div>
                       </td>

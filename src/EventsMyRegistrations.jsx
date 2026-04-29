@@ -40,7 +40,7 @@ export default function EventsMyRegistrations() {
           <div className="text-center py-12 text-gray-400">Loading…</div>
         ) : regs.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
-            <div className="text-4xl mb-3">🎟️</div>
+            <div className="flex justify-center mb-3"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="9" y1="15" x2="9.01" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg></div>
             <p className="mb-4">You haven't registered for any events yet.</p>
             <Link to="/events" className="text-[#3D6B34] hover:underline text-sm">Browse Upcoming Events</Link>
           </div>

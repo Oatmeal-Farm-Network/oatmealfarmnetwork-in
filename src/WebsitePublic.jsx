@@ -862,7 +862,7 @@ function ProduceBlock({ data, site, businessId }) {
       <SectionHeading site={site}>{data.heading || 'Fresh Produce'}</SectionHeading>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
         {items.map(p => (
-          <PriceCard key={p.ProduceID} icon="🥕" name={p.IngredientName} price={p.RetailPrice}
+          <PriceCard key={p.ProduceID} icon={<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M7 20s4-6 4-10a4 4 0 0 0-8 0c0 4 4 10 4 10z"/><path d="M7 20h10"/><path d="M13 12s2-3 5-3"/></svg>} name={p.IngredientName} price={p.RetailPrice}
             unit={p.QuantityMeasurement} tags={[p.IsOrganic && 'Organic', p.IsLocal && 'Local'].filter(Boolean)}
             site={site} />
         ))}
@@ -883,7 +883,7 @@ function MeatBlock({ data, site, businessId }) {
       <SectionHeading site={site}>{data.heading || 'Meat'}</SectionHeading>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
         {items.map(m => (
-          <PriceCard key={m.MeatInventoryID} icon="🥩" name={m.IngredientName}
+          <PriceCard key={m.MeatInventoryID} icon={<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 13L5 21l7-4 7 4-1-8"/><path d="M5 4l7 4 7-4"/><path d="M5 4v9m14-9v9"/></svg>} name={m.IngredientName}
             price={m.RetailPrice} unit={`${m.Weight} ${m.WeightUnit}`}
             tags={[]} site={site} />
         ))}
@@ -904,7 +904,7 @@ function ProcessedFoodBlock({ data, site, businessId }) {
       <SectionHeading site={site}>{data.heading || 'Farm Products'}</SectionHeading>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
         {items.map(f => (
-          <PriceCard key={f.ProcessedFoodID} icon="🫙" name={f.Name} price={f.RetailPrice}
+          <PriceCard key={f.ProcessedFoodID} icon={<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2h18l-2 7H5z"/><path d="M5 9l1 11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-11"/></svg>} name={f.Name} price={f.RetailPrice}
             image={f.ImageURL} desc={f.Description} tags={[]} site={site} />
         ))}
       </div>
@@ -1537,7 +1537,7 @@ function PriceCard({ icon, name, price, unit, image, desc, tags, site }) {
     <div style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.07)' }}>
       {image
         ? <img src={image} alt={name} style={{ width: '100%', height: 130, objectFit: 'cover' }} />
-        : <div style={{ height: 80, background: `${site.primary_color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>{icon || '📦'}</div>
+        : <div style={{ height: 80, background: `${site.primary_color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: site.primary_color }}>{icon || <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>}</div>
       }
       <div style={{ padding: '0.75rem' }}>
         <div style={{ fontWeight: 700, fontSize: '0.85rem', color: site.text_color, fontFamily: site.font_family, lineHeight: 1.3 }}>{name}</div>

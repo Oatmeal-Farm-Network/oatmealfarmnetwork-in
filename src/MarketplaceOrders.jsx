@@ -87,7 +87,12 @@ export default function MarketplaceOrders() {
             <div className="divide-y divide-gray-100">
               {(order.items || []).map(item => (
                 <div key={item.OrderItemID} className="flex items-center gap-4 px-5 py-3">
-                  <span className="text-2xl">{item.ProductType === 'meat' ? '🥩' : item.ProductType === 'processed_food' ? '🫙' : '🥬'}</span>
+                  <span className="flex items-center">{item.ProductType === 'meat'
+                    ? <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M18.6 6.62a2.5 2.5 0 0 1-3.53 3.53L5 20a2 2 0 0 1-2.83-2.83l10.16-10.16a2.5 2.5 0 0 1 3.53-3.53"/><path d="m15.5 5.5-3 3"/></svg>
+                    : item.ProductType === 'processed_food'
+                    ? <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2h8l1 7H7L8 2z"/><path d="M7 9c0 7 2 11 5 11s5-4 5-11"/></svg>
+                    : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 22"/><path d="M9.5 9.5s1-3 4.5-5c0 0 1 3-1 7"/><path d="M3.82 22s1.5-3.5 8.18-4.5"/></svg>
+                  }</span>
                   <div className="flex-grow">
                     <p className="font-semibold text-sm text-gray-800">{item.ProductTitle}</p>
                     <p className="text-xs text-gray-400">{item.SellerName || item.BusinessName} · {item.Quantity} × ${parseFloat(item.UnitPrice).toFixed(2)}</p>

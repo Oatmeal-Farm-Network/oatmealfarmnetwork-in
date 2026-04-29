@@ -25,7 +25,12 @@ const D2C_CHANNELS  = ['own_app', 'zepto', 'swiggy', 'blinkit', 'amazon', 'other
 const D2C_STATUSES  = ['placed', 'picking', 'out_for_delivery', 'delivered', 'refunded'];
 
 const CHANNEL_ICON = {
-  own_app: '📱', zepto: '⚡', swiggy: '🛵', blinkit: '🟡', amazon: '📦', other: '🔗',
+  own_app: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>,
+  zepto:   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  swiggy:  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  blinkit: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>,
+  amazon:  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
+  other:   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
 };
 
 const fmt$  = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -107,7 +112,7 @@ function B2BAccountsTab({ businessId }) {
           <AccountForm key={a.AccountID} acct={editing} onSave={save} onCancel={() => setEdit(null)} />
         ) : (
           <div key={a.AccountID} className="bg-white border border-gray-200 rounded-xl p-3 flex items-start gap-3">
-            <div className="text-2xl shrink-0">🏬</div>
+            <div className="shrink-0 flex items-center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <strong className="text-gray-900">{a.BuyerName}</strong>
@@ -120,7 +125,7 @@ function B2BAccountsTab({ businessId }) {
                 {a.NetTermsDays != null && ` · net ${a.NetTermsDays}d`}
                 {a.CreditLimit != null && ` · credit $${fmt$(a.CreditLimit)}`}
               </div>
-              {a.DeliveryAddress && <div className="text-xs text-gray-500 mt-0.5">📍 {a.DeliveryAddress}</div>}
+              {a.DeliveryAddress && <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>{a.DeliveryAddress}</div>}
             </div>
             <button onClick={() => setEdit(a)} className={btnGhost}>Edit</button>
             <button onClick={() => del(a.AccountID)} className="text-xs text-red-600 hover:underline">Delete</button>
@@ -186,6 +191,8 @@ function B2BOrdersTab({ businessId, accounts }) {
   const [list, setList]    = useState([]);
   const [editing, setEdit] = useState(null);
   const [adding, setAdd]   = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState(null);
 
   const refresh = () => { fetch(`${API}/api/aggregator/${businessId}/b2b/orders`).then(r => r.json()).then(setList); };
   useEffect(() => { refresh(); }, [businessId]);
@@ -203,9 +210,23 @@ function B2BOrdersTab({ businessId, accounts }) {
     await fetch(`${API}/api/aggregator/b2b/orders/${id}`, { method: 'DELETE' });
     refresh();
   };
+  const sync = async () => {
+    setSyncing(true); setSyncMsg(null);
+    const r = await fetch(`${API}/api/aggregator/${businessId}/accounting/sync`, { method: 'POST' }).catch(() => null);
+    if (r?.ok) {
+      const res = await r.json();
+      setSyncMsg(`Posted ${res.invoices_created} new invoice${res.invoices_created === 1 ? '' : 's'} to accounting.`);
+      refresh();
+    } else {
+      const err = await r?.json().catch(() => ({}));
+      setSyncMsg(err?.detail || 'Sync failed — check accounting setup.');
+    }
+    setSyncing(false);
+  };
 
   const total      = list.reduce((acc, r) => acc + Number(r.TotalValue || 0), 0);
   const unpaid     = list.filter(r => r.PaymentStatus !== 'paid').reduce((acc, r) => acc + Number(r.TotalValue || 0), 0);
+  const unposted   = list.filter(r => !r.AccountingInvoiceID && r.Status !== 'cancelled').length;
   const statusColor = (st) => st === 'delivered' ? 'bg-emerald-100 text-emerald-800'
                             : st === 'dispatched' ? 'bg-blue-100 text-blue-800'
                             : st === 'cancelled' ? 'bg-red-100 text-red-800'
@@ -213,16 +234,29 @@ function B2BOrdersTab({ businessId, accounts }) {
 
   return (
     <div className="space-y-3">
-      <div className="bg-white border border-gray-200 rounded-xl p-3 grid grid-cols-3 gap-3 text-sm">
+      <div className="bg-white border border-gray-200 rounded-xl p-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
         <div><div className="text-[10px] uppercase text-gray-500 font-semibold">Orders</div><div className="text-xl font-bold">{list.length}</div></div>
         <div><div className="text-[10px] uppercase text-gray-500 font-semibold">Total billed</div><div className="text-xl font-bold">${fmt$(total)}</div></div>
         <div><div className="text-[10px] uppercase text-gray-500 font-semibold">Outstanding A/R</div><div className={`text-xl font-bold ${unpaid > 0 ? 'text-amber-600' : ''}`}>${fmt$(unpaid)}</div></div>
+        <div><div className="text-[10px] uppercase text-gray-500 font-semibold">Unposted</div><div className={`text-xl font-bold ${unposted > 0 ? 'text-amber-600' : 'text-gray-400'}`}>{unposted}</div></div>
       </div>
 
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <span className="text-sm text-gray-500">B2B sales orders</span>
-        <button onClick={() => setAdd(true)} disabled={accounts.length === 0} className={btn}>+ New B2B order</button>
+        <div className="flex items-center gap-2">
+          {unposted > 0 && (
+            <button onClick={sync} disabled={syncing} className="px-3 py-1.5 text-sm border border-[#3D6B34] text-[#3D6B34] rounded-lg hover:bg-[#f0f7ec] disabled:opacity-50">
+              {syncing ? 'Posting…' : `Post ${unposted} to Accounting`}
+            </button>
+          )}
+          <button onClick={() => setAdd(true)} disabled={accounts.length === 0} className={btn}>+ New B2B order</button>
+        </div>
       </div>
+      {syncMsg && (
+        <div className={`text-xs rounded-lg px-3 py-2 ${syncMsg.includes('failed') || syncMsg.includes('check') ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
+          {syncMsg}
+        </div>
+      )}
       {accounts.length === 0 && <div className="text-sm text-gray-500 italic">Add at least one B2B account first.</div>}
       {adding && <B2BOrderForm accounts={accounts} onSave={save} onCancel={() => setAdd(false)} />}
 
@@ -231,13 +265,17 @@ function B2BOrdersTab({ businessId, accounts }) {
           <B2BOrderForm key={o.OrderID} order={editing} accounts={accounts} onSave={save} onCancel={() => setEdit(null)} />
         ) : (
           <div key={o.OrderID} className="bg-white border border-gray-200 rounded-xl p-3 flex items-start gap-3">
-            <div className="text-2xl shrink-0">🧾</div>
+            <div className="shrink-0 flex items-center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <strong className="text-gray-900">{o.BuyerName || `Account #${o.AccountID}`}</strong>
                 {o.CropType && <span className="text-sm text-gray-700">— {o.CropType}</span>}
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${statusColor(o.Status)}`}>{o.Status}</span>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${o.PaymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-800' : o.PaymentStatus === 'partial' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-700'}`}>{o.PaymentStatus}</span>
+                {o.AccountingInvoiceID
+                  ? <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-semibold uppercase">INV #{o.AccountingInvoiceID}</span>
+                  : o.Status !== 'cancelled' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold uppercase">unposted</span>
+                }
               </div>
               <div className="text-xs text-gray-600 mt-0.5">
                 {o.QuantityKg != null && `${o.QuantityKg} kg`}
@@ -347,7 +385,7 @@ function D2COrdersTab({ businessId }) {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
             {Object.entries(byChannel).map(([ch, v]) => (
               <div key={ch} className="border border-gray-100 rounded-lg p-2 text-xs">
-                <div className="font-semibold text-gray-700">{CHANNEL_ICON[ch] || '🔗'} {ch}</div>
+                <div className="font-semibold text-gray-700 flex items-center gap-1.5"><span className="text-gray-500">{CHANNEL_ICON[ch] || CHANNEL_ICON.other}</span>{ch}</div>
                 <div className="text-gray-500">{v.count} · ${fmt$(v.revenue)}</div>
               </div>
             ))}
@@ -372,7 +410,7 @@ function D2COrdersTab({ businessId }) {
           <D2COrderForm key={o.OrderID} order={editing} onSave={save} onCancel={() => setEdit(null)} />
         ) : (
           <div key={o.OrderID} className="bg-white border border-gray-200 rounded-xl p-3 flex items-start gap-3">
-            <div className="text-2xl shrink-0">{CHANNEL_ICON[o.Channel] || '🔗'}</div>
+            <div className="shrink-0 text-gray-500">{CHANNEL_ICON[o.Channel] || CHANNEL_ICON.other}</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <strong className="text-gray-900">{o.Channel}</strong>
@@ -386,7 +424,7 @@ function D2COrdersTab({ businessId }) {
                 {o.TotalValue != null && `$${fmt$(o.TotalValue)}`}
                 {o.DeliverySLAMinutes != null && ` · SLA ${o.DeliverySLAMinutes}m`}
               </div>
-              {o.DeliveryAddress && <div className="text-xs text-gray-500 mt-0.5">📍 {o.DeliveryAddress}</div>}
+              {o.DeliveryAddress && <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>{o.DeliveryAddress}</div>}
             </div>
             <button onClick={() => setEdit(o)} className={btnGhost}>Edit</button>
             <button onClick={() => del(o.OrderID)} className="text-xs text-red-600 hover:underline">Delete</button>

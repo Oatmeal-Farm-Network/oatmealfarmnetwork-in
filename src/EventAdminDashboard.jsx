@@ -30,7 +30,7 @@ function ActionTile({ to, href, icon, label, color }) {
   const cls = `flex items-center gap-3 px-4 py-3 rounded-xl border ${color} no-underline transition-colors`;
   const inner = (
     <>
-      <span className="text-lg">{icon}</span>
+      <span className="inline-flex items-center">{icon}</span>
       <span className="text-sm font-semibold">{label}</span>
     </>
   );
@@ -199,20 +199,20 @@ export default function EventAdminDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {typeModule && (
               <ActionTile to={`/events/${eventId}/${typeModule.path}${adminBizQs}`}
-                icon="🛠️" label={typeModule.label}
+                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>} label={typeModule.label}
                 color="border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100" />
             )}
-            <ActionTile to={`/events/${eventId}/checkin`} icon="✅" label="Check-in"
+            <ActionTile to={`/events/${eventId}/checkin`} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>} label="Check-in"
               color="border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50" />
-            <ActionTile to={`/events/${eventId}/broadcast`} icon="📣" label="Broadcast email"
+            <ActionTile to={`/events/${eventId}/broadcast`} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>} label="Broadcast email"
               color="border-amber-200 bg-white text-amber-700 hover:bg-amber-50" />
-            <ActionTile to={`/events/${eventId}/analytics`} icon="📊" label="Analytics"
+            <ActionTile to={`/events/${eventId}/analytics`} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></svg>} label="Analytics"
               color="border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50" />
-            <ActionTile href={`${API}/api/events/${eventId}/attendees.csv`} icon="⬇️" label="Attendees CSV"
+            <ActionTile href={`${API}/api/events/${eventId}/attendees.csv`} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>} label="Attendees CSV"
               color="border-gray-200 bg-white text-gray-700 hover:bg-gray-50" />
-            <ActionTile href={`${API}/api/events/${eventId}/calendar.ics`} icon="📅" label="Export .ics"
+            <ActionTile href={`${API}/api/events/${eventId}/calendar.ics`} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>} label="Export .ics"
               color="border-gray-200 bg-white text-gray-700 hover:bg-gray-50" />
-            <ActionTile to={`/events/${eventId}/certificate`} icon="🏅" label="Certificates"
+            <ActionTile to={`/events/${eventId}/certificate`} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>} label="Certificates"
               color="border-yellow-200 bg-white text-yellow-700 hover:bg-yellow-50" />
           </div>
         </div>

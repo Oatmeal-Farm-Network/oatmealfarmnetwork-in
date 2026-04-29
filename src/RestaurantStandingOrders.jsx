@@ -307,7 +307,7 @@ function OrderRow({ order: o, onPause, onResume, onRemove, onQtyChange, onFulfil
 function EmptyState({ title, body, cta }) {
   return (
     <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-      <div className="text-5xl mb-3">🔁</div>
+      <div className="flex justify-center mb-3"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
       <p className="text-lg font-bold text-gray-700">{title}</p>
       <p className="text-sm text-gray-500 mt-2 max-w-md mx-auto">{body}</p>
       {cta && <div className="mt-4">{cta}</div>}

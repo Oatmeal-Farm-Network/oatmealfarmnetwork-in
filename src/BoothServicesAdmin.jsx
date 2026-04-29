@@ -14,7 +14,15 @@ const btn = "px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg hover:bg-[#2
 const btnGhost = "px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50";
 
 const CATEGORIES = ['general', 'electrical', 'water', 'internet', 'furniture', 'av', 'shipping'];
-const CAT_ICON = { general: '📦', electrical: '⚡', water: '💧', internet: '📶', furniture: '🪑', av: '📺', shipping: '🚚' };
+const CAT_ICON = {
+  general:    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
+  electrical: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  water:      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L5 10a7 7 0 1 0 14 0L12 2z"/></svg>,
+  internet:   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>,
+  furniture:  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="10" rx="2"/><path d="M3 13h18"/><path d="M8 21v-8"/><path d="M16 21v-8"/></svg>,
+  av:         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>,
+  shipping:   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
+};
 
 function ServiceForm({ svc, onSave, onCancel }) {
   const [s, setS] = useState(svc || {
@@ -104,7 +112,7 @@ export default function BoothServicesAdmin() {
               <div className="mt-3 grid md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {revenue.by_service.filter(r => Number(r.revenue || 0) > 0).map(r => (
                   <div key={r.ServiceID} className="border border-gray-100 rounded-lg p-2 text-xs">
-                    <div className="font-semibold text-gray-700">{CAT_ICON[r.Category] || '📦'} {r.Name}</div>
+                    <div className="font-semibold text-gray-700 flex items-center gap-1.5"><span className="text-gray-500">{CAT_ICON[r.Category] || CAT_ICON.general}</span>{r.Name}</div>
                     <div className="text-gray-500">{r.units_sold} {r.Unit} · ${Number(r.revenue).toFixed(2)}</div>
                   </div>
                 ))}
@@ -128,7 +136,7 @@ export default function BoothServicesAdmin() {
             <ServiceForm key={s.ServiceID} svc={editing} onSave={save} onCancel={() => setEditing(null)} />
           ) : (
             <div key={s.ServiceID} className={`border rounded-xl p-3 flex items-start gap-3 ${s.IsActive ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-200'}`}>
-              <div className="text-2xl shrink-0">{CAT_ICON[s.Category] || '📦'}</div>
+              <div className="shrink-0 text-gray-500">{CAT_ICON[s.Category] || CAT_ICON.general}</div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <strong className={s.IsActive ? 'text-gray-900' : 'text-gray-500'}>{s.Name}</strong>

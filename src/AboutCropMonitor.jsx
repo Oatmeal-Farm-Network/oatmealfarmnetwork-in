@@ -13,13 +13,14 @@ const ACCENT = '#2563EB';
 export default function AboutCropMonitor() {
   const { t } = useTranslation();
 
+  const S = (p) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}/>;
   const features = [
-    { icon: '🛰️', titleKey: 'feat1_title', bodyKey: 'feat1_body' },
-    { icon: '🌱', titleKey: 'feat2_title', bodyKey: 'feat2_body' },
-    { icon: '📊', titleKey: 'feat3_title', bodyKey: 'feat3_body' },
-    { icon: '📈', titleKey: 'feat4_title', bodyKey: 'feat4_body' },
-    { icon: '🌾', titleKey: 'feat5_title', bodyKey: 'feat5_body' },
-    { icon: '📝', titleKey: 'feat6_title', bodyKey: 'feat6_body' },
+    { icon: <S><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/><path d="M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10"/></S>, titleKey: 'feat1_title', bodyKey: 'feat1_body' },
+    { icon: <S><path d="M7 20s4-6 4-10a4 4 0 0 0-8 0c0 4 4 10 4 10z"/><path d="M7 20h10"/><path d="M13 12s2-3 5-3"/></S>, titleKey: 'feat2_title', bodyKey: 'feat2_body' },
+    { icon: <S><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></S>, titleKey: 'feat3_title', bodyKey: 'feat3_body' },
+    { icon: <S><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></S>, titleKey: 'feat4_title', bodyKey: 'feat4_body' },
+    { icon: <S><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></S>, titleKey: 'feat5_title', bodyKey: 'feat5_body' },
+    { icon: <S><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></S>, titleKey: 'feat6_title', bodyKey: 'feat6_body' },
   ];
 
   return (
@@ -35,7 +36,7 @@ export default function AboutCropMonitor() {
         <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
         <div className="relative max-w-5xl mx-auto">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-3xl">🛰️</div>
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/><path d="M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10"/></svg></div>
             <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('crop_monitor.hero_badge')}</span>
           </div>
           <h1 className="text-4xl font-bold mb-3 drop-shadow" style={{ color: '#fff' }}>{t('crop_monitor.hero_title')}</h1>

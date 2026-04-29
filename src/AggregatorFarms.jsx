@@ -11,7 +11,8 @@ import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
-const API = import.meta.env.VITE_API_URL || '';
+const API    = import.meta.env.VITE_API_URL || '';
+const OTF_API = import.meta.env.VITE_OTF_API_URL || import.meta.env.VITE_API_URL || '';
 const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-[#819360]";
 const lbl = "block text-xs font-medium text-gray-500 mb-1";
 const btn = "px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg hover:bg-[#2d5226] disabled:opacity-50";
@@ -35,6 +36,243 @@ const S = ({ children }) => (
 const IconFarm     = () => <S><path d="M8 14V9"/><path d="M4 6c0-2.5 2-4 4-4s4 1.5 4 4-2 3-4 3-4-.5-4-3z"/></S>;
 const IconContract = () => <S><path d="M4 2h8l2 2v10H4V2z"/><line x1="6" y1="7" x2="10" y2="7"/><line x1="6" y1="9.5" x2="10" y2="9.5"/><line x1="6" y1="12" x2="8" y2="12"/></S>;
 const IconInputs   = () => <S><path d="M13 3a3.5 3.5 0 0 0-4.2 3.5L2.5 12.5a1.5 1.5 0 1 0 2 2L10 9a3.5 3.5 0 1 0 3-6z"/><circle cx="12.5" cy="3.5" r="1"/></S>;
+
+// ─────────────────────────────────────────────────────────────────
+// Add Farm Modal — search first, then invite or link
+// ─────────────────────────────────────────────────────────────────
+function AddFarmModal({ businessId, onDone, onCancel }) {
+  const [phase, setPhase]   = useState('search'); // 'search' | 'results' | 'invite'
+  const [q, setQ]           = useState('');
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr]       = useState('');
+  const [countries, setCountries] = useState([]);
+  const [states, setStates]       = useState([]);
+  const [inviteForm, setInviteForm] = useState({
+    FarmName: '', ContactName: '', ContactPhone: '', ContactEmail: '',
+    City: '', Region: '', Country: '',
+    Certification: '', Notes: '',
+  });
+
+  useEffect(() => {
+    fetch(`${API}/api/businesses/countries`)
+      .then(r => r.json())
+      .then(setCountries)
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!inviteForm.Country) { setStates([]); return; }
+    fetch(`${API}/api/businesses/states?country=${encodeURIComponent(inviteForm.Country)}`)
+      .then(r => r.json())
+      .then(setStates)
+      .catch(() => setStates([]));
+  }, [inviteForm.Country]);
+
+  const search = async () => {
+    if (q.trim().length < 2) return;
+    setSearching(true); setErr('');
+    try {
+      const r = await fetch(`${API}/api/aggregator/search?q=${encodeURIComponent(q)}`);
+      setResults(await r.json());
+      setPhase('results');
+    } catch { setErr('Search failed.'); }
+    finally { setSearching(false); }
+  };
+
+  // Link an existing business as a farm
+  const linkExisting = async (hit) => {
+    setSaving(true); setErr('');
+    const token = localStorage.getItem('access_token') || '';
+    const peopleId = localStorage.getItem('people_id') || '0';
+    try {
+      const r = await fetch(`${API}/api/aggregator/${businessId}/farms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          FarmName: hit.BusinessName || `${hit.PeopleFirstName || ''} ${hit.PeopleLastName || ''}`.trim(),
+          ContactName: `${hit.PeopleFirstName || ''} ${hit.PeopleLastName || ''}`.trim(),
+          ContactEmail: hit.PeopleEmail || '',
+          City: hit.City || '',
+          Region: hit.Region || '',
+          Country: hit.Country || '',
+          LinkedBusinessID: hit.BusinessID,
+          LinkedPeopleID: hit.PeopleID,
+          Status: 'active',
+        }),
+      });
+      if (!r.ok) throw new Error('Link failed');
+      onDone();
+    } catch (e) { setErr(e.message || 'Failed to link farm.'); }
+    finally { setSaving(false); }
+  };
+
+  // Invite a new farm (creates People + Business + sends email)
+  const inviteNew = async () => {
+    if (!inviteForm.FarmName.trim()) { setErr('Farm name is required.'); return; }
+    setSaving(true); setErr('');
+    const token = localStorage.getItem('access_token') || '';
+    const peopleId = localStorage.getItem('people_id') || '0';
+    try {
+      const r = await fetch(`${API}/api/aggregator/${businessId}/invite-farm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(inviteForm),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || 'Invite failed');
+
+      // Add the new farm's user to the org's default OTF community
+      if (data.PeopleID) {
+        try {
+          const commR = await fetch(`${OTF_API}/api/admin/mill/communities/by-business/${businessId}`);
+          const comm = await commR.json();
+          if (comm?.CommunityID) {
+            await fetch(`${OTF_API}/api/admin/mill/communities/${comm.CommunityID}/join`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-people-id': String(data.PeopleID) },
+            });
+          }
+        } catch { /* non-blocking */ }
+      }
+      onDone();
+    } catch (e) { setErr(e.message || 'Invite failed.'); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold text-lg text-gray-900">Add a Farm to Your Network</h2>
+          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+        </div>
+
+        {/* PHASE: search */}
+        {(phase === 'search' || phase === 'results') && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">First, search to see if this farm already has an account on the platform.</p>
+            <div className="flex gap-2">
+              <input
+                className={inp + ' flex-1'}
+                placeholder="Search by farm name, person name, or email…"
+                value={q}
+                onChange={e => setQ(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && search()}
+              />
+              <button onClick={search} disabled={searching || q.trim().length < 2} className={btn}>
+                {searching ? '…' : 'Search'}
+              </button>
+            </div>
+
+            {phase === 'results' && (
+              <div className="space-y-2">
+                {results.length === 0 ? (
+                  <div className="text-sm text-gray-500 italic py-2">
+                    No existing accounts found for "{q}".
+                  </div>
+                ) : (
+                  results.map((hit, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 border border-gray-200 rounded-lg p-3">
+                      <div>
+                        <div className="font-medium text-gray-900 text-sm">{hit.BusinessName || '—'}</div>
+                        <div className="text-xs text-gray-500">
+                          {[hit.PeopleFirstName, hit.PeopleLastName].filter(Boolean).join(' ')}
+                          {hit.PeopleEmail && ` · ${hit.PeopleEmail}`}
+                          {[hit.City, hit.Region, hit.Country].filter(Boolean).join(', ') && ` · ${[hit.City, hit.Region, hit.Country].filter(Boolean).join(', ')}`}
+                        </div>
+                      </div>
+                      <button onClick={() => linkExisting(hit)} disabled={saving} className={btn + ' whitespace-nowrap'}>
+                        Link farm
+                      </button>
+                    </div>
+                  ))
+                )}
+                <div className="pt-1 border-t border-gray-100">
+                  <button onClick={() => setPhase('invite')} className="text-sm text-[#3D6B34] hover:underline font-medium">
+                    Not in the list? Invite a new farm →
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PHASE: invite form */}
+        {phase === 'invite' && (
+          <div className="space-y-3">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
+              A free platform account will be created and an invite email sent to the contact.
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              <div>
+                <label className={lbl}>Farm name *</label>
+                <input className={inp} value={inviteForm.FarmName}
+                  onChange={e => setInviteForm(f => ({ ...f, FarmName: e.target.value }))} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Contact name</label>
+                  <input className={inp} value={inviteForm.ContactName}
+                    onChange={e => setInviteForm(f => ({ ...f, ContactName: e.target.value }))} />
+                </div>
+                <div>
+                  <label className={lbl}>Phone</label>
+                  <input className={inp} value={inviteForm.ContactPhone}
+                    onChange={e => setInviteForm(f => ({ ...f, ContactPhone: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <label className={lbl}>Email (used to create login)</label>
+                <input className={inp} type="email" value={inviteForm.ContactEmail}
+                  onChange={e => setInviteForm(f => ({ ...f, ContactEmail: e.target.value }))} />
+              </div>
+              <div>
+                <label className={lbl}>Country</label>
+                <select className={inp} value={inviteForm.Country}
+                  onChange={e => setInviteForm(f => ({ ...f, Country: e.target.value, Region: '' }))}>
+                  <option value="">— select country —</option>
+                  {countries.map(c => <option key={c.country_id} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>City</label>
+                  <input className={inp} value={inviteForm.City}
+                    onChange={e => setInviteForm(f => ({ ...f, City: e.target.value }))} />
+                </div>
+                <div>
+                  <label className={lbl}>State / Province</label>
+                  {states.length > 0 ? (
+                    <select className={inp} value={inviteForm.Region}
+                      onChange={e => setInviteForm(f => ({ ...f, Region: e.target.value }))}>
+                      <option value="">— select —</option>
+                      {states.map(s => <option key={s.StateIndex} value={s.name}>{s.name}</option>)}
+                    </select>
+                  ) : (
+                    <input className={inp} placeholder={inviteForm.Country ? 'State / Province' : 'Select country first'}
+                      disabled={!inviteForm.Country}
+                      value={inviteForm.Region}
+                      onChange={e => setInviteForm(f => ({ ...f, Region: e.target.value }))} />
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button onClick={() => setPhase('results')} className={btnGhost}>← Back</button>
+              <button onClick={inviteNew} disabled={saving || !inviteForm.FarmName.trim()} className={btn}>
+                {saving ? 'Sending invite…' : 'Create account & send invite'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {err && <div className="text-red-600 text-xs">{err}</div>}
+      </div>
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────
 // Farm form
@@ -80,7 +318,7 @@ function FarmForm({ farm, onSave, onCancel }) {
 function FarmsTab({ businessId }) {
   const [farms, setFarms]   = useState([]);
   const [editing, setEdit]  = useState(null);
-  const [adding, setAdd]    = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [loading, setLoad]  = useState(true);
   const [filter, setFilter] = useState('active');
 
@@ -94,12 +332,11 @@ function FarmsTab({ businessId }) {
   useEffect(refresh, [businessId, filter]);
 
   const save = async (f) => {
-    const isEdit = !!f.FarmID;
-    const url = isEdit ? `${API}/api/aggregator/farms/${f.FarmID}` : `${API}/api/aggregator/${businessId}/farms`;
-    const r = await fetch(url, { method: isEdit ? 'PUT' : 'POST',
+    const url = `${API}/api/aggregator/farms/${f.FarmID}`;
+    const r = await fetch(url, { method: 'PUT',
                                  headers: { 'Content-Type': 'application/json' },
                                  body: JSON.stringify(f) });
-    if (r.ok) { setEdit(null); setAdd(false); refresh(); } else alert('Save failed');
+    if (r.ok) { setEdit(null); refresh(); } else alert('Save failed');
   };
   const del = async (id) => {
     if (!window.confirm('Delete this farm? Contracts/inputs/purchases referencing it will become orphaned.')) return;
@@ -109,6 +346,14 @@ function FarmsTab({ businessId }) {
 
   return (
     <div className="space-y-3">
+      {showModal && (
+        <AddFarmModal
+          businessId={businessId}
+          onDone={() => { setShowModal(false); refresh(); }}
+          onCancel={() => setShowModal(false)}
+        />
+      )}
+
       <div className="flex items-center gap-3 flex-wrap">
         <select className={inp + ' max-w-xs'} value={filter} onChange={e => setFilter(e.target.value)}>
           <option value="active">Active only</option>
@@ -118,10 +363,9 @@ function FarmsTab({ businessId }) {
         </select>
         <span className="text-sm text-gray-500">{farms.length} farm{farms.length === 1 ? '' : 's'}</span>
         <div className="flex-1" />
-        <button onClick={() => setAdd(true)} className={btn}>+ Add farm</button>
+        <button onClick={() => setShowModal(true)} className={btn}>+ Add farm</button>
       </div>
 
-      {adding && <FarmForm onSave={save} onCancel={() => setAdd(false)} />}
       {loading && <div className="text-sm text-gray-500">Loading…</div>}
       {!loading && farms.length === 0 && (
         <div className="text-sm text-gray-500 italic">No farms yet. Add your first partner farm to start tracking contracts and harvests.</div>
@@ -138,6 +382,7 @@ function FarmsTab({ businessId }) {
                 <strong className="text-gray-900">{f.FarmName}</strong>
                 {f.Certification && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold uppercase">{f.Certification}</span>}
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${f.Status === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700'}`}>{f.Status}</span>
+                {f.LinkedBusinessID && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-800 font-semibold">platform account</span>}
               </div>
               <div className="text-xs text-gray-600 mt-0.5">
                 {f.ContactName && `${f.ContactName} · `}
@@ -209,7 +454,7 @@ function ContractsTab({ businessId, farms }) {
   const [editing, setEdit] = useState(null);
   const [adding, setAdd]   = useState(false);
 
-  const refresh = () => fetch(`${API}/api/aggregator/${businessId}/contracts`).then(r => r.json()).then(setList);
+  const refresh = () => { fetch(`${API}/api/aggregator/${businessId}/contracts`).then(r => r.json()).then(setList); };
   useEffect(refresh, [businessId]);
 
   const save = async (c) => {
@@ -322,7 +567,7 @@ function InputsTab({ businessId, farms }) {
   const [editing, setEdit] = useState(null);
   const [adding, setAdd]   = useState(false);
 
-  const refresh = () => fetch(`${API}/api/aggregator/${businessId}/inputs`).then(r => r.json()).then(setList);
+  const refresh = () => { fetch(`${API}/api/aggregator/${businessId}/inputs`).then(r => r.json()).then(setList); };
   useEffect(refresh, [businessId]);
 
   const save = async (i) => {

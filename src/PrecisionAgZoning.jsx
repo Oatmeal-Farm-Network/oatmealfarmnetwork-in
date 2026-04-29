@@ -324,7 +324,7 @@ export default function PrecisionAgZoning() {
               {analyses.length === 0 ? (
                 <div className="bg-white rounded-xl border border-gray-200 flex items-center justify-center" style={{ minHeight: 340 }}>
                   <div className="text-center">
-                    <div className="text-4xl mb-3">🗺️</div>
+                    <div className="flex justify-center mb-3"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>
                     <div className="font-lora text-gray-600 text-lg mb-1">No analysis data</div>
                     <div className="font-mont text-sm text-gray-400">Run an analysis to generate zone maps.</div>
                   </div>

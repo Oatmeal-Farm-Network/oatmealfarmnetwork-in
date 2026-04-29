@@ -169,8 +169,8 @@ export default function BlogAuthorDetail() {
                   style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '3px solid #e5e7eb', flexShrink: 0 }}
                   onError={e => e.target.style.display = 'none'} />
               ) : (
-                <div style={{ width: 96, height: 96, borderRadius: '50%', background: 'linear-gradient(135deg,#f3f4f6,#e5e7eb)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem' }}>
-                  👤
+                <div style={{ width: 96, height: 96, borderRadius: '50%', background: 'linear-gradient(135deg,#f3f4f6,#e5e7eb)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 </div>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -211,8 +211,8 @@ export default function BlogAuthorDetail() {
                             <img src={cover} alt={post.title} style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }}
                               onError={e => e.target.style.display = 'none'} />
                           ) : (
-                            <div style={{ width: '100%', height: 80, background: 'linear-gradient(135deg,#f3f4f6,#e5e7eb)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <span style={{ fontSize: '2rem' }}>📝</span>
+                            <div style={{ width: '100%', height: 80, background: 'linear-gradient(135deg,#f3f4f6,#e5e7eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                             </div>
                           )}
                           <div style={{ padding: '0.85rem' }}>

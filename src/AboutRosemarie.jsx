@@ -11,23 +11,29 @@ import RosemarieChat from './RosemarieChat';
 
 const ACCENT = '#8B5CF6';
 
-const FOR_ICONS = ['🌾', '🍞', '🧀', '🥒', '🍯', '🫖', '🍫', '🥓'];
-
 export default function AboutRosemarie() {
   const { t } = useTranslation();
 
-  const forItems = FOR_ICONS.map((icon, i) => ({
-    icon,
-    label: t(`rosemarie.for${i + 1}`),
-  }));
+  const S = (p) => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}/>;
+
+  const forItems = [
+    { icon: <S><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></S>, label: t('rosemarie.for1') },
+    { icon: <S><path d="M3 12C3 7 7 4 12 4s9 3 9 8v8H3v-8z"/><path d="M12 4v2"/></S>, label: t('rosemarie.for2') },
+    { icon: <S><path d="M2 16l10-12 10 12H2z"/><line x1="2" y1="16" x2="22" y2="16"/></S>, label: t('rosemarie.for3') },
+    { icon: <S><path d="M7 20s4-6 4-10a4 4 0 0 0-8 0c0 4 4 10 4 10z"/><path d="M7 20h10"/><path d="M13 12s2-3 5-3"/></S>, label: t('rosemarie.for4') },
+    { icon: <S><path d="M12 2c0 0-6 6-6 11a6 6 0 0 0 12 0c0-5-6-11-6-11z"/></S>, label: t('rosemarie.for5') },
+    { icon: <S><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/></S>, label: t('rosemarie.for6') },
+    { icon: <S><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/></S>, label: t('rosemarie.for7') },
+    { icon: <S><path d="M6 13L5 21l7-4 7 4-1-8"/><path d="M5 4l7 4 7-4"/><path d="M5 4v9m14-9v9"/></S>, label: t('rosemarie.for8') },
+  ];
 
   const capabilities = [
-    { icon: '🌾', title: t('rosemarie.cap1_title'), body: t('rosemarie.cap1_body') },
-    { icon: '📦', title: t('rosemarie.cap2_title'), body: t('rosemarie.cap2_body') },
-    { icon: '📥', title: t('rosemarie.cap3_title'), body: t('rosemarie.cap3_body') },
-    { icon: '📤', title: t('rosemarie.cap4_title'), body: t('rosemarie.cap4_body') },
-    { icon: '🏷️', title: t('rosemarie.cap5_title'), body: t('rosemarie.cap5_body') },
-    { icon: '📚', title: t('rosemarie.cap6_title'), body: t('rosemarie.cap6_body') },
+    { icon: <S><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></S>, title: t('rosemarie.cap1_title'), body: t('rosemarie.cap1_body') },
+    { icon: <S><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></S>, title: t('rosemarie.cap2_title'), body: t('rosemarie.cap2_body') },
+    { icon: <S><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></S>, title: t('rosemarie.cap3_title'), body: t('rosemarie.cap3_body') },
+    { icon: <S><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></S>, title: t('rosemarie.cap4_title'), body: t('rosemarie.cap4_body') },
+    { icon: <S><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></S>, title: t('rosemarie.cap5_title'), body: t('rosemarie.cap5_body') },
+    { icon: <S><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></S>, title: t('rosemarie.cap6_title'), body: t('rosemarie.cap6_body') },
   ];
 
   return (
@@ -44,7 +50,7 @@ export default function AboutRosemarie() {
         <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
         <div className="relative max-w-5xl mx-auto">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-3xl">🌿</div>
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></svg></div>
             <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('rosemarie.hero_badge')}</span>
           </div>
           <h1 className="text-4xl font-bold mb-3 drop-shadow" style={{ color: '#fff' }}>{t('rosemarie.hero_title')}</h1>
@@ -87,7 +93,7 @@ export default function AboutRosemarie() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {forItems.map(x => (
               <div key={x.label} className="bg-white border border-gray-200 rounded-xl p-3 text-center">
-                <div className="text-2xl mb-1">{x.icon}</div>
+                <div className="mb-1 flex justify-center">{x.icon}</div>
                 <div className="text-xs font-semibold text-gray-700">{x.label}</div>
               </div>
             ))}
@@ -151,7 +157,7 @@ function Capability({ icon, title, body }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4">
       <div className="flex items-center gap-2 mb-1">
-        <span className="text-xl">{icon}</span>
+        <span className="flex items-center">{icon}</span>
         <h3 className="font-bold text-gray-900">{title}</h3>
       </div>
       <p className="text-sm text-gray-600">{body}</p>

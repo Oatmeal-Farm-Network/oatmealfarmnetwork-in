@@ -403,7 +403,7 @@ function DataRequired({ icon, title, description, integrations }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
       <div className="flex items-start gap-3">
-        <div className="text-2xl">{icon}</div>
+        <div className="flex items-center text-gray-500">{icon}</div>
         <div className="flex-1">
           <div className="font-lora font-bold text-gray-700 mb-1">{title}</div>
           <p className="font-mont text-sm text-gray-500 mb-3">{description}</p>
@@ -507,7 +507,7 @@ function MapsTab({ latest, analyses, fieldId }) {
   if (!latest) {
     return (
       <div className="text-center py-16 rounded-xl bg-gray-50 border border-gray-100">
-        <div className="text-4xl mb-3">🛰️</div>
+        <div className="mb-3 flex justify-center text-gray-400"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/><path d="M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10"/></svg></div>
         <div className="font-lora text-xl text-gray-700 mb-1">No satellite data yet</div>
         <div className="font-mont text-sm text-gray-400">Click "Run Analysis" to generate spatial variability maps</div>
       </div>
@@ -545,7 +545,7 @@ function MapsTab({ latest, analyses, fieldId }) {
       <div>
         <SectionTitle>Variable Rate Prescription (VRT) Map</SectionTitle>
         <DataRequired
-          icon="🗺️"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>}
           title="VRT Prescription Layer"
           description="Combines vegetation index zones with field history and agronomic targets to generate equipment prescription files (ISO-XML / Shape). Requires integration with your variable-rate applicator or precision planter."
           integrations={['John Deere Operations Center', 'Climate FieldView', 'AgLeader SMS', 'Trimble Ag Software', 'CNH AFS Connect']}
@@ -555,7 +555,7 @@ function MapsTab({ latest, analyses, fieldId }) {
       <div>
         <SectionTitle>Topography & Elevation Map</SectionTitle>
         <DataRequired
-          icon="🏔️"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 20l7-14 4 8 3-5 4 11H3z"/></svg>}
           title="Elevation & Slope Data"
           description="3D contour maps showing drainage patterns, slope gradient, and water-pooling risk zones. Requires field survey data or LiDAR DEM integration."
           integrations={['USGS 3DEP LiDAR', 'Drone survey (DJI Terra)', 'John Deere Terrain Compensation', 'Custom DEM upload']}
@@ -565,7 +565,7 @@ function MapsTab({ latest, analyses, fieldId }) {
       <div>
         <SectionTitle>Yield Map</SectionTitle>
         <DataRequired
-          icon="🌾"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></svg>}
           title="Yield Monitor Data"
           description="Color-coded spatial distribution of harvest weight per acre. Requires a calibrated yield monitor connected to your combine and synced after harvest."
           integrations={['John Deere Harvest Lab', 'Precision Planting YieldSense', 'AgLeader Integra', 'Climate FieldView yield import']}
@@ -613,7 +613,7 @@ function GrowthTab({ analyses, agronomy }) {
         </div>
       ) : (
         <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
-          <div className="text-3xl mb-2">📈</div>
+          <div className="mb-2 flex justify-center text-gray-400"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
           <div className="font-lora text-gray-700">Run multiple analyses to build a vegetation trend chart</div>
         </div>
       )}
@@ -640,7 +640,7 @@ function GrowthTab({ analyses, agronomy }) {
           </div>
         ) : (
           <DataRequired
-            icon="🌡️"
+            icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>}
             title="GDD Calculation Requires Crop + Planting Date"
             description="Set the crop type and planting date in Edit Field to enable growing degree unit tracking and maturity forecasting."
             integrations={['Edit Field to add crop & planting date']}
@@ -651,7 +651,7 @@ function GrowthTab({ analyses, agronomy }) {
       <div>
         <SectionTitle>Emergence Uniformity</SectionTitle>
         <DataRequired
-          icon="🌱"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0 0 6"/><rect x="9" y="8" width="6" height="8" rx="1"/><path d="M7 15v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2"/></svg>}
           title="Planter Monitor Required"
           description="Emergence uniformity charts (% of plants emerged on Day 1 vs Day 5 vs Day 10) require row-by-row seed sensor data from a precision planting monitor."
           integrations={['Precision Planting 20|20', 'John Deere SeedStar', 'Kinze Harvest Command', 'AgLeader SureDrive']}
@@ -676,10 +676,10 @@ function SoilTab({ agronomy }) {
       <SectionTitle>Soil Nutrient Heatmaps</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[
-          { icon: '⚗️', title: 'Soil pH Map', desc: 'Spatial distribution of soil acidity. Optimal range 6.0–7.0 for most row crops. pH imbalance limits nutrient uptake even when fertility is adequate.' },
-          { icon: '🔴', title: 'Phosphorus (P) Map', desc: 'Identifies low-P zones that limit early root development. Used to generate VRT P application prescriptions to avoid over/under-application.' },
-          { icon: '🟡', title: 'Potassium (K) Map', desc: 'K drives water regulation, enzyme activation, and standability. Deficiency appears as marginal leaf scorch on older leaves.' },
-          { icon: '🟫', title: 'Organic Matter (OM) Map', desc: 'Higher OM indicates better water holding capacity, CEC, and biological activity. Target >3% for most corn-belt soils.' },
+          { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>, title: 'Soil pH Map', desc: 'Spatial distribution of soil acidity. Optimal range 6.0–7.0 for most row crops. pH imbalance limits nutrient uptake even when fertility is adequate.' },
+          { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>, title: 'Phosphorus (P) Map', desc: 'Identifies low-P zones that limit early root development. Used to generate VRT P application prescriptions to avoid over/under-application.' },
+          { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c0 0-6 6-6 11a6 6 0 0 0 12 0c0-5-6-11-6-11z"/></svg>, title: 'Potassium (K) Map', desc: 'K drives water regulation, enzyme activation, and standability. Deficiency appears as marginal leaf scorch on older leaves.' },
+          { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h18"/><path d="M3 6h18"/><path d="M3 18h18"/></svg>, title: 'Organic Matter (OM) Map', desc: 'Higher OM indicates better water holding capacity, CEC, and biological activity. Target >3% for most corn-belt soils.' },
         ].map(({ icon, title, desc }) => (
           <DataRequired key={title} icon={icon} title={title} description={desc}
             integrations={['Soil sampling lab (A&L, Ward, Midwest Labs)', 'Veris MSP3 on-the-go sensor', 'CDFA-accredited lab']} />
@@ -688,7 +688,7 @@ function SoilTab({ agronomy }) {
 
       <SectionTitle>Soil Moisture Profile</SectionTitle>
       <DataRequired
-        icon="💧"
+        icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c0 0-6 6-6 11a6 6 0 0 0 12 0c0-5-6-11-6-11z"/></svg>}
         title="Soil Moisture Probes Required"
         description="Multi-depth soil moisture charts (4″, 12″, 24″, 36″) show plant-available water at each root zone layer. Used to optimize irrigation timing and amount."
         integrations={['Sentek EnviroSCAN', 'Campbell Scientific CS650', 'METER Group TEROS', 'John Deere Water Management']}
@@ -704,7 +704,7 @@ function SoilTab({ agronomy }) {
         </div>
       ) : (
         <DataRequired
-          icon="🌡️"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>}
           title="Soil Temperature Sensor Required"
           description="Precise 2″ soil temperature determines the optimal planting window (e.g., corn needs ≥50°F for 3 consecutive days). Required for accurate GDD base calculation."
           integrations={['METER Group 5TM', 'Davis Instruments', 'WatchDog weather station', 'In-cab soil temp monitor']}
@@ -729,7 +729,7 @@ function WeatherTab({ weather, field }) {
   if (!field.latitude || !field.longitude) {
     return (
       <div className="text-center py-16 rounded-xl bg-gray-50">
-        <div className="text-4xl mb-3">📍</div>
+        <div className="mb-3 flex justify-center text-gray-400"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
         <div className="font-lora text-xl text-gray-700">Field coordinates required</div>
         <div className="font-mont text-sm text-gray-400 mt-1">Edit this field and add GPS coordinates to enable weather data</div>
       </div>
@@ -739,7 +739,7 @@ function WeatherTab({ weather, field }) {
   if (!weather?.current) {
     return (
       <div className="text-center py-16 rounded-xl bg-gray-50">
-        <div className="text-4xl mb-3">🌤️</div>
+        <div className="mb-3 flex justify-center text-gray-400"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></div>
         <div className="font-lora text-xl text-gray-700">Weather data unavailable</div>
         <div className="font-mont text-sm text-gray-400 mt-1">Could not load weather for this field's location</div>
       </div>
@@ -882,25 +882,25 @@ function OperationsTab() {
       <SectionTitle>Planter Performance</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <DataRequired
-          icon="🌾"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></svg>}
           title="Singulation Chart"
           description="Bar chart showing % of rows with skips (0 seeds) and doubles (2 seeds) vs singulated (1 seed). Target: >98% singulation. Identifies worn discs or incorrect seed sizing."
           integrations={['Precision Planting 20|20 SeedSense', 'John Deere SeedStar 3 HP', 'Kinze Harvest Command']}
         />
         <DataRequired
-          icon="⬇️"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>}
           title="Downforce / Gauge Wheel Pressure"
           description="Graph showing per-row downforce in pounds throughout the field. Ensures correct seeding depth across varying soil types. Low downforce = shallow seed placement."
           integrations={['Precision Planting DeltaForce', 'John Deere Active Pneumatic Downforce', 'Ag Leader SureDrive']}
         />
         <DataRequired
-          icon="🚜"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>}
           title="Speed vs Applied Rate Histogram"
           description="Shows what % of the field was planted at target speed and target seeding rate. Identifies headland speed violations that affect emergence uniformity."
           integrations={['John Deere Operations Center', 'Climate FieldView', 'Ag Leader InCommand']}
         />
         <DataRequired
-          icon="📏"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 6H3"/><path d="M21 12H3"/><path d="M21 18H3"/></svg>}
           title="Seeding Depth Uniformity"
           description="Row-by-row depth consistency (target ± 0.25″). Uneven depth leads to uneven emergence and significant yield loss in corn."
           integrations={['Precision Planting vDrive', 'John Deere ExactEmerge', 'AGCO RD2 Row Unit']}
@@ -910,13 +910,13 @@ function OperationsTab() {
       <SectionTitle>Fleet & Fuel Analytics</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <DataRequired
-          icon="⛽"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 22V8l8-6 8 6v14"/><path d="M10 22V16h4v6"/><path d="M3 8h18"/></svg>}
           title="Fuel Consumption & Idle Time"
           description="Pie/bar charts breaking down active field work vs idle time per operator. Used to calculate cost per acre and identify inefficiencies in field logistics."
           integrations={['John Deere Operations Center', 'CNH AFS Connect', 'AGCO Fuse', 'Samsara fleet telematics']}
         />
         <DataRequired
-          icon="⏱️"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}
           title="Field Efficiency Report"
           description="Total acres/hour, headland time %, and overlap % — shows applicator or planter efficiency and estimates savings from guidance improvements."
           integrations={['John Deere Operations Center', 'Trimble Ag Software', 'Raven Precision']}
@@ -1020,7 +1020,7 @@ function EconomicsTab({ field, analyses }) {
         </>
       ) : (
         <DataRequired
-          icon="💰"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
           title="Field Size Required for Economic Analysis"
           description="Draw a boundary polygon on the map when editing this field — the area will be calculated automatically. Or enter the size manually in hectares."
           integrations={['Edit Field → Draw boundary on map', 'Edit Field → Field Size (hectares)']}
@@ -1030,7 +1030,7 @@ function EconomicsTab({ field, analyses }) {
       <div>
         <SectionTitle>Profit / Loss Zone Map</SectionTitle>
         <DataRequired
-          icon="🗺️"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>}
           title="Yield Monitor Required"
           description="Spatial profit/loss map subtracts localized input costs from yield monitor data to show which zones of the field lost money. Identifies management zones for input optimization."
           integrations={['Combine yield monitor', 'Climate FieldView yield layers', 'John Deere Harvest Lab']}
@@ -1040,7 +1040,7 @@ function EconomicsTab({ field, analyses }) {
       <div>
         <SectionTitle>Yield vs. Variety Comparison</SectionTitle>
         <DataRequired
-          icon="📊"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></svg>}
           title="Multi-Variety Trial Data Required"
           description="Side-by-side bar charts comparing hybrid/variety performance under identical conditions. Requires strip trial data with variety boundaries tagged in the yield monitor."
           integrations={['Seed company trial portal', 'Climate FieldView strip trial', 'Encirca variety tracking']}
@@ -1084,7 +1084,7 @@ function AnalyticsTab({ analyses, recommendations }) {
         </div>
       ) : (
         <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
-          <div className="text-3xl mb-2">📉</div>
+          <div className="mb-2 flex justify-center text-gray-400"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg></div>
           <div className="font-lora text-gray-700">Run at least 2 analyses to generate correlation plots</div>
         </div>
       )}
@@ -1142,7 +1142,7 @@ function AnalyticsTab({ analyses, recommendations }) {
         <SectionTitle>AI Recommendations</SectionTitle>
         {recommendations.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
-            <div className="text-3xl mb-2">💡</div>
+            <div className="mb-2 flex justify-center text-gray-400"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg></div>
             <div className="font-lora text-gray-700">No recommendations yet — run an analysis to generate AI-powered recommendations</div>
           </div>
         ) : (
@@ -1169,7 +1169,7 @@ function AnalyticsTab({ analyses, recommendations }) {
       <div>
         <SectionTitle>Multi-Year Layer Comparison</SectionTitle>
         <DataRequired
-          icon="🗓️"
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>}
           title="Historical Yield Map Archive Required"
           description="Side-by-side or overlay comparison of NDVI/yield maps across seasons (e.g., 2022 vs 2023 vs 2024) identifies persistent problem areas that don't respond to annual management changes."
           integrations={['Yield monitor archive (John Deere Ops Center)', 'Climate FieldView historical layers', 'Custom GeoTIFF upload']}
@@ -1277,7 +1277,7 @@ function HistogramsTab({ analyses, fieldId }) {
   if (analyses.length === 0) {
     return (
       <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
-        <div className="text-5xl mb-4">📊</div>
+        <div className="mb-4 flex justify-center text-gray-400"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></svg></div>
         <div className="font-lora text-xl text-gray-600 mb-2">No analysis data</div>
         <div className="font-mont text-sm text-gray-400">Run an analysis on this field to generate histogram data.</div>
       </div>
@@ -1463,18 +1463,20 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
             ← Back to Fields
           </button>
           <h1 className="font-lora text-3xl font-bold text-gray-900">{field.name}</h1>
-          {field.address && <p className="text-gray-500 font-mont text-sm mt-1">📍 {field.address}</p>}
+          {field.address && <p className="text-gray-500 font-mont text-sm mt-1 flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {field.address}</p>}
           <div className="flex gap-4 mt-2 text-sm text-gray-500 font-mont">
-            {field.crop_type && <span>🌱 {field.crop_type}</span>}
-            {field.field_size_hectares && <span>📏 {field.field_size_hectares} ha</span>}
+            {field.crop_type && <span className="flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V12"/><path d="M17 8c0 2.5-2 4-5 4S7 10.5 7 8c0-3 2.5-5 5-5s5 2 5 5z"/></svg> {field.crop_type}</span>}
+            {field.field_size_hectares && <span className="flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 3H3v18"/><path d="m21 9-6 6-4-4-4 4"/></svg> {field.field_size_hectares} ha</span>}
           </div>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
-          <button onClick={onEdit} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-sm transition-all border border-[#6D8E22] text-[#6D8E22] hover:bg-[#f0f5e8]">
-            ✏️ Edit Field
+          <button onClick={onEdit} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-sm transition-all border border-[#6D8E22] text-[#6D8E22] hover:bg-[#f0f5e8] inline-flex items-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit Field
           </button>
-          <button onClick={onJournal} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-sm transition-all border border-gray-300 text-gray-600 hover:bg-gray-50">
-            📓 Journal
+          <button onClick={onJournal} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-sm transition-all border border-gray-300 text-gray-600 hover:bg-gray-50 inline-flex items-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            Journal
           </button>
           <button onClick={triggerAnalysis} disabled={analyzing} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-white text-sm transition-all disabled:opacity-50" style={{ background: '#819360' }}>
             {analyzing ? 'Analyzing…' : '▶ Run Analysis'}
@@ -1485,7 +1487,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
       {/* Alerts — show only on satellite-relevant tabs */}
       {alerts.length > 0 && ['overview', 'maps', 'histograms', 'growth', 'analytics'].includes(tab) && (
         <div className="rounded-xl border border-red-300 bg-red-50 p-4 mb-6">
-          <div className="font-lora font-bold text-red-700 mb-2">⚠️ {alerts.length} Active Alert{alerts.length > 1 ? 's' : ''}</div>
+          <div className="font-lora font-bold text-red-700 mb-2 flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> {alerts.length} Active Alert{alerts.length > 1 ? 's' : ''}</div>
           {alerts.map((a, i) => <div key={i} className="text-sm text-red-700 font-mont">{a.message || a.alert_type}</div>)}
         </div>
       )}
@@ -1511,7 +1513,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
                 </div>
               ) : (
                 <div className="text-center py-16 rounded-xl bg-gray-50 border border-gray-100">
-                  <div className="text-4xl mb-3">📡</div>
+                  <div className="flex justify-center mb-3"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4.9 4.9A10 10 0 1 0 19.1 19.1"/><path d="M16.24 7.76A6 6 0 1 0 7.76 16.24"/><path d="M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><line x1="12" y1="12" x2="21" y2="21"/></svg></div>
                   <div className="font-lora text-xl text-gray-700 mb-1">No analysis data yet</div>
                   <div className="font-mont text-sm text-gray-400">Click "Run Analysis" to get started</div>
                 </div>
@@ -1522,7 +1524,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
                   <h3 className="font-lora font-bold text-gray-900 text-lg mb-1">Vegetation Indices</h3>
                   <p className="font-mont text-xs text-gray-400 mb-3">
                     As of {new Date(latest.analysis_date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
-                    {latest.cloud_percent > 20 && <span className="ml-2 text-amber-600">☁ {latest.cloud_percent.toFixed(0)}% cloud cover</span>}
+                    {latest.cloud_percent > 20 && <span className="ml-2 text-amber-600 inline-flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg> {latest.cloud_percent.toFixed(0)}% cloud cover</span>}
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {['NDVI', 'NDRE', 'EVI', 'GNDVI', 'NDWI'].map(name => {
@@ -1556,7 +1558,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
                   <h3 className="font-lora font-bold text-gray-900 text-lg mb-3">Agronomy Snapshot</h3>
                   {!agronomy.gdd && !agronomy.growth_stage && (
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3 text-sm font-mont mb-3">
-                      <span>📅</span>
+                      <span className="flex items-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
                       <span className="text-amber-800">GDD and growth stage require a planting date.{' '}
                         <button onClick={onEdit} className="font-semibold underline">Set crop & planting date in field settings →</button>
                       </span>
@@ -1660,7 +1662,7 @@ export default function PrecisionAgAnalyses() {
           />
         ) : (
           <div className="text-center py-24">
-            <div className="text-5xl mb-4">🌾</div>
+            <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V12"/><path d="M17 8c0 2.5-2 4-5 4S7 10.5 7 8c0-3 2.5-5 5-5s5 2 5 5z"/><line x1="12" y1="22" x2="4" y2="22"/><line x1="12" y1="22" x2="20" y2="22"/></svg></div>
             <div className="font-lora text-2xl text-gray-700 mb-2">Field Analysis</div>
             <div className="font-mont text-sm text-gray-400">Select a field from the Fields page to view its analysis</div>
             <button

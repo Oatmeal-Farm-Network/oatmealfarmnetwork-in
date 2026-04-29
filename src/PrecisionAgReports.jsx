@@ -301,7 +301,7 @@ export default function PrecisionAgReports() {
             {/* Empty state */}
             {analyses.length === 0 && soilSamples.length === 0 && scouts.length === 0 && (
               <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
-                <div className="text-5xl mb-4">📄</div>
+                <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
                 <div className="font-lora text-xl text-gray-600 mb-2">No data yet</div>
                 <div className="font-mont text-sm text-gray-400">
                   Run a satellite analysis, add soil samples, or log scouting observations to generate a report.

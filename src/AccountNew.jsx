@@ -9,16 +9,40 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const OTF_API = import.meta.env.VITE_OTF_API_URL || import.meta.env.VITE_API_URL || '';
 const FORM_MAX_WIDTH = '640px';
 
-async function createOTFCommunity(businessId, businessName) {
+async function createOTFCommunity(businessId, businessName, knownPeopleId) {
   try {
-    const token   = localStorage.getItem('access_token') || '';
-    const peopleId = localStorage.getItem('people_id') || '0';
-    await fetch(`${OTF_API}/api/admin/mill/communities`, {
+    const token    = localStorage.getItem('access_token') || '';
+    // Accept the caller's known peopleId, or fall back to either localStorage key
+    const peopleId = String(
+      knownPeopleId ||
+      localStorage.getItem('people_id') ||
+      localStorage.getItem('PeopleID') ||
+      new URLSearchParams(window.location.search).get('PeopleID') ||
+      '0'
+    );
+    if (!peopleId || peopleId === '0') {
+      console.warn('[OTF] skipping community creation — no people_id available');
+      return;
+    }
+    const res = await fetch(`${OTF_API}/api/admin/mill/communities`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-people-id': peopleId },
-      body: JSON.stringify({ name: businessName, linkedType: 'business', linkedId: businessId }),
+      body: JSON.stringify({
+        name: `${businessName || 'My Org'} — Over The Fence`,
+        linkedBusinessId: businessId,
+        isPublic: false,
+        iconEmoji: '🌾',
+      }),
     });
-  } catch { /* non-blocking */ }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      console.warn('[OTF] community creation failed:', res.status, data);
+    } else {
+      console.log('[OTF] community created:', data);
+    }
+  } catch (e) {
+    console.warn('[OTF] community creation error:', e);
+  }
 }
 
 const money = (n, ccy = 'USD') =>
@@ -49,6 +73,8 @@ export default function AccountNew() {
     AddressStreet: '',
     AddressApt: '',
     AddressCity: '',
+    country_id: '',
+    country: '',
     StateIndex: '',
     AddressZip: '',
     PeoplePhone: '',
@@ -57,7 +83,9 @@ export default function AccountNew() {
     SalesLegalDisclaimer: false,
   });
 
-  const peopleId = localStorage.getItem('people_id');
+  const peopleId = localStorage.getItem('people_id') ||
+                   localStorage.getItem('PeopleID') ||
+                   new URLSearchParams(window.location.search).get('PeopleID');
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -70,16 +98,24 @@ export default function AccountNew() {
 
     fetch(`${API_URL}/api/businesses/countries`)
       .then(r => r.json())
-      .then(data => setCountries(Array.isArray(data) ? data : []))
+      .then(data => {
+        const list = Array.isArray(data) ? data : [];
+        setCountries(list);
+        // Default to United States on first load
+        const us = list.find(c => c.name === 'USA' || c.name === 'United States');
+        if (us) setForm(f => ({ ...f, country_id: us.country_id, country: us.name }));
+      })
       .catch(() => {});
   }, [navigate]);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/businesses/states?country=USA`)
+    if (!form.country) return;
+    setStates([]);
+    fetch(`${API_URL}/api/businesses/states?country=${encodeURIComponent(form.country)}`)
       .then(r => r.json())
       .then(data => setStates(Array.isArray(data) ? data : []))
       .catch(() => {});
-  }, []);
+  }, [form.country]);
 
   // Load packages when user reaches the plan step. Filter by the chosen
   // business type so sellers don't see irrelevant offerings.
@@ -126,7 +162,7 @@ export default function AccountNew() {
       const data = await res.json();
       if (res.ok) {
         setCreatedBusinessId(data.BusinessID);
-        createOTFCommunity(data.BusinessID, form.BusinessName || '');
+        createOTFCommunity(data.BusinessID, form.BusinessName || '', peopleId);
         setStep(2);
       } else {
         setErrors({ submit: data.detail || 'An error occurred. Please try again.' });
@@ -265,9 +301,31 @@ export default function AccountNew() {
               </div>
 
               <div>
+                <label className={labelClass}>Country</label>
+                <select
+                  value={form.country_id}
+                  onChange={e => {
+                    const chosen = countries.find(c => String(c.country_id) === e.target.value);
+                    setForm(f => ({ ...f, country_id: e.target.value, country: chosen ? chosen.name : '', StateIndex: '' }));
+                  }}
+                  className={inputClass}
+                >
+                  <option value="">Select a country...</option>
+                  {countries.map(c => (
+                    <option key={c.country_id} value={c.country_id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label className={labelClass}>State / Province</label>
-                <select value={form.StateIndex} onChange={e => update('StateIndex', e.target.value)} className={inputClass}>
-                  <option value="">Select...</option>
+                <select
+                  value={form.StateIndex}
+                  onChange={e => update('StateIndex', e.target.value)}
+                  className={inputClass}
+                  disabled={!form.country}
+                >
+                  <option value="">{form.country ? 'Select...' : 'Select a country first'}</option>
                   {states.map(s => (
                     <option key={s.StateIndex} value={s.StateIndex}>{s.name}</option>
                   ))}

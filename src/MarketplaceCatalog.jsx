@@ -186,7 +186,12 @@ export default function MarketplaceCatalog() {
                       <img src={l.ImageURL} alt={l.Title} className="w-full h-44 object-cover" onError={e => { e.target.style.display = 'none'; }} />
                     ) : (
                       <div className="w-full h-44 bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
-                        <span className="text-4xl">{l.ProductType === 'meat' ? '🥩' : l.ProductType === 'processed_food' ? '🫙' : '🥬'}</span>
+                        {l.ProductType === 'meat'
+                          ? <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M18.6 6.62a2.5 2.5 0 0 1-3.53 3.53L5 20a2 2 0 0 1-2.83-2.83l10.16-10.16a2.5 2.5 0 0 1 3.53-3.53"/><path d="m15.5 5.5-3 3"/></svg>
+                          : l.ProductType === 'processed_food'
+                          ? <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2h8l1 7H7L8 2z"/><path d="M7 9c0 7 2 11 5 11s5-4 5-11"/></svg>
+                          : <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 22"/><path d="M9.5 9.5s1-3 4.5-5c0 0 1 3-1 7"/><path d="M3.82 22s1.5-3.5 8.18-4.5"/></svg>
+                        }
                       </div>
                     )}
                     <div className="absolute top-2 left-2 flex gap-1">

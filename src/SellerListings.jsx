@@ -611,7 +611,7 @@ export default function SellerListings() {
               <div className="text-center py-12 text-gray-400">Loading…</div>
             ) : products.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
-                <div className="text-3xl mb-2">🛍️</div>
+                <div className="flex justify-center mb-2"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
                 <p className="mb-3">No products yet. List your farm goods, handcrafted items, and more.</p>
                 <button onClick={openAdd}
                   className="bg-[#3D6B34] text-white font-semibold px-5 py-2 rounded-lg hover:bg-[#2d5226] text-sm">

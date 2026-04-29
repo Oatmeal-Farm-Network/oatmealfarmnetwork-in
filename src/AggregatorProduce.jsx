@@ -111,6 +111,8 @@ function PurchasesTab({ businessId, farms }) {
   const [adding, setAdd]   = useState(false);
   const [residue, setRes]  = useState('');
   const [crop, setCrop]    = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState(null);
 
   const refresh = () => {
     const qs = new URLSearchParams();
@@ -136,9 +138,23 @@ function PurchasesTab({ businessId, farms }) {
     await fetch(`${API}/api/aggregator/purchases/${id}`, { method: 'DELETE' });
     refresh();
   };
+  const sync = async () => {
+    setSyncing(true); setSyncMsg(null);
+    const r = await fetch(`${API}/api/aggregator/${businessId}/accounting/sync`, { method: 'POST' }).catch(() => null);
+    if (r?.ok) {
+      const res = await r.json();
+      setSyncMsg(`Posted ${res.bills_created} new bill${res.bills_created === 1 ? '' : 's'} to accounting.`);
+      refresh();
+    } else {
+      const err = await r?.json().catch(() => ({}));
+      setSyncMsg(err?.detail || 'Sync failed — check accounting setup.');
+    }
+    setSyncing(false);
+  };
 
   const totalSpend = list.reduce((acc, r) => acc + Number(r.TotalPaid || 0), 0);
   const totalKg    = list.reduce((acc, r) => acc + Number(r.QuantityKg || 0), 0);
+  const unposted   = list.filter(r => !r.AccountingBillID).length;
   const crops = [...new Set(list.map(r => r.CropType).filter(Boolean))].sort();
 
   const residueColor = (st) => st === 'passed' ? 'bg-emerald-100 text-emerald-800'
@@ -150,10 +166,11 @@ function PurchasesTab({ businessId, farms }) {
 
   return (
     <div className="space-y-3">
-      <div className="bg-white border border-gray-200 rounded-xl p-3 grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+      <div className="bg-white border border-gray-200 rounded-xl p-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
         <div><div className="text-[10px] uppercase text-gray-500 font-semibold">Records (filtered)</div><div className="text-xl font-bold">{list.length}</div></div>
         <div><div className="text-[10px] uppercase text-gray-500 font-semibold">Total spend</div><div className="text-xl font-bold">${fmt$(totalSpend)}</div></div>
         <div><div className="text-[10px] uppercase text-gray-500 font-semibold">Total received</div><div className="text-xl font-bold">{fmtKg(totalKg)} kg</div></div>
+        <div><div className="text-[10px] uppercase text-gray-500 font-semibold">Unposted</div><div className={`text-xl font-bold ${unposted > 0 ? 'text-amber-600' : 'text-gray-400'}`}>{unposted}</div></div>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -166,8 +183,18 @@ function PurchasesTab({ businessId, farms }) {
           {crops.map(c => <option key={c}>{c}</option>)}
         </select>
         <div className="flex-1" />
+        {unposted > 0 && (
+          <button onClick={sync} disabled={syncing} className="px-3 py-1.5 text-sm border border-[#3D6B34] text-[#3D6B34] rounded-lg hover:bg-[#f0f7ec] disabled:opacity-50">
+            {syncing ? 'Posting…' : `Post ${unposted} to Accounting`}
+          </button>
+        )}
         <button onClick={() => setAdd(true)} disabled={farms.length === 0} className={btn}>+ Record purchase</button>
       </div>
+      {syncMsg && (
+        <div className={`text-xs rounded-lg px-3 py-2 ${syncMsg.includes('failed') || syncMsg.includes('check') ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
+          {syncMsg}
+        </div>
+      )}
       {farms.length === 0 && <div className="text-sm text-gray-500 italic">Add farms first.</div>}
       {adding && <PurchaseForm farms={farms} contracts={contracts} onSave={save} onCancel={() => setAdd(false)} />}
 
@@ -185,6 +212,10 @@ function PurchasesTab({ businessId, farms }) {
                 {p.Grade && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-semibold uppercase">{p.Grade}</span>}
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${residueColor(p.ResidueTestStatus)}`}>residue: {p.ResidueTestStatus}</span>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${paymentColor(p.PaymentStatus)}`}>{p.PaymentStatus}</span>
+                {p.AccountingBillID
+                  ? <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-semibold uppercase">BILL #{p.AccountingBillID}</span>
+                  : <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold uppercase">unposted</span>
+                }
               </div>
               <div className="text-xs text-gray-600 mt-0.5">
                 {fmtKg(p.QuantityKg)} kg{p.PricePerKg != null && ` @ $${fmt$(p.PricePerKg)}/kg`}

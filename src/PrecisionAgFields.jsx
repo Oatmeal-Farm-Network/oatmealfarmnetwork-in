@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+const IcoEdit = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+const IcoDel  = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>;
 import AccountLayout from './AccountLayout';
 import MoonPhase from './MoonPhase';
 import WeatherCompact from './WeatherCompact';
@@ -751,7 +753,7 @@ function FieldList({ businessId, onCreateNew }) {
                     <td style={tdStyle}>
                       <div className="flex items-center gap-2">
                         <Link to={`/precision-ag/fields?BusinessID=${businessId}&view=edit-field&FieldID=${fieldId}`} title="Edit">
-                          <img src="/icons/Edit.svg" width="20" alt="Edit" onError={e => e.target.style.display='none'} />
+                          <IcoEdit />
                         </Link>
                         <span className="text-gray-300">|</span>
                         <button
@@ -760,7 +762,7 @@ function FieldList({ businessId, onCreateNew }) {
                           onClick={() => setConfirmDeleteId(fieldId)}
                           className="bg-transparent border-0 p-0 cursor-pointer"
                         >
-                          <img src="/icons/Delete.svg" width="20" alt="Delete" onError={e => e.target.style.display='none'} />
+                          <IcoDel />
                         </button>
                       </div>
                     </td>

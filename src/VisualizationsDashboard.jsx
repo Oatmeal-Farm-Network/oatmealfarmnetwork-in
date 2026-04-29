@@ -10,7 +10,7 @@ const DASHBOARDS = [
     key: 'crop-analysis-summary',
     title: 'Crop Analysis Summary',
     blurb: 'Filter by field, crop, type, soil, zone, or pH and see KPIs, distributions, the nutrient matrix, and a detail table.',
-    icon: '/icons/PrecisionAg.svg',
+    icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5a7a40" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
     to: '/precision-ag/visualizations/crop-analysis-summary',
   },
 ];
@@ -41,7 +41,7 @@ export default function VisualizationsDashboard() {
               className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-[#819360] transition"
             >
               <div className="flex items-center gap-3 mb-2">
-                <img src={d.icon} alt="" className="w-8 h-8" />
+                {d.icon}
                 <h2 className="font-semibold text-gray-800">{d.title}</h2>
               </div>
               <p className="text-sm text-gray-600">{d.blurb}</p>

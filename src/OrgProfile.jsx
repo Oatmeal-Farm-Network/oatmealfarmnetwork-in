@@ -6,22 +6,29 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
-import { FaFacebookF, FaPinterestP, FaXTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaGlobe, FaBlog } from 'react-icons/fa6';
+const IcoFacebook  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
+const IcoPinterest = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.24 2.65 7.86 6.39 9.29-.09-.78-.17-1.98.03-2.83.19-.77 1.27-5.38 1.27-5.38s-.32-.65-.32-1.61c0-1.51.87-2.64 1.96-2.64.92 0 1.37.69 1.37 1.53 0 .93-.59 2.33-.9 3.62-.26 1.08.54 1.96 1.6 1.96 1.92 0 3.4-2.02 3.4-4.94 0-2.58-1.86-4.39-4.51-4.39-3.07 0-4.87 2.3-4.87 4.68 0 .93.36 1.92.8 2.46.09.11.1.2.07.31-.08.34-.26 1.08-.3 1.23-.05.2-.17.24-.38.14-1.39-.65-2.26-2.68-2.26-4.32 0-3.51 2.55-6.74 7.36-6.74 3.86 0 6.86 2.75 6.86 6.42 0 3.83-2.41 6.91-5.76 6.91-1.12 0-2.18-.58-2.55-1.27l-.69 2.59c-.25.97-.93 2.18-1.39 2.92.75.23 1.54.36 2.36.36 5.52 0 10-4.48 10-10S17.52 2 12 2z"/></svg>;
+const IcoTwitterX  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>;
+const IcoInstagram = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>;
+const IcoLinkedIn  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>;
+const IcoYouTube   = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.97C18.88 4 12 4 12 4s-6.88 0-8.59.45a2.78 2.78 0 0 0-1.95 1.97A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.97C5.12 20 12 20 12 20s6.88 0 8.59-.45a2.78 2.78 0 0 0 1.95-1.97A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon fill="white" points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>;
+const IcoGlobe     = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
+const IcoBlog      = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1" fill="currentColor" stroke="none"/></svg>;
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const GCP = 'https://storage.googleapis.com/oatmeal-farm-network-images/Animals/Uploads';
 
 const SOCIAL_LINKS = [
-  { key: 'facebook',    label: 'Facebook',    icon: <FaFacebookF />,  base: 'https://facebook.com/',          color: 'bg-[#1877F2]' },
-  { key: 'instagram',   label: 'Instagram',   icon: <FaInstagram />,  base: 'https://instagram.com/',         color: 'bg-[#E1306C]' },
-  { key: 'linkedin',    label: 'LinkedIn',    icon: <FaLinkedinIn />, base: 'https://linkedin.com/company/',  color: 'bg-[#0A66C2]' },
-  { key: 'x',          label: 'Twitter / X', icon: <FaXTwitter />,   base: 'https://twitter.com/',           color: 'bg-black' },
-  { key: 'pinterest',  label: 'Pinterest',   icon: <FaPinterestP />, base: 'https://pinterest.com/',         color: 'bg-[#E60023]' },
-  { key: 'youtube',    label: 'YouTube',     icon: <FaYoutube />,    base: 'https://youtube.com/',           color: 'bg-[#FF0000]' },
-  { key: 'blog',       label: 'Blog',        icon: <FaBlog />,       base: '',                               color: 'bg-[#507033]' },
-  { key: 'truth_social',label:'Truth Social', icon: <FaGlobe />,     base: '',                               color: 'bg-[#5b2d8e]' },
-  { key: 'other_social1',label:'Social',      icon: <FaGlobe />,     base: '',                               color: 'bg-gray-500' },
-  { key: 'other_social2',label:'Social',      icon: <FaGlobe />,     base: '',                               color: 'bg-gray-500' },
+  { key: 'facebook',    label: 'Facebook',    icon: <IcoFacebook />,  base: 'https://facebook.com/',          color: 'bg-[#1877F2]' },
+  { key: 'instagram',   label: 'Instagram',   icon: <IcoInstagram />, base: 'https://instagram.com/',         color: 'bg-[#E1306C]' },
+  { key: 'linkedin',    label: 'LinkedIn',    icon: <IcoLinkedIn />,  base: 'https://linkedin.com/company/',  color: 'bg-[#0A66C2]' },
+  { key: 'x',          label: 'Twitter / X', icon: <IcoTwitterX />,  base: 'https://twitter.com/',           color: 'bg-black' },
+  { key: 'pinterest',  label: 'Pinterest',   icon: <IcoPinterest />, base: 'https://pinterest.com/',         color: 'bg-[#E60023]' },
+  { key: 'youtube',    label: 'YouTube',     icon: <IcoYouTube />,   base: 'https://youtube.com/',           color: 'bg-[#FF0000]' },
+  { key: 'blog',       label: 'Blog',        icon: <IcoBlog />,      base: '',                               color: 'bg-[#507033]' },
+  { key: 'truth_social',label:'Truth Social', icon: <IcoGlobe />,    base: '',                               color: 'bg-[#5b2d8e]' },
+  { key: 'other_social1',label:'Social',      icon: <IcoGlobe />,    base: '',                               color: 'bg-gray-500' },
+  { key: 'other_social2',label:'Social',      icon: <IcoGlobe />,    base: '',                               color: 'bg-gray-500' },
 ];
 
 // ── Contact form ──────────────────────────────────────────────────────────────
@@ -49,7 +56,9 @@ function ContactForm({ ranch }) {
 
   if (sent) return (
     <div style={{ backgroundColor: '#d4edda', border: '1px solid #c3e6cb', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
-      <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✓</div>
+      <div style={{ marginBottom: '8px', display:'flex', justifyContent:'center' }}>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#155724" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
       <h3 style={{ color: '#155724', margin: '0 0 8px' }}>{t('org_profile.form_sent_title')}</h3>
       <p style={{ color: '#155724', margin: 0 }}>{t('org_profile.form_sent_body', { name: ranch.business_name })}</p>
     </div>
@@ -218,7 +227,9 @@ function ServicesTab({ businessId }) {
               style={{ width: '72px', height: '72px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
               onError={e => e.target.style.display = 'none'} />
           ) : (
-            <div style={{ width: '72px', height: '72px', background: '#f3f4f6', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>🔧</div>
+            <div style={{ width: '72px', height: '72px', background: '#f3f4f6', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            </div>
           )}
           <div style={{ flexGrow: 1 }}>
             <div style={{ fontWeight: 700, fontSize: '1rem', color: '#222', marginBottom: '4px' }}>{svc.ServiceTitle}</div>
@@ -324,7 +335,9 @@ function SFProductsTab({ items }) {
           {p.ImageURL ? (
             <img src={p.ImageURL} alt={p.Title || p.prodName} style={{ width: '100%', height: '140px', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
           ) : (
-            <div style={{ height: '80px', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>🛍️</div>
+            <div style={{ height: '80px', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
           )}
           <div style={{ padding: '12px' }}>
             <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#222', marginBottom: '4px' }}>{p.Title || p.prodName}</div>
@@ -485,7 +498,7 @@ function EventsTab({ events }) {
               <div style={{ padding: '14px 16px', flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '1rem', color: '#222', marginBottom: '4px' }}>{ev.EventName}</div>
                 {startDate && <div style={{ fontSize: '0.82rem', color: '#507033', fontWeight: 600, marginBottom: '2px' }}>{startDate}{endDate && endDate !== startDate ? ` – ${endDate}` : ''}</div>}
-                {location && <div style={{ fontSize: '0.82rem', color: '#666', marginBottom: '4px' }}>📍 {location}</div>}
+                {location && <div style={{ fontSize: '0.82rem', color: '#666', marginBottom: '4px', display:'flex', alignItems:'center', gap:3 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {location}</div>}
                 {ev.EventType && <span style={{ fontSize: '0.75rem', background: '#f0f4ed', color: '#507033', borderRadius: '4px', padding: '2px 8px', fontWeight: 600 }}>{ev.EventType}</span>}
               </div>
             </div>
@@ -796,10 +809,10 @@ export default function OrgProfile() {
               fontSize: '0.85rem',
               color: '#555',
             }}>
-              {ranch.cuisine          && <span>🍽️ <strong>{ranch.cuisine}</strong></span>}
-              {ranch.head_chef        && <span>👨‍🍳 Chef <strong>{ranch.head_chef}</strong></span>}
-              {ranch.seating_capacity && <span>🪑 Seats <strong>{ranch.seating_capacity}</strong></span>}
-              {ranch.year_opened      && <span>📅 Est. <strong>{ranch.year_opened}</strong></span>}
+              {ranch.cuisine          && <span style={{display:'inline-flex',alignItems:'center',gap:3}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg> <strong>{ranch.cuisine}</strong></span>}
+              {ranch.head_chef        && <span style={{display:'inline-flex',alignItems:'center',gap:3}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7a4 4 0 0 0-4-4 4 4 0 0 0-4 4 4 4 0 0 0-4-4 4 4 0 0 0-4 4 4 4 0 0 0 4 4h8a4 4 0 0 0 4-4z"/><path d="M8 11v9h8v-9"/></svg> Chef <strong>{ranch.head_chef}</strong></span>}
+              {ranch.seating_capacity && <span style={{display:'inline-flex',alignItems:'center',gap:3}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.7 17a2 2 0 0 1 .3 1v2H3v-2a2 2 0 0 1 .3-1l3-6H6V8a2 2 0 0 1 4 0v3h4V8a2 2 0 0 1 4 0v3h-.3l3 6z"/></svg> Seats <strong>{ranch.seating_capacity}</strong></span>}
+              {ranch.year_opened      && <span style={{display:'inline-flex',alignItems:'center',gap:3}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Est. <strong>{ranch.year_opened}</strong></span>}
               {ranch.restaurant_hours && <span>🕐 {ranch.restaurant_hours}</span>}
             </div>
           )}

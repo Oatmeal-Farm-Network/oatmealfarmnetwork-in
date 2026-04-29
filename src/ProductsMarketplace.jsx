@@ -334,7 +334,7 @@ export default function ProductsMarketplace() {
             </div>
           ) : products.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-100 p-16 text-center text-gray-400">
-              <div className="text-4xl mb-3">🛍️</div>
+              <div className="flex justify-center mb-3"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
               <p className="font-medium">{t('prod_mkt.no_products')}</p>
               {search && <button onClick={() => { setSearch(''); setSearchInput(''); }} className="mt-2 text-sm text-[#3D6B34] hover:underline">{t('prod_mkt.clear_search')}</button>}
             </div>
@@ -437,7 +437,7 @@ export default function ProductsMarketplace() {
             <div className="flex-grow overflow-y-auto px-5 py-4">
               {cart.length === 0 ? (
                 <div className="text-center text-gray-400 py-16">
-                  <div className="text-4xl mb-3">🛍️</div>
+                  <div className="flex justify-center mb-3"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
                   <p>{t('prod_mkt.cart_empty')}</p>
                 </div>
               ) : (

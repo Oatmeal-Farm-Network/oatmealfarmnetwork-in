@@ -336,7 +336,7 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
               <span style={{ padding: '3px 10px', background: '#f3f4f6', borderRadius: 6, fontSize: 11, fontWeight: 600, color: '#6b7280' }}>{fieldData.texture} Soil</span>
             </div>
             <div style={{ fontSize: 12, color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-              📍 {fieldData.location.lat.toFixed(4)}°, {fieldData.location.lon.toFixed(4)}°
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {fieldData.location.lat.toFixed(4)}°, {fieldData.location.lon.toFixed(4)}°
               <span style={{ margin: '0 4px' }}>•</span>
               {fieldData.acres} {t('crop_detection.drawer_acres')}
               {fieldData.county && <><span style={{ margin: '0 4px' }}>•</span>{fieldData.county} {t('crop_detection.drawer_county')}</>}
@@ -379,7 +379,7 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
           {fieldData.healthData && (
             <div style={{ background: 'linear-gradient(135deg,#f0f9ff,#e0f2fe)', border: '1px solid #bae6fd', borderRadius: 12, padding: 18, marginBottom: 14 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                ⚡ {t('crop_detection.drawer_health_title')}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> {t('crop_detection.drawer_health_title')}
               </div>
               <div style={{ display: 'flex', gap: 16 }}>
                 <div style={{ width: 96, height: 96, borderRadius: '50%', border: `6px solid ${scoreColor}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'white', flexShrink: 0 }}>
@@ -404,17 +404,17 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
           {fieldData.depthSummaries?.length > 0 && fieldData.depthSummaries.map((entry, idx) => (
             <div key={`${entry.depth}-${idx}`} style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 18, marginBottom: 14 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                🥧 {t('crop_detection.drawer_soil_composition')} <span style={{ fontWeight: 500, textTransform: 'none', color: '#6b7280' }}>({entry.depth})</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> {t('crop_detection.drawer_soil_composition')} <span style={{ fontWeight: 500, textTransform: 'none', color: '#6b7280' }}>({entry.depth})</span>
               </div>
               <SoilPie soil={entry.soil} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
                 {[
-                  ['💧', t('crop_detection.drawer_ph'), entry.soil.ph?.toFixed(1) || '—', '#3b82f6'],
-                  ['🌿', t('crop_detection.drawer_carbon'), `${entry.soil.soc?.toFixed(1) || '—'} g/kg`, '#10b981'],
-                  ['📊', t('crop_detection.drawer_clay'), `${entry.soil.clay?.toFixed(1) || '—'}%`, '#8b5cf6'],
+                  [<svg key="ph" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c0 0-6 6-6 11a6 6 0 0 0 12 0c0-5-6-11-6-11z"/></svg>, t('crop_detection.drawer_ph'), entry.soil.ph?.toFixed(1) || '—', '#3b82f6'],
+                  [<svg key="c" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></svg>, t('crop_detection.drawer_carbon'), `${entry.soil.soc?.toFixed(1) || '—'} g/kg`, '#10b981'],
+                  [<svg key="cl" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></svg>, t('crop_detection.drawer_clay'), `${entry.soil.clay?.toFixed(1) || '—'}%`, '#8b5cf6'],
                 ].map(([icon, label, val]) => (
                   <div key={label} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 8px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 16 }}>{icon}</div>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>{icon}</div>
                     <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 500, marginTop: 2 }}>{label}</div>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginTop: 2 }}>{val}</div>
                   </div>
@@ -426,7 +426,7 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
           {/* Fertilizer */}
           {fieldData.fertilizerPlan?.length > 0 && (
             <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 18, marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>🧫 {t('crop_detection.drawer_fertilizer_title')}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg> {t('crop_detection.drawer_fertilizer_title')}</div>
               {fieldData.fertilizerPlan.map((plan, i) => (
                 <div key={i} style={{ background: '#fefce8', border: '1px solid #fde68a', borderRadius: 8, padding: 14, marginBottom: i < fieldData.fertilizerPlan.length - 1 ? 10 : 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -449,7 +449,7 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
           {/* Crop Recommendations */}
           {fieldData.recommendations?.length > 0 && (
             <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 18, marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>📈 {t('crop_detection.drawer_crop_matches')}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> {t('crop_detection.drawer_crop_matches')}</div>
               {fieldData.recommendations.slice(0, 5).map((rec, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: '#f9fafb', border: '1px solid #f3f4f6', borderRadius: 8, marginBottom: 6 }}>
                   <div style={{ width: 22, height: 22, background: '#1a237e', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>#{i + 1}</div>
@@ -470,7 +470,7 @@ function AnalysisDrawer({ open, fieldData, onClose, onSaveField, drawnPolygon, b
           {/* Crop History */}
           {fieldData.history && Object.keys(fieldData.history).length > 0 && (
             <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 18 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>🌾 {t('crop_detection.drawer_history_title')}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></svg> {t('crop_detection.drawer_history_title')}</div>
               <div style={{ maxHeight: 300, overflowY: 'auto', paddingRight: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {Object.entries(fieldData.history).sort(([a], [b]) => parseInt(b) - parseInt(a)).map(([year, info]) => (
                   <div key={year} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -980,7 +980,7 @@ export default function CropDetection() {
 
         {/* Title bar */}
         <div style={{ padding: '12px 24px', background: 'white', borderBottom: '1px solid #e8e0d5', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <span style={{ fontSize: 22 }}>🌾</span>
+          <span style={{ display: 'inline-flex', color: '#3D6B34' }}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></svg></span>
           <div>
             <div style={{ fontFamily: 'Georgia,serif', fontWeight: 700, fontSize: 17, color: '#2c1a0e' }}>{t('crop_detection.heading')}</div>
             <div style={{ fontSize: 12, color: '#8b7355' }}>{t('crop_detection.subtitle')}</div>
@@ -1013,7 +1013,7 @@ export default function CropDetection() {
           <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 300, background: 'white', zIndex: 20, boxShadow: '2px 0 16px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column' }}>
 
             <div style={{ padding: '18px 16px 14px', background: 'linear-gradient(135deg,#1a237e,#283593)', color: 'white', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 20 }}>🗺</span>
+              <span style={{ display: 'inline-flex' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg></span>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 15 }}>{t('crop_detection.panel_title')}</div>
                 <div style={{ fontSize: 11, opacity: 0.8 }}>{t('crop_detection.panel_subtitle')}</div>
@@ -1023,11 +1023,11 @@ export default function CropDetection() {
             <div style={{ padding: '14px 14px 0' }}>
               {/* Search */}
               <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-                📍 {t('crop_detection.find_location')}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {t('crop_detection.find_location')}
               </div>
               <div style={{ position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '2px solid #e2e8f0', borderRadius: 10, padding: '10px 12px', background: 'white' }}>
-                  <span style={{ color: '#64748b', fontSize: 14 }}>🔍</span>
+                  <span style={{ color: '#64748b', display: 'inline-flex' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
                   <input
                     type="text" placeholder={t('crop_detection.search_placeholder')} value={address}
                     onChange={e => handleAddressChange(e.target.value)}
@@ -1047,7 +1047,7 @@ export default function CropDetection() {
                         onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
                         onMouseLeave={e => e.currentTarget.style.background = 'white'}
                       >
-                        <span style={{ color: '#64748b', flexShrink: 0, marginTop: 1 }}>📍</span>
+                        <span style={{ color: '#64748b', flexShrink: 0, marginTop: 1, display: 'inline-flex' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
                         <div>
                           <div style={{ fontWeight: 500, color: '#1e293b' }}>{sug.display_name.split(',')[0]}</div>
                           <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{sug.display_name.split(',').slice(1, 3).join(',')}</div>
@@ -1061,7 +1061,7 @@ export default function CropDetection() {
               {/* ── Field Drawing Controls ── */}
               <div style={{ marginTop: 16, marginBottom: 4 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-                  ✏️ {t('crop_detection.define_boundary')}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> {t('crop_detection.define_boundary')}
                 </div>
 
                 {!drawMode && drawnPolygon.length === 0 && (
@@ -1119,7 +1119,7 @@ export default function CropDetection() {
             {/* Legend */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
-                🌈 {t('crop_detection.legend_title')}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> {t('crop_detection.legend_title')}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 10px' }}>
                 {Object.entries(CROP_COLORS).map(([code, color]) => (

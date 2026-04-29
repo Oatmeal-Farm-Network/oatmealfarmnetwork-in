@@ -39,8 +39,11 @@ const STATE_OPTIONS = [
   '','AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
 ];
 
-const typeEmoji = (type) =>
-  type === 'meat' ? '🥩' : type === 'processed_food' ? '🫙' : '🥬';
+const typeIcon = (type) => type === 'meat'
+  ? <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M18.6 6.62a2.5 2.5 0 0 1-3.53 3.53L5 20a2 2 0 0 1-2.83-2.83l10.16-10.16a2.5 2.5 0 0 1 3.53-3.53"/><path d="m15.5 5.5-3 3"/></svg>
+  : type === 'processed_food'
+  ? <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2h8l1 7H7L8 2z"/><path d="M7 9c0 7 2 11 5 11s5-4 5-11"/></svg>
+  : <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 22"/><path d="M9.5 9.5s1-3 4.5-5c0 0 1 3-1 7"/><path d="M3.82 22s1.5-3.5 8.18-4.5"/></svg>;
 
 // Format an AvailableDate string as a short "Ready Mon D" label, or null if past/invalid/today.
 const formatAvailability = (dateStr) => {
@@ -848,7 +851,7 @@ function ProductCard({ listing: l, inCart, onAdd, onView, isRestaurant = false, 
           <img src={l.ImageURL} alt={l.Title} className="w-full h-44 object-cover" loading="lazy" />
         ) : (
           <div className="w-full h-44 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f0f4e8, #dde8c8)' }}>
-            <span className="text-6xl">{typeEmoji(l.ProductType)}</span>
+            {typeIcon(l.ProductType)}
           </div>
         )}
         {l.IsOrganic && (

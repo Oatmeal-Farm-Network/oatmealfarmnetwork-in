@@ -40,6 +40,10 @@ const TILES = [
     icon: <S><circle cx="8" cy="8" r="6"/><path d="M8 2c-2 1.5-3 3.5-3 6s1 4.5 3 6"/><path d="M8 2c2 1.5 3 3.5 3 6s-1 4.5-3 6"/><line x1="2" y1="8" x2="14" y2="8"/></S>,
     title: 'ESG Reports',
     desc: 'Audit-ready proof of sustainable practices — auto-pulled from sourcing, cold chain, inputs; manual metrics for the rest. PDF export.' },
+  { slug: 'accounting',
+    icon: <S><rect x="2" y="3" width="12" height="10" rx="1"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/><line x1="12" y1="13" x2="12" y2="16"/><line x1="10" y1="15" x2="14" y2="15"/></S>,
+    title: 'Accounting',
+    desc: 'Invoices, bills, chart of accounts — post aggregator orders and purchases into your books.' },
 ];
 
 const fmt$  = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
@@ -51,6 +55,9 @@ export default function AggregatorHub() {
   const BusinessID = params.get('BusinessID') || ctxBID;
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [acct, setAcct] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState(null);
 
   useEffect(() => {
     if (!BusinessID) return;
@@ -59,7 +66,29 @@ export default function AggregatorHub() {
       .then(r => r.ok ? r.json() : null)
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
+    fetch(`${API}/api/aggregator/${BusinessID}/accounting/summary`)
+      .then(r => r.ok ? r.json() : null)
+      .then(setAcct)
+      .catch(() => {});
   }, [BusinessID]);
+
+  const syncAccounting = async () => {
+    setSyncing(true); setSyncMsg(null);
+    try {
+      const r = await fetch(`${API}/api/aggregator/${BusinessID}/accounting/sync`, { method: 'POST' });
+      if (r.ok) {
+        const res = await r.json();
+        setSyncMsg(`Synced: ${res.invoices_created} invoice${res.invoices_created === 1 ? '' : 's'}, ${res.bills_created} bill${res.bills_created === 1 ? '' : 's'}, ${res.customers_created} customer${res.customers_created === 1 ? '' : 's'}, ${res.vendors_created} vendor${res.vendors_created === 1 ? '' : 's'} created.`);
+        fetch(`${API}/api/aggregator/${BusinessID}/accounting/summary`)
+          .then(r2 => r2.ok ? r2.json() : null)
+          .then(setAcct);
+      } else {
+        const err = await r.json().catch(() => ({}));
+        setSyncMsg(`Error: ${err.detail || 'sync failed'}`);
+      }
+    } catch { setSyncMsg('Network error'); }
+    setSyncing(false);
+  };
 
   if (!BusinessID) {
     return (
@@ -104,8 +133,11 @@ export default function AggregatorHub() {
         <div>
           <div className="text-xs uppercase font-semibold text-gray-500 mb-2">Last 30 days</div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {kpi('Active farms',     loading ? '…' : data?.farms?.active ?? 0,
-                 `${data?.contracts?.active ?? 0} active contracts`)}
+            <Link to={`/aggregator/farms?BusinessID=${BusinessID}`}
+                  className="block hover:ring-2 hover:ring-[#819360] rounded-xl transition">
+              {kpi('Active farms',     loading ? '…' : data?.farms?.active ?? 0,
+                   `${data?.contracts?.active ?? 0} active contracts`)}
+            </Link>
             {kpi('Procurement spend', loading ? '…' : '$' + fmt$(data?.purchases?.spend_30d),
                  `${fmtKg(data?.purchases?.kg_30d)} kg received`)}
             {kpi('Inventory on hand', loading ? '…' : fmtKg(data?.inventory?.current_kg) + ' kg',
@@ -142,13 +174,69 @@ export default function AggregatorHub() {
           </div>
         </div>
 
+        {/* Accounting summary */}
+        {acct?.setup && (
+          <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="font-semibold text-gray-900">Accounting</div>
+              <div className="flex items-center gap-2">
+                {(acct.unposted_orders > 0 || acct.unposted_purchases > 0) && (
+                  <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                    {acct.unposted_orders} order{acct.unposted_orders === 1 ? '' : 's'} + {acct.unposted_purchases} purchase{acct.unposted_purchases === 1 ? '' : 's'} unposted
+                  </span>
+                )}
+                <button
+                  onClick={syncAccounting}
+                  disabled={syncing}
+                  className="px-3 py-1 text-xs bg-[#3D6B34] text-white rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
+                  {syncing ? 'Syncing…' : 'Sync to Accounting'}
+                </button>
+              </div>
+            </div>
+            {syncMsg && (
+              <div className={`text-xs rounded-lg px-3 py-2 ${syncMsg.startsWith('Error') ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
+                {syncMsg}
+              </div>
+            )}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div className="border border-gray-100 rounded-xl p-3">
+                <div className="text-[10px] uppercase font-semibold text-gray-500">A/R (open)</div>
+                <div className="text-xl font-bold text-gray-900 mt-0.5">${fmt$(acct.ar?.total)}</div>
+                <div className="text-xs text-gray-500">{acct.ar?.open_count} invoice{acct.ar?.open_count === 1 ? '' : 's'}</div>
+              </div>
+              <div className="border border-gray-100 rounded-xl p-3">
+                <div className="text-[10px] uppercase font-semibold text-gray-500">A/P (open)</div>
+                <div className="text-xl font-bold text-gray-900 mt-0.5">${fmt$(acct.ap?.total)}</div>
+                <div className="text-xs text-gray-500">{acct.ap?.open_count} bill{acct.ap?.open_count === 1 ? '' : 's'}</div>
+              </div>
+              <div className="border border-gray-100 rounded-xl p-3">
+                <div className="text-[10px] uppercase font-semibold text-gray-500">Revenue (all time)</div>
+                <div className="text-xl font-bold text-gray-900 mt-0.5">${fmt$(acct.revenue?.total)}</div>
+                <div className="text-xs text-gray-500">B2B ${fmt$(acct.revenue?.b2b)} · D2C ${fmt$(acct.revenue?.d2c)}</div>
+              </div>
+              <div className="border border-gray-100 rounded-xl p-3">
+                <div className="text-[10px] uppercase font-semibold text-gray-500">Gross margin</div>
+                <div className={`text-xl font-bold mt-0.5 ${acct.gross_margin >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>${fmt$(acct.gross_margin)}</div>
+                <div className="text-xs text-gray-500">{acct.gross_margin_pct}% · COGS ${fmt$(acct.cogs)}</div>
+              </div>
+            </div>
+          </div>
+        )}
+        {acct && !acct.setup && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
+            Accounting not set up for this business. Open the Accounting module and initialise a chart of accounts to enable sync.
+          </div>
+        )}
+
         {/* Subdashboard tiles */}
         <div>
           <div className="text-xs uppercase font-semibold text-gray-500 mb-2">Manage</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {TILES.map(t => (
               <Link key={t.slug}
-                    to={`/aggregator/${t.slug}?BusinessID=${BusinessID}`}
+                    to={t.slug === 'accounting'
+                        ? `/account/accounting?BusinessID=${BusinessID}`
+                        : `/aggregator/${t.slug}?BusinessID=${BusinessID}`}
                     className="bg-white border border-gray-200 rounded-xl p-4 flex items-start gap-3 hover:border-[#819360] hover:shadow-sm transition">
                 <div className="mt-0.5">{t.icon}</div>
                 <div>

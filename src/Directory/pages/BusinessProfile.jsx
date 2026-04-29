@@ -3,7 +3,13 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
 import photoNotAvailable from '../images/photo not available .jpg';
 import { DIRECTORY_TYPE_TO_IMAGE, DIRECTORY_TYPE_TO_BUSINESS_TYPE } from './directoryMappings';
-import { FaFacebookF, FaPinterestP, FaXTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaGlobe } from 'react-icons/fa6';
+const IcoFacebook  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
+const IcoPinterest = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.24 2.65 7.86 6.39 9.29-.09-.78-.17-1.98.03-2.83.19-.77 1.27-5.38 1.27-5.38s-.32-.65-.32-1.61c0-1.51.87-2.64 1.96-2.64.92 0 1.37.69 1.37 1.53 0 .93-.59 2.33-.9 3.62-.26 1.08.54 1.96 1.6 1.96 1.92 0 3.4-2.02 3.4-4.94 0-2.58-1.86-4.39-4.51-4.39-3.07 0-4.87 2.3-4.87 4.68 0 .93.36 1.92.8 2.46.09.11.1.2.07.31-.08.34-.26 1.08-.3 1.23-.05.2-.17.24-.38.14-1.39-.65-2.26-2.68-2.26-4.32 0-3.51 2.55-6.74 7.36-6.74 3.86 0 6.86 2.75 6.86 6.42 0 3.83-2.41 6.91-5.76 6.91-1.12 0-2.18-.58-2.55-1.27l-.69 2.59c-.25.97-.93 2.18-1.39 2.92.75.23 1.54.36 2.36.36 5.52 0 10-4.48 10-10S17.52 2 12 2z"/></svg>;
+const IcoTwitterX  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>;
+const IcoInstagram = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>;
+const IcoLinkedIn  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>;
+const IcoYouTube   = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.97C18.88 4 12 4 12 4s-6.88 0-8.59.45a2.78 2.78 0 0 0-1.95 1.97A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.97C5.12 20 12 20 12 20s6.88 0 8.59-.45a2.78 2.78 0 0 0 1.95-1.97A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon fill="white" points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>;
+const IcoGlobe     = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
 import Header from '../../Header';
 import Footer from '../../Footer';
 import PageMeta from '../../PageMeta';
@@ -166,13 +172,13 @@ const BusinessProfile = () => {
     });
 
     const socialLinks = [
-        { key: 'BusinessFacebook',  label: 'Facebook',  icon: <FaFacebookF />,  base: 'https://facebook.com/',  color: 'bg-[#1877F2]' },
-        { key: 'BusinessPinterest', label: 'Pinterest', icon: <FaPinterestP />, base: 'https://pinterest.com/', color: 'bg-[#E60023]' },
-        { key: 'BusinessX',         label: 'Twitter',   icon: <FaXTwitter />,   base: 'https://twitter.com/',   color: 'bg-black' },
-        { key: 'BusinessInstagram', label: 'Instagram', icon: <FaInstagram />,  base: 'https://instagram.com/', color: 'bg-[#E1306C]' },
-        { key: 'BusinessLinkedIn',  label: 'LinkedIn',  icon: <FaLinkedinIn />, base: 'https://linkedin.com/company/', color: 'bg-[#0A66C2]' },
-        { key: 'BusinessYouTube',   label: 'YouTube',   icon: <FaYoutube />,    base: 'https://youtube.com/',   color: 'bg-[#FF0000]' },
-        { key: 'BusinessWebsite',   label: 'Website',   icon: <FaGlobe />,      base: '',                       color: 'bg-[#4d734d]' },
+        { key: 'BusinessFacebook',  label: 'Facebook',  icon: <IcoFacebook />,  base: 'https://facebook.com/',  color: 'bg-[#1877F2]' },
+        { key: 'BusinessPinterest', label: 'Pinterest', icon: <IcoPinterest />, base: 'https://pinterest.com/', color: 'bg-[#E60023]' },
+        { key: 'BusinessX',         label: 'Twitter',   icon: <IcoTwitterX />,  base: 'https://twitter.com/',   color: 'bg-black' },
+        { key: 'BusinessInstagram', label: 'Instagram', icon: <IcoInstagram />, base: 'https://instagram.com/', color: 'bg-[#E1306C]' },
+        { key: 'BusinessLinkedIn',  label: 'LinkedIn',  icon: <IcoLinkedIn />,  base: 'https://linkedin.com/company/', color: 'bg-[#0A66C2]' },
+        { key: 'BusinessYouTube',   label: 'YouTube',   icon: <IcoYouTube />,   base: 'https://youtube.com/',   color: 'bg-[#FF0000]' },
+        { key: 'BusinessWebsite',   label: 'Website',   icon: <IcoGlobe />,     base: '',                       color: 'bg-[#4d734d]' },
     ];
 
     if (!business) {

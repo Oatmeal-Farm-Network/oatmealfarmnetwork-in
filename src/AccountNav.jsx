@@ -2,6 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
+const NavIcon = ({ children }) => (
+  <div className="w-10 h-10 flex items-center justify-center text-[#5a7a40]">{children}</div>
+);
+
 export default function AccountNav({ Business, BusinessID, PeopleID }) {
   const { t } = useTranslation();
   const BT = Business?.BusinessTypeID;
@@ -14,7 +18,7 @@ export default function AccountNav({ Business, BusinessID, PeopleID }) {
         {[8, 10, 14, 26, 29, 31].includes(BT) && (
           <tr className="border-b border-gray-200">
             <td className="w-20 py-3 pr-4">
-              <img src="/icons/produce.webp" alt={t('account_nav.sec_produce')} className="w-10 h-10" />
+              <NavIcon><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 0 1 10 10c0 4-2.5 7.4-6 9"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></NavIcon>
             </td>
             <td className="py-3">
               <p className="font-bold text-gray-800 mb-1">{t('account_nav.sec_produce')}</p>
@@ -29,7 +33,7 @@ export default function AccountNav({ Business, BusinessID, PeopleID }) {
         {BT === 8 && (
           <tr className="border-b border-gray-200">
             <td className="w-20 py-3 pr-4">
-              <img alt={t('account_nav.sec_precision_ag')} className="w-10 h-10" />
+              <NavIcon><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></NavIcon>
             </td>
             <td className="py-3">
               <p className="font-bold text-gray-800 mb-1">{t('account_nav.sec_precision_ag')}</p>
@@ -48,7 +52,7 @@ export default function AccountNav({ Business, BusinessID, PeopleID }) {
         {BT === 8 && (
           <tr className="border-b border-gray-200">
             <td className="w-20 py-3 pr-4">
-              <img src="/icons/Livestock.svg" alt={t('account_nav.sec_livestock')} className="w-10 h-10" />
+              <NavIcon><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="14" rx="7" ry="5"/><path d="M5 14c0-1-1-3-1-5a3 3 0 0 1 6 0"/><path d="M19 14c0-1 1-3 1-5a3 3 0 0 0-6 0"/><circle cx="9" cy="11" r="0.8" fill="currentColor"/><circle cx="15" cy="11" r="0.8" fill="currentColor"/></svg></NavIcon>
             </td>
             <td className="py-3">
               <p className="font-bold text-gray-800 mb-1">{t('account_nav.sec_livestock')}</p>
@@ -66,7 +70,7 @@ export default function AccountNav({ Business, BusinessID, PeopleID }) {
         {/* Products - all types */}
         <tr className="border-b border-gray-200">
           <td className="w-20 py-3 pr-4">
-            <img src="/icons/Products.svg" alt={t('account_nav.sec_products')} className="w-10 h-10" />
+              <NavIcon><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></NavIcon>
           </td>
           <td className="py-3">
             <p className="font-bold text-gray-800 mb-1">{t('account_nav.sec_products')}</p>
@@ -81,7 +85,7 @@ export default function AccountNav({ Business, BusinessID, PeopleID }) {
         {/* Services - all types */}
         <tr className="border-b border-gray-200">
           <td className="w-20 py-3 pr-4">
-            <img src="/icons/Services.svg" alt={t('account_nav.sec_services')} className="w-10 h-10" />
+              <NavIcon><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></NavIcon>
           </td>
           <td className="py-3">
             <p className="font-bold text-gray-800 mb-1">{t('account_nav.sec_services')}</p>
@@ -98,7 +102,7 @@ export default function AccountNav({ Business, BusinessID, PeopleID }) {
         {[8, 30].includes(BT) && (
           <tr className="border-b border-gray-200">
             <td className="w-20 py-3 pr-4">
-              <img src="/icons/RealEstate.svg" alt={t('account_nav.sec_properties')} className="w-10 h-10" />
+              <NavIcon><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></NavIcon>
             </td>
             <td className="py-3">
               <p className="font-bold text-gray-800 mb-1">{t('account_nav.sec_properties')}</p>
@@ -114,7 +118,7 @@ export default function AccountNav({ Business, BusinessID, PeopleID }) {
         {BT === 1 && (
           <tr className="border-b border-gray-200">
             <td className="w-20 py-3 pr-4">
-              <img src="/icons/Assoc-administration-icon.svg" alt={t('account_nav.sec_associations')} className="w-10 h-10" />
+              <NavIcon><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></NavIcon>
             </td>
             <td className="py-3">
               <p className="font-bold text-gray-800 mb-1">{t('account_nav.sec_associations')}</p>
@@ -129,7 +133,7 @@ export default function AccountNav({ Business, BusinessID, PeopleID }) {
         {/* My Website - all types */}
         <tr>
           <td className="w-20 py-3 pr-4">
-            <img src="/icons/Website.svg" alt={t('account_nav.sec_website')} className="w-10 h-10" />
+              <NavIcon><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></NavIcon>
           </td>
           <td className="py-3">
             <p className="font-bold text-gray-800 mb-1">{t('account_nav.sec_website')}</p>
