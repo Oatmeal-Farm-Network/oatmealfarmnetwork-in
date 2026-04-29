@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import RichTextEditor from './RichTextEditor';
 
 export default function TestimonialsManage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('people_id');
@@ -119,17 +121,17 @@ export default function TestimonialsManage() {
     setEditorKey(k => k + 1);
   };
 
-  const startEdit = (t) => {
-    setEditingId(t.TestimonialsID);
-    setAuthorName(t.AuthorName || '');
-    setCity(t.City || '');
-    setState(t.State || '');
-    setOrganization(t.Organization || '');
-    setWebsite(t.Website || '');
-    setTestimonialDate(t.TestimonialDate ? t.TestimonialDate.split('T')[0] : today);
-    setContent(t.Content || '');
-    setRating(t.Rating ? String(t.Rating) : '');
-    setSelectedPeopleID(t.PeopleID || null);
+  const startEdit = (item) => {
+    setEditingId(item.TestimonialsID);
+    setAuthorName(item.AuthorName || '');
+    setCity(item.City || '');
+    setState(item.State || '');
+    setOrganization(item.Organization || '');
+    setWebsite(item.Website || '');
+    setTestimonialDate(item.TestimonialDate ? item.TestimonialDate.split('T')[0] : today);
+    setContent(item.Content || '');
+    setRating(item.Rating ? String(item.Rating) : '');
+    setSelectedPeopleID(item.PeopleID || null);
     setPeopleQuery('');
     setSaveError(null);
     setShowForm(true);
@@ -162,7 +164,7 @@ export default function TestimonialsManage() {
           PeopleID: selectedPeopleID,
         }),
       });
-      if (!res.ok) throw new Error('Failed to save testimonial');
+      if (!res.ok) throw new Error(t('testimonials.err_save_failed'));
       clearForm();
       setShowForm(false);
       loadTestimonials();
@@ -173,22 +175,22 @@ export default function TestimonialsManage() {
     }
   };
 
-  if (!Business || loading) return <div className="p-8 text-gray-500">Loading...</div>;
+  if (!Business || loading) return <div className="p-8 text-gray-500">{t('testimonials.loading')}</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Manage Testimonials" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Testimonials' }, { label: 'Manage' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={t('testimonials.page_title')} breadcrumbs={[{ label: t('testimonials.breadcrumb_dashboard'), to: '/dashboard' }, { label: t('testimonials.breadcrumb_testimonials') }, { label: t('testimonials.breadcrumb_manage') }]}>
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-green-700">Manage Testimonials</h2>
+          <h2 className="text-2xl font-bold text-green-700">{t('testimonials.heading')}</h2>
           <button onClick={() => { if (showForm) { clearForm(); setShowForm(false); } else { clearForm(); setShowForm(true); } }} className="regsubmit2">
-            {showForm ? 'Cancel' : 'Add Testimonial'}
+            {showForm ? t('testimonials.btn_cancel') : t('testimonials.btn_add')}
           </button>
         </div>
 
         {showForm && (
           <form onSubmit={handleSave} className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-4">
             <h3 className="text-lg font-semibold text-[#5a3e2b]">
-              {editingId ? 'Edit Testimonial' : 'New Testimonial'}
+              {editingId ? t('testimonials.form_heading_edit') : t('testimonials.form_heading_new')}
             </h3>
 
             {saveError && (
@@ -197,16 +199,16 @@ export default function TestimonialsManage() {
 
             {/* People search */}
             <div ref={dropdownRef} className="relative max-w-lg">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Search People in Database</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('testimonials.lbl_search_people')}</label>
               <input
                 type="text"
                 value={peopleQuery}
                 onChange={e => searchPeople(e.target.value)}
                 onFocus={() => { if (peopleResults.length > 0) setShowPeopleDropdown(true); }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-600"
-                placeholder="Type a name to search..."
+                placeholder={t('testimonials.placeholder_search')}
               />
-              {peopleSearching && <span className="absolute right-3 top-8 text-xs text-gray-400">Searching...</span>}
+              {peopleSearching && <span className="absolute right-3 top-8 text-xs text-gray-400">{t('testimonials.searching')}</span>}
               {showPeopleDropdown && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   {peopleResults.map(p => (
@@ -230,7 +232,7 @@ export default function TestimonialsManage() {
             <hr className="border-gray-200" />
 
             <div className="max-w-lg">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Author Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('testimonials.lbl_author_name')}</label>
               <input
                 type="text"
                 value={authorName}
@@ -243,7 +245,7 @@ export default function TestimonialsManage() {
 
             <div className="grid grid-cols-2 gap-4 max-w-lg">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('testimonials.lbl_city')}</label>
                 <input
                   type="text"
                   value={city}
@@ -253,7 +255,7 @@ export default function TestimonialsManage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('testimonials.lbl_state')}</label>
                 <input
                   type="text"
                   value={state}
@@ -265,7 +267,7 @@ export default function TestimonialsManage() {
             </div>
 
             <div className="max-w-lg">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('testimonials.lbl_organization')}</label>
               <input
                 type="text"
                 value={organization}
@@ -276,7 +278,7 @@ export default function TestimonialsManage() {
             </div>
 
             <div className="max-w-lg">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('testimonials.lbl_website')}</label>
               <input
                 type="url"
                 value={website}
@@ -287,7 +289,7 @@ export default function TestimonialsManage() {
             </div>
 
             <div className="max-w-lg">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('testimonials.lbl_date')}</label>
               <input
                 type="date"
                 value={testimonialDate}
@@ -297,64 +299,64 @@ export default function TestimonialsManage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Testimonial</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('testimonials.lbl_content')}</label>
               <RichTextEditor key={editorKey} value={content} onChange={setContent} minHeight={180} />
             </div>
 
             <div className="max-w-lg">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Rating (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('testimonials.lbl_rating')}</label>
               <select
                 value={rating}
                 onChange={e => setRating(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-600"
               >
-                <option value="">No rating</option>
-                <option value="5">5 Stars</option>
-                <option value="4">4 Stars</option>
-                <option value="3">3 Stars</option>
-                <option value="2">2 Stars</option>
-                <option value="1">1 Star</option>
+                <option value="">{t('testimonials.rating_none')}</option>
+                <option value="5">{t('testimonials.rating_5')}</option>
+                <option value="4">{t('testimonials.rating_4')}</option>
+                <option value="3">{t('testimonials.rating_3')}</option>
+                <option value="2">{t('testimonials.rating_2')}</option>
+                <option value="1">{t('testimonials.rating_1')}</option>
               </select>
             </div>
 
             <div className="flex justify-end">
               <button type="submit" disabled={saving} className="regsubmit2">
-                {saving ? 'Saving...' : editingId ? 'Update Testimonial' : 'Save Testimonial'}
+                {saving ? t('testimonials.btn_saving') : editingId ? t('testimonials.btn_update') : t('testimonials.btn_save')}
               </button>
             </div>
           </form>
         )}
 
         {testimonials.length === 0 && !showForm ? (
-          <p className="text-gray-500 text-sm">You don't have any testimonials yet. Add one or request some from your customers!</p>
+          <p className="text-gray-500 text-sm">{t('testimonials.empty')}</p>
         ) : (
           <div className="space-y-4">
-            {testimonials.map((t, i) => (
-              <div key={t.TestimonialsID || i} className="border border-gray-100 rounded-lg p-4">
-                <div className="text-gray-700" dangerouslySetInnerHTML={{ __html: t.Content }} />
+            {testimonials.map((item, i) => (
+              <div key={item.TestimonialsID || i} className="border border-gray-100 rounded-lg p-4">
+                <div className="text-gray-700" dangerouslySetInnerHTML={{ __html: item.Content }} />
                 <div className="flex items-center justify-between mt-2">
                   <div>
-                    <p className="text-sm text-gray-500">— {t.AuthorName || 'Anonymous'}</p>
-                    {(t.Organization || t.City || t.State) && (
+                    <p className="text-sm text-gray-500">— {item.AuthorName || t('testimonials.anonymous')}</p>
+                    {(item.Organization || item.City || item.State) && (
                       <p className="text-xs text-gray-400">
-                        {[t.Organization, [t.City, t.State].filter(Boolean).join(', ')].filter(Boolean).join(' | ')}
+                        {[item.Organization, [item.City, item.State].filter(Boolean).join(', ')].filter(Boolean).join(' | ')}
                       </p>
                     )}
-                    {t.TestimonialDate && (
-                      <p className="text-xs text-gray-400">{new Date(t.TestimonialDate).toLocaleDateString()}</p>
+                    {item.TestimonialDate && (
+                      <p className="text-xs text-gray-400">{new Date(item.TestimonialDate).toLocaleDateString()}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    {t.Rating > 0 && (
+                    {item.Rating > 0 && (
                       <span className="text-sm text-yellow-500">
-                        {'★'.repeat(t.Rating)}{'☆'.repeat(5 - t.Rating)}
+                        {'★'.repeat(item.Rating)}{'☆'.repeat(5 - item.Rating)}
                       </span>
                     )}
                     <button
-                      onClick={() => startEdit(t)}
+                      onClick={() => startEdit(item)}
                       className="text-xs text-[#5a3e2b] hover:underline font-medium"
                     >
-                      Edit
+                      {t('testimonials.btn_edit')}
                     </button>
                   </div>
                 </div>

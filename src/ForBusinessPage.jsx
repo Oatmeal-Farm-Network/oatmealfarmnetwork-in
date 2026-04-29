@@ -42,6 +42,7 @@ const IMG_EVENTS     = '/images/EventsHeader.webp';
 const IMG_ASSOC      = '/images/CoreFeaturesAssociationSupport.webp';
 const IMG_RESTAURANTS= '/images/Restaurants.webp';
 const IMG_DIRECTORY  = '/images/AboutDirectoryImage.webp';
+const IMG_BLOG       = '/images/ForXBlog.webp';
 
 const TYPE_DATA = {
   farms: {
@@ -92,7 +93,7 @@ const TYPE_DATA = {
       { icon: I.rosemarie, img: IMG_SAIGE,      link: '/platform/rosemarie' },
       { icon: I.source,    img: IMG_FARM2TABLE, link: '/marketplaces/farm-to-table' },
       { icon: I.website,   img: IMG_WEBSITE,    link: '/website-builder' },
-      { icon: I.blog,                           link: '/website-builder' },
+      { icon: I.blog,      img: IMG_BLOG,         link: '/website-builder' },
       { icon: I.directory, img: IMG_DIRECTORY,  link: '/directory/artisan-producers' },
       { icon: I.events,    img: IMG_EVENTS,     link: '/event-registration' },
       { icon: I.assoc,     img: IMG_ASSOC,      link: '/agriculture-support' },
@@ -112,7 +113,7 @@ const TYPE_DATA = {
       { icon: I.website,   img: IMG_WEBSITE,     link: '/website-builder' },
       { icon: I.directory, img: IMG_DIRECTORY,   link: '/directory/restaurants' },
       { icon: I.events,    img: IMG_EVENTS,      link: '/event-registration' },
-      { icon: I.blog,                            link: '/website-builder' },
+      { icon: I.blog,      img: IMG_BLOG,          link: '/website-builder' },
       { icon: I.assoc,     img: IMG_ASSOC,       link: '/agriculture-support' },
     ],
   },

@@ -13,6 +13,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -87,6 +88,7 @@ const ninetyDaysAgo = new Date(today.getTime() - 90 * 86400_000);
 // Live snapshot (read-only, recomputed for the chosen period)
 // ─────────────────────────────────────────────────────────────────
 function LiveTab({ businessId }) {
+  const { t } = useTranslation();
   const [start, setStart] = useState(isoDate(ninetyDaysAgo));
   const [end,   setEnd]   = useState(isoDate(today));
   const [data,  setData]  = useState(null);
@@ -99,7 +101,7 @@ function LiveTab({ businessId }) {
   };
   useEffect(() => { refresh(); }, [businessId, start, end]);
 
-  if (loading) return <div className="text-sm text-gray-500">Loading…</div>;
+  if (loading) return <div className="text-sm text-gray-500">{t('aggregator_esg.loading')}</div>;
 
   const live = data?.live || {};
   const src = live.sourcing || {};
@@ -129,39 +131,39 @@ function LiveTab({ businessId }) {
   return (
     <div className="space-y-4">
       <div className="flex items-end gap-3 flex-wrap">
-        <div><label className={lbl}>Period start</label><input className={inp} type="date" value={start} onChange={e => setStart(e.target.value)} /></div>
-        <div><label className={lbl}>Period end</label><input className={inp} type="date" value={end} onChange={e => setEnd(e.target.value)} /></div>
-        <button onClick={refresh} className={btnGhost}>Refresh</button>
+        <div><label className={lbl}>{t('aggregator_esg.lbl_period_start')}</label><input className={inp} type="date" value={start} onChange={e => setStart(e.target.value)} /></div>
+        <div><label className={lbl}>{t('aggregator_esg.lbl_period_end')}</label><input className={inp} type="date" value={end} onChange={e => setEnd(e.target.value)} /></div>
+        <button onClick={refresh} className={btnGhost}>{t('aggregator_esg.btn_refresh')}</button>
         <div className="flex-1" />
-        <span className="text-xs text-gray-500">Numbers below come from real activity records — same query reproduces the same answer at audit time.</span>
+        <span className="text-xs text-gray-500">{t('aggregator_esg.live_note')}</span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-3">
-        {card('Sourcing transparency', ICONS.sourcing, <>
-          {kv('Active partner farms',    src.active_farms ?? 0)}
-          {kv('Certified farms',         `${src.farms_certified ?? 0} (${src.certified_pct ?? 0}%)`)}
+        {card(t('aggregator_esg.card_sourcing'), ICONS.sourcing, <>
+          {kv(t('aggregator_esg.kv_active_farms'),    src.active_farms ?? 0)}
+          {kv(t('aggregator_esg.kv_certified_farms'), `${src.farms_certified ?? 0} (${src.certified_pct ?? 0}%)`)}
           {(src.certifications || []).length > 0 && (
             <div className="pt-2 border-t border-gray-100 mt-2">
               {src.certifications.map(c => (
                 <div key={c.Certification} className="flex justify-between text-xs">
                   <span className="text-gray-700">{c.Certification}</span>
-                  <span className="text-gray-500">{c.N} farm{c.N === 1 ? '' : 's'}</span>
+                  <span className="text-gray-500">{c.N} {t('aggregator_esg.farm_plural', { n: c.N })}</span>
                 </div>
               ))}
             </div>
           )}
         </>)}
 
-        {card('Procurement & residue', ICONS.procurement, <>
-          {kv('Purchase records',        proc.purchase_count ?? 0)}
-          {kv('Quantity received',       `${fmtKg(proc.kg_received)} kg`)}
-          {kv('Spend',                   `$${fmt$(proc.spend)}`)}
-          {kv('Residue tests passed',    proc.residue_passed ?? 0)}
-          {kv('Residue tests failed',    proc.residue_failed ?? 0, 'lower is better')}
-          {kv('Residue pass rate',       fmtPct(proc.residue_pass_rate_pct))}
+        {card(t('aggregator_esg.card_procurement'), ICONS.procurement, <>
+          {kv(t('aggregator_esg.kv_purchase_records'),   proc.purchase_count ?? 0)}
+          {kv(t('aggregator_esg.kv_qty_received'),        `${fmtKg(proc.kg_received)} kg`)}
+          {kv(t('aggregator_esg.kv_spend'),               `$${fmt$(proc.spend)}`)}
+          {kv(t('aggregator_esg.kv_residue_passed'),      proc.residue_passed ?? 0)}
+          {kv(t('aggregator_esg.kv_residue_failed'),      proc.residue_failed ?? 0, t('aggregator_esg.lower_is_better'))}
+          {kv(t('aggregator_esg.kv_residue_pass_rate'),   fmtPct(proc.residue_pass_rate_pct))}
         </>)}
 
-        {card('Inputs distributed to farms', ICONS.inputs, <>
+        {card(t('aggregator_esg.card_inputs'), ICONS.inputs, <>
           {(inputs.by_type || []).length > 0
             ? (inputs.by_type || []).map(r => (
                 <div key={r.InputType} className="flex justify-between text-xs">
@@ -169,25 +171,25 @@ function LiveTab({ businessId }) {
                   <span className="text-gray-500">{r.N} · ${fmt$(r.Spend)}</span>
                 </div>
               ))
-            : <div className="text-xs text-gray-500 italic">No inputs distributed in this period.</div>}
+            : <div className="text-xs text-gray-500 italic">{t('aggregator_esg.no_inputs')}</div>}
           <div className="pt-2 mt-2 border-t border-gray-100 flex justify-between font-semibold">
-            <span className="text-gray-700">Total invested</span>
+            <span className="text-gray-700">{t('aggregator_esg.kv_total_invested')}</span>
             <span className="text-gray-900">${fmt$(inputs.total_spend)}</span>
           </div>
         </>)}
 
-        {card('Cold chain integrity', ICONS.coldchain, <>
-          {kv('Dispatches logged',     cold.dispatches ?? 0)}
-          {kv('Cold-chain breaches',   cold.breaches ?? 0, 'lower is better')}
-          {kv('Integrity rate',        fmtPct(cold.integrity_pct))}
+        {card(t('aggregator_esg.card_cold_chain'), ICONS.coldchain, <>
+          {kv(t('aggregator_esg.kv_dispatches'),      cold.dispatches ?? 0)}
+          {kv(t('aggregator_esg.kv_cold_breaches'),   cold.breaches ?? 0, t('aggregator_esg.lower_is_better'))}
+          {kv(t('aggregator_esg.kv_integrity_rate'),  fmtPct(cold.integrity_pct))}
         </>)}
 
-        {card('Waste signal', ICONS.waste, <>
-          {kv('Items quarantined / discarded', waste.items_quarantined_or_discarded ?? 0)}
-          {kv('Kg quarantined / discarded',    fmtKg(waste.kg_quarantined_or_discarded))}
+        {card(t('aggregator_esg.card_waste'), ICONS.waste, <>
+          {kv(t('aggregator_esg.kv_items_quarantined'), waste.items_quarantined_or_discarded ?? 0)}
+          {kv(t('aggregator_esg.kv_kg_quarantined'),    fmtKg(waste.kg_quarantined_or_discarded))}
         </>)}
 
-        {card('Sensor data (IoT)', ICONS.sensors, <>
+        {card(t('aggregator_esg.card_sensors'), ICONS.sensors, <>
           {sensors.length > 0
             ? sensors.map(r => (
                 <div key={r.sensor_type} className="flex justify-between text-xs">
@@ -195,7 +197,7 @@ function LiveTab({ businessId }) {
                   <span className="text-gray-500">{r.readings} · avg {Number(r.avg).toFixed(2)}, range {Number(r.min).toFixed(2)}–{Number(r.max).toFixed(2)}</span>
                 </div>
               ))
-            : <div className="text-xs text-gray-500 italic">No sensor data ingested. POST to <code>/api/esg/{businessId}/sensor-webhook</code> from any IoT integration to start populating this.</div>}
+            : <div className="text-xs text-gray-500 italic">{t('aggregator_esg.no_sensors', { businessId })}</div>}
         </>)}
       </div>
 
@@ -203,7 +205,7 @@ function LiveTab({ businessId }) {
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3 text-[#3D6B34]">
             {ICONS.clipboard}
-            <strong className="text-gray-900">Manual ESG metrics for this period</strong>
+            <strong className="text-gray-900">{t('aggregator_esg.manual_metrics_heading')}</strong>
             <span className="text-xs text-gray-500">({manual.length})</span>
           </div>
           <div className="space-y-2">
@@ -215,7 +217,7 @@ function LiveTab({ businessId }) {
                   <div className="text-xs text-gray-500">
                     {m.Value} {m.Unit && <span className="text-gray-400">{m.Unit}</span>}
                     {m.PeriodStart && <span> · {(m.PeriodStart || '').slice(0,10)} → {(m.PeriodEnd || '').slice(0,10)}</span>}
-                    {m.EvidenceURL && <> · <a href={m.EvidenceURL} target="_blank" rel="noreferrer" className="text-[#3D6B34] hover:underline">evidence</a></>}
+                    {m.EvidenceURL && <> · <a href={m.EvidenceURL} target="_blank" rel="noreferrer" className="text-[#3D6B34] hover:underline">{t('aggregator_esg.evidence_link')}</a></>}
                   </div>
                 </div>
               </div>
@@ -231,6 +233,7 @@ function LiveTab({ businessId }) {
 // Manual metrics CRUD
 // ─────────────────────────────────────────────────────────────────
 function MetricForm({ metric, onSave, onCancel }) {
+  const { t } = useTranslation();
   const [s, setS] = useState(metric || {
     Category: 'environmental', MetricKey: '', Label: '',
     Value: '', NumericValue: '', Unit: '',
@@ -244,23 +247,23 @@ function MetricForm({ metric, onSave, onCancel }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div><label className={lbl}>Category</label>
+        <div><label className={lbl}>{t('aggregator_esg.lbl_category')}</label>
           <select className={inp} value={s.Category} onChange={set('Category')}>
             {CATEGORIES.map(c => <option key={c}>{c}</option>)}
           </select></div>
-        <div><label className={lbl}>Metric key *</label><input className={inp} placeholder="renewable_energy_pct" value={s.MetricKey} onChange={set('MetricKey')} /></div>
-        <div><label className={lbl}>Unit</label><input className={inp} placeholder="% / $ / kg / hours" value={s.Unit || ''} onChange={set('Unit')} /></div>
-        <div className="md:col-span-3"><label className={lbl}>Label *</label><input className={inp} placeholder="% of operations on renewable energy" value={s.Label} onChange={set('Label')} /></div>
-        <div><label className={lbl}>Value</label><input className={inp} placeholder="85% / Yes / ISO 14001" value={s.Value || ''} onChange={set('Value')} /></div>
-        <div><label className={lbl}>Numeric (optional)</label><input className={inp} type="number" step="0.0001" value={s.NumericValue ?? ''} onChange={setNum('NumericValue')} /></div>
-        <div><label className={lbl}>Evidence URL</label><input className={inp} placeholder="https://… link to certificate / audit doc" value={s.EvidenceURL || ''} onChange={set('EvidenceURL')} /></div>
-        <div><label className={lbl}>Period start</label><input className={inp} type="date" value={s.PeriodStart || ''} onChange={set('PeriodStart')} /></div>
-        <div><label className={lbl}>Period end</label><input className={inp} type="date" value={s.PeriodEnd || ''} onChange={set('PeriodEnd')} /></div>
-        <div className="md:col-span-3"><label className={lbl}>Notes</label><textarea className={inp} rows={2} value={s.Notes || ''} onChange={set('Notes')} /></div>
+        <div><label className={lbl}>{t('aggregator_esg.lbl_metric_key')}</label><input className={inp} placeholder="renewable_energy_pct" value={s.MetricKey} onChange={set('MetricKey')} /></div>
+        <div><label className={lbl}>{t('aggregator_esg.lbl_unit')}</label><input className={inp} placeholder="% / $ / kg / hours" value={s.Unit || ''} onChange={set('Unit')} /></div>
+        <div className="md:col-span-3"><label className={lbl}>{t('aggregator_esg.lbl_label')}</label><input className={inp} placeholder="% of operations on renewable energy" value={s.Label} onChange={set('Label')} /></div>
+        <div><label className={lbl}>{t('aggregator_esg.lbl_value')}</label><input className={inp} placeholder="85% / Yes / ISO 14001" value={s.Value || ''} onChange={set('Value')} /></div>
+        <div><label className={lbl}>{t('aggregator_esg.lbl_numeric')}</label><input className={inp} type="number" step="0.0001" value={s.NumericValue ?? ''} onChange={setNum('NumericValue')} /></div>
+        <div><label className={lbl}>{t('aggregator_esg.lbl_evidence_url')}</label><input className={inp} placeholder="https://… link to certificate / audit doc" value={s.EvidenceURL || ''} onChange={set('EvidenceURL')} /></div>
+        <div><label className={lbl}>{t('aggregator_esg.lbl_period_start')}</label><input className={inp} type="date" value={s.PeriodStart || ''} onChange={set('PeriodStart')} /></div>
+        <div><label className={lbl}>{t('aggregator_esg.lbl_period_end')}</label><input className={inp} type="date" value={s.PeriodEnd || ''} onChange={set('PeriodEnd')} /></div>
+        <div className="md:col-span-3"><label className={lbl}>{t('aggregator_esg.lbl_notes')}</label><textarea className={inp} rows={2} value={s.Notes || ''} onChange={set('Notes')} /></div>
       </div>
       {!metric && sugg.length > 0 && (
         <div className="text-xs text-gray-500">
-          <div className="mb-1">Quick fill:</div>
+          <div className="mb-1">{t('aggregator_esg.quick_fill')}</div>
           <div className="flex flex-wrap gap-1.5">
             {sugg.map(([k, l, u]) => (
               <button key={k} type="button" onClick={() => pickSuggestion(k, l, u)}
@@ -272,14 +275,15 @@ function MetricForm({ metric, onSave, onCancel }) {
         </div>
       )}
       <div className="flex justify-end gap-2">
-        {onCancel && <button onClick={onCancel} className={btnGhost}>Cancel</button>}
-        <button onClick={() => onSave(s)} disabled={!s.MetricKey || !s.Label} className={btn}>Save</button>
+        {onCancel && <button onClick={onCancel} className={btnGhost}>{t('aggregator_esg.btn_cancel')}</button>}
+        <button onClick={() => onSave(s)} disabled={!s.MetricKey || !s.Label} className={btn}>{t('aggregator_esg.btn_save')}</button>
       </div>
     </div>
   );
 }
 
 function MetricsTab({ businessId }) {
+  const { t } = useTranslation();
   const [list, setList]    = useState([]);
   const [editing, setEdit] = useState(null);
   const [adding, setAdd]   = useState(false);
@@ -297,10 +301,10 @@ function MetricsTab({ businessId }) {
     const r = await fetch(url, { method: isEdit ? 'PUT' : 'POST',
                                  headers: { 'Content-Type': 'application/json' },
                                  body: JSON.stringify(m) });
-    if (r.ok) { setEdit(null); setAdd(false); refresh(); } else alert('Save failed');
+    if (r.ok) { setEdit(null); setAdd(false); refresh(); } else alert(t('aggregator_esg.err_save_failed'));
   };
   const del = async (id) => {
-    if (!window.confirm('Delete this metric?')) return;
+    if (!window.confirm(t('aggregator_esg.confirm_delete_metric'))) return;
     await fetch(`${API}/api/esg/metrics/${id}`, { method: 'DELETE' });
     refresh();
   };
@@ -309,15 +313,15 @@ function MetricsTab({ businessId }) {
     <div className="space-y-3">
       <div className="flex items-center gap-3 flex-wrap">
         <select className={inp + ' max-w-xs'} value={filter} onChange={e => setFilt(e.target.value)}>
-          <option value="">All categories</option>
+          <option value="">{t('aggregator_esg.filter_all_categories')}</option>
           {CATEGORIES.map(c => <option key={c}>{c}</option>)}
         </select>
-        <span className="text-sm text-gray-500">{list.length} metric{list.length === 1 ? '' : 's'}</span>
+        <span className="text-sm text-gray-500">{t('aggregator_esg.metric_count', { n: list.length, s: list.length === 1 ? '' : 's' })}</span>
         <div className="flex-1" />
-        <button onClick={() => setAdd(true)} className={btn}>+ Add metric</button>
+        <button onClick={() => setAdd(true)} className={btn}>{t('aggregator_esg.btn_add_metric')}</button>
       </div>
       {adding && <MetricForm onSave={save} onCancel={() => setAdd(false)} />}
-      {list.length === 0 && <div className="text-sm text-gray-500 italic">No manual ESG metrics yet. Add ones that aren't tracked automatically — e.g. renewable energy %, fair-wage premium paid, EU CSRD status, ISO 14001 certification.</div>}
+      {list.length === 0 && <div className="text-sm text-gray-500 italic">{t('aggregator_esg.no_metrics')}</div>}
 
       <div className="space-y-2">
         {list.map(m => editing?.MetricID === m.MetricID ? (
@@ -343,8 +347,8 @@ function MetricsTab({ businessId }) {
               )}
               {m.Notes && <div className="text-xs text-gray-500 mt-0.5">{m.Notes}</div>}
             </div>
-            <button onClick={() => setEdit(m)} className={btnGhost}>Edit</button>
-            <button onClick={() => del(m.MetricID)} className="text-xs text-red-600 hover:underline">Delete</button>
+            <button onClick={() => setEdit(m)} className={btnGhost}>{t('aggregator_esg.btn_edit')}</button>
+            <button onClick={() => del(m.MetricID)} className="text-xs text-red-600 hover:underline">{t('aggregator_esg.btn_delete')}</button>
           </div>
         ))}
       </div>
@@ -356,6 +360,7 @@ function MetricsTab({ businessId }) {
 // Generate report
 // ─────────────────────────────────────────────────────────────────
 function GenerateTab({ businessId, onSaved }) {
+  const { t } = useTranslation();
   const [s, setS] = useState({
     Title: '',
     PeriodStart: isoDate(ninetyDaysAgo),
@@ -378,26 +383,26 @@ function GenerateTab({ businessId, onSaved }) {
       const j = await r.json();
       setResult(j);
       onSaved?.();
-    } else { alert('Generate failed'); }
+    } else { alert(t('aggregator_esg.err_generate_failed')); }
     setBusy(false);
   };
 
   return (
     <div className="space-y-3">
       <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
-        <div className="text-sm text-gray-700">Snapshots all live + manual metrics for the period below into a saved record. Once saved you can download as PDF — auditors get one immutable file with the same numbers no matter when they open it.</div>
+        <div className="text-sm text-gray-700">{t('aggregator_esg.generate_desc')}</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div><label className={lbl}>Title</label><input className={inp} placeholder="Q1 2026 ESG Report" value={s.Title} onChange={set('Title')} /></div>
+          <div><label className={lbl}>{t('aggregator_esg.lbl_title')}</label><input className={inp} placeholder="Q1 2026 ESG Report" value={s.Title} onChange={set('Title')} /></div>
           <div className="grid grid-cols-2 gap-2">
-            <div><label className={lbl}>Period start</label><input className={inp} type="date" value={s.PeriodStart} onChange={set('PeriodStart')} /></div>
-            <div><label className={lbl}>Period end</label><input className={inp} type="date" value={s.PeriodEnd} onChange={set('PeriodEnd')} /></div>
+            <div><label className={lbl}>{t('aggregator_esg.lbl_period_start')}</label><input className={inp} type="date" value={s.PeriodStart} onChange={set('PeriodStart')} /></div>
+            <div><label className={lbl}>{t('aggregator_esg.lbl_period_end')}</label><input className={inp} type="date" value={s.PeriodEnd} onChange={set('PeriodEnd')} /></div>
           </div>
-          <div><label className={lbl}>Signatory</label><input className={inp} placeholder="Jane Doe, ESG Officer" value={s.Signatory} onChange={set('Signatory')} /></div>
-          <div><label className={lbl}>Signature date</label><input className={inp} type="date" value={s.SignatureDate} onChange={set('SignatureDate')} /></div>
+          <div><label className={lbl}>{t('aggregator_esg.lbl_signatory')}</label><input className={inp} placeholder="Jane Doe, ESG Officer" value={s.Signatory} onChange={set('Signatory')} /></div>
+          <div><label className={lbl}>{t('aggregator_esg.lbl_signature_date')}</label><input className={inp} type="date" value={s.SignatureDate} onChange={set('SignatureDate')} /></div>
         </div>
-        <div><label className={lbl}>Notes (auditor context)</label><textarea className={inp} rows={2} value={s.Notes} onChange={set('Notes')} /></div>
+        <div><label className={lbl}>{t('aggregator_esg.lbl_notes_auditor')}</label><textarea className={inp} rows={2} value={s.Notes} onChange={set('Notes')} /></div>
         <div className="flex justify-end">
-          <button onClick={submit} disabled={busy} className={btn}>{busy ? 'Generating…' : 'Generate & save'}</button>
+          <button onClick={submit} disabled={busy} className={btn}>{busy ? t('aggregator_esg.btn_generating') : t('aggregator_esg.btn_generate')}</button>
         </div>
       </div>
 
@@ -405,12 +410,12 @@ function GenerateTab({ businessId, onSaved }) {
         <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-4 space-y-2">
           <div className="flex items-center gap-2 text-emerald-700">
             {ICONS.check}
-            <strong className="text-emerald-900">Saved as report #{result.ReportID}</strong>
+            <strong className="text-emerald-900">{t('aggregator_esg.saved_as_report', { id: result.ReportID })}</strong>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <a href={`${API}/api/esg/reports/${result.ReportID}/pdf`} target="_blank" rel="noreferrer" className={btn + ' inline-flex items-center gap-1.5'}>{ICONS.download} Download PDF</a>
-            <a href={`${API}/api/esg/reports/${result.ReportID}/html`} target="_blank" rel="noreferrer" className={btnGhost}>View HTML</a>
-            <a href={`${API}/api/esg/reports/${result.ReportID}`} target="_blank" rel="noreferrer" className={btnGhost}>View JSON</a>
+            <a href={`${API}/api/esg/reports/${result.ReportID}/pdf`} target="_blank" rel="noreferrer" className={btn + ' inline-flex items-center gap-1.5'}>{ICONS.download} {t('aggregator_esg.btn_download_pdf')}</a>
+            <a href={`${API}/api/esg/reports/${result.ReportID}/html`} target="_blank" rel="noreferrer" className={btnGhost}>{t('aggregator_esg.btn_view_html')}</a>
+            <a href={`${API}/api/esg/reports/${result.ReportID}`} target="_blank" rel="noreferrer" className={btnGhost}>{t('aggregator_esg.btn_view_json')}</a>
           </div>
         </div>
       )}
@@ -422,33 +427,34 @@ function GenerateTab({ businessId, onSaved }) {
 // Saved reports list
 // ─────────────────────────────────────────────────────────────────
 function ReportsTab({ businessId, refreshKey }) {
+  const { t } = useTranslation();
   const [list, setList] = useState([]);
   const refresh = () => { fetch(`${API}/api/esg/${businessId}/reports`).then(r => r.json()).then(setList); };
   useEffect(() => { refresh(); }, [businessId, refreshKey]);
 
   const del = async (id) => {
-    if (!window.confirm('Delete this saved report? This cannot be undone (the snapshot data is gone).')) return;
+    if (!window.confirm(t('aggregator_esg.confirm_delete_report'))) return;
     await fetch(`${API}/api/esg/reports/${id}`, { method: 'DELETE' });
     refresh();
   };
 
   return (
     <div className="space-y-2">
-      {list.length === 0 && <div className="text-sm text-gray-500 italic">No saved reports yet. Use the Generate tab to create your first audit-ready snapshot.</div>}
+      {list.length === 0 && <div className="text-sm text-gray-500 italic">{t('aggregator_esg.no_reports')}</div>}
       {list.map(r => (
         <div key={r.ReportID} className="bg-white border border-gray-200 rounded-xl p-3 flex items-start gap-3">
           <div className="shrink-0 text-[#3D6B34] mt-0.5">{ICONS.document}</div>
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-gray-900">{r.Title || `Report #${r.ReportID}`}</div>
+            <div className="font-semibold text-gray-900">{r.Title || t('aggregator_esg.report_num', { n: r.ReportID })}</div>
             <div className="text-xs text-gray-600 mt-0.5">
-              Period {(r.PeriodStart || '').slice(0,10)} → {(r.PeriodEnd || '').slice(0,10)}
-              {' · '}generated {(r.GeneratedDate || '').slice(0,10)}
-              {r.Signatory && <> · signed by <strong>{r.Signatory}</strong></>}
+              {t('aggregator_esg.report_period')} {(r.PeriodStart || '').slice(0,10)} → {(r.PeriodEnd || '').slice(0,10)}
+              {' · '}{t('aggregator_esg.report_generated')} {(r.GeneratedDate || '').slice(0,10)}
+              {r.Signatory && <> · {t('aggregator_esg.report_signed_by')} <strong>{r.Signatory}</strong></>}
             </div>
           </div>
-          <a href={`${API}/api/esg/reports/${r.ReportID}/pdf`} target="_blank" rel="noreferrer" className={btn}>PDF</a>
-          <a href={`${API}/api/esg/reports/${r.ReportID}/html`} target="_blank" rel="noreferrer" className={btnGhost}>HTML</a>
-          <button onClick={() => del(r.ReportID)} className="text-xs text-red-600 hover:underline">Delete</button>
+          <a href={`${API}/api/esg/reports/${r.ReportID}/pdf`} target="_blank" rel="noreferrer" className={btn}>{t('aggregator_esg.btn_pdf')}</a>
+          <a href={`${API}/api/esg/reports/${r.ReportID}/html`} target="_blank" rel="noreferrer" className={btnGhost}>{t('aggregator_esg.btn_html')}</a>
+          <button onClick={() => del(r.ReportID)} className="text-xs text-red-600 hover:underline">{t('aggregator_esg.btn_delete')}</button>
         </div>
       ))}
     </div>
@@ -458,14 +464,15 @@ function ReportsTab({ businessId, refreshKey }) {
 // ─────────────────────────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────────────────────────
-const TABS = [
-  { key: 'live',     label: 'Live snapshot' },
-  { key: 'metrics',  label: 'Manual metrics' },
-  { key: 'generate', label: 'Generate report' },
-  { key: 'reports',  label: 'Saved reports' },
+const TAB_KEYS = [
+  { key: 'live',     labelKey: 'tab_live' },
+  { key: 'metrics',  labelKey: 'tab_metrics' },
+  { key: 'generate', labelKey: 'tab_generate' },
+  { key: 'reports',  labelKey: 'tab_reports' },
 ];
 
 export default function AggregatorESG() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const { BusinessID: ctxBID } = useAccount();
   const BusinessID = params.get('BusinessID') || ctxBID;
@@ -474,38 +481,38 @@ export default function AggregatorESG() {
 
   if (!BusinessID) {
     return (
-      <AccountLayout pageTitle="ESG Reports">
-        <div className="p-6 text-sm text-gray-500">Pick a business from the account picker.</div>
+      <AccountLayout pageTitle={t('aggregator_esg.page_title')}>
+        <div className="p-6 text-sm text-gray-500">{t('aggregator_esg.no_business')}</div>
       </AccountLayout>
     );
   }
 
   return (
     <AccountLayout
-      pageTitle="ESG Reports"
+      pageTitle={t('aggregator_esg.page_title')}
       breadcrumbs={[
-        { label: 'Account', to: '/account' },
-        { label: 'Food Aggregation', to: `/aggregator?BusinessID=${BusinessID}` },
-        { label: 'ESG Reports' },
+        { label: t('aggregator_esg.breadcrumb_account'), to: '/account' },
+        { label: t('aggregator_esg.breadcrumb_aggregation'), to: `/aggregator?BusinessID=${BusinessID}` },
+        { label: t('aggregator_esg.breadcrumb_esg') },
       ]}
     >
       <div className="p-5 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="font-lora text-2xl font-bold text-gray-900">ESG Reports</h1>
-            <p className="text-sm text-gray-500 mt-1">Automated, audit-ready proof of sustainable practices. Live numbers come from your sourcing, procurement, cold-chain and input records — manual metrics fill in everything else.</p>
+            <h1 className="font-lora text-2xl font-bold text-gray-900">{t('aggregator_esg.heading')}</h1>
+            <p className="text-sm text-gray-500 mt-1">{t('aggregator_esg.subheading')}</p>
           </div>
-          <Link to={`/aggregator?BusinessID=${BusinessID}`} className={btnGhost}>← Hub</Link>
+          <Link to={`/aggregator?BusinessID=${BusinessID}`} className={btnGhost}>{t('aggregator_esg.btn_hub')}</Link>
         </div>
 
         <div className="border-b border-gray-200">
           <div className="flex gap-1">
-            {TABS.map(t => (
-              <button key={t.key} onClick={() => setTab(t.key)}
-                      className={`px-4 py-2 text-sm font-medium ${tab === t.key
+            {TAB_KEYS.map(tabItem => (
+              <button key={tabItem.key} onClick={() => setTab(tabItem.key)}
+                      className={`px-4 py-2 text-sm font-medium ${tab === tabItem.key
                         ? 'border-b-2 border-[#3D6B34] text-[#3D6B34]'
                         : 'text-gray-500 hover:text-gray-700'}`}>
-                {t.label}
+                {t(`aggregator_esg.${tabItem.labelKey}`)}
               </button>
             ))}
           </div>

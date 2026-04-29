@@ -370,7 +370,10 @@
       "Bash(node f:/tmp/add_halter_keys.js)",
       "Bash(node f:/tmp/add_myreg_order_keys.js)",
       "Bash(node f:/tmp/add_pairsley_product_keys.js)",
-      "Bash(node f:/tmp/add_promo_push_props_suggest_keys.js)"
+      "Bash(node f:/tmp/add_promo_push_props_suggest_keys.js)",
+      "Bash(node f:/tmp/add_waitlist_stripe_testimonials_keys.js)",
+      "Bash(node \"f:/tmp/add_aggregator_esg_keys.js\")",
+      "Bash(node \"f:/tmp/add_chef_dashboard_keys.js\")"
     ],
     "additionalDirectories": [
       "\\tmp"
