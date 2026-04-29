@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -7,7 +8,28 @@ const STORAGE_MIC  = 'lavendir_mic_device_id';
 const STORAGE_SPK  = 'lavendir_spk_device_id';
 const STORAGE_TTS  = 'lavendir_tts_voice';
 
+function DeviceSelect({ label, value, onChange, options, placeholder, deviceFallbackLabel }) {
+  return (
+    <div className="mb-5">
+      <label className="block text-sm font-semibold text-gray-700 mb-1">{label}</label>
+      <select
+        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      >
+        <option value="">{placeholder}</option>
+        {options.map(d => (
+          <option key={d.deviceId} value={d.deviceId}>
+            {d.label || deviceFallbackLabel(d.deviceId)}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export default function AudioSettings() {
+  const { t } = useTranslation();
   const [searchParams]  = useSearchParams();
   const BusinessID      = searchParams.get('BusinessID');
   const PeopleID        = localStorage.getItem('people_id');
@@ -34,19 +56,17 @@ export default function AudioSettings() {
   useEffect(() => {
     async function loadDevices() {
       try {
-        // Request permission first so labels appear
         await navigator.mediaDevices.getUserMedia({ audio: true }).then(s => s.getTracks().forEach(t => t.stop()));
         const devices = await navigator.mediaDevices.enumerateDevices();
         setMics(devices.filter(d => d.kind === 'audioinput'));
         setSpks(devices.filter(d => d.kind === 'audiooutput'));
         setPermError('');
       } catch (e) {
-        setPermError('Microphone permission denied. Please allow microphone access in your browser settings.');
+        setPermError(t('audio_settings.perm_error_mic'));
       }
     }
     loadDevices();
 
-    // Load TTS voices
     const loadVoices = () => {
       const v = window.speechSynthesis?.getVoices() || [];
       const enVoices = v.filter(v => v.lang.startsWith('en'));
@@ -61,7 +81,6 @@ export default function AudioSettings() {
     return () => { window.speechSynthesis.onvoiceschanged = null; };
   }, []);
 
-  // Mic level meter
   const startMicTest = async () => {
     setTestingMic(true);
     setMicLevel(0);
@@ -85,7 +104,7 @@ export default function AudioSettings() {
       };
       tick();
     } catch (e) {
-      setPermError('Could not access microphone: ' + e.message);
+      setPermError(t('audio_settings.perm_error_access', { msg: e.message }));
       setTestingMic(false);
     }
   };
@@ -98,11 +117,10 @@ export default function AudioSettings() {
     setTestingMic(false);
   };
 
-  // Speaker test
   const testSpeaker = async () => {
     setTestingSpk(true);
     try {
-      const utt = new SpeechSynthesisUtterance("Hello! This is Lavendir. Your audio is working.");
+      const utt = new SpeechSynthesisUtterance(t('audio_settings.test_utterance'));
       if (selVoice) {
         const voice = window.speechSynthesis.getVoices().find(v => v.name === selVoice);
         if (voice) utt.voice = voice;
@@ -124,30 +142,20 @@ export default function AudioSettings() {
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const DeviceSelect = ({ label, value, onChange, options, placeholder }) => (
-    <div className="mb-5">
-      <label className="block text-sm font-semibold text-gray-700 mb-1">{label}</label>
-      <select
-        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-      >
-        <option value="">{placeholder}</option>
-        {options.map(d => (
-          <option key={d.deviceId} value={d.deviceId}>
-            {d.label || `Device ${d.deviceId.slice(0, 8)}`}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
+  const deviceFallbackLabel = (id) => t('audio_settings.device_label_fallback', { id: id.slice(0, 8) });
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Audio Settings" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Settings' }, { label: 'Audio' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}
+      pageTitle={t('audio_settings.page_title')}
+      breadcrumbs={[
+        { label: t('audio_settings.crumb_dashboard'), to: '/dashboard' },
+        { label: t('audio_settings.crumb_settings') },
+        { label: t('audio_settings.crumb_audio') },
+      ]}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Audio Settings</h1>
-          <p className="text-sm text-gray-500">Configure microphone and speaker for Lavendir, your AI website assistant.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('audio_settings.heading')}</h1>
+          <p className="text-sm text-gray-500">{t('audio_settings.desc')}</p>
         </div>
 
         {permError && (
@@ -163,22 +171,22 @@ export default function AudioSettings() {
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
             </svg>
-            <h2 className="font-bold text-gray-800">Microphone</h2>
+            <h2 className="font-bold text-gray-800">{t('audio_settings.section_mic')}</h2>
           </div>
 
           <DeviceSelect
-            label="Select Microphone"
+            label={t('audio_settings.lbl_select_mic')}
             value={selMic}
             onChange={setSelMic}
             options={mics}
-            placeholder="System Default"
+            placeholder={t('audio_settings.placeholder_system_default')}
+            deviceFallbackLabel={deviceFallbackLabel}
           />
 
-          {/* Level meter */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-gray-500">Input Level</span>
-              {testingMic && <span className="text-xs text-purple-600 animate-pulse">● Recording…</span>}
+              <span className="text-xs text-gray-500">{t('audio_settings.lbl_input_level')}</span>
+              {testingMic && <span className="text-xs text-purple-600 animate-pulse">{t('audio_settings.recording_indicator')}</span>}
             </div>
             <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
               <div
@@ -199,11 +207,9 @@ export default function AudioSettings() {
                 : 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
             }`}
           >
-            {testingMic ? '⏹ Stop Test' : '▶ Test Microphone'}
+            {testingMic ? t('audio_settings.btn_stop_test') : t('audio_settings.btn_test_mic')}
           </button>
-          <p className="text-xs text-gray-400 mt-2">
-            Speak into your microphone — the level bar should move. If it doesn't, check your device or browser permissions.
-          </p>
+          <p className="text-xs text-gray-400 mt-2">{t('audio_settings.mic_tip')}</p>
         </div>
 
         {/* Speaker / TTS Voice */}
@@ -213,34 +219,35 @@ export default function AudioSettings() {
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
               <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
             </svg>
-            <h2 className="font-bold text-gray-800">Speaker &amp; Voice</h2>
+            <h2 className="font-bold text-gray-800">{t('audio_settings.section_speaker')}</h2>
           </div>
 
           {spks.length > 0 && (
             <DeviceSelect
-              label="Output Device"
+              label={t('audio_settings.lbl_output_device')}
               value={selSpk}
               onChange={setSelSpk}
               options={spks}
-              placeholder="System Default"
+              placeholder={t('audio_settings.placeholder_system_default')}
+              deviceFallbackLabel={deviceFallbackLabel}
             />
           )}
 
           <div className="mb-5">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Lavendir's Voice</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">{t('audio_settings.lbl_lavendir_voice')}</label>
             <select
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white"
               value={selVoice}
               onChange={e => setSelVoice(e.target.value)}
             >
-              <option value="">Browser Default</option>
+              <option value="">{t('audio_settings.opt_browser_default')}</option>
               {voices.map(v => (
                 <option key={v.name} value={v.name}>
                   {v.name} {v.name.includes('Google') ? '⭐' : ''}
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-400 mt-1">Voices marked ⭐ are high-quality Google voices (Chrome only).</p>
+            <p className="text-xs text-gray-400 mt-1">{t('audio_settings.voice_tip')}</p>
           </div>
 
           <button
@@ -248,32 +255,29 @@ export default function AudioSettings() {
             disabled={testingSpk}
             className="px-4 py-2 rounded-xl text-sm font-semibold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition-colors disabled:opacity-50"
           >
-            {testingSpk ? '🔊 Playing…' : '▶ Test Speaker'}
+            {testingSpk ? t('audio_settings.btn_playing') : t('audio_settings.btn_test_speaker')}
           </button>
         </div>
 
         {/* Tips */}
         <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-6">
-          <p className="text-sm font-semibold text-purple-800 mb-2">Tips for best results with Lavendir</p>
+          <p className="text-sm font-semibold text-purple-800 mb-2">{t('audio_settings.tips_heading')}</p>
           <ul className="text-xs text-purple-700 space-y-1 list-disc list-inside">
-            <li>Use <strong>Google Chrome</strong> for the best voice quality and speech recognition</li>
-            <li>Select <strong>Google US English</strong> as the voice for natural-sounding responses</li>
-            <li>Use a headset or headphones to prevent echo when voice is enabled</li>
-            <li>Click the mic button once to start listening, click again to stop</li>
-            <li>If speech recognition stops working, refresh the page and try again</li>
+            <li dangerouslySetInnerHTML={{ __html: t('audio_settings.tip_1') }} />
+            <li dangerouslySetInnerHTML={{ __html: t('audio_settings.tip_2') }} />
+            <li>{t('audio_settings.tip_3')}</li>
+            <li>{t('audio_settings.tip_4')}</li>
+            <li>{t('audio_settings.tip_5')}</li>
           </ul>
         </div>
 
         {/* Save */}
         <div className="flex justify-end items-center gap-3">
-          <button
-            onClick={save}
-            className="regsubmit2 px-8 py-2.5 text-sm"
-          >
-            Save Audio Settings
+          <button onClick={save} className="regsubmit2 px-8 py-2.5 text-sm">
+            {t('audio_settings.btn_save')}
           </button>
           {saved && (
-            <span className="text-sm text-green-600 font-medium animate-pulse">✓ Saved!</span>
+            <span className="text-sm text-green-600 font-medium animate-pulse">{t('audio_settings.saved')}</span>
           )}
         </div>
       </div>

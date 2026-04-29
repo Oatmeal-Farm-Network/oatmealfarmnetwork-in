@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -9,6 +10,7 @@ const fmt = (n) => {
 };
 
 export default function AnimalPackages() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('people_id');
@@ -21,14 +23,12 @@ export default function AnimalPackages() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
-  // Form state
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [packagePrice, setPackagePrice] = useState('');
-  const [selectedItems, setSelectedItems] = useState([]); // [{AnimalID, IncludeType:'sale'|'stud', FullName, Price, StudFee}]
+  const [selectedItems, setSelectedItems] = useState([]);
 
-  // Animal search
   const [animalQuery, setAnimalQuery] = useState('');
 
   const apiBase = import.meta.env.VITE_API_URL || '';
@@ -55,7 +55,6 @@ export default function AnimalPackages() {
     loadAnimals();
   }, [BusinessID]);
 
-  // Computed value of selected animals
   const totalValue = useMemo(() => {
     let total = 0;
     for (const item of selectedItems) {
@@ -68,7 +67,6 @@ export default function AnimalPackages() {
     return total;
   }, [selectedItems]);
 
-  // Filter available animals (not already selected)
   const selectedIds = useMemo(() => new Set(selectedItems.map(i => i.AnimalID)), [selectedItems]);
   const filteredAnimals = useMemo(() => {
     let list = animals.filter(a => !selectedIds.has(a.AnimalID));
@@ -154,7 +152,7 @@ export default function AnimalPackages() {
           Items: selectedItems.map(i => ({ AnimalID: i.AnimalID, IncludeType: i.IncludeType })),
         }),
       });
-      if (!res.ok) throw new Error('Failed to save package');
+      if (!res.ok) throw new Error(t('animal_packages.save_error'));
       clearForm();
       setShowForm(false);
       loadPackages();
@@ -166,7 +164,7 @@ export default function AnimalPackages() {
   };
 
   const handleDelete = async (pkgId) => {
-    if (!window.confirm('Delete this package?')) return;
+    if (!window.confirm(t('animal_packages.confirm_delete'))) return;
     await fetch(`${apiBase}/auth/packages/delete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...headers },
@@ -175,22 +173,28 @@ export default function AnimalPackages() {
     loadPackages();
   };
 
-  if (!Business || loading) return <div className="p-8 text-gray-500">Loading...</div>;
+  if (!Business || loading) return <div className="p-8 text-gray-500">{t('animal_packages.loading')}</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Animal Packages" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Livestock' }, { label: 'Packages' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}
+      pageTitle={t('animal_packages.page_title')}
+      breadcrumbs={[
+        { label: t('animal_packages.crumb_dashboard'), to: '/dashboard' },
+        { label: t('animal_packages.crumb_livestock') },
+        { label: t('animal_packages.crumb_packages') },
+      ]}>
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-green-700">Animal Packages</h2>
+          <h2 className="text-2xl font-bold text-green-700">{t('animal_packages.heading')}</h2>
           <button onClick={() => { if (showForm) { clearForm(); setShowForm(false); } else { clearForm(); setShowForm(true); } }} className="regsubmit2">
-            {showForm ? 'Cancel' : 'Create Package'}
+            {showForm ? t('animal_packages.btn_cancel') : t('animal_packages.btn_create')}
           </button>
         </div>
 
         {showForm && (
           <form onSubmit={handleSave} className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-4">
             <h3 className="text-lg font-semibold text-[#5a3e2b]">
-              {editingId ? 'Edit Package' : 'New Package'}
+              {editingId ? t('animal_packages.form_heading_edit') : t('animal_packages.form_heading_new')}
             </h3>
 
             {saveError && (
@@ -198,37 +202,36 @@ export default function AnimalPackages() {
             )}
 
             <div className="max-w-lg">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Package Title</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('animal_packages.lbl_title')}</label>
               <input
                 type="text"
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-600"
-                placeholder="Starter Herd Package"
+                placeholder={t('animal_packages.placeholder_title')}
               />
             </div>
 
             <div className="max-w-lg">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('animal_packages.lbl_description')}</label>
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-600 resize-y"
-                placeholder="Everything you need to start your herd..."
+                placeholder={t('animal_packages.placeholder_description')}
               />
             </div>
 
-            {/* Animal selector */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Add Animals</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('animal_packages.lbl_add_animals')}</label>
               <input
                 type="text"
                 value={animalQuery}
                 onChange={e => setAnimalQuery(e.target.value)}
                 className="w-full max-w-lg px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-600 mb-2"
-                placeholder="Search animals by name, category, or species..."
+                placeholder={t('animal_packages.placeholder_animal_search')}
               />
               {filteredAnimals.length > 0 && (
                 <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto bg-white">
@@ -246,12 +249,12 @@ export default function AnimalPackages() {
                         <div className="flex gap-1">
                           <button type="button" onClick={() => addAnimal(a, 'sale')}
                             className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
-                            + Sale
+                            {t('animal_packages.btn_add_sale')}
                           </button>
                           {hasStud && (
                             <button type="button" onClick={() => addAnimal(a, 'stud')}
                               className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">
-                              + Stud
+                              {t('animal_packages.btn_add_stud')}
                             </button>
                           )}
                         </div>
@@ -262,17 +265,16 @@ export default function AnimalPackages() {
               )}
             </div>
 
-            {/* Selected animals */}
             {selectedItems.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Package Animals</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('animal_packages.lbl_package_animals')}</label>
                 <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-gray-50 text-left text-xs text-gray-500 uppercase">
-                        <th className="px-3 py-2">Animal</th>
-                        <th className="px-3 py-2">Type</th>
-                        <th className="px-3 py-2 text-right">Value</th>
+                        <th className="px-3 py-2">{t('animal_packages.th_animal')}</th>
+                        <th className="px-3 py-2">{t('animal_packages.th_type')}</th>
+                        <th className="px-3 py-2 text-right">{t('animal_packages.th_value')}</th>
                         <th className="px-3 py-2 w-10"></th>
                       </tr>
                     </thead>
@@ -287,9 +289,9 @@ export default function AnimalPackages() {
                                   ? 'bg-blue-100 text-blue-700'
                                   : 'bg-green-100 text-green-700'
                               } ${item.StudFee > 0 ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
-                              title={item.StudFee > 0 ? 'Click to toggle sale/stud' : ''}
+                              title={item.StudFee > 0 ? t('animal_packages.toggle_title') : ''}
                             >
-                              {item.IncludeType === 'stud' ? 'Stud Fee' : 'Sale'}
+                              {item.IncludeType === 'stud' ? t('animal_packages.type_stud_fee') : t('animal_packages.type_sale')}
                             </button>
                           </td>
                           <td className="px-3 py-2 text-right">
@@ -304,7 +306,7 @@ export default function AnimalPackages() {
                     </tbody>
                     <tfoot>
                       <tr className="border-t-2 border-gray-200 bg-gray-50">
-                        <td className="px-3 py-2 font-semibold text-gray-700" colSpan={2}>Total Animal Value</td>
+                        <td className="px-3 py-2 font-semibold text-gray-700" colSpan={2}>{t('animal_packages.total_animal_value')}</td>
                         <td className="px-3 py-2 text-right font-bold text-green-700">{fmt(totalValue)}</td>
                         <td></td>
                       </tr>
@@ -314,9 +316,8 @@ export default function AnimalPackages() {
               </div>
             )}
 
-            {/* Package price + savings */}
             <div className="max-w-lg">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Package Price</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('animal_packages.lbl_package_price')}</label>
               <div className="flex items-center gap-3">
                 <div className="relative flex-1">
                   <span className="absolute left-3 top-2 text-gray-400 text-sm">$</span>
@@ -332,7 +333,10 @@ export default function AnimalPackages() {
                 </div>
                 {packagePrice && totalValue > 0 && Number(packagePrice) < totalValue && (
                   <span className="text-sm text-green-600 font-medium whitespace-nowrap">
-                    Save {fmt(totalValue - Number(packagePrice))} ({Math.round((1 - Number(packagePrice) / totalValue) * 100)}% off)
+                    {t('animal_packages.savings_label', {
+                      amount: fmt(totalValue - Number(packagePrice)),
+                      pct: Math.round((1 - Number(packagePrice) / totalValue) * 100),
+                    })}
                   </span>
                 )}
               </div>
@@ -340,15 +344,14 @@ export default function AnimalPackages() {
 
             <div className="flex justify-end">
               <button type="submit" disabled={saving} className="regsubmit2">
-                {saving ? 'Saving...' : editingId ? 'Update Package' : 'Save Package'}
+                {saving ? t('animal_packages.btn_saving') : editingId ? t('animal_packages.btn_update') : t('animal_packages.btn_save')}
               </button>
             </div>
           </form>
         )}
 
-        {/* Package list */}
         {packages.length === 0 && !showForm ? (
-          <p className="text-gray-500 text-sm">No packages yet. Create one to bundle animals together at a special price.</p>
+          <p className="text-gray-500 text-sm">{t('animal_packages.empty_packages')}</p>
         ) : (
           <div className="space-y-4">
             {packages.map(pkg => {
@@ -367,7 +370,10 @@ export default function AnimalPackages() {
                       <p className="text-xl font-bold text-green-700">{fmt(pkg.PackagePrice)}</p>
                       {savings > 0 && (
                         <p className="text-xs text-green-600">
-                          Save {fmt(savings)} ({Math.round((savings / itemValue) * 100)}% off)
+                          {t('animal_packages.savings_label', {
+                            amount: fmt(savings),
+                            pct: Math.round((savings / itemValue) * 100),
+                          })}
                         </p>
                       )}
                     </div>
@@ -382,22 +388,22 @@ export default function AnimalPackages() {
                           }`}>
                             {it.FullName}
                             <span className="text-gray-400">
-                              {it.IncludeType === 'stud' ? `(Stud: ${fmt(it.StudFee)})` : `(${fmt(it.Price)})`}
+                              {it.IncludeType === 'stud' ? `(${t('animal_packages.type_stud_fee')}: ${fmt(it.StudFee)})` : `(${fmt(it.Price)})`}
                             </span>
                           </span>
                         ))}
                       </div>
                       <p className="text-xs text-gray-400 mt-2">
-                        Total individual value: {fmt(itemValue)}
+                        {t('animal_packages.individual_value', { amount: fmt(itemValue) })}
                       </p>
                     </div>
                   )}
 
                   <div className="flex gap-3 mt-3">
                     <button onClick={() => startEdit(pkg)}
-                      className="text-xs text-[#5a3e2b] hover:underline font-medium">Edit</button>
+                      className="text-xs text-[#5a3e2b] hover:underline font-medium">{t('animal_packages.btn_edit')}</button>
                     <button onClick={() => handleDelete(pkg.PackageID)}
-                      className="text-xs text-red-500 hover:underline font-medium">Delete</button>
+                      className="text-xs text-red-500 hover:underline font-medium">{t('animal_packages.btn_delete')}</button>
                   </div>
                 </div>
               );

@@ -102,7 +102,7 @@ export default function AboutAIAgents() {
   }));
 
   return (
-    <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8' }}>
+    <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title="AI Agents | Oatmeal Farm Network"
         description="Meet Saige, Pairsley, Rosemarie, Thaiyme, and Lavendir — five purpose-built AI agents covering every role in the food system, from field to fork to website."
@@ -110,46 +110,62 @@ export default function AboutAIAgents() {
       />
       <Header />
 
-      {/* Hero */}
-      <div className="relative text-white py-20 px-4" style={{ backgroundColor: '#3D6B34' }}>
-        <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-white">
-              <S size={28}>
-                <circle cx="8" cy="5" r="2.5"/>
-                <path d="M3 14c0-3.3 2.2-5 5-5s5 1.7 5 5"/>
-                <circle cx="13" cy="4" r="1.5"/>
-                <circle cx="3" cy="4" r="1.5"/>
-                <path d="M14.5 11c0-2.2-1-3.5-1.5-3.5"/>
-                <path d="M1.5 11c0-2.2 1-3.5 1.5-3.5"/>
-              </S>
-            </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('ai_agents.hero_badge')}</span>
-          </div>
-          <h1 className="text-4xl font-bold mb-3 drop-shadow">{t('ai_agents.hero_title')}</h1>
-          <p className="text-lg text-white/95 drop-shadow max-w-2xl">
-            {t('ai_agents.hero_body')}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/saige"
-              className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition"
-              style={{ color: '#3D6B34' }}>
-              {t('ai_agents.hero_cta1')}
-            </Link>
-            <Link to="/signup"
-              className="border-2 border-white/60 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-white/10 transition">
-              {t('ai_agents.hero_cta2')}
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-4 py-8 grow w-full">
+      {/* Breadcrumbs */}
+      <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
           { label: 'AI Agents' },
         ]} />
+      </div>
+
+      {/* Hero — photo + gradient overlay */}
+      <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
+        <div className="relative w-full overflow-hidden rounded-xl">
+          <img
+            src="/images/CoreFeaturesFarm2Table.webp"
+            alt="AI Agents for Agriculture"
+            className="w-full object-cover"
+            style={{ height: '260px', display: 'block' }}
+            loading="eager"
+            onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to right, rgba(18,72,38,0.92) 0%, rgba(18,72,38,0.75) 45%, rgba(18,72,38,0) 78%)' }}
+          />
+          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '720px' }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.22)', color: 'white' }}>
+                <S size={22}>
+                  <circle cx="8" cy="5" r="2.5"/>
+                  <path d="M3 14c0-3.3 2.2-5 5-5s5 1.7 5 5"/>
+                  <circle cx="13" cy="4" r="1.5"/>
+                  <circle cx="3" cy="4" r="1.5"/>
+                  <path d="M14.5 11c0-2.2-1-3.5-1.5-3.5"/>
+                  <path d="M1.5 11c0-2.2 1-3.5 1.5-3.5"/>
+                </S>
+              </div>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.88)' }}>{t('ai_agents.hero_badge')}</span>
+            </div>
+            <h1 style={{ color: '#ffffff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
+              {t('ai_agents.hero_title')}
+            </h1>
+            <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+              {t('ai_agents.hero_body')}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/saige" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: '#3D6B34' }}>
+                {t('ai_agents.hero_cta1')}
+              </Link>
+              <Link to="/signup" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: 'rgba(255,255,255,0.55)', color: '#ffffff' }}>
+                {t('ai_agents.hero_cta2')}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
         <p className="mt-6 text-gray-700 leading-relaxed max-w-3xl">
           {t('ai_agents.intro')}

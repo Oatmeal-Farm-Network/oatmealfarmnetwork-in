@@ -109,10 +109,9 @@ function NavSection({ icon, label, expanded, isOpen, onToggle, children, iconOnl
 
 export default function AccountSidebar() {
   const { t } = useTranslation();
-  const { Business, BusinessID, Expanded, setExpanded, OpenSections, setOpenSections, businesses } = useAccount();
+  const { Business, BusinessID, Expanded, setExpanded, OpenSections, setOpenSections, businesses, websiteSlug, setWebsiteSlug } = useAccount();
   const peopleId = typeof window !== 'undefined' ? localStorage.getItem('people_id') || '' : '';
   const [fields, setFields] = useState([]);
-  const [websiteSlug, setWebsiteSlug] = useState(null);
   const [features, setFeatures] = useState(null);
   const location = useLocation();
 
@@ -125,11 +124,14 @@ export default function AccountSidebar() {
   }, [BusinessID]);
 
   useEffect(() => {
-    if (!BusinessID) return;
+    if (!BusinessID) {
+      setWebsiteSlug(null);
+      return;
+    }
     fetch(`${API_URL}/api/website/site?business_id=${BusinessID}`)
       .then(r => r.ok ? r.json() : null)
-      .then(site => { if (site) setWebsiteSlug(site.slug); })
-      .catch(() => {});
+      .then(site => setWebsiteSlug(site?.slug ?? null))
+      .catch(() => setWebsiteSlug(null));
   }, [BusinessID]);
 
   useEffect(() => {

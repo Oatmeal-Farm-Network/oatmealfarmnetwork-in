@@ -26,7 +26,7 @@ export default function AboutDirectory() {
   ];
 
   return (
-    <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8' }}>
+    <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title="Directory | Oatmeal Farm Network"
         description="A searchable directory of farms, ranches, mills, bakers, chefs, and agricultural businesses on Oatmeal Farm Network. Filter by product, livestock breed, certification, and region."
@@ -34,36 +34,55 @@ export default function AboutDirectory() {
       />
       <Header />
 
-      <div className="relative text-white py-20 px-4" style={{ backgroundColor: ACCENT }}>
-        <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
-            <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('dir_about.hero_badge')}</span>
-          </div>
-          <h1 className="text-4xl font-bold mb-3 drop-shadow" style={{ color: '#fff' }}>{t('dir_about.hero_title')}</h1>
-          <p className="text-lg text-white/95 drop-shadow max-w-2xl">
-            {t('dir_about.hero_body')}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/directory"
-              className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition"
-              style={{ color: ACCENT }}>
-              {t('dir_about.hero_cta1')}
-            </Link>
-            <Link to="/account"
-              className="border-2 border-white/60 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-white/10 transition">
-              {t('dir_about.hero_cta2')}
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-4 py-8 grow w-full">
+      {/* Breadcrumbs */}
+      <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
           { label: 'Directory' },
         ]} />
+      </div>
+
+      {/* Hero — photo + gradient overlay */}
+      <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
+        <div className="relative w-full overflow-hidden rounded-xl">
+          <img
+            src="/images/1wmain.webp"
+            alt="Farm Network Directory"
+            className="w-full object-cover"
+            style={{ height: '260px', display: 'block' }}
+            loading="eager"
+            onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to right, rgba(18,72,38,0.92) 0%, rgba(18,72,38,0.75) 45%, rgba(18,72,38,0) 78%)' }}
+          />
+          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '720px' }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.88)' }}>{t('dir_about.hero_badge')}</span>
+            </div>
+            <h1 style={{ color: '#ffffff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
+              {t('dir_about.hero_title')}
+            </h1>
+            <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+              {t('dir_about.hero_body')}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/directory" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
+                {t('dir_about.hero_cta1')}
+              </Link>
+              <Link to="/account" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: 'rgba(255,255,255,0.55)', color: '#ffffff' }}>
+                {t('dir_about.hero_cta2')}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
         <section className="mt-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-3"

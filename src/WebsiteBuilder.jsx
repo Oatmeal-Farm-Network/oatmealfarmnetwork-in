@@ -6142,7 +6142,7 @@ export default function WebsiteBuilder() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const BusinessID = searchParams.get('BusinessID');
-  const { Business, LoadBusiness } = useAccount();
+  const { Business, LoadBusiness, setWebsiteSlug } = useAccount();
 
   // If the OAT admin passed auth params via URL, seed localStorage so API calls work
   useEffect(() => {
@@ -6324,6 +6324,7 @@ export default function WebsiteBuilder() {
       });
       setSite(data);
       setSetupMode(false);
+      setWebsiteSlug(data.slug ?? null);
       setBuildStatus('Setting up your default pages…');
 
       const mkPage = (name, slug, isHome, order) =>
@@ -6404,7 +6405,12 @@ export default function WebsiteBuilder() {
     if (!site) return;
     try {
       await apiFetch(`/api/website/site/${site.website_id}`, { method: 'DELETE' });
-      setSite(null); setSetupMode(true);
+      setSite(null);
+      setPages([]);
+      setBlocks([]);
+      setActivePage(null);
+      setWebsiteSlug(null);
+      setSetupMode(true);
     } catch (e) { alert(e.message); }
   };
 

@@ -2,6 +2,7 @@
 // Route: /farm/standing-orders
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
@@ -9,12 +10,18 @@ import { useAccount } from './AccountContext';
 
 const API = import.meta.env.VITE_API_URL || '';
 
-const FREQUENCY_LABELS = { weekly: 'Weekly', biweekly: 'Every 2 weeks', monthly: 'Monthly' };
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 export default function FarmStandingOrders() {
+  const { t } = useTranslation();
   const { Business, BusinessID, businesses } = useAccount() || {};
   const PeopleID = localStorage.getItem('PeopleID') || localStorage.getItem('people_id');
+
+  const FREQUENCY_LABELS = {
+    weekly: t('farm_standing_orders.freq_weekly'),
+    biweekly: t('farm_standing_orders.freq_biweekly'),
+    monthly: t('farm_standing_orders.freq_monthly'),
+  };
 
   const farmBusinesses = useMemo(() =>
     (Array.isArray(businesses) ? businesses : [])
@@ -40,7 +47,7 @@ export default function FarmStandingOrders() {
       const data = await r.json();
       setOrders(Array.isArray(data) ? data : []);
     } catch {
-      setErr('Could not load incoming orders.');
+      setErr(t('farm_standing_orders.err_load'));
     } finally {
       setLoading(false);
     }
@@ -50,13 +57,17 @@ export default function FarmStandingOrders() {
 
   const markFulfilled = async (order) => {
     const qtyInput = window.prompt(
-      `Record delivery of "${order.ProductTitle || 'standing order'}" to ${order.BuyerName || 'the restaurant'}.\nDelivered quantity (${order.UnitLabel || 'unit'}):`,
+      t('farm_standing_orders.prompt_fulfill', {
+        product: order.ProductTitle || t('farm_standing_orders.standing_order_default'),
+        buyer: order.BuyerName || t('farm_standing_orders.restaurant_default'),
+        unit: order.UnitLabel || t('farm_standing_orders.unit_default'),
+      }),
       String(order.Quantity ?? '')
     );
     if (qtyInput === null) return;
     const qty = parseFloat(qtyInput);
-    if (!(qty > 0)) { alert('Please enter a positive quantity.'); return; }
-    const notes = window.prompt('Optional notes. Leave blank for none:', '') || null;
+    if (!(qty > 0)) { alert(t('farm_standing_orders.alert_positive_qty')); return; }
+    const notes = window.prompt(t('farm_standing_orders.prompt_notes'), '') || null;
     try {
       const r = await fetch(`${API}/api/marketplace/standing-orders/${order.StandingOrderID}/fulfill`, {
         method: 'POST',
@@ -66,14 +77,17 @@ export default function FarmStandingOrders() {
       if (!r.ok) throw new Error(`${r.status}`);
       await load();
     } catch {
-      alert('Could not record delivery — please try again.');
+      alert(t('farm_standing_orders.alert_err_delivery'));
     }
   };
 
   const skipNext = async (order) => {
-    const next = order.NextDeliveryDate || '(no date set)';
-    if (!window.confirm(`Skip the ${next} delivery to ${order.BuyerName || 'the restaurant'}?\nThe restaurant will be notified and the next date rolled forward by one cycle.`)) return;
-    const reason = window.prompt('Optional reason (sent to the restaurant). Leave blank for none:', '') || null;
+    const next = order.NextDeliveryDate || t('farm_standing_orders.no_date');
+    if (!window.confirm(t('farm_standing_orders.confirm_skip', {
+      date: next,
+      buyer: order.BuyerName || t('farm_standing_orders.restaurant_default'),
+    }))) return;
+    const reason = window.prompt(t('farm_standing_orders.prompt_skip_reason'), '') || null;
     try {
       const r = await fetch(`${API}/api/marketplace/standing-orders/${order.StandingOrderID}/skip`, {
         method: 'POST',
@@ -83,19 +97,19 @@ export default function FarmStandingOrders() {
       if (!r.ok) throw new Error(`${r.status}`);
       await load();
     } catch {
-      alert('Could not skip delivery — please try again.');
+      alert(t('farm_standing_orders.alert_err_skip'));
     }
   };
 
   const reschedule = async (order) => {
     const current = order.NextDeliveryDate || '';
     const newDate = window.prompt(
-      `Reschedule delivery to ${order.BuyerName || 'the restaurant'}.\nEnter the new delivery date as YYYY-MM-DD:`,
+      t('farm_standing_orders.prompt_reschedule', { buyer: order.BuyerName || t('farm_standing_orders.restaurant_default') }),
       current
     );
     if (newDate === null) return;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate.trim())) { alert('Please enter a date in YYYY-MM-DD format.'); return; }
-    const reason = window.prompt('Optional reason (sent to the restaurant). Leave blank for none:', '') || null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate.trim())) { alert(t('farm_standing_orders.alert_date_format')); return; }
+    const reason = window.prompt(t('farm_standing_orders.prompt_reschedule_reason'), '') || null;
     try {
       const r = await fetch(`${API}/api/marketplace/standing-orders/${order.StandingOrderID}/reschedule`, {
         method: 'POST',
@@ -108,7 +122,7 @@ export default function FarmStandingOrders() {
       }
       await load();
     } catch (e) {
-      alert(`Could not reschedule: ${e.message}`);
+      alert(t('farm_standing_orders.alert_err_reschedule', { msg: e.message }));
     }
   };
 
@@ -117,21 +131,25 @@ export default function FarmStandingOrders() {
       Business={Business}
       BusinessID={BusinessID}
       PeopleID={PeopleID}
-      pageTitle="Incoming Standing Orders"
-      breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Farm 2 Table' }, { label: 'Standing Orders' }]}
+      pageTitle={t('farm_standing_orders.page_title')}
+      breadcrumbs={[
+        { label: t('farm_standing_orders.crumb_dashboard'), to: '/dashboard' },
+        { label: t('farm_standing_orders.crumb_f2t') },
+        { label: t('farm_standing_orders.crumb_standing_orders') },
+      ]}
     >
       <PageMeta
-        title="Incoming Standing Orders | Farm Dashboard"
-        description="Recurring orders from restaurants — mark deliveries as fulfilled."
+        title={t('farm_standing_orders.meta_title')}
+        description={t('farm_standing_orders.meta_desc')}
       />
 
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            Incoming Standing Orders
+            {t('farm_standing_orders.heading')}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Recurring orders restaurants have set up for your farm. Mark each delivery as fulfilled once it leaves.
+            {t('farm_standing_orders.subheading')}
           </p>
         </div>
         {farmBusinesses.length > 1 && (
@@ -149,18 +167,18 @@ export default function FarmStandingOrders() {
 
       {farmBusinesses.length === 0 ? (
         <EmptyState
-          title="No farm business found on your account"
-          body="This page shows standing orders for businesses on your account with type 'Farm/Ranch'."
-          cta={<Link to="/account" className="text-[#3D6B34] underline font-semibold">Go to account</Link>}
+          title={t('farm_standing_orders.empty_no_farm_title')}
+          body={t('farm_standing_orders.empty_no_farm_body')}
+          cta={<Link to="/account" className="text-[#3D6B34] underline font-semibold">{t('farm_standing_orders.go_to_account')}</Link>}
         />
       ) : loading ? (
-        <div className="text-center py-16 text-gray-400">Loading…</div>
+        <div className="text-center py-16 text-gray-400">{t('farm_standing_orders.loading')}</div>
       ) : err ? (
         <div className="text-center py-16 text-red-500">{err}</div>
       ) : orders.length === 0 ? (
         <EmptyState
-          title="No incoming standing orders yet"
-          body="When a restaurant sets up a recurring order from your farm, it will appear here."
+          title={t('farm_standing_orders.empty_no_orders_title')}
+          body={t('farm_standing_orders.empty_no_orders_body')}
           cta={null}
         />
       ) : (
@@ -169,6 +187,7 @@ export default function FarmStandingOrders() {
             <OrderRow
               key={o.StandingOrderID}
               order={o}
+              frequencyLabels={FREQUENCY_LABELS}
               onFulfill={() => markFulfilled(o)}
               onSkip={() => skipNext(o)}
               onReschedule={() => reschedule(o)}
@@ -180,7 +199,8 @@ export default function FarmStandingOrders() {
   );
 }
 
-function OrderRow({ order: o, onFulfill, onSkip, onReschedule }) {
+function OrderRow({ order: o, frequencyLabels, onFulfill, onSkip, onReschedule }) {
+  const { t } = useTranslation();
   const status = o.Status || 'active';
   const isOverdue = status === 'overdue';
   const isActive  = status === 'active' || isOverdue;
@@ -196,16 +216,16 @@ function OrderRow({ order: o, onFulfill, onSkip, onReschedule }) {
       <div className="grow min-w-0">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <h3 className="font-bold text-gray-900 truncate">{o.ProductTitle || `${o.ListingType} #${o.ListingSourceID}`}</h3>
-          {isOverdue  && <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">Overdue</span>}
-          {status === 'paused'    && <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-600">Paused</span>}
-          {status === 'cancelled' && <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-600">Cancelled</span>}
+          {isOverdue  && <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">{t('farm_standing_orders.badge_overdue')}</span>}
+          {status === 'paused'    && <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-600">{t('farm_standing_orders.badge_paused')}</span>}
+          {status === 'cancelled' && <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-600">{t('farm_standing_orders.badge_cancelled')}</span>}
         </div>
         <div className="text-sm text-[#3D6B34] font-medium">{o.BuyerName || `Buyer #${o.BuyerBusinessID}`}</div>
         <div className="text-xs text-gray-500 mt-1 flex flex-wrap gap-x-4 gap-y-1">
-          <span>{o.Quantity} {o.UnitLabel || 'unit'}</span>
-          <span>{FREQUENCY_LABELS[o.Frequency] || o.Frequency}</span>
+          <span>{o.Quantity} {o.UnitLabel || t('farm_standing_orders.unit_default')}</span>
+          <span>{frequencyLabels[o.Frequency] || o.Frequency}</span>
           {o.DayOfWeek != null && <span>{DAY_NAMES[o.DayOfWeek]}</span>}
-          {next && <span className={isOverdue ? 'text-red-600 font-semibold' : ''}>Next: {next}</span>}
+          {next && <span className={isOverdue ? 'text-red-600 font-semibold' : ''}>{t('farm_standing_orders.next_label', { date: next })}</span>}
         </div>
         {o.Notes && <p className="text-xs italic text-gray-600 mt-2">"{o.Notes}"</p>}
       </div>
@@ -214,15 +234,15 @@ function OrderRow({ order: o, onFulfill, onSkip, onReschedule }) {
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <button onClick={onFulfill}
             className="text-xs font-semibold text-white bg-[#3D6B34] hover:bg-[#2d5225] px-3 py-1.5 rounded transition">
-            Mark Fulfilled
+            {t('farm_standing_orders.btn_fulfilled')}
           </button>
           <button onClick={onSkip}
             className="text-xs font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 px-3 py-1.5 rounded transition">
-            Skip
+            {t('farm_standing_orders.btn_skip')}
           </button>
           <button onClick={onReschedule}
             className="text-xs font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 px-3 py-1.5 rounded transition">
-            Reschedule
+            {t('farm_standing_orders.btn_reschedule')}
           </button>
         </div>
       )}

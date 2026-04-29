@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
 
@@ -42,6 +43,7 @@ function CropCard({ title, list, good }) {
 }
 
 export default function CompanionPlanting() {
+  const { t } = useTranslation();
   const [crops, setCrops] = useState([]);
   const [loadingCrops, setLoadingCrops] = useState(true);
   const [selected, setSelected] = useState('');
@@ -63,7 +65,7 @@ export default function CompanionPlanting() {
         if (cancelled) return;
         setCrops(Array.isArray(j?.crops) ? j.crops : []);
       } catch (e) {
-        if (!cancelled) setError('Could not reach companion-planting service.');
+        if (!cancelled) setError(t('companion_planting.err_service'));
       } finally {
         if (!cancelled) setLoadingCrops(false);
       }
@@ -81,9 +83,9 @@ export default function CompanionPlanting() {
       const res = await fetch(`${SAIGE_API}/companion/${encodeURIComponent(crop)}`);
       const j = await res.json();
       if (j?.status === 'ok') setRecord(j.record);
-      else setError(`No data for ${crop}.`);
+      else setError(t('companion_planting.err_no_data', { crop }));
     } catch (e) {
-      setError('Lookup failed.');
+      setError(t('companion_planting.err_lookup_failed'));
     } finally {
       setLoadingRecord(false);
     }
@@ -98,7 +100,7 @@ export default function CompanionPlanting() {
       const j = await res.json();
       setPairResult(j?.result || null);
     } catch (e) {
-      setPairResult({ verdict: 'error', explanation: 'Could not reach service.' });
+      setPairResult({ verdict: 'error', explanation: t('companion_planting.err_pair_service') });
     } finally {
       setPairLoading(false);
     }
@@ -117,12 +119,10 @@ export default function CompanionPlanting() {
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
         <img src="/images/AI-agent-logo-saige.svg" alt="" style={{ width: 36, height: 36 }} />
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#14532d' }}>Companion Planting Advisor</h1>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#14532d' }}>{t('companion_planting.heading')}</h1>
       </div>
       <p style={{ color: '#4b5563', marginTop: 4, marginBottom: 20 }}>
-        Look up which crops grow well together, and which ones to keep apart. Based on curated
-        agronomic sources (Old Farmer's Almanac, <em>Carrots Love Tomatoes</em>, permaculture guides,
-        Three Sisters tradition). For deeper reasoning, ask <Link to="/saige">Saige</Link>.
+        {t('companion_planting.desc')} <Link to="/saige">{t('companion_planting.desc_link')}</Link>.
       </p>
 
       {error && (
@@ -134,29 +134,29 @@ export default function CompanionPlanting() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         {/* SINGLE CROP LOOKUP */}
         <section style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 18 }}>
-          <h2 style={{ margin: '0 0 10px 0', fontSize: 18, fontWeight: 700 }}>Single-crop lookup</h2>
-          <label style={{ fontSize: 13, color: '#374151' }}>Choose a crop</label>
+          <h2 style={{ margin: '0 0 10px 0', fontSize: 18, fontWeight: 700 }}>{t('companion_planting.section_single')}</h2>
+          <label style={{ fontSize: 13, color: '#374151' }}>{t('companion_planting.lbl_choose_crop')}</label>
           <select
             value={selected}
             onChange={(e) => handlePick(e.target.value)}
             disabled={loadingCrops}
             style={{ display: 'block', width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 8, marginTop: 4, marginBottom: 14, textTransform: 'capitalize' }}
           >
-            <option value="">{loadingCrops ? 'Loading…' : '— Select —'}</option>
+            <option value="">{loadingCrops ? t('companion_planting.opt_loading') : t('companion_planting.opt_select')}</option>
             {crops.map(c => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
 
-          {loadingRecord && <div style={{ color: '#6b7280' }}>Loading…</div>}
+          {loadingRecord && <div style={{ color: '#6b7280' }}>{t('companion_planting.loading')}</div>}
 
           {record && !loadingRecord && (
             <>
-              <CropCard title="Good companions (friends)" list={record.friends} good />
-              <CropCard title="Avoid near (foes)" list={record.foes} good={false} />
+              <CropCard title={t('companion_planting.card_friends')} list={record.friends} good />
+              <CropCard title={t('companion_planting.card_foes')} list={record.foes} good={false} />
               {record.notes && (
                 <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 10, fontSize: 13, color: '#374151' }}>
-                  <strong>Notes:</strong> {record.notes}
+                  <strong>{t('companion_planting.notes_prefix')}</strong> {record.notes}
                 </div>
               )}
             </>
@@ -165,26 +165,26 @@ export default function CompanionPlanting() {
 
         {/* PAIR CHECK */}
         <section style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 18 }}>
-          <h2 style={{ margin: '0 0 10px 0', fontSize: 18, fontWeight: 700 }}>Can I plant these together?</h2>
+          <h2 style={{ margin: '0 0 10px 0', fontSize: 18, fontWeight: 700 }}>{t('companion_planting.section_pair')}</h2>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <div style={{ flex: '1 1 140px' }}>
-              <label style={{ fontSize: 13, color: '#374151' }}>Crop A</label>
+              <label style={{ fontSize: 13, color: '#374151' }}>{t('companion_planting.lbl_crop_a')}</label>
               <input
                 list="companion-crops"
                 value={pairA}
                 onChange={(e) => setPairA(e.target.value)}
                 style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 8, marginTop: 4 }}
-                placeholder="e.g., tomato"
+                placeholder={t('companion_planting.placeholder_crop_a')}
               />
             </div>
             <div style={{ flex: '1 1 140px' }}>
-              <label style={{ fontSize: 13, color: '#374151' }}>Crop B</label>
+              <label style={{ fontSize: 13, color: '#374151' }}>{t('companion_planting.lbl_crop_b')}</label>
               <input
                 list="companion-crops"
                 value={pairB}
                 onChange={(e) => setPairB(e.target.value)}
                 style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 8, marginTop: 4 }}
-                placeholder="e.g., basil"
+                placeholder={t('companion_planting.placeholder_crop_b')}
               />
             </div>
             <button
@@ -192,7 +192,7 @@ export default function CompanionPlanting() {
               disabled={!pairA || !pairB || pairLoading}
               style={{ padding: '9px 14px', background: '#14532d', color: '#fff', borderRadius: 8, border: 'none', cursor: (!pairA || !pairB) ? 'not-allowed' : 'pointer', opacity: (!pairA || !pairB) ? 0.5 : 1 }}
             >
-              {pairLoading ? 'Checking…' : 'Check'}
+              {pairLoading ? t('companion_planting.btn_checking') : t('companion_planting.btn_check')}
             </button>
           </div>
 
@@ -203,22 +203,21 @@ export default function CompanionPlanting() {
           {pairResult && (
             <div style={{ ...verdictStyle, padding: 12, borderRadius: 10, marginTop: 14 }}>
               <div style={{ fontWeight: 700, textTransform: 'capitalize', marginBottom: 4 }}>
-                Verdict: {pairResult.verdict || 'unknown'}
+                {t('companion_planting.verdict_prefix')} {pairResult.verdict || 'unknown'}
               </div>
               {pairResult.explanation && <div>{pairResult.explanation}</div>}
             </div>
           )}
 
           <div style={{ marginTop: 18, fontSize: 13, color: '#6b7280' }}>
-            Tip: if a crop isn't in the dropdown, try common synonyms (e.g., "maize" for corn,
-            "courgette" for squash).
+            {t('companion_planting.tip')}
           </div>
         </section>
       </div>
 
       {/* QUICK BROWSE */}
       <section style={{ marginTop: 24, background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16 }}>
-        <h3 style={{ margin: '0 0 10px 0', fontSize: 16, fontWeight: 700 }}>All crops in the database</h3>
+        <h3 style={{ margin: '0 0 10px 0', fontSize: 16, fontWeight: 700 }}>{t('companion_planting.section_all')}</h3>
         <div>
           {crops.map(c => (
             <button key={c} onClick={() => handlePick(c)} style={{ background: 'transparent', border: 'none', padding: 0, marginRight: 6, marginBottom: 6, cursor: 'pointer' }}>

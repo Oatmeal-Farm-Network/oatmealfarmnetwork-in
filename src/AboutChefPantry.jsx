@@ -65,7 +65,7 @@ export default function AboutChefPantry() {
   ];
 
   return (
-    <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#f7f2e8' }}>
+    <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title="Chef's Digital Pantry | Oatmeal Farm Network"
         description="A complete sourcing and kitchen management suite for chefs and restaurateurs — farm marketplace, standing orders, weekly harvest digest, recipes, plate costing, and Pairsley AI."
@@ -73,54 +73,73 @@ export default function AboutChefPantry() {
       />
       <Header />
 
-      {/* Hero */}
-      <div className="relative text-white py-20 px-4" style={{ backgroundColor: ACCENT }}>
-        <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-white">
-              <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 2v5a3 3 0 0 0 6 0V2"/>
-                <line x1="8" y1="10" x2="8" y2="14"/>
-                <line x1="5" y1="14" x2="11" y2="14"/>
-              </svg>
+      {/* Breadcrumbs */}
+      <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: t('chef_pantry.hero_title') },
+        ]} />
+      </div>
+
+      {/* Hero — photo + gradient overlay */}
+      <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
+        <div className="relative w-full overflow-hidden rounded-xl">
+          <img
+            src="/images/CoreFeaturesFarm2Table.webp"
+            alt="Chef's Digital Pantry"
+            className="w-full object-cover"
+            style={{ height: '260px', display: 'block' }}
+            loading="eager"
+            onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to right, rgba(15,70,38,0.92) 0%, rgba(15,70,38,0.75) 45%, rgba(15,70,38,0) 78%)' }}
+          />
+          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '720px' }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}>
+                <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 2v5a3 3 0 0 0 6 0V2"/>
+                  <line x1="8" y1="10" x2="8" y2="14"/>
+                  <line x1="5" y1="14" x2="11" y2="14"/>
+                </svg>
+              </div>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.88)' }}>{t('chef_pantry.hero_badge')}</span>
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('chef_pantry.hero_badge')}</span>
-          </div>
-          <h1 className="text-4xl font-bold mb-3 drop-shadow">{t('chef_pantry.hero_title')}</h1>
-          <p className="text-lg text-white/95 drop-shadow max-w-2xl">{t('chef_pantry.hero_body')}</p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/chef"
-              className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition"
-              style={{ color: ACCENT }}>
-              {t('chef_pantry.hero_cta1')}
-            </Link>
-            <Link to="/signup"
-              className="border-2 border-white/60 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-white/10 transition">
-              {t('chef_pantry.hero_cta2')}
-            </Link>
+            <h1 style={{ color: '#ffffff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
+              {t('chef_pantry.hero_title')}
+            </h1>
+            <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+              {t('chef_pantry.hero_body')}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/chef" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
+                {t('chef_pantry.hero_cta1')}
+              </Link>
+              <Link to="/signup" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: 'rgba(255,255,255,0.55)', color: '#ffffff' }}>
+                {t('chef_pantry.hero_cta2')}
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Stats bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 py-5 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          {stats.map(s => (
-            <div key={s.l}>
-              <div className="text-2xl font-bold" style={{ color: ACCENT }}>{s.v}</div>
-              <div className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide font-semibold">{s.l}</div>
-            </div>
-          ))}
+      <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
+        <div className="bg-white border border-gray-200 rounded-xl">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-100">
+            {stats.map(s => (
+              <div key={s.l} className="text-center py-4 px-2">
+                <div className="text-2xl font-bold" style={{ color: ACCENT }}>{s.v}</div>
+                <div className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide font-semibold">{s.l}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8 grow w-full">
-        <Breadcrumbs items={[
-          { label: 'Home', to: '/' },
-          { label: t('chef_pantry.hero_title') },
-        ]} />
+      <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
         <section className="mt-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-3"

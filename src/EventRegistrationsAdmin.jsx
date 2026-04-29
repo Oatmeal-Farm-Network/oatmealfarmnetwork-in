@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import EventAdminLayout from './EventAdminLayout';
 
 const API = import.meta.env.VITE_API_URL || '';
 
 function authHeaders() {
-  const t = localStorage.getItem('access_token');
-  return t ? { Authorization: `Bearer ${t}` } : {};
+  const tok = localStorage.getItem('access_token');
+  return tok ? { Authorization: `Bearer ${tok}` } : {};
 }
 
 const statusBadge = {
@@ -20,11 +21,14 @@ const statusBadge = {
 };
 
 export default function EventRegistrationsAdmin() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [carts, setCarts] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
+
+  const statusLabel = (s) => t(`event_registrations_admin.status_${s}`, { defaultValue: s });
 
   const load = () => {
     setLoading(true);
@@ -52,35 +56,35 @@ export default function EventRegistrationsAdmin() {
   return (
     <EventAdminLayout eventId={eventId}>
       <div className="max-w-6xl mx-auto p-4">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">Registrations</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-1">{t('event_registrations_admin.heading')}</h1>
         <p className="text-sm text-gray-600 mb-6">
-          All carts for this event. Click any row to view line items, capture, or refund.
+          {t('event_registrations_admin.subheading')}
         </p>
 
         <div className="grid gap-3 sm:grid-cols-3 mb-6">
-          <StatCard label="Total Carts" value={totals.count} />
-          <StatCard label="Collected" value={`$${totals.paid.toFixed(2)}`} />
-          <StatCard label="Refunded" value={`$${totals.refunded.toFixed(2)}`} tone="red" />
+          <StatCard label={t('event_registrations_admin.stat_total_carts')} value={totals.count} />
+          <StatCard label={t('event_registrations_admin.stat_collected')} value={`$${totals.paid.toFixed(2)}`} />
+          <StatCard label={t('event_registrations_admin.stat_refunded')} value={`$${totals.refunded.toFixed(2)}`} tone="red" />
         </div>
 
         {loading ? (
-          <div className="text-sm text-gray-500">Loading registrations…</div>
+          <div className="text-sm text-gray-500">{t('event_registrations_admin.loading')}</div>
         ) : carts.length === 0 ? (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-sm text-gray-600">
-            No registrations yet.
+            {t('event_registrations_admin.no_registrations')}
           </div>
         ) : (
           <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-xs font-medium text-gray-600">
                 <tr>
-                  <th className="text-left px-4 py-2">Attendee</th>
-                  <th className="text-left px-4 py-2">Contact</th>
-                  <th className="text-left px-4 py-2">Items</th>
-                  <th className="text-right px-4 py-2">Total</th>
-                  <th className="text-right px-4 py-2">Paid</th>
-                  <th className="text-left px-4 py-2">Status</th>
-                  <th className="text-left px-4 py-2">Date</th>
+                  <th className="text-left px-4 py-2">{t('event_registrations_admin.col_attendee')}</th>
+                  <th className="text-left px-4 py-2">{t('event_registrations_admin.col_contact')}</th>
+                  <th className="text-left px-4 py-2">{t('event_registrations_admin.col_items')}</th>
+                  <th className="text-right px-4 py-2">{t('event_registrations_admin.col_total')}</th>
+                  <th className="text-right px-4 py-2">{t('event_registrations_admin.col_paid')}</th>
+                  <th className="text-left px-4 py-2">{t('event_registrations_admin.col_status')}</th>
+                  <th className="text-left px-4 py-2">{t('event_registrations_admin.col_date')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -102,7 +106,7 @@ export default function EventRegistrationsAdmin() {
                     <td className="px-4 py-2 text-right text-gray-800">${Number(c.AmountPaid || 0).toFixed(2)}</td>
                     <td className="px-4 py-2">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusBadge[c.Status] || 'bg-gray-100 text-gray-700'}`}>
-                        {c.Status}
+                        {statusLabel(c.Status)}
                       </span>
                     </td>
                     <td className="px-4 py-2 text-xs text-gray-500">
@@ -127,7 +131,7 @@ export default function EventRegistrationsAdmin() {
         {err && (
           <div className="fixed bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm max-w-sm">
             {err}
-            <button className="ml-3 underline" onClick={() => setErr('')}>dismiss</button>
+            <button className="ml-3 underline" onClick={() => setErr('')}>{t('event_registrations_admin.btn_dismiss')}</button>
           </div>
         )}
       </div>
@@ -146,9 +150,12 @@ function StatCard({ label, value, tone }) {
 }
 
 function CartDetailModal({ cart, onClose, onChanged, setErr }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState('');
   const [refundAmt, setRefundAmt] = useState('');
   const [showRefund, setShowRefund] = useState(false);
+
+  const statusLabel = (s) => t(`event_registrations_admin.status_${s}`, { defaultValue: s });
 
   const canCapture = cart.Status === 'pending_capture';
   const canRefund = cart.Status === 'paid' || cart.Status === 'pending_capture' || cart.Status === 'partially_refunded';
@@ -164,8 +171,8 @@ function CartDetailModal({ cart, onClose, onChanged, setErr }) {
         body: JSON.stringify(body || {}),
       });
       if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t || `HTTP ${res.status}`);
+        const txt = await res.text();
+        throw new Error(txt || `HTTP ${res.status}`);
       }
       onChanged();
     } catch (e) {
@@ -180,7 +187,7 @@ function CartDetailModal({ cart, onClose, onChanged, setErr }) {
   const refund = () => {
     const amt = refundAmt ? Number(refundAmt) : null;
     if (amt !== null && (isNaN(amt) || amt <= 0 || amt > maxRefund)) {
-      setErr(`Refund must be between 0 and ${maxRefund.toFixed(2)}`);
+      setErr(t('event_registrations_admin.err_refund_range', { max: maxRefund.toFixed(2) }));
       return;
     }
     doPost(`/api/events/cart/${cart.CartID}/refund`, amt ? { Amount: amt } : {});
@@ -203,30 +210,30 @@ function CartDetailModal({ cart, onClose, onChanged, setErr }) {
 
         <div className="px-6 py-4 space-y-4">
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><span className="text-gray-500">Email:</span> <span className="text-gray-800">{cart.AttendeeEmail || '—'}</span></div>
-            <div><span className="text-gray-500">Phone:</span> <span className="text-gray-800">{cart.AttendeePhone || '—'}</span></div>
-            <div><span className="text-gray-500">Status:</span>
+            <div><span className="text-gray-500">{t('event_registrations_admin.lbl_email')}</span> <span className="text-gray-800">{cart.AttendeeEmail || '—'}</span></div>
+            <div><span className="text-gray-500">{t('event_registrations_admin.lbl_phone')}</span> <span className="text-gray-800">{cart.AttendeePhone || '—'}</span></div>
+            <div><span className="text-gray-500">{t('event_registrations_admin.lbl_status')}</span>
               <span className={`ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusBadge[cart.Status] || 'bg-gray-100 text-gray-700'}`}>
-                {cart.Status}
+                {statusLabel(cart.Status)}
               </span>
             </div>
-            <div><span className="text-gray-500">Stripe:</span> <span className="text-gray-800 text-xs font-mono">{cart.StripePaymentIntentID || '—'}</span></div>
+            <div><span className="text-gray-500">{t('event_registrations_admin.lbl_stripe')}</span> <span className="text-gray-800 text-xs font-mono">{cart.StripePaymentIntentID || '—'}</span></div>
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Line Items</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('event_registrations_admin.section_line_items')}</h3>
             {!cart.items || cart.items.length === 0 ? (
-              <div className="text-sm text-gray-500 italic">No items.</div>
+              <div className="text-sm text-gray-500 italic">{t('event_registrations_admin.no_items')}</div>
             ) : (
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 text-xs text-gray-600">
                     <tr>
-                      <th className="text-left px-3 py-1.5">Item</th>
-                      <th className="text-left px-3 py-1.5">Feature</th>
-                      <th className="text-right px-3 py-1.5">Qty</th>
-                      <th className="text-right px-3 py-1.5">Unit</th>
-                      <th className="text-right px-3 py-1.5">Line</th>
+                      <th className="text-left px-3 py-1.5">{t('event_registrations_admin.col_item')}</th>
+                      <th className="text-left px-3 py-1.5">{t('event_registrations_admin.col_feature')}</th>
+                      <th className="text-right px-3 py-1.5">{t('event_registrations_admin.col_qty')}</th>
+                      <th className="text-right px-3 py-1.5">{t('event_registrations_admin.col_unit')}</th>
+                      <th className="text-right px-3 py-1.5">{t('event_registrations_admin.col_line')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -246,18 +253,18 @@ function CartDetailModal({ cart, onClose, onChanged, setErr }) {
           </div>
 
           <div className="border-t pt-3 space-y-1 text-sm">
-            <Row label="Subtotal" value={`$${Number(cart.Subtotal || 0).toFixed(2)}`} />
-            <Row label="Platform Fee" value={`$${Number(cart.PlatformFeeAmount || 0).toFixed(2)}`} />
-            <Row label="Total" value={`$${Number(cart.Total || 0).toFixed(2)}`} bold />
-            <Row label="Amount Paid" value={`$${Number(cart.AmountPaid || 0).toFixed(2)}`} />
+            <Row label={t('event_registrations_admin.lbl_subtotal')} value={`$${Number(cart.Subtotal || 0).toFixed(2)}`} />
+            <Row label={t('event_registrations_admin.lbl_platform_fee')} value={`$${Number(cart.PlatformFeeAmount || 0).toFixed(2)}`} />
+            <Row label={t('event_registrations_admin.lbl_total')} value={`$${Number(cart.Total || 0).toFixed(2)}`} bold />
+            <Row label={t('event_registrations_admin.lbl_amount_paid')} value={`$${Number(cart.AmountPaid || 0).toFixed(2)}`} />
             {Number(cart.AmountRefunded || 0) > 0 && (
-              <Row label="Refunded" value={`-$${Number(cart.AmountRefunded || 0).toFixed(2)}`} tone="red" />
+              <Row label={t('event_registrations_admin.lbl_refunded')} value={`-$${Number(cart.AmountRefunded || 0).toFixed(2)}`} tone="red" />
             )}
           </div>
 
           {showRefund && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 space-y-2">
-              <div className="text-sm font-medium text-gray-700">Refund Amount</div>
+              <div className="text-sm font-medium text-gray-700">{t('event_registrations_admin.refund_heading')}</div>
               <div className="flex gap-2 items-center">
                 <input
                   type="number"
@@ -266,14 +273,14 @@ function CartDetailModal({ cart, onClose, onChanged, setErr }) {
                   max={maxRefund}
                   value={refundAmt}
                   onChange={e => setRefundAmt(e.target.value)}
-                  placeholder={`Max $${maxRefund.toFixed(2)} (leave blank for full)`}
+                  placeholder={t('event_registrations_admin.refund_placeholder', { max: maxRefund.toFixed(2) })}
                   className="border border-gray-300 rounded px-2 py-1 text-sm flex-1"
                 />
                 <button onClick={refund} disabled={busy} className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:opacity-50">
-                  Confirm Refund
+                  {t('event_registrations_admin.btn_confirm_refund')}
                 </button>
                 <button onClick={() => { setShowRefund(false); setRefundAmt(''); }} className="px-3 py-1 border border-gray-300 rounded text-sm">
-                  Cancel
+                  {t('event_registrations_admin.btn_cancel')}
                 </button>
               </div>
             </div>
@@ -283,16 +290,18 @@ function CartDetailModal({ cart, onClose, onChanged, setErr }) {
         <div className="sticky bottom-0 bg-gray-50 border-t px-6 py-3 flex justify-end gap-2">
           {canCapture && (
             <button onClick={capture} disabled={busy} className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-              {busy === `/api/events/cart/${cart.CartID}/capture` ? 'Capturing…' : 'Capture Payment'}
+              {busy === `/api/events/cart/${cart.CartID}/capture`
+                ? t('event_registrations_admin.btn_capturing')
+                : t('event_registrations_admin.btn_capture')}
             </button>
           )}
           {canRefund && !showRefund && (
             <button onClick={() => setShowRefund(true)} className="px-4 py-1.5 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50">
-              Refund
+              {t('event_registrations_admin.btn_refund')}
             </button>
           )}
           <button onClick={onClose} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-            Close
+            {t('event_registrations_admin.btn_close')}
           </button>
         </div>
       </div>

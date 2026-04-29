@@ -2,6 +2,7 @@
 // Public progeny list — /marketplaces/livestock/animal/:id/progeny
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -18,6 +19,7 @@ function formatDOB(year, month, day) {
 }
 
 export default function LivestockAnimalProgeny() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,9 +53,9 @@ export default function LivestockAnimalProgeny() {
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <Header />
       <div className="max-w-2xl mx-auto px-4 py-24 text-center">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">Animal Not Found</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">{t('livestock_progeny.not_found')}</h1>
         <Link to="/marketplaces/livestock" className="text-sm font-bold" style={{ color: '#3D6B34' }}>
-          ← Back to Livestock Marketplace
+          {t('livestock_progeny.back_to_marketplace')}
         </Link>
       </div>
       <Footer />
@@ -65,29 +67,29 @@ export default function LivestockAnimalProgeny() {
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
-        title={`Progeny of ${parent_name} | OatmealFarmNetwork`}
-        description={`All offspring of ${parent_name} on OatmealFarmNetwork. Browse recorded progeny and bloodline information.`}
-        keywords={`${parent_name} progeny, ${parent_name} offspring, livestock bloodline, animal genetics`}
+        title={t('livestock_progeny.meta_title', { name: parent_name })}
+        description={t('livestock_progeny.meta_desc', { name: parent_name })}
+        keywords={t('livestock_progeny.meta_keywords', { name: parent_name })}
         canonical={`https://oatmealfarmnetwork.com/marketplaces/livestock/animal/${parent_id}/progeny`}
       />
       <Header />
 
       <div className="mx-auto px-4 py-6" style={{ maxWidth: '1200px' }}>
         <Breadcrumbs items={[
-          { label: 'Home', to: '/' },
-          { label: 'Marketplaces', to: '/marketplaces' },
-          { label: 'Livestock', to: '/marketplaces/livestock' },
+          { label: t('livestock_progeny.crumb_home'), to: '/' },
+          { label: t('livestock_progeny.crumb_marketplaces'), to: '/marketplaces' },
+          { label: t('livestock_progeny.crumb_livestock'), to: '/marketplaces/livestock' },
           { label: parent_name, to: `/marketplaces/livestock/animal/${parent_id}` },
-          { label: 'Progeny' },
+          { label: t('livestock_progeny.crumb_progeny') },
         ]} />
 
         <h1 className="text-2xl font-bold mb-1" style={{ color: '#3D6B34' }}>
-          Progeny of {parent_name}
+          {t('livestock_progeny.heading', { name: parent_name })}
         </h1>
         <p className="text-sm text-gray-600 mb-6">
           {progeny.length === 0
-            ? 'No progeny have been recorded for this animal yet.'
-            : `${progeny.length} offspring recorded.`}
+            ? t('livestock_progeny.empty')
+            : t('livestock_progeny.count', { count: progeny.length })}
         </p>
 
         {progeny.length > 0 && (
@@ -123,7 +125,7 @@ export default function LivestockAnimalProgeny() {
                       <div className="text-xs text-gray-600 mt-1">{p.colors}</div>
                     )}
                     {dob && (
-                      <div className="text-xs text-gray-500 mt-1">DOB: {dob}</div>
+                      <div className="text-xs text-gray-500 mt-1">{t('livestock_progeny.dob', { dob })}</div>
                     )}
                     {p.category && (
                       <div className="text-xs text-gray-500 mt-1">{p.category}</div>
@@ -138,7 +140,7 @@ export default function LivestockAnimalProgeny() {
         <div className="mt-8">
           <Link to={`/marketplaces/livestock/animal/${parent_id}`}
                 className="text-sm font-bold" style={{ color: '#3D6B34' }}>
-            ← Back to {parent_name}
+            {t('livestock_progeny.back_to_parent', { name: parent_name })}
           </Link>
         </div>
       </div>

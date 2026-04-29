@@ -20,6 +20,7 @@ export function AccountProvider({ children }) {
   const [OpenSections, setOpenSections] = useState({});
   const [Expanded, setExpanded] = useState(true);
   const [businesses, setBusinesses] = useState([]);
+  const [websiteSlug, setWebsiteSlug] = useState(null);
   const location = useLocation();
 
   // Boot-time scrub: a previous bad LoadBusiness(null) call may have written
@@ -109,6 +110,8 @@ const LoadBusiness = (ID, Force = false) => {
       setExpanded,
       businesses,
       setBusinesses,
+      websiteSlug,
+      setWebsiteSlug,
     }}>
       {children}
     </AccountContext.Provider>

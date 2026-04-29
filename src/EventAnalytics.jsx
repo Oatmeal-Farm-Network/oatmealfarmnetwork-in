@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import EventAdminLayout from './EventAdminLayout';
 import { useAccount } from './AccountContext';
@@ -19,8 +20,8 @@ function StatCard({ label, value, hint }) {
   );
 }
 
-// ── Per-event view ──────────────────────────────────────────────────────────
 function EventView({ eventId }) {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -33,8 +34,8 @@ function EventView({ eventId }) {
       .catch(e => { setErr(String(e)); setLoading(false); });
   }, [eventId]);
 
-  if (loading) return <div className="p-6 text-gray-500">Loading analytics…</div>;
-  if (err)     return <div className="p-6 text-red-600">Failed to load: {err}</div>;
+  if (loading) return <div className="p-6 text-gray-500">{t('event_analytics.loading')}</div>;
+  if (err)     return <div className="p-6 text-red-600">{t('event_analytics.err_load', { msg: err })}</div>;
   if (!data)   return null;
 
   const kinds = Object.entries(data.byKind || {});
@@ -53,29 +54,29 @@ function EventView({ eventId }) {
             href={`${API}/api/events/${eventId}/attendees.csv`}
             className="px-3 py-2 text-sm rounded-lg bg-[#819360] text-white hover:bg-[#6d7e52]"
           >
-            Export attendees CSV
+            {t('event_analytics.btn_export_csv')}
           </a>
           <Link
             to={`/events/${eventId}/checkin`}
             className="px-3 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
           >
-            Check-in
+            {t('event_analytics.btn_checkin')}
           </Link>
           <Link
             to={`/events/${eventId}/broadcast`}
             className="px-3 py-2 text-sm rounded-lg bg-amber-600 text-white hover:bg-amber-700"
           >
-            Broadcast
+            {t('event_analytics.btn_broadcast')}
           </Link>
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <StatCard label="Registrations" value={data.totalRegistrations} />
-        <StatCard label="Total attendees" value={data.totalAttendees} hint="incl. party size" />
-        <StatCard label="Checked in" value={data.checkedIn} hint={fmtPct(data.checkInRate) + ' of regs'} />
-        <StatCard label="Revenue (all)" value={fmtMoney(data.revenue)} />
-        <StatCard label="Revenue (paid)" value={fmtMoney(data.paidRevenue)} />
+        <StatCard label={t('event_analytics.stat_registrations')} value={data.totalRegistrations} />
+        <StatCard label={t('event_analytics.stat_attendees')} value={data.totalAttendees} hint={t('event_analytics.hint_party_size')} />
+        <StatCard label={t('event_analytics.stat_checked_in')} value={data.checkedIn} hint={fmtPct(data.checkInRate) + ' ' + t('event_analytics.hint_of_regs')} />
+        <StatCard label={t('event_analytics.stat_revenue_all')} value={fmtMoney(data.revenue)} />
+        <StatCard label={t('event_analytics.stat_revenue_paid')} value={fmtMoney(data.paidRevenue)} />
       </div>
 
       {kinds.length > 0 && (
@@ -83,11 +84,11 @@ function EventView({ eventId }) {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-600">
               <tr>
-                <th className="text-left py-2 px-3">Type</th>
-                <th className="text-right py-2 px-3">Regs</th>
-                <th className="text-right py-2 px-3">Attendees</th>
-                <th className="text-right py-2 px-3">Checked in</th>
-                <th className="text-right py-2 px-3">Revenue</th>
+                <th className="text-left py-2 px-3">{t('event_analytics.col_type')}</th>
+                <th className="text-right py-2 px-3">{t('event_analytics.col_regs')}</th>
+                <th className="text-right py-2 px-3">{t('event_analytics.col_attendees')}</th>
+                <th className="text-right py-2 px-3">{t('event_analytics.col_checked_in')}</th>
+                <th className="text-right py-2 px-3">{t('event_analytics.col_revenue')}</th>
               </tr>
             </thead>
             <tbody>
@@ -108,8 +109,8 @@ function EventView({ eventId }) {
   );
 }
 
-// ── Organizer rollup view ───────────────────────────────────────────────────
 function OrganizerView({ businessId }) {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -121,35 +122,35 @@ function OrganizerView({ businessId }) {
       .catch(() => setLoading(false));
   }, [businessId]);
 
-  if (loading) return <div className="p-6 text-gray-500">Loading analytics…</div>;
-  if (!data)   return <div className="p-6 text-gray-500">No data.</div>;
+  if (loading) return <div className="p-6 text-gray-500">{t('event_analytics.loading')}</div>;
+  if (!data)   return <div className="p-6 text-gray-500">{t('event_analytics.no_data')}</div>;
 
-  const t = data.totals || {};
+  const totals = data.totals || {};
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-bold text-gray-800">Events Analytics</h1>
-        <div className="text-sm text-gray-500">Rollup across {t.eventCount || 0} events</div>
+        <h1 className="text-xl font-bold text-gray-800">{t('event_analytics.organizer_heading')}</h1>
+        <div className="text-sm text-gray-500">{t('event_analytics.organizer_rollup', { count: totals.eventCount || 0 })}</div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <StatCard label="Events" value={t.eventCount || 0} />
-        <StatCard label="Registrations" value={t.totalRegistrations || 0} />
-        <StatCard label="Attendees" value={t.totalAttendees || 0} />
-        <StatCard label="Revenue (all)" value={fmtMoney(t.revenue)} />
-        <StatCard label="Revenue (paid)" value={fmtMoney(t.paidRevenue)} />
+        <StatCard label={t('event_analytics.stat_events')} value={totals.eventCount || 0} />
+        <StatCard label={t('event_analytics.stat_registrations')} value={totals.totalRegistrations || 0} />
+        <StatCard label={t('event_analytics.stat_attendees')} value={totals.totalAttendees || 0} />
+        <StatCard label={t('event_analytics.stat_revenue_all')} value={fmtMoney(totals.revenue)} />
+        <StatCard label={t('event_analytics.stat_revenue_paid')} value={fmtMoney(totals.paidRevenue)} />
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
-              <th className="text-left py-2 px-3">Event</th>
-              <th className="text-left py-2 px-3">Date</th>
-              <th className="text-right py-2 px-3">Regs</th>
-              <th className="text-right py-2 px-3">Attendees</th>
-              <th className="text-right py-2 px-3">Checked in</th>
-              <th className="text-right py-2 px-3">Revenue</th>
+              <th className="text-left py-2 px-3">{t('event_analytics.col_event')}</th>
+              <th className="text-left py-2 px-3">{t('event_analytics.col_date')}</th>
+              <th className="text-right py-2 px-3">{t('event_analytics.col_regs')}</th>
+              <th className="text-right py-2 px-3">{t('event_analytics.col_attendees')}</th>
+              <th className="text-right py-2 px-3">{t('event_analytics.col_checked_in')}</th>
+              <th className="text-right py-2 px-3">{t('event_analytics.col_revenue')}</th>
               <th className="text-right py-2 px-3"></th>
             </tr>
           </thead>
@@ -171,13 +172,13 @@ function OrganizerView({ businessId }) {
                     href={`${API}/api/events/${e.EventID}/attendees.csv`}
                     className="text-xs text-[#819360] hover:underline"
                   >
-                    CSV
+                    {t('event_analytics.csv_link')}
                   </a>
                 </td>
               </tr>
             ))}
             {!(data.events || []).length && (
-              <tr><td colSpan="7" className="py-4 px-3 text-center text-gray-500">No events yet.</td></tr>
+              <tr><td colSpan="7" className="py-4 px-3 text-center text-gray-500">{t('event_analytics.no_events')}</td></tr>
             )}
           </tbody>
         </table>
@@ -187,6 +188,7 @@ function OrganizerView({ businessId }) {
 }
 
 export default function EventAnalytics() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const { account } = useAccount() || {};
   const businessId = account?.BusinessID || localStorage.getItem('business_id');
@@ -201,7 +203,7 @@ export default function EventAnalytics() {
           ? <EventView eventId={eventId} />
           : (businessId
               ? <OrganizerView businessId={businessId} />
-              : <div className="p-6 text-gray-500">Sign in as an organizer to see analytics.</div>)
+              : <div className="p-6 text-gray-500">{t('event_analytics.sign_in_prompt')}</div>)
         }
       </div>
     </Wrapper>

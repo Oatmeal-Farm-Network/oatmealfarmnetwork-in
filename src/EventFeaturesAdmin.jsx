@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 
 const API = import.meta.env.VITE_API_URL || '';
@@ -12,6 +13,7 @@ const EMPTY_FEATURE = {
 };
 
 function FeatureForm({ initial, onSave, onCancel, saving }) {
+  const { t } = useTranslation();
   const [f, setF] = useState(initial || EMPTY_FEATURE);
   const isEdit = Boolean(initial?.FeatureID);
   const set = (k) => (e) => setF(v => ({ ...v, [k]: e.target.value }));
@@ -29,54 +31,54 @@ function FeatureForm({ initial, onSave, onCancel, saving }) {
   return (
     <form onSubmit={submit} className="space-y-3 bg-white border border-gray-200 rounded-xl p-4">
       <div className="font-semibold text-gray-800 text-sm">
-        {isEdit ? `Edit: ${initial.FeatureKey}` : 'Add new feature'}
+        {isEdit ? t('event_features_admin.edit_label', { key: initial.FeatureKey }) : t('event_features_admin.add_new')}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={lbl}>Feature Key</label>
+          <label className={lbl}>{t('event_features_admin.lbl_feature_key')}</label>
           <input value={f.FeatureKey} onChange={set('FeatureKey')} className={inp}
                  disabled={isEdit} required placeholder="qr_checkin" />
         </div>
         <div>
-          <label className={lbl}>Feature Name</label>
+          <label className={lbl}>{t('event_features_admin.lbl_feature_name')}</label>
           <input value={f.FeatureName} onChange={set('FeatureName')} className={inp} required />
         </div>
         <div className="col-span-2">
-          <label className={lbl}>Description</label>
+          <label className={lbl}>{t('event_features_admin.lbl_description')}</label>
           <input value={f.FeatureDescription || ''} onChange={set('FeatureDescription')} className={inp} />
         </div>
         <div>
-          <label className={lbl}>Icon (emoji or class)</label>
+          <label className={lbl}>{t('event_features_admin.lbl_icon')}</label>
           <input value={f.Icon || ''} onChange={set('Icon')} className={inp} placeholder="📋" />
         </div>
         <div>
-          <label className={lbl}>Sort Order</label>
+          <label className={lbl}>{t('event_features_admin.lbl_sort_order')}</label>
           <input type="number" value={f.SortOrder ?? 100} onChange={set('SortOrder')} className={inp} />
         </div>
         <div className="col-span-2">
-          <label className={lbl}>Admin Path</label>
+          <label className={lbl}>{t('event_features_admin.lbl_admin_path')}</label>
           <input value={f.AdminPath || ''} onChange={set('AdminPath')} className={inp}
                  placeholder="/events/{eventId}/admin/qr" />
         </div>
         <div className="col-span-2">
-          <label className={lbl}>Public Path</label>
+          <label className={lbl}>{t('event_features_admin.lbl_public_path')}</label>
           <input value={f.PublicPath || ''} onChange={set('PublicPath')} className={inp}
                  placeholder="/events/{eventId}/register" />
         </div>
         <label className="col-span-2 flex items-center gap-2 text-sm text-gray-700">
           <input type="checkbox" checked={!!f.IsCoreModule} onChange={setB('IsCoreModule')}
                  className="w-4 h-4 accent-green-600" />
-          Is Core Module (primary workflow for an event type)
+          {t('event_features_admin.lbl_core_module')}
         </label>
       </div>
       <div className="flex justify-end items-center gap-3 pt-2">
         <button type="button" onClick={onCancel}
                 className="px-4 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
-          Cancel
+          {t('event_features_admin.btn_cancel')}
         </button>
         <button type="submit" disabled={saving}
                 className="bg-[#3D6B34] text-white font-semibold px-5 py-1.5 rounded-lg text-sm hover:bg-[#2d5226] disabled:opacity-50">
-          {saving ? 'Saving…' : (isEdit ? 'Update' : 'Create')}
+          {saving ? t('event_features_admin.btn_saving') : (isEdit ? t('event_features_admin.btn_update') : t('event_features_admin.btn_create'))}
         </button>
       </div>
     </form>
@@ -84,6 +86,7 @@ function FeatureForm({ initial, onSave, onCancel, saving }) {
 }
 
 export default function EventFeaturesAdmin() {
+  const { t } = useTranslation();
   const [features, setFeatures] = useState([]);
   const [matrix, setMatrix] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -102,8 +105,8 @@ export default function EventFeaturesAdmin() {
         fetch(`${API}/api/events/features`),
         fetch(`${API}/api/events/types-features`),
       ]);
-      if (!fRes.ok) throw new Error('Failed to load features');
-      if (!mRes.ok) throw new Error('Failed to load type matrix');
+      if (!fRes.ok) throw new Error(t('event_features_admin.err_load_features'));
+      if (!mRes.ok) throw new Error(t('event_features_admin.err_load_matrix'));
       setFeatures(await fRes.json());
       setMatrix(await mRes.json());
     } catch (e) {
@@ -127,7 +130,7 @@ export default function EventFeaturesAdmin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || 'Save failed');
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || t('event_features_admin.err_save'));
       setEditing(null);
       setAdding(false);
       await load();
@@ -139,10 +142,10 @@ export default function EventFeaturesAdmin() {
   };
 
   const deleteFeature = async (id, name) => {
-    if (!window.confirm(`Delete feature "${name}"? This removes it from all event types.`)) return;
+    if (!window.confirm(t('event_features_admin.confirm_delete', { name }))) return;
     try {
       const r = await fetch(`${API}/api/events/features/${id}`, { method: 'DELETE' });
-      if (!r.ok) throw new Error('Delete failed');
+      if (!r.ok) throw new Error(t('event_features_admin.err_delete'));
       await load();
     } catch (e) {
       alert(e.message);
@@ -167,7 +170,7 @@ export default function EventFeaturesAdmin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ features: typeRow.features }),
       });
-      if (!r.ok) throw new Error('Save failed');
+      if (!r.ok) throw new Error(t('event_features_admin.err_save'));
       setSavedTypes(s => new Set([...s, typeRow.EventTypeID]));
       setTimeout(() => {
         setSavedTypes(s => {
@@ -195,14 +198,14 @@ export default function EventFeaturesAdmin() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Event Features</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('event_features_admin.heading')}</h1>
             <p className="text-sm text-gray-500 mt-1">
-              Manage the catalog of event registration options and which event types expose them.
+              {t('event_features_admin.subheading')}
             </p>
           </div>
           <button onClick={() => { setAdding(true); setEditing(null); }}
                   className="bg-[#3D6B34] text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-[#2d5226]">
-            + Add Feature
+            {t('event_features_admin.btn_add_feature')}
           </button>
         </div>
 
@@ -211,7 +214,7 @@ export default function EventFeaturesAdmin() {
             {err}
           </div>
         )}
-        {loading && <div className="text-sm text-gray-500">Loading…</div>}
+        {loading && <div className="text-sm text-gray-500">{t('event_features_admin.loading')}</div>}
 
         {(adding || editing) && (
           <div className="mb-6">
@@ -225,15 +228,14 @@ export default function EventFeaturesAdmin() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Feature catalog */}
           <section className="lg:col-span-2">
             <div className="bg-white border border-gray-200 rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold text-gray-800">Feature Catalog</h2>
-                <span className="text-xs text-gray-400">{features.length} features</span>
+                <h2 className="font-semibold text-gray-800">{t('event_features_admin.catalog_heading')}</h2>
+                <span className="text-xs text-gray-400">{t('event_features_admin.feature_count', { n: features.length })}</span>
               </div>
               <input value={filter} onChange={(e) => setFilter(e.target.value)}
-                     placeholder="Search features…" className={`${inp} mb-3`} />
+                     placeholder={t('event_features_admin.placeholder_search')} className={`${inp} mb-3`} />
               <div className="space-y-2 max-h-[600px] overflow-y-auto">
                 {filteredFeatures.map(f => (
                   <div key={f.FeatureID}
@@ -244,7 +246,7 @@ export default function EventFeaturesAdmin() {
                           {f.Icon && <span>{f.Icon}</span>}
                           <span className="font-semibold text-sm text-gray-900">{f.FeatureName}</span>
                           {f.IsCoreModule ? (
-                            <span className="text-[10px] bg-[#3D6B34]/10 text-[#3D6B34] px-1.5 py-0.5 rounded">CORE</span>
+                            <span className="text-[10px] bg-[#3D6B34]/10 text-[#3D6B34] px-1.5 py-0.5 rounded">{t('event_features_admin.badge_core')}</span>
                           ) : null}
                         </div>
                         <div className="text-xs text-gray-500 font-mono mt-0.5">{f.FeatureKey}</div>
@@ -255,29 +257,28 @@ export default function EventFeaturesAdmin() {
                       <div className="flex items-center gap-1 shrink-0">
                         <button onClick={() => { setEditing(f); setAdding(false); }}
                                 className="text-xs text-gray-600 hover:text-[#3D6B34] px-2 py-1 rounded">
-                          Edit
+                          {t('event_features_admin.btn_edit')}
                         </button>
                         <button onClick={() => deleteFeature(f.FeatureID, f.FeatureName)}
                                 className="text-xs text-red-500 hover:text-red-700 px-2 py-1 rounded">
-                          Delete
+                          {t('event_features_admin.btn_delete')}
                         </button>
                       </div>
                     </div>
                   </div>
                 ))}
                 {filteredFeatures.length === 0 && !loading && (
-                  <div className="text-sm text-gray-400 text-center py-6">No features match.</div>
+                  <div className="text-sm text-gray-400 text-center py-6">{t('event_features_admin.no_match')}</div>
                 )}
               </div>
             </div>
           </section>
 
-          {/* Type × Feature matrix */}
           <section className="lg:col-span-3">
             <div className="bg-white border border-gray-200 rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold text-gray-800">Event Types → Features</h2>
-                <span className="text-xs text-gray-400">{matrix.length} types</span>
+                <h2 className="font-semibold text-gray-800">{t('event_features_admin.matrix_heading')}</h2>
+                <span className="text-xs text-gray-400">{t('event_features_admin.type_count', { n: matrix.length })}</span>
               </div>
               <div className="space-y-3 max-h-[600px] overflow-y-auto">
                 {matrix.map(row => (
@@ -290,7 +291,7 @@ export default function EventFeaturesAdmin() {
                                   ? 'bg-green-100 text-green-700'
                                   : 'bg-[#3D6B34] text-white hover:bg-[#2d5226]'
                               }`}>
-                        {savedTypes.has(row.EventTypeID) ? '✓ Saved' : 'Save'}
+                        {savedTypes.has(row.EventTypeID) ? t('event_features_admin.btn_saved') : t('event_features_admin.btn_save')}
                       </button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">

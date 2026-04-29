@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import RichTextEditor from './RichTextEditor';
 
@@ -16,43 +17,44 @@ const EMPTY_ENTRY = {
 };
 
 function EntryForm({ initial, onSave, onCancel, categories, animals, saving }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(initial || EMPTY_ENTRY);
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(form); }} className="space-y-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
       <div>
-        <label className={lbl}>Entry title</label>
-        <input value={form.EntryTitle} onChange={set('EntryTitle')} required className={inp} placeholder="e.g. Handspun alpaca lace-weight yarn" />
+        <label className={lbl}>{t('fiber_arts_register.lbl_entry_title')}</label>
+        <input value={form.EntryTitle} onChange={set('EntryTitle')} required className={inp} placeholder={t('fiber_arts_register.placeholder_entry_title')} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className={lbl}>Category</label>
+          <label className={lbl}>{t('fiber_arts_register.lbl_category')}</label>
           <select value={form.CategoryID} onChange={set('CategoryID')} className={inp}>
-            <option value="">-- Select --</option>
+            <option value="">{t('fiber_arts_register.opt_select')}</option>
             {categories.map(c => <option key={c.CategoryID} value={c.CategoryID}>{c.CategoryName}</option>)}
           </select>
         </div>
         <div>
-          <label className={lbl}>Fiber type</label>
-          <input value={form.FiberType} onChange={set('FiberType')} className={inp} placeholder="Alpaca, Wool, Mohair, Blend…" />
+          <label className={lbl}>{t('fiber_arts_register.lbl_fiber_type')}</label>
+          <input value={form.FiberType} onChange={set('FiberType')} className={inp} placeholder={t('fiber_arts_register.placeholder_fiber_type')} />
         </div>
       </div>
       <div>
-        <label className={lbl}>Source animal (optional)</label>
+        <label className={lbl}>{t('fiber_arts_register.lbl_source_animal')}</label>
         <select value={form.SourceAnimalID} onChange={set('SourceAnimalID')} className={inp}>
-          <option value="">-- None / mixed fleece --</option>
+          <option value="">{t('fiber_arts_register.opt_no_animal')}</option>
           {animals.map(a => <option key={a.ID ?? a.AnimalID} value={a.ID ?? a.AnimalID}>{a.FullName || a.AnimalName}</option>)}
         </select>
       </div>
       <div>
-        <label className={lbl}>Description</label>
+        <label className={lbl}>{t('fiber_arts_register.lbl_description')}</label>
         <RichTextEditor value={form.Description || ''}
           onChange={(v) => setForm(f => ({ ...f, Description: v }))} minHeight={140} />
       </div>
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
+        <button type="button" onClick={onCancel} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">{t('fiber_arts_register.btn_cancel')}</button>
         <button type="submit" disabled={saving} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save Entry'}
+          {saving ? t('fiber_arts_register.btn_saving') : t('fiber_arts_register.btn_save')}
         </button>
       </div>
     </form>
@@ -60,6 +62,7 @@ function EntryForm({ initial, onSave, onCancel, categories, animals, saving }) {
 }
 
 export default function FiberArtsRegister() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [params] = useSearchParams();
   const { BusinessID: ctxBusinessID } = useAccount() || {};
@@ -116,7 +119,7 @@ export default function FiberArtsRegister() {
       }
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
-        throw new Error(j.detail || 'Save failed');
+        throw new Error(j.detail || t('fiber_arts_register.save_failed'));
       }
       setAdding(false);
       setEditing(null);
@@ -129,7 +132,7 @@ export default function FiberArtsRegister() {
   };
 
   const remove = async (entry) => {
-    if (!confirm(`Remove "${entry.EntryTitle}"?`)) return;
+    if (!confirm(t('fiber_arts_register.confirm_remove', { title: entry.EntryTitle }))) return;
     await fetch(`${API}/api/events/fiber-arts/entries/${entry.EntryID}`, { method: 'DELETE' });
     loadEntries();
   };
@@ -142,18 +145,18 @@ export default function FiberArtsRegister() {
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Enter the Fiber Arts Show</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('fiber_arts_register.heading')}</h1>
           <p className="text-sm text-gray-500 mt-1">
             {event?.EventName || 'Event'}
             {event?.EventLocationCity && ` — ${event.EventLocationCity}, ${event.EventLocationState}`}
           </p>
         </div>
-        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">← Back to Event</Link>
+        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">{t('fiber_arts_register.btn_back')}</Link>
       </div>
 
       {!configured && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-4 mb-4">
-          The fiber arts show has not yet been configured by the organizer.
+          {t('fiber_arts_register.not_configured')}
         </div>
       )}
 
@@ -167,52 +170,52 @@ export default function FiberArtsRegister() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-xs">
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Fee per entry</div>
+              <div className="text-gray-500">{t('fiber_arts_register.lbl_fee_per_entry')}</div>
               <div className="font-semibold text-gray-900 text-base">${Number(cfg.CurrentFee || cfg.FeePerEntry || 0).toFixed(2)}</div>
               {cfg.DiscountFeePerEntry != null && cfg.DiscountEndDate && (
                 <div className="text-[11px] text-gray-400">
-                  discount ends {String(cfg.DiscountEndDate).substring(0, 10)}
+                  {t('fiber_arts_register.discount_ends', { date: String(cfg.DiscountEndDate).substring(0, 10) })}
                 </div>
               )}
             </div>
             {cfg.MaxEntriesPerRegistrant && (
               <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-gray-500">Max per registrant</div>
+                <div className="text-gray-500">{t('fiber_arts_register.lbl_max_per_registrant')}</div>
                 <div className="font-semibold text-gray-900 text-base">{entries.length} / {cfg.MaxEntriesPerRegistrant}</div>
               </div>
             )}
             {cfg.RegistrationEndDate && (
               <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-gray-500">Registration closes</div>
+                <div className="text-gray-500">{t('fiber_arts_register.lbl_reg_closes')}</div>
                 <div className="font-semibold text-gray-900 text-base">{String(cfg.RegistrationEndDate).substring(0, 10)}</div>
               </div>
             )}
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Your total</div>
+              <div className="text-gray-500">{t('fiber_arts_register.lbl_your_total')}</div>
               <div className="font-semibold text-[#3D6B34] text-base">${total.toFixed(2)}</div>
             </div>
           </div>
 
           {closed && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
-              Registration for this show has closed.
+              {t('fiber_arts_register.msg_closed')}
             </div>
           )}
 
           {err && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">{err}</div>}
 
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">Your entries</h2>
+            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">{t('fiber_arts_register.your_entries')}</h2>
             {!adding && !editing && !closed && peopleId && (
               <button onClick={() => setAdding(true)} className="text-sm bg-[#3D6B34] text-white px-4 py-1.5 rounded-lg hover:bg-[#2d5226]">
-                + Add Entry
+                {t('fiber_arts_register.btn_add_entry')}
               </button>
             )}
           </div>
 
           {!peopleId && (
             <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-3 mb-3">
-              Please <Link to="/login" className="underline">log in</Link> to submit fiber arts entries.
+              {t('fiber_arts_register.login_prompt_text')} <Link to="/login" className="underline">{t('fiber_arts_register.login_link')}</Link> {t('fiber_arts_register.login_prompt_suffix')}
             </div>
           )}
 
@@ -229,7 +232,7 @@ export default function FiberArtsRegister() {
 
           <div className="space-y-2 mt-3">
             {entries.length === 0 && !adding && peopleId && (
-              <div className="text-sm text-gray-500">You have no entries yet.</div>
+              <div className="text-sm text-gray-500">{t('fiber_arts_register.no_entries')}</div>
             )}
             {entries.map(e => (
               <div key={e.EntryID} className="bg-white border border-gray-200 rounded-lg p-3">
@@ -237,12 +240,12 @@ export default function FiberArtsRegister() {
                   <div className="flex-1">
                     <div className="font-medium text-gray-900">{e.EntryTitle}</div>
                     <div className="text-xs text-gray-500 mt-0.5">
-                      {e.CategoryName || 'Uncategorized'}
+                      {e.CategoryName || t('fiber_arts_register.uncategorized')}
                       {e.FiberType && ` • ${e.FiberType}`}
                     </div>
                     {e.Description && <div className="text-xs text-gray-600 mt-1">{e.Description}</div>}
                     {e.Placement && <div className="text-xs font-semibold text-[#3D6B34] mt-1">🏆 {e.Placement}</div>}
-                    {e.JudgeNotes && <div className="text-xs italic text-gray-500 mt-0.5">Judge: {e.JudgeNotes}</div>}
+                    {e.JudgeNotes && <div className="text-xs italic text-gray-500 mt-0.5">{t('fiber_arts_register.judge_label')} {e.JudgeNotes}</div>}
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <div className="text-sm font-medium">${Number(e.EntryFee || 0).toFixed(2)}</div>
@@ -251,8 +254,8 @@ export default function FiberArtsRegister() {
                     </div>
                     {!closed && (
                       <div className="flex gap-2 mt-1">
-                        <button onClick={() => { setEditing(e); setAdding(false); }} className="text-xs text-gray-500 hover:text-gray-800">Edit</button>
-                        <button onClick={() => remove(e)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                        <button onClick={() => { setEditing(e); setAdding(false); }} className="text-xs text-gray-500 hover:text-gray-800">{t('fiber_arts_register.btn_edit')}</button>
+                        <button onClick={() => remove(e)} className="text-xs text-red-500 hover:text-red-700">{t('fiber_arts_register.btn_remove')}</button>
                       </div>
                     )}
                   </div>

@@ -11,6 +11,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -38,6 +39,7 @@ const ORDER_TYPE_ICON = {
 const fmtDT = (s) => s ? new Date(s).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }) : '';
 
 function DispatchForm({ row, onSave, onCancel }) {
+  const { t } = useTranslation();
   const [s, setS] = useState(row || {
     OrderType: 'b2b', OrderID: '', VehicleID: '',
     DriverName: '', DriverPhone: '',
@@ -51,38 +53,39 @@ function DispatchForm({ row, onSave, onCancel }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div><label className={lbl}>Type *</label>
+        <div><label className={lbl}>{t('agg_logistics.lbl_type')}</label>
           <select className={inp} value={s.OrderType} onChange={set('OrderType')}>
             {ORDER_TYPES.map(x => <option key={x}>{x}</option>)}
           </select></div>
-        <div><label className={lbl}>Linked order ID</label><input className={inp} type="number" value={s.OrderID ?? ''} onChange={setNum('OrderID')} placeholder="purchase / B2B / D2C" /></div>
-        <div><label className={lbl}>Status</label>
+        <div><label className={lbl}>{t('agg_logistics.lbl_order_id')}</label><input className={inp} type="number" value={s.OrderID ?? ''} onChange={setNum('OrderID')} placeholder={t('agg_logistics.placeholder_order_id')} /></div>
+        <div><label className={lbl}>{t('agg_logistics.lbl_status')}</label>
           <select className={inp} value={s.Status} onChange={set('Status')}>
             {STATUSES.map(x => <option key={x}>{x}</option>)}
           </select></div>
-        <div><label className={lbl}>Vehicle ID</label><input className={inp} value={s.VehicleID || ''} onChange={set('VehicleID')} placeholder="MH-12 AB 1234 / fleet #07" /></div>
-        <div><label className={lbl}>Driver name</label><input className={inp} value={s.DriverName || ''} onChange={set('DriverName')} /></div>
-        <div><label className={lbl}>Driver phone</label><input className={inp} value={s.DriverPhone || ''} onChange={set('DriverPhone')} /></div>
-        <div><label className={lbl}>Pickup time</label><input className={inp} type="datetime-local" value={(s.PickupTime || '').slice(0,16)} onChange={set('PickupTime')} /></div>
-        <div><label className={lbl}>Delivery time</label><input className={inp} type="datetime-local" value={(s.DeliveryTime || '').slice(0,16)} onChange={set('DeliveryTime')} /></div>
-        <div><label className={lbl}>Max cold-chain temp (°C)</label><input className={inp} type="number" step="0.1" value={s.ColdChainTempC ?? ''} onChange={setNum('ColdChainTempC')} /></div>
+        <div><label className={lbl}>{t('agg_logistics.lbl_vehicle')}</label><input className={inp} value={s.VehicleID || ''} onChange={set('VehicleID')} placeholder={t('agg_logistics.placeholder_vehicle')} /></div>
+        <div><label className={lbl}>{t('agg_logistics.lbl_driver_name')}</label><input className={inp} value={s.DriverName || ''} onChange={set('DriverName')} /></div>
+        <div><label className={lbl}>{t('agg_logistics.lbl_driver_phone')}</label><input className={inp} value={s.DriverPhone || ''} onChange={set('DriverPhone')} /></div>
+        <div><label className={lbl}>{t('agg_logistics.lbl_pickup_time')}</label><input className={inp} type="datetime-local" value={(s.PickupTime || '').slice(0,16)} onChange={set('PickupTime')} /></div>
+        <div><label className={lbl}>{t('agg_logistics.lbl_delivery_time')}</label><input className={inp} type="datetime-local" value={(s.DeliveryTime || '').slice(0,16)} onChange={set('DeliveryTime')} /></div>
+        <div><label className={lbl}>{t('agg_logistics.lbl_cold_temp')}</label><input className={inp} type="number" step="0.1" value={s.ColdChainTempC ?? ''} onChange={setNum('ColdChainTempC')} /></div>
         <div className="flex items-end">
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={!!s.ColdChainBreach} onChange={setBool('ColdChainBreach')} />
-            Cold chain breach
+            {t('agg_logistics.lbl_breach')}
           </label>
         </div>
       </div>
-      <div><label className={lbl}>Route notes</label><textarea className={inp} rows={2} value={s.RouteNotes || ''} onChange={set('RouteNotes')} placeholder="Stops, delays, gate/dock instructions" /></div>
+      <div><label className={lbl}>{t('agg_logistics.lbl_route_notes')}</label><textarea className={inp} rows={2} value={s.RouteNotes || ''} onChange={set('RouteNotes')} placeholder={t('agg_logistics.placeholder_notes')} /></div>
       <div className="flex justify-end gap-2">
-        {onCancel && <button onClick={onCancel} className={btnGhost}>Cancel</button>}
-        <button onClick={() => onSave(s)} className={btn}>Save</button>
+        {onCancel && <button onClick={onCancel} className={btnGhost}>{t('agg_logistics.btn_cancel')}</button>}
+        <button onClick={() => onSave(s)} className={btn}>{t('agg_logistics.btn_save')}</button>
       </div>
     </div>
   );
 }
 
 export default function AggregatorLogistics() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const { BusinessID: ctxBID } = useAccount();
   const BusinessID = params.get('BusinessID') || ctxBID;
@@ -107,18 +110,18 @@ export default function AggregatorLogistics() {
     const r = await fetch(url, { method: isEdit ? 'PUT' : 'POST',
                                  headers: { 'Content-Type': 'application/json' },
                                  body: JSON.stringify(d) });
-    if (r.ok) { setEdit(null); setAdd(false); refresh(); } else alert('Save failed');
+    if (r.ok) { setEdit(null); setAdd(false); refresh(); } else alert(t('agg_logistics.alert_save_failed'));
   };
   const del = async (id) => {
-    if (!window.confirm('Delete this dispatch record?')) return;
+    if (!window.confirm(t('agg_logistics.confirm_delete'))) return;
     await fetch(`${API}/api/aggregator/logistics/${id}`, { method: 'DELETE' });
     refresh();
   };
 
   if (!BusinessID) {
     return (
-      <AccountLayout pageTitle="Logistics">
-        <div className="p-6 text-sm text-gray-500">Pick a business from the account picker.</div>
+      <AccountLayout pageTitle={t('agg_logistics.page_title')}>
+        <div className="p-6 text-sm text-gray-500">{t('agg_logistics.no_business')}</div>
       </AccountLayout>
     );
   }
@@ -132,43 +135,43 @@ export default function AggregatorLogistics() {
 
   return (
     <AccountLayout
-      pageTitle="Logistics"
+      pageTitle={t('agg_logistics.page_title')}
       breadcrumbs={[
-        { label: 'Account', to: '/account' },
-        { label: 'Food Aggregation', to: `/aggregator?BusinessID=${BusinessID}` },
-        { label: 'Logistics' },
+        { label: t('agg_logistics.crumb_account'), to: '/account' },
+        { label: t('agg_logistics.crumb_aggregation'), to: `/aggregator?BusinessID=${BusinessID}` },
+        { label: t('agg_logistics.crumb_logistics') },
       ]}
     >
       <div className="max-w-6xl mx-auto p-5 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="font-lora text-2xl font-bold text-gray-900">Logistics</h1>
-            <p className="text-sm text-gray-500 mt-1">Dispatch records covering inbound (farm pickup), B2B delivery, and D2C last-mile — with cold-chain temp logging and breach flagging.</p>
+            <h1 className="font-lora text-2xl font-bold text-gray-900">{t('agg_logistics.heading')}</h1>
+            <p className="text-sm text-gray-500 mt-1">{t('agg_logistics.desc')}</p>
           </div>
-          <Link to={`/aggregator?BusinessID=${BusinessID}`} className={btnGhost}>← Hub</Link>
+          <Link to={`/aggregator?BusinessID=${BusinessID}`} className={btnGhost}>{t('agg_logistics.btn_hub')}</Link>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-3 grid grid-cols-3 gap-3 text-sm">
-          <div><div className="text-[10px] uppercase text-gray-500 font-semibold">Records (filtered)</div><div className="text-xl font-bold">{list.length}</div></div>
-          <div><div className="text-[10px] uppercase text-gray-500 font-semibold">In transit</div><div className="text-xl font-bold">{inTransit}</div></div>
-          <div><div className="text-[10px] uppercase text-gray-500 font-semibold">Cold-chain breaches</div><div className={`text-xl font-bold ${breaches > 0 ? 'text-red-600' : ''}`}>{breaches}</div></div>
+          <div><div className="text-[10px] uppercase text-gray-500 font-semibold">{t('agg_logistics.stat_records')}</div><div className="text-xl font-bold">{list.length}</div></div>
+          <div><div className="text-[10px] uppercase text-gray-500 font-semibold">{t('agg_logistics.stat_in_transit')}</div><div className="text-xl font-bold">{inTransit}</div></div>
+          <div><div className="text-[10px] uppercase text-gray-500 font-semibold">{t('agg_logistics.stat_breaches')}</div><div className={`text-xl font-bold ${breaches > 0 ? 'text-red-600' : ''}`}>{breaches}</div></div>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
           <select className={inp + ' max-w-xs'} value={typeF} onChange={e => setTpF(e.target.value)}>
-            <option value="">All types</option>
+            <option value="">{t('agg_logistics.filter_all_types')}</option>
             {ORDER_TYPES.map(x => <option key={x}>{x}</option>)}
           </select>
           <select className={inp + ' max-w-xs'} value={statusF} onChange={e => setStF(e.target.value)}>
-            <option value="">All statuses</option>
+            <option value="">{t('agg_logistics.filter_all_statuses')}</option>
             {STATUSES.map(x => <option key={x}>{x}</option>)}
           </select>
           <div className="flex-1" />
-          <button onClick={() => setAdd(true)} className={btn}>+ Schedule dispatch</button>
+          <button onClick={() => setAdd(true)} className={btn}>{t('agg_logistics.btn_schedule')}</button>
         </div>
 
         {adding && <DispatchForm onSave={save} onCancel={() => setAdd(false)} />}
-        {list.length === 0 && <div className="text-sm text-gray-500 italic">No dispatch records yet.</div>}
+        {list.length === 0 && <div className="text-sm text-gray-500 italic">{t('agg_logistics.no_records')}</div>}
 
         <div className="space-y-2">
           {list.map(r => editing?.DispatchID === r.DispatchID ? (
@@ -180,24 +183,24 @@ export default function AggregatorLogistics() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <strong className="text-gray-900 capitalize">{r.OrderType}</strong>
-                  {r.OrderID && <span className="text-xs text-gray-500">order #{r.OrderID}</span>}
+                  {r.OrderID && <span className="text-xs text-gray-500">{t('agg_logistics.label_order', { id: r.OrderID })}</span>}
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${statusColor(r.Status)}`}>{r.Status}</span>
-                  {r.ColdChainBreach && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-200 text-red-900 font-semibold uppercase">breach</span>}
+                  {r.ColdChainBreach && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-200 text-red-900 font-semibold uppercase">{t('agg_logistics.badge_breach')}</span>}
                 </div>
                 <div className="text-xs text-gray-700 mt-0.5">
-                  {r.VehicleID && `Vehicle: ${r.VehicleID}`}
+                  {r.VehicleID && t('agg_logistics.label_vehicle', { id: r.VehicleID })}
                   {r.DriverName && ` · ${r.DriverName}`}
                   {r.DriverPhone && ` (${r.DriverPhone})`}
                 </div>
                 <div className="text-xs text-gray-500 mt-0.5">
-                  {r.PickupTime && `pickup ${fmtDT(r.PickupTime)}`}
-                  {r.DeliveryTime && ` → delivered ${fmtDT(r.DeliveryTime)}`}
-                  {r.ColdChainTempC != null && ` · max ${r.ColdChainTempC}°C`}
+                  {r.PickupTime && t('agg_logistics.label_pickup', { time: fmtDT(r.PickupTime) })}
+                  {r.DeliveryTime && t('agg_logistics.label_delivered', { time: fmtDT(r.DeliveryTime) })}
+                  {r.ColdChainTempC != null && t('agg_logistics.label_max_temp', { temp: r.ColdChainTempC })}
                 </div>
                 {r.RouteNotes && <div className="text-xs text-gray-500 mt-0.5">{r.RouteNotes}</div>}
               </div>
-              <button onClick={() => setEdit(r)} className={btnGhost}>Edit</button>
-              <button onClick={() => del(r.DispatchID)} className="text-xs text-red-600 hover:underline">Delete</button>
+              <button onClick={() => setEdit(r)} className={btnGhost}>{t('agg_logistics.btn_edit')}</button>
+              <button onClick={() => del(r.DispatchID)} className="text-xs text-red-600 hover:underline">{t('agg_logistics.btn_delete')}</button>
             </div>
           ))}
         </div>

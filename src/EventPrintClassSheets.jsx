@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 
 function authHeaders() {
-  const t = localStorage.getItem('access_token');
-  return t ? { Authorization: `Bearer ${t}` } : {};
+  const tok = localStorage.getItem('access_token');
+  return tok ? { Authorization: `Bearer ${tok}` } : {};
 }
 
 /**
@@ -13,6 +14,7 @@ function authHeaders() {
  * Columns: back#, animal name, exhibitor, placement (blank), notes (blank).
  */
 export default function EventPrintClassSheets() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [event, setEvent] = useState(null);
   const [classes, setClasses] = useState([]);
@@ -49,25 +51,31 @@ export default function EventPrintClassSheets() {
   }, [eventId]);
 
   const populated = classes.filter(c => (entriesByClass[c.ClassID] || []).length > 0);
+  const classNoun = (n) => n === 1 ? t('event_print_class_sheets.class_one') : t('event_print_class_sheets.class_many');
 
   return (
     <div className="min-h-screen bg-gray-100 print:bg-white">
       <div className="no-print max-w-3xl mx-auto p-5">
-        <h1 className="text-2xl font-semibold text-[#3D6B34] mb-1">Judge's Class Sheets</h1>
+        <h1 className="text-2xl font-semibold text-[#3D6B34] mb-1">{t('event_print_class_sheets.heading')}</h1>
         <p className="text-sm text-gray-600 mb-4">
           {loading
-            ? 'Loading…'
-            : `${populated.length} class${populated.length === 1 ? '' : 'es'} with entries (of ${classes.length} total)`}
-          {' — '}One page per class for the judge's ring stand.
+            ? t('event_print_class_sheets.loading')
+            : t('event_print_class_sheets.classes_with_entries', {
+                n: populated.length,
+                noun: classNoun(populated.length),
+                total: classes.length,
+              })}
+          {' — '}
+          {t('event_print_class_sheets.print_instruction')}
         </p>
         <div className="flex gap-3 mb-4">
           <button onClick={() => window.print()}
             className="px-4 py-2 text-sm rounded-lg bg-[#3D6B34] text-white hover:bg-[#2f5226]">
-            🖨️ Print
+            {t('event_print_class_sheets.btn_print')}
           </button>
           <button onClick={() => window.history.back()}
             className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-            Back
+            {t('event_print_class_sheets.btn_back')}
           </button>
         </div>
       </div>
@@ -79,27 +87,27 @@ export default function EventPrintClassSheets() {
             <div key={c.ClassID} className="class-sheet">
               <div className="sheet-header">
                 <div className="event-name">{event?.EventName || ''}</div>
-                <div className="date">Date: _______________  Judge: _______________  Ring: _____</div>
+                <div className="date">{t('event_print_class_sheets.sheet_judge_line')}</div>
               </div>
               <div className="class-title">
                 {c.ClassCode && <span className="code">{c.ClassCode}</span>}
                 {' '}{c.ClassName}
               </div>
               <div className="class-meta">
-                {c.Breed && <span><strong>Breed:</strong> {c.Breed}</span>}
-                {c.Gender && <span><strong>Sex:</strong> {c.Gender}</span>}
-                {c.AgeGroup && <span><strong>Age:</strong> {c.AgeGroup}</span>}
-                <span><strong>Entries:</strong> {entries.length}</span>
+                {c.Breed && <span><strong>{t('event_print_class_sheets.breed_label')}</strong> {c.Breed}</span>}
+                {c.Gender && <span><strong>{t('event_print_class_sheets.sex_label')}</strong> {c.Gender}</span>}
+                {c.AgeGroup && <span><strong>{t('event_print_class_sheets.age_label')}</strong> {c.AgeGroup}</span>}
+                <span><strong>{t('event_print_class_sheets.entries_label')}</strong> {entries.length}</span>
               </div>
 
               <table className="entries">
                 <thead>
                   <tr>
-                    <th style={{ width: '0.6in' }}>Back #</th>
-                    <th>Animal</th>
-                    <th>Exhibitor</th>
-                    <th style={{ width: '0.9in' }}>Place</th>
-                    <th style={{ width: '1.8in' }}>Notes</th>
+                    <th style={{ width: '0.6in' }}>{t('event_print_class_sheets.col_back_num')}</th>
+                    <th>{t('event_print_class_sheets.col_animal')}</th>
+                    <th>{t('event_print_class_sheets.col_exhibitor')}</th>
+                    <th style={{ width: '0.9in' }}>{t('event_print_class_sheets.col_place')}</th>
+                    <th style={{ width: '1.8in' }}>{t('event_print_class_sheets.col_notes')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -118,7 +126,6 @@ export default function EventPrintClassSheets() {
                       <td></td>
                     </tr>
                   ))}
-                  {/* Blank rows so judge can write late-scratches/additions */}
                   {[...Array(Math.max(0, 3 - (entries.length % 3)))].map((_, i) => (
                     <tr key={`b-${i}`} className="blank">
                       <td>&nbsp;</td>
@@ -132,13 +139,13 @@ export default function EventPrintClassSheets() {
               </table>
 
               <div className="signature">
-                Judge's signature: ________________________________
+                {t('event_print_class_sheets.judge_signature')}
               </div>
             </div>
           );
         })}
         {populated.length === 0 && !loading && (
-          <div className="text-gray-400 italic p-6 no-print">No classes with entries to print yet.</div>
+          <div className="text-gray-400 italic p-6 no-print">{t('event_print_class_sheets.no_classes')}</div>
         )}
       </div>
 

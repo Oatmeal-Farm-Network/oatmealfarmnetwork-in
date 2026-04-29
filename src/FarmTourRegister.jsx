@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import RichTextEditor from './RichTextEditor';
 
@@ -15,6 +16,7 @@ function fmtSlot(iso) {
 }
 
 export default function FarmTourRegister() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [params] = useSearchParams();
   const { BusinessID: ctxBusinessID } = useAccount() || {};
@@ -78,10 +80,10 @@ export default function FarmTourRegister() {
   const submit = async (e) => {
     e.preventDefault();
     setErr('');
-    if (!form.GuestName) { setErr('Your name is required'); return; }
-    if (!form.SlotID) { setErr('Please pick a time slot'); return; }
+    if (!form.GuestName) { setErr(t('farm_tour_register.err_name_required')); return; }
+    if (!form.SlotID) { setErr(t('farm_tour_register.err_slot_required')); return; }
     if (cfg?.RequireWaiver && !form.WaiverSignedBy.trim()) {
-      setErr('Please sign the waiver by typing your full name');
+      setErr(t('farm_tour_register.err_waiver_required'));
       return;
     }
     setSaving(true);
@@ -108,7 +110,7 @@ export default function FarmTourRegister() {
       });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
-        throw new Error(j.detail || 'Booking failed');
+        throw new Error(j.detail || t('farm_tour_register.err_booking_failed'));
       }
       setOk(true);
       setForm({
@@ -134,18 +136,18 @@ export default function FarmTourRegister() {
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Book your tour</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('farm_tour_register.heading')}</h1>
           <p className="text-sm text-gray-500 mt-1">
             {event?.EventName || 'Event'}
             {event?.EventLocationCity && ` — ${event.EventLocationCity}, ${event.EventLocationState}`}
           </p>
         </div>
-        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">← Back to Event</Link>
+        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">{t('farm_tour_register.btn_back')}</Link>
       </div>
 
       {!configured && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-4 mb-4">
-          Tour details have not yet been configured by the organizer.
+          {t('farm_tour_register.not_configured')}
         </div>
       )}
 
@@ -158,18 +160,18 @@ export default function FarmTourRegister() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-xs">
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Adult</div>
+              <div className="text-gray-500">{t('farm_tour_register.lbl_adult')}</div>
               <div className="font-semibold text-gray-900 text-base">${Number(cfg.PricePerAdult || 0).toFixed(2)}</div>
             </div>
             {cfg.PricePerChild != null && (
               <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-gray-500">Child (≤{cfg.ChildAgeLimit})</div>
+                <div className="text-gray-500">{t('farm_tour_register.lbl_child', { age: cfg.ChildAgeLimit })}</div>
                 <div className="font-semibold text-gray-900 text-base">${Number(cfg.PricePerChild).toFixed(2)}</div>
               </div>
             )}
             {cfg.RegistrationEndDate && (
               <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-gray-500">Booking closes</div>
+                <div className="text-gray-500">{t('farm_tour_register.lbl_booking_closes')}</div>
                 <div className="font-semibold text-gray-900 text-sm">{String(cfg.RegistrationEndDate).substring(0, 10)}</div>
               </div>
             )}
@@ -179,19 +181,19 @@ export default function FarmTourRegister() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
               {cfg.DrivingDirections && (
                 <div className="bg-white border border-gray-200 rounded-lg p-3 text-sm">
-                  <div className="text-xs font-bold text-gray-500 uppercase mb-1">Directions</div>
+                  <div className="text-xs font-bold text-gray-500 uppercase mb-1">{t('farm_tour_register.lbl_directions')}</div>
                   <div dangerouslySetInnerHTML={{ __html: cfg.DrivingDirections }} />
                 </div>
               )}
               {cfg.ParkingNotes && (
                 <div className="bg-white border border-gray-200 rounded-lg p-3 text-sm">
-                  <div className="text-xs font-bold text-gray-500 uppercase mb-1">Parking</div>
+                  <div className="text-xs font-bold text-gray-500 uppercase mb-1">{t('farm_tour_register.lbl_parking')}</div>
                   <div dangerouslySetInnerHTML={{ __html: cfg.ParkingNotes }} />
                 </div>
               )}
               {cfg.ThingsToBring && (
                 <div className="bg-white border border-gray-200 rounded-lg p-3 text-sm">
-                  <div className="text-xs font-bold text-gray-500 uppercase mb-1">Bring / wear</div>
+                  <div className="text-xs font-bold text-gray-500 uppercase mb-1">{t('farm_tour_register.lbl_bring')}</div>
                   <div dangerouslySetInnerHTML={{ __html: cfg.ThingsToBring }} />
                 </div>
               )}
@@ -200,23 +202,23 @@ export default function FarmTourRegister() {
 
           {closed && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
-              Registration has closed.
+              {t('farm_tour_register.msg_closed')}
             </div>
           )}
           {!closed && allFull && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
-              All slots are fully booked.
+              {t('farm_tour_register.msg_all_full')}
             </div>
           )}
 
           {myRegs.length > 0 && (
             <div className="bg-[#f6f8f3] border border-[#3D6B34]/20 rounded-lg p-4 mb-4">
-              <h3 className="text-sm font-bold text-[#3D6B34] mb-2">Your bookings</h3>
+              <h3 className="text-sm font-bold text-[#3D6B34] mb-2">{t('farm_tour_register.your_bookings')}</h3>
               <div className="space-y-2">
                 {myRegs.map(r => (
                   <div key={r.RegID} className="text-sm">
                     <span className="font-medium">{fmtSlot(r.SlotStart)}</span>
-                    <span className="text-gray-500"> · {r.GuestName} · party of {r.PartySize}</span>
+                    <span className="text-gray-500"> · {r.GuestName} · {t('farm_tour_register.party_of', { n: r.PartySize })}</span>
                     <span className={`ml-2 text-[11px] px-2 py-0.5 rounded ${r.PaidStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                       {r.PaidStatus}
                     </span>
@@ -229,10 +231,10 @@ export default function FarmTourRegister() {
           {!closed && !allFull && (
             <form onSubmit={submit} className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
               {err && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{err}</div>}
-              {ok && <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3">Booking confirmed.</div>}
+              {ok && <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3">{t('farm_tour_register.msg_confirmed')}</div>}
 
               <div>
-                <label className={lbl}>Pick a time slot</label>
+                <label className={lbl}>{t('farm_tour_register.lbl_slot')}</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                   {activeSlots.map(s => {
                     const booked = Number(s.Booked || 0);
@@ -249,35 +251,35 @@ export default function FarmTourRegister() {
                           className="sr-only"
                         />
                         <div className="text-sm font-semibold text-gray-900">{fmtSlot(s.SlotStart)}</div>
-                        <div className="text-xs text-gray-500">{s.DurationMin} min · {left} spot{left === 1 ? '' : 's'} left</div>
+                        <div className="text-xs text-gray-500">{t('farm_tour_register.spots_left', { min: s.DurationMin, left })}</div>
                         {s.Notes && <div className="text-xs text-gray-600 mt-1">{s.Notes}</div>}
                       </label>
                     );
                   })}
                 </div>
-                {activeSlots.length === 0 && <div className="text-sm text-gray-500">No slots available.</div>}
+                {activeSlots.length === 0 && <div className="text-sm text-gray-500">{t('farm_tour_register.no_slots')}</div>}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className={lbl}>Your name</label>
+                  <label className={lbl}>{t('farm_tour_register.lbl_name')}</label>
                   <input value={form.GuestName} onChange={e => setForm(f => ({ ...f, GuestName: e.target.value }))} required className={inp} />
                 </div>
                 <div>
-                  <label className={lbl}>Email</label>
+                  <label className={lbl}>{t('farm_tour_register.lbl_email')}</label>
                   <input type="email" value={form.GuestEmail} onChange={e => setForm(f => ({ ...f, GuestEmail: e.target.value }))} className={inp} />
                 </div>
                 <div>
-                  <label className={lbl}>Phone</label>
+                  <label className={lbl}>{t('farm_tour_register.lbl_phone')}</label>
                   <input value={form.GuestPhone} onChange={e => setForm(f => ({ ...f, GuestPhone: e.target.value }))} className={inp} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className={lbl}>Party size</label>
+                    <label className={lbl}>{t('farm_tour_register.lbl_party_size')}</label>
                     <input type="number" min="1" value={form.PartySize} onChange={e => setForm(f => ({ ...f, PartySize: e.target.value }))} className={inp} />
                   </div>
                   <div>
-                    <label className={lbl}>Of which children</label>
+                    <label className={lbl}>{t('farm_tour_register.lbl_children')}</label>
                     <input type="number" min="0" value={form.ChildCount} onChange={e => setForm(f => ({ ...f, ChildCount: e.target.value }))} className={inp} />
                   </div>
                 </div>
@@ -285,7 +287,7 @@ export default function FarmTourRegister() {
 
               {activeAddons.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Optional add-ons</h3>
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('farm_tour_register.lbl_addons')}</h3>
                   <div className="space-y-2">
                     {activeAddons.map(a => (
                       <div key={a.AddOnID} className="flex items-start justify-between border border-gray-200 rounded-lg p-2">
@@ -308,35 +310,35 @@ export default function FarmTourRegister() {
 
               {cfg.RequireWaiver && (
                 <div className="border border-amber-200 bg-amber-50 rounded-lg p-3">
-                  <h3 className="text-sm font-bold text-amber-800 mb-2">Liability Waiver</h3>
+                  <h3 className="text-sm font-bold text-amber-800 mb-2">{t('farm_tour_register.lbl_waiver')}</h3>
                   {cfg.WaiverText && (
                     <div className="text-xs text-gray-700 mb-3 max-h-40 overflow-y-auto bg-white border border-amber-100 rounded p-2"
                          dangerouslySetInnerHTML={{ __html: cfg.WaiverText }} />
                   )}
-                  <label className={lbl}>Type your full legal name to sign</label>
+                  <label className={lbl}>{t('farm_tour_register.lbl_waiver_sign')}</label>
                   <input value={form.WaiverSignedBy}
                     onChange={e => setForm(f => ({ ...f, WaiverSignedBy: e.target.value }))}
                     required
-                    className={inp} placeholder="Full legal name" />
+                    className={inp} placeholder={t('farm_tour_register.placeholder_legal_name')} />
                 </div>
               )}
 
               <div>
-                <label className={lbl}>Special requests (optional)</label>
+                <label className={lbl}>{t('farm_tour_register.lbl_special_requests')}</label>
                 <RichTextEditor value={form.SpecialRequests}
                   onChange={(v) => setForm(f => ({ ...f, SpecialRequests: v }))} minHeight={100} />
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <div className="text-lg font-semibold text-[#3D6B34]">Total ${fee.toFixed(2)}</div>
+                <div className="text-lg font-semibold text-[#3D6B34]">{t('farm_tour_register.total_label', { amount: fee.toFixed(2) })}</div>
               </div>
 
               <div className="flex justify-end gap-3">
                 <Link to={`/events/${eventId}`} className="px-5 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 no-underline">
-                  Cancel
+                  {t('farm_tour_register.btn_cancel')}
                 </Link>
                 <button type="submit" disabled={saving} className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
-                  {saving ? 'Booking…' : 'Book Tour'}
+                  {saving ? t('farm_tour_register.btn_booking') : t('farm_tour_register.btn_book')}
                 </button>
               </div>
             </form>

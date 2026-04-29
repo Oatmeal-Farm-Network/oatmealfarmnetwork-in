@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 
 function authHeaders() {
-  const t = localStorage.getItem('access_token');
-  return t ? { Authorization: `Bearer ${t}` } : {};
+  const tok = localStorage.getItem('access_token');
+  return tok ? { Authorization: `Bearer ${tok}` } : {};
 }
 
 function fmtDate(d) {
@@ -19,6 +20,7 @@ function fmtDate(d) {
  * Shows: animal name, owner/business, classes entered, class codes.
  */
 export default function EventPrintBarnCards() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [event, setEvent] = useState(null);
   const [rows, setRows] = useState([]);
@@ -44,19 +46,22 @@ export default function EventPrintBarnCards() {
   return (
     <div className="min-h-screen bg-gray-100 print:bg-white">
       <div className="no-print max-w-3xl mx-auto p-5">
-        <h1 className="text-2xl font-semibold text-[#3D6B34] mb-1">Barn Cards</h1>
+        <h1 className="text-2xl font-semibold text-[#3D6B34] mb-1">{t('event_print_barn_cards.heading')}</h1>
         <p className="text-sm text-gray-600 mb-4">
-          {loading ? 'Loading…' : `${rows.length} registered animal${rows.length === 1 ? '' : 's'}`}
-          {' — '}Print on Letter, 2 cards per sheet.
+          {loading
+            ? t('event_print_barn_cards.loading')
+            : t('event_print_barn_cards.animal_count', { n: rows.length, s: rows.length === 1 ? '' : 's' })}
+          {' — '}
+          {t('event_print_barn_cards.print_instruction')}
         </p>
         <div className="flex gap-3 mb-4">
           <button onClick={() => window.print()}
             className="px-4 py-2 text-sm rounded-lg bg-[#3D6B34] text-white hover:bg-[#2f5226]">
-            🖨️ Print
+            {t('event_print_barn_cards.btn_print')}
           </button>
           <button onClick={() => window.history.back()}
             className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-            Back
+            {t('event_print_barn_cards.btn_back')}
           </button>
         </div>
       </div>
@@ -70,22 +75,22 @@ export default function EventPrintBarnCards() {
             </div>
             <div className="animal-name">{r.AnimalName || r.RegisteredName || '—'}</div>
             {r.RegisteredName && r.AnimalName !== r.RegisteredName && (
-              <div className="registered-name">Registered: {r.RegisteredName}</div>
+              <div className="registered-name">{t('event_print_barn_cards.registered_label')} {r.RegisteredName}</div>
             )}
             <div className="owner">
-              <span className="label">Exhibitor:</span>{' '}
+              <span className="label">{t('event_print_barn_cards.exhibitor_label')}</span>{' '}
               {[r.FirstName, r.LastName].filter(Boolean).join(' ') || '—'}
               {r.BusinessName && <div className="business">{r.BusinessName}</div>}
             </div>
             <div className="details">
-              {r.AnimalGender && <span><strong>Sex:</strong> {r.AnimalGender}</span>}
-              {r.DateOfBirth && <span><strong>DOB:</strong> {fmtDate(r.DateOfBirth)}</span>}
-              {r.EarTagNumber && <span><strong>Tag:</strong> {r.EarTagNumber}</span>}
+              {r.AnimalGender && <span><strong>{t('event_print_barn_cards.sex_label')}</strong> {r.AnimalGender}</span>}
+              {r.DateOfBirth && <span><strong>{t('event_print_barn_cards.dob_label')}</strong> {fmtDate(r.DateOfBirth)}</span>}
+              {r.EarTagNumber && <span><strong>{t('event_print_barn_cards.tag_label')}</strong> {r.EarTagNumber}</span>}
             </div>
             <div className="classes">
-              <div className="label">Classes entered:</div>
+              <div className="label">{t('event_print_barn_cards.classes_label')}</div>
               {(r.classes || []).length === 0 ? (
-                <div className="class-none">— none —</div>
+                <div className="class-none">{t('event_print_barn_cards.class_none')}</div>
               ) : (
                 <ul>
                   {(r.classes || []).map(c => (
@@ -100,7 +105,7 @@ export default function EventPrintBarnCards() {
           </div>
         ))}
         {rows.length === 0 && !loading && (
-          <div className="text-gray-400 italic p-6 no-print">No halter registrations yet.</div>
+          <div className="text-gray-400 italic p-6 no-print">{t('event_print_barn_cards.no_registrations')}</div>
         )}
       </div>
 

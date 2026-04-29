@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import EventAdminLayout from './EventAdminLayout';
 import RichTextEditor from './RichTextEditor';
 
@@ -23,6 +24,7 @@ const EMPTY_CONFIG = {
 function d(val) { return val ? String(val).substring(0, 10) : ''; }
 
 function ConfigTab({ eventId }) {
+  const { t } = useTranslation();
   const [cfg, setCfg] = useState(EMPTY_CONFIG);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -66,8 +68,8 @@ function ConfigTab({ eventId }) {
           MaxEntriesTotal: cfg.MaxEntriesTotal === '' ? null : Number(cfg.MaxEntriesTotal),
         }),
       });
-      if (!r.ok) throw new Error('Save failed');
-      setMsg('Saved');
+      if (!r.ok) throw new Error(t('fiber_arts_admin.save_failed'));
+      setMsg(t('fiber_arts_admin.saved'));
     } catch (ex) {
       setMsg(ex.message);
     } finally {
@@ -79,46 +81,46 @@ function ConfigTab({ eventId }) {
   return (
     <form onSubmit={save} className="space-y-5">
       <div>
-        <label className={lbl}>Show Description</label>
+        <label className={lbl}>{t('fiber_arts_admin.lbl_description')}</label>
         <RichTextEditor value={cfg.Description || ''}
           onChange={(v) => setCfg(c => ({ ...c, Description: v }))} minHeight={200} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className={lbl}>Fee per entry ($)</label>
+          <label className={lbl}>{t('fiber_arts_admin.lbl_fee')}</label>
           <input type="number" step="0.01" value={cfg.FeePerEntry} onChange={set('FeePerEntry')} className={inp} />
         </div>
         <div>
-          <label className={lbl}>Discount fee per entry ($)</label>
-          <input type="number" step="0.01" value={cfg.DiscountFeePerEntry} onChange={set('DiscountFeePerEntry')} className={inp} placeholder="Optional" />
+          <label className={lbl}>{t('fiber_arts_admin.lbl_discount_fee')}</label>
+          <input type="number" step="0.01" value={cfg.DiscountFeePerEntry} onChange={set('DiscountFeePerEntry')} className={inp} placeholder={t('fiber_arts_admin.placeholder_optional')} />
         </div>
         <div>
-          <label className={lbl}>Discount ends</label>
+          <label className={lbl}>{t('fiber_arts_admin.lbl_discount_ends')}</label>
           <input type="date" value={cfg.DiscountEndDate} onChange={set('DiscountEndDate')} className={inp} />
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className={lbl}>Max entries per registrant</label>
-          <input type="number" min="1" value={cfg.MaxEntriesPerRegistrant} onChange={set('MaxEntriesPerRegistrant')} className={inp} placeholder="Unlimited" />
+          <label className={lbl}>{t('fiber_arts_admin.lbl_max_per_registrant')}</label>
+          <input type="number" min="1" value={cfg.MaxEntriesPerRegistrant} onChange={set('MaxEntriesPerRegistrant')} className={inp} placeholder={t('fiber_arts_admin.placeholder_unlimited')} />
         </div>
         <div>
-          <label className={lbl}>Max entries total</label>
-          <input type="number" min="1" value={cfg.MaxEntriesTotal} onChange={set('MaxEntriesTotal')} className={inp} placeholder="Unlimited" />
+          <label className={lbl}>{t('fiber_arts_admin.lbl_max_total')}</label>
+          <input type="number" min="1" value={cfg.MaxEntriesTotal} onChange={set('MaxEntriesTotal')} className={inp} placeholder={t('fiber_arts_admin.placeholder_unlimited')} />
         </div>
         <div>
-          <label className={lbl}>Registration closes</label>
+          <label className={lbl}>{t('fiber_arts_admin.lbl_reg_closes')}</label>
           <input type="date" value={cfg.RegistrationEndDate} onChange={set('RegistrationEndDate')} className={inp} />
         </div>
       </div>
       <label className="flex items-center gap-2 text-sm text-gray-700">
         <input type="checkbox" checked={cfg.IsActive} onChange={setB('IsActive')} className="w-4 h-4 accent-green-600" />
-        Show is active (attendees can enter)
+        {t('fiber_arts_admin.lbl_active')}
       </label>
       <div className="flex items-center justify-end gap-3 pt-2">
         {msg && <span className="text-sm text-gray-500 mr-auto">{msg}</span>}
         <button type="submit" disabled={saving} className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save Configuration'}
+          {saving ? t('fiber_arts_admin.btn_saving') : t('fiber_arts_admin.btn_save')}
         </button>
       </div>
     </form>
@@ -126,6 +128,7 @@ function ConfigTab({ eventId }) {
 }
 
 function CategoriesTab({ eventId }) {
+  const { t } = useTranslation();
   const [cats, setCats] = useState([]);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState({ CategoryName: '', CategoryDescription: '', DisplayOrder: 0 });
@@ -148,7 +151,7 @@ function CategoriesTab({ eventId }) {
   };
 
   const remove = async (id) => {
-    if (!confirm('Delete this category?')) return;
+    if (!confirm(t('fiber_arts_admin.confirm_delete_cat'))) return;
     await fetch(`${API}/api/events/fiber-arts/categories/${id}`, { method: 'DELETE' });
     load();
   };
@@ -160,7 +163,7 @@ function CategoriesTab({ eventId }) {
   };
 
   const seedDefaults = async () => {
-    if (!confirm('Seed 9 standard cottage-industry categories (Handspun Yarn, Knitted Garment, Woven, Felted, etc.)? Existing categories with the same names are skipped.')) return;
+    if (!confirm(t('fiber_arts_admin.confirm_seed'))) return;
     const r = await fetch(`${API}/api/events/${eventId}/fiber-arts/categories/bulk-seed`, { method: 'POST' });
     if (r.ok) load();
   };
@@ -168,16 +171,16 @@ function CategoriesTab({ eventId }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <p className="text-sm text-gray-600">Define judging categories (e.g., "Handspun Yarn", "Felted Goods", "Finished Garments").</p>
+        <p className="text-sm text-gray-600">{t('fiber_arts_admin.cat_desc')}</p>
         <div className="flex gap-2">
           {cats.length === 0 && (
             <button onClick={seedDefaults} className="text-sm border border-[#3D6B34] text-[#3D6B34] px-4 py-1.5 rounded-lg hover:bg-green-50">
-              Seed defaults
+              {t('fiber_arts_admin.btn_seed')}
             </button>
           )}
           {!adding && (
             <button onClick={() => setAdding(true)} className="text-sm bg-[#3D6B34] text-white px-4 py-1.5 rounded-lg hover:bg-[#2d5226]">
-              + Add Category
+              {t('fiber_arts_admin.btn_add_cat')}
             </button>
           )}
         </div>
@@ -186,37 +189,37 @@ function CategoriesTab({ eventId }) {
       {adding && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 space-y-3">
           <div>
-            <label className={lbl}>Category name</label>
+            <label className={lbl}>{t('fiber_arts_admin.lbl_cat_name')}</label>
             <input value={draft.CategoryName} onChange={e => setDraft(d => ({ ...d, CategoryName: e.target.value }))} className={inp} />
           </div>
           <div>
-            <label className={lbl}>Description (optional)</label>
+            <label className={lbl}>{t('fiber_arts_admin.lbl_cat_desc')}</label>
             <RichTextEditor value={draft.CategoryDescription || ''}
               onChange={(v) => setDraft(d => ({ ...d, CategoryDescription: v }))} minHeight={110} />
           </div>
           <div>
-            <label className={lbl}>Display order</label>
+            <label className={lbl}>{t('fiber_arts_admin.lbl_display_order')}</label>
             <input type="number" value={draft.DisplayOrder} onChange={e => setDraft(d => ({ ...d, DisplayOrder: Number(e.target.value) || 0 }))} className={`${inp} w-28`} />
           </div>
           <div className="flex justify-end gap-2">
-            <button onClick={() => { setAdding(false); setEditingId(null); setDraft({ CategoryName: '', CategoryDescription: '', DisplayOrder: 0 }); }} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
-            <button onClick={save} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg">{editingId ? 'Update' : 'Add'}</button>
+            <button onClick={() => { setAdding(false); setEditingId(null); setDraft({ CategoryName: '', CategoryDescription: '', DisplayOrder: 0 }); }} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">{t('fiber_arts_admin.btn_cancel')}</button>
+            <button onClick={save} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg">{editingId ? t('fiber_arts_admin.btn_update') : t('fiber_arts_admin.btn_add')}</button>
           </div>
         </div>
       )}
 
       <div className="space-y-2">
-        {cats.length === 0 && <div className="text-sm text-gray-500">No categories yet.</div>}
+        {cats.length === 0 && <div className="text-sm text-gray-500">{t('fiber_arts_admin.no_categories')}</div>}
         {cats.map(c => (
           <div key={c.CategoryID} className="flex items-start justify-between bg-white border border-gray-200 rounded-lg p-3">
             <div className="flex-1">
               <div className="font-medium text-gray-900">{c.CategoryName}</div>
               {c.CategoryDescription && <div className="text-xs text-gray-500 mt-0.5">{c.CategoryDescription}</div>}
-              <div className="text-[11px] text-gray-400 mt-1">Order {c.DisplayOrder}</div>
+              <div className="text-[11px] text-gray-400 mt-1">{t('fiber_arts_admin.order_label', { n: c.DisplayOrder })}</div>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => startEdit(c)} className="text-xs text-gray-500 hover:text-gray-800">Edit</button>
-              <button onClick={() => remove(c.CategoryID)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+              <button onClick={() => startEdit(c)} className="text-xs text-gray-500 hover:text-gray-800">{t('fiber_arts_admin.btn_edit')}</button>
+              <button onClick={() => remove(c.CategoryID)} className="text-xs text-red-500 hover:text-red-700">{t('fiber_arts_admin.btn_delete')}</button>
             </div>
           </div>
         ))}
@@ -226,6 +229,7 @@ function CategoriesTab({ eventId }) {
 }
 
 function EntriesTab({ eventId }) {
+  const { t } = useTranslation();
   const [entries, setEntries] = useState([]);
   const [judgingId, setJudgingId] = useState(null);
   const [judgeDraft, setJudgeDraft] = useState({ Placement: '', JudgeNotes: '' });
@@ -259,15 +263,21 @@ function EntriesTab({ eventId }) {
   };
 
   const byCat = entries.reduce((acc, e) => {
-    const key = e.CategoryName || 'Uncategorized';
+    const key = e.CategoryName || t('fiber_arts_admin.uncategorized');
     (acc[key] ||= []).push(e);
     return acc;
   }, {});
 
+  const registrantCount = new Set(entries.map(e => e.PeopleID)).size;
+
   return (
     <div>
       <div className="mb-4 text-sm text-gray-600">
-        {entries.length} {entries.length === 1 ? 'entry' : 'entries'} from {new Set(entries.map(e => e.PeopleID)).size} registrants.
+        {t('fiber_arts_admin.entry_summary', {
+          count: entries.length,
+          noun: entries.length === 1 ? t('fiber_arts_admin.entry_singular') : t('fiber_arts_admin.entry_plural'),
+          registrants: registrantCount,
+        })}
       </div>
       {Object.entries(byCat).map(([cat, list]) => (
         <div key={cat} className="mb-6">
@@ -279,19 +289,19 @@ function EntriesTab({ eventId }) {
                   <div className="space-y-3">
                     <div className="font-medium">{e.EntryTitle}</div>
                     <div>
-                      <label className={lbl}>Placement</label>
+                      <label className={lbl}>{t('fiber_arts_admin.lbl_placement')}</label>
                       <select value={judgeDraft.Placement} onChange={ev => setJudgeDraft(d => ({ ...d, Placement: ev.target.value }))} className={inp}>
-                        {PLACEMENTS.map(p => <option key={p} value={p}>{p || '— none —'}</option>)}
+                        {PLACEMENTS.map(p => <option key={p} value={p}>{p || t('fiber_arts_admin.placement_none')}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className={lbl}>Judge notes</label>
+                      <label className={lbl}>{t('fiber_arts_admin.lbl_judge_notes')}</label>
                       <RichTextEditor value={judgeDraft.JudgeNotes || ''}
                         onChange={(v) => setJudgeDraft(d => ({ ...d, JudgeNotes: v }))} minHeight={130} />
                     </div>
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => setJudgingId(null)} className="px-3 py-1 text-sm border border-gray-300 rounded-lg">Cancel</button>
-                      <button onClick={saveJudge} className="px-3 py-1 text-sm bg-[#3D6B34] text-white rounded-lg">Save</button>
+                      <button onClick={() => setJudgingId(null)} className="px-3 py-1 text-sm border border-gray-300 rounded-lg">{t('fiber_arts_admin.btn_cancel_judge')}</button>
+                      <button onClick={saveJudge} className="px-3 py-1 text-sm bg-[#3D6B34] text-white rounded-lg">{t('fiber_arts_admin.btn_save_judge')}</button>
                     </div>
                   </div>
                 ) : (
@@ -305,14 +315,14 @@ function EntriesTab({ eventId }) {
                       </div>
                       {e.Description && <div className="text-xs text-gray-600 mt-1">{e.Description}</div>}
                       {e.Placement && <div className="text-xs font-semibold text-[#3D6B34] mt-1">🏆 {e.Placement}</div>}
-                      {e.JudgeNotes && <div className="text-xs italic text-gray-500 mt-0.5">Judge: {e.JudgeNotes}</div>}
+                      {e.JudgeNotes && <div className="text-xs italic text-gray-500 mt-0.5">{t('fiber_arts_admin.judge_label')} {e.JudgeNotes}</div>}
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="text-xs text-gray-600">${Number(e.EntryFee || 0).toFixed(2)}</div>
                       <button onClick={() => togglePaid(e)} className={`text-[11px] px-2 py-0.5 rounded ${e.PaidStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                         {e.PaidStatus || 'pending'}
                       </button>
-                      <button onClick={() => startJudge(e)} className="text-xs text-blue-600 hover:text-blue-800">Judge</button>
+                      <button onClick={() => startJudge(e)} className="text-xs text-blue-600 hover:text-blue-800">{t('fiber_arts_admin.btn_judge')}</button>
                     </div>
                   </div>
                 )}
@@ -326,11 +336,18 @@ function EntriesTab({ eventId }) {
 }
 
 export default function FiberArtsAdmin() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [params] = useSearchParams();
   const BusinessID = params.get('BusinessID');
   const [tab, setTab] = useState(params.get('tab') || 'config');
   const [event, setEvent] = useState(null);
+
+  const TABS = [
+    { id: 'config', label: t('fiber_arts_admin.tab_config') },
+    { id: 'categories', label: t('fiber_arts_admin.tab_categories') },
+    { id: 'entries', label: t('fiber_arts_admin.tab_entries') },
+  ];
 
   useEffect(() => {
     fetch(`${API}/api/events/${eventId}`).then(r => r.json()).then(setEvent).catch(() => {});
@@ -342,25 +359,25 @@ export default function FiberArtsAdmin() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Cottage Industry / Fiber Arts Show
+              {t('fiber_arts_admin.heading')}
             </h1>
             <p className="text-sm text-gray-500 mt-1">
-              {event?.EventName || 'Event'} — admin console
+              {event?.EventName || 'Event'} — {t('fiber_arts_admin.subheading')}
             </p>
           </div>
           <Link to={`/events/manage?BusinessID=${BusinessID || ''}`} className="text-sm text-gray-500 hover:text-gray-700">
-            ← Back to My Events
+            {t('fiber_arts_admin.btn_back')}
           </Link>
         </div>
 
         <div className="flex gap-1 border-b border-gray-200 mb-6">
-          {['config', 'categories', 'entries'].map(t => (
+          {TABS.map(tab_ => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === t ? 'border-[#3D6B34] text-[#3D6B34]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              key={tab_.id}
+              onClick={() => setTab(tab_.id)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === tab_.id ? 'border-[#3D6B34] text-[#3D6B34]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
-              {t === 'config' ? 'Configuration' : t === 'categories' ? 'Categories' : 'Entries & Judging'}
+              {tab_.label}
             </button>
           ))}
         </div>

@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-[#3D6B34]";
 const lbl = "block text-xs font-medium text-gray-500 mb-1";
 
 function authHeaders() {
-  const t = localStorage.getItem('access_token');
-  return t ? { Authorization: `Bearer ${t}` } : {};
+  const token = localStorage.getItem('access_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export default function AnimalPickerStep({ businessId, peopleId, picked, setPicked, onNext, onBack }) {
+  const { t } = useTranslation();
   const [animals, setAnimals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -38,25 +40,23 @@ export default function AnimalPickerStep({ businessId, peopleId, picked, setPick
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-1">Your Animals</h3>
-        <p className="text-sm text-gray-600">
-          Select the animals you'll be registering. You can add new animals to your account here — they'll be saved for future shows too.
-        </p>
+        <h3 className="text-lg font-semibold text-gray-800 mb-1">{t('animal_picker.heading')}</h3>
+        <p className="text-sm text-gray-600">{t('animal_picker.desc')}</p>
       </div>
 
       {!businessId && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
-          Please select a farm/business in your account before adding animals.
+          {t('animal_picker.warn_no_business')}
         </div>
       )}
 
       {err && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">{err}</div>}
 
       {loading ? (
-        <div className="text-sm text-gray-500">Loading your animals…</div>
+        <div className="text-sm text-gray-500">{t('animal_picker.loading')}</div>
       ) : animals.length === 0 ? (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-sm text-gray-600">
-          No animals on your account yet. Add one below to get started.
+          {t('animal_picker.empty')}
         </div>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">
@@ -73,7 +73,7 @@ export default function AnimalPickerStep({ businessId, peopleId, picked, setPick
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="font-semibold text-gray-800 truncate">{a.FullName || '(unnamed)'}</div>
+                    <div className="font-semibold text-gray-800 truncate">{a.FullName || t('animal_picker.unnamed')}</div>
                     <div className="text-xs text-gray-500 truncate">
                       {a.SpeciesName}{a.Category ? ` • ${a.Category}` : ''}
                     </div>
@@ -97,7 +97,7 @@ export default function AnimalPickerStep({ businessId, peopleId, picked, setPick
             onClick={() => setShowAdd(true)}
             className="text-sm text-[#3D6B34] font-medium hover:underline"
           >
-            + Add a new animal to your account
+            {t('animal_picker.btn_add_new')}
           </button>
         ) : (
           <AddAnimalInline
@@ -119,14 +119,14 @@ export default function AnimalPickerStep({ businessId, peopleId, picked, setPick
           onClick={onBack}
           className="px-5 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
         >
-          Back
+          {t('animal_picker.btn_back')}
         </button>
         <button
           type="button"
           onClick={onNext}
           className="px-5 py-2 text-sm rounded-lg bg-[#3D6B34] text-white hover:bg-[#2f5226]"
         >
-          Continue ({(picked || []).length} selected)
+          {t('animal_picker.btn_continue', { count: (picked || []).length })}
         </button>
       </div>
     </div>
@@ -134,6 +134,7 @@ export default function AnimalPickerStep({ businessId, peopleId, picked, setPick
 }
 
 function AddAnimalInline({ businessId, onCancel, onSaved, setErr }) {
+  const { t } = useTranslation();
   const [species, setSpecies] = useState([]);
   const [breeds, setBreeds] = useState([]);
   const [f, setF] = useState({
@@ -163,7 +164,7 @@ function AddAnimalInline({ businessId, onCancel, onSaved, setErr }) {
 
   const submit = async () => {
     if (!f.Name.trim() || !f.SpeciesID) {
-      setErr('Animal name and species are required.');
+      setErr(t('animal_picker.err_required'));
       return;
     }
     setSaving(true); setErr('');
@@ -182,8 +183,8 @@ function AddAnimalInline({ businessId, onCancel, onSaved, setErr }) {
         body: fd,
       });
       if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t || `HTTP ${res.status}`);
+        const errText = await res.text();
+        throw new Error(errText || `HTTP ${res.status}`);
       }
       const data = await res.json();
       const newId = data.animalID || data.AnimalID;
@@ -204,41 +205,39 @@ function AddAnimalInline({ businessId, onCancel, onSaved, setErr }) {
 
   return (
     <div className="border-2 border-[#3D6B34] border-dashed rounded-lg p-4 bg-green-50/30 space-y-3">
-      <div className="font-semibold text-gray-800">Add New Animal</div>
+      <div className="font-semibold text-gray-800">{t('animal_picker.add_heading')}</div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className={lbl}>Name <span className="text-red-500">*</span></label>
-          <input className={inp} value={f.Name} onChange={set('Name')} placeholder="Animal name" />
+          <label className={lbl}>{t('animal_picker.lbl_name')} <span className="text-red-500">*</span></label>
+          <input className={inp} value={f.Name} onChange={set('Name')} placeholder={t('animal_picker.placeholder_name')} />
         </div>
         <div>
-          <label className={lbl}>Species <span className="text-red-500">*</span></label>
+          <label className={lbl}>{t('animal_picker.lbl_species')} <span className="text-red-500">*</span></label>
           <select className={inp} value={f.SpeciesID} onChange={set('SpeciesID')}>
-            <option value="">— choose —</option>
+            <option value="">{t('animal_picker.opt_choose')}</option>
             {species.map(s => <option key={s.id} value={s.id}>{s.singular || s.plural}</option>)}
           </select>
         </div>
         <div>
-          <label className={lbl}>Breed</label>
+          <label className={lbl}>{t('animal_picker.lbl_breed')}</label>
           <select className={inp} value={f.BreedID} onChange={set('BreedID')} disabled={!breeds.length}>
-            <option value="">— optional —</option>
+            <option value="">{t('animal_picker.opt_optional')}</option>
             {breeds.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </div>
         <div>
-          <label className={lbl}>Color</label>
-          <input className={inp} value={f.Color1} onChange={set('Color1')} placeholder="e.g., Black" />
+          <label className={lbl}>{t('animal_picker.lbl_color')}</label>
+          <input className={inp} value={f.Color1} onChange={set('Color1')} placeholder={t('animal_picker.placeholder_color')} />
         </div>
         <div>
-          <label className={lbl}>Date of Birth</label>
+          <label className={lbl}>{t('animal_picker.lbl_dob')}</label>
           <input type="date" className={inp} value={f.DOB} onChange={set('DOB')} />
         </div>
       </div>
-      <div className="text-xs text-gray-500">
-        You can add photos, pedigree, and more details later from your animal profile.
-      </div>
+      <div className="text-xs text-gray-500">{t('animal_picker.hint_more_details')}</div>
       <div className="flex justify-end gap-2 pt-2">
         <button type="button" onClick={onCancel} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-          Cancel
+          {t('animal_picker.btn_cancel')}
         </button>
         <button
           type="button"
@@ -246,7 +245,7 @@ function AddAnimalInline({ businessId, onCancel, onSaved, setErr }) {
           disabled={saving}
           className="px-4 py-1.5 text-sm rounded-lg bg-[#3D6B34] text-white hover:bg-[#2f5226] disabled:opacity-50"
         >
-          {saving ? 'Saving…' : 'Save Animal'}
+          {saving ? t('animal_picker.btn_saving') : t('animal_picker.btn_save')}
         </button>
       </div>
     </div>
