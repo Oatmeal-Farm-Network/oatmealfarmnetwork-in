@@ -4535,7 +4535,6 @@
     "draft": "draft",
     "paid_revenue": "{{paid}} paid · ${{revenue}}"
   },
-
   "saige_history": {
     "loading": "Loading Saige history…",
     "empty_prefix": "No Saige history yet — run a",
@@ -4552,7 +4551,6 @@
     "soil_challenges_other": "{{count}} challenges",
     "summarize_price": "{{commodity}} — {{confidence}} confidence"
   },
-
   "event_certificate": {
     "back": "← Back to event",
     "btn_print": "Print / Save as PDF",
@@ -4567,7 +4565,6 @@
     "footer_issued": "Issued",
     "footer_ref": "Ref #"
   },
-
   "insurance": {
     "heading": "Crop Insurance Finder",
     "desc_prefix": "US federal crop-insurance products for your commodity. Backed by USDA's Risk Management Agency (RMA). For questions about premiums or coverage level,",
@@ -4585,7 +4582,6 @@
     "err_no_match": "No insurance products matched.",
     "err_lookup_failed": "Lookup failed."
   },
-
   "moon_phase": {
     "today": "Today",
     "day_sun": "Sun",
@@ -4605,7 +4601,6 @@
     "phase_waning_crescent": "Waning Crescent",
     "title_fmt": "{{date}} — {{name}} ({{illum}}%)"
   },
-
   "crop_names": {
     "heading": "Traditional & Local Crop Names",
     "desc_1": "Translate crop names across languages and regions. Type a local name (\"brinjal\", \"melongene\", \"courgette\") or a scientific name",
@@ -4620,7 +4615,6 @@
     "err_no_match": "No traditional-name data for \"{{query}}\".",
     "err_lookup_failed": "Lookup failed."
   },
-
   "pwa_install": {
     "msg_install": "Install Oatmeal Farm Network for push alerts and home-screen access.",
     "msg_ios_prefix": "Add OFN to your Home Screen: tap the Share button, then",
@@ -4628,7 +4622,6 @@
     "btn_install": "Install",
     "btn_dismiss_aria": "Dismiss"
   },
-
   "subsidies": {
     "heading": "Government Subsidies & Grants",
     "desc_prefix": "US federal farm programs — cost-share, grants, low-interest loans, disaster aid. For eligibility help or regional nuance,",
@@ -4650,11 +4643,9 @@
     "err_no_service": "Could not reach service.",
     "err_lookup": "Lookup failed."
   },
-
   "related_suggestions": {
     "heading": "Related Saige suggestions"
   },
-
   "weather_mitigation": {
     "heading": "Weather Mitigation Plans",
     "desc_prefix": "Step-by-step playbook for extreme weather: frost, drought, heat wave, flood, hail, wind, wildfire smoke, cold snap. Pick the hazard and the phase you're in. For crop-specific recovery questions,",
@@ -4672,14 +4663,12 @@
     "err_no_plan": "No plan available.",
     "err_lookup": "Lookup failed."
   },
-
   "install_prompt": {
     "heading": "Install OFN",
     "body": "Faster, works offline at events.",
     "btn_install": "Install",
     "btn_dismiss_aria": "Dismiss"
   },
-
   "saige_profile": {
     "heading": "Saige Profile",
     "desc_prefix": "Values saved here pre-fill every Saige tool — region, zone, climate, and your active crops. Override anything that auto-populates from your business.",
@@ -4709,7 +4698,6 @@
     "climate_cold": "cold",
     "climate_mountain": "mountain"
   },
-
   "event_clone": {
     "heading": "Clone Event",
     "desc": "Duplicate this event and all its configuration (classes, options, menu, slots, lots, etc.). The new event starts unpublished.",
@@ -4728,7 +4716,6 @@
     "err_not_found": "Event not found",
     "err_clone_failed": "Clone failed"
   },
-
   "event_checkin": {
     "back": "← Back to event",
     "kiosk_exit": "Exit kiosk mode",
@@ -4748,7 +4735,6 @@
     "btn_checked_in": "✓ Checked in",
     "btn_check_in": "Check in"
   },
-
   "price_forecast": {
     "heading": "Crop Price Forecast",
     "desc_prefix": "US commodity prices — historical USDA NASS data + seasonal adjustment. Always returns a range, not a single-point estimate. For marketing-strategy questions,",
@@ -4769,7 +4755,6 @@
     "err_no_forecast": "No forecast available.",
     "err_lookup": "Lookup failed."
   },
-
   "soil_challenges": {
     "heading": "Soil Challenge Assessment",
     "desc_prefix": "Enter any values you have from a soil test — leave the rest blank. We'll identify challenges and recommend remediation. For field-specific advice,",
@@ -4808,7 +4793,6 @@
     "hint_bulk_density_gcc": "<1.4 healthy",
     "hint_sodium_pct_cec": "<5 healthy"
   },
-
   "standing_order_widget": {
     "heading": "Standing Order Activity",
     "view_all": "View all →",
@@ -4829,7 +4813,6 @@
     "default_order": "Standing order",
     "default_delivered": "Delivered"
   },
-
   "region_crops": {
     "heading": "Region-Specific Crop Recommendations",
     "desc_prefix": "What should I grow here? Pick a climate zone, USDA zone, or latitude/longitude. For deeper reasoning,",
@@ -4853,7 +4836,6 @@
     "err_no_recs": "No recommendations available.",
     "err_lookup": "Lookup failed."
   },
-
   "event_print_nametags": {
     "heading": "Nametags",
     "loading": "Loading…",
@@ -4865,7 +4847,6 @@
     "guest": "Guest",
     "empty": "No attendees to print yet."
   },
-
   "otf_dm_widget": {
     "chan_group": "Group OTF DM",
     "chan_dm": "OTF DM",
@@ -4877,7 +4858,6 @@
     "btn_new": "🚧 New OTF DM",
     "link_view_all": "View all messages →"
   },
-
   "services_home": {
     "loading": "Loading...",
     "error": "Error loading services.",
@@ -4897,7 +4877,6 @@
     "btn_photos": "Photos",
     "btn_delete": "Delete"
   },
-
   "weather_compact": {
     "loading": "Loading weather…",
     "unavailable": "Weather unavailable.",
@@ -4911,14 +4890,12 @@
     "day_sat": "Sat",
     "hi_lo": "H: {{hi}}° · L: {{lo}}°"
   },
-
   "breadcrumbs": {
     "nav_aria": "Breadcrumb",
     "btn_personal_settings": "Personal Settings",
     "link_account": "Login & Account",
     "link_language": "Language & Audio Settings"
   },
-
   "pest_detection": {
     "heading": "Pest & Disease Detection",
     "desc": "Upload a close-up photo of a leaf, stem, fruit, or whole plant. We'll identify likely pests, diseases, or deficiencies and suggest next steps. For confirmed diagnoses, also consult your local extension office.",
@@ -4939,7 +4916,6 @@
     "err_failed": "Detection failed.",
     "err_no_service": "Could not reach detection service."
   },
-
   "livestock_progeny": {
     "not_found": "Animal Not Found",
     "back_to_marketplace": "← Back to Livestock Marketplace",
@@ -4957,7 +4933,6 @@
     "dob": "DOB: {{dob}}",
     "back_to_parent": "← Back to {{name}}"
   },
-
   "abandoned_carts": {
     "heading": "Abandoned Carts",
     "desc": "These attendees started registration and added items but never paid. Send them a reminder with a one-click link back to finish checkout.",
@@ -4990,7 +4965,6 @@
     "alert_failed": "Failed: {{err}}",
     "alert_bulk_failed": "Bulk send failed"
   },
-
   "notification_bell": {
     "aria_label": "Notifications",
     "title": "Notifications",
@@ -5003,7 +4977,6 @@
     "time_h": "{{n}}h ago",
     "time_d": "{{n}}d ago"
   },
-
   "seller_orders": {
     "page_title": "Incoming Orders",
     "heading": "Incoming Orders",
@@ -5028,7 +5001,6 @@
     "prompt_reject": "Reason for rejection:",
     "prompt_tracking": "Tracking number (optional):"
   },
-
   "animal_picker": {
     "heading": "Your Animals",
     "desc": "Select the animals you'll be registering. You can add new animals to your account here — they'll be saved for future shows too.",
@@ -5055,7 +5027,6 @@
     "btn_saving": "Saving…",
     "btn_save": "Save Animal"
   },
-
   "crop_analysis": {
     "meta_title": "Crop Analysis Summary | Oatmeal Farm Network",
     "crumb_dashboard": "Dashboard",
@@ -5119,7 +5090,6 @@
     "no_data": "No data",
     "loading": "Loading…"
   },
-
   "blog_authors": {
     "toolbar_style": "Style",
     "toolbar_body": "Body",
@@ -6425,5 +6395,85 @@
     "confirm_remove": "Remove \"{{name}}\"?",
     "fleece_fallback": "fleece",
     "err_save_failed": "Save failed"
+  },
+  "floor_plan_admin": {
+    "heading": "Floor Plan",
+    "description": "Upload your venue layout, then drag to paint booths or bulk-fill a grid. Vendors will see this map and click an available booth to claim it.",
+    "btn_back": "← Event detail",
+    "stat_total": "Total booths",
+    "stat_available": "Available",
+    "stat_reserved": "Reserved",
+    "stat_sold": "Sold",
+    "lbl_image": "Floor plan image",
+    "img_dimensions": "✓ {{w}}×{{h}}px",
+    "lbl_scale_hint": "Scale hint (free text)",
+    "placeholder_scale": "e.g. 1 grid square = 10 ft",
+    "lbl_render_scale": "Render scale",
+    "canvas_empty": "Upload a floor-plan image above to start placing booths.",
+    "edit_booth_heading": "Edit booth",
+    "btn_delete": "Delete",
+    "lbl_number": "Number",
+    "lbl_tier": "Tier",
+    "lbl_status": "Status",
+    "lbl_price": "Price ($)",
+    "lbl_assigned_app": "Assigned vendor application ID",
+    "lbl_x": "X",
+    "lbl_y": "Y",
+    "lbl_w": "W",
+    "lbl_h": "H",
+    "btn_close": "Close",
+    "btn_save": "Save",
+    "canvas_hint": "Drag on the canvas to draw a booth, or click an existing booth to edit it.",
+    "bulk_heading": "Bulk-fill grid",
+    "lbl_prefix": "Prefix",
+    "lbl_cols": "Cols",
+    "lbl_rows": "Rows",
+    "lbl_width": "Width",
+    "lbl_height": "Height",
+    "lbl_gap": "Gap",
+    "lbl_start_x": "Start X",
+    "lbl_start_y": "Start Y",
+    "btn_add_booths": "Add {{n}} booths",
+    "tier_colors_heading": "Tier colors",
+    "tier_premium": "premium",
+    "tier_standard": "standard",
+    "tier_corner": "corner",
+    "tier_aisle": "aisle",
+    "tier_blocked": "blocked",
+    "status_available": "available",
+    "status_reserved": "reserved",
+    "status_sold": "sold",
+    "status_blocked": "blocked",
+    "alert_upload_failed": "Upload failed",
+    "confirm_delete_booth": "Delete this booth?",
+    "alert_created": "Created {{n}} booth(s) ({{first}} → {{last}})"
+  },
+  "floor_plan_public": {
+    "heading": "Floor Plan — {{name}}",
+    "description": "Click an available (green) booth to claim it. Reserved booths are amber, sold booths are blue.",
+    "btn_back": "← Event detail",
+    "status_available": "Available",
+    "status_reserved": "Reserved",
+    "status_sold": "Sold",
+    "status_blocked": "Not for sale",
+    "no_floor_plan": "The organizer hasn't published a floor plan yet.",
+    "claim_heading": "Claim booth {{number}}",
+    "tier_price": "{{tier}} tier · ${{price}}",
+    "tier_only": "{{tier}} tier",
+    "lbl_business_name": "Business name *",
+    "lbl_contact_name": "Contact name",
+    "lbl_email": "Email",
+    "lbl_phone": "Phone",
+    "lbl_product_categories": "Product categories",
+    "placeholder_categories": "e.g. Tractors, Soil testing, Crop insurance",
+    "lbl_electricity": "I need electrical service",
+    "btn_cancel": "Cancel",
+    "btn_reserving": "Reserving…",
+    "btn_claim": "Claim {{number}}",
+    "err_biz_required": "Business name required",
+    "err_app_failed": "Application failed",
+    "err_reserve_failed": "Reservation failed",
+    "err_prefix": "Error: {{msg}}",
+    "success_reserved": "✓ Booth {{number}} reserved! The organizer will follow up to confirm."
   }
 }
