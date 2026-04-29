@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function ProduceInventory() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('people_id');
@@ -125,7 +127,7 @@ export default function ProduceInventory() {
   }
 
   async function handleDelete(produceId) {
-    if (!confirm('Are you sure you want to delete this produce item?')) return;
+    if (!confirm(t('produce_inv.confirm_delete'))) return;
     setDeletingRow(produceId);
     await fetch(`${API_URL}/api/produce/delete/${produceId}?BusinessID=${BusinessID}`, { method: 'DELETE' });
     await loadInventory();
@@ -136,17 +138,17 @@ export default function ProduceInventory() {
   const labelCls = "block text-xs font-medium text-gray-500 mb-1";
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Produce Inventory" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Inventory' }, { label: 'Produce' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={t('produce_inv.page_title')} breadcrumbs={[{ label: t('nav.dashboard'), to: '/dashboard' }, { label: t('produce_inv.breadcrumb_inventory') }, { label: t('produce_inv.breadcrumb_produce') }]}>
       <div className="max-w-full mx-auto space-y-6">
 
         {/* ── ADD PRODUCE FORM ── */}
         <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">Produce</h1>
-          <h2 className="text-base font-semibold text-gray-600 mb-4">Add Produce</h2>
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">{t('produce_inv.heading')}</h1>
+          <h2 className="text-base font-semibold text-gray-600 mb-4">{t('produce_inv.add_heading')}</h2>
 
           {addSuccess && (
             <div className="bg-green-50 border border-green-300 text-green-700 rounded px-4 py-2 text-sm mb-4">
-              Produce added successfully.
+              {t('produce_inv.success_add')}
             </div>
           )}
 
@@ -155,14 +157,14 @@ export default function ProduceInventory() {
 
               {/* Category */}
               <div className="col-span-2 md:col-span-1 lg:col-span-1">
-                <label className={labelCls}>Ingredient Category</label>
+                <label className={labelCls}>{t('produce_inv.label_category')}</label>
                 <select
                   value={addForm.IngredientCategoryID}
                   onChange={e => handleCategoryChange(e.target.value)}
                   className={inputCls}
                   required
                 >
-                  <option value="">Select category</option>
+                  <option value="">{t('produce_inv.select_category')}</option>
                   {categories.map(c => (
                     <option key={c.IngredientCategoryID} value={c.IngredientCategoryID}>{c.IngredientCategory}</option>
                   ))}
@@ -171,7 +173,7 @@ export default function ProduceInventory() {
 
               {/* Ingredient */}
               <div className="col-span-2 md:col-span-1 lg:col-span-1">
-                <label className={labelCls}>Ingredient</label>
+                <label className={labelCls}>{t('produce_inv.label_ingredient')}</label>
                 <select
                   value={addForm.IngredientID}
                   onChange={e => setAddForm(f => ({ ...f, IngredientID: e.target.value }))}
@@ -179,7 +181,7 @@ export default function ProduceInventory() {
                   disabled={!ingredients.length}
                   required
                 >
-                  <option value="">Select ingredient</option>
+                  <option value="">{t('produce_inv.select_ingredient')}</option>
                   {ingredients.map(i => (
                     <option key={i.IngredientID} value={i.IngredientID}>{i.IngredientName}</option>
                   ))}
@@ -188,15 +190,15 @@ export default function ProduceInventory() {
 
               {/* Quantity */}
               <div>
-                <label className={labelCls}>Quantity <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <label className={labelCls}>{t('produce_inv.label_quantity')} <span className="text-gray-400 font-normal">({t('produce_inv.optional')})</span></label>
                 <input type="number" value={addForm.Quantity} onChange={e => setAddForm(f => ({ ...f, Quantity: e.target.value }))} className={inputCls} min="0" />
               </div>
 
               {/* Measurement */}
               <div>
-                <label className={labelCls}>Measurement <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <label className={labelCls}>{t('produce_inv.label_measurement')} <span className="text-gray-400 font-normal">({t('produce_inv.optional')})</span></label>
                 <select value={addForm.MeasurementID} onChange={e => setAddForm(f => ({ ...f, MeasurementID: e.target.value }))} className={inputCls}>
-                  <option value="">Select</option>
+                  <option value="">{t('produce_inv.select_measurement')}</option>
                   {measurements.map(m => (
                     <option key={m.MeasurementID} value={m.MeasurementID}>{m.Measurement} ({m.MeasurementAbbreviation})</option>
                   ))}
@@ -205,7 +207,7 @@ export default function ProduceInventory() {
 
               {/* Wholesale */}
               <div>
-                <label className={labelCls}>Wholesale (USD) <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <label className={labelCls}>{t('produce_inv.label_wholesale')} <span className="text-gray-400 font-normal">({t('produce_inv.optional')})</span></label>
                 <div className="flex items-center border border-gray-300 rounded overflow-hidden focus-within:border-[#819360]">
                   <span className="px-2 text-gray-400 text-sm bg-gray-50 border-r border-gray-300">$</span>
                   <input type="number" value={addForm.WholesalePrice} onChange={e => setAddForm(f => ({ ...f, WholesalePrice: e.target.value }))} className="px-2 py-1.5 text-sm focus:outline-none w-full" step="0.01" min="0" />
@@ -214,7 +216,7 @@ export default function ProduceInventory() {
 
               {/* Retail */}
               <div>
-                <label className={labelCls}>Retail (USD) <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <label className={labelCls}>{t('produce_inv.label_retail')} <span className="text-gray-400 font-normal">({t('produce_inv.optional')})</span></label>
                 <div className="flex items-center border border-gray-300 rounded overflow-hidden focus-within:border-[#819360]">
                   <span className="px-2 text-gray-400 text-sm bg-gray-50 border-r border-gray-300">$</span>
                   <input type="number" value={addForm.RetailPrice} onChange={e => setAddForm(f => ({ ...f, RetailPrice: e.target.value }))} className="px-2 py-1.5 text-sm focus:outline-none w-full" step="0.01" min="0" />
@@ -223,7 +225,7 @@ export default function ProduceInventory() {
 
               {/* Available Date */}
               <div>
-                <label className={labelCls}>Available Date <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <label className={labelCls}>{t('produce_inv.label_available_date')} <span className="text-gray-400 font-normal">({t('produce_inv.optional')})</span></label>
                 <input type="date" value={addForm.AvailableDate} onChange={e => setAddForm(f => ({ ...f, AvailableDate: e.target.value }))} className={inputCls} />
               </div>
 
@@ -231,7 +233,7 @@ export default function ProduceInventory() {
 
             <div className="flex justify-end mt-4">
               <button type="submit" disabled={adding} className="regsubmit2" style={{ minWidth: '160px' }}>
-                {adding ? 'Adding...' : 'Add Produce'}
+                {adding ? t('produce_inv.btn_adding') : t('produce_inv.btn_add')}
               </button>
             </div>
           </form>
@@ -240,18 +242,18 @@ export default function ProduceInventory() {
         {/* ── INVENTORY TABLE ── */}
         <div className="bg-white rounded-2xl shadow border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-lg font-bold text-gray-800">Inventory</h2>
+            <h2 className="text-lg font-bold text-gray-800">{t('produce_inv.inventory_heading')}</h2>
           </div>
 
           {loadingInventory ? (
-            <div className="text-center py-12 text-gray-400">Loading inventory...</div>
+            <div className="text-center py-12 text-gray-400">{t('produce_inv.loading')}</div>
           ) : inventory.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">You do not currently have any produce listed.</div>
+            <div className="text-center py-12 text-gray-400">{t('produce_inv.empty')}</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ backgroundColor: '#F3F4F6' }}>
-                  {['Ingredient', 'Wholesale', 'Retail', 'Qty', 'Unit', 'Available', 'Show', 'Actions'].map(h => (
+                  {[t('produce_inv.th_ingredient'), t('produce_inv.th_wholesale'), t('produce_inv.th_retail'), t('produce_inv.th_qty'), t('produce_inv.th_unit'), t('produce_inv.th_available'), t('produce_inv.th_show'), t('produce_inv.th_actions')].map(h => (
                     <th key={h} style={{ padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>{h}</th>
                   ))}
                 </tr>
@@ -338,10 +340,10 @@ export default function ProduceInventory() {
                           {isEditing ? (
                             <>
                               <button onClick={() => handleUpdate(item.ProduceID)} disabled={savingRow === item.ProduceID} className="text-xs bg-[#3D6B34] text-white px-2 py-1 rounded hover:bg-[#2e5227] transition-colors disabled:opacity-50">
-                                {savingRow === item.ProduceID ? '...' : 'Save'}
+                                {savingRow === item.ProduceID ? '...' : t('produce_inv.btn_save')}
                               </button>
                               <button onClick={() => setEditRows(prev => { const n = { ...prev }; delete n[item.ProduceID]; return n; })} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded border border-gray-300">
-                                Cancel
+                                {t('produce_inv.btn_cancel')}
                               </button>
                             </>
                           ) : (

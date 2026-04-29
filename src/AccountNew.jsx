@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -49,6 +50,7 @@ const money = (n, ccy = 'USD') =>
   new Intl.NumberFormat(undefined, { style: 'currency', currency: ccy }).format(Number(n) || 0);
 
 export default function AccountNew() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [businessTypes, setBusinessTypes] = useState([]);
@@ -138,12 +140,12 @@ export default function AccountNew() {
 
   const validateDetails = () => {
     const e = {};
-    if (!form.BusinessTypeID) e.BusinessTypeID = 'Please select an account type.';
-    if (!form.StateIndex) e.StateIndex = 'Please select a state/province.';
-    if (!form.PeoplePhone) e.PeoplePhone = 'Phone is required.';
+    if (!form.BusinessTypeID) e.BusinessTypeID = t('account_new.err_type');
+    if (!form.StateIndex) e.StateIndex = t('account_new.err_state');
+    if (!form.PeoplePhone) e.PeoplePhone = t('account_new.err_phone');
     if (form.BusinessTypeID === '8') {
-      if (!form.LivestockLegalDisclaimer) e.LivestockLegalDisclaimer = 'You must accept the Livestock Legal Disclaimer.';
-      if (!form.SalesLegalDisclaimer) e.SalesLegalDisclaimer = 'You must accept the Sales Legal Disclaimer.';
+      if (!form.LivestockLegalDisclaimer) e.LivestockLegalDisclaimer = t('account_new.err_livestock_disclaimer');
+      if (!form.SalesLegalDisclaimer) e.SalesLegalDisclaimer = t('account_new.err_sales_disclaimer');
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -165,10 +167,10 @@ export default function AccountNew() {
         createOTFCommunity(data.BusinessID, form.BusinessName || '', peopleId);
         setStep(2);
       } else {
-        setErrors({ submit: data.detail || 'An error occurred. Please try again.' });
+        setErrors({ submit: data.detail || t('account_new.err_generic') });
       }
     } catch {
-      setErrors({ submit: 'An error occurred. Please try again.' });
+      setErrors({ submit: t('account_new.err_generic') });
     } finally {
       setSubmitting(false);
     }
@@ -199,11 +201,11 @@ export default function AccountNew() {
         if (!res.ok) throw new Error(data.detail || 'Could not activate subscription.');
         navigate(`/account?PeopleID=${peopleId}&BusinessID=${createdBusinessId}`);
       } else {
-        setErrors({ pay: 'Live Stripe checkout for subscription packages is not yet available. Ask an admin to enable Test Mode at /app/admin/payment-settings.' });
+        setErrors({ pay: t('account_new.err_stripe_live') });
         setPaying(false);
       }
     } catch (e) {
-      setErrors({ pay: e.message || 'Payment failed. Please try again.' });
+      setErrors({ pay: e.message || t('account_new.err_payment') });
       setPaying(false);
     }
   };
@@ -215,9 +217,9 @@ export default function AccountNew() {
   const selectedPlan = plans.find(p => p.PackageID === selectedPlanId);
 
   const stepTitle = {
-    1: 'Add An Account',
-    2: 'Choose a Subscription',
-    3: plansMode === 'test' ? 'Confirm Subscription' : 'Payment',
+    1: t('account_new.step1_title'),
+    2: t('account_new.step2_title'),
+    3: plansMode === 'test' ? t('account_new.step3_title_test') : t('account_new.step3_title_live'),
   }[step];
 
   return (
@@ -230,7 +232,7 @@ export default function AccountNew() {
       <Header />
 
       <div style={{ maxWidth: FORM_MAX_WIDTH, margin: '2rem auto', padding: '0 1rem 3rem' }}>
-        <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'My Accounts', to: '/accounts' }, { label: 'Add Account' }]} />
+        <Breadcrumbs items={[{ label: t('nav.home'), to: '/' }, { label: t('accounts.heading'), to: '/accounts' }, { label: t('account_new.breadcrumb') }]} />
         <div className="bg-white rounded-xl shadow border border-gray-100 p-8">
 
           <h1 className="text-2xl font-bold text-gray-800 mb-2">{stepTitle}</h1>
@@ -249,33 +251,33 @@ export default function AccountNew() {
           {step === 1 && (
             <div className="space-y-5">
               <div>
-                <label className={labelClass}>Account Type</label>
+                <label className={labelClass}>{t('account_new.label_type')}</label>
                 <select
                   value={form.BusinessTypeID}
                   onChange={e => update('BusinessTypeID', e.target.value)}
                   className={inputClass}
                 >
-                  <option value="">Select an account type...</option>
-                  {businessTypes.map(t => (
-                    <option key={t.BusinessTypeID} value={t.BusinessTypeID}>{t.BusinessType}</option>
+                  <option value="">{t('account_new.select_type')}</option>
+                  {businessTypes.map(bType => (
+                    <option key={bType.BusinessTypeID} value={bType.BusinessTypeID}>{bType.BusinessType}</option>
                   ))}
                 </select>
                 {errors.BusinessTypeID && <p className={errorClass}>{errors.BusinessTypeID}</p>}
               </div>
 
               <div>
-                <label className={labelClass}>Business / Org. Name <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <label className={labelClass}>{t('account_new.label_name')} <span className="text-gray-400 font-normal">({t('account_new.optional')})</span></label>
                 <input
                   type="text"
                   value={form.BusinessName}
                   onChange={e => update('BusinessName', e.target.value)}
                   className={inputClass}
-                  placeholder="Your farm or business name"
+                  placeholder={t('account_new.placeholder_name')}
                 />
               </div>
 
               <div>
-                <label className={labelClass}>Website <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <label className={labelClass}>{t('account_new.label_website')} <span className="text-gray-400 font-normal">({t('account_new.optional')})</span></label>
                 <input
                   type="text"
                   value={form.BusinessWebsite}
@@ -286,22 +288,22 @@ export default function AccountNew() {
               </div>
 
               <div>
-                <label className={labelClass}>Street <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <label className={labelClass}>{t('account_new.label_street')} <span className="text-gray-400 font-normal">({t('account_new.optional')})</span></label>
                 <input type="text" value={form.AddressStreet} onChange={e => update('AddressStreet', e.target.value)} className={inputClass} />
               </div>
 
               <div>
-                <label className={labelClass}>Address Line 2 <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <label className={labelClass}>{t('account_new.label_apt')} <span className="text-gray-400 font-normal">({t('account_new.optional')})</span></label>
                 <input type="text" value={form.AddressApt} onChange={e => update('AddressApt', e.target.value)} className={inputClass} />
               </div>
 
               <div>
-                <label className={labelClass}>City <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <label className={labelClass}>{t('account_new.label_city')} <span className="text-gray-400 font-normal">({t('account_new.optional')})</span></label>
                 <input type="text" value={form.AddressCity} onChange={e => update('AddressCity', e.target.value)} className={inputClass} />
               </div>
 
               <div>
-                <label className={labelClass}>Country</label>
+                <label className={labelClass}>{t('account_new.label_country')}</label>
                 <select
                   value={form.country_id}
                   onChange={e => {
@@ -310,7 +312,7 @@ export default function AccountNew() {
                   }}
                   className={inputClass}
                 >
-                  <option value="">Select a country...</option>
+                  <option value="">{t('account_new.select_country')}</option>
                   {countries.map(c => (
                     <option key={c.country_id} value={c.country_id}>{c.name}</option>
                   ))}
@@ -318,14 +320,14 @@ export default function AccountNew() {
               </div>
 
               <div>
-                <label className={labelClass}>State / Province</label>
+                <label className={labelClass}>{t('account_new.label_state')}</label>
                 <select
                   value={form.StateIndex}
                   onChange={e => update('StateIndex', e.target.value)}
                   className={inputClass}
                   disabled={!form.country}
                 >
-                  <option value="">{form.country ? 'Select...' : 'Select a country first'}</option>
+                  <option value="">{form.country ? t('account_new.select_state') : t('account_new.select_country_first')}</option>
                   {states.map(s => (
                     <option key={s.StateIndex} value={s.StateIndex}>{s.name}</option>
                   ))}
@@ -334,12 +336,12 @@ export default function AccountNew() {
               </div>
 
               <div>
-                <label className={labelClass}>Postal Code <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <label className={labelClass}>{t('account_new.label_zip')} <span className="text-gray-400 font-normal">({t('account_new.optional')})</span></label>
                 <input type="text" value={form.AddressZip} onChange={e => update('AddressZip', e.target.value)} className={inputClass} />
               </div>
 
               <div>
-                <label className={labelClass}>Phone</label>
+                <label className={labelClass}>{t('account_new.label_phone')}</label>
                 <input
                   type="text"
                   value={form.PeoplePhone}
@@ -352,20 +354,20 @@ export default function AccountNew() {
 
               <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
                 <input type="checkbox" checked={form.Permission} onChange={e => update('Permission', e.target.checked)} className="mt-1" />
-                Yes, you have my permission to share my listings in mass emails and on social media.
+                {t('account_new.permission_text')}
               </label>
 
               {String(form.BusinessTypeID) === '8' && (
                 <>
                   <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
                     <input type="checkbox" checked={form.LivestockLegalDisclaimer} onChange={e => update('LivestockLegalDisclaimer', e.target.checked)} className="mt-1" />
-                    <span><strong>Livestock Legal Disclaimer:</strong> I acknowledge and agree that I am solely responsible for negotiating all livestock sales. Global Grange Inc. bears no legal responsibility for any facet of such sales as well as any ensuing consequences arising from said transactions.</span>
+                    <span><strong>{t('account_new.livestock_disclaimer_title')}</strong> {t('account_new.livestock_disclaimer_body')}</span>
                   </label>
                   {errors.LivestockLegalDisclaimer && <p className={errorClass}>{errors.LivestockLegalDisclaimer}</p>}
 
                   <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
                     <input type="checkbox" checked={form.SalesLegalDisclaimer} onChange={e => update('SalesLegalDisclaimer', e.target.checked)} className="mt-1" />
-                    <span><strong>Sales Legal Disclaimer:</strong> I acknowledge and agree that Global Grange Inc. bears no legal responsibility for any facet of sales, including but not limited to the sale of livestock, eggs, fiber/wool, products, and services, as well as any ensuing consequences arising from said transactions.</span>
+                    <span><strong>{t('account_new.sales_disclaimer_title')}</strong> {t('account_new.sales_disclaimer_body')}</span>
                   </label>
                   {errors.SalesLegalDisclaimer && <p className={errorClass}>{errors.SalesLegalDisclaimer}</p>}
                 </>
@@ -379,7 +381,7 @@ export default function AccountNew() {
 
               <div className="flex justify-end gap-3 mt-4">
                 <button onClick={handleCreateAccount} disabled={submitting} className="regsubmit2">
-                  {submitting ? 'Creating...' : createdBusinessId ? 'Continue →' : 'Create Account →'}
+                  {submitting ? t('account_new.btn_creating') : createdBusinessId ? t('account_new.btn_continue') : t('account_new.btn_create')}
                 </button>
               </div>
             </div>
@@ -389,12 +391,12 @@ export default function AccountNew() {
           {step === 2 && (
             <div className="space-y-4">
               <p className="text-sm text-gray-600">
-                Pick the plan that best fits your operation. You can change or cancel any time from your account settings.
+                {t('account_new.plan_intro')}
               </p>
 
               {plansMode === 'test' && (
                 <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 rounded px-4 py-2 text-xs">
-                  Test mode is enabled — no payment will be collected on the next step.
+                  {t('account_new.test_mode_notice')}
                 </div>
               )}
 
@@ -405,10 +407,10 @@ export default function AccountNew() {
               )}
 
               {plansLoading ? (
-                <div className="text-center py-8 text-gray-400">Loading plans…</div>
+                <div className="text-center py-8 text-gray-400">{t('account_new.plans_loading')}</div>
               ) : plans.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 border border-dashed border-gray-300 rounded-lg">
-                  No subscription plans are configured yet.
+                  {t('account_new.no_plans')}
                 </div>
               ) : (
                 <div className="grid gap-3">
@@ -432,7 +434,7 @@ export default function AccountNew() {
                           </div>
                           <div className="text-right whitespace-nowrap">
                             <div className="text-xl font-bold text-gray-900">{money(p.MonthlyPrice)}</div>
-                            <div className="text-xs text-gray-500">/ mo</div>
+                            <div className="text-xs text-gray-500">{t('account_new.per_mo')}</div>
                           </div>
                         </div>
                       </button>
@@ -443,14 +445,14 @@ export default function AccountNew() {
 
               <div className="flex justify-end gap-3 mt-4">
                 <button onClick={() => setStep(1)} className="border border-gray-300 rounded px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
-                  ← Back
+                  {t('account_new.btn_back')}
                 </button>
                 <button
                   onClick={() => selectedPlanId && handleChoosePlan(plans.find(p => p.PackageID === selectedPlanId))}
                   disabled={!selectedPlanId}
                   className="regsubmit2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Next →
+                  {t('account_new.btn_next')}
                 </button>
               </div>
             </div>
@@ -461,11 +463,11 @@ export default function AccountNew() {
             <div className="space-y-4">
               {selectedPlan && (
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <div className="text-sm text-gray-500 mb-1">You selected</div>
+                  <div className="text-sm text-gray-500 mb-1">{t('account_new.you_selected')}</div>
                   <div className="flex items-center justify-between">
                     <div className="font-bold text-gray-800">{selectedPlan.PackageName}</div>
                     <div className="text-lg font-bold text-gray-900">
-                      {money(selectedPlan.MonthlyPrice)}<span className="text-xs font-normal text-gray-500"> / mo</span>
+                      {money(selectedPlan.MonthlyPrice)}<span className="text-xs font-normal text-gray-500"> {t('account_new.per_mo')}</span>
                     </div>
                   </div>
                 </div>
@@ -473,13 +475,11 @@ export default function AccountNew() {
 
               {plansMode === 'test' ? (
                 <div className="bg-yellow-50 border border-yellow-300 text-yellow-900 rounded px-4 py-3 text-sm">
-                  <strong>Test mode.</strong> Your subscription will be activated immediately without
-                  processing a real payment.
+                  <strong>{t('account_new.test_mode_label')}</strong> {t('account_new.test_mode_confirm_body')}
                 </div>
               ) : (
                 <p className="text-sm text-gray-600">
-                  Click below to continue to Stripe and complete payment securely. You'll be returned
-                  here when you're done.
+                  {t('account_new.stripe_redirect_body')}
                 </p>
               )}
 
@@ -491,12 +491,12 @@ export default function AccountNew() {
 
               <div className="flex justify-end gap-3 mt-4">
                 <button onClick={() => setStep(2)} className="border border-gray-300 rounded px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
-                  ← Back
+                  {t('account_new.btn_back')}
                 </button>
                 <button onClick={handlePay} disabled={paying} className="regsubmit2">
                   {paying
-                    ? (plansMode === 'test' ? 'Activating…' : 'Redirecting…')
-                    : (plansMode === 'test' ? 'Confirm Subscription' : 'Continue to Payment')}
+                    ? (plansMode === 'test' ? t('account_new.btn_activating') : t('account_new.btn_redirecting'))
+                    : (plansMode === 'test' ? t('account_new.btn_confirm_sub') : t('account_new.btn_pay'))}
                 </button>
               </div>
             </div>

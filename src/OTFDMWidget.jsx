@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const OTF_API = import.meta.env.VITE_OTF_API_URL || import.meta.env.VITE_API_URL || '';
 const MILL = `${OTF_API}/api/admin/mill`;
@@ -9,12 +10,6 @@ function authHeaders() {
   const pid   = localStorage.getItem('people_id')    || '';
   const lvl   = localStorage.getItem('access_level') || '0';
   return { Authorization: `Bearer ${token}`, 'x-people-id': pid, 'x-access-level': lvl };
-}
-
-function chanName(ch) {
-  if (ch.ChannelType === 'group_dm') return ch.Name || ch.DmPartnerNames || 'Group OTF DM';
-  if (ch.ChannelType === 'dm')       return ch.DmPartnerNames || 'OTF DM';
-  return `#${ch.Name}`;
 }
 
 function fmtTime(iso) {
@@ -27,9 +22,16 @@ function fmtTime(iso) {
 }
 
 export default function OTFDMWidget() {
+  const { t } = useTranslation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [channels,   setChannels]   = useState([]);
   const [loading,    setLoading]    = useState(true);
+
+  function chanName(ch) {
+    if (ch.ChannelType === 'group_dm') return ch.Name || ch.DmPartnerNames || t('otf_dm_widget.chan_group');
+    if (ch.ChannelType === 'dm')       return ch.DmPartnerNames || t('otf_dm_widget.chan_dm');
+    return `#${ch.Name}`;
+  }
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -66,10 +68,10 @@ export default function OTFDMWidget() {
                 className="w-7 h-7 rounded-lg"
                 onError={e => { e.target.style.display = 'none'; }}
               />
-              <span className="text-white font-bold text-sm">Over The Fence DM</span>
+              <span className="text-white font-bold text-sm">{t('otf_dm_widget.header')}</span>
               {totalUnread > 0 && (
                 <span className="rounded-full text-[10px] font-bold text-white px-2 py-0.5" style={{ backgroundColor: '#25d366' }}>
-                  {totalUnread} new
+                  {t('otf_dm_widget.new_badge', { count: totalUnread })}
                 </span>
               )}
             </div>
@@ -77,23 +79,23 @@ export default function OTFDMWidget() {
               to="/over-the-fence"
               className="text-white/80 hover:text-white text-xs font-semibold transition"
             >
-              Open →
+              {t('otf_dm_widget.link_open')}
             </Link>
           </div>
 
           {/* Conversation rows */}
           {loading && (
-            <div className="px-5 py-4 text-sm text-gray-400">Loading conversations…</div>
+            <div className="px-5 py-4 text-sm text-gray-400">{t('otf_dm_widget.loading')}</div>
           )}
           {!loading && channels.length === 0 && (
             <div className="px-5 py-6 text-center">
-              <p className="text-sm text-gray-500 mb-3">No messages yet. Start talking over the fence!</p>
+              <p className="text-sm text-gray-500 mb-3">{t('otf_dm_widget.empty_msg')}</p>
               <Link
                 to="/over-the-fence"
                 className="inline-block px-4 py-2 rounded-lg text-white text-sm font-bold"
                 style={{ backgroundColor: '#008069' }}
               >
-                🚧 New OTF DM
+                {t('otf_dm_widget.btn_new')}
               </Link>
             </div>
           )}
@@ -130,7 +132,7 @@ export default function OTFDMWidget() {
               ))}
               <div className="px-5 py-2.5 text-right">
                 <Link to="/over-the-fence" className="text-xs font-bold hover:underline" style={{ color: '#008069' }}>
-                  View all messages →
+                  {t('otf_dm_widget.link_view_all')}
                 </Link>
               </div>
             </div>

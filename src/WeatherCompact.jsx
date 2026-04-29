@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -34,20 +35,18 @@ async function fetchWeather(lat, lon) {
   return data;
 }
 
-const formatHour = (t) => {
-  const d = new Date(t);
+const formatHour = (ts) => {
+  const d = new Date(ts);
   const h = d.getHours();
   if (h === 0) return '12a';
   if (h === 12) return 'Noon';
   return h < 12 ? `${h}am` : `${h - 12}pm`;
 };
 
-const dayName = (dateStr) => {
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  return days[new Date(dateStr).getDay()];
-};
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 export default function WeatherCompact({ lat, lon, address, label, mini = false }) {
+  const { t } = useTranslation();
   const [weather, setWeather] = useState(null);
   const [status, setStatus] = useState('loading');
 
@@ -72,10 +71,10 @@ export default function WeatherCompact({ lat, lon, address, label, mini = false 
   }, [lat, lon, address]);
 
   if (status === 'loading') {
-    return <div className="text-xs text-gray-400 italic">Loading weather…</div>;
+    return <div className="text-xs text-gray-400 italic">{t('weather_compact.loading')}</div>;
   }
   if (status === 'unavailable' || !weather) {
-    return <div className="text-xs text-gray-400 italic">Weather unavailable.</div>;
+    return <div className="text-xs text-gray-400 italic">{t('weather_compact.unavailable')}</div>;
   }
 
   // Mini variant: one-line summary for field cards
@@ -111,7 +110,7 @@ export default function WeatherCompact({ lat, lon, address, label, mini = false 
         </div>
         {weather.today?.high_f != null && (
           <div className="text-xs text-gray-500 ml-auto">
-            H: {Math.round(weather.today.high_f)}° · L: {Math.round(weather.today.low_f ?? 0)}°
+            {t('weather_compact.hi_lo', { hi: Math.round(weather.today.high_f), lo: Math.round(weather.today.low_f ?? 0) })}
           </div>
         )}
       </div>
@@ -127,7 +126,7 @@ export default function WeatherCompact({ lat, lon, address, label, mini = false 
               }}
             >
               <span style={{ fontSize: '0.6rem', fontWeight: 600, color: '#6B7280' }}>
-                {i === 0 ? 'Today' : dayName(d.date)}
+                {i === 0 ? t('weather_compact.today') : t('weather_compact.day_' + DAY_KEYS[new Date(d.date).getDay()])}
               </span>
               {d.icon && <img src={d.icon} alt="" style={{ width: '1.6rem', height: '1.6rem' }} />}
               <span style={{ fontSize: '0.62rem', color: '#EF4444', fontWeight: 600 }}>

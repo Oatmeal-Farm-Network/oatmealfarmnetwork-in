@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -11,13 +12,14 @@ function fmt(iso) {
 }
 
 export default function SpeakerPortal() {
+  const { t } = useTranslation();
   const { accessCode } = useParams();
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
 
   useEffect(() => {
     fetch(`${API}/api/events/conference/speaker/${accessCode}`)
-      .then(r => { if (!r.ok) throw new Error('Invalid code'); return r.json(); })
+      .then(r => { if (!r.ok) throw new Error(t('speaker_portal.invalid_code')); return r.json(); })
       .then(setData)
       .catch(e => setErr(e.message));
   }, [accessCode]);
@@ -26,11 +28,11 @@ export default function SpeakerPortal() {
     <div className="min-h-screen bg-[#FAF7EE] flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow p-6 max-w-md text-center">
         <div className="text-lg font-semibold text-red-600 mb-2">{err}</div>
-        <p className="text-sm text-gray-600">This access code is invalid or has been revoked.</p>
+        <p className="text-sm text-gray-600">{t('speaker_portal.invalid_code_body')}</p>
       </div>
     </div>
   );
-  if (!data) return <div className="min-h-screen bg-[#FAF7EE] flex items-center justify-center text-sm text-gray-500">Loading…</div>;
+  if (!data) return <div className="min-h-screen bg-[#FAF7EE] flex items-center justify-center text-sm text-gray-500">{t('speaker_portal.loading')}</div>;
 
   const { Speaker, Event, Sessions } = data;
 
@@ -55,12 +57,12 @@ export default function SpeakerPortal() {
 
       <div className="max-w-4xl mx-auto p-4">
         <div className="text-sm text-gray-500 mb-3">
-          Your sessions ({Sessions.length})
+          {t('speaker_portal.your_sessions', { count: Sessions.length })}
           {Event.EventLocationName && ` · ${Event.EventLocationName}`}
         </div>
         {Sessions.length === 0 ? (
           <div className="bg-white rounded-xl shadow p-6 text-sm text-gray-500 text-center">
-            You're not scheduled for any sessions yet.
+            {t('speaker_portal.no_sessions')}
           </div>
         ) : (
           <div className="space-y-3">
@@ -84,7 +86,7 @@ export default function SpeakerPortal() {
                     <div className="text-sm text-gray-700 mt-2">{s.Description}</div>
                   )}
                   {s.Capacity && (
-                    <div className="text-xs text-gray-400 mt-1">Capacity: {s.Capacity}</div>
+                    <div className="text-xs text-gray-400 mt-1">{t('speaker_portal.capacity', { n: s.Capacity })}</div>
                   )}
                 </div>
               </div>

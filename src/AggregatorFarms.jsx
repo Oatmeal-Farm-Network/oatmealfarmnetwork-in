@@ -8,6 +8,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -41,6 +42,7 @@ const IconInputs   = () => <S><path d="M13 3a3.5 3.5 0 0 0-4.2 3.5L2.5 12.5a1.5 
 // Add Farm Modal — search first, then invite or link
 // ─────────────────────────────────────────────────────────────────
 function AddFarmModal({ businessId, onDone, onCancel }) {
+  const { t } = useTranslation();
   const [phase, setPhase]   = useState('search'); // 'search' | 'results' | 'invite'
   const [q, setQ]           = useState('');
   const [results, setResults] = useState([]);
@@ -77,15 +79,13 @@ function AddFarmModal({ businessId, onDone, onCancel }) {
       const r = await fetch(`${API}/api/aggregator/search?q=${encodeURIComponent(q)}`);
       setResults(await r.json());
       setPhase('results');
-    } catch { setErr('Search failed.'); }
+    } catch { setErr(t('agg_farms.err_search')); }
     finally { setSearching(false); }
   };
 
-  // Link an existing business as a farm
   const linkExisting = async (hit) => {
     setSaving(true); setErr('');
     const token = localStorage.getItem('access_token') || '';
-    const peopleId = localStorage.getItem('people_id') || '0';
     try {
       const r = await fetch(`${API}/api/aggregator/${businessId}/farms`, {
         method: 'POST',
@@ -102,18 +102,16 @@ function AddFarmModal({ businessId, onDone, onCancel }) {
           Status: 'active',
         }),
       });
-      if (!r.ok) throw new Error('Link failed');
+      if (!r.ok) throw new Error(t('agg_farms.err_link'));
       onDone();
-    } catch (e) { setErr(e.message || 'Failed to link farm.'); }
+    } catch (e) { setErr(e.message || t('agg_farms.err_link')); }
     finally { setSaving(false); }
   };
 
-  // Invite a new farm (creates People + Business + sends email)
   const inviteNew = async () => {
-    if (!inviteForm.FarmName.trim()) { setErr('Farm name is required.'); return; }
+    if (!inviteForm.FarmName.trim()) { setErr(t('agg_farms.err_farm_name_required')); return; }
     setSaving(true); setErr('');
     const token = localStorage.getItem('access_token') || '';
-    const peopleId = localStorage.getItem('people_id') || '0';
     try {
       const r = await fetch(`${API}/api/aggregator/${businessId}/invite-farm`, {
         method: 'POST',
@@ -121,9 +119,8 @@ function AddFarmModal({ businessId, onDone, onCancel }) {
         body: JSON.stringify(inviteForm),
       });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.detail || 'Invite failed');
+      if (!r.ok) throw new Error(data.detail || t('agg_farms.err_invite'));
 
-      // Add the new farm's user to the org's default OTF community
       if (data.PeopleID) {
         try {
           const commR = await fetch(`${OTF_API}/api/admin/mill/communities/by-business/${businessId}`);
@@ -137,7 +134,7 @@ function AddFarmModal({ businessId, onDone, onCancel }) {
         } catch { /* non-blocking */ }
       }
       onDone();
-    } catch (e) { setErr(e.message || 'Invite failed.'); }
+    } catch (e) { setErr(e.message || t('agg_farms.err_invite')); }
     finally { setSaving(false); }
   };
 
@@ -145,24 +142,24 @@ function AddFarmModal({ businessId, onDone, onCancel }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h2 className="font-bold text-lg text-gray-900">Add a Farm to Your Network</h2>
+          <h2 className="font-bold text-lg text-gray-900">{t('agg_farms.modal_title')}</h2>
           <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
         </div>
 
         {/* PHASE: search */}
         {(phase === 'search' || phase === 'results') && (
           <div className="space-y-3">
-            <p className="text-sm text-gray-600">First, search to see if this farm already has an account on the platform.</p>
+            <p className="text-sm text-gray-600">{t('agg_farms.modal_search_hint')}</p>
             <div className="flex gap-2">
               <input
                 className={inp + ' flex-1'}
-                placeholder="Search by farm name, person name, or email…"
+                placeholder={t('agg_farms.placeholder_search')}
                 value={q}
                 onChange={e => setQ(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && search()}
               />
               <button onClick={search} disabled={searching || q.trim().length < 2} className={btn}>
-                {searching ? '…' : 'Search'}
+                {searching ? t('agg_farms.btn_searching') : t('agg_farms.btn_search')}
               </button>
             </div>
 
@@ -170,7 +167,7 @@ function AddFarmModal({ businessId, onDone, onCancel }) {
               <div className="space-y-2">
                 {results.length === 0 ? (
                   <div className="text-sm text-gray-500 italic py-2">
-                    No existing accounts found for "{q}".
+                    {t('agg_farms.no_results', { q })}
                   </div>
                 ) : (
                   results.map((hit, i) => (
@@ -184,14 +181,14 @@ function AddFarmModal({ businessId, onDone, onCancel }) {
                         </div>
                       </div>
                       <button onClick={() => linkExisting(hit)} disabled={saving} className={btn + ' whitespace-nowrap'}>
-                        Link farm
+                        {t('agg_farms.btn_link')}
                       </button>
                     </div>
                   ))
                 )}
                 <div className="pt-1 border-t border-gray-100">
                   <button onClick={() => setPhase('invite')} className="text-sm text-[#3D6B34] hover:underline font-medium">
-                    Not in the list? Invite a new farm →
+                    {t('agg_farms.invite_link')}
                   </button>
                 </div>
               </div>
@@ -203,55 +200,56 @@ function AddFarmModal({ businessId, onDone, onCancel }) {
         {phase === 'invite' && (
           <div className="space-y-3">
             <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
-              A free platform account will be created and an invite email sent to the contact.
+              {t('agg_farms.invite_note')}
             </div>
             <div className="grid grid-cols-1 gap-3">
               <div>
-                <label className={lbl}>Farm name *</label>
+                <label className={lbl}>{t('agg_farms.label_farm_name')}</label>
                 <input className={inp} value={inviteForm.FarmName}
                   onChange={e => setInviteForm(f => ({ ...f, FarmName: e.target.value }))} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={lbl}>Contact name</label>
+                  <label className={lbl}>{t('agg_farms.label_contact_name')}</label>
                   <input className={inp} value={inviteForm.ContactName}
                     onChange={e => setInviteForm(f => ({ ...f, ContactName: e.target.value }))} />
                 </div>
                 <div>
-                  <label className={lbl}>Phone</label>
+                  <label className={lbl}>{t('agg_farms.label_phone')}</label>
                   <input className={inp} value={inviteForm.ContactPhone}
                     onChange={e => setInviteForm(f => ({ ...f, ContactPhone: e.target.value }))} />
                 </div>
               </div>
               <div>
-                <label className={lbl}>Email (used to create login)</label>
+                <label className={lbl}>{t('agg_farms.label_email_login')}</label>
                 <input className={inp} type="email" value={inviteForm.ContactEmail}
                   onChange={e => setInviteForm(f => ({ ...f, ContactEmail: e.target.value }))} />
               </div>
               <div>
-                <label className={lbl}>Country</label>
+                <label className={lbl}>{t('agg_farms.label_country')}</label>
                 <select className={inp} value={inviteForm.Country}
                   onChange={e => setInviteForm(f => ({ ...f, Country: e.target.value, Region: '' }))}>
-                  <option value="">— select country —</option>
+                  <option value="">{t('agg_farms.select_country')}</option>
                   {countries.map(c => <option key={c.country_id} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={lbl}>City</label>
+                  <label className={lbl}>{t('agg_farms.label_city')}</label>
                   <input className={inp} value={inviteForm.City}
                     onChange={e => setInviteForm(f => ({ ...f, City: e.target.value }))} />
                 </div>
                 <div>
-                  <label className={lbl}>State / Province</label>
+                  <label className={lbl}>{t('agg_farms.label_state')}</label>
                   {states.length > 0 ? (
                     <select className={inp} value={inviteForm.Region}
                       onChange={e => setInviteForm(f => ({ ...f, Region: e.target.value }))}>
-                      <option value="">— select —</option>
+                      <option value="">{t('agg_farms.select_state')}</option>
                       {states.map(s => <option key={s.StateIndex} value={s.name}>{s.name}</option>)}
                     </select>
                   ) : (
-                    <input className={inp} placeholder={inviteForm.Country ? 'State / Province' : 'Select country first'}
+                    <input className={inp}
+                      placeholder={inviteForm.Country ? t('agg_farms.placeholder_state') : t('agg_farms.placeholder_country_first')}
                       disabled={!inviteForm.Country}
                       value={inviteForm.Region}
                       onChange={e => setInviteForm(f => ({ ...f, Region: e.target.value }))} />
@@ -260,9 +258,9 @@ function AddFarmModal({ businessId, onDone, onCancel }) {
               </div>
             </div>
             <div className="flex gap-2 pt-1">
-              <button onClick={() => setPhase('results')} className={btnGhost}>← Back</button>
+              <button onClick={() => setPhase('results')} className={btnGhost}>{t('agg_farms.btn_back')}</button>
               <button onClick={inviteNew} disabled={saving || !inviteForm.FarmName.trim()} className={btn}>
-                {saving ? 'Sending invite…' : 'Create account & send invite'}
+                {saving ? t('agg_farms.btn_sending_invite') : t('agg_farms.btn_send_invite')}
               </button>
             </div>
           </div>
@@ -278,6 +276,7 @@ function AddFarmModal({ businessId, onDone, onCancel }) {
 // Farm form
 // ─────────────────────────────────────────────────────────────────
 function FarmForm({ farm, onSave, onCancel }) {
+  const { t } = useTranslation();
   const [s, setS] = useState(farm || {
     FarmName: '', ContactName: '', ContactPhone: '', ContactEmail: '',
     AddressLine: '', City: '', Region: '', Country: '',
@@ -289,33 +288,34 @@ function FarmForm({ farm, onSave, onCancel }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="md:col-span-2"><label className={lbl}>Farm name *</label><input className={inp} value={s.FarmName} onChange={set('FarmName')} /></div>
-        <div><label className={lbl}>Status</label>
+        <div className="md:col-span-2"><label className={lbl}>{t('agg_farms.label_farm_name')}</label><input className={inp} value={s.FarmName} onChange={set('FarmName')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_status')}</label>
           <select className={inp} value={s.Status} onChange={set('Status')}>
-            {FARM_STATUSES.map(x => <option key={x}>{x}</option>)}
+            {FARM_STATUSES.map(x => <option key={x} value={x}>{t('agg_farms.status_' + x, { defaultValue: x })}</option>)}
           </select></div>
-        <div><label className={lbl}>Contact name</label><input className={inp} value={s.ContactName || ''} onChange={set('ContactName')} /></div>
-        <div><label className={lbl}>Phone</label><input className={inp} value={s.ContactPhone || ''} onChange={set('ContactPhone')} /></div>
-        <div><label className={lbl}>Email</label><input className={inp} value={s.ContactEmail || ''} onChange={set('ContactEmail')} /></div>
-        <div className="md:col-span-2"><label className={lbl}>Address</label><input className={inp} value={s.AddressLine || ''} onChange={set('AddressLine')} /></div>
-        <div><label className={lbl}>City</label><input className={inp} value={s.City || ''} onChange={set('City')} /></div>
-        <div><label className={lbl}>Region / state</label><input className={inp} value={s.Region || ''} onChange={set('Region')} /></div>
-        <div><label className={lbl}>Country</label><input className={inp} value={s.Country || ''} onChange={set('Country')} /></div>
-        <div><label className={lbl}>Hectares</label><input className={inp} type="number" step="0.01" value={s.HectaresUnder ?? ''} onChange={setNum('HectaresUnder')} /></div>
-        <div className="md:col-span-2"><label className={lbl}>Primary crops (comma-list)</label><input className={inp} placeholder="blueberry, strawberry" value={s.PrimaryCrops || ''} onChange={set('PrimaryCrops')} /></div>
-        <div><label className={lbl}>Certification</label><input className={inp} placeholder="organic / residue-free / GAP" value={s.Certification || ''} onChange={set('Certification')} /></div>
-        <div><label className={lbl}>Joined date</label><input className={inp} type="date" value={s.JoinedDate || ''} onChange={set('JoinedDate')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_contact_name')}</label><input className={inp} value={s.ContactName || ''} onChange={set('ContactName')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_phone')}</label><input className={inp} value={s.ContactPhone || ''} onChange={set('ContactPhone')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_email')}</label><input className={inp} value={s.ContactEmail || ''} onChange={set('ContactEmail')} /></div>
+        <div className="md:col-span-2"><label className={lbl}>{t('agg_farms.label_address')}</label><input className={inp} value={s.AddressLine || ''} onChange={set('AddressLine')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_city')}</label><input className={inp} value={s.City || ''} onChange={set('City')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_region')}</label><input className={inp} value={s.Region || ''} onChange={set('Region')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_country')}</label><input className={inp} value={s.Country || ''} onChange={set('Country')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_hectares')}</label><input className={inp} type="number" step="0.01" value={s.HectaresUnder ?? ''} onChange={setNum('HectaresUnder')} /></div>
+        <div className="md:col-span-2"><label className={lbl}>{t('agg_farms.label_primary_crops')}</label><input className={inp} placeholder={t('agg_farms.placeholder_crops')} value={s.PrimaryCrops || ''} onChange={set('PrimaryCrops')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_certification')}</label><input className={inp} placeholder={t('agg_farms.placeholder_cert')} value={s.Certification || ''} onChange={set('Certification')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_joined_date')}</label><input className={inp} type="date" value={s.JoinedDate || ''} onChange={set('JoinedDate')} /></div>
       </div>
-      <div><label className={lbl}>Notes</label><textarea className={inp} rows={2} value={s.Notes || ''} onChange={set('Notes')} /></div>
+      <div><label className={lbl}>{t('agg_farms.label_notes')}</label><textarea className={inp} rows={2} value={s.Notes || ''} onChange={set('Notes')} /></div>
       <div className="flex justify-end gap-2">
-        {onCancel && <button onClick={onCancel} className={btnGhost}>Cancel</button>}
-        <button onClick={() => onSave(s)} disabled={!s.FarmName} className={btn}>Save</button>
+        {onCancel && <button onClick={onCancel} className={btnGhost}>{t('agg_farms.btn_cancel')}</button>}
+        <button onClick={() => onSave(s)} disabled={!s.FarmName} className={btn}>{t('agg_farms.btn_save')}</button>
       </div>
     </div>
   );
 }
 
 function FarmsTab({ businessId }) {
+  const { t } = useTranslation();
   const [farms, setFarms]   = useState([]);
   const [editing, setEdit]  = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -336,10 +336,10 @@ function FarmsTab({ businessId }) {
     const r = await fetch(url, { method: 'PUT',
                                  headers: { 'Content-Type': 'application/json' },
                                  body: JSON.stringify(f) });
-    if (r.ok) { setEdit(null); refresh(); } else alert('Save failed');
+    if (r.ok) { setEdit(null); refresh(); } else alert(t('agg_farms.err_save'));
   };
   const del = async (id) => {
-    if (!window.confirm('Delete this farm? Contracts/inputs/purchases referencing it will become orphaned.')) return;
+    if (!window.confirm(t('agg_farms.confirm_delete_farm'))) return;
     await fetch(`${API}/api/aggregator/farms/${id}`, { method: 'DELETE' });
     refresh();
   };
@@ -356,19 +356,19 @@ function FarmsTab({ businessId }) {
 
       <div className="flex items-center gap-3 flex-wrap">
         <select className={inp + ' max-w-xs'} value={filter} onChange={e => setFilter(e.target.value)}>
-          <option value="active">Active only</option>
-          <option value="paused">Paused</option>
-          <option value="churned">Churned</option>
-          <option value="all">All</option>
+          <option value="active">{t('agg_farms.filter_active')}</option>
+          <option value="paused">{t('agg_farms.filter_paused')}</option>
+          <option value="churned">{t('agg_farms.filter_churned')}</option>
+          <option value="all">{t('agg_farms.filter_all')}</option>
         </select>
-        <span className="text-sm text-gray-500">{farms.length} farm{farms.length === 1 ? '' : 's'}</span>
+        <span className="text-sm text-gray-500">{t('agg_farms.farm_count', { count: farms.length })}</span>
         <div className="flex-1" />
-        <button onClick={() => setShowModal(true)} className={btn}>+ Add farm</button>
+        <button onClick={() => setShowModal(true)} className={btn}>{t('agg_farms.btn_add_farm')}</button>
       </div>
 
-      {loading && <div className="text-sm text-gray-500">Loading…</div>}
+      {loading && <div className="text-sm text-gray-500">{t('agg_farms.loading')}</div>}
       {!loading && farms.length === 0 && (
-        <div className="text-sm text-gray-500 italic">No farms yet. Add your first partner farm to start tracking contracts and harvests.</div>
+        <div className="text-sm text-gray-500 italic">{t('agg_farms.no_farms')}</div>
       )}
 
       <div className="space-y-2">
@@ -381,18 +381,20 @@ function FarmsTab({ businessId }) {
               <div className="flex items-center gap-2 flex-wrap">
                 <strong className="text-gray-900">{f.FarmName}</strong>
                 {f.Certification && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold uppercase">{f.Certification}</span>}
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${f.Status === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700'}`}>{f.Status}</span>
-                {f.LinkedBusinessID && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-800 font-semibold">platform account</span>}
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${f.Status === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700'}`}>
+                  {t('agg_farms.status_' + f.Status, { defaultValue: f.Status })}
+                </span>
+                {f.LinkedBusinessID && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-800 font-semibold">{t('agg_farms.badge_platform')}</span>}
               </div>
               <div className="text-xs text-gray-600 mt-0.5">
                 {f.ContactName && `${f.ContactName} · `}
                 {f.ContactPhone && `${f.ContactPhone} · `}
                 {[f.City, f.Region, f.Country].filter(Boolean).join(', ')}
               </div>
-              {f.PrimaryCrops && <div className="text-xs text-gray-500 mt-0.5">Crops: {f.PrimaryCrops}{f.HectaresUnder ? ` · ${f.HectaresUnder} ha` : ''}</div>}
+              {f.PrimaryCrops && <div className="text-xs text-gray-500 mt-0.5">{t('agg_farms.label_crops')} {f.PrimaryCrops}{f.HectaresUnder ? ` · ${f.HectaresUnder} ha` : ''}</div>}
             </div>
-            <button onClick={() => setEdit(f)} className={btnGhost}>Edit</button>
-            <button onClick={() => del(f.FarmID)} className="text-xs text-red-600 hover:underline">Delete</button>
+            <button onClick={() => setEdit(f)} className={btnGhost}>{t('agg_farms.btn_edit')}</button>
+            <button onClick={() => del(f.FarmID)} className="text-xs text-red-600 hover:underline">{t('agg_farms.btn_delete')}</button>
           </div>
         ))}
       </div>
@@ -404,6 +406,8 @@ function FarmsTab({ businessId }) {
 // Contract form + tab
 // ─────────────────────────────────────────────────────────────────
 function ContractForm({ contract, farms, onSave, onCancel }) {
+  const { t } = useTranslation();
+  const CONTRACT_STATUSES = ['active', 'completed', 'breached', 'cancelled'];
   const [s, setS] = useState(contract || {
     FarmID: farms[0]?.FarmID || '', CropType: '',
     ContractType: 'first_right', PricingModel: 'fixed',
@@ -416,40 +420,41 @@ function ContractForm({ contract, farms, onSave, onCancel }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div><label className={lbl}>Farm *</label>
+        <div><label className={lbl}>{t('agg_farms.label_farm')}</label>
           <select className={inp} value={s.FarmID} onChange={set('FarmID')}>
-            <option value="">— select —</option>
+            <option value="">{t('agg_farms.select_farm')}</option>
             {farms.map(f => <option key={f.FarmID} value={f.FarmID}>{f.FarmName}</option>)}
           </select></div>
-        <div><label className={lbl}>Crop *</label><input className={inp} placeholder="blueberry" value={s.CropType} onChange={set('CropType')} /></div>
-        <div><label className={lbl}>Type</label>
+        <div><label className={lbl}>{t('agg_farms.label_crop')}</label><input className={inp} placeholder={t('agg_farms.placeholder_crop')} value={s.CropType} onChange={set('CropType')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_type')}</label>
           <select className={inp} value={s.ContractType} onChange={set('ContractType')}>
-            {CONTRACT_TYPES.map(x => <option key={x}>{x}</option>)}
+            {CONTRACT_TYPES.map(x => <option key={x} value={x}>{t('agg_farms.ctype_' + x, { defaultValue: x })}</option>)}
           </select></div>
-        <div><label className={lbl}>Pricing model</label>
+        <div><label className={lbl}>{t('agg_farms.label_pricing')}</label>
           <select className={inp} value={s.PricingModel} onChange={set('PricingModel')}>
-            {PRICING_MODELS.map(x => <option key={x}>{x}</option>)}
+            {PRICING_MODELS.map(x => <option key={x} value={x}>{t('agg_farms.pricing_' + x, { defaultValue: x })}</option>)}
           </select></div>
-        <div><label className={lbl}>Price per kg</label><input className={inp} type="number" step="0.01" value={s.PricePerKg ?? ''} onChange={setNum('PricePerKg')} /></div>
-        <div><label className={lbl}>Estimated kg / season</label><input className={inp} type="number" step="0.01" value={s.EstimatedKgPerSeason ?? ''} onChange={setNum('EstimatedKgPerSeason')} /></div>
-        <div><label className={lbl}>Start</label><input className={inp} type="date" value={s.StartDate || ''} onChange={set('StartDate')} /></div>
-        <div><label className={lbl}>End</label><input className={inp} type="date" value={s.EndDate || ''} onChange={set('EndDate')} /></div>
-        <div><label className={lbl}>Residue requirement</label><input className={inp} placeholder="residue-free" value={s.ResidueRequirement || ''} onChange={set('ResidueRequirement')} /></div>
-        <div><label className={lbl}>Status</label>
+        <div><label className={lbl}>{t('agg_farms.label_price_kg')}</label><input className={inp} type="number" step="0.01" value={s.PricePerKg ?? ''} onChange={setNum('PricePerKg')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_est_kg')}</label><input className={inp} type="number" step="0.01" value={s.EstimatedKgPerSeason ?? ''} onChange={setNum('EstimatedKgPerSeason')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_start')}</label><input className={inp} type="date" value={s.StartDate || ''} onChange={set('StartDate')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_end')}</label><input className={inp} type="date" value={s.EndDate || ''} onChange={set('EndDate')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_residue')}</label><input className={inp} placeholder={t('agg_farms.placeholder_residue')} value={s.ResidueRequirement || ''} onChange={set('ResidueRequirement')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_status')}</label>
           <select className={inp} value={s.Status} onChange={set('Status')}>
-            <option>active</option><option>completed</option><option>breached</option><option>cancelled</option>
+            {CONTRACT_STATUSES.map(x => <option key={x} value={x}>{t('agg_farms.cstatus_' + x, { defaultValue: x })}</option>)}
           </select></div>
       </div>
-      <div><label className={lbl}>Terms</label><textarea className={inp} rows={2} value={s.Terms || ''} onChange={set('Terms')} placeholder="Free text — payment cadence, quality criteria, exclusivity carve-outs, etc." /></div>
+      <div><label className={lbl}>{t('agg_farms.label_terms')}</label><textarea className={inp} rows={2} value={s.Terms || ''} onChange={set('Terms')} placeholder={t('agg_farms.placeholder_terms')} /></div>
       <div className="flex justify-end gap-2">
-        {onCancel && <button onClick={onCancel} className={btnGhost}>Cancel</button>}
-        <button onClick={() => onSave(s)} disabled={!s.FarmID || !s.CropType} className={btn}>Save</button>
+        {onCancel && <button onClick={onCancel} className={btnGhost}>{t('agg_farms.btn_cancel')}</button>}
+        <button onClick={() => onSave(s)} disabled={!s.FarmID || !s.CropType} className={btn}>{t('agg_farms.btn_save')}</button>
       </div>
     </div>
   );
 }
 
 function ContractsTab({ businessId, farms }) {
+  const { t } = useTranslation();
   const [list, setList]    = useState([]);
   const [editing, setEdit] = useState(null);
   const [adding, setAdd]   = useState(false);
@@ -463,10 +468,10 @@ function ContractsTab({ businessId, farms }) {
     const r = await fetch(url, { method: isEdit ? 'PUT' : 'POST',
                                  headers: { 'Content-Type': 'application/json' },
                                  body: JSON.stringify(c) });
-    if (r.ok) { setEdit(null); setAdd(false); refresh(); } else alert('Save failed');
+    if (r.ok) { setEdit(null); setAdd(false); refresh(); } else alert(t('agg_farms.err_save'));
   };
   const del = async (id) => {
-    if (!window.confirm('Delete this contract?')) return;
+    if (!window.confirm(t('agg_farms.confirm_delete_contract'))) return;
     await fetch(`${API}/api/aggregator/contracts/${id}`, { method: 'DELETE' });
     refresh();
   };
@@ -474,10 +479,10 @@ function ContractsTab({ businessId, farms }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <span className="text-sm text-gray-500">{list.length} contract{list.length === 1 ? '' : 's'}</span>
-        <button onClick={() => setAdd(true)} disabled={farms.length === 0} className={btn}>+ Add contract</button>
+        <span className="text-sm text-gray-500">{t('agg_farms.contract_count', { count: list.length })}</span>
+        <button onClick={() => setAdd(true)} disabled={farms.length === 0} className={btn}>{t('agg_farms.btn_add_contract')}</button>
       </div>
-      {farms.length === 0 && <div className="text-sm text-gray-500 italic">Add farms first.</div>}
+      {farms.length === 0 && <div className="text-sm text-gray-500 italic">{t('agg_farms.add_farms_first')}</div>}
       {adding && <ContractForm farms={farms} onSave={save} onCancel={() => setAdd(false)} />}
 
       <div className="space-y-2">
@@ -490,20 +495,26 @@ function ContractsTab({ businessId, farms }) {
               <div className="flex items-center gap-2 flex-wrap">
                 <strong className="text-gray-900">{c.FarmName || `Farm #${c.FarmID}`}</strong>
                 <span className="text-sm text-gray-700">— {c.CropType}</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-semibold uppercase">{c.ContractType}</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 font-semibold uppercase">{c.PricingModel}</span>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${c.Status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'}`}>{c.Status}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-semibold uppercase">
+                  {t('agg_farms.ctype_' + c.ContractType, { defaultValue: c.ContractType })}
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 font-semibold uppercase">
+                  {t('agg_farms.pricing_' + c.PricingModel, { defaultValue: c.PricingModel })}
+                </span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${c.Status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'}`}>
+                  {t('agg_farms.cstatus_' + c.Status, { defaultValue: c.Status })}
+                </span>
               </div>
               <div className="text-xs text-gray-600 mt-0.5">
                 {c.PricePerKg != null && `$${fmt$(c.PricePerKg)}/kg`}
                 {c.EstimatedKgPerSeason != null && ` · est. ${fmt$(c.EstimatedKgPerSeason)} kg/season`}
                 {c.StartDate && ` · ${(c.StartDate || '').slice(0,10)}`}{c.EndDate && ` → ${(c.EndDate || '').slice(0,10)}`}
               </div>
-              {c.ResidueRequirement && <div className="text-xs text-gray-500 mt-0.5">Residue: {c.ResidueRequirement}</div>}
+              {c.ResidueRequirement && <div className="text-xs text-gray-500 mt-0.5">{t('agg_farms.label_residue_display')} {c.ResidueRequirement}</div>}
               {c.Terms && <div className="text-xs text-gray-500 mt-0.5 line-clamp-2">{c.Terms}</div>}
             </div>
-            <button onClick={() => setEdit(c)} className={btnGhost}>Edit</button>
-            <button onClick={() => del(c.ContractID)} className="text-xs text-red-600 hover:underline">Delete</button>
+            <button onClick={() => setEdit(c)} className={btnGhost}>{t('agg_farms.btn_edit')}</button>
+            <button onClick={() => del(c.ContractID)} className="text-xs text-red-600 hover:underline">{t('agg_farms.btn_delete')}</button>
           </div>
         ))}
       </div>
@@ -515,6 +526,7 @@ function ContractsTab({ businessId, farms }) {
 // Inputs form + tab
 // ─────────────────────────────────────────────────────────────────
 function InputForm({ input, farms, onSave, onCancel }) {
+  const { t } = useTranslation();
   const [s, setS] = useState(input || {
     FarmID: farms[0]?.FarmID || '', InputType: 'sapling',
     Description: '', Quantity: '', Unit: 'units',
@@ -526,43 +538,44 @@ function InputForm({ input, farms, onSave, onCancel }) {
   // auto-compute total when qty * unitCost both present
   useEffect(() => {
     if (s.Quantity != null && s.UnitCost != null && s.Quantity !== '' && s.UnitCost !== '') {
-      const t = Number(s.Quantity) * Number(s.UnitCost);
-      if (!Number.isNaN(t)) setS(prev => ({ ...prev, TotalCost: t }));
+      const computedTotal = Number(s.Quantity) * Number(s.UnitCost);
+      if (!Number.isNaN(computedTotal)) setS(prev => ({ ...prev, TotalCost: computedTotal }));
     }
   }, [s.Quantity, s.UnitCost]);
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div><label className={lbl}>Farm *</label>
+        <div><label className={lbl}>{t('agg_farms.label_farm')}</label>
           <select className={inp} value={s.FarmID} onChange={set('FarmID')}>
-            <option value="">— select —</option>
+            <option value="">{t('agg_farms.select_farm')}</option>
             {farms.map(f => <option key={f.FarmID} value={f.FarmID}>{f.FarmName}</option>)}
           </select></div>
-        <div><label className={lbl}>Type *</label>
+        <div><label className={lbl}>{t('agg_farms.label_input_type')}</label>
           <select className={inp} value={s.InputType} onChange={set('InputType')}>
-            {INPUT_TYPES.map(x => <option key={x}>{x}</option>)}
+            {INPUT_TYPES.map(x => <option key={x} value={x}>{t('agg_farms.itype_' + x, { defaultValue: x })}</option>)}
           </select></div>
-        <div><label className={lbl}>Provided</label><input className={inp} type="date" value={s.ProvidedDate || ''} onChange={set('ProvidedDate')} /></div>
-        <div className="md:col-span-3"><label className={lbl}>Description</label><input className={inp} placeholder="e.g. premium blueberry saplings, tunnel kit incl. plastic + frame" value={s.Description || ''} onChange={set('Description')} /></div>
-        <div><label className={lbl}>Quantity</label><input className={inp} type="number" step="0.01" value={s.Quantity ?? ''} onChange={setNum('Quantity')} /></div>
-        <div><label className={lbl}>Unit</label><input className={inp} placeholder="units / kg / sqft" value={s.Unit || ''} onChange={set('Unit')} /></div>
-        <div><label className={lbl}>Unit cost ($)</label><input className={inp} type="number" step="0.01" value={s.UnitCost ?? ''} onChange={setNum('UnitCost')} /></div>
-        <div><label className={lbl}>Total cost ($)</label><input className={inp} type="number" step="0.01" value={s.TotalCost ?? ''} onChange={setNum('TotalCost')} /></div>
-        <div><label className={lbl}>Recovery</label>
+        <div><label className={lbl}>{t('agg_farms.label_provided')}</label><input className={inp} type="date" value={s.ProvidedDate || ''} onChange={set('ProvidedDate')} /></div>
+        <div className="md:col-span-3"><label className={lbl}>{t('agg_farms.label_description')}</label><input className={inp} placeholder={t('agg_farms.placeholder_description')} value={s.Description || ''} onChange={set('Description')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_quantity')}</label><input className={inp} type="number" step="0.01" value={s.Quantity ?? ''} onChange={setNum('Quantity')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_unit')}</label><input className={inp} placeholder={t('agg_farms.placeholder_unit')} value={s.Unit || ''} onChange={set('Unit')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_unit_cost')}</label><input className={inp} type="number" step="0.01" value={s.UnitCost ?? ''} onChange={setNum('UnitCost')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_total_cost')}</label><input className={inp} type="number" step="0.01" value={s.TotalCost ?? ''} onChange={setNum('TotalCost')} /></div>
+        <div><label className={lbl}>{t('agg_farms.label_recovery')}</label>
           <select className={inp} value={s.RecoveryModel} onChange={set('RecoveryModel')}>
-            {RECOVERY_MODELS.map(x => <option key={x}>{x}</option>)}
+            {RECOVERY_MODELS.map(x => <option key={x} value={x}>{t('agg_farms.recovery_' + x, { defaultValue: x })}</option>)}
           </select></div>
       </div>
-      <div><label className={lbl}>Notes</label><textarea className={inp} rows={2} value={s.Notes || ''} onChange={set('Notes')} /></div>
+      <div><label className={lbl}>{t('agg_farms.label_notes')}</label><textarea className={inp} rows={2} value={s.Notes || ''} onChange={set('Notes')} /></div>
       <div className="flex justify-end gap-2">
-        {onCancel && <button onClick={onCancel} className={btnGhost}>Cancel</button>}
-        <button onClick={() => onSave(s)} disabled={!s.FarmID || !s.InputType} className={btn}>Save</button>
+        {onCancel && <button onClick={onCancel} className={btnGhost}>{t('agg_farms.btn_cancel')}</button>}
+        <button onClick={() => onSave(s)} disabled={!s.FarmID || !s.InputType} className={btn}>{t('agg_farms.btn_save')}</button>
       </div>
     </div>
   );
 }
 
 function InputsTab({ businessId, farms }) {
+  const { t } = useTranslation();
   const [list, setList]    = useState([]);
   const [editing, setEdit] = useState(null);
   const [adding, setAdd]   = useState(false);
@@ -576,10 +589,10 @@ function InputsTab({ businessId, farms }) {
     const r = await fetch(url, { method: isEdit ? 'PUT' : 'POST',
                                  headers: { 'Content-Type': 'application/json' },
                                  body: JSON.stringify(i) });
-    if (r.ok) { setEdit(null); setAdd(false); refresh(); } else alert('Save failed');
+    if (r.ok) { setEdit(null); setAdd(false); refresh(); } else alert(t('agg_farms.err_save'));
   };
   const del = async (id) => {
-    if (!window.confirm('Delete this input record?')) return;
+    if (!window.confirm(t('agg_farms.confirm_delete_input'))) return;
     await fetch(`${API}/api/aggregator/inputs/${id}`, { method: 'DELETE' });
     refresh();
   };
@@ -590,12 +603,12 @@ function InputsTab({ businessId, farms }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <span className="text-sm text-gray-500">{list.length} input record{list.length === 1 ? '' : 's'}</span>
-          {total > 0 && <span className="text-sm text-gray-700 ml-3">Total invested: <strong>${fmt$(total)}</strong></span>}
+          <span className="text-sm text-gray-500">{t('agg_farms.input_count', { count: list.length })}</span>
+          {total > 0 && <span className="text-sm text-gray-700 ml-3">{t('agg_farms.total_invested')} <strong>${fmt$(total)}</strong></span>}
         </div>
-        <button onClick={() => setAdd(true)} disabled={farms.length === 0} className={btn}>+ Record input</button>
+        <button onClick={() => setAdd(true)} disabled={farms.length === 0} className={btn}>{t('agg_farms.btn_record_input')}</button>
       </div>
-      {farms.length === 0 && <div className="text-sm text-gray-500 italic">Add farms first.</div>}
+      {farms.length === 0 && <div className="text-sm text-gray-500 italic">{t('agg_farms.add_farms_first')}</div>}
       {adding && <InputForm farms={farms} onSave={save} onCancel={() => setAdd(false)} />}
 
       <div className="space-y-2">
@@ -607,8 +620,12 @@ function InputsTab({ businessId, farms }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <strong className="text-gray-900">{i.FarmName || `Farm #${i.FarmID}`}</strong>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-800 font-semibold uppercase">{i.InputType}</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 font-semibold uppercase">{i.RecoveryModel}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-800 font-semibold uppercase">
+                  {t('agg_farms.itype_' + i.InputType, { defaultValue: i.InputType })}
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 font-semibold uppercase">
+                  {t('agg_farms.recovery_' + i.RecoveryModel, { defaultValue: i.RecoveryModel })}
+                </span>
               </div>
               {i.Description && <div className="text-xs text-gray-700 mt-0.5">{i.Description}</div>}
               <div className="text-xs text-gray-500 mt-0.5">
@@ -617,8 +634,8 @@ function InputsTab({ businessId, farms }) {
                 {i.ProvidedDate && ` · ${(i.ProvidedDate || '').slice(0,10)}`}
               </div>
             </div>
-            <button onClick={() => setEdit(i)} className={btnGhost}>Edit</button>
-            <button onClick={() => del(i.InputID)} className="text-xs text-red-600 hover:underline">Delete</button>
+            <button onClick={() => setEdit(i)} className={btnGhost}>{t('agg_farms.btn_edit')}</button>
+            <button onClick={() => del(i.InputID)} className="text-xs text-red-600 hover:underline">{t('agg_farms.btn_delete')}</button>
           </div>
         ))}
       </div>
@@ -629,19 +646,20 @@ function InputsTab({ businessId, farms }) {
 // ─────────────────────────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────────────────────────
-const TABS = [
-  { key: 'farms',     label: 'Farms' },
-  { key: 'contracts', label: 'Contracts' },
-  { key: 'inputs',    label: 'Inputs' },
-];
-
 export default function AggregatorFarms() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const { BusinessID: ctxBID } = useAccount();
   const BusinessID = params.get('BusinessID') || ctxBID;
   const [tab, setTab] = useState('farms');
-  // Cache the farm list once at this level so contracts/inputs forms can pick from it
   const [farms, setFarms] = useState([]);
+
+  const TABS = [
+    { key: 'farms',     label: t('agg_farms.tab_farms') },
+    { key: 'contracts', label: t('agg_farms.tab_contracts') },
+    { key: 'inputs',    label: t('agg_farms.tab_inputs') },
+  ];
+
   useEffect(() => {
     if (!BusinessID) return;
     fetch(`${API}/api/aggregator/${BusinessID}/farms`).then(r => r.json()).then(setFarms);
@@ -649,39 +667,39 @@ export default function AggregatorFarms() {
 
   if (!BusinessID) {
     return (
-      <AccountLayout pageTitle="Farm Network">
-        <div className="p-6 text-sm text-gray-500">Pick a business from the account picker.</div>
+      <AccountLayout pageTitle={t('agg_farms.page_title')}>
+        <div className="p-6 text-sm text-gray-500">{t('agg_farms.no_business')}</div>
       </AccountLayout>
     );
   }
 
   return (
     <AccountLayout
-      pageTitle="Farm Network"
+      pageTitle={t('agg_farms.page_title')}
       breadcrumbs={[
-        { label: 'Account', to: '/account' },
-        { label: 'Food Aggregation', to: `/aggregator?BusinessID=${BusinessID}` },
-        { label: 'Farm Network' },
+        { label: t('agg_farms.breadcrumb_account'), to: '/account' },
+        { label: t('agg_farms.breadcrumb_aggregation'), to: `/aggregator?BusinessID=${BusinessID}` },
+        { label: t('agg_farms.page_title') },
       ]}
     >
       <div className="max-w-6xl mx-auto p-5 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="font-lora text-2xl font-bold text-gray-900">Farm Network</h1>
-            <p className="text-sm text-gray-500 mt-1">Partner farms, the contracts that bind you to their harvest, and the inputs you've supplied to them.</p>
+            <h1 className="font-lora text-2xl font-bold text-gray-900">{t('agg_farms.page_title')}</h1>
+            <p className="text-sm text-gray-500 mt-1">{t('agg_farms.subheading')}</p>
           </div>
-          <Link to={`/aggregator?BusinessID=${BusinessID}`} className={btnGhost}>← Hub</Link>
+          <Link to={`/aggregator?BusinessID=${BusinessID}`} className={btnGhost}>{t('agg_farms.btn_hub')}</Link>
         </div>
 
         <div className="border-b border-gray-200">
           <div className="flex gap-1">
-            {TABS.map(t => (
-              <button key={t.key}
-                      onClick={() => setTab(t.key)}
-                      className={`px-4 py-2 text-sm font-medium ${tab === t.key
+            {TABS.map(tabItem => (
+              <button key={tabItem.key}
+                      onClick={() => setTab(tabItem.key)}
+                      className={`px-4 py-2 text-sm font-medium ${tab === tabItem.key
                         ? 'border-b-2 border-[#3D6B34] text-[#3D6B34]'
                         : 'text-gray-500 hover:text-gray-700'}`}>
-                {t.label}
+                {tabItem.label}
               </button>
             ))}
           </div>

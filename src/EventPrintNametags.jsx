@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 
 function authHeaders() {
-  const t = localStorage.getItem('access_token');
-  return t ? { Authorization: `Bearer ${t}` } : {};
+  const token = localStorage.getItem('access_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 /**
@@ -14,6 +15,7 @@ function authHeaders() {
  * Source rows: paid cart rows (payer) + all OFNEventCartAttendees.
  */
 export default function EventPrintNametags() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [event, setEvent] = useState(null);
   const [rows, setRows] = useState([]);
@@ -49,19 +51,22 @@ export default function EventPrintNametags() {
   return (
     <div className="min-h-screen bg-gray-100 print:bg-white">
       <div className="no-print max-w-3xl mx-auto p-5">
-        <h1 className="text-2xl font-semibold text-[#3D6B34] mb-1">Nametags</h1>
+        <h1 className="text-2xl font-semibold text-[#3D6B34] mb-1">{t('event_print_nametags.heading')}</h1>
         <p className="text-sm text-gray-600 mb-4">
-          {loading ? 'Loading…' : `${rows.length} nametag${rows.length === 1 ? '' : 's'} ready to print`}
-          {' — '}Use browser Print → Letter, margins: None.
+          {loading
+            ? t('event_print_nametags.loading')
+            : t('event_print_nametags.ready', { count: rows.length })}
+          {' — '}
+          {t('event_print_nametags.print_hint')}
         </p>
         <div className="flex gap-3 mb-4">
           <button onClick={() => window.print()}
             className="px-4 py-2 text-sm rounded-lg bg-[#3D6B34] text-white hover:bg-[#2f5226]">
-            🖨️ Print
+            {t('event_print_nametags.btn_print')}
           </button>
           <button onClick={() => window.history.back()}
             className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-            Back
+            {t('event_print_nametags.btn_back')}
           </button>
         </div>
       </div>
@@ -71,7 +76,7 @@ export default function EventPrintNametags() {
           <div key={i} className="nametag">
             <div className="event-name">{event?.EventName || ''}</div>
             <div className="person-name">
-              {[r.FirstName, r.LastName].filter(Boolean).join(' ') || 'Guest'}
+              {[r.FirstName, r.LastName].filter(Boolean).join(' ') || t('event_print_nametags.guest')}
             </div>
             {r.NameTagTitle && <div className="title">{r.NameTagTitle}</div>}
             {r.Role && r.Role !== 'Registrant' && (
@@ -80,7 +85,7 @@ export default function EventPrintNametags() {
           </div>
         ))}
         {rows.length === 0 && !loading && (
-          <div className="text-gray-400 italic p-6 no-print">No attendees to print yet.</div>
+          <div className="text-gray-400 italic p-6 no-print">{t('event_print_nametags.empty')}</div>
         )}
       </div>
 

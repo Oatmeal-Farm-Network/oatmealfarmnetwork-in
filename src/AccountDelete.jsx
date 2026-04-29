@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -8,6 +9,7 @@ import Breadcrumbs from './Breadcrumbs';
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function AccountDelete() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const businessId = searchParams.get('BusinessID');
   const navigate = useNavigate();
@@ -27,12 +29,12 @@ export default function AccountDelete() {
     fetch(`${API_URL}/api/businesses/profile/${businessId}`)
       .then(r => r.json())
       .then(data => setBusiness(data))
-      .catch(() => setError('Could not load account details.'));
+      .catch(() => setError(t('account_delete.err_load')));
   }, [businessId]);
 
   const handleDelete = async () => {
     if (!confirmed) {
-      setError('Please check the confirmation box before deleting.');
+      setError(t('account_delete.err_confirm_required'));
       return;
     }
     setDeleting(true);
@@ -46,10 +48,10 @@ export default function AccountDelete() {
         navigate('/dashboard', { state: { deleted: business?.BusinessName } });
       } else {
         const data = await res.json();
-        setError(data.detail || 'An error occurred. Please try again.');
+        setError(data.detail || t('account_delete.err_generic'));
       }
     } catch {
-      setError('An error occurred. Please try again.');
+      setError(t('account_delete.err_generic'));
     } finally {
       setDeleting(false);
     }
@@ -58,7 +60,7 @@ export default function AccountDelete() {
   if (!business && !error) return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <Header />
-      <div className="text-center py-20 text-gray-400">Loading...</div>
+      <div className="text-center py-20 text-gray-400">{t('account_delete.loading')}</div>
       <Footer />
     </div>
   );
@@ -66,47 +68,44 @@ export default function AccountDelete() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <PageMeta
-        title="Delete Account | Oatmeal Farm Network"
-        description="Permanently delete your business account on Oatmeal Farm Network."
+        title={t('account_delete.meta_title')}
+        description={t('account_delete.meta_desc')}
         noIndex
       />
       <Header />
 
       <div style={{ maxWidth: '550px', margin: '2rem auto', padding: '0 1rem 3rem' }}>
-        <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'My Accounts', to: '/accounts' }, { label: 'Delete Account' }]} />
+        <Breadcrumbs items={[
+          { label: t('account_delete.breadcrumb_home'), to: '/' },
+          { label: t('account_delete.breadcrumb_accounts'), to: '/accounts' },
+          { label: t('account_delete.breadcrumb_delete') },
+        ]} />
 
-        {/* Back link */}
         <Link
           to={`/account?PeopleID=${peopleId}&BusinessID=${businessId}`}
           className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 mb-4"
         >
-          ← Back to Account
+          {t('account_delete.back_link')}
         </Link>
 
         <div className="bg-white rounded-xl shadow border border-gray-100 p-8">
 
-          {/* Warning header */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
               <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-red-600">Delete Account</h1>
+            <h1 className="text-xl font-bold text-red-600">{t('account_delete.heading')}</h1>
           </div>
 
-          <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-            Are you sure you want to permanently delete this account? This action
-            cannot be undone. All associated data including listings, animals,
-            and account access will be removed.
-          </p>
+          <p className="text-gray-600 text-sm mb-6 leading-relaxed">{t('account_delete.warning_body')}</p>
 
-          {/* Business details card */}
           {business && (
             <div className="border border-gray-200 rounded-lg p-4 mb-6 bg-gray-50">
               <h2 className="font-bold text-gray-800 text-base mb-1">{business.BusinessName}</h2>
               {business.BusinessType && (
-                <p className="text-sm text-gray-500">{business.BusinessType} Account</p>
+                <p className="text-sm text-gray-500">{t('account_delete.business_type', { type: business.BusinessType })}</p>
               )}
               {business.AddressCity && (
                 <p className="text-sm text-gray-500">
@@ -116,7 +115,6 @@ export default function AccountDelete() {
             </div>
           )}
 
-          {/* Confirmation checkbox */}
           <label className="flex items-start gap-3 mb-6 cursor-pointer">
             <input
               type="checkbox"
@@ -125,8 +123,9 @@ export default function AccountDelete() {
               className="mt-0.5"
             />
             <span className="text-sm text-gray-700">
-              I understand this is permanent and cannot be undone. I want to delete{' '}
-              <strong>{business?.BusinessName}</strong>.
+              {t('account_delete.confirm_label_pre')}{' '}
+              <strong>{business?.BusinessName}</strong>
+              {t('account_delete.confirm_label_post')}
             </span>
           </label>
 
@@ -136,20 +135,19 @@ export default function AccountDelete() {
             </div>
           )}
 
-          {/* Action buttons */}
           <div className="flex gap-3">
             <Link
               to={`/account?PeopleID=${peopleId}&BusinessID=${businessId}`}
               className="flex-1 text-center border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              {t('account_delete.btn_cancel')}
             </Link>
             <button
               onClick={handleDelete}
               disabled={deleting}
               className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors disabled:opacity-50"
             >
-              {deleting ? 'Deleting...' : 'Delete Account'}
+              {deleting ? t('account_delete.btn_deleting') : t('account_delete.btn_delete')}
             </button>
           </div>
 

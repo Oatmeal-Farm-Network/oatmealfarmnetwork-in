@@ -1,8 +1,11 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Synodic month length and reference new moon (2000-01-06 18:14 UTC)
 const SYNODIC = 29.53058867;
 const REF_NEW_MOON = Date.UTC(2000, 0, 6, 18, 14, 0) / 86400000; // in days
+
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 // Returns fraction of cycle (0 = new, 0.5 = full) for a given Date
 function phaseFraction(date) {
@@ -15,14 +18,14 @@ function phaseFraction(date) {
 
 function phaseInfo(frac) {
   // 8 principal phases, windowed around their exact fractions
-  if (frac < 0.0303 || frac >= 0.9697) return { name: 'New Moon',        emoji: '🌑' };
-  if (frac < 0.2197)                   return { name: 'Waxing Crescent', emoji: '🌒' };
-  if (frac < 0.2803)                   return { name: 'First Quarter',   emoji: '🌓' };
-  if (frac < 0.4697)                   return { name: 'Waxing Gibbous',  emoji: '🌔' };
-  if (frac < 0.5303)                   return { name: 'Full Moon',       emoji: '🌕' };
-  if (frac < 0.7197)                   return { name: 'Waning Gibbous',  emoji: '🌖' };
-  if (frac < 0.7803)                   return { name: 'Last Quarter',    emoji: '🌗' };
-  return                                      { name: 'Waning Crescent', emoji: '🌘' };
+  if (frac < 0.0303 || frac >= 0.9697) return { key: 'new',             emoji: '🌑' };
+  if (frac < 0.2197)                   return { key: 'waxing_crescent', emoji: '🌒' };
+  if (frac < 0.2803)                   return { key: 'first_quarter',   emoji: '🌓' };
+  if (frac < 0.4697)                   return { key: 'waxing_gibbous',  emoji: '🌔' };
+  if (frac < 0.5303)                   return { key: 'full',            emoji: '🌕' };
+  if (frac < 0.7197)                   return { key: 'waning_gibbous',  emoji: '🌖' };
+  if (frac < 0.7803)                   return { key: 'last_quarter',    emoji: '🌗' };
+  return                                      { key: 'waning_crescent', emoji: '🌘' };
 }
 
 // Percent illumination: 100% full, 0% new. Monotonic by distance from full moon.
@@ -30,13 +33,9 @@ function illumination(frac) {
   return Math.round((1 - Math.cos(2 * Math.PI * frac)) * 50);
 }
 
-function dayLabel(offset, date) {
-  if (offset === 0) return 'Today';
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  return days[date.getDay()];
-}
-
 export default function MoonPhase() {
+  const { t } = useTranslation();
+
   const today = new Date();
   today.setHours(12, 0, 0, 0);
 
@@ -50,10 +49,10 @@ export default function MoonPhase() {
     series.push({
       offset: off,
       date: d,
-      label: dayLabel(off, d),
+      label: off === 0 ? t('moon_phase.today') : t('moon_phase.day_' + DAY_KEYS[d.getDay()]),
       dayNum: d.getDate(),
       emoji: info.emoji,
-      name: info.name,
+      phaseKey: info.key,
       illum: illumination(f),
     });
   }
@@ -64,10 +63,11 @@ export default function MoonPhase() {
       <div style={{ display: 'flex', overflowX: 'auto', gap: '0.2rem' }}>
         {series.map((d) => {
           const isToday = d.offset === 0;
+          const phaseName = t('moon_phase.phase_' + d.phaseKey);
           return (
             <div
               key={d.offset}
-              title={`${d.date.toLocaleDateString()} — ${d.name} (${d.illum}%)`}
+              title={t('moon_phase.title_fmt', { date: d.date.toLocaleDateString(), name: phaseName, illum: d.illum })}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -81,7 +81,7 @@ export default function MoonPhase() {
               }}
             >
               <span style={{ fontSize: '0.6rem', fontWeight: 600, color: isToday ? '#3D6B34' : '#6B7280' }}>
-                {isToday ? 'Today' : d.label}
+                {d.label}
               </span>
               <span style={{ fontSize: '0.55rem', color: '#9CA3AF' }}>{d.dayNum}</span>
               <span style={{ fontSize: '1.4rem', lineHeight: 1, margin: '0.15rem 0' }}>{d.emoji}</span>

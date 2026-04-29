@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function ProductsInventory() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('people_id');
@@ -20,7 +22,7 @@ export default function ProductsInventory() {
   const [qtyDrafts, setQtyDrafts] = useState({});
   const [search, setSearch] = useState('');
   const [bulkQty, setBulkQty] = useState('');
-  const [bulkBusy, setBulkBusy] = useState(null); // 'Publishproduct' | 'ProdForSale' | 'ProdQuantityAvailable' | null
+  const [bulkBusy, setBulkBusy] = useState(null);
 
   const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -93,7 +95,6 @@ export default function ProductsInventory() {
 
   async function saveInline(prodId, field, value) {
     setInlineSaving(prev => ({ ...prev, [prodId]: field }));
-    // optimistic local update
     setProducts(prev => prev.map(p => {
       if (p.ProdID !== prodId) return p;
       if (field === 'ProdQuantityAvailable') return { ...p, QuantityAvailable: value };
@@ -104,16 +105,13 @@ export default function ProductsInventory() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ [field]: value }),
     });
-    if (!res.ok) {
-      await loadProducts(); // revert from server on failure
-    }
+    if (!res.ok) await loadProducts();
     setInlineSaving(prev => { const n = { ...prev }; delete n[prodId]; return n; });
   }
 
   async function bulkApply(field, value) {
     if (filteredProducts.length === 0) return;
     setBulkBusy(field);
-    // optimistic local update for every visible row
     const ids = filteredProducts.map(p => p.ProdID);
     setProducts(prev => prev.map(p => {
       if (!ids.includes(p.ProdID)) return p;
@@ -129,12 +127,12 @@ export default function ProductsInventory() {
         }).then(r => r.ok).catch(() => false)
       )
     );
-    if (results.some(ok => !ok)) await loadProducts(); // refresh if any failed
+    if (results.some(ok => !ok)) await loadProducts();
     setBulkBusy(null);
   }
 
   async function handleDelete(prodId) {
-    if (!confirm('Delete this product? This cannot be undone.')) return;
+    if (!confirm(t('products_inv.confirm_delete'))) return;
     setDeletingRow(prodId);
     await fetch(`${API_URL}/api/sfproducts/${prodId}`, { method: 'DELETE' });
     await loadProducts();
@@ -146,75 +144,90 @@ export default function ProductsInventory() {
       Business={Business}
       BusinessID={BusinessID}
       PeopleID={PeopleID}
-      pageTitle="My Products"
-      breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Products' }, { label: 'My Products' }]}
+      pageTitle={t('products_inv.page_title')}
+      breadcrumbs={[
+        { label: t('products_inv.breadcrumb_dashboard'), to: '/dashboard' },
+        { label: t('products_inv.breadcrumb_products') },
+        { label: t('products_inv.breadcrumb_my_products') },
+      ]}
     >
       <div className="max-w-full mx-auto space-y-6">
 
-        {/* ── HEADER ── */}
+        {/* HEADER */}
         <div className="bg-white rounded-2xl shadow border border-gray-200 p-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-1">Products</h1>
-            <p className="text-sm text-gray-500">Manage your marketplace products. Buyers check out through our Stripe-powered cart; platform fees per THE OAT settings.</p>
+            <h1 className="text-2xl font-bold text-gray-800 mb-1">{t('products_inv.heading')}</h1>
+            <p className="text-sm text-gray-500">{t('products_inv.subheading')}</p>
           </div>
           <Link
             to={`/products/add?BusinessID=${BusinessID}`}
             className="regsubmit2"
             style={{ minWidth: '160px', textAlign: 'center' }}
           >
-            + Add Product
+            {t('products_inv.btn_add')}
           </Link>
         </div>
 
-        {/* ── LIST ── */}
+        {/* LIST */}
         <div className="bg-white rounded-2xl shadow border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-gray-800">
-              Inventory
+              {t('products_inv.inventory_heading')}
               <span className="ml-2 text-sm font-normal text-gray-500">
                 {search.trim()
-                  ? `${filteredProducts.length} of ${products.length}`
-                  : `${products.length}`}
+                  ? t('products_inv.count_filtered', { filtered: filteredProducts.length, total: products.length })
+                  : products.length}
               </span>
             </h2>
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search by name or category..."
+              placeholder={t('products_inv.placeholder_search')}
               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#3D6B34]"
               style={{ width: 280, maxWidth: '100%' }}
             />
           </div>
 
           {loading ? (
-            <div className="text-center py-12 text-gray-400">Loading products...</div>
+            <div className="text-center py-12 text-gray-400">{t('products_inv.loading')}</div>
           ) : products.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
-              You don't have any products yet.{' '}
-              <Link to={`/products/add?BusinessID=${BusinessID}`} className="text-[#3D6B34] font-semibold hover:underline">Add your first product</Link>.
+              {t('products_inv.empty')}{' '}
+              <Link to={`/products/add?BusinessID=${BusinessID}`} className="text-[#3D6B34] font-semibold hover:underline">
+                {t('products_inv.btn_add_first')}
+              </Link>.
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
-              No products match "{search}". <button onClick={() => setSearch('')} className="text-[#3D6B34] hover:underline">Clear search</button>
+              {t('products_inv.no_match', { query: search })}{' '}
+              <button onClick={() => setSearch('')} className="text-[#3D6B34] hover:underline">
+                {t('products_inv.clear_search')}
+              </button>
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ backgroundColor: '#F3F4F6' }}>
-                  {['Image', 'Name', 'Category', 'Price', 'Sale'].map(h => (
+                  {[
+                    t('products_inv.th_image'),
+                    t('products_inv.th_name'),
+                    t('products_inv.th_category'),
+                    t('products_inv.th_price'),
+                    t('products_inv.th_sale'),
+                  ].map(h => (
                     <th key={h} style={{ padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>{h}</th>
                   ))}
                   {/* Qty header with bulk-set */}
                   <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>
-                    <div>Qty</div>
-                    <div className="flex items-center gap-1 mt-1" title="Set quantity for all visible products">
+                    <div>{t('products_inv.th_qty')}</div>
+                    <div className="flex items-center gap-1 mt-1" title={t('products_inv.bulk_qty_title')}>
                       <input
                         type="number"
                         min="0"
                         value={bulkQty}
                         onChange={e => setBulkQty(e.target.value)}
-                        placeholder="Set all"
+                        placeholder={t('products_inv.bulk_qty_placeholder')}
                         disabled={bulkBusy === 'ProdQuantityAvailable'}
                         className="border border-gray-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:border-[#3D6B34]"
                         style={{ width: 60 }}
@@ -223,44 +236,46 @@ export default function ProductsInventory() {
                         onClick={() => {
                           const v = parseInt(bulkQty, 10);
                           if (!Number.isFinite(v) || v < 0) return;
-                          if (!confirm(`Set quantity to ${v} for ${filteredProducts.length} product(s)?`)) return;
+                          if (!confirm(t('products_inv.confirm_bulk_qty', { qty: v, count: filteredProducts.length }))) return;
                           bulkApply('ProdQuantityAvailable', v);
                           setBulkQty('');
                         }}
                         disabled={bulkBusy === 'ProdQuantityAvailable' || bulkQty === ''}
                         className="text-xs bg-[#3D6B34] text-white px-2 py-0.5 rounded hover:bg-[#2e5227] disabled:opacity-50"
                       >
-                        {bulkBusy === 'ProdQuantityAvailable' ? '...' : 'Apply'}
+                        {bulkBusy === 'ProdQuantityAvailable' ? '...' : t('products_inv.btn_apply')}
                       </button>
                     </div>
                   </th>
-                  {/* Published header with select-all toggle */}
+                  {/* Published header */}
                   <th style={{ padding: '0.6rem 0.75rem', textAlign: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>
-                    <div>Published</div>
-                    <label className="flex items-center justify-center gap-1 mt-1 font-normal normal-case text-[10px] tracking-normal text-gray-500" title="Toggle all visible products">
+                    <div>{t('products_inv.th_published')}</div>
+                    <label className="flex items-center justify-center gap-1 mt-1 font-normal normal-case text-[10px] tracking-normal text-gray-500" title={t('products_inv.bulk_toggle_title')}>
                       <input
                         type="checkbox"
                         checked={allPublished}
                         disabled={bulkBusy === 'Publishproduct' || filteredProducts.length === 0}
                         onChange={e => bulkApply('Publishproduct', e.target.checked ? 1 : 0)}
                       />
-                      <span>All</span>
+                      <span>{t('products_inv.all')}</span>
                     </label>
                   </th>
-                  {/* For Sale header with select-all toggle */}
+                  {/* For Sale header */}
                   <th style={{ padding: '0.6rem 0.75rem', textAlign: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>
-                    <div>For Sale</div>
-                    <label className="flex items-center justify-center gap-1 mt-1 font-normal normal-case text-[10px] tracking-normal text-gray-500" title="Toggle all visible products">
+                    <div>{t('products_inv.th_for_sale')}</div>
+                    <label className="flex items-center justify-center gap-1 mt-1 font-normal normal-case text-[10px] tracking-normal text-gray-500" title={t('products_inv.bulk_toggle_title')}>
                       <input
                         type="checkbox"
                         checked={allForSale}
                         disabled={bulkBusy === 'ProdForSale' || filteredProducts.length === 0}
                         onChange={e => bulkApply('ProdForSale', e.target.checked ? 1 : 0)}
                       />
-                      <span>All</span>
+                      <span>{t('products_inv.all')}</span>
                     </label>
                   </th>
-                  <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>Actions</th>
+                  <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>
+                    {t('products_inv.th_actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -375,20 +390,22 @@ export default function ProductsInventory() {
                           {isEditing ? (
                             <>
                               <button onClick={() => handleUpdate(p.ProdID)} disabled={savingRow === p.ProdID} className="text-xs bg-[#3D6B34] text-white px-2 py-1 rounded hover:bg-[#2e5227] transition-colors disabled:opacity-50">
-                                {savingRow === p.ProdID ? '...' : 'Save'}
+                                {savingRow === p.ProdID ? '...' : t('products_inv.btn_save')}
                               </button>
                               <button onClick={() => setEditRows(prev => { const n = { ...prev }; delete n[p.ProdID]; return n; })} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded border border-gray-300">
-                                Cancel
+                                {t('products_inv.btn_cancel')}
                               </button>
                             </>
                           ) : (
                             <>
-                              <button onClick={() => startEdit(p)} title="Quick edit" className="text-gray-500 hover:text-[#3D6B34]">
+                              <button onClick={() => startEdit(p)} title={t('products_inv.btn_quick_edit')} className="text-gray-500 hover:text-[#3D6B34]">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                               </button>
-                              <Link to={`/products/edit/${p.ProdID}?BusinessID=${BusinessID}`} className="text-xs text-[#3D6B34] hover:underline">Full Edit</Link>
+                              <Link to={`/products/edit/${p.ProdID}?BusinessID=${BusinessID}`} className="text-xs text-[#3D6B34] hover:underline">
+                                {t('products_inv.btn_full_edit')}
+                              </Link>
                               <span className="text-gray-300">|</span>
-                              <button onClick={() => handleDelete(p.ProdID)} disabled={deletingRow === p.ProdID} title="Delete" className="text-gray-500 hover:text-red-600">
+                              <button onClick={() => handleDelete(p.ProdID)} disabled={deletingRow === p.ProdID} title={t('products_inv.btn_delete')} className="text-gray-500 hover:text-red-600">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                               </button>
                             </>

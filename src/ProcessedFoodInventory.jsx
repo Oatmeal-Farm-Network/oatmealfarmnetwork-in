@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import PageMeta from './PageMeta';
 import RosemarieChat from './RosemarieChat';
 
@@ -17,18 +18,19 @@ function getStockStatus(item) {
 }
 
 function StatusBadge({ item }) {
+  const { t } = useTranslation();
   const status = getStockStatus(item);
   const c = STATUS_COLORS[status];
-  const labels = { active: 'Active', inactive: 'Inactive', low: 'Low Stock' };
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${c.bg} ${c.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-      {labels[status]}
+      {t('processed_food_inv.status_' + status, { defaultValue: status })}
     </span>
   );
 }
 
 export default function ProcessedFoodInventory() {
+  const { t } = useTranslation();
   const [items, setItems]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState('');
@@ -47,14 +49,13 @@ export default function ProcessedFoodInventory() {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
-  // ── Fetch listings ────────────────────────────────────────────────────────
   async function fetchItems() {
     setLoading(true);
     setError('');
     try {
       const res  = await fetch(`${API_URL}/api/marketplace/seller/listings?business_id=${businessId}`, { headers });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Failed to load inventory');
+      if (!res.ok) throw new Error(data.detail || t('processed_food_inv.err_load'));
       setItems(data.filter(i => i.ProductType === 'processed_food'));
     } catch (e) {
       setError(e.message);
@@ -65,7 +66,6 @@ export default function ProcessedFoodInventory() {
 
   useEffect(() => { fetchItems(); }, []);
 
-  // ── Derived list ──────────────────────────────────────────────────────────
   const filtered = items
     .filter(i => !search || i.Title?.toLowerCase().includes(search.toLowerCase()) ||
                              i.Description?.toLowerCase().includes(search.toLowerCase()))
@@ -74,10 +74,9 @@ export default function ProcessedFoodInventory() {
       if (sortBy === 'price_asc')   return a.UnitPrice - b.UnitPrice;
       if (sortBy === 'price_desc')  return b.UnitPrice - a.UnitPrice;
       if (sortBy === 'qty_asc')     return a.QuantityAvailable - b.QuantityAvailable;
-      return b.SourceID - a.SourceID; // newest
+      return b.SourceID - a.SourceID;
     });
 
-  // ── Modal helpers ─────────────────────────────────────────────────────────
   const emptyForm = {
     Name: '', Description: '', RetailPrice: '', WholesalePrice: '',
     Quantity: '', ShowProcessedFood: true, AvailableDate: '', ImageURL: '',
@@ -120,7 +119,7 @@ export default function ProcessedFoodInventory() {
       const method = isNew ? 'POST' : 'PUT';
       const res    = await fetch(url, { method, headers, body: JSON.stringify(payload) });
       const data   = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Save failed');
+      if (!res.ok) throw new Error(data.detail || t('processed_food_inv.err_save'));
       closeModal();
       fetchItems();
     } catch (e) {
@@ -141,18 +140,16 @@ export default function ProcessedFoodInventory() {
     } catch { /* silent */ }
   }
 
-  // ── Stats ─────────────────────────────────────────────────────────────────
   const totalItems    = items.length;
   const activeItems   = items.filter(i => i.IsActive).length;
   const lowStockItems = items.filter(i => i.IsActive && i.QuantityAvailable <= 5).length;
   const totalValue    = items.reduce((s, i) => s + (i.UnitPrice * i.QuantityAvailable), 0);
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#f7f5f0] font-sans">
       <PageMeta
-        title="Processed Food Inventory | Oatmeal Farm Network"
-        description="Manage your value-added and processed food listings."
+        title={t('processed_food_inv.meta_title')}
+        description={t('processed_food_inv.meta_desc')}
         noIndex
       />
 
@@ -160,14 +157,14 @@ export default function ProcessedFoodInventory() {
       <div className="bg-white border-b border-gray-200 px-6 py-5">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 font-lora">Processed Food Inventory</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Manage your value-added and processed food listings</p>
+            <h1 className="text-2xl font-bold text-gray-900 font-lora">{t('processed_food_inv.page_title')}</h1>
+            <p className="text-sm text-gray-500 mt-0.5">{t('processed_food_inv.subheading')}</p>
           </div>
           <button
             onClick={openAdd}
             className="bg-[#819360] hover:bg-[#3D6B35] text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2"
           >
-            <span className="text-lg leading-none">+</span> Add Item
+            <span className="text-lg leading-none">+</span> {t('processed_food_inv.btn_add_item')}
           </button>
         </div>
       </div>
@@ -177,10 +174,10 @@ export default function ProcessedFoodInventory() {
         {/* Stats row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total Items',   value: totalItems,                      color: 'text-gray-800' },
-            { label: 'Active',        value: activeItems,                     color: 'text-[#819360]' },
-            { label: 'Low Stock',     value: lowStockItems,                   color: 'text-amber-600' },
-            { label: 'Inventory Value', value: `$${totalValue.toFixed(2)}`,   color: 'text-gray-800' },
+            { label: t('processed_food_inv.stat_total'),   value: totalItems,                    color: 'text-gray-800' },
+            { label: t('processed_food_inv.stat_active'),  value: activeItems,                   color: 'text-[#819360]' },
+            { label: t('processed_food_inv.stat_low'),     value: lowStockItems,                 color: 'text-amber-600' },
+            { label: t('processed_food_inv.stat_value'),   value: `$${totalValue.toFixed(2)}`,   color: 'text-gray-800' },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl px-5 py-4 shadow-sm border border-gray-100">
               <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">{s.label}</p>
@@ -193,7 +190,7 @@ export default function ProcessedFoodInventory() {
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <input
             type="text"
-            placeholder="Search items..."
+            placeholder={t('processed_food_inv.placeholder_search')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 bg-white"
@@ -203,50 +200,46 @@ export default function ProcessedFoodInventory() {
             onChange={e => setSortBy(e.target.value)}
             className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:border-[#819360] text-gray-600"
           >
-            <option value="newest">Newest First</option>
-            <option value="name_asc">Name A–Z</option>
-            <option value="price_asc">Price: Low–High</option>
-            <option value="price_desc">Price: High–Low</option>
-            <option value="qty_asc">Quantity: Low–High</option>
+            <option value="newest">{t('processed_food_inv.sort_newest')}</option>
+            <option value="name_asc">{t('processed_food_inv.sort_name_asc')}</option>
+            <option value="price_asc">{t('processed_food_inv.sort_price_asc')}</option>
+            <option value="price_desc">{t('processed_food_inv.sort_price_desc')}</option>
+            <option value="qty_asc">{t('processed_food_inv.sort_qty_asc')}</option>
           </select>
         </div>
 
-        {/* Error */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-6 text-sm">
             {error}
           </div>
         )}
 
-        {/* Loading */}
         {loading && (
-          <div className="text-center py-20 text-gray-400 text-sm">Loading inventory...</div>
+          <div className="text-center py-20 text-gray-400 text-sm">{t('processed_food_inv.loading')}</div>
         )}
 
-        {/* Empty state */}
         {!loading && !error && filtered.length === 0 && (
           <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
             <div className="flex justify-center mb-3"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2h8l1 7H7L8 2z"/><path d="M7 9c0 7 2 11 5 11s5-4 5-11"/></svg></div>
-            <p className="text-gray-500 font-medium">No processed food items yet</p>
-            <p className="text-gray-400 text-sm mt-1">Add jams, sauces, baked goods, and more</p>
+            <p className="text-gray-500 font-medium">{t('processed_food_inv.empty_title')}</p>
+            <p className="text-gray-400 text-sm mt-1">{t('processed_food_inv.empty_body')}</p>
             <button onClick={openAdd} className="mt-5 bg-[#819360] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#6a7a4f] transition-colors">
-              Add Your First Item
+              {t('processed_food_inv.btn_add_first')}
             </button>
           </div>
         )}
 
-        {/* Table */}
         {!loading && filtered.length > 0 && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-[#f9faf7]">
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Retail Price</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Wholesale</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qty</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('processed_food_inv.th_item')}</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('processed_food_inv.th_retail')}</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('processed_food_inv.th_wholesale')}</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('processed_food_inv.th_qty')}</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('processed_food_inv.th_status')}</th>
+                  <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('processed_food_inv.th_actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -287,13 +280,13 @@ export default function ProcessedFoodInventory() {
                           onClick={() => toggleVisibility(item)}
                           className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
                         >
-                          {item.IsActive ? 'Hide' : 'Show'}
+                          {item.IsActive ? t('processed_food_inv.btn_hide') : t('processed_food_inv.btn_show')}
                         </button>
                         <button
                           onClick={() => openEdit(item)}
                           className="text-xs px-3 py-1.5 rounded-lg bg-[#819360] text-white hover:bg-[#6a7a4f] transition-colors font-medium"
                         >
-                          Edit
+                          {t('processed_food_inv.btn_edit')}
                         </button>
                       </div>
                     </td>
@@ -311,7 +304,7 @@ export default function ProcessedFoodInventory() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="bg-[#819360] px-6 py-5 rounded-t-2xl">
               <h2 className="text-white font-bold text-lg font-lora">
-                {editing.ProcessedFoodID ? 'Edit Item' : 'Add New Item'}
+                {editing.ProcessedFoodID ? t('processed_food_inv.modal_edit') : t('processed_food_inv.modal_add')}
               </h2>
             </div>
             <form onSubmit={handleSave} className="px-6 py-6 space-y-4">
@@ -322,30 +315,30 @@ export default function ProcessedFoodInventory() {
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Name</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">{t('processed_food_inv.label_name')}</label>
                 <input
                   required
                   value={editing.Name}
                   onChange={e => setEditing(p => ({ ...p, Name: e.target.value }))}
-                  placeholder="e.g. Strawberry Jam, Hot Sauce..."
+                  placeholder={t('processed_food_inv.placeholder_name')}
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Description <span className="text-gray-400 normal-case font-normal">(Optional)</span></label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">{t('processed_food_inv.label_description')} <span className="text-gray-400 normal-case font-normal">({t('processed_food_inv.optional')})</span></label>
                 <textarea
                   value={editing.Description}
                   onChange={e => setEditing(p => ({ ...p, Description: e.target.value }))}
                   rows={3}
-                  placeholder="Ingredients, flavor notes, size..."
+                  placeholder={t('processed_food_inv.placeholder_description')}
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20 resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Retail Price</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">{t('processed_food_inv.label_retail_price')}</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                     <input
@@ -358,7 +351,7 @@ export default function ProcessedFoodInventory() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Wholesale Price <span className="text-gray-400 normal-case font-normal">(Optional)</span></label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">{t('processed_food_inv.label_wholesale_price')} <span className="text-gray-400 normal-case font-normal">({t('processed_food_inv.optional')})</span></label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                     <input
@@ -374,7 +367,7 @@ export default function ProcessedFoodInventory() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Quantity</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">{t('processed_food_inv.label_quantity')}</label>
                   <input
                     required type="number" min="0" step="1"
                     value={editing.Quantity}
@@ -384,7 +377,7 @@ export default function ProcessedFoodInventory() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Available Date <span className="text-gray-400 normal-case font-normal">(Optional)</span></label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">{t('processed_food_inv.label_available_date')} <span className="text-gray-400 normal-case font-normal">({t('processed_food_inv.optional')})</span></label>
                   <input
                     type="date"
                     value={editing.AvailableDate}
@@ -395,7 +388,7 @@ export default function ProcessedFoodInventory() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Image URL <span className="text-gray-400 normal-case font-normal">(Optional)</span></label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">{t('processed_food_inv.label_image_url')} <span className="text-gray-400 normal-case font-normal">({t('processed_food_inv.optional')})</span></label>
                 <input
                   type="url"
                   value={editing.ImageURL}
@@ -414,7 +407,7 @@ export default function ProcessedFoodInventory() {
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${editing.ShowProcessedFood ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
                 <span className="text-sm text-gray-600 font-medium">
-                  {editing.ShowProcessedFood ? 'Visible in marketplace' : 'Hidden from marketplace'}
+                  {editing.ShowProcessedFood ? t('processed_food_inv.visible') : t('processed_food_inv.hidden')}
                 </span>
               </div>
 
@@ -423,13 +416,13 @@ export default function ProcessedFoodInventory() {
                   type="button" onClick={closeModal}
                   className="border border-gray-200 text-gray-600 font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors"
                 >
-                  Cancel
+                  {t('processed_food_inv.btn_cancel')}
                 </button>
                 <button
                   type="submit" disabled={saving}
                   className="bg-[#819360] hover:bg-[#3D6B35] text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors disabled:opacity-60"
                 >
-                  {saving ? 'Saving...' : (editing.ProcessedFoodID ? 'Save Changes' : 'Add Item')}
+                  {saving ? t('processed_food_inv.btn_saving') : (editing.ProcessedFoodID ? t('processed_food_inv.btn_save_changes') : t('processed_food_inv.btn_add_item'))}
                 </button>
               </div>
             </form>

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function AccountHome() {
+  const { t } = useTranslation();
   const [SearchParams] = useSearchParams();
   const BusinessID = SearchParams.get('BusinessID');
   const PeopleID = SearchParams.get('PeopleID') ||
@@ -36,8 +38,8 @@ export default function AccountHome() {
       .catch(() => setFeatures({}));
   }, [BusinessID]);
 
-  if (Error) return <div className="p-8 text-red-600">Error loading account.</div>;
-  if (!Business || features === null) return <div className="p-8 text-gray-500">Loading...</div>;
+  if (Error) return <div className="p-8 text-red-600">{t('account_home.error_loading')}</div>;
+  if (!Business || features === null) return <div className="p-8 text-gray-500">{t('account_home.loading')}</div>;
 
   const Icon = ({ d, size = 24, viewBox = '0 0 24 24', fill = 'none', children }) => (
     <svg width={size} height={size} viewBox={viewBox} fill={fill} stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -146,118 +148,118 @@ export default function AccountHome() {
     {
       key: 'blog',
       icon: icons.blog,
-      label: 'Blog',
+      label: t('account_home.sec_blog'),
       links: [
-        { to: `/blog/manage?BusinessID=${BusinessID}`, label: 'Manage Blog' },
-        { to: `/blog/manage?BusinessID=${BusinessID}&view=new`, label: 'Add Post' },
-        { to: `/blog/authors/manage?BusinessID=${BusinessID}`, label: 'Authors' },
+        { to: `/blog/manage?BusinessID=${BusinessID}`, label: t('account_home.blog_manage') },
+        { to: `/blog/manage?BusinessID=${BusinessID}&view=new`, label: t('account_home.blog_add_post') },
+        { to: `/blog/authors/manage?BusinessID=${BusinessID}`, label: t('account_home.blog_authors') },
       ],
     },
     {
       key: 'precision_ag',
       icon: icons.precisionAg,
-      label: 'Precision Ag',
+      label: t('account_home.sec_precision_ag'),
       links: [
-        { to: `/precision-ag/fields?BusinessID=${BusinessID}`, label: 'Fields' },
-        { to: `/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`, label: 'Add Field' },
-        { to: `/precision-ag/analyses?BusinessID=${BusinessID}`, label: 'Analyses' },
-        { to: `/precision-ag/crop-detection?BusinessID=${BusinessID}`, label: 'Crop Detection' },
-        { to: `/oatsense/crop-rotation?BusinessID=${BusinessID}`, label: 'Crop Rotation' },
-        { to: `/oatsense/notes?BusinessID=${BusinessID}`, label: 'Field Journal' },
+        { to: `/precision-ag/fields?BusinessID=${BusinessID}`, label: t('account_home.pag_fields') },
+        { to: `/precision-ag/fields?BusinessID=${BusinessID}&view=create-field`, label: t('account_home.pag_add_field') },
+        { to: `/precision-ag/analyses?BusinessID=${BusinessID}`, label: t('account_home.pag_analyses') },
+        { to: `/precision-ag/crop-detection?BusinessID=${BusinessID}`, label: t('account_home.pag_crop_detection') },
+        { to: `/oatsense/crop-rotation?BusinessID=${BusinessID}`, label: t('account_home.pag_crop_rotation') },
+        { to: `/oatsense/notes?BusinessID=${BusinessID}`, label: t('account_home.pag_field_journal') },
       ],
     },
     {
       key: 'livestock',
       icon: icons.livestock,
-      label: 'Livestock',
+      label: t('account_home.sec_livestock'),
       links: [
-        { to: `/animals?BusinessID=${BusinessID}`, label: 'Animals List' },
-        { to: `/animals/add?BusinessID=${BusinessID}`, label: 'Add Animal' },
-        { to: `/animals/transfer?BusinessID=${BusinessID}`, label: 'Transfer' },
-        { to: `/animals/packages?BusinessID=${BusinessID}`, label: 'Packages' },
-        { to: `/animals/stats?BusinessID=${BusinessID}`, label: 'Statistics' },
+        { to: `/animals?BusinessID=${BusinessID}`, label: t('account_home.lv_list') },
+        { to: `/animals/add?BusinessID=${BusinessID}`, label: t('account_home.lv_add') },
+        { to: `/animals/transfer?BusinessID=${BusinessID}`, label: t('account_home.lv_transfer') },
+        { to: `/animals/packages?BusinessID=${BusinessID}`, label: t('account_home.lv_packages') },
+        { to: `/animals/stats?BusinessID=${BusinessID}`, label: t('account_home.lv_stats') },
       ],
     },
     {
       key: 'farm_2_table',
       icon: icons.farm2table,
-      label: 'Farm 2 Table',
+      label: t('account_home.sec_farm_2_table'),
       links: [
-        { to: `/seller/orders?BusinessID=${BusinessID}`, label: 'Incoming Orders' },
-        { to: `/produce/inventory?BusinessID=${BusinessID}`, label: 'Produce Inventory' },
-        { to: `/produce/processed-food?BusinessID=${BusinessID}`, label: 'Processed Foods' },
-        { to: `/produce/meat?BusinessID=${BusinessID}`, label: 'Meat' },
-        { to: `/account/stripe-connect?BusinessID=${BusinessID}`, label: 'Stripe Payouts' },
+        { to: `/seller/orders?BusinessID=${BusinessID}`, label: t('account_home.f2t_orders') },
+        { to: `/produce/inventory?BusinessID=${BusinessID}`, label: t('account_home.f2t_produce') },
+        { to: `/produce/processed-food?BusinessID=${BusinessID}`, label: t('account_home.f2t_processed') },
+        { to: `/produce/meat?BusinessID=${BusinessID}`, label: t('account_home.f2t_meat') },
+        { to: `/account/stripe-connect?BusinessID=${BusinessID}`, label: t('account_home.f2t_stripe') },
       ],
     },
     {
       key: 'products',
       icon: icons.products,
-      label: 'Products',
+      label: t('account_home.sec_products'),
       links: [
-        { to: `/marketplace/products`, label: 'Browse Marketplace' },
-        { to: `/products?BusinessID=${BusinessID}`, label: 'My Products' },
-        { to: `/products/settings?BusinessID=${BusinessID}`, label: 'Settings' },
+        { to: `/marketplace/products`, label: t('account_home.prod_browse') },
+        { to: `/products?BusinessID=${BusinessID}`, label: t('account_home.prod_my') },
+        { to: `/products/settings?BusinessID=${BusinessID}`, label: t('account_home.prod_settings') },
       ],
     },
     {
       key: 'services',
       icon: icons.services,
-      label: 'Services',
+      label: t('account_home.sec_services'),
       links: [
-        { to: `/services/directory`, label: 'Browse Directory' },
-        { to: `/services?BusinessID=${BusinessID}`, label: 'My Services' },
-        { to: `/services/add?BusinessID=${BusinessID}`, label: 'Add Service' },
-        { to: `/services/suggest-category?BusinessID=${BusinessID}`, label: 'Suggest Category' },
+        { to: `/services/directory`, label: t('account_home.svc_browse') },
+        { to: `/services?BusinessID=${BusinessID}`, label: t('account_home.svc_my') },
+        { to: `/services/add?BusinessID=${BusinessID}`, label: t('account_home.svc_add') },
+        { to: `/services/suggest-category?BusinessID=${BusinessID}`, label: t('account_home.svc_suggest') },
       ],
     },
     {
       key: 'events',
       icon: icons.events,
-      label: 'Events',
+      label: t('account_home.sec_events'),
       links: [
-        { to: `/events`, label: 'Browse Events' },
-        { to: `/events/manage?BusinessID=${BusinessID}`, label: 'My Events' },
-        { to: `/events/my-registrations?BusinessID=${BusinessID}`, label: 'My Registrations' },
+        { to: `/events`, label: t('account_home.ev_browse') },
+        { to: `/events/manage?BusinessID=${BusinessID}`, label: t('account_home.ev_my') },
+        { to: `/events/my-registrations?BusinessID=${BusinessID}`, label: t('account_home.ev_registrations') },
       ],
     },
     {
       key: 'properties',
       icon: icons.properties,
-      label: 'Properties',
+      label: t('account_home.sec_properties'),
       links: [
-        { to: `/properties?BusinessID=${BusinessID}`, label: 'List Properties' },
-        { to: `/properties/add?BusinessID=${BusinessID}`, label: 'Add Property' },
+        { to: `/properties?BusinessID=${BusinessID}`, label: t('account_home.prop_list') },
+        { to: `/properties/add?BusinessID=${BusinessID}`, label: t('account_home.prop_add') },
       ],
     },
     {
       key: 'associations',
       icon: icons.associations,
-      label: 'Associations',
+      label: t('account_home.sec_associations'),
       links: [
-        { to: `/association/create?BusinessID=${BusinessID}`, label: 'Create' },
-        { to: `/association/delete?BusinessID=${BusinessID}`, label: 'Delete' },
+        { to: `/association/create?BusinessID=${BusinessID}`, label: t('account_home.assoc_create') },
+        { to: `/association/delete?BusinessID=${BusinessID}`, label: t('account_home.assoc_delete') },
       ],
     },
     {
       key: 'my_website',
       icon: icons.website,
-      label: 'My Website',
+      label: t('account_home.sec_my_website'),
       links: [
-        { to: `/website/builder?BusinessID=${BusinessID}&view=design`, label: 'Design' },
-        { to: `/website/builder?BusinessID=${BusinessID}&view=settings`, label: 'Settings (& Delete)' },
+        { to: `/website/builder?BusinessID=${BusinessID}&view=design`, label: t('account_home.web_design') },
+        { to: `/website/builder?BusinessID=${BusinessID}&view=settings`, label: t('account_home.web_settings') },
       ],
     },
     {
       key: 'accounting',
       icon: icons.accounting,
-      label: 'Accounting',
+      label: t('account_home.sec_accounting'),
       links: [
-        { to: `/accounting?BusinessID=${BusinessID}`, label: 'Dashboard' },
-        { to: `/accounting?BusinessID=${BusinessID}#invoices`, label: 'Invoices' },
-        { to: `/accounting?BusinessID=${BusinessID}#customers`, label: 'Customers' },
-        { to: `/accounting?BusinessID=${BusinessID}#vendors`, label: 'Vendors' },
-        { to: `/accounting?BusinessID=${BusinessID}#reports`, label: 'Reports' },
+        { to: `/accounting?BusinessID=${BusinessID}`, label: t('account_home.acct_dashboard') },
+        { to: `/accounting?BusinessID=${BusinessID}#invoices`, label: t('account_home.acct_invoices') },
+        { to: `/accounting?BusinessID=${BusinessID}#customers`, label: t('account_home.acct_customers') },
+        { to: `/accounting?BusinessID=${BusinessID}#vendors`, label: t('account_home.acct_vendors') },
+        { to: `/accounting?BusinessID=${BusinessID}#reports`, label: t('account_home.acct_reports') },
       ],
     },
   ];
@@ -276,10 +278,10 @@ export default function AccountHome() {
       Business={Business}
       BusinessID={BusinessID}
       PeopleID={PeopleID}
-      pageTitle="Account Home"
+      pageTitle={t('account_home.page_title')}
       breadcrumbs={[
-        { label: 'Dashboard', to: '/dashboard' },
-        { label: Business.BusinessName || 'Account Home' },
+        { label: t('nav.dashboard'), to: '/dashboard' },
+        { label: Business.BusinessName || t('account_home.page_title') },
       ]}
     >
       <div className="max-w-full mx-auto space-y-6">
@@ -291,33 +293,33 @@ export default function AccountHome() {
               <h2 className="text-2xl font-bold text-green-700 mb-4 border-b-2 border-green-200 pb-3">
                 {Business.BusinessName}
               </h2>
-              <p className="text-sm text-gray-700 mb-1">Account Name: <strong>{Business.BusinessName}</strong></p>
-              <p className="text-sm text-gray-700 mb-1">Account Type: <strong>{Business.BusinessType}</strong></p>
+              <p className="text-sm text-gray-700 mb-1">{t('account_home.label_name')} <strong>{Business.BusinessName}</strong></p>
+              <p className="text-sm text-gray-700 mb-1">{t('account_home.label_type')} <strong>{Business.BusinessType}</strong></p>
               <Link to={`/account/change-type?BusinessID=${BusinessID}`} className="text-xs text-[#819360] hover:underline">
-                Change Account Type
+                {t('account_home.change_type')}
               </Link>
-              <p className="text-sm text-gray-700 mt-3 mb-1">Subscription Level: <strong>{Business.SubscriptionLevel}</strong></p>
-              <p className="text-sm text-gray-700 mb-1">Subscription Ends: <strong>{Business.SubscriptionEndDate || 'Not Set'}</strong></p>
+              <p className="text-sm text-gray-700 mt-3 mb-1">{t('account_home.label_sub_level')} <strong>{Business.SubscriptionLevel}</strong></p>
+              <p className="text-sm text-gray-700 mb-1">{t('account_home.label_sub_ends')} <strong>{Business.SubscriptionEndDate || t('account_home.not_set')}</strong></p>
               {Business.FavoriteAssociationName ? (
                 <p className="text-sm text-gray-700 mt-1">
-                  Favorite Association: <strong>{Business.FavoriteAssociationName}</strong>
+                  {t('account_home.label_fav_assoc')} <strong>{Business.FavoriteAssociationName}</strong>
                 </p>
               ) : (
-                <p className="text-sm text-gray-500 mt-1">Favorite Association: Not Set</p>
+                <p className="text-sm text-gray-500 mt-1">{t('account_home.fav_assoc_not_set')}</p>
               )}
               <Link to={`/account/associations?BusinessID=${BusinessID}`} className="text-xs text-[#819360] hover:underline">
-                Set Favorite Association
+                {t('account_home.set_fav_assoc')}
               </Link>
             </div>
             <div className="flex flex-col gap-2 pt-1 md:pt-8">
               <Link to={`/account/profile?BusinessID=${BusinessID}`} className="text-sm text-[#3D6B34] hover:underline">
-                Account Profile
+                {t('account_home.link_profile')}
               </Link>
               <Link to={`/account/subscription?BusinessID=${BusinessID}`} className="text-sm text-[#3D6B34] hover:underline">
-                Subscription / Billing
+                {t('account_home.link_billing')}
               </Link>
               <Link to={`/account/delete?BusinessID=${BusinessID}`} className="text-sm text-red-600 hover:underline">
-                Delete Account
+                {t('account_home.link_delete')}
               </Link>
             </div>
           </div>

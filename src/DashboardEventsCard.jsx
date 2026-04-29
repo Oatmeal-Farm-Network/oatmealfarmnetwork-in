@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 
 const API = import.meta.env.VITE_API_URL || '';
 
 function authHeaders() {
-  const t = localStorage.getItem('access_token');
-  return t ? { Authorization: `Bearer ${t}` } : {};
+  const token = localStorage.getItem('access_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 function fmtDate(d) {
@@ -26,6 +27,7 @@ function daysUntil(d) {
 }
 
 export default function DashboardEventsCard({ peopleId }) {
+  const { t } = useTranslation();
   const { businesses } = useAccount() || {};
   const [data, setData] = useState({ hosting: [], registered: [], pending: [] });
   const [loading, setLoading] = useState(true);
@@ -54,18 +56,12 @@ export default function DashboardEventsCard({ peopleId }) {
 
     Promise.all([attendeePromise, hostingPromise])
       .then(([attendee, hosting]) => {
-        setData({
-          hosting,
-          registered: attendee.registered || [],
-          pending: attendee.pending || [],
-        });
+        setData({ hosting, registered: attendee.registered || [], pending: attendee.pending || [] });
       })
       .finally(() => setLoading(false));
   }, [peopleId, businesses]);
 
-  const total = (data.hosting?.length || 0)
-    + (data.registered?.length || 0)
-    + (data.pending?.length || 0);
+  const total = (data.hosting?.length || 0) + (data.registered?.length || 0) + (data.pending?.length || 0);
 
   if (loading) return null;
   if (total === 0) return null;
@@ -73,14 +69,14 @@ export default function DashboardEventsCard({ peopleId }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-gray-800">🎪 Your Events</h2>
-        <Link to="/events" className="text-xs text-[#3D6B34] hover:underline">Browse all →</Link>
+        <h2 className="text-lg font-semibold text-gray-800">{t('dash_events.heading')}</h2>
+        <Link to="/events" className="text-xs text-[#3D6B34] hover:underline">{t('dash_events.browse_all')}</Link>
       </div>
 
       {data.pending?.length > 0 && (
         <div className="mb-4">
           <div className="text-[10px] uppercase tracking-wide text-amber-700 font-semibold mb-1.5">
-            Unfinished registration{data.pending.length > 1 ? 's' : ''}
+            {t('dash_events.pending_heading', { count: data.pending.length })}
           </div>
           {data.pending.map(c => (
             <Link key={c.CartID}
@@ -90,11 +86,11 @@ export default function DashboardEventsCard({ peopleId }) {
                 <div className="min-w-0">
                   <div className="text-sm font-medium text-gray-800 truncate">{c.EventName}</div>
                   <div className="text-xs text-gray-500">
-                    ${Number(c.Total || 0).toFixed(2)} in cart · started {fmtDate(c.CreatedDate)}
+                    {t('dash_events.cart_info', { amount: Number(c.Total || 0).toFixed(2), date: fmtDate(c.CreatedDate) })}
                   </div>
                 </div>
                 <span className="text-xs text-amber-700 font-semibold whitespace-nowrap ml-2">
-                  Resume →
+                  {t('dash_events.btn_resume')}
                 </span>
               </div>
             </Link>
@@ -105,7 +101,7 @@ export default function DashboardEventsCard({ peopleId }) {
       {data.registered?.length > 0 && (
         <div className="mb-4">
           <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-1.5">
-            You're registered
+            {t('dash_events.registered_heading')}
           </div>
           {data.registered.slice(0, 4).map(e => {
             const days = daysUntil(e.EventStartDate);
@@ -122,7 +118,7 @@ export default function DashboardEventsCard({ peopleId }) {
                 </div>
                 {days != null && days >= 0 && days <= 30 && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-[#3D6B34]/10 text-[#3D6B34] font-semibold ml-2 whitespace-nowrap">
-                    in {days}d
+                    {t('dash_events.in_days', { days })}
                   </span>
                 )}
               </Link>
@@ -134,7 +130,7 @@ export default function DashboardEventsCard({ peopleId }) {
       {data.hosting?.length > 0 && (
         <div>
           <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-1.5">
-            You're hosting
+            {t('dash_events.hosting_heading')}
           </div>
           {data.hosting.slice(0, 4).map(e => (
             <Link key={e.EventID} to={`/events/${e.EventID}/admin/dashboard`}
@@ -142,10 +138,10 @@ export default function DashboardEventsCard({ peopleId }) {
               <div className="min-w-0">
                 <div className="text-sm font-medium text-gray-800 truncate">
                   {e.EventName}
-                  {!e.IsPublished && <span className="ml-2 text-[10px] text-gray-400 uppercase">draft</span>}
+                  {!e.IsPublished && <span className="ml-2 text-[10px] text-gray-400 uppercase">{t('dash_events.draft')}</span>}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {fmtDate(e.EventStartDate)} · {e.PaidCartCount || 0} paid · ${Number(e.Revenue || 0).toFixed(0)}
+                  {fmtDate(e.EventStartDate)} · {t('dash_events.paid_revenue', { paid: e.PaidCartCount || 0, revenue: Number(e.Revenue || 0).toFixed(0) })}
                 </div>
               </div>
             </Link>

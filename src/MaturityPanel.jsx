@@ -471,75 +471,75 @@ export default function MaturityPanel({ fieldId, businessId }) {
       <div className="bg-white border border-gray-200 rounded-lg p-5">
         <div className="flex items-center justify-between">
           <h4 className="font-mont text-sm font-bold text-gray-700 uppercase tracking-wide">
-            Samples ({samples.length})
+            {t('maturity.samples_heading', { count: samples.length })}
           </h4>
           <button
             onClick={() => setShowSampleForm(s => !s)}
             className="text-xs text-white bg-[#3D6B34] hover:opacity-90 px-3 py-1.5 rounded font-semibold"
           >
-            {showSampleForm ? 'Cancel' : '+ Log sample'}
+            {showSampleForm ? t('maturity.btn_cancel') : t('maturity.btn_log_sample')}
           </button>
         </div>
 
         {showSampleForm && (
           <form onSubmit={submitSample} className="mt-4 p-4 rounded-lg bg-gray-50 grid grid-cols-2 sm:grid-cols-3 gap-3">
             <label className="text-sm sm:col-span-1">
-              <span className="block text-gray-600 mb-1">Sample date</span>
+              <span className="block text-gray-600 mb-1">{t('maturity.sample_date')}</span>
               <input type="date" className="w-full border rounded px-2 py-1.5" value={sampleForm.sample_date}
                      onChange={e => setSampleForm(f => ({ ...f, sample_date: e.target.value }))} />
             </label>
             <label className="text-sm">
-              <span className="block text-gray-600 mb-1">Brix (°Bx)</span>
+              <span className="block text-gray-600 mb-1">{t('maturity.sample_brix')}</span>
               <input type="number" step="0.1" className="w-full border rounded px-2 py-1.5" value={sampleForm.brix_degrees}
                      onChange={e => setSampleForm(f => ({ ...f, brix_degrees: e.target.value }))} />
             </label>
             <label className="text-sm">
-              <span className="block text-gray-600 mb-1">Anthocyanin (mg/g)</span>
+              <span className="block text-gray-600 mb-1">{t('maturity.sample_anthocyanin')}</span>
               <input type="number" step="0.01" className="w-full border rounded px-2 py-1.5" value={sampleForm.anthocyanin_mg_g}
                      onChange={e => setSampleForm(f => ({ ...f, anthocyanin_mg_g: e.target.value }))} />
             </label>
             <label className="text-sm">
-              <span className="block text-gray-600 mb-1">Firmness (kgf)</span>
+              <span className="block text-gray-600 mb-1">{t('maturity.sample_firmness')}</span>
               <input type="number" step="0.01" className="w-full border rounded px-2 py-1.5" value={sampleForm.firmness_kgf}
                      onChange={e => setSampleForm(f => ({ ...f, firmness_kgf: e.target.value }))} />
             </label>
             <label className="text-sm">
-              <span className="block text-gray-600 mb-1">pH</span>
+              <span className="block text-gray-600 mb-1">{t('maturity.sample_ph')}</span>
               <input type="number" step="0.01" className="w-full border rounded px-2 py-1.5" value={sampleForm.ph}
                      onChange={e => setSampleForm(f => ({ ...f, ph: e.target.value }))} />
             </label>
             <label className="text-sm">
-              <span className="block text-gray-600 mb-1">Titratable acidity (%)</span>
+              <span className="block text-gray-600 mb-1">{t('maturity.sample_titratable_acidity')}</span>
               <input type="number" step="0.01" className="w-full border rounded px-2 py-1.5" value={sampleForm.titratable_acidity_pct}
                      onChange={e => setSampleForm(f => ({ ...f, titratable_acidity_pct: e.target.value }))} />
             </label>
             <label className="text-sm">
-              <span className="block text-gray-600 mb-1">Cultivar</span>
+              <span className="block text-gray-600 mb-1">{t('maturity.sample_cultivar')}</span>
               <input className="w-full border rounded px-2 py-1.5" value={sampleForm.cultivar}
                      onChange={e => setSampleForm(f => ({ ...f, cultivar: e.target.value }))} />
             </label>
             <label className="text-sm">
-              <span className="block text-gray-600 mb-1">Sample size (#)</span>
+              <span className="block text-gray-600 mb-1">{t('maturity.sample_size')}</span>
               <input type="number" className="w-full border rounded px-2 py-1.5" value={sampleForm.sample_size}
                      onChange={e => setSampleForm(f => ({ ...f, sample_size: e.target.value }))} />
             </label>
             <label className="text-sm">
-              <span className="block text-gray-600 mb-1">Lab / device</span>
+              <span className="block text-gray-600 mb-1">{t('maturity.sample_lab')}</span>
               <input className="w-full border rounded px-2 py-1.5" value={sampleForm.lab_name}
                      onChange={e => setSampleForm(f => ({ ...f, lab_name: e.target.value }))}
-                     placeholder="e.g. Felix F-750, in-house refractometer" />
+                     placeholder={t('maturity.sample_lab_placeholder')} />
             </label>
             <label className="text-sm col-span-2 sm:col-span-3">
-              <span className="block text-gray-600 mb-1">Notes</span>
+              <span className="block text-gray-600 mb-1">{t('maturity.sample_notes')}</span>
               <textarea rows="2" className="w-full border rounded px-2 py-1.5" value={sampleForm.notes}
                         onChange={e => setSampleForm(f => ({ ...f, notes: e.target.value }))} />
             </label>
             <div className="col-span-2 sm:col-span-3 flex justify-end gap-2">
               <button type="button" onClick={() => setShowSampleForm(false)}
-                      className="px-3 py-1.5 text-sm rounded border border-gray-300">Cancel</button>
+                      className="px-3 py-1.5 text-sm rounded border border-gray-300">{t('maturity.btn_cancel')}</button>
               <button type="submit" disabled={savingSample}
                       className="px-3 py-1.5 text-sm rounded bg-[#3D6B34] text-white disabled:opacity-50">
-                {savingSample ? 'Saving…' : 'Save sample'}
+                {savingSample ? t('maturity.btn_saving') : t('maturity.btn_save_sample')}
               </button>
             </div>
           </form>
@@ -549,11 +549,11 @@ export default function MaturityPanel({ fieldId, businessId }) {
           <div className="mt-4 flex flex-col items-center gap-3 py-6 bg-gray-50 rounded-lg">
             <div className="flex items-center"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 22"/><path d="M9.5 9.5s1-3 4.5-5c0 0 1 3-1 7"/><path d="M3.82 22s1.5-3.5 8.18-4.5"/></svg></div>
             <p className="text-sm text-gray-600 text-center max-w-sm">
-              Start tracking maturity by logging a sample. Enter Brix, firmness, pH, or anthocyanin readings.
+              {t('maturity.no_samples_body')}
             </p>
             <button onClick={() => setShowSampleForm(true)}
               className="px-4 py-2 bg-[#3D6B34] text-white rounded-lg text-sm font-semibold hover:opacity-90">
-              + Start Maturity Tracking
+              {t('maturity.btn_start_tracking')}
             </button>
           </div>
         ) : sortedSamples.length > 0 ? (
@@ -561,13 +561,13 @@ export default function MaturityPanel({ fieldId, businessId }) {
             <table className="w-full text-sm">
               <thead className="text-left text-xs text-gray-500 uppercase tracking-wide">
                 <tr>
-                  <th className="py-2 pr-3">Date</th>
-                  <th className="py-2 pr-3">Brix</th>
-                  <th className="py-2 pr-3">Anthocyanin</th>
-                  <th className="py-2 pr-3">Firmness</th>
-                  <th className="py-2 pr-3">pH</th>
-                  <th className="py-2 pr-3">Acidity</th>
-                  <th className="py-2 pr-3">Lab</th>
+                  <th className="py-2 pr-3">{t('maturity.th_date')}</th>
+                  <th className="py-2 pr-3">{t('maturity.th_brix')}</th>
+                  <th className="py-2 pr-3">{t('maturity.th_anthocyanin')}</th>
+                  <th className="py-2 pr-3">{t('maturity.th_firmness')}</th>
+                  <th className="py-2 pr-3">{t('maturity.th_ph')}</th>
+                  <th className="py-2 pr-3">{t('maturity.th_acidity')}</th>
+                  <th className="py-2 pr-3">{t('maturity.th_lab')}</th>
                   <th className="py-2 pr-3"></th>
                 </tr>
               </thead>
@@ -583,7 +583,7 @@ export default function MaturityPanel({ fieldId, businessId }) {
                     <td className="py-2 pr-3 text-gray-600">{s.lab_name || '—'}</td>
                     <td className="py-2 pr-3 text-right">
                       <button onClick={() => deleteSample(s.sample_id)}
-                              className="text-xs text-red-600 hover:underline">delete</button>
+                              className="text-xs text-red-600 hover:underline">{t('maturity.btn_delete')}</button>
                     </td>
                   </tr>
                 ))}

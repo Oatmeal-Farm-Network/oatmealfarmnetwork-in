@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { useFields, API_URL } from './precisionAgUtils';
@@ -19,6 +20,7 @@ const CAT_ICON = {
 };
 
 function ScoutCard({ scout, onDelete }) {
+  const { t } = useTranslation();
   const [confirming, setConfirming] = useState(false);
   const sevColor = SEV_COLOR[scout.severity] || '#9CA3AF';
   return (
@@ -26,10 +28,12 @@ function ScoutCard({ scout, onDelete }) {
       <div className="flex-shrink-0 w-10 flex items-center justify-center text-gray-500">{CAT_ICON[scout.category] || CAT_ICON.General}</div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap mb-1">
-          <span className="font-mont text-sm font-semibold text-gray-800">{scout.category}</span>
+          <span className="font-mont text-sm font-semibold text-gray-800">
+            {t('scouting.cat_' + scout.category.toLowerCase(), { defaultValue: scout.category })}
+          </span>
           {scout.severity && (
             <span className="px-2 py-0.5 rounded-full text-xs font-mont font-bold" style={{ background: sevColor + '22', color: sevColor }}>
-              {scout.severity}
+              {t('scouting.sev_' + scout.severity.toLowerCase(), { defaultValue: scout.severity })}
             </span>
           )}
           <span className="font-mont text-xs text-gray-400 ml-auto">
@@ -47,11 +51,11 @@ function ScoutCard({ scout, onDelete }) {
       <div className="flex-shrink-0">
         {confirming ? (
           <div className="flex flex-col gap-1">
-            <button onClick={() => onDelete(scout.scout_id)} className="text-xs px-2 py-1 bg-red-500 text-white rounded font-mont">Confirm</button>
-            <button onClick={() => setConfirming(false)} className="text-xs px-2 py-1 border border-gray-200 rounded font-mont">Cancel</button>
+            <button onClick={() => onDelete(scout.scout_id)} className="text-xs px-2 py-1 bg-red-500 text-white rounded font-mont">{t('scouting.btn_confirm')}</button>
+            <button onClick={() => setConfirming(false)} className="text-xs px-2 py-1 border border-gray-200 rounded font-mont">{t('scouting.btn_cancel')}</button>
           </div>
         ) : (
-          <button onClick={() => setConfirming(true)} className="text-xs text-gray-400 hover:text-red-500 font-mont">Delete</button>
+          <button onClick={() => setConfirming(true)} className="text-xs text-gray-400 hover:text-red-500 font-mont">{t('scouting.btn_delete')}</button>
         )}
       </div>
     </div>
@@ -59,6 +63,7 @@ function ScoutCard({ scout, onDelete }) {
 }
 
 function AddScoutForm({ fieldId, onSaved, onCancel }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     category: 'General', severity: '', notes: '',
     observed_at: new Date().toISOString().slice(0, 10),
@@ -70,7 +75,7 @@ function AddScoutForm({ fieldId, onSaved, onCancel }) {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const submit = async () => {
-    if (!form.notes.trim()) { setError('Please add a note.'); return; }
+    if (!form.notes.trim()) { setError(t('scouting.error_need_note')); return; }
     setSaving(true); setError('');
     try {
       const r = await fetch(`${API_URL}/api/fields/${fieldId}/scouts`, {
@@ -94,55 +99,59 @@ function AddScoutForm({ fieldId, onSaved, onCancel }) {
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-      <h3 className="font-lora font-bold text-gray-900">New Observation</h3>
+      <h3 className="font-lora font-bold text-gray-900">{t('scouting.form_title')}</h3>
       {error && <div className="text-xs text-red-600 bg-red-50 rounded px-3 py-2 font-mont">{error}</div>}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold font-mont text-gray-500">Date</label>
+          <label className="text-xs font-semibold font-mont text-gray-500">{t('scouting.form_date')}</label>
           <input type="date" value={form.observed_at} onChange={e => set('observed_at', e.target.value)}
             className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2" />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold font-mont text-gray-500">Category</label>
+          <label className="text-xs font-semibold font-mont text-gray-500">{t('scouting.form_category')}</label>
           <select value={form.category} onChange={e => set('category', e.target.value)}
             className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2">
-            {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+            {CATEGORIES.map(c => (
+              <option key={c} value={c}>{t('scouting.cat_' + c.toLowerCase(), { defaultValue: c })}</option>
+            ))}
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold font-mont text-gray-500">Severity</label>
+          <label className="text-xs font-semibold font-mont text-gray-500">{t('scouting.form_severity')}</label>
           <select value={form.severity} onChange={e => set('severity', e.target.value)}
             className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2">
-            <option value="">— none —</option>
-            {SEVERITIES.map(s => <option key={s}>{s}</option>)}
+            <option value="">{t('scouting.form_severity_none')}</option>
+            {SEVERITIES.map(sev => (
+              <option key={sev} value={sev}>{t('scouting.sev_' + sev.toLowerCase(), { defaultValue: sev })}</option>
+            ))}
           </select>
         </div>
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold font-mont text-gray-500">Notes *</label>
+        <label className="text-xs font-semibold font-mont text-gray-500">{t('scouting.form_notes')}</label>
         <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3}
-          placeholder="Describe what you observed..."
+          placeholder={t('scouting.form_notes_placeholder')}
           className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 resize-none" />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold font-mont text-gray-500">Latitude (optional)</label>
+          <label className="text-xs font-semibold font-mont text-gray-500">{t('scouting.form_latitude')}</label>
           <input type="number" step="any" value={form.latitude} onChange={e => set('latitude', e.target.value)}
             placeholder="e.g. 41.8781"
             className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2" />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold font-mont text-gray-500">Longitude (optional)</label>
+          <label className="text-xs font-semibold font-mont text-gray-500">{t('scouting.form_longitude')}</label>
           <input type="number" step="any" value={form.longitude} onChange={e => set('longitude', e.target.value)}
             placeholder="e.g. -87.6298"
             className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2" />
         </div>
       </div>
       <div className="flex justify-end gap-3">
-        <button onClick={onCancel} className="px-4 py-2 text-sm font-mont text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+        <button onClick={onCancel} className="px-4 py-2 text-sm font-mont text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">{t('scouting.btn_cancel')}</button>
         <button onClick={submit} disabled={saving}
           className="px-5 py-2 text-sm font-mont font-semibold bg-[#6D8E22] text-white rounded-lg hover:bg-[#5a7519] disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save Observation'}
+          {saving ? t('scouting.btn_saving') : t('scouting.btn_save')}
         </button>
       </div>
     </div>
@@ -150,6 +159,7 @@ function AddScoutForm({ fieldId, onSaved, onCancel }) {
 }
 
 export default function PrecisionAgScouting() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -193,32 +203,32 @@ export default function PrecisionAgScouting() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
-      pageTitle="Scouting" breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:'Scouting' }]}>
+      pageTitle={t('scouting.page_title')} breadcrumbs={[{ label: t('nav.dashboard'), to:'/dashboard' }, { label: t('precision_ag_alerts.breadcrumb_precision_ag') }, { label: t('scouting.page_title') }]}>
       <div className="max-w-full mx-auto space-y-5">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">Field Scouting</h1>
-            <p className="font-mont text-sm text-gray-500">Log pest, disease, weed, and irrigation observations tied to a field and date.</p>
+            <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">{t('scouting.heading')}</h1>
+            <p className="font-mont text-sm text-gray-500">{t('scouting.subheading')}</p>
           </div>
           <button onClick={() => setShowForm(true)}
             className="px-4 py-2 bg-[#6D8E22] text-white text-sm font-mont font-semibold rounded-lg hover:bg-[#5a7519]">
-            + Add Observation
+            {t('scouting.btn_add')}
           </button>
         </div>
 
         {/* Field selector */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 flex-wrap items-end">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold font-mont text-gray-500">Field</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{t('scouting.field_label')}</label>
             <select value={selectedFieldId} onChange={e => { setSelectedFieldId(e.target.value); setShowForm(false); }}
               className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 min-w-52">
-              {fields.length === 0 && <option value="">No fields</option>}
+              {fields.length === 0 && <option value="">{t('scouting.no_fields')}</option>}
               {fields.map(f => <option key={f.fieldid||f.id} value={String(f.fieldid||f.id)}>{f.name}</option>)}
             </select>
           </div>
           {scouts.length > 0 && (
             <div className="font-mont text-xs text-gray-400 self-end pb-2">
-              {scouts.length} observation{scouts.length !== 1 ? 's' : ''} total
+              {t('scouting.obs_count', { count: scouts.length })}
             </div>
           )}
         </div>
@@ -238,11 +248,12 @@ export default function PrecisionAgScouting() {
               const active = filterCat === c;
               const count = c === 'All' ? scouts.length : (counts[c] || 0);
               if (c !== 'All' && count === 0) return null;
+              const label = c === 'All' ? t('scouting.filter_all') : t('scouting.cat_' + c.toLowerCase(), { defaultValue: c });
               return (
                 <button key={c} onClick={() => setFilterCat(c)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mont font-semibold border transition-all"
                   style={{ background: active ? '#6D8E22' : 'white', borderColor: active ? '#6D8E22' : '#E5E7EB', color: active ? 'white' : '#6B7280' }}>
-                  {c !== 'All' && CAT_ICON[c]} {c}
+                  {c !== 'All' && CAT_ICON[c]} {label}
                   <span className="ml-0.5 opacity-70">{count}</span>
                 </button>
               );
@@ -252,13 +263,13 @@ export default function PrecisionAgScouting() {
 
         {/* Observations */}
         {loading ? (
-          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
+          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">{t('scouting.loading')}</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
             <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-            <div className="font-lora text-xl text-gray-600 mb-2">{scouts.length === 0 ? 'No observations yet' : 'No observations in this category'}</div>
+            <div className="font-lora text-xl text-gray-600 mb-2">{scouts.length === 0 ? t('scouting.no_obs_title') : t('scouting.no_obs_filtered_title')}</div>
             <div className="font-mont text-sm text-gray-400">
-              {scouts.length === 0 ? 'Click "Add Observation" to log your first scouting note.' : 'Try selecting a different category.'}
+              {scouts.length === 0 ? t('scouting.no_obs_body') : t('scouting.no_obs_filtered_body')}
             </div>
           </div>
         ) : (
@@ -270,7 +281,7 @@ export default function PrecisionAgScouting() {
         {/* Summary stats */}
         {scouts.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="font-mont text-sm font-semibold text-gray-600 mb-3">Severity Breakdown</div>
+            <div className="font-mont text-sm font-semibold text-gray-600 mb-3">{t('scouting.severity_title')}</div>
             <div className="flex gap-4 flex-wrap">
               {SEVERITIES.map(sev => {
                 const count = scouts.filter(s => s.severity === sev).length;
@@ -278,7 +289,7 @@ export default function PrecisionAgScouting() {
                 return (
                   <div key={sev} className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full" style={{ background: SEV_COLOR[sev] }} />
-                    <span className="font-mont text-sm text-gray-600">{sev}</span>
+                    <span className="font-mont text-sm text-gray-600">{t('scouting.sev_' + sev.toLowerCase(), { defaultValue: sev })}</span>
                     <span className="font-mont text-sm font-bold" style={{ color: SEV_COLOR[sev] }}>{count}</span>
                   </div>
                 );

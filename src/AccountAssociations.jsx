@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -8,6 +9,7 @@ import Breadcrumbs from './Breadcrumbs';
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function AccountAssociations() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const BusinessID = parseInt(params.get('BusinessID') || '0', 10);
@@ -26,7 +28,7 @@ export default function AccountAssociations() {
   useEffect(() => {
     if (!peopleId) { navigate('/login'); return; }
     if (!BusinessID) {
-      setError('Missing BusinessID in URL.');
+      setError(t('acct_assoc.err_missing_id'));
       setLoading(false);
       return;
     }
@@ -46,8 +48,8 @@ export default function AccountAssociations() {
         setMemberships(mem.memberships || []);
         setFavorite(mem.favorite || null);
         setSelected(mem.favorite ? String(mem.favorite.AssociationID) : '');
-      } catch (e) {
-        if (!cancelled) setError('Could not load associations.');
+      } catch {
+        if (!cancelled) setError(t('acct_assoc.err_load'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -71,24 +73,17 @@ export default function AccountAssociations() {
       const res = await fetch(`${API_URL}/api/associations/set-favorite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          PeopleID: peopleId,
-          BusinessID,
-          AssociationID: parseInt(selected, 10),
-        }),
+        body: JSON.stringify({ PeopleID: peopleId, BusinessID, AssociationID: parseInt(selected, 10) }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        throw new Error(d.detail || 'Could not save favorite.');
+        throw new Error(d.detail || t('acct_assoc.err_save'));
       }
       const data = await res.json();
-      setFavorite({
-        AssociationID: data.FavoriteAssociationID,
-        AssociationName: data.FavoriteAssociationName,
-      });
-      setSavedMessage('Favorite association updated.');
+      setFavorite({ AssociationID: data.FavoriteAssociationID, AssociationName: data.FavoriteAssociationName });
+      setSavedMessage(t('acct_assoc.saved_fav'));
     } catch (e) {
-      setError(e.message || 'Save failed.');
+      setError(e.message || t('acct_assoc.err_save_generic'));
     } finally {
       setSaving(false);
     }
@@ -104,12 +99,12 @@ export default function AccountAssociations() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ PeopleID: peopleId, BusinessID }),
       });
-      if (!res.ok) throw new Error('Could not clear favorite.');
+      if (!res.ok) throw new Error(t('acct_assoc.err_clear'));
       setFavorite(null);
       setSelected('');
-      setSavedMessage('Favorite cleared.');
+      setSavedMessage(t('acct_assoc.cleared'));
     } catch (e) {
-      setError(e.message || 'Clear failed.');
+      setError(e.message || t('acct_assoc.err_clear_generic'));
     } finally {
       setSaving(false);
     }
@@ -117,28 +112,25 @@ export default function AccountAssociations() {
 
   return (
     <div className="min-h-screen font-sans">
-      <PageMeta title="Favorite Association | Oatmeal Farm Network" noIndex />
+      <PageMeta title={t('acct_assoc.meta_title')} noIndex />
       <Header />
 
       <div className="container mx-auto px-4 py-8" style={{ maxWidth: '900px' }}>
         <Breadcrumbs items={[
-          { label: 'Home', to: '/' },
-          { label: 'Dashboard', to: '/dashboard' },
-          { label: 'Favorite Association' },
+          { label: t('acct_assoc.breadcrumb_home'), to: '/' },
+          { label: t('acct_assoc.breadcrumb_dashboard'), to: '/dashboard' },
+          { label: t('acct_assoc.breadcrumb_associations') },
         ]} />
 
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Favorite Association</h1>
-        <p className="text-gray-600 mb-6 text-sm">
-          Pick the agricultural association this account identifies with most closely. It'll
-          appear on your dashboard and can drive association-specific features.
-        </p>
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">{t('acct_assoc.heading')}</h1>
+        <p className="text-gray-600 mb-6 text-sm">{t('acct_assoc.subheading')}</p>
 
         {loading ? (
-          <p className="text-gray-500">Loading…</p>
+          <p className="text-gray-500">{t('acct_assoc.loading')}</p>
         ) : (
           <>
             <div className="bg-gray-50 border border-gray-200 rounded p-4 mb-6">
-              <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Current favorite</div>
+              <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">{t('acct_assoc.current_fav_label')}</div>
               {favorite ? (
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div className="text-lg font-semibold text-gray-800">{favorite.AssociationName}</div>
@@ -148,30 +140,30 @@ export default function AccountAssociations() {
                     disabled={saving}
                     className="text-sm text-red-600 hover:underline disabled:opacity-50"
                   >
-                    Clear favorite
+                    {t('acct_assoc.btn_clear')}
                   </button>
                 </div>
               ) : (
-                <div className="text-gray-500">None set.</div>
+                <div className="text-gray-500">{t('acct_assoc.none_set')}</div>
               )}
             </div>
 
             <div className="mb-4">
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Filter associations
+                {t('acct_assoc.filter_label')}
               </label>
               <input
                 type="text"
                 value={filter}
                 onChange={e => setFilter(e.target.value)}
-                placeholder="Type to filter…"
+                placeholder={t('acct_assoc.filter_placeholder')}
                 className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
               />
             </div>
 
             <div className="mb-4">
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Select association ({filteredOptions.length} of {allAssociations.length})
+                {t('acct_assoc.select_label', { filtered: filteredOptions.length, total: allAssociations.length })}
               </label>
               <select
                 value={selected}
@@ -179,7 +171,7 @@ export default function AccountAssociations() {
                 size={12}
                 className="w-full border border-gray-300 rounded px-2 py-2 text-sm"
               >
-                <option value="">— Choose an association —</option>
+                <option value="">{t('acct_assoc.select_placeholder')}</option>
                 {filteredOptions.map(a => (
                   <option key={a.AssociationID} value={a.AssociationID}>
                     {a.AssociationName}
@@ -200,11 +192,8 @@ export default function AccountAssociations() {
             )}
 
             <div className="flex justify-end gap-2">
-              <Link
-                to="/dashboard"
-                className="border border-gray-300 rounded px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Back to Dashboard
+              <Link to="/dashboard" className="border border-gray-300 rounded px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                {t('acct_assoc.btn_back')}
               </Link>
               <button
                 type="button"
@@ -212,18 +201,20 @@ export default function AccountAssociations() {
                 disabled={saving || !selected}
                 className="bg-[#3D6B34] hover:bg-[#2f5427] text-white rounded px-4 py-2 text-sm font-semibold disabled:opacity-50"
               >
-                {saving ? 'Saving…' : 'Set as Favorite'}
+                {saving ? t('acct_assoc.btn_saving') : t('acct_assoc.btn_set_fav')}
               </button>
             </div>
 
             {memberships.length > 0 && (
               <div className="mt-8">
-                <h2 className="text-sm font-semibold text-gray-700 mb-2">Your existing memberships</h2>
+                <h2 className="text-sm font-semibold text-gray-700 mb-2">{t('acct_assoc.memberships_heading')}</h2>
                 <ul className="text-sm text-gray-600 space-y-1">
                   {memberships.map(m => (
                     <li key={m.associationmemberID}>
-                      {m.AssociationName || `Association #${m.AssociationID}`}
-                      {m.Favorite === 1 && <span className="ml-2 text-[#3D6B34] font-semibold">★ favorite</span>}
+                      {m.AssociationName || t('acct_assoc.assoc_number', { id: m.AssociationID })}
+                      {m.Favorite === 1 && (
+                        <span className="ml-2 text-[#3D6B34] font-semibold">{t('acct_assoc.fav_badge')}</span>
+                      )}
                     </li>
                   ))}
                 </ul>

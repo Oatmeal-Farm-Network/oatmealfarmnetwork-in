@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { useFields, API_URL } from './precisionAgUtils';
@@ -23,6 +24,7 @@ const TYPE_ICON = {
 };
 
 function AlertCard({ alert, onDismiss }) {
+  const { t } = useTranslation();
   const sev = SEV_COLOR[alert.severity] || SEV_COLOR.Low;
   const icon = TYPE_ICON[alert.type] || '⚠️';
   return (
@@ -35,18 +37,23 @@ function AlertCard({ alert, onDismiss }) {
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-mont text-xs font-bold px-2 py-0.5 rounded-full"
             style={{ background: sev.bg, color: sev.text }}>
-            {alert.severity}
+            {t('precision_ag_alerts.sev_' + alert.severity.toLowerCase(), { defaultValue: alert.severity })}
           </span>
-          <span className="font-mont text-xs text-gray-500">{alert.type}</span>
+          <span className="font-mont text-xs text-gray-500">
+            {t('precision_ag_alerts.type_' + alert.type.toLowerCase().replace(/\s+/g, '_'), { defaultValue: alert.type })}
+          </span>
           <span className="font-mont text-xs text-gray-400 ml-auto">{alert.date}</span>
         </div>
         <p className="font-mont text-sm text-gray-800 mt-1">{alert.message}</p>
         {alert.source && (
-          <p className="font-mont text-xs text-gray-400 mt-0.5 capitalize">Source: {alert.source.replace('_', ' ')}</p>
+          <p className="font-mont text-xs text-gray-400 mt-0.5 capitalize">
+            {t('precision_ag_alerts.source_label', { source: alert.source.replace('_', ' ') })}
+          </p>
         )}
       </div>
       <button onClick={() => onDismiss(alert.alert_id)}
-        className="text-gray-300 hover:text-gray-500 text-lg leading-none flex-shrink-0 mt-0.5" title="Dismiss">
+        className="text-gray-300 hover:text-gray-500 text-lg leading-none flex-shrink-0 mt-0.5"
+        title={t('precision_ag_alerts.dismiss_title')}>
         ×
       </button>
     </div>
@@ -54,6 +61,7 @@ function AlertCard({ alert, onDismiss }) {
 }
 
 export default function PrecisionAgAlerts() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -103,24 +111,24 @@ export default function PrecisionAgAlerts() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
-      pageTitle="Alerts" breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:'Alerts' }]}>
+      pageTitle={t('precision_ag_alerts.page_title')} breadcrumbs={[{ label: t('nav.dashboard'), to:'/dashboard' }, { label: t('precision_ag_alerts.breadcrumb_precision_ag') }, { label: t('precision_ag_alerts.page_title') }]}>
       <div className="max-w-full mx-auto space-y-5">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">Field Alerts</h1>
-            <p className="font-mont text-sm text-gray-500">Health warnings, NDVI declines, and scouting flags surfaced automatically.</p>
+            <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">{t('precision_ag_alerts.heading')}</h1>
+            <p className="font-mont text-sm text-gray-500">{t('precision_ag_alerts.subheading')}</p>
           </div>
           <button onClick={load} className="px-4 py-2 text-sm font-mont font-semibold bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700">
-            ↻ Refresh
+            {t('precision_ag_alerts.btn_refresh')}
           </button>
         </div>
 
         {/* Field selector */}
         <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <label className="text-xs font-semibold font-mont text-gray-500 block mb-1">Field</label>
+          <label className="text-xs font-semibold font-mont text-gray-500 block mb-1">{t('precision_ag_alerts.field_label')}</label>
           <select value={selectedFieldId} onChange={e => setSelectedFieldId(e.target.value)}
             className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 min-w-52">
-            {fields.length === 0 && <option value="">No fields</option>}
+            {fields.length === 0 && <option value="">{t('precision_ag_alerts.no_fields')}</option>}
             {fields.map(f => <option key={f.fieldid||f.id} value={String(f.fieldid||f.id)}>{f.name}</option>)}
           </select>
         </div>
@@ -134,7 +142,9 @@ export default function PrecisionAgAlerts() {
                 <div key={sev} className="rounded-xl border p-3 text-center"
                   style={{ background: c.bg + '80', borderColor: c.dot + '40' }}>
                   <div className="font-mont text-2xl font-bold" style={{ color: c.text }}>{counts[sev]}</div>
-                  <div className="font-mont text-xs" style={{ color: c.text }}>{sev}</div>
+                  <div className="font-mont text-xs" style={{ color: c.text }}>
+                    {t('precision_ag_alerts.sev_' + sev.toLowerCase(), { defaultValue: sev })}
+                  </div>
                 </div>
               );
             })}
@@ -142,12 +152,12 @@ export default function PrecisionAgAlerts() {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
+          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">{t('precision_ag_alerts.loading')}</div>
         ) : visible.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
             <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-            <div className="font-lora text-xl text-gray-600 mb-2">No active alerts</div>
-            <div className="font-mont text-sm text-gray-400">All clear — no issues detected for this field.</div>
+            <div className="font-lora text-xl text-gray-600 mb-2">{t('precision_ag_alerts.no_alerts_title')}</div>
+            <div className="font-mont text-sm text-gray-400">{t('precision_ag_alerts.no_alerts_body')}</div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -159,7 +169,7 @@ export default function PrecisionAgAlerts() {
                 setDismissed(new Set());
                 localStorage.removeItem('ag_dismissed_alerts');
               }} className="font-mont text-xs text-gray-400 hover:text-gray-600 underline">
-                Restore {dismissed.size} dismissed alert{dismissed.size > 1 ? 's' : ''}
+                {t('precision_ag_alerts.restore_dismissed', { count: dismissed.size })}
               </button>
             )}
           </div>

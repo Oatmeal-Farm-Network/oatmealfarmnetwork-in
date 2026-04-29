@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import EventAdminLayout from './EventAdminLayout';
 
 const API = import.meta.env.VITE_API_URL || '';
 const inp = "border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-[#819360]";
 
 export default function EventBroadcast() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [event, setEvent] = useState(null);
   const [recipients, setRecipients] = useState([]);
@@ -23,7 +25,7 @@ export default function EventBroadcast() {
 
   const send = async () => {
     if (!subject || !bodyHtml) return;
-    if (!confirm(`Send to ${recipients.length} recipients?`)) return;
+    if (!confirm(t('event_broadcast.confirm_send', { count: recipients.length }))) return;
     setSending(true);
     setResult(null);
     try {
@@ -43,13 +45,13 @@ export default function EventBroadcast() {
     <EventAdminLayout eventId={eventId}>
       <div className="max-w-3xl mx-auto py-8 px-4">
         <Link to={`/events/${eventId}/manage`} className="text-xs text-gray-500 hover:text-[#3D6B34]">← Back to manage</Link>
-        <h1 className="text-3xl font-semibold text-[#3D6B34] mt-2 mb-1">Broadcast</h1>
+        <h1 className="text-3xl font-semibold text-[#3D6B34] mt-2 mb-1">{t('event_broadcast.heading')}</h1>
         <div className="text-sm text-gray-500 mb-6">{event?.EventName}</div>
 
         <div className="bg-white rounded-xl shadow p-5 mb-4">
-          <div className="text-sm font-medium mb-2">Recipients ({recipients.length})</div>
+          <div className="text-sm font-medium mb-2">{t('event_broadcast.recipients_label', { count: recipients.length })}</div>
           {recipients.length === 0 ? (
-            <div className="text-xs text-gray-500">No registrants with email addresses yet.</div>
+            <div className="text-xs text-gray-500">{t('event_broadcast.no_recipients')}</div>
           ) : (
             <div className="flex flex-wrap gap-1.5 max-h-32 overflow-auto">
               {recipients.map(r => (
@@ -63,14 +65,14 @@ export default function EventBroadcast() {
 
         <div className="bg-white rounded-xl shadow p-5 space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Subject</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">{t('event_broadcast.label_subject')}</label>
             <input className={inp} value={subject}
-              placeholder="e.g. Reminder: parking info for tomorrow"
+              placeholder={t('event_broadcast.placeholder_subject')}
               onChange={e => setSubject(e.target.value)} />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">
-              Message (HTML allowed · use <code>{'{{name}}'}</code> for first name)
+              {t('event_broadcast.label_message')} <code>{'{{name}}'}</code> {t('event_broadcast.label_message_hint')}
             </label>
             <textarea rows={10} className={inp} value={bodyHtml}
               placeholder={'Hi {{name}},\n\n...'}
@@ -79,17 +81,17 @@ export default function EventBroadcast() {
           <div className="flex justify-end gap-2 pt-2">
             <Link to={`/events/${eventId}/manage`}
               className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50">
-              Cancel
+              {t('event_broadcast.btn_cancel')}
             </Link>
             <button onClick={send} disabled={sending || !subject || !bodyHtml || recipients.length === 0}
               className="px-4 py-2 bg-[#3D6B34] text-white text-sm rounded-lg hover:bg-[#2d5025] disabled:opacity-50">
-              {sending ? 'Sending…' : `Send to ${recipients.length}`}
+              {sending ? t('event_broadcast.btn_sending') : t('event_broadcast.btn_send', { count: recipients.length })}
             </button>
           </div>
           {result && (
             <div className={`text-sm mt-2 ${result.sent > 0 ? 'text-green-700' : 'text-red-600'}`}>
-              Sent: {result.sent || 0}
-              {result.failed > 0 && ` · Failed: ${result.failed}`}
+              {t('event_broadcast.result_sent', { count: result.sent || 0 })}
+              {result.failed > 0 && ` · ${t('event_broadcast.result_failed', { count: result.failed })}`}
               {result.message && ` · ${result.message}`}
             </div>
           )}

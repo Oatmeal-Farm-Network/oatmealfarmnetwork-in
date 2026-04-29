@@ -10,11 +10,13 @@
 //   ]} />
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const BASE_URL = 'https://oatmealfarmnetwork.com';
 const MARKER   = 'data-breadcrumb-jsonld';
 
 export default function Breadcrumbs({ items: rawItems = [], className = '', style = {} }) {
+  const { t } = useTranslation();
   const isLoggedIn = typeof window !== 'undefined' && !!localStorage.getItem('access_token');
   const [psOpen, setPsOpen] = useState(false);
   const psRef = useRef(null);
@@ -75,7 +77,7 @@ export default function Breadcrumbs({ items: rawItems = [], className = '', styl
   return (
     <div className={`text-xs mb-3 flex flex-wrap items-center ${className}`} style={style}>
       <nav
-        aria-label="Breadcrumb"
+        aria-label={t('breadcrumbs.nav_aria')}
         className="flex flex-wrap items-center"
         style={{ gap: 4, color: '#6b7280' }}
       >
@@ -108,7 +110,7 @@ export default function Breadcrumbs({ items: rawItems = [], className = '', styl
         <div className="ml-auto relative" ref={psRef}>
           <button
             onClick={() => setPsOpen(o => !o)}
-            title="Personal Settings"
+            title={t('breadcrumbs.btn_personal_settings')}
             style={{ color: '#3D6B34', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -127,7 +129,7 @@ export default function Breadcrumbs({ items: rawItems = [], className = '', styl
                 className="block px-4 py-2 hover:bg-gray-50 transition-colors"
                 style={{ color: '#374151', textDecoration: 'none', fontSize: '0.8rem' }}
               >
-                Login &amp; Account
+                {t('breadcrumbs.link_account')}
               </Link>
               <Link
                 to="/account/settings?tab=audio"
@@ -135,7 +137,7 @@ export default function Breadcrumbs({ items: rawItems = [], className = '', styl
                 className="block px-4 py-2 hover:bg-gray-50 transition-colors"
                 style={{ color: '#374151', textDecoration: 'none', fontSize: '0.8rem' }}
               >
-                Language &amp; Audio Settings
+                {t('breadcrumbs.link_language')}
               </Link>
             </div>
           )}

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
 export default function TestimonialsRequest() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('people_id');
@@ -30,7 +32,7 @@ export default function TestimonialsRequest() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ BusinessID, email, name }),
       });
-      if (!res.ok) throw new Error('Failed to send request');
+      if (!res.ok) throw new Error(t('testimonials_req.err_send'));
       setSent(true);
       setEmail('');
       setName('');
@@ -41,17 +43,17 @@ export default function TestimonialsRequest() {
     }
   };
 
-  if (!Business) return <div className="p-8 text-gray-500">Loading...</div>;
+  if (!Business) return <div className="p-8 text-gray-500">{t('testimonials_req.loading')}</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Request Testimonials" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Testimonials' }, { label: 'Request' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={t('testimonials_req.page_title')} breadcrumbs={[{ label: t('nav.dashboard'), to: '/dashboard' }, { label: t('testimonials_req.breadcrumb') }, { label: t('testimonials_req.breadcrumb_request') }]}>
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
-        <h2 className="text-2xl font-bold text-green-700 mb-4">Request a Testimonial</h2>
-        <p className="text-gray-600 text-sm mb-6">Send a testimonial request to a customer or partner. They'll receive an email with a link to submit their testimonial.</p>
+        <h2 className="text-2xl font-bold text-green-700 mb-4">{t('testimonials_req.heading')}</h2>
+        <p className="text-gray-600 text-sm mb-6">{t('testimonials_req.subheading')}</p>
 
         {sent && (
           <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">
-            Testimonial request sent successfully!
+            {t('testimonials_req.success')}
           </div>
         )}
         {error && (
@@ -62,7 +64,7 @@ export default function TestimonialsRequest() {
 
         <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Recipient Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('testimonials_req.label_name')}</label>
             <input
               type="text"
               value={name}
@@ -73,7 +75,7 @@ export default function TestimonialsRequest() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Recipient Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('testimonials_req.label_email')}</label>
             <input
               type="email"
               value={email}
@@ -89,7 +91,7 @@ export default function TestimonialsRequest() {
               disabled={sending}
               className="regsubmit2"
             >
-              {sending ? 'Sending...' : 'Send Request'}
+              {sending ? t('testimonials_req.btn_sending') : t('testimonials_req.btn_send')}
             </button>
           </div>
         </form>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Lightweight install-prompt banner.
 // Shows when the browser fires `beforeinstallprompt` (Chrome/Edge/Android).
@@ -30,6 +31,7 @@ function isStandalone() {
 }
 
 export default function PWAInstallPrompt() {
+  const { t } = useTranslation();
   const [deferred, setDeferred] = useState(null);
   const [visible, setVisible] = useState(false);
   const [showIosHint, setShowIosHint] = useState(false);
@@ -46,14 +48,14 @@ export default function PWAInstallPrompt() {
 
     // iOS path — show a gentle hint after 8s if the user hasn't already
     // dismissed or installed.
-    let t;
+    let timerId;
     if (isIOS() && !isStandalone()) {
-      t = setTimeout(() => setShowIosHint(true), 8000);
+      timerId = setTimeout(() => setShowIosHint(true), 8000);
     }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', onBefore);
-      if (t) clearTimeout(t);
+      if (timerId) clearTimeout(timerId);
     };
   }, []);
 
@@ -86,17 +88,17 @@ export default function PWAInstallPrompt() {
       <img src="/images/OFNFavico.png" alt="" style={{ width: 36, height: 36, borderRadius: 8, background: '#fff', padding: 4 }} />
       <div style={{ flex: 1, fontSize: 13, lineHeight: 1.35 }}>
         {visible ? (
-          <>Install Oatmeal Farm Network for push alerts and home-screen access.</>
+          <>{t('pwa_install.msg_install')}</>
         ) : (
-          <>Add OFN to your Home Screen: tap the Share button, then <strong>Add to Home Screen</strong>.</>
+          <>{t('pwa_install.msg_ios_prefix')} <strong>{t('pwa_install.msg_ios_add')}</strong>.</>
         )}
       </div>
       {visible && (
         <button onClick={install} style={{ padding: '8px 12px', background: '#fff', color: '#14532d', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
-          Install
+          {t('pwa_install.btn_install')}
         </button>
       )}
-      <button onClick={dismiss} aria-label="Dismiss" style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}>×</button>
+      <button onClick={dismiss} aria-label={t('pwa_install.btn_dismiss_aria')} style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}>×</button>
     </div>
   );
 }

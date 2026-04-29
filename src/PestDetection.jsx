@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import RelatedSuggestions from './RelatedSuggestions.jsx';
 
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
@@ -11,6 +12,7 @@ function confidenceColor(c) {
 }
 
 export default function PestDetection() {
+  const { t } = useTranslation();
   const [preview, setPreview] = useState(null);
   const [notes, setNotes] = useState('');
   const [result, setResult] = useState(null);
@@ -42,9 +44,9 @@ export default function PestDetection() {
       });
       const j = await r.json();
       if (j?.status === 'ok') setResult(j);
-      else setErr(j?.message || 'Detection failed.');
+      else setErr(j?.message || t('pest_detection.err_failed'));
     } catch {
-      setErr('Could not reach detection service.');
+      setErr(t('pest_detection.err_no_service'));
     } finally {
       setLoading(false);
     }
@@ -56,13 +58,12 @@ export default function PestDetection() {
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 20px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
         <img src="/images/AI-agent-logo-saige.svg" alt="" style={{ width: 36, height: 36 }} />
-        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#14532d' }}>Pest & Disease Detection</h1>
+        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#14532d' }}>{t('pest_detection.heading')}</h1>
       </div>
       <p style={{ color: '#4b5563', marginTop: 4, marginBottom: 18 }}>
-        Upload a close-up photo of a leaf, stem, fruit, or whole plant. We'll identify
-        likely pests, diseases, or deficiencies and suggest next steps. For confirmed
-        diagnoses, also consult your local extension office.
-        <Link to="/saige"> Ask Saige</Link> for deeper follow-up questions.
+        {t('pest_detection.desc')}
+        <Link to="/saige"> {t('pest_detection.desc_link')}</Link>{' '}
+        {t('pest_detection.desc_link_suffix')}
       </p>
 
       <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, marginBottom: 14 }}>
@@ -77,19 +78,19 @@ export default function PestDetection() {
         {preview && (
           <img src={preview} alt="preview" style={{ maxWidth: '100%', maxHeight: 320, borderRadius: 8, marginBottom: 12 }} />
         )}
-        <label style={{ fontSize: 13, color: '#374151' }}>Notes (optional — symptoms, crop, when it started)</label>
+        <label style={{ fontSize: 13, color: '#374151' }}>{t('pest_detection.label_notes')}</label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          placeholder="e.g., Yellowing started 3 days ago after heavy rain, corn seedlings"
+          placeholder={t('pest_detection.placeholder_notes')}
           style={{ display: 'block', width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 8, marginTop: 4 }}
         />
         <button
           onClick={detect}
           disabled={!preview || loading}
           style={{ marginTop: 12, padding: '10px 20px', background: '#14532d', color: '#fff', border: 'none', borderRadius: 8, cursor: (!preview || loading) ? 'not-allowed' : 'pointer', opacity: (!preview || loading) ? 0.5 : 1 }}
-        >{loading ? 'Analyzing photo…' : 'Identify problem'}</button>
+        >{loading ? t('pest_detection.btn_loading') : t('pest_detection.btn_detect')}</button>
       </div>
 
       {err && <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', color: '#991b1b', padding: 10, borderRadius: 8 }}>{err}</div>}
@@ -97,14 +98,14 @@ export default function PestDetection() {
       {result && (
         <div style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 12, padding: 16 }}>
           <div style={{ fontSize: 18, fontWeight: 700, color: c.color, textTransform: 'capitalize' }}>
-            {result.diagnosis} <span style={{ fontSize: 14, fontWeight: 400 }}>({result.category}, confidence: {result.confidence})</span>
+            {result.diagnosis} <span style={{ fontSize: 14, fontWeight: 400 }}>{t('pest_detection.result_meta', { category: result.category, confidence: result.confidence })}</span>
           </div>
           {result.crop_identified && result.crop_identified !== 'unknown' && (
-            <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>Crop identified: {result.crop_identified}</div>
+            <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>{t('pest_detection.result_crop', { crop: result.crop_identified })}</div>
           )}
           {result.symptoms_observed?.length > 0 && (
             <>
-              <div style={{ marginTop: 12, fontWeight: 600 }}>Symptoms observed</div>
+              <div style={{ marginTop: 12, fontWeight: 600 }}>{t('pest_detection.symptoms_heading')}</div>
               <ul style={{ margin: '4px 0 0 0', paddingLeft: 22, lineHeight: 1.5 }}>
                 {result.symptoms_observed.map((s, i) => <li key={i}>{s}</li>)}
               </ul>
@@ -112,7 +113,7 @@ export default function PestDetection() {
           )}
           {result.recommended_actions?.length > 0 && (
             <>
-              <div style={{ marginTop: 12, fontWeight: 600 }}>Recommended actions</div>
+              <div style={{ marginTop: 12, fontWeight: 600 }}>{t('pest_detection.actions_heading')}</div>
               <ul style={{ margin: '4px 0 0 0', paddingLeft: 22, lineHeight: 1.5 }}>
                 {result.recommended_actions.map((s, i) => <li key={i}>{s}</li>)}
               </ul>
@@ -120,16 +121,16 @@ export default function PestDetection() {
           )}
           {result.look_alikes?.length > 0 && (
             <div style={{ marginTop: 12, fontSize: 13 }}>
-              <strong>Rule out:</strong> {result.look_alikes.join(', ')}
+              <strong>{t('pest_detection.rule_out_label')}</strong> {result.look_alikes.join(', ')}
             </div>
           )}
           {result.notes && (
             <div style={{ marginTop: 10, fontSize: 13, color: '#4b5563' }}>
-              <strong>Notes:</strong> {result.notes}
+              <strong>{t('pest_detection.notes_label')}</strong> {result.notes}
             </div>
           )}
           <RelatedSuggestions
-            heading="Companion plants that may help"
+            heading={t('pest_detection.related_heading')}
             items={result.related_suggestions || []}
           />
           <div style={{ marginTop: 14 }}>
@@ -141,7 +142,7 @@ export default function PestDetection() {
               )}`}
               style={{ display: 'inline-block', padding: '10px 18px', background: '#0f766e', color: '#fff', borderRadius: 8, textDecoration: 'none', fontWeight: 600 }}
             >
-              Ask Saige about this diagnosis →
+              {t('pest_detection.btn_ask_saige')}
             </Link>
           </div>
         </div>

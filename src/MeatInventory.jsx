@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function MeatInventory() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('people_id');
@@ -97,7 +99,7 @@ export default function MeatInventory() {
       await loadInventory();
     } else {
       const d = await res.json().catch(() => ({}));
-      setAddError(d.detail || 'An error occurred.');
+      setAddError(d.detail || t('meat_inv.err_generic'));
     }
     setAdding(false);
   }
@@ -145,7 +147,7 @@ export default function MeatInventory() {
   }
 
   async function handleDelete(id) {
-    if (!confirm('Are you sure you want to delete this meat item?')) return;
+    if (!confirm(t('meat_inv.confirm_delete'))) return;
     setDeletingRow(id);
     await fetch(`${API_URL}/api/meat/delete/${id}?BusinessID=${BusinessID}`, { method: 'DELETE' });
     await loadInventory();
@@ -156,18 +158,18 @@ export default function MeatInventory() {
   const labelCls = "block text-xs font-medium text-gray-500 mb-1";
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Meat Inventory" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Inventory' }, { label: 'Meat' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={t('meat_inv.page_title')} breadcrumbs={[{ label: t('nav.dashboard'), to: '/dashboard' }, { label: t('meat_inv.breadcrumb_inventory') }, { label: t('meat_inv.breadcrumb_meat') }]}>
       <div className="max-w-full mx-auto space-y-6">
 
         {/* ── ADD FORM ── */}
         <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">Meat Inventory</h1>
-          <p className="text-sm text-gray-500 mb-4">Beef, pork, poultry, lamb, and other meats for sale.</p>
-          <h2 className="text-base font-semibold text-gray-600 mb-4">Add Meat</h2>
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">{t('meat_inv.page_title')}</h1>
+          <p className="text-sm text-gray-500 mb-4">{t('meat_inv.subheading')}</p>
+          <h2 className="text-base font-semibold text-gray-600 mb-4">{t('meat_inv.add_heading')}</h2>
 
           {addSuccess && (
             <div className="bg-green-50 border border-green-300 text-green-700 rounded px-4 py-2 text-sm mb-4">
-              Meat item added successfully.
+              {t('meat_inv.success_add')}
             </div>
           )}
           {addError && (
@@ -182,7 +184,7 @@ export default function MeatInventory() {
 
               {/* Meat (from Ingredients where category=10) */}
               <div>
-                <label className={labelCls}>Meat</label>
+                <label className={labelCls}>{t('meat_inv.label_meat')}</label>
                 <select
                   value={addForm.IngredientID}
                   onChange={e => {
@@ -192,7 +194,7 @@ export default function MeatInventory() {
                   className={inputCls}
                   required
                 >
-                  <option value="">Select meat</option>
+                  <option value="">{t('meat_inv.select_meat')}</option>
                   {meatItems.map(m => (
                     <option key={m.IngredientID} value={m.IngredientID}>
                       {m.IngredientName}
@@ -203,14 +205,14 @@ export default function MeatInventory() {
 
               {/* Cut (filtered by selected meat) */}
               <div>
-                <label className={labelCls}>Cut</label>
+                <label className={labelCls}>{t('meat_inv.label_cut')}</label>
                 <select
                   value={addForm.IngredientCutID}
                   onChange={e => setAddForm(f => ({ ...f, IngredientCutID: e.target.value }))}
                   className={inputCls}
                   disabled={!addForm.IngredientID}
                 >
-                  <option value="">{addForm.IngredientID ? 'Select cut' : 'Select meat first'}</option>
+                  <option value="">{addForm.IngredientID ? t('meat_inv.select_cut') : t('meat_inv.select_meat_first')}</option>
                   {cuts.map(c => (
                     <option key={c.IngredientCutID} value={c.IngredientCutID}>
                       {c.IngredientCut}
@@ -221,7 +223,7 @@ export default function MeatInventory() {
 
               {/* Quantity */}
               <div>
-                <label className={labelCls}># Available</label>
+                <label className={labelCls}>{t('meat_inv.label_available')}</label>
                 <input
                   type="number"
                   value={addForm.Quantity}
@@ -233,7 +235,7 @@ export default function MeatInventory() {
 
               {/* Weight */}
               <div>
-                <label className={labelCls}>Weight</label>
+                <label className={labelCls}>{t('meat_inv.label_weight')}</label>
                 <div className="flex gap-1">
                   <input
                     type="number"
@@ -263,7 +265,7 @@ export default function MeatInventory() {
 
               {/* Wholesale */}
               <div>
-                <label className={labelCls}>Wholesale (USD)</label>
+                <label className={labelCls}>{t('meat_inv.label_wholesale')}</label>
                 <div className="flex items-center border border-gray-300 rounded overflow-hidden focus-within:border-[#819360]">
                   <span className="px-2 text-gray-400 text-sm bg-gray-50 border-r border-gray-300">$</span>
                   <input
@@ -278,7 +280,7 @@ export default function MeatInventory() {
 
               {/* Retail */}
               <div>
-                <label className={labelCls}>Retail (USD)</label>
+                <label className={labelCls}>{t('meat_inv.label_retail')}</label>
                 <div className="flex items-center border border-gray-300 rounded overflow-hidden focus-within:border-[#819360]">
                   <span className="px-2 text-gray-400 text-sm bg-gray-50 border-r border-gray-300">$</span>
                   <input
@@ -294,7 +296,7 @@ export default function MeatInventory() {
 
             <div className="flex justify-end mt-4">
               <button type="submit" disabled={adding} className="regsubmit2" style={{ minWidth: '180px' }}>
-                {adding ? 'Adding...' : 'Add Meat'}
+                {adding ? t('meat_inv.btn_adding') : t('meat_inv.btn_add')}
               </button>
             </div>
           </form>
@@ -303,19 +305,19 @@ export default function MeatInventory() {
         {/* ── INVENTORY TABLE ── */}
         <div className="bg-white rounded-2xl shadow border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-lg font-bold text-gray-800">Inventory</h2>
+            <h2 className="text-lg font-bold text-gray-800">{t('meat_inv.inventory_heading')}</h2>
           </div>
 
           {loadingInventory ? (
-            <div className="text-center py-12 text-gray-400">Loading inventory...</div>
+            <div className="text-center py-12 text-gray-400">{t('meat_inv.loading')}</div>
           ) : inventory.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">You do not currently have any meat listed.</div>
+            <div className="text-center py-12 text-gray-400">{t('meat_inv.empty')}</div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#F3F4F6' }}>
-                    {['Meat', 'Cut', 'Weight', 'Wholesale', 'Retail', 'Qty', 'Available', 'Display', 'Options'].map(h => (
+                    {[t('meat_inv.th_meat'), t('meat_inv.th_cut'), t('meat_inv.th_weight'), t('meat_inv.th_wholesale'), t('meat_inv.th_retail'), t('meat_inv.th_qty'), t('meat_inv.th_available'), t('meat_inv.th_display'), t('meat_inv.th_options')].map(h => (
                       <th key={h} style={{ padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -337,7 +339,7 @@ export default function MeatInventory() {
                         <td style={{ padding: '0.6rem 0.75rem', fontSize: '0.82rem', color: '#6B7280' }}>
                           {isEditing ? (
                             <select value={row.IngredientCutID || ''} onChange={e => updateEditRow(item.MeatInventoryID, 'IngredientCutID', e.target.value)} className="border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none" style={{ maxWidth: '140px' }}>
-                              <option value="">None</option>
+                              <option value="">{t('meat_inv.none')}</option>
                               {rowCuts.map(c => (
                                 <option key={c.IngredientCutID} value={c.IngredientCutID}>{c.IngredientCut}</option>
                               ))}
@@ -422,10 +424,10 @@ export default function MeatInventory() {
                             {isEditing ? (
                               <>
                                 <button onClick={() => handleUpdate(item.MeatInventoryID)} disabled={savingRow === item.MeatInventoryID} className="text-xs bg-[#3D6B34] text-white px-2 py-1 rounded hover:bg-[#2e5227] transition-colors disabled:opacity-50">
-                                  {savingRow === item.MeatInventoryID ? '...' : 'Save'}
+                                  {savingRow === item.MeatInventoryID ? '...' : t('meat_inv.btn_save')}
                                 </button>
                                 <button onClick={() => cancelEdit(item.MeatInventoryID)} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded border border-gray-300">
-                                  Cancel
+                                  {t('meat_inv.btn_cancel')}
                                 </button>
                               </>
                             ) : (

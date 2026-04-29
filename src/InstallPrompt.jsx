@@ -10,6 +10,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 const DISMISS_KEY = 'ofn_install_dismissed_at';
 const COOLDOWN_DAYS = 14;
@@ -31,6 +32,7 @@ function isStandalone() {
 }
 
 export default function InstallPrompt() {
+  const { t } = useTranslation();
   const [evt, setEvt] = useState(null);
   const [hidden, setHidden] = useState(true);
 
@@ -95,14 +97,14 @@ export default function InstallPrompt() {
     }}>
       <img src="/images/OFNFavico.png" alt="" style={{ width: 28, height: 28, borderRadius: 6 }} />
       <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 600 }}>Install OFN</div>
-        <div style={{ fontSize: 12, opacity: 0.85 }}>Faster, works offline at events.</div>
+        <div style={{ fontWeight: 600 }}>{t('install_prompt.heading')}</div>
+        <div style={{ fontSize: 12, opacity: 0.85 }}>{t('install_prompt.body')}</div>
       </div>
       <button onClick={install} style={{
         background: '#fff', color: '#3D6B34', border: 'none',
         padding: '6px 12px', borderRadius: 6, fontWeight: 600, cursor: 'pointer', fontSize: 13,
-      }}>Install</button>
-      <button onClick={dismiss} aria-label="Dismiss" style={{
+      }}>{t('install_prompt.btn_install')}</button>
+      <button onClick={dismiss} aria-label={t('install_prompt.btn_dismiss_aria')} style={{
         background: 'transparent', color: '#fff', border: 'none', cursor: 'pointer',
         fontSize: 18, lineHeight: 1, padding: '0 4px',
       }}>×</button>

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
 export default function AccountChangeType() {
+  const { t } = useTranslation();
   const [SearchParams] = useSearchParams();
   const BusinessID = SearchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('PeopleID');
@@ -41,28 +43,28 @@ export default function AccountChangeType() {
   }
 };
 
-  if (!Business || Loading) return <div className="p-8 text-gray-500">Loading...</div>;
+  if (!Business || Loading) return <div className="p-8 text-gray-500">{t('change_type.loading')}</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Change Account Type" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Account Settings' }, { label: 'Change Account Type' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={t('change_type.page_title')} breadcrumbs={[{ label: t('nav.dashboard'), to: '/dashboard' }, { label: t('change_type.breadcrumb_settings') }, { label: t('change_type.page_title') }]}>
 
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6 mx-w-full" >
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Change Account Type</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('change_type.heading')}</h1>
 
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
           <h2 className="text-lg font-bold text-gray-800">{Business?.BusinessName}</h2>
-          <p className="text-gray-500 text-sm mt-1">{Business?.BusinessType} Account</p>
+          <p className="text-gray-500 text-sm mt-1">{Business?.BusinessType} {t('change_type.account_label')}</p>
         </div>
 
         {Success && (
           <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-3 mb-6 text-sm font-medium">
-            Account type updated successfully!
+            {t('change_type.success')}
           </div>
         )}
 
         <form onSubmit={HandleSubmit}>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Account Type
+            {t('change_type.label_type')}
           </label>
           <div className="flex gap-3">
             <select
@@ -71,7 +73,7 @@ export default function AccountChangeType() {
               required
               className="flex-grow border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#819360] focus:ring-2 focus:ring-[#819360]/20"
             >
-              <option value="">Select a type...</option>
+              <option value="">{t('change_type.select_type')}</option>
               {BusinessTypes.map(T => (
                 <option key={T.BusinessTypeID} value={T.BusinessTypeID}>
                   {T.BusinessType}
@@ -82,7 +84,7 @@ export default function AccountChangeType() {
               type="submit"
               className="regsubmit2"
             >
-              Change
+              {t('change_type.btn_change')}
             </button>
           </div>
         </form>
@@ -92,7 +94,7 @@ export default function AccountChangeType() {
             to={`/account?BusinessID=${BusinessID}`}
             className="text-sm text-[#3D6B34] hover:underline"
           >
-            ← Back to Account
+            {t('change_type.back_link')}
           </Link>
         </div>
       </div>

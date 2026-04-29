@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
 const apiBase = import.meta.env.VITE_API_URL || '';
 
 export default function ServicesHome() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
@@ -38,33 +40,31 @@ export default function ServicesHome() {
       });
   }, [BusinessID]);
 
-  if (!Business || Loading) return <div className="p-8 text-gray-500">Loading...</div>;
-  if (hasError) return <div className="p-8 text-red-600">Error loading services.</div>;
+  if (!Business || Loading) return <div className="p-8 text-gray-500">{t('services_home.loading')}</div>;
+  if (hasError) return <div className="p-8 text-red-600">{t('services_home.error')}</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="My Services" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Services' }, { label: 'My Services' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID}
+      pageTitle={t('services_home.page_title')}
+      breadcrumbs={[
+        { label: t('services_home.breadcrumb_dashboard'), to: '/dashboard' },
+        { label: t('services_home.breadcrumb_services') },
+        { label: t('services_home.page_title') },
+      ]}>
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
 
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-green-700">My Services</h2>
-          <Link
-            to={`/services/add?BusinessID=${BusinessID}`}
-            className="regsubmit2"
-          >
-            Add Service
+          <h2 className="text-2xl font-bold text-green-700">{t('services_home.heading')}</h2>
+          <Link to={`/services/add?BusinessID=${BusinessID}`} className="regsubmit2">
+            {t('services_home.btn_add')}
           </Link>
         </div>
 
-        {/* Empty state */}
         {Services.length === 0 ? (
           <p className="text-gray-500 text-sm">
-            You do not have any services listed.{' '}
-            <Link
-              to={`/services/add?BusinessID=${BusinessID}`}
-              className="text-[#3D6B34] hover:underline"
-            >
-              Click here to add one.
+            {t('services_home.empty')}{' '}
+            <Link to={`/services/add?BusinessID=${BusinessID}`} className="text-[#3D6B34] hover:underline">
+              {t('services_home.empty_cta')}
             </Link>
           </p>
         ) : (
@@ -72,18 +72,16 @@ export default function ServicesHome() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b-2 border-gray-300">
-                  <th className="text-left py-3 px-2 text-gray-600 font-semibold">Service</th>
-                  <th className="text-left py-3 px-2 text-gray-600 font-semibold hidden md:table-cell">Available</th>
-                  <th className="text-left py-3 px-2 text-gray-600 font-semibold hidden md:table-cell">Price / Rate</th>
-                  <th className="text-right py-3 px-2 text-gray-600 font-semibold">Options</th>
+                  <th className="text-left py-3 px-2 text-gray-600 font-semibold">{t('services_home.th_service')}</th>
+                  <th className="text-left py-3 px-2 text-gray-600 font-semibold hidden md:table-cell">{t('services_home.th_available')}</th>
+                  <th className="text-left py-3 px-2 text-gray-600 font-semibold hidden md:table-cell">{t('services_home.th_price')}</th>
+                  <th className="text-right py-3 px-2 text-gray-600 font-semibold">{t('services_home.th_options')}</th>
                 </tr>
               </thead>
               <tbody>
                 {Services.map(Service => (
                   <React.Fragment key={Service.ServicesID}>
                     <tr className="border-b border-gray-100 hover:bg-gray-50">
-
-                      {/* Title */}
                       <td className="py-3 px-2">
                         <span
                           onClick={() => navigate(`/services/edit?BusinessID=${BusinessID}&ServicesID=${Service.ServicesID}`)}
@@ -92,47 +90,40 @@ export default function ServicesHome() {
                           {Service.ServiceTitle}
                         </span>
                       </td>
-
-                      {/* Available */}
                       <td className="py-3 px-2 hidden md:table-cell text-gray-600">
                         {Service.ServiceAvailable || '—'}
                       </td>
-
-                      {/* Price */}
                       <td className="py-3 px-2 hidden md:table-cell text-gray-600">
                         {Service.ServicePrice
                           ? `$${parseFloat(Service.ServicePrice).toLocaleString()}`
                           : Service.ServiceContactForPrice === 'Yes'
-                          ? 'Contact for price'
+                          ? t('services_home.contact_for_price')
                           : '—'}
                       </td>
-
-                      {/* Options */}
                       <td className="py-3 px-2 text-right">
                         <div className="flex justify-end gap-3 items-center">
                           <button
                             onClick={() => navigate(`/services/edit?BusinessID=${BusinessID}&ServicesID=${Service.ServicesID}`)}
                             className="text-[#5a3e2b] hover:underline text-xs font-medium"
                           >
-                            Edit
+                            {t('services_home.btn_edit')}
                           </button>
                           <span className="text-gray-300">|</span>
                           <Link
                             to={`/services/photos?BusinessID=${BusinessID}&ServicesID=${Service.ServicesID}`}
                             className="text-[#3D6B34] hover:underline text-xs"
                           >
-                            Photos
+                            {t('services_home.btn_photos')}
                           </Link>
                           <span className="text-gray-300">|</span>
                           <Link
                             to={`/services/delete?BusinessID=${BusinessID}&ServicesID=${Service.ServicesID}`}
                             className="text-red-500 hover:underline text-xs"
                           >
-                            Delete
+                            {t('services_home.btn_delete')}
                           </Link>
                         </div>
                       </td>
-
                     </tr>
                   </React.Fragment>
                 ))}
