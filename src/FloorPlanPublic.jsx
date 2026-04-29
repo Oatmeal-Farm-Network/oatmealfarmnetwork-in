@@ -10,6 +10,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 
 const API = import.meta.env.VITE_API_URL || '';
@@ -19,13 +20,14 @@ const btn = "px-4 py-2 text-sm bg-[#3D6B34] text-white rounded-lg hover:bg-[#2d5
 const btnGhost = "px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50";
 
 const STATUS_COLOR = {
-  available: { fill: '#16A34A', stroke: '#14532D', label: 'Available' },
-  reserved:  { fill: '#F59E0B', stroke: '#78350F', label: 'Reserved' },
-  sold:      { fill: '#3B82F6', stroke: '#1E40AF', label: 'Sold' },
-  blocked:   { fill: '#9CA3AF', stroke: '#4B5563', label: 'Not for sale' },
+  available: { fill: '#16A34A', stroke: '#14532D' },
+  reserved:  { fill: '#F59E0B', stroke: '#78350F' },
+  sold:      { fill: '#3B82F6', stroke: '#1E40AF' },
+  blocked:   { fill: '#9CA3AF', stroke: '#4B5563' },
 };
 
 export default function FloorPlanPublic() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [params] = useSearchParams();
   const accountCtx = useAccount() || {};
@@ -54,7 +56,7 @@ export default function FloorPlanPublic() {
   const H = plan?.ImageHeight || 600;
 
   const reserve = async () => {
-    if (!picked || !contact.BusinessName.trim()) { setMsg('Business name required'); return; }
+    if (!picked || !contact.BusinessName.trim()) { setMsg(t('floor_plan_public.err_biz_required')); return; }
     setBusy(true); setMsg('');
     try {
       // 1. Create vendor application
@@ -74,7 +76,7 @@ export default function FloorPlanPublic() {
           Status: 'pending',
         }),
       });
-      if (!appRes.ok) throw new Error('Application failed');
+      if (!appRes.ok) throw new Error(t('floor_plan_public.err_app_failed'));
       const { AppID } = await appRes.json();
 
       // 2. Reserve the booth atomically
@@ -84,13 +86,13 @@ export default function FloorPlanPublic() {
       });
       if (!rsv.ok) {
         const j = await rsv.json().catch(() => ({}));
-        throw new Error(j.detail || 'Reservation failed');
+        throw new Error(j.detail || t('floor_plan_public.err_reserve_failed'));
       }
-      setMsg(`✓ Booth ${picked.BoothNumber} reserved! The organizer will follow up to confirm.`);
+      setMsg(t('floor_plan_public.success_reserved', { number: picked.BoothNumber }));
       setPicked(null);
       refreshBooths();
     } catch (e) {
-      setMsg('Error: ' + e.message);
+      setMsg(t('floor_plan_public.err_prefix', { msg: e.message }));
     } finally {
       setBusy(false);
     }
@@ -101,23 +103,23 @@ export default function FloorPlanPublic() {
       <div className="max-w-6xl mx-auto space-y-5">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="font-lora text-2xl font-bold text-gray-900">Floor Plan — {event?.EventName || 'Event'}</h1>
-            <p className="text-sm text-gray-500">Click an available (green) booth to claim it. Reserved booths are amber, sold booths are blue.</p>
+            <h1 className="font-lora text-2xl font-bold text-gray-900">{t('floor_plan_public.heading', { name: event?.EventName || 'Event' })}</h1>
+            <p className="text-sm text-gray-500">{t('floor_plan_public.description')}</p>
           </div>
-          <Link to={`/events/${eventId}`} className={btnGhost}>← Event detail</Link>
+          <Link to={`/events/${eventId}`} className={btnGhost}>{t('floor_plan_public.btn_back')}</Link>
         </div>
 
         {/* Legend */}
         <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-wrap gap-4">
           {Object.entries(STATUS_COLOR).map(([k, c]) => (
-            <div key={k} className="flex items-center gap-2 text-xs"><span className="w-4 h-4 rounded" style={{ background: c.fill }} /><span>{c.label}</span></div>
+            <div key={k} className="flex items-center gap-2 text-xs"><span className="w-4 h-4 rounded" style={{ background: c.fill }} /><span>{t(`floor_plan_public.status_${k}`)}</span></div>
           ))}
           {plan?.ScaleHint && <div className="text-xs text-gray-500 ml-auto">{plan.ScaleHint}</div>}
         </div>
 
         {!plan?.ImageURL ? (
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 text-sm">
-            The organizer hasn't published a floor plan yet.
+            {t('floor_plan_public.no_floor_plan')}
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-auto" style={{ maxHeight: '70vh' }}>
@@ -151,27 +153,31 @@ export default function FloorPlanPublic() {
           <div className="bg-white rounded-xl border-2 border-[#3D6B34] p-5 space-y-3">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="font-lora text-xl font-bold text-gray-900">Claim booth {picked.BoothNumber}</h2>
-                <p className="text-sm text-gray-500">{picked.Tier} tier{picked.Price ? ` · $${Number(picked.Price).toFixed(0)}` : ''}</p>
+                <h2 className="font-lora text-xl font-bold text-gray-900">{t('floor_plan_public.claim_heading', { number: picked.BoothNumber })}</h2>
+                <p className="text-sm text-gray-500">
+                  {picked.Price
+                    ? t('floor_plan_public.tier_price', { tier: picked.Tier, price: Number(picked.Price).toFixed(0) })
+                    : t('floor_plan_public.tier_only', { tier: picked.Tier })}
+                </p>
               </div>
               <button onClick={() => setPicked(null)} className="text-gray-400 hover:text-gray-700">✕</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div><label className={lbl}>Business name *</label><input className={inp} value={contact.BusinessName} onChange={e => setContact(c => ({ ...c, BusinessName: e.target.value }))} /></div>
-              <div><label className={lbl}>Contact name</label><input className={inp} value={contact.ContactName} onChange={e => setContact(c => ({ ...c, ContactName: e.target.value }))} /></div>
-              <div><label className={lbl}>Email</label><input className={inp} type="email" value={contact.ContactEmail} onChange={e => setContact(c => ({ ...c, ContactEmail: e.target.value }))} /></div>
-              <div><label className={lbl}>Phone</label><input className={inp} value={contact.ContactPhone} onChange={e => setContact(c => ({ ...c, ContactPhone: e.target.value }))} /></div>
-              <div className="md:col-span-2"><label className={lbl}>Product categories</label><input className={inp} value={contact.ProductCategories} onChange={e => setContact(c => ({ ...c, ProductCategories: e.target.value }))} placeholder="e.g. Tractors, Soil testing, Crop insurance" /></div>
+              <div><label className={lbl}>{t('floor_plan_public.lbl_business_name')}</label><input className={inp} value={contact.BusinessName} onChange={e => setContact(c => ({ ...c, BusinessName: e.target.value }))} /></div>
+              <div><label className={lbl}>{t('floor_plan_public.lbl_contact_name')}</label><input className={inp} value={contact.ContactName} onChange={e => setContact(c => ({ ...c, ContactName: e.target.value }))} /></div>
+              <div><label className={lbl}>{t('floor_plan_public.lbl_email')}</label><input className={inp} type="email" value={contact.ContactEmail} onChange={e => setContact(c => ({ ...c, ContactEmail: e.target.value }))} /></div>
+              <div><label className={lbl}>{t('floor_plan_public.lbl_phone')}</label><input className={inp} value={contact.ContactPhone} onChange={e => setContact(c => ({ ...c, ContactPhone: e.target.value }))} /></div>
+              <div className="md:col-span-2"><label className={lbl}>{t('floor_plan_public.lbl_product_categories')}</label><input className={inp} value={contact.ProductCategories} onChange={e => setContact(c => ({ ...c, ProductCategories: e.target.value }))} placeholder={t('floor_plan_public.placeholder_categories')} /></div>
               <label className="md:col-span-2 flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={contact.NeedsElectricity} onChange={e => setContact(c => ({ ...c, NeedsElectricity: e.target.checked }))} />
-                I need electrical service
+                {t('floor_plan_public.lbl_electricity')}
               </label>
             </div>
             {msg && <div className={`text-sm ${msg.startsWith('Error') ? 'text-red-600' : 'text-emerald-700'}`}>{msg}</div>}
             <div className="flex justify-end gap-2">
-              <button onClick={() => setPicked(null)} className={btnGhost}>Cancel</button>
+              <button onClick={() => setPicked(null)} className={btnGhost}>{t('floor_plan_public.btn_cancel')}</button>
               <button onClick={reserve} disabled={busy || !contact.BusinessName.trim()} className={btn}>
-                {busy ? 'Reserving…' : `Claim ${picked.BoothNumber}`}
+                {busy ? t('floor_plan_public.btn_reserving') : t('floor_plan_public.btn_claim', { number: picked.BoothNumber })}
               </button>
             </div>
           </div>

@@ -9,6 +9,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import EventAdminLayout from './EventAdminLayout';
 
 const API = import.meta.env.VITE_API_URL || '';
@@ -27,6 +28,7 @@ const TIER_COLORS = {
 const STATUS_OPACITY = { available: 0.55, reserved: 0.85, sold: 0.95, blocked: 0.7 };
 
 export default function FloorPlanAdmin() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [plan, setPlan]         = useState(null);
   const [booths, setBooths]     = useState([]);
@@ -50,7 +52,7 @@ export default function FloorPlanAdmin() {
     if (!f) return;
     const fd = new FormData(); fd.append('file', f);
     const r = await fetch(`${API}/api/events/${eventId}/floor-plan/upload-image`, { method: 'POST', body: fd });
-    if (!r.ok) { alert('Upload failed'); return; }
+    if (!r.ok) { alert(t('floor_plan_admin.alert_upload_failed')); return; }
     const { url } = await r.json();
     // measure image to populate width/height
     const img = new Image();
@@ -122,7 +124,7 @@ export default function FloorPlanAdmin() {
   };
 
   const deleteBooth = async (id) => {
-    if (!window.confirm('Delete this booth?')) return;
+    if (!window.confirm(t('floor_plan_admin.confirm_delete_booth'))) return;
     await fetch(`${API}/api/events/floor-plan/booths/${id}`, { method: 'DELETE' });
     setSelected(null); refresh();
   };
@@ -132,7 +134,7 @@ export default function FloorPlanAdmin() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bulk),
     });
-    if (r.ok) { const j = await r.json(); alert(`Created ${j.created} booth(s) (${j.first_number} → ${j.last_number})`); refresh(); }
+    if (r.ok) { const j = await r.json(); alert(t('floor_plan_admin.alert_created', { n: j.created, first: j.first_number, last: j.last_number })); refresh(); }
   };
 
   // ── Render ──
@@ -144,30 +146,30 @@ export default function FloorPlanAdmin() {
       <div className="max-w-7xl mx-auto p-5 space-y-5">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="font-lora text-2xl font-bold text-gray-900">Floor Plan</h1>
-            <p className="text-sm text-gray-500">Upload your venue layout, then drag to paint booths or bulk-fill a grid. Vendors will see this map and click an available booth to claim it.</p>
+            <h1 className="font-lora text-2xl font-bold text-gray-900">{t('floor_plan_admin.heading')}</h1>
+            <p className="text-sm text-gray-500">{t('floor_plan_admin.description')}</p>
           </div>
-          <Link to={`/events/${eventId}`} className={btnGhost}>← Event detail</Link>
+          <Link to={`/events/${eventId}`} className={btnGhost}>{t('floor_plan_admin.btn_back')}</Link>
         </div>
 
         {summary && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-white border border-gray-200 rounded-xl p-3"><div className="text-[10px] uppercase text-gray-500 font-semibold">Total booths</div><div className="text-2xl font-bold">{summary.total}</div></div>
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3"><div className="text-[10px] uppercase text-emerald-700 font-semibold">Available</div><div className="text-2xl font-bold text-emerald-700">{summary.by_status?.available || 0}</div></div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3"><div className="text-[10px] uppercase text-amber-700 font-semibold">Reserved</div><div className="text-2xl font-bold text-amber-700">{summary.by_status?.reserved || 0}</div></div>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3"><div className="text-[10px] uppercase text-blue-700 font-semibold">Sold</div><div className="text-2xl font-bold text-blue-700">{summary.by_status?.sold || 0}</div></div>
+            <div className="bg-white border border-gray-200 rounded-xl p-3"><div className="text-[10px] uppercase text-gray-500 font-semibold">{t('floor_plan_admin.stat_total')}</div><div className="text-2xl font-bold">{summary.total}</div></div>
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3"><div className="text-[10px] uppercase text-emerald-700 font-semibold">{t('floor_plan_admin.stat_available')}</div><div className="text-2xl font-bold text-emerald-700">{summary.by_status?.available || 0}</div></div>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3"><div className="text-[10px] uppercase text-amber-700 font-semibold">{t('floor_plan_admin.stat_reserved')}</div><div className="text-2xl font-bold text-amber-700">{summary.by_status?.reserved || 0}</div></div>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3"><div className="text-[10px] uppercase text-blue-700 font-semibold">{t('floor_plan_admin.stat_sold')}</div><div className="text-2xl font-bold text-blue-700">{summary.by_status?.sold || 0}</div></div>
           </div>
         )}
 
         <div className="bg-white border border-gray-200 rounded-xl p-4 flex gap-3 flex-wrap items-end">
           <div className="flex-1 min-w-[200px]">
-            <label className={lbl}>Floor plan image</label>
+            <label className={lbl}>{t('floor_plan_admin.lbl_image')}</label>
             <input type="file" accept="image/*" onChange={onUpload} className="text-sm" />
-            {plan?.ImageURL && <span className="text-xs text-emerald-700 ml-2">✓ {plan.ImageWidth}×{plan.ImageHeight}px</span>}
+            {plan?.ImageURL && <span className="text-xs text-emerald-700 ml-2">{t('floor_plan_admin.img_dimensions', { w: plan.ImageWidth, h: plan.ImageHeight })}</span>}
           </div>
           <div>
-            <label className={lbl}>Scale hint (free text)</label>
-            <input className={inp} placeholder="e.g. 1 grid square = 10 ft" value={plan?.ScaleHint || ''}
+            <label className={lbl}>{t('floor_plan_admin.lbl_scale_hint')}</label>
+            <input className={inp} placeholder={t('floor_plan_admin.placeholder_scale')} value={plan?.ScaleHint || ''}
               onChange={e => setPlan(p => ({ ...p, ScaleHint: e.target.value }))}
               onBlur={async () => {
                 if (!plan?.ImageURL) return;
@@ -177,7 +179,7 @@ export default function FloorPlanAdmin() {
               }} />
           </div>
           <div>
-            <label className={lbl}>Render scale</label>
+            <label className={lbl}>{t('floor_plan_admin.lbl_render_scale')}</label>
             <input type="range" min="0.4" max="2" step="0.1" value={scale} onChange={e => setScale(Number(e.target.value))} />
             <span className="text-xs text-gray-500 ml-2">{scale.toFixed(1)}x</span>
           </div>
@@ -188,7 +190,7 @@ export default function FloorPlanAdmin() {
           <div className="bg-gray-100 rounded-xl border border-gray-200 overflow-auto" style={{ maxHeight: '70vh' }}>
             {!plan?.ImageURL ? (
               <div className="p-12 text-center text-gray-400 text-sm">
-                Upload a floor-plan image above to start placing booths.
+                {t('floor_plan_admin.canvas_empty')}
               </div>
             ) : (
               <div style={{ position: 'relative', width: W * scale, height: H * scale }}>
@@ -232,63 +234,63 @@ export default function FloorPlanAdmin() {
           <div className="space-y-4">
             {selected ? (
               <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
-                <div className="flex justify-between items-center"><strong>Edit booth</strong><button onClick={() => deleteBooth(selected.BoothID)} className="text-xs text-red-600 hover:underline">Delete</button></div>
-                <div><label className={lbl}>Number</label><input className={inp} value={selected.BoothNumber || ''} onChange={e => setSelected(s => ({ ...s, BoothNumber: e.target.value }))} /></div>
+                <div className="flex justify-between items-center"><strong>{t('floor_plan_admin.edit_booth_heading')}</strong><button onClick={() => deleteBooth(selected.BoothID)} className="text-xs text-red-600 hover:underline">{t('floor_plan_admin.btn_delete')}</button></div>
+                <div><label className={lbl}>{t('floor_plan_admin.lbl_number')}</label><input className={inp} value={selected.BoothNumber || ''} onChange={e => setSelected(s => ({ ...s, BoothNumber: e.target.value }))} /></div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div><label className={lbl}>Tier</label>
+                  <div><label className={lbl}>{t('floor_plan_admin.lbl_tier')}</label>
                     <select className={inp} value={selected.Tier || 'standard'} onChange={e => setSelected(s => ({ ...s, Tier: e.target.value }))}>
-                      {Object.keys(TIER_COLORS).map(k => <option key={k} value={k}>{k}</option>)}
+                      {Object.keys(TIER_COLORS).map(k => <option key={k} value={k}>{t(`floor_plan_admin.tier_${k}`)}</option>)}
                     </select></div>
-                  <div><label className={lbl}>Status</label>
+                  <div><label className={lbl}>{t('floor_plan_admin.lbl_status')}</label>
                     <select className={inp} value={selected.Status || 'available'} onChange={e => setSelected(s => ({ ...s, Status: e.target.value }))}>
-                      <option value="available">available</option>
-                      <option value="reserved">reserved</option>
-                      <option value="sold">sold</option>
-                      <option value="blocked">blocked</option>
+                      <option value="available">{t('floor_plan_admin.status_available')}</option>
+                      <option value="reserved">{t('floor_plan_admin.status_reserved')}</option>
+                      <option value="sold">{t('floor_plan_admin.status_sold')}</option>
+                      <option value="blocked">{t('floor_plan_admin.status_blocked')}</option>
                     </select></div>
                 </div>
-                <div><label className={lbl}>Price ($)</label><input className={inp} type="number" step="0.01" value={selected.Price ?? ''} onChange={e => setSelected(s => ({ ...s, Price: e.target.value === '' ? null : Number(e.target.value) }))} /></div>
-                <div><label className={lbl}>Assigned vendor application ID</label><input className={inp} type="number" value={selected.AssignedAppID ?? ''} onChange={e => setSelected(s => ({ ...s, AssignedAppID: e.target.value === '' ? null : Number(e.target.value) }))} /></div>
+                <div><label className={lbl}>{t('floor_plan_admin.lbl_price')}</label><input className={inp} type="number" step="0.01" value={selected.Price ?? ''} onChange={e => setSelected(s => ({ ...s, Price: e.target.value === '' ? null : Number(e.target.value) }))} /></div>
+                <div><label className={lbl}>{t('floor_plan_admin.lbl_assigned_app')}</label><input className={inp} type="number" value={selected.AssignedAppID ?? ''} onChange={e => setSelected(s => ({ ...s, AssignedAppID: e.target.value === '' ? null : Number(e.target.value) }))} /></div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div><label className={lbl}>X</label><input className={inp} type="number" value={selected.X} onChange={e => setSelected(s => ({ ...s, X: Number(e.target.value) }))} /></div>
-                  <div><label className={lbl}>Y</label><input className={inp} type="number" value={selected.Y} onChange={e => setSelected(s => ({ ...s, Y: Number(e.target.value) }))} /></div>
-                  <div><label className={lbl}>W</label><input className={inp} type="number" value={selected.Width} onChange={e => setSelected(s => ({ ...s, Width: Number(e.target.value) }))} /></div>
-                  <div><label className={lbl}>H</label><input className={inp} type="number" value={selected.Height} onChange={e => setSelected(s => ({ ...s, Height: Number(e.target.value) }))} /></div>
+                  <div><label className={lbl}>{t('floor_plan_admin.lbl_x')}</label><input className={inp} type="number" value={selected.X} onChange={e => setSelected(s => ({ ...s, X: Number(e.target.value) }))} /></div>
+                  <div><label className={lbl}>{t('floor_plan_admin.lbl_y')}</label><input className={inp} type="number" value={selected.Y} onChange={e => setSelected(s => ({ ...s, Y: Number(e.target.value) }))} /></div>
+                  <div><label className={lbl}>{t('floor_plan_admin.lbl_w')}</label><input className={inp} type="number" value={selected.Width} onChange={e => setSelected(s => ({ ...s, Width: Number(e.target.value) }))} /></div>
+                  <div><label className={lbl}>{t('floor_plan_admin.lbl_h')}</label><input className={inp} type="number" value={selected.Height} onChange={e => setSelected(s => ({ ...s, Height: Number(e.target.value) }))} /></div>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <button onClick={() => setSelected(null)} className={btnGhost}>Close</button>
-                  <button onClick={() => { updateBooth(selected); setSelected(null); }} className={btn}>Save</button>
+                  <button onClick={() => setSelected(null)} className={btnGhost}>{t('floor_plan_admin.btn_close')}</button>
+                  <button onClick={() => { updateBooth(selected); setSelected(null); }} className={btn}>{t('floor_plan_admin.btn_save')}</button>
                 </div>
               </div>
             ) : (
               <div className="bg-white border border-gray-200 rounded-xl p-4 text-xs text-gray-500">
-                Drag on the canvas to draw a booth, or click an existing booth to edit it.
+                {t('floor_plan_admin.canvas_hint')}
               </div>
             )}
 
             <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-2">
-              <strong className="text-sm">Bulk-fill grid</strong>
+              <strong className="text-sm">{t('floor_plan_admin.bulk_heading')}</strong>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div><label className={lbl}>Prefix</label><input className={inp} value={bulk.prefix} onChange={e => setBulk(b => ({ ...b, prefix: e.target.value }))} /></div>
-                <div><label className={lbl}>Tier</label>
+                <div><label className={lbl}>{t('floor_plan_admin.lbl_prefix')}</label><input className={inp} value={bulk.prefix} onChange={e => setBulk(b => ({ ...b, prefix: e.target.value }))} /></div>
+                <div><label className={lbl}>{t('floor_plan_admin.lbl_tier')}</label>
                   <select className={inp} value={bulk.tier} onChange={e => setBulk(b => ({ ...b, tier: e.target.value }))}>
-                    {Object.keys(TIER_COLORS).map(k => <option key={k} value={k}>{k}</option>)}
+                    {Object.keys(TIER_COLORS).map(k => <option key={k} value={k}>{t(`floor_plan_admin.tier_${k}`)}</option>)}
                   </select></div>
-                <div><label className={lbl}>Cols</label><input className={inp} type="number" value={bulk.cols} onChange={e => setBulk(b => ({ ...b, cols: Number(e.target.value) }))} /></div>
-                <div><label className={lbl}>Rows</label><input className={inp} type="number" value={bulk.rows} onChange={e => setBulk(b => ({ ...b, rows: Number(e.target.value) }))} /></div>
-                <div><label className={lbl}>Width</label><input className={inp} type="number" value={bulk.width} onChange={e => setBulk(b => ({ ...b, width: Number(e.target.value) }))} /></div>
-                <div><label className={lbl}>Height</label><input className={inp} type="number" value={bulk.height} onChange={e => setBulk(b => ({ ...b, height: Number(e.target.value) }))} /></div>
-                <div><label className={lbl}>Gap</label><input className={inp} type="number" value={bulk.gap} onChange={e => setBulk(b => ({ ...b, gap: Number(e.target.value) }))} /></div>
-                <div><label className={lbl}>Start X</label><input className={inp} type="number" value={bulk.start_x} onChange={e => setBulk(b => ({ ...b, start_x: Number(e.target.value) }))} /></div>
-                <div><label className={lbl}>Start Y</label><input className={inp} type="number" value={bulk.start_y} onChange={e => setBulk(b => ({ ...b, start_y: Number(e.target.value) }))} /></div>
+                <div><label className={lbl}>{t('floor_plan_admin.lbl_cols')}</label><input className={inp} type="number" value={bulk.cols} onChange={e => setBulk(b => ({ ...b, cols: Number(e.target.value) }))} /></div>
+                <div><label className={lbl}>{t('floor_plan_admin.lbl_rows')}</label><input className={inp} type="number" value={bulk.rows} onChange={e => setBulk(b => ({ ...b, rows: Number(e.target.value) }))} /></div>
+                <div><label className={lbl}>{t('floor_plan_admin.lbl_width')}</label><input className={inp} type="number" value={bulk.width} onChange={e => setBulk(b => ({ ...b, width: Number(e.target.value) }))} /></div>
+                <div><label className={lbl}>{t('floor_plan_admin.lbl_height')}</label><input className={inp} type="number" value={bulk.height} onChange={e => setBulk(b => ({ ...b, height: Number(e.target.value) }))} /></div>
+                <div><label className={lbl}>{t('floor_plan_admin.lbl_gap')}</label><input className={inp} type="number" value={bulk.gap} onChange={e => setBulk(b => ({ ...b, gap: Number(e.target.value) }))} /></div>
+                <div><label className={lbl}>{t('floor_plan_admin.lbl_start_x')}</label><input className={inp} type="number" value={bulk.start_x} onChange={e => setBulk(b => ({ ...b, start_x: Number(e.target.value) }))} /></div>
+                <div><label className={lbl}>{t('floor_plan_admin.lbl_start_y')}</label><input className={inp} type="number" value={bulk.start_y} onChange={e => setBulk(b => ({ ...b, start_y: Number(e.target.value) }))} /></div>
               </div>
-              <button onClick={bulkCreate} className={`${btn} w-full`} disabled={!plan?.ImageURL}>Add {bulk.cols * bulk.rows} booths</button>
+              <button onClick={bulkCreate} className={`${btn} w-full`} disabled={!plan?.ImageURL}>{t('floor_plan_admin.btn_add_booths', { n: bulk.cols * bulk.rows })}</button>
             </div>
 
             <div className="bg-white border border-gray-200 rounded-xl p-4 text-xs text-gray-600">
-              <strong className="text-sm block mb-1">Tier colors</strong>
+              <strong className="text-sm block mb-1">{t('floor_plan_admin.tier_colors_heading')}</strong>
               {Object.entries(TIER_COLORS).map(([k, c]) => (
-                <div key={k} className="flex items-center gap-2"><span className="w-4 h-4 rounded" style={{ background: c.fill }} /><span>{k}</span></div>
+                <div key={k} className="flex items-center gap-2"><span className="w-4 h-4 rounded" style={{ background: c.fill }} /><span>{t(`floor_plan_admin.tier_${k}`)}</span></div>
               ))}
             </div>
           </div>
