@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import RichTextEditor from './RichTextEditor';
 
@@ -12,7 +13,14 @@ const btnGhost = "px-4 py-1.5 text-sm border border-gray-300 rounded-lg";
 const REG_TYPES = ['Halter', 'Production', 'Fleece', 'Get of Sire', 'Produce of Dam'];
 const PEN_TYPES = ['Adult', 'Juvenile', 'Mixed'];
 
+const REG_TYPE_KEY_MAP = {
+  'Halter': 'halter', 'Production': 'production', 'Fleece': 'fleece',
+  'Get of Sire': 'get_of_sire', 'Produce of Dam': 'produce_of_dam',
+};
+const PEN_TYPE_KEY_MAP = { 'Adult': 'adult', 'Juvenile': 'juvenile', 'Mixed': 'mixed' };
+
 function AnimalRegForm({ animals, classes, onSave, onCancel, saving, reg }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(reg ? {
     AnimalID: reg.AnimalID, RegistrationType: reg.RegistrationType,
     IsShorn: !!reg.IsShorn, ClassIDs: (reg.classes || []).map(c => c.ClassID),
@@ -45,10 +53,10 @@ function AnimalRegForm({ animals, classes, onSave, onCancel, saving, reg }) {
       className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
-          <label className={lbl}>Animal</label>
+          <label className={lbl}>{t('halter_register.lbl_animal')}</label>
           <select required disabled={!!reg} value={form.AnimalID}
             onChange={(e) => setForm(f => ({ ...f, AnimalID: e.target.value }))} className={inp}>
-            <option value="">-- Select an animal --</option>
+            <option value="">{t('halter_register.option_select_animal')}</option>
             {animals.map(a => (
               <option key={a.ID ?? a.AnimalID} value={a.ID ?? a.AnimalID}>
                 {a.FullName || a.AnimalName || a.RegisteredName}
@@ -58,36 +66,36 @@ function AnimalRegForm({ animals, classes, onSave, onCancel, saving, reg }) {
           </select>
         </div>
         <div>
-          <label className={lbl}>Registration type</label>
+          <label className={lbl}>{t('halter_register.lbl_reg_type')}</label>
           <select value={form.RegistrationType}
             onChange={(e) => setForm(f => ({ ...f, RegistrationType: e.target.value, ClassIDs: [] }))}
             className={inp}>
-            {REG_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            {REG_TYPES.map(typ => <option key={typ} value={typ}>{t(`halter_register.reg_type_${REG_TYPE_KEY_MAP[typ]}`, { defaultValue: typ })}</option>)}
           </select>
         </div>
         <div className="flex items-end">
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.IsShorn}
               onChange={(e) => setForm(f => ({ ...f, IsShorn: e.target.checked }))} />
-            Animal is shorn
+            {t('halter_register.lbl_is_shorn')}
           </label>
         </div>
       </div>
 
       {animals.length === 0 && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs rounded-lg p-2">
-          You have no animals on your farm. Add animals under the Animals section first.
+          {t('halter_register.no_animals_warning')}
         </div>
       )}
 
       <div>
         <div className="flex items-center justify-between mb-1">
-          <div className={lbl}>Classes to enter ({form.ClassIDs.length} selected)</div>
-          {animalBreed && <div className="text-xs text-gray-400">Animal breed: {animalBreed}</div>}
+          <div className={lbl}>{t('halter_register.lbl_classes', { n: form.ClassIDs.length })}</div>
+          {animalBreed && <div className="text-xs text-gray-400">{t('halter_register.animal_breed_hint', { breed: animalBreed })}</div>}
         </div>
         <div className="max-h-[300px] overflow-y-auto bg-white border border-gray-200 rounded-lg p-2 space-y-2">
           {Object.keys(byBreed).length === 0 && (
-            <div className="text-xs text-gray-500 p-2">No {form.RegistrationType} classes available.</div>
+            <div className="text-xs text-gray-500 p-2">{t('halter_register.no_classes_available', { type: form.RegistrationType })}</div>
           )}
           {Object.entries(byBreed).map(([breed, list]) => (
             <div key={breed}>
@@ -111,14 +119,15 @@ function AnimalRegForm({ animals, classes, onSave, onCancel, saving, reg }) {
       </div>
 
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className={btnGhost}>Cancel</button>
-        <button type="submit" disabled={saving} className={btn}>{saving ? 'Saving…' : 'Save Registration'}</button>
+        <button type="button" onClick={onCancel} className={btnGhost}>{t('halter_register.btn_cancel')}</button>
+        <button type="submit" disabled={saving} className={btn}>{saving ? t('halter_register.btn_saving') : t('halter_register.btn_save_reg')}</button>
       </div>
     </form>
   );
 }
 
 function PenForm({ cfg, onSave, onCancel, saving }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     PenType: 'Adult', NeedsElectricity: false, NeedsStallMat: false, NeedsVetCheck: false, Notes: '',
   });
@@ -131,37 +140,37 @@ function PenForm({ cfg, onSave, onCancel, saving }) {
       className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div>
-          <label className={lbl}>Pen type</label>
+          <label className={lbl}>{t('halter_register.lbl_pen_type')}</label>
           <select value={form.PenType} onChange={(e) => setForm(f => ({ ...f, PenType: e.target.value }))} className={inp}>
-            {PEN_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            {PEN_TYPES.map(typ => <option key={typ} value={typ}>{t(`halter_register.pen_type_${PEN_TYPE_KEY_MAP[typ]}`, { defaultValue: typ })}</option>)}
           </select>
         </div>
         <label className="flex items-end gap-2 text-sm pb-2">
           <input type="checkbox" checked={form.NeedsElectricity}
             onChange={(e) => setForm(f => ({ ...f, NeedsElectricity: e.target.checked }))} />
-          Electricity (+${Number(cfg?.ElectricityFee || 0).toFixed(2)})
+          {t('halter_register.pen_electricity', { fee: Number(cfg?.ElectricityFee || 0).toFixed(2) })}
         </label>
         <label className="flex items-end gap-2 text-sm pb-2">
           <input type="checkbox" checked={form.NeedsStallMat}
             onChange={(e) => setForm(f => ({ ...f, NeedsStallMat: e.target.checked }))} />
-          Stall mat (+${Number(cfg?.StallMatFee || 0).toFixed(2)})
+          {t('halter_register.pen_stall_mat', { fee: Number(cfg?.StallMatFee || 0).toFixed(2) })}
         </label>
         <label className="flex items-end gap-2 text-sm pb-2">
           <input type="checkbox" checked={form.NeedsVetCheck}
             onChange={(e) => setForm(f => ({ ...f, NeedsVetCheck: e.target.checked }))} />
-          Vet check (+${Number(cfg?.VetCheckFee || 0).toFixed(2)})
+          {t('halter_register.pen_vet_check', { fee: Number(cfg?.VetCheckFee || 0).toFixed(2) })}
         </label>
       </div>
       <div>
-        <label className={lbl}>Notes</label>
+        <label className={lbl}>{t('halter_register.lbl_notes')}</label>
         <RichTextEditor value={form.Notes || ''}
           onChange={(v) => setForm(f => ({ ...f, Notes: v }))} minHeight={120} />
       </div>
       <div className="flex justify-between items-center">
-        <div className="text-sm">Pen fee: <span className="font-bold text-[#3D6B34]">${fee.toFixed(2)}</span></div>
+        <div className="text-sm">{t('halter_register.pen_fee_label')} <span className="font-bold text-[#3D6B34]">${fee.toFixed(2)}</span></div>
         <div className="flex gap-2">
-          <button type="button" onClick={onCancel} className={btnGhost}>Cancel</button>
-          <button type="submit" disabled={saving} className={btn}>{saving ? 'Saving…' : 'Reserve Pen'}</button>
+          <button type="button" onClick={onCancel} className={btnGhost}>{t('halter_register.btn_cancel')}</button>
+          <button type="submit" disabled={saving} className={btn}>{saving ? t('halter_register.btn_saving') : t('halter_register.btn_reserve_pen')}</button>
         </div>
       </div>
     </form>
@@ -169,6 +178,7 @@ function PenForm({ cfg, onSave, onCancel, saving }) {
 }
 
 export default function HalterRegister() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [params] = useSearchParams();
   const { BusinessID: ctxBusinessID } = useAccount() || {};
@@ -230,14 +240,14 @@ export default function HalterRegister() {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
         });
       }
-      if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.detail || 'Save failed'); }
+      if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.detail || t('halter_register.err_save_failed')); }
       setAdding(false); setEditing(null); loadRegs();
     } catch (ex) { setErr(ex.message); }
     finally { setSaving(false); }
   };
 
   const removeReg = async (r) => {
-    if (!confirm(`Remove ${r.AnimalName} from the show?`)) return;
+    if (!confirm(t('halter_register.confirm_remove_animal', { name: r.AnimalName }))) return;
     await fetch(`${API}/api/events/halter/registrations/${r.RegID}`, { method: 'DELETE' });
     loadRegs();
   };
@@ -249,14 +259,14 @@ export default function HalterRegister() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, PeopleID: peopleId, BusinessID: BusinessID ? Number(BusinessID) : null }),
       });
-      if (!r.ok) throw new Error('Pen reserve failed');
+      if (!r.ok) throw new Error(t('halter_register.err_pen_reserve_failed'));
       setAddingPen(false); loadPens();
     } catch (ex) { setErr(ex.message); }
     finally { setSaving(false); }
   };
 
   const removePen = async (p) => {
-    if (!confirm(`Release pen #${p.PenID}?`)) return;
+    if (!confirm(t('halter_register.confirm_release_pen', { id: p.PenID }))) return;
     await fetch(`${API}/api/events/halter/pens/${p.PenID}`, { method: 'DELETE' });
     loadPens();
   };
@@ -272,18 +282,18 @@ export default function HalterRegister() {
     <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Halter Show Registration</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('halter_register.heading')}</h1>
           <p className="text-sm text-gray-500 mt-1">
             {event?.EventName || 'Event'}
             {event?.EventLocationCity && ` — ${event.EventLocationCity}, ${event.EventLocationState}`}
           </p>
         </div>
-        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">← Back to Event</Link>
+        <Link to={`/events/${eventId}`} className="text-sm text-gray-500 hover:text-gray-700">{t('halter_register.btn_back')}</Link>
       </div>
 
       {!configured && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-4 mb-4">
-          The halter show has not yet been configured by the organizer.
+          {t('halter_register.not_configured')}
         </div>
       )}
 
@@ -297,35 +307,40 @@ export default function HalterRegister() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-xs">
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Fee per animal</div>
+              <div className="text-gray-500">{t('halter_register.stat_fee_per_animal')}</div>
               <div className="font-semibold text-gray-900 text-base">
                 ${Number(cfg.CurrentFeePerAnimal || cfg.FeePerAnimal || 0).toFixed(2)}
               </div>
               {cfg.DiscountFeePerAnimal != null && cfg.DiscountEndDate && (
-                <div className="text-[11px] text-gray-400">discount ends {String(cfg.DiscountEndDate).substring(0, 10)}</div>
+                <div className="text-[11px] text-gray-400">{t('halter_register.discount_ends', { date: String(cfg.DiscountEndDate).substring(0, 10) })}</div>
               )}
             </div>
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Fee per pen</div>
+              <div className="text-gray-500">{t('halter_register.stat_fee_per_pen')}</div>
               <div className="font-semibold text-gray-900 text-base">${Number(cfg.FeePerPen || 0).toFixed(2)}</div>
-              {maxPens && <div className="text-[11px] text-gray-400">max {maxPens} per farm</div>}
+              {maxPens && <div className="text-[11px] text-gray-400">{t('halter_register.max_per_farm', { n: maxPens })}</div>}
             </div>
             {cfg.RegistrationEndDate && (
               <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-gray-500">Registration closes</div>
+                <div className="text-gray-500">{t('halter_register.stat_reg_closes')}</div>
                 <div className="font-semibold text-gray-900 text-base">{String(cfg.RegistrationEndDate).substring(0, 10)}</div>
               </div>
             )}
             <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="text-gray-500">Your total</div>
+              <div className="text-gray-500">{t('halter_register.stat_your_total')}</div>
               <div className="font-semibold text-[#3D6B34] text-base">${total.toFixed(2)}</div>
-              <div className="text-[11px] text-gray-400">{regs.length} animal{regs.length === 1 ? '' : 's'} · {pens.length} pen{pens.length === 1 ? '' : 's'}</div>
+              <div className="text-[11px] text-gray-400">
+                {t('halter_register.stat_count', {
+                  animals: regs.length, animalS: regs.length === 1 ? '' : 's',
+                  pens: pens.length, penS: pens.length === 1 ? '' : 's',
+                })}
+              </div>
             </div>
           </div>
 
           {closed && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
-              Registration for this show has closed.
+              {t('halter_register.reg_closed')}
             </div>
           )}
 
@@ -333,15 +348,15 @@ export default function HalterRegister() {
 
           {!peopleId && (
             <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-3 mb-3">
-              Please <Link to="/login" className="underline">log in</Link> to register animals.
+              {t('halter_register.login_prompt')} <Link to="/login" className="underline">{t('halter_register.login_link')}</Link> {t('halter_register.login_suffix')}
             </div>
           )}
 
           {/* ANIMALS */}
           <div className="flex justify-between items-center mb-2 mt-4">
-            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">Your animals ({regs.length})</h2>
+            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">{t('halter_register.animals_heading', { n: regs.length })}</h2>
             {!adding && !editing && !closed && peopleId && (
-              <button onClick={() => setAdding(true)} className={btn}>+ Register Animal</button>
+              <button onClick={() => setAdding(true)} className={btn}>{t('halter_register.btn_register_animal')}</button>
             )}
           </div>
 
@@ -352,19 +367,19 @@ export default function HalterRegister() {
 
           <div className="space-y-2 mt-2">
             {regs.length === 0 && !adding && peopleId && (
-              <div className="text-sm text-gray-500">No animals registered yet.</div>
+              <div className="text-sm text-gray-500">{t('halter_register.no_animals_reg')}</div>
             )}
             {regs.map(r => (
               <div key={r.RegID} className="bg-white border border-gray-200 rounded-lg p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900">{r.AnimalName || `Animal #${r.AnimalID}`}</div>
+                    <div className="font-medium text-gray-900">{r.AnimalName || t('halter_register.animal_num', { n: r.AnimalID })}</div>
                     <div className="text-xs text-gray-500">
-                      {r.RegistrationType}{r.IsShorn && ' · shorn'}
-                      {r.IsCheckedIn && <span className="text-green-700 ml-1">· checked in</span>}
+                      {r.RegistrationType}{r.IsShorn && t('halter_register.label_shorn')}
+                      {r.IsCheckedIn && <span className="text-green-700 ml-1">{t('halter_register.label_checked_in')}</span>}
                     </div>
                     <div className="text-xs text-gray-600 mt-1">
-                      {(r.classes || []).length === 0 && <span className="text-gray-400">No classes selected</span>}
+                      {(r.classes || []).length === 0 && <span className="text-gray-400">{t('halter_register.no_classes_selected')}</span>}
                       {(r.classes || []).map(c => (
                         <div key={c.EntryID}>
                           • {c.ClassName}
@@ -376,12 +391,12 @@ export default function HalterRegister() {
                   <div className="flex flex-col items-end gap-1">
                     <div className="text-sm font-medium">${Number(r.Fee || 0).toFixed(2)}</div>
                     <div className={`text-[11px] px-2 py-0.5 rounded ${r.PaidStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                      {r.PaidStatus}
+                      {t(`halter_register.status_${r.PaidStatus}`, { defaultValue: r.PaidStatus })}
                     </div>
                     {!closed && (
                       <div className="flex gap-2 mt-1">
-                        <button onClick={() => { setEditing(r); setAdding(false); }} className="text-xs text-gray-500 hover:text-gray-800">Edit</button>
-                        <button onClick={() => removeReg(r)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                        <button onClick={() => { setEditing(r); setAdding(false); }} className="text-xs text-gray-500 hover:text-gray-800">{t('halter_register.btn_edit')}</button>
+                        <button onClick={() => removeReg(r)} className="text-xs text-red-500 hover:text-red-700">{t('halter_register.btn_remove')}</button>
                       </div>
                     )}
                   </div>
@@ -393,10 +408,12 @@ export default function HalterRegister() {
           {/* PENS */}
           <div className="flex justify-between items-center mb-2 mt-6">
             <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">
-              Your pens ({pens.length}{maxPens ? ` / ${maxPens}` : ''})
+              {maxPens
+                ? t('halter_register.pens_heading_max', { n: pens.length, max: maxPens })
+                : t('halter_register.pens_heading', { n: pens.length })}
             </h2>
             {!addingPen && !closed && peopleId && (!maxPens || pens.length < maxPens) && (
-              <button onClick={() => setAddingPen(true)} className={btn}>+ Reserve Pen</button>
+              <button onClick={() => setAddingPen(true)} className={btn}>{t('halter_register.btn_add_pen')}</button>
             )}
           </div>
 
@@ -406,24 +423,27 @@ export default function HalterRegister() {
 
           <div className="space-y-2 mt-2">
             {pens.length === 0 && !addingPen && peopleId && (
-              <div className="text-sm text-gray-500">No pens reserved.</div>
+              <div className="text-sm text-gray-500">{t('halter_register.no_pens')}</div>
             )}
             {pens.map(p => (
               <div key={p.PenID} className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between">
                 <div className="flex-1">
                   <div className="font-medium text-sm">
-                    Pen #{p.PenNumber || p.PenID} · {p.PenType}
+                    {t('halter_register.pen_number', { num: p.PenNumber || p.PenID, type: p.PenType })}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {[p.NeedsElectricity && 'electricity', p.NeedsStallMat && 'stall mat', p.NeedsVetCheck && 'vet check']
-                      .filter(Boolean).join(' · ') || 'no extras'}
+                    {[
+                      p.NeedsElectricity && t('halter_register.extra_electricity'),
+                      p.NeedsStallMat && t('halter_register.extra_stall_mat'),
+                      p.NeedsVetCheck && t('halter_register.extra_vet_check'),
+                    ].filter(Boolean).join(' · ') || t('halter_register.no_extras')}
                     {p.Notes && ` · ${p.Notes}`}
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <div className="text-sm font-medium">${Number(p.Fee || 0).toFixed(2)}</div>
                   {!closed && (
-                    <button onClick={() => removePen(p)} className="text-xs text-red-500 hover:text-red-700">Release</button>
+                    <button onClick={() => removePen(p)} className="text-xs text-red-500 hover:text-red-700">{t('halter_register.btn_release')}</button>
                   )}
                 </div>
               </div>

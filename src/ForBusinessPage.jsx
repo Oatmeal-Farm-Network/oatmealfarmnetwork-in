@@ -204,8 +204,8 @@ export default function ForBusinessPage({ type }) {
               </Link>
               <Link
                 to={cfg.cta2.to}
-                className="font-bold px-5 py-2 rounded-lg border-2 transition hover:bg-gray-50 text-sm"
-                style={{ color: cfg.color, borderColor: cfg.color }}
+                className="font-bold px-5 py-2 rounded-lg shadow hover:shadow-md transition text-sm hover:opacity-90"
+                style={{ backgroundColor: cfg.color, color: '#fff' }}
               >
                 {cfg.cta2.label}
               </Link>
