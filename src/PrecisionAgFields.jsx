@@ -732,7 +732,7 @@ function FieldList({ businessId, onCreateNew }) {
             {fields.map((field, i) => {
               const fieldId = field.fieldid || field.id;
               const rowBg = i % 2 === 0 ? '#fff' : '#fafafa';
-              const serviceLinks = buildFieldServiceLinks(businessId, fieldId, t);
+              const serviceLinks = buildFieldServiceLinks(businessId, fieldId);
               const biomassOpen = openBiomass.has(fieldId);
               return (
                 <React.Fragment key={fieldId}>
