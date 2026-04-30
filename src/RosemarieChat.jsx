@@ -11,6 +11,7 @@
  * buffer on the backend.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageContext';
 
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
@@ -77,6 +78,7 @@ function Bubble({ role, content }) {
 // ─── Chat panel ──────────────────────────────────────────────────────────────
 
 function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscreen }) {
+  const { t } = useTranslation();
   const { language } = useLanguage();
   const [threadId, setThreadId]   = useState(() => {
     return localStorage.getItem(threadStorageKey(peopleId, businessId)) || null;
@@ -90,10 +92,10 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
 
   const ensureThread = useCallback(() => {
     if (threadId) return threadId;
-    const t = newThreadId();
-    setThreadId(t);
-    localStorage.setItem(threadStorageKey(peopleId, businessId), t);
-    return t;
+    const newTid = newThreadId();
+    setThreadId(newTid);
+    localStorage.setItem(threadStorageKey(peopleId, businessId), newTid);
+    return newTid;
   }, [threadId, peopleId, businessId]);
 
   const loadHistory = useCallback(async (tid) => {
@@ -149,19 +151,19 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
         throw new Error(body.message || body.error || `HTTP ${r.status}`);
       }
       const data = await r.json();
-      setMessages([...nextMsgs, { role: 'assistant', content: data.response || '(no response)' }]);
+      setMessages([...nextMsgs, { role: 'assistant', content: data.response || t('rosemarie_chat.no_response') }]);
     } catch (e) {
-      setError(e.message || 'Failed');
-      setMessages([...nextMsgs, { role: 'assistant', content: `I couldn't send that — ${e.message}` }]);
+      setError(e.message || t('rosemarie_chat.err_failed'));
+      setMessages([...nextMsgs, { role: 'assistant', content: t('rosemarie_chat.err_send', { msg: e.message }) }]);
     } finally {
       setSending(false);
     }
   };
 
   const newConversation = () => {
-    const t = newThreadId();
-    setThreadId(t);
-    localStorage.setItem(threadStorageKey(peopleId, businessId), t);
+    const newTid = newThreadId();
+    setThreadId(newTid);
+    localStorage.setItem(threadStorageKey(peopleId, businessId), newTid);
     setMessages([]);
   };
 
@@ -203,30 +205,28 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
           <SprigMark size={22} />
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: 15 }}>Rosemarie</div>
-            <div style={{ fontSize: 11, opacity: 0.9 }}>Your artisan producer AI</div>
+            <div style={{ fontSize: 11, opacity: 0.9 }}>{t('rosemarie_chat.subtitle')}</div>
           </div>
-          <button onClick={newConversation} style={hdrBtn} title="New conversation">New</button>
-          <button onClick={onToggleFullscreen} style={hdrBtn} title={fullscreen ? 'Exit full screen' : 'Full screen'}>
+          <button onClick={newConversation} style={hdrBtn} title={t('rosemarie_chat.btn_new_title')}>{t('rosemarie_chat.btn_new')}</button>
+          <button onClick={onToggleFullscreen} style={hdrBtn} title={fullscreen ? t('rosemarie_chat.btn_exit_fullscreen') : t('rosemarie_chat.btn_fullscreen')}>
             {fullscreen ? '⤢' : '⤡'}
           </button>
-          <button onClick={onClose} style={hdrBtn} title="Close">×</button>
+          <button onClick={onClose} style={hdrBtn} title={t('rosemarie_chat.btn_close')}>×</button>
         </div>
 
         {/* Messages */}
         <div ref={scrollRef} style={{
           flex: 1, padding: 12, overflowY: 'auto', background: '#fafaf9',
         }}>
-          {loadingHist && <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>Loading past conversation…</div>}
+          {loadingHist && <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>{t('rosemarie_chat.loading_history')}</div>}
           {!loadingHist && !messages.length && (
             <div style={{ fontSize: 13, color: '#4b5563', padding: '16px 8px', lineHeight: 1.6 }}>
-              Hi — I'm Rosemarie. Ask me to find raw ingredients from farms, check your par levels,
-              list incoming wholesale orders from restaurants, or mark an order as shipped.
-              I run against live OFN data on both sides of your supply chain.
+              {t('rosemarie_chat.welcome')}
             </div>
           )}
           {messages.map((m, i) => <Bubble key={i} role={m.role} content={m.content} />)}
           {sending && (
-            <div style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>Rosemarie is thinking…</div>
+            <div style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>{t('rosemarie_chat.thinking')}</div>
           )}
           {error && (
             <div style={{ fontSize: 12, color: '#991b1b', marginTop: 6 }}>{error}</div>
@@ -243,7 +243,7 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKey}
-            placeholder="Ask Rosemarie about sourcing, orders, or production…"
+            placeholder={t('rosemarie_chat.placeholder')}
             style={{
               flex: 1, resize: 'none', border: '1px solid #d1d5db', borderRadius: 8,
               padding: '8px 10px', fontSize: 13.5, fontFamily: 'inherit',
@@ -260,7 +260,7 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
               opacity: input.trim() && !sending ? 1 : 0.6,
             }}
           >
-            Send
+            {t('rosemarie_chat.btn_send')}
           </button>
         </div>
       </div>
@@ -277,6 +277,7 @@ const hdrBtn = {
 // ─── Launcher bubble ─────────────────────────────────────────────────────────
 
 export default function RosemarieChat({ businessId }) {
+  const { t } = useTranslation();
   const [open, setOpen]           = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const peopleId = useMemo(() => (
@@ -294,7 +295,7 @@ export default function RosemarieChat({ businessId }) {
     <>
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-label="Open Rosemarie chat"
+        aria-label={t('rosemarie_chat.launcher_aria')}
         style={{
           position: 'fixed', bottom: 20, right: 20, zIndex: 9999,
           width: 58, height: 58, borderRadius: '50%',
@@ -303,7 +304,7 @@ export default function RosemarieChat({ businessId }) {
           cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}
-        title="Chat with Rosemarie"
+        title={t('rosemarie_chat.launcher_title')}
       >
         <SprigMark size={30} />
       </button>

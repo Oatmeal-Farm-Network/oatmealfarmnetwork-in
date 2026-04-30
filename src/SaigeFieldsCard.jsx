@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
 
@@ -16,26 +17,26 @@ function ndviColor(v) {
   return '#22C55E';
 }
 
-function ndviLabel(v) {
-  if (v == null) return 'No data';
-  if (v < 0.3) return 'Poor';
-  if (v < 0.45) return 'Stressed';
-  if (v < 0.6) return 'Moderate';
-  if (v < 0.7) return 'Good';
-  return 'Excellent';
+function ndviLabelKey(v) {
+  if (v == null) return 'saige_fields_card.ndvi_no_data';
+  if (v < 0.3) return 'saige_fields_card.ndvi_poor';
+  if (v < 0.45) return 'saige_fields_card.ndvi_stressed';
+  if (v < 0.6) return 'saige_fields_card.ndvi_moderate';
+  if (v < 0.7) return 'saige_fields_card.ndvi_good';
+  return 'saige_fields_card.ndvi_excellent';
 }
 
 const SEV_STYLE = {
-  critical: { bg: '#FEF2F2', text: '#991B1B', label: 'Critical' },
-  high:     { bg: '#FFF7ED', text: '#9A3412', label: 'High' },
-  medium:   { bg: '#FFFBEB', text: '#92400E', label: 'Medium' },
-  low:      { bg: '#F0FDF4', text: '#166534', label: 'Low' },
+  critical: { bg: '#FEF2F2', text: '#991B1B', labelKey: 'saige_fields_card.sev_critical' },
+  high:     { bg: '#FFF7ED', text: '#9A3412', labelKey: 'saige_fields_card.sev_high' },
+  medium:   { bg: '#FFFBEB', text: '#92400E', labelKey: 'saige_fields_card.sev_medium' },
+  low:      { bg: '#F0FDF4', text: '#166534', labelKey: 'saige_fields_card.sev_low' },
 };
 
 const URGENCY_STYLE = {
-  high:   { bg: '#FEF2F2', border: '#FECACA', text: '#991B1B', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#991B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, msg: 'Irrigate now — water deficit critical' },
-  medium: { bg: '#FFFBEB', border: '#FDE68A', text: '#92400E', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L5 10a7 7 0 1 0 14 0L12 2z"/></svg>, msg: 'Consider irrigating within 2–3 days' },
-  low:    { bg: '#F0FDF4', border: '#BBF7D0', text: '#166534', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>, msg: 'No irrigation needed' },
+  high:   { bg: '#FEF2F2', border: '#FECACA', text: '#991B1B', msgKey: 'saige_fields_card.urgency_high', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#991B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
+  medium: { bg: '#FFFBEB', border: '#FDE68A', text: '#92400E', msgKey: 'saige_fields_card.urgency_medium', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L5 10a7 7 0 1 0 14 0L12 2z"/></svg> },
+  low:    { bg: '#F0FDF4', border: '#BBF7D0', text: '#166534', msgKey: 'saige_fields_card.urgency_low', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> },
 };
 
 function NDVIMiniBar({ value }) {
@@ -57,6 +58,7 @@ function NDVIMiniBar({ value }) {
 }
 
 export default function SaigeFieldsCard() {
+  const { t } = useTranslation();
   const [state, setState] = useState({ loading: true, data: null, error: false });
 
   useEffect(() => {
@@ -77,7 +79,7 @@ export default function SaigeFieldsCard() {
   if (state.loading) {
     return (
       <div style={{ fontSize: 13, color: '#6B7280', fontFamily: 'var(--font-mont, sans-serif)' }}>
-        Loading your fields…
+        {t('saige_fields_card.loading')}
       </div>
     );
   }
@@ -87,7 +89,7 @@ export default function SaigeFieldsCard() {
   if (!data || !data.fields || data.fields.length === 0) {
     return (
       <div style={{ fontSize: 13, color: '#6B7280', fontFamily: 'var(--font-mont, sans-serif)' }}>
-        No monitored fields on your account yet. Set one up in the Crop Monitor dashboard to have Saige track NDVI trends for you.
+        {t('saige_fields_card.empty')}
       </div>
     );
   }
@@ -116,7 +118,7 @@ export default function SaigeFieldsCard() {
         }}>
           <span style={{ display:'inline-flex', alignItems:'center' }}>{urgencyStyle.icon}</span>
           <span style={{ fontSize: 12, fontWeight: 700, color: urgencyStyle.text, fontFamily: 'var(--font-mont, sans-serif)' }}>
-            {urgencyStyle.msg}
+            {t(urgencyStyle.msgKey)}
             {bestField && ` — ${bestField.name}`}
           </span>
         </div>
@@ -141,7 +143,7 @@ export default function SaigeFieldsCard() {
               {hasCritical
                 ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>}
-              {totalAlerts} active alert{totalAlerts !== 1 ? 's' : ''}
+              {t('saige_fields_card.active_alerts', { count: totalAlerts })}
             </span>
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -160,7 +162,7 @@ export default function SaigeFieldsCard() {
                   fontWeight: 700,
                   fontFamily: 'var(--font-mont, sans-serif)',
                 }}>
-                  {count} {s.label}
+                  {count} {t(s.labelKey)}
                 </span>
               );
             })}
@@ -183,10 +185,10 @@ export default function SaigeFieldsCard() {
           justifyContent: 'space-between',
         }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: '#14532D', fontFamily: 'var(--font-lora, serif)' }}>
-            My fields
+            {t('saige_fields_card.my_fields')}
           </span>
           <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'var(--font-mont, sans-serif)' }}>
-            {fields.length} field{fields.length !== 1 ? 's' : ''}
+            {t('saige_fields_card.field_count', { count: fields.length })}
           </span>
         </div>
         {sortedFields.slice(0, 6).map((f, i) => {
@@ -251,13 +253,13 @@ export default function SaigeFieldsCard() {
                     color: '#9CA3AF',
                     fontFamily: 'var(--font-mont, sans-serif)',
                   }}>
-                    {ndviLabel(f.ndvi)}
+                    {t(ndviLabelKey(f.ndvi))}
                   </span>
                 </div>
               </div>
               {!f.monitoring_enabled && (
                 <span style={{ fontSize: 10, color: '#9CA3AF', fontFamily: 'var(--font-mont, sans-serif)' }}>
-                  off
+                  {t('saige_fields_card.monitoring_off')}
                 </span>
               )}
             </div>
@@ -272,14 +274,14 @@ export default function SaigeFieldsCard() {
             fontFamily: 'var(--font-mont, sans-serif)',
             textAlign: 'center',
           }}>
-            +{fields.length - 6} more fields — ask me about them
+            {t('saige_fields_card.more_fields', { count: fields.length - 6 })}
           </div>
         )}
       </div>
 
       {/* Quick-start suggestions */}
       <div style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'var(--font-mont, sans-serif)', lineHeight: 1.5 }}>
-        Try: "How is my {bestField?.name || 'top field'} doing?" · "Any fields need irrigation?" · "Show me a benchmark"
+        {t('saige_fields_card.suggestions', { field: bestField?.name || t('saige_fields_card.top_field') })}
       </div>
     </div>
   );

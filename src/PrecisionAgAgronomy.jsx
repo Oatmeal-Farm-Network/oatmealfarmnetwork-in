@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { useFields, API_URL } from './precisionAgUtils';
@@ -34,10 +35,11 @@ function IndexBar({ label, value, lo = 0, hi = 1, color = '#3D6B34' }) {
 const TREND_COLORS = { rising: '#15803D', falling: '#B91C1C', flat: '#6B7280' };
 
 function NDVITrendChart({ series, summary, index = 'NDVI' }) {
+  const { t } = useTranslation();
   if (!series || series.length < 2) {
     return (
       <div className="text-sm text-gray-500 italic">
-        Need at least two analyses to chart a trend. Run the field analysis on a few separate dates.
+        {t('precision_ag_agronomy.ndvi_chart_empty')}
       </div>
     );
   }
@@ -91,10 +93,10 @@ function NDVITrendChart({ series, summary, index = 'NDVI' }) {
 
       {summary && (
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 mt-1">
-          <span><span className="font-semibold">Trend:</span> <span style={{ color: trendColor }}>{summary.trend}</span></span>
-          <span><span className="font-semibold">Δ over window:</span> {summary.delta_total >= 0 ? '+' : ''}{summary.delta_total.toFixed(3)}</span>
-          <span><span className="font-semibold">Per week:</span> {summary.slope_per_week >= 0 ? '+' : ''}{summary.slope_per_week.toFixed(4)}</span>
-          <span><span className="font-semibold">Samples:</span> {summary.samples}</span>
+          <span><span className="font-semibold">{t('precision_ag_agronomy.ndvi_trend_label')}:</span> <span style={{ color: trendColor }}>{summary.trend}</span></span>
+          <span><span className="font-semibold">{t('precision_ag_agronomy.ndvi_delta_label')}:</span> {summary.delta_total >= 0 ? '+' : ''}{summary.delta_total.toFixed(3)}</span>
+          <span><span className="font-semibold">{t('precision_ag_agronomy.ndvi_per_week_label')}:</span> {summary.slope_per_week >= 0 ? '+' : ''}{summary.slope_per_week.toFixed(4)}</span>
+          <span><span className="font-semibold">{t('precision_ag_agronomy.ndvi_samples_label')}:</span> {summary.samples}</span>
         </div>
       )}
     </div>
@@ -102,6 +104,7 @@ function NDVITrendChart({ series, summary, index = 'NDVI' }) {
 }
 
 export default function PrecisionAgAgronomy() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const fieldId = searchParams.get('FieldID');
   const BusinessID = searchParams.get('BusinessID');
@@ -129,7 +132,7 @@ export default function PrecisionAgAgronomy() {
         .then(r => (r.ok ? r.json() : null)).catch(() => null),
     ])
       .then(([a, r, s]) => { setAgro(a || null); setRecs(r || null); setNdviSeries(s || null); })
-      .catch(e => setError(e.message || 'Failed to load agronomy snapshot'))
+      .catch(e => setError(e.message || t('precision_ag_agronomy.err_load_failed')))
       .finally(() => setLoading(false));
   }
   useEffect(load, [fieldId]);
@@ -147,21 +150,21 @@ export default function PrecisionAgAgronomy() {
       Business={Business}
       BusinessID={BusinessID}
       PeopleID={typeof window !== 'undefined' ? localStorage.getItem('people_id') : null}
-      pageTitle="Agronomy AI"
+      pageTitle={t('precision_ag_agronomy.page_title')}
       breadcrumbs={[
-        { label: 'Dashboard', to: '/dashboard' },
-        { label: 'Precision Ag' },
-        { label: 'Agronomy AI' },
+        { label: t('precision_ag_agronomy.breadcrumb_dashboard'), to: '/dashboard' },
+        { label: t('precision_ag_agronomy.breadcrumb_precision_ag') },
+        { label: t('precision_ag_agronomy.page_title') },
       ]}
     >
       <div className="max-w-5xl mx-auto">
         <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
           <div>
-            <h1 className="font-lora text-2xl font-bold text-gray-900">Agronomy Snapshot</h1>
+            <h1 className="font-lora text-2xl font-bold text-gray-900">{t('precision_ag_agronomy.heading')}</h1>
             <p className="font-mont text-sm text-gray-500">
-              Satellite-driven model snapshot from CropMonitor
-              {field?.name && <> for <span className="font-semibold">{field.name}</span></>}.
-              {cached && <> · <span className="text-emerald-700">cached</span></>}
+              {t('precision_ag_agronomy.subheading')}
+              {field?.name && <> {t('precision_ag_agronomy.subheading_for')} <span className="font-semibold">{field.name}</span></>}.
+              {cached && <> · <span className="text-emerald-700">{t('precision_ag_agronomy.cached')}</span></>}
             </p>
           </div>
           <button
@@ -169,13 +172,13 @@ export default function PrecisionAgAgronomy() {
             disabled={loading || !fieldId}
             className="px-4 py-2 rounded-lg bg-[#3D6B34] text-white text-sm font-mont font-semibold hover:bg-[#2F5328] disabled:opacity-50"
           >
-            {loading ? 'Refreshing…' : 'Refresh'}
+            {loading ? t('precision_ag_agronomy.btn_refreshing') : t('precision_ag_agronomy.btn_refresh')}
           </button>
         </div>
 
         {!fieldId && (
           <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 text-sm">
-            No field selected. Open this page from a field's menu.
+            {t('precision_ag_agronomy.no_field_selected')}
           </div>
         )}
 
@@ -187,21 +190,21 @@ export default function PrecisionAgAgronomy() {
           <>
             <div className="grid md:grid-cols-4 gap-4 mb-6">
               <StatTile
-                label="GDD"
+                label={t('precision_ag_agronomy.tile_gdd')}
                 value={agro?.gdd?.gdd != null ? Math.round(agro.gdd.gdd) : null}
-                sub={agro?.gdd?.start_date ? `since ${agro.gdd.start_date}` : null}
+                sub={agro?.gdd?.start_date ? t('precision_ag_agronomy.tile_gdd_since', { date: agro.gdd.start_date }) : null}
               />
               <StatTile
-                label="Growth Stage"
+                label={t('precision_ag_agronomy.tile_growth_stage')}
                 value={agro?.growth_stage || null}
               />
               <StatTile
-                label="Temperature"
+                label={t('precision_ag_agronomy.tile_temperature')}
                 value={agro?.weather?.temperature_c != null ? `${agro.weather.temperature_c}°C` : null}
-                sub={agro?.weather?.humidity != null ? `RH ${agro.weather.humidity}%` : null}
+                sub={agro?.weather?.humidity != null ? t('precision_ag_agronomy.tile_humidity', { rh: agro.weather.humidity }) : null}
               />
               <StatTile
-                label="Health Score"
+                label={t('precision_ag_agronomy.tile_health_score')}
                 value={recs?.health_score != null ? recs.health_score : null}
               />
             </div>
@@ -209,13 +212,13 @@ export default function PrecisionAgAgronomy() {
             {agro && !agro?.gdd?.gdd && !agro?.growth_stage && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3 text-sm font-mont mb-6">
                 <span>📅</span>
-                <span className="text-amber-800">GDD and growth stage require a planting date. <a href={`/precision-ag/fields?BusinessID=${BusinessID}&FieldID=${fieldId}`} className="font-semibold underline">Set planting date in field settings →</a></span>
+                <span className="text-amber-800">{t('precision_ag_agronomy.warn_planting_date')} <a href={`/precision-ag/fields?BusinessID=${BusinessID}&FieldID=${fieldId}`} className="font-semibold underline">{t('precision_ag_agronomy.warn_planting_date_link')}</a></span>
               </div>
             )}
 
             <div className="grid md:grid-cols-2 gap-4 mb-6">
               <div className="bg-white border border-gray-200 rounded-xl p-5">
-                <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">Latest Vegetation Indices</h2>
+                <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">{t('precision_ag_agronomy.veg_indices_heading')}</h2>
                 <div className="space-y-3">
                   <IndexBar label="NDVI" value={ndvi} color="#3D6B34" />
                   <IndexBar label="NDRE" value={ndre} color="#15803D" lo={0} hi={0.6} />
@@ -225,16 +228,16 @@ export default function PrecisionAgAgronomy() {
               </div>
 
               <div className="bg-white border border-gray-200 rounded-xl p-5">
-                <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">Signals</h2>
+                <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">{t('precision_ag_agronomy.signals_heading')}</h2>
                 <ul className="space-y-2 text-sm">
                   {agro?.irrigation?.recommendation && (
-                    <li><span className="font-semibold text-sky-700">💧 Irrigation:</span> {agro.irrigation.recommendation}</li>
+                    <li><span className="font-semibold text-sky-700">💧 {t('precision_ag_agronomy.signal_irrigation')}:</span> {agro.irrigation.recommendation}</li>
                   )}
                   {agro?.disease_risk?.level && (
-                    <li><span className="font-semibold text-rose-700">🦠 Disease risk:</span> {agro.disease_risk.level}</li>
+                    <li><span className="font-semibold text-rose-700">🦠 {t('precision_ag_agronomy.signal_disease_risk')}:</span> {agro.disease_risk.level}</li>
                   )}
                   {!agro?.irrigation && !agro?.disease_risk && (
-                    <li className="text-gray-500 italic">No active signals from the model.</li>
+                    <li className="text-gray-500 italic">{t('precision_ag_agronomy.signals_empty')}</li>
                   )}
                 </ul>
               </div>
@@ -242,7 +245,7 @@ export default function PrecisionAgAgronomy() {
 
             {agro?.spray_by_product && Object.keys(agro.spray_by_product).some(k => k !== 'general') && (
               <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-                <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">Spray Decision (today's forecast)</h2>
+                <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">{t('precision_ag_agronomy.spray_heading')}</h2>
                 <div className="grid grid-cols-3 gap-3">
                   {['herbicide', 'fungicide', 'insecticide'].map(k => {
                     const v = agro.spray_by_product[k] || {};
@@ -257,9 +260,9 @@ export default function PrecisionAgAgronomy() {
                           <span className="font-mont text-xs uppercase tracking-wide text-gray-600">{v.label || k}</span>
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: color }}>{dec}</span>
                         </div>
-                        {fails && <div className="text-xs text-gray-700 mt-1"><strong>Fails:</strong> {fails}</div>}
-                        {!fails && warns && <div className="text-xs text-gray-600 mt-1"><strong>Watch:</strong> {warns}</div>}
-                        {!fails && !warns && <div className="text-xs text-gray-500 mt-1">Within all thresholds.</div>}
+                        {fails && <div className="text-xs text-gray-700 mt-1"><strong>{t('precision_ag_agronomy.spray_fails')}:</strong> {fails}</div>}
+                        {!fails && warns && <div className="text-xs text-gray-600 mt-1"><strong>{t('precision_ag_agronomy.spray_watch')}:</strong> {warns}</div>}
+                        {!fails && !warns && <div className="text-xs text-gray-500 mt-1">{t('precision_ag_agronomy.spray_ok')}</div>}
                       </div>
                     );
                   })}
@@ -274,7 +277,7 @@ export default function PrecisionAgAgronomy() {
 
             {Array.isArray(agro?.pest_disease_alerts) && agro.pest_disease_alerts.length > 0 && (
               <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-                <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">Pest &amp; Disease Watch</h2>
+                <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">{t('precision_ag_agronomy.pest_heading')}</h2>
                 <ul className="space-y-2.5">
                   {agro.pest_disease_alerts.map((a, i) => {
                     const sev = (a.severity || 'MEDIUM').toUpperCase();
@@ -292,8 +295,8 @@ export default function PrecisionAgAgronomy() {
                           </span>
                         </div>
                         <div className="font-mont text-sm text-gray-700">{a.action}</div>
-                        {a.why && <div className="font-mont text-xs text-gray-500 mt-1">Why: {a.why}</div>}
-                        {a.source && <div className="font-mont text-[10px] text-gray-400 mt-1">Source: {a.source}</div>}
+                        {a.why && <div className="font-mont text-xs text-gray-500 mt-1">{t('precision_ag_agronomy.pest_why')}: {a.why}</div>}
+                        {a.source && <div className="font-mont text-[10px] text-gray-400 mt-1">{t('precision_ag_agronomy.pest_source')}: {a.source}</div>}
                       </li>
                     );
                   })}
@@ -303,10 +306,10 @@ export default function PrecisionAgAgronomy() {
 
             <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-lora text-lg font-bold text-gray-900">NDVI Trend (last 180 days)</h2>
+                <h2 className="font-lora text-lg font-bold text-gray-900">{t('precision_ag_agronomy.ndvi_heading')}</h2>
                 {ndviSeries?.summary?.last_date && (
                   <span className="text-xs text-gray-500">
-                    last sample {String(ndviSeries.summary.last_date).slice(0, 10)}
+                    {t('precision_ag_agronomy.ndvi_last_sample', { date: String(ndviSeries.summary.last_date).slice(0, 10) })}
                   </span>
                 )}
               </div>
@@ -314,7 +317,7 @@ export default function PrecisionAgAgronomy() {
             </div>
 
             <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">Recommendations</h2>
+              <h2 className="font-lora text-lg font-bold text-gray-900 mb-3">{t('precision_ag_agronomy.recs_heading')}</h2>
               {recList.length ? (
                 <ul className="space-y-2">
                   {recList.map((r, i) => {
@@ -328,7 +331,7 @@ export default function PrecisionAgAgronomy() {
                   })}
                 </ul>
               ) : (
-                <div className="text-sm text-gray-500 italic">No recommendations from the model right now.</div>
+                <div className="text-sm text-gray-500 italic">{t('precision_ag_agronomy.recs_empty')}</div>
               )}
             </div>
           </>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import EventAdminLayout from './EventAdminLayout';
 import RichTextEditor from './RichTextEditor';
 
@@ -24,6 +25,7 @@ const EMPTY_CONFIG = {
 function d(val) { return val ? String(val).substring(0, 10) : ''; }
 
 function ConfigTab({ eventId }) {
+  const { t } = useTranslation();
   const [cfg, setCfg] = useState(EMPTY_CONFIG);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -67,8 +69,8 @@ function ConfigTab({ eventId }) {
           MaxEntriesPerRegistrant: cfg.MaxEntriesPerRegistrant === '' ? null : Number(cfg.MaxEntriesPerRegistrant),
         }),
       });
-      if (!r.ok) throw new Error('Save failed');
-      setMsg('Saved');
+      if (!r.ok) throw new Error(t('spin_off_admin.err_save_failed'));
+      setMsg(t('spin_off_admin.saved'));
     } catch (ex) {
       setMsg(ex.message);
     } finally {
@@ -80,60 +82,60 @@ function ConfigTab({ eventId }) {
   return (
     <form onSubmit={save} className="space-y-5">
       <div>
-        <label className={lbl}>Spin-Off Description</label>
+        <label className={lbl}>{t('spin_off_admin.lbl_description')}</label>
         <RichTextEditor value={cfg.Description || ''}
           onChange={(v) => setCfg(c => ({ ...c, Description: v }))} minHeight={200} />
       </div>
 
-      <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide">Fees</h3>
+      <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide">{t('spin_off_admin.section_fees')}</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className={lbl}>Fee per Spin-Off entry ($)</label>
+          <label className={lbl}>{t('spin_off_admin.lbl_fee_per_entry')}</label>
           <input type="number" step="0.01" value={cfg.FeePerEntry} onChange={set('FeePerEntry')} className={inp} />
         </div>
         <div>
-          <label className={lbl}>Discount fee per entry ($)</label>
-          <input type="number" step="0.01" value={cfg.DiscountFeePerEntry} onChange={set('DiscountFeePerEntry')} className={inp} placeholder="Optional" />
+          <label className={lbl}>{t('spin_off_admin.lbl_discount_fee')}</label>
+          <input type="number" step="0.01" value={cfg.DiscountFeePerEntry} onChange={set('DiscountFeePerEntry')} className={inp} placeholder={t('spin_off_admin.placeholder_optional')} />
         </div>
         <div>
-          <label className={lbl}>Max entries per registrant</label>
-          <input type="number" min="1" value={cfg.MaxEntriesPerRegistrant} onChange={set('MaxEntriesPerRegistrant')} className={inp} placeholder="Unlimited" />
+          <label className={lbl}>{t('spin_off_admin.lbl_max_entries')}</label>
+          <input type="number" min="1" value={cfg.MaxEntriesPerRegistrant} onChange={set('MaxEntriesPerRegistrant')} className={inp} placeholder={t('spin_off_admin.placeholder_unlimited')} />
         </div>
       </div>
 
-      <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide">Registration Window</h3>
+      <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide">{t('spin_off_admin.section_reg_window')}</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className={lbl}>Registration opens</label>
+          <label className={lbl}>{t('spin_off_admin.lbl_reg_opens')}</label>
           <input type="date" value={cfg.RegistrationStartDate} onChange={set('RegistrationStartDate')} className={inp} />
         </div>
         <div>
-          <label className={lbl}>Registration closes</label>
+          <label className={lbl}>{t('spin_off_admin.lbl_reg_closes')}</label>
           <input type="date" value={cfg.RegistrationEndDate} onChange={set('RegistrationEndDate')} className={inp} />
         </div>
       </div>
 
-      <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide">Discount Window</h3>
+      <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide">{t('spin_off_admin.section_discount_window')}</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className={lbl}>Discount starts</label>
+          <label className={lbl}>{t('spin_off_admin.lbl_discount_starts')}</label>
           <input type="date" value={cfg.DiscountStartDate} onChange={set('DiscountStartDate')} className={inp} />
         </div>
         <div>
-          <label className={lbl}>Discount ends</label>
+          <label className={lbl}>{t('spin_off_admin.lbl_discount_ends')}</label>
           <input type="date" value={cfg.DiscountEndDate} onChange={set('DiscountEndDate')} className={inp} />
         </div>
       </div>
 
       <label className="flex items-center gap-2 text-sm text-gray-700">
         <input type="checkbox" checked={cfg.IsActive} onChange={setB('IsActive')} className="w-4 h-4 accent-green-600" />
-        Spin-Off is active (attendees can register)
+        {t('spin_off_admin.lbl_is_active')}
       </label>
 
       <div className="flex items-center justify-end gap-3 pt-2">
         {msg && <span className="text-sm text-gray-500 mr-auto">{msg}</span>}
         <button type="submit" disabled={saving} className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save Configuration'}
+          {saving ? t('spin_off_admin.btn_saving') : t('spin_off_admin.btn_save')}
         </button>
       </div>
     </form>
@@ -141,6 +143,7 @@ function ConfigTab({ eventId }) {
 }
 
 function CategoriesTab({ eventId }) {
+  const { t } = useTranslation();
   const [cats, setCats] = useState([]);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -164,7 +167,7 @@ function CategoriesTab({ eventId }) {
   };
 
   const remove = async (id) => {
-    if (!confirm('Delete this category?')) return;
+    if (!confirm(t('spin_off_admin.confirm_delete_cat'))) return;
     await fetch(`${API}/api/events/spinoff/categories/${id}`, { method: 'DELETE' });
     load();
   };
@@ -181,7 +184,7 @@ function CategoriesTab({ eventId }) {
   };
 
   const seedDefaults = async () => {
-    if (!confirm('Seed 8 standard Spin-Off categories (Novice/Intermediate/Advanced/Youth spinners + Camelid, Sheep, Luxury, Art Yarn)? Existing categories with the same names are skipped.')) return;
+    if (!confirm(t('spin_off_admin.confirm_seed'))) return;
     const r = await fetch(`${API}/api/events/${eventId}/spinoff/categories/bulk-seed`, { method: 'POST' });
     if (r.ok) load();
   };
@@ -189,16 +192,16 @@ function CategoriesTab({ eventId }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <p className="text-sm text-gray-600">Define Spin-Off categories (e.g., "Novice Spinner", "Advanced", "Art Yarn"). Entries can be grouped by category for judging.</p>
+        <p className="text-sm text-gray-600">{t('spin_off_admin.cats_subtitle')}</p>
         <div className="flex gap-2">
           {cats.length === 0 && (
             <button onClick={seedDefaults} className="text-sm border border-[#3D6B34] text-[#3D6B34] px-4 py-1.5 rounded-lg hover:bg-green-50">
-              Seed defaults
+              {t('spin_off_admin.btn_seed_defaults')}
             </button>
           )}
           {!adding && (
             <button onClick={() => setAdding(true)} className="text-sm bg-[#3D6B34] text-white px-4 py-1.5 rounded-lg hover:bg-[#2d5226]">
-              + Add Category
+              {t('spin_off_admin.btn_add_category')}
             </button>
           )}
         </div>
@@ -208,50 +211,50 @@ function CategoriesTab({ eventId }) {
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className={lbl}>Category name *</label>
+              <label className={lbl}>{t('spin_off_admin.lbl_cat_name')}</label>
               <input value={draft.CategoryName} onChange={e => setDraft(d => ({ ...d, CategoryName: e.target.value }))} className={inp} />
             </div>
             <div>
-              <label className={lbl}>Skill level</label>
+              <label className={lbl}>{t('spin_off_admin.lbl_skill_level')}</label>
               <select value={draft.SkillLevel} onChange={e => setDraft(d => ({ ...d, SkillLevel: e.target.value }))} className={inp}>
-                <option value="">— none —</option>
-                <option value="Novice">Novice</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-                <option value="Youth">Youth</option>
-                <option value="Open">Open</option>
+                <option value="">{t('spin_off_admin.skill_none')}</option>
+                <option value="Novice">{t('spin_off_admin.skill_novice')}</option>
+                <option value="Intermediate">{t('spin_off_admin.skill_intermediate')}</option>
+                <option value="Advanced">{t('spin_off_admin.skill_advanced')}</option>
+                <option value="Youth">{t('spin_off_admin.skill_youth')}</option>
+                <option value="Open">{t('spin_off_admin.skill_open')}</option>
               </select>
             </div>
           </div>
           <div>
-            <label className={lbl}>Description (optional)</label>
+            <label className={lbl}>{t('spin_off_admin.lbl_cat_description')}</label>
             <RichTextEditor value={draft.Description || ''}
               onChange={(v) => setDraft(d => ({ ...d, Description: v }))} minHeight={110} />
           </div>
           <div>
-            <label className={lbl}>Display order</label>
+            <label className={lbl}>{t('spin_off_admin.lbl_display_order')}</label>
             <input type="number" value={draft.DisplayOrder} onChange={e => setDraft(d => ({ ...d, DisplayOrder: Number(e.target.value) || 0 }))} className={`${inp} w-28`} />
           </div>
           <div className="flex justify-end gap-2">
-            <button onClick={() => { setAdding(false); setEditingId(null); setDraft(EMPTY); }} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">Cancel</button>
-            <button onClick={save} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg">{editingId ? 'Update' : 'Add'}</button>
+            <button onClick={() => { setAdding(false); setEditingId(null); setDraft(EMPTY); }} className="px-4 py-1.5 text-sm border border-gray-300 rounded-lg">{t('spin_off_admin.btn_cancel')}</button>
+            <button onClick={save} className="px-4 py-1.5 text-sm bg-[#3D6B34] text-white rounded-lg">{editingId ? t('spin_off_admin.btn_update') : t('spin_off_admin.btn_add')}</button>
           </div>
         </div>
       )}
 
       <div className="space-y-2">
-        {cats.length === 0 && <div className="text-sm text-gray-500">No categories yet. Categories are optional — entries can be submitted without one.</div>}
+        {cats.length === 0 && <div className="text-sm text-gray-500">{t('spin_off_admin.cats_empty')}</div>}
         {cats.map(c => (
           <div key={c.CategoryID} className="flex items-start justify-between bg-white border border-gray-200 rounded-lg p-3">
             <div className="flex-1">
               <div className="font-medium text-gray-900">{c.CategoryName}</div>
-              {c.SkillLevel && <div className="text-xs text-gray-500 mt-0.5">Skill: {c.SkillLevel}</div>}
+              {c.SkillLevel && <div className="text-xs text-gray-500 mt-0.5">{t('spin_off_admin.skill_label', { level: c.SkillLevel })}</div>}
               {c.Description && <div className="text-xs text-gray-500 mt-0.5">{c.Description}</div>}
-              <div className="text-[11px] text-gray-400 mt-1">Order {c.DisplayOrder}</div>
+              <div className="text-[11px] text-gray-400 mt-1">{t('spin_off_admin.order_label', { n: c.DisplayOrder })}</div>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => startEdit(c)} className="text-xs text-gray-500 hover:text-gray-800">Edit</button>
-              <button onClick={() => remove(c.CategoryID)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+              <button onClick={() => startEdit(c)} className="text-xs text-gray-500 hover:text-gray-800">{t('spin_off_admin.btn_edit')}</button>
+              <button onClick={() => remove(c.CategoryID)} className="text-xs text-red-500 hover:text-red-700">{t('spin_off_admin.btn_delete')}</button>
             </div>
           </div>
         ))}
@@ -261,6 +264,7 @@ function CategoriesTab({ eventId }) {
 }
 
 function EntriesTab({ eventId }) {
+  const { t } = useTranslation();
   const [entries, setEntries] = useState([]);
 
   const load = () => fetch(`${API}/api/events/${eventId}/spinoff/entries`)
@@ -288,20 +292,20 @@ function EntriesTab({ eventId }) {
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3 text-sm">
         <div className="bg-white border border-gray-200 rounded-lg px-3 py-2">
-          <div className="text-xs text-gray-500">Total entries</div>
+          <div className="text-xs text-gray-500">{t('spin_off_admin.stat_total_entries')}</div>
           <div className="font-bold text-gray-900">{entries.length}</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg px-3 py-2">
-          <div className="text-xs text-gray-500">Paid</div>
+          <div className="text-xs text-gray-500">{t('spin_off_admin.stat_paid')}</div>
           <div className="font-bold text-green-700">{entries.filter(e => e.PaidStatus === 'paid').length}</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg px-3 py-2">
-          <div className="text-xs text-gray-500">Total fees</div>
+          <div className="text-xs text-gray-500">{t('spin_off_admin.stat_total_fees')}</div>
           <div className="font-bold text-[#3D6B34]">${totalFee.toFixed(2)}</div>
         </div>
       </div>
 
-      {entries.length === 0 && <div className="text-sm text-gray-500">No Spin-Off entries yet.</div>}
+      {entries.length === 0 && <div className="text-sm text-gray-500">{t('spin_off_admin.entries_empty')}</div>}
 
       {Object.entries(byFarm).map(([farm, list]) => (
         <div key={farm} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -309,17 +313,17 @@ function EntriesTab({ eventId }) {
           <table className="w-full text-sm">
             <thead className="text-xs text-gray-500 border-t">
               <tr>
-                <th className="text-left p-2">Entry</th>
-                <th className="text-left p-2">Fiber Source</th>
-                <th className="text-left p-2">Spinner</th>
-                <th className="text-right p-2">Fee</th>
-                <th className="text-center p-2">Paid</th>
+                <th className="text-left p-2">{t('spin_off_admin.th_entry')}</th>
+                <th className="text-left p-2">{t('spin_off_admin.th_fiber_source')}</th>
+                <th className="text-left p-2">{t('spin_off_admin.th_spinner')}</th>
+                <th className="text-right p-2">{t('spin_off_admin.th_fee')}</th>
+                <th className="text-center p-2">{t('spin_off_admin.th_paid')}</th>
               </tr>
             </thead>
             <tbody>
               {list.map(e => (
                 <tr key={e.EntryID} className="border-t">
-                  <td className="p-2 font-medium">{e.EntryTitle || `Entry #${e.EntryID}`}</td>
+                  <td className="p-2 font-medium">{e.EntryTitle || t('spin_off_admin.entry_fallback', { id: e.EntryID })}</td>
                   <td className="p-2">{e.FiberSource || e.AnimalName || '—'}</td>
                   <td className="p-2">{e.SpinnerName || [e.PeopleFirstName, e.PeopleLastName].filter(Boolean).join(' ') || '—'}</td>
                   <td className="p-2 text-right">${Number(e.EntryFee || 0).toFixed(2)}</td>
@@ -340,6 +344,7 @@ function EntriesTab({ eventId }) {
 }
 
 function JudgingTab({ eventId }) {
+  const { t } = useTranslation();
   const [entries, setEntries] = useState([]);
   const [judgingId, setJudgingId] = useState(null);
   const [draft, setDraft] = useState({ Placement: '', JudgeNotes: '', Score: '' });
@@ -368,47 +373,47 @@ function JudgingTab({ eventId }) {
 
   return (
     <div className="space-y-2">
-      {entries.length === 0 && <div className="text-sm text-gray-500">No Spin-Off entries to judge yet.</div>}
+      {entries.length === 0 && <div className="text-sm text-gray-500">{t('spin_off_admin.judging_empty')}</div>}
       {entries.map(e => (
         <div key={e.EntryID} className="bg-white border border-gray-200 rounded-lg p-3">
           {judgingId === e.EntryID ? (
             <div className="space-y-3">
-              <div className="font-medium">{e.EntryTitle || `Entry #${e.EntryID}`}</div>
+              <div className="font-medium">{e.EntryTitle || t('spin_off_admin.entry_fallback', { id: e.EntryID })}</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className={lbl}>Placement</label>
+                  <label className={lbl}>{t('spin_off_admin.lbl_placement')}</label>
                   <select value={draft.Placement} onChange={ev => setDraft(d => ({ ...d, Placement: ev.target.value }))} className={inp}>
-                    {PLACEMENTS.map(p => <option key={p} value={p}>{p || '— none —'}</option>)}
+                    {PLACEMENTS.map(p => <option key={p} value={p}>{p || t('spin_off_admin.placement_none')}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className={lbl}>Score (optional)</label>
+                  <label className={lbl}>{t('spin_off_admin.lbl_score')}</label>
                   <input type="number" step="0.01" value={draft.Score} onChange={ev => setDraft(d => ({ ...d, Score: ev.target.value }))} className={inp} />
                 </div>
               </div>
               <div>
-                <label className={lbl}>Judge notes</label>
+                <label className={lbl}>{t('spin_off_admin.lbl_judge_notes')}</label>
                 <RichTextEditor value={draft.JudgeNotes || ''}
                   onChange={(v) => setDraft(d => ({ ...d, JudgeNotes: v }))} minHeight={130} />
               </div>
               <div className="flex justify-end gap-2">
-                <button onClick={() => setJudgingId(null)} className="px-3 py-1 text-sm border border-gray-300 rounded-lg">Cancel</button>
-                <button onClick={save} className="px-3 py-1 text-sm bg-[#3D6B34] text-white rounded-lg">Save</button>
+                <button onClick={() => setJudgingId(null)} className="px-3 py-1 text-sm border border-gray-300 rounded-lg">{t('spin_off_admin.btn_cancel')}</button>
+                <button onClick={save} className="px-3 py-1 text-sm bg-[#3D6B34] text-white rounded-lg">{t('common.save')}</button>
               </div>
             </div>
           ) : (
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
-                <div className="font-medium text-gray-900">{e.EntryTitle || `Entry #${e.EntryID}`}</div>
+                <div className="font-medium text-gray-900">{e.EntryTitle || t('spin_off_admin.entry_fallback', { id: e.EntryID })}</div>
                 <div className="text-xs text-gray-500 mt-0.5">
                   {[e.PeopleFirstName, e.PeopleLastName].filter(Boolean).join(' ')}
                   {e.BusinessName && ` • ${e.BusinessName}`}
                   {e.FiberSource && ` • ${e.FiberSource}`}
                 </div>
-                {e.Placement && <div className="text-xs font-semibold text-[#3D6B34] mt-1">🏆 {e.Placement}{e.Score != null && ` • Score ${e.Score}`}</div>}
-                {e.JudgeNotes && <div className="text-xs italic text-gray-500 mt-0.5">Judge: {e.JudgeNotes}</div>}
+                {e.Placement && <div className="text-xs font-semibold text-[#3D6B34] mt-1">🏆 {e.Placement}{e.Score != null && ` • ${t('spin_off_admin.score_label', { score: e.Score })}`}</div>}
+                {e.JudgeNotes && <div className="text-xs italic text-gray-500 mt-0.5">{t('spin_off_admin.judge_prefix', { notes: e.JudgeNotes })}</div>}
               </div>
-              <button onClick={() => start(e)} className="text-xs text-blue-600 hover:text-blue-800 shrink-0">Judge</button>
+              <button onClick={() => start(e)} className="text-xs text-blue-600 hover:text-blue-800 shrink-0">{t('spin_off_admin.btn_judge')}</button>
             </div>
           )}
         </div>
@@ -418,6 +423,7 @@ function JudgingTab({ eventId }) {
 }
 
 export default function SpinOffAdmin() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [params] = useSearchParams();
   const BusinessID = params.get('BusinessID');
@@ -429,10 +435,10 @@ export default function SpinOffAdmin() {
   }, [eventId]);
 
   const TABS = [
-    ['config', 'Configuration'],
-    ['categories', 'Categories'],
-    ['entries', 'Spin-Off Entries'],
-    ['judging', 'Judging & Results'],
+    ['config', t('spin_off_admin.tab_config')],
+    ['categories', t('spin_off_admin.tab_categories')],
+    ['entries', t('spin_off_admin.tab_entries')],
+    ['judging', t('spin_off_admin.tab_judging')],
   ];
 
   return (
@@ -440,13 +446,13 @@ export default function SpinOffAdmin() {
       <div className="max-w-5xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Spin-Off</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('spin_off_admin.heading')}</h1>
             <p className="text-sm text-gray-500 mt-1">
-              {event?.EventName || 'Event'} — admin console
+              {event?.EventName || t('spin_off_admin.event_fallback')} — {t('spin_off_admin.admin_console')}
             </p>
           </div>
           <Link to={`/events/manage?BusinessID=${BusinessID || ''}`} className="text-sm text-gray-500 hover:text-gray-700">
-            ← Back to My Events
+            {t('spin_off_admin.btn_back')}
           </Link>
         </div>
 

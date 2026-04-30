@@ -39,7 +39,7 @@ function OMChart({ history }) {
   const cy = v => PAD.t + (1 - (v - minV) / (maxV - minV)) * (H - PAD.t - PAD.b);
   const path = history.map((d, i) => d.om_pct ? `${i === 0 ? 'M' : 'L'}${cx(i)},${cy(d.om_pct)}` : '').join(' ');
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 130 }}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
       {[minV, (minV + maxV) / 2, maxV].map(v => (
         <g key={v}>
           <line x1={PAD.l} y1={cy(v)} x2={W - PAD.r} y2={cy(v)} stroke="#f0f0f0" strokeWidth="1" />

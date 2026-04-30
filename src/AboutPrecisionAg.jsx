@@ -8,25 +8,6 @@ import Breadcrumbs from './Breadcrumbs';
 
 const ACCENT = '#3D6B34';
 
-const S = ({ children }) => (
-  <svg width="24" height="24" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-    strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-    {children}
-  </svg>
-);
-
-const ICONS = {
-  satellite: <S><rect x="5" y="1" width="6" height="4" rx="0.5"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="10" r="3"/><line x1="1" y1="3" x2="4" y2="5"/><line x1="15" y1="3" x2="12" y2="5"/></S>,
-  climate:   <S><path d="M3 9a5 5 0 0 1 10 0 3 3 0 0 1 0 6H3a3 3 0 0 1 0-6z"/><path d="M8 2v2M3.5 3.5l1.4 1.4M12.5 3.5l-1.4 1.4"/></S>,
-  soil:      <S><path d="M2 12c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M5 12c0-1.7 1.3-3 3-3s3 1.3 3 3"/><line x1="8" y1="14" x2="8" y2="15"/><line x1="4" y1="14" x2="4" y2="15"/><line x1="12" y1="14" x2="12" y2="15"/></S>,
-  gdd:       <S><path d="M2 12 L5 7 L8 9 L11 4 L14 6"/><line x1="2" y1="14" x2="14" y2="14"/><circle cx="14" cy="4" r="1.5" fill="currentColor" stroke="none"/></S>,
-  scout:     <S><circle cx="8" cy="8" r="3"/><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="1.5" x2="8" y2="4"/><line x1="8" y1="12" x2="8" y2="14.5"/><line x1="1.5" y1="8" x2="4" y2="8"/><line x1="12" y1="8" x2="14.5" y2="8"/></S>,
-  zones:     <S><path d="M2 8a6 6 0 0 1 12 0"/><path d="M4.5 11a4 4 0 0 1 7 0"/><path d="M7 14a1.5 1.5 0 0 1 2 0"/><line x1="8" y1="2" x2="8" y2="14"/></S>,
-  yield:     <S><path d="M2 13 L5 8 L8 10 L11 5 L14 7"/><path d="M11 5 L14 5 L14 8"/><line x1="2" y1="15" x2="14" y2="15"/></S>,
-  carbon:    <S><path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2z"/><path d="M5.5 8.5c.5 1.5 1.5 2.5 2.5 2.5s2-.8 2-2-.8-1.5-2-1.5-2-.5-2-1.5.8-2 2-2 2 1 2.5 2.5"/><line x1="8" y1="2" x2="8" y2="1"/><line x1="8" y1="14" x2="8" y2="15"/></S>,
-  report:    <S><rect x="3" y="1" width="10" height="14" rx="1"/><line x1="6" y1="5" x2="10" y2="5"/><line x1="6" y1="8" x2="10" y2="8"/><line x1="6" y1="11" x2="9" y2="11"/></S>,
-  alert:     <S><path d="M8 2L1 14h14z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12.5" r="0.6" fill="currentColor" stroke="none"/></S>,
-};
 
 const STATS_VALUES = ['6', '10+', '24h', '∞'];
 
@@ -34,16 +15,16 @@ export default function AboutPrecisionAg() {
   const { t } = useTranslation();
 
   const features = [
-    { icon: ICONS.satellite, title: t('precision.feat1_title'),  body: t('precision.feat1_body'),  link: '/oatsense' },
-    { icon: ICONS.climate,   title: t('precision.feat2_title'),  body: t('precision.feat2_body'),  link: '/oatsense' },
-    { icon: ICONS.soil,      title: t('precision.feat3_title'),  body: t('precision.feat3_body'),  link: '/oatsense' },
-    { icon: ICONS.gdd,       title: t('precision.feat4_title'),  body: t('precision.feat4_body'),  link: '/oatsense' },
-    { icon: ICONS.scout,     title: t('precision.feat5_title'),  body: t('precision.feat5_body'),  link: '/oatsense' },
-    { icon: ICONS.zones,     title: t('precision.feat6_title'),  body: t('precision.feat6_body'),  link: '/oatsense' },
-    { icon: ICONS.yield,     title: t('precision.feat7_title'),  body: t('precision.feat7_body'),  link: '/oatsense' },
-    { icon: ICONS.carbon,    title: t('precision.feat8_title'),  body: t('precision.feat8_body'),  link: '/oatsense' },
-    { icon: ICONS.alert,     title: t('precision.feat9_title'),  body: t('precision.feat9_body'),  link: '/oatsense' },
-    { icon: ICONS.report,    title: t('precision.feat10_title'), body: t('precision.feat10_body'), link: '/oatsense' },
+    { img: '/images/PrecsisionAgSateliteCropMonitoring.webp',        title: t('precision.feat1_title'),  body: t('precision.feat1_body'),  link: '/oatsense' },
+    { img: '/images/PrecsisionAgGrowingDegreeDays&Maturity.webp',    title: t('precision.feat2_title'),  body: t('precision.feat2_body'),  link: '/oatsense' },
+    { img: '/images/PrecsisionAgSoil&IrragationIntellegence.webp',   title: t('precision.feat3_title'),  body: t('precision.feat3_body'),  link: '/oatsense' },
+    { img: '/images/PrecsisionAgGrowingDegreeDays&Maturity.webp',    title: t('precision.feat4_title'),  body: t('precision.feat4_body'),  link: '/oatsense' },
+    { img: '/images/PrecsisionAgFieldScouting&ActivityLog.webp',     title: t('precision.feat5_title'),  body: t('precision.feat5_body'),  link: '/oatsense' },
+    { img: '/images/PrecsisionAgSateliteCropMonitoring.webp',        title: t('precision.feat6_title'),  body: t('precision.feat6_body'),  link: '/oatsense' },
+    { img: '/images/PrecsisionAgYieldForecasting.webp',              title: t('precision.feat7_title'),  body: t('precision.feat7_body'),  link: '/oatsense' },
+    { img: '/images/PrecsisionCarbon&CropRotation.webp',             title: t('precision.feat8_title'),  body: t('precision.feat8_body'),  link: '/oatsense' },
+    { img: '/images/PrecsisionAgAlerts.webp',                        title: t('precision.feat9_title'),  body: t('precision.feat9_body'),  link: '/oatsense' },
+    { img: '/images/PrecsisionProfessionalFieldReport.webp',         title: t('precision.feat10_title'), body: t('precision.feat10_body'), link: '/oatsense' },
   ];
 
   const stats = [
@@ -158,7 +139,7 @@ export default function AboutPrecisionAg() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
           {features.map((f, i) => (
-            <ToolCard key={i} icon={f.icon} title={f.title} body={f.body} link={f.link} />
+            <ToolCard key={i} img={f.img} title={f.title} body={f.body} link={f.link} />
           ))}
         </div>
 
@@ -215,19 +196,22 @@ export default function AboutPrecisionAg() {
 }
 
 // ── ToolCard — matches /for-farms horizontal card style ──────────────
-function ToolCard({ icon, title, body, link }) {
+function ToolCard({ img, title, body, link }) {
   return (
     <div className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200">
       <Link
         to={link}
-        className="shrink-0 flex items-center justify-center"
-        style={{ width: '155px', minHeight: '155px', backgroundColor: `${ACCENT}18` }}
+        className="shrink-0"
+        style={{ width: '155px', minHeight: '155px' }}
         aria-hidden="true"
         tabIndex={-1}
       >
-        <span style={{ color: ACCENT, opacity: 0.85, transform: 'scale(2.2)', display: 'flex' }}>
-          {icon}
-        </span>
+        <img
+          src={img}
+          alt=""
+          className="w-full h-full object-cover"
+          style={{ display: 'block', minHeight: '155px' }}
+        />
       </Link>
       <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
         <div>

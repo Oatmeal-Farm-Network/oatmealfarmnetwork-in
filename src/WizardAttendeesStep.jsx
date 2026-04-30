@@ -1,19 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 
 function authHeaders() {
-  const t = localStorage.getItem('access_token');
-  return t ? { Authorization: `Bearer ${t}` } : {};
+  const tok = localStorage.getItem('access_token');
+  return tok ? { Authorization: `Bearer ${tok}` } : {};
 }
 
-const ROLES = [
-  { value: 'exhibitor', label: 'Exhibitor' },
-  { value: 'youth',     label: 'Youth / Junior' },
-  { value: 'child',     label: 'Child' },
-  { value: 'guest',     label: 'Guest / Spectator' },
-  { value: 'other',     label: 'Other' },
-];
+const ROLE_VALUES = ['exhibitor', 'youth', 'child', 'guest', 'other'];
 
 /**
  * Group registration step. Lets the payer add additional people who will be
@@ -26,6 +21,7 @@ const ROLES = [
  *   onNext / onBack
  */
 export default function WizardAttendeesStep({ cartId, payer, businessId, onNext, onBack }) {
+  const { t } = useTranslation();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
@@ -51,13 +47,13 @@ export default function WizardAttendeesStep({ cartId, payer, businessId, onNext,
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(a),
     });
-    if (!res.ok) { alert('Save failed'); return; }
+    if (!res.ok) { alert(t('wizard_attendees.err_save_failed')); return; }
     setEditing(null);
     load();
   };
 
   const remove = async (a) => {
-    if (!confirm(`Remove ${a.FirstName || 'attendee'} from this registration?`)) return;
+    if (!confirm(t('wizard_attendees.confirm_remove', { name: a.FirstName || t('wizard_attendees.attendee_fallback') }))) return;
     await fetch(`${API}/api/events/cart/attendees/${a.AttendeeID}`, {
       method: 'DELETE', headers: authHeaders(),
     });
@@ -66,29 +62,28 @@ export default function WizardAttendeesStep({ cartId, payer, businessId, onNext,
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-      <h2 className="text-xl font-semibold text-gray-800 mb-1">Who else is coming?</h2>
+      <h2 className="text-xl font-semibold text-gray-800 mb-1">{t('wizard_attendees.heading')}</h2>
       <p className="text-sm text-gray-500 mb-5">
-        If you're registering more than one person (kids, family members, employees),
-        add them here. Leave blank if it's just you.
+        {t('wizard_attendees.subheading')}
       </p>
 
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-5 text-sm">
-        <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-1">Payer</div>
+        <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-1">{t('wizard_attendees.payer_label')}</div>
         <div className="text-gray-800">
-          {[payer?.FirstName, payer?.LastName].filter(Boolean).join(' ') || 'You'}
+          {[payer?.FirstName, payer?.LastName].filter(Boolean).join(' ') || t('wizard_attendees.payer_you')}
           {payer?.Email && <span className="text-gray-500"> · {payer.Email}</span>}
         </div>
       </div>
 
       {loading ? (
-        <div className="text-sm text-gray-500 py-4">Loading…</div>
+        <div className="text-sm text-gray-500 py-4">{t('wizard_attendees.loading')}</div>
       ) : (
         <div className="space-y-2 mb-4">
           {rows.map(a => (
             <div key={a.AttendeeID} className="border border-gray-200 rounded-lg p-3 flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-sm font-medium text-gray-800">
-                  {[a.FirstName, a.LastName].filter(Boolean).join(' ') || 'Unnamed attendee'}
+                  {[a.FirstName, a.LastName].filter(Boolean).join(' ') || t('wizard_attendees.unnamed_attendee')}
                   {a.Role && (
                     <span className="ml-2 text-[10px] uppercase bg-gray-100 text-gray-600 rounded px-2 py-0.5">
                       {a.Role}
@@ -96,17 +91,17 @@ export default function WizardAttendeesStep({ cartId, payer, businessId, onNext,
                   )}
                 </div>
                 {a.Email && <div className="text-xs text-gray-500">{a.Email}</div>}
-                {a.NameTagTitle && <div className="text-xs text-gray-500">Badge: {a.NameTagTitle}</div>}
+                {a.NameTagTitle && <div className="text-xs text-gray-500">{t('wizard_attendees.badge_prefix', { title: a.NameTagTitle })}</div>}
               </div>
               <div className="flex gap-2 shrink-0">
-                <button onClick={() => setEditing(a)} className="text-xs text-[#3D6B34] hover:underline">Edit</button>
-                <button onClick={() => remove(a)} className="text-xs text-red-600 hover:underline">Remove</button>
+                <button onClick={() => setEditing(a)} className="text-xs text-[#3D6B34] hover:underline">{t('wizard_attendees.btn_edit')}</button>
+                <button onClick={() => remove(a)} className="text-xs text-red-600 hover:underline">{t('wizard_attendees.btn_remove')}</button>
               </div>
             </div>
           ))}
           {rows.length === 0 && (
             <div className="text-sm text-gray-400 py-2 text-center italic">
-              No additional attendees yet.
+              {t('wizard_attendees.empty')}
             </div>
           )}
         </div>
@@ -115,12 +110,12 @@ export default function WizardAttendeesStep({ cartId, payer, businessId, onNext,
       <div className="flex gap-2">
         <button onClick={() => setEditing({ Role: 'exhibitor' })}
           className="flex-1 border-2 border-dashed border-gray-300 rounded-lg py-3 text-sm text-gray-600 hover:border-[#3D6B34] hover:text-[#3D6B34]">
-          + Add another attendee
+          {t('wizard_attendees.btn_add_attendee')}
         </button>
         {businessId && (
           <button onClick={() => setTeamOpen(true)}
             className="px-4 border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-[#3D6B34] hover:text-[#3D6B34]">
-            👥 Import from my team
+            {t('wizard_attendees.btn_import_team')}
           </button>
         )}
       </div>
@@ -154,10 +149,10 @@ export default function WizardAttendeesStep({ cartId, payer, businessId, onNext,
 
       <div className="flex justify-between mt-6 pt-4 border-t">
         <button onClick={onBack} className="px-5 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-          Back
+          {t('wizard_attendees.btn_back')}
         </button>
         <button onClick={onNext} className="px-6 py-2 text-sm rounded-lg bg-[#3D6B34] text-white hover:bg-[#2f5226]">
-          Continue
+          {t('wizard_attendees.btn_continue')}
         </button>
       </div>
     </div>
@@ -165,41 +160,51 @@ export default function WizardAttendeesStep({ cartId, payer, businessId, onNext,
 }
 
 function AttendeeEditor({ a, onSave, onClose }) {
+  const { t } = useTranslation();
   const [d, setD] = useState({ ...a });
   const set = (k, v) => setD(p => ({ ...p, [k]: v }));
+
+  const roles = [
+    { value: 'exhibitor', label: t('wizard_attendees.role_exhibitor') },
+    { value: 'youth',     label: t('wizard_attendees.role_youth') },
+    { value: 'child',     label: t('wizard_attendees.role_child') },
+    { value: 'guest',     label: t('wizard_attendees.role_guest') },
+    { value: 'other',     label: t('wizard_attendees.role_other') },
+  ];
+
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-5">
         <h3 className="text-lg font-semibold text-[#3D6B34] mb-3">
-          {a.AttendeeID ? 'Edit attendee' : 'Add attendee'}
+          {a.AttendeeID ? t('wizard_attendees.editor_edit_heading') : t('wizard_attendees.editor_add_heading')}
         </h3>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <input className="border rounded px-3 py-2" placeholder="First name"
+          <input className="border rounded px-3 py-2" placeholder={t('wizard_attendees.placeholder_first_name')}
             value={d.FirstName || ''} onChange={e => set('FirstName', e.target.value)} />
-          <input className="border rounded px-3 py-2" placeholder="Last name"
+          <input className="border rounded px-3 py-2" placeholder={t('wizard_attendees.placeholder_last_name')}
             value={d.LastName || ''} onChange={e => set('LastName', e.target.value)} />
-          <input className="border rounded px-3 py-2 col-span-2" placeholder="Email (optional)"
+          <input className="border rounded px-3 py-2 col-span-2" placeholder={t('wizard_attendees.placeholder_email')}
             value={d.Email || ''} onChange={e => set('Email', e.target.value)} />
-          <input className="border rounded px-3 py-2" placeholder="Phone (optional)"
+          <input className="border rounded px-3 py-2" placeholder={t('wizard_attendees.placeholder_phone')}
             value={d.Phone || ''} onChange={e => set('Phone', e.target.value)} />
           <select className="border rounded px-3 py-2" value={d.Role || 'exhibitor'}
             onChange={e => set('Role', e.target.value)}>
-            {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+            {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
           </select>
           <input className="border rounded px-3 py-2 col-span-2"
-            placeholder="Badge / nametag title (optional)"
+            placeholder={t('wizard_attendees.placeholder_nametag')}
             value={d.NameTagTitle || ''} onChange={e => set('NameTagTitle', e.target.value)} />
           <input className="border rounded px-3 py-2" type="date"
             value={(d.DateOfBirth || '').substring(0, 10)}
             onChange={e => set('DateOfBirth', e.target.value)}
-            placeholder="Date of birth (for youth divisions)" />
-          <input className="border rounded px-3 py-2" placeholder="Notes"
+            placeholder={t('wizard_attendees.placeholder_dob')} />
+          <input className="border rounded px-3 py-2" placeholder={t('wizard_attendees.placeholder_notes')}
             value={d.Notes || ''} onChange={e => set('Notes', e.target.value)} />
         </div>
         <div className="flex justify-end gap-2 mt-5">
-          <button onClick={onClose} className="text-sm px-4 py-2 rounded border border-gray-300">Cancel</button>
+          <button onClick={onClose} className="text-sm px-4 py-2 rounded border border-gray-300">{t('wizard_attendees.btn_cancel')}</button>
           <button onClick={() => onSave(d)} className="text-sm px-4 py-2 rounded bg-[#3D6B34] text-white">
-            {a.AttendeeID ? 'Save' : 'Add'}
+            {a.AttendeeID ? t('wizard_attendees.btn_save') : t('wizard_attendees.btn_add')}
           </button>
         </div>
       </div>
@@ -208,6 +213,7 @@ function AttendeeEditor({ a, onSave, onClose }) {
 }
 
 function TeamPicker({ businessId, existing, onPick, onClose }) {
+  const { t } = useTranslation();
   const [team, setTeam] = useState([]);
   const [loading, setLoading] = useState(true);
   const [picked, setPicked] = useState({});
@@ -221,19 +227,19 @@ function TeamPicker({ businessId, existing, onPick, onClose }) {
   }, [businessId]);
 
   const toggle = (pid) => setPicked(p => ({ ...p, [pid]: !p[pid] }));
-  const chosen = team.filter(t => picked[t.PeopleID]);
+  const chosen = team.filter(m => picked[m.PeopleID]);
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-5">
-        <h3 className="text-lg font-semibold text-[#3D6B34] mb-2">Import from my team</h3>
+        <h3 className="text-lg font-semibold text-[#3D6B34] mb-2">{t('wizard_attendees.team_heading')}</h3>
         <p className="text-xs text-gray-500 mb-3">
-          People with access to this business. Already-added attendees are dimmed.
+          {t('wizard_attendees.team_subheading')}
         </p>
         {loading ? (
-          <div className="py-6 text-center text-sm text-gray-500">Loading…</div>
+          <div className="py-6 text-center text-sm text-gray-500">{t('wizard_attendees.loading')}</div>
         ) : team.length === 0 ? (
-          <div className="py-6 text-center text-sm text-gray-500">No team members found.</div>
+          <div className="py-6 text-center text-sm text-gray-500">{t('wizard_attendees.team_empty')}</div>
         ) : (
           <div className="max-h-72 overflow-y-auto border border-gray-200 rounded-lg">
             {team.map(p => {
@@ -247,8 +253,8 @@ function TeamPicker({ businessId, existing, onPick, onClose }) {
                     onChange={() => !already && toggle(p.PeopleID)} />
                   <div className="min-w-0 flex-1">
                     <div className="text-gray-800">
-                      {[p.FirstName, p.LastName].filter(Boolean).join(' ') || '(no name)'}
-                      {already && <span className="ml-2 text-[10px] text-gray-400">already added</span>}
+                      {[p.FirstName, p.LastName].filter(Boolean).join(' ') || t('wizard_attendees.no_name')}
+                      {already && <span className="ml-2 text-[10px] text-gray-400">{t('wizard_attendees.already_added')}</span>}
                     </div>
                     {p.Email && <div className="text-xs text-gray-500">{p.Email}</div>}
                   </div>
@@ -259,11 +265,11 @@ function TeamPicker({ businessId, existing, onPick, onClose }) {
         )}
         <div className="flex justify-end gap-2 mt-4">
           <button onClick={onClose}
-            className="text-sm px-4 py-2 rounded border border-gray-300">Cancel</button>
+            className="text-sm px-4 py-2 rounded border border-gray-300">{t('wizard_attendees.btn_cancel')}</button>
           <button onClick={() => onPick(chosen)}
             disabled={chosen.length === 0}
             className="text-sm px-4 py-2 rounded bg-[#3D6B34] text-white disabled:opacity-50">
-            Add {chosen.length || ''}
+            {t('wizard_attendees.btn_add_count', { count: chosen.length || '' })}
           </button>
         </div>
       </div>

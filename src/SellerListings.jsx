@@ -1,6 +1,7 @@
 // src/SellerListings.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -31,6 +32,7 @@ const EMPTY_SF = {
 };
 
 export default function SellerListings() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const PeopleID   = localStorage.getItem('people_id');
@@ -117,7 +119,6 @@ export default function SellerListings() {
 
   const openEdit = async (p) => {
     setEditingProduct(p);
-    // Load full product detail for editing
     let detail = p;
     try {
       const res = await fetch(`${API}/api/sfproducts/${p.ProdID}`);
@@ -304,7 +305,7 @@ export default function SellerListings() {
   };
 
   const deleteProduct = async (p) => {
-    if (!confirm(`Delete "${p.Title}"?`)) return;
+    if (!confirm(t('seller_listings.confirm_delete', { title: p.Title }))) return;
     await fetch(`${API}/api/sfproducts/${p.ProdID}`, { method: 'DELETE' });
     loadProducts();
   };
@@ -318,16 +319,18 @@ export default function SellerListings() {
     loadProducts();
   };
 
+  const optLbl = <span className="text-xs text-gray-400 font-normal"> {t('seller_listings.lbl_optional')}</span>;
+
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="My Listings" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Marketplace' }, { label: 'My Listings' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={t('seller_listings.page_title')} breadcrumbs={[{ label: t('common.dashboard'), to: '/dashboard' }, { label: t('seller_listings.breadcrumb_marketplace') }, { label: t('seller_listings.page_title') }]}>
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <h1 className="text-2xl font-bold text-gray-800">My Listings</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{t('seller_listings.heading')}</h1>
           <button onClick={openAdd}
             className="bg-[#3D6B34] text-white font-semibold px-5 py-2 rounded-lg hover:bg-[#2d5226]">
-            + Add Product
+            {t('seller_listings.btn_add_product')}
           </button>
         </div>
 
@@ -337,24 +340,24 @@ export default function SellerListings() {
             {showForm && (
               <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
                 <h2 className="font-bold text-gray-700 mb-5 text-lg">
-                  {editingProduct ? `Edit: ${editingProduct.Title}` : 'New Product'}
+                  {editingProduct ? t('seller_listings.form_heading_edit', { title: editingProduct.Title }) : t('seller_listings.form_heading_new')}
                 </h2>
                 <form onSubmit={saveProduct}>
 
                   {/* ── BASIC INFO ── */}
                   <div className="mb-6">
-                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Basic Info</h3>
+                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">{t('seller_listings.section_basic')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="md:col-span-3">
-                        <label className={lbl}>Title</label>
-                        <input value={form.prodName} onChange={pf('prodName')} className={inp} required placeholder="e.g. Hand-spun Merino Wool Yarn" />
+                        <label className={lbl}>{t('seller_listings.lbl_title')}</label>
+                        <input value={form.prodName} onChange={pf('prodName')} className={inp} required placeholder={t('seller_listings.placeholder_title')} />
                       </div>
 
                       {/* Category */}
                       <div>
-                        <label className={lbl}>Category <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+                        <label className={lbl}>{t('seller_listings.lbl_category')}{optLbl}</label>
                         <select value={form.prodCategoryId} onChange={handleCatChange} className={inp}>
-                          <option value="">-- Select Category --</option>
+                          <option value="">{t('seller_listings.select_category')}</option>
                           {categories.map(c => (
                             <option key={c.CatID} value={c.CatID}>{c.CatName}</option>
                           ))}
@@ -363,9 +366,9 @@ export default function SellerListings() {
 
                       {/* Subcategory */}
                       <div>
-                        <label className={lbl}>Subcategory <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+                        <label className={lbl}>{t('seller_listings.lbl_subcategory')}{optLbl}</label>
                         <select value={form.prodSubCategoryId} onChange={pf('prodSubCategoryId')} className={inp} disabled={!subcategories.length}>
-                          <option value="">-- Select Subcategory --</option>
+                          <option value="">{t('seller_listings.select_subcategory')}</option>
                           {subcategories.map(s => (
                             <option key={s.SubCatID} value={s.SubCatID}>{s.SubCatName}</option>
                           ))}
@@ -373,24 +376,24 @@ export default function SellerListings() {
                       </div>
 
                       <div>
-                        <label className={lbl}>Short Description <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
-                        <input value={form.prodShortDescription} onChange={pf('prodShortDescription')} className={inp} placeholder="Brief tagline…" />
+                        <label className={lbl}>{t('seller_listings.lbl_short_description')}{optLbl}</label>
+                        <input value={form.prodShortDescription} onChange={pf('prodShortDescription')} className={inp} placeholder={t('seller_listings.placeholder_short_desc')} />
                       </div>
 
                       <div className="md:col-span-3">
-                        <label className={lbl}>Full Description <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
-                        <textarea value={form.prodDescription} onChange={pf('prodDescription')} className={inp} rows={4} placeholder="Describe your product in detail…" />
+                        <label className={lbl}>{t('seller_listings.lbl_full_description')}{optLbl}</label>
+                        <textarea value={form.prodDescription} onChange={pf('prodDescription')} className={inp} rows={4} placeholder={t('seller_listings.placeholder_full_desc')} />
                       </div>
 
                       {/* Made In */}
                       <div>
-                        <label className={lbl}>Made In <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
-                        <input value={form.prodMadeIn} onChange={pf('prodMadeIn')} className={inp} placeholder="e.g. USA, Montana…" />
+                        <label className={lbl}>{t('seller_listings.lbl_made_in')}{optLbl}</label>
+                        <input value={form.prodMadeIn} onChange={pf('prodMadeIn')} className={inp} placeholder={t('seller_listings.placeholder_made_in')} />
                       </div>
                       <div className="flex items-center pt-5">
                         <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                           <input type="checkbox" checked={form.madeInUSA} onChange={handleMadeInUSA} className="w-4 h-4 accent-green-600" />
-                          Made in USA (auto-fill)
+                          {t('seller_listings.lbl_made_in_usa')}
                         </label>
                       </div>
                     </div>
@@ -398,24 +401,24 @@ export default function SellerListings() {
 
                   {/* ── PRICING ── */}
                   <div className="mb-6">
-                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Pricing</h3>
+                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">{t('seller_listings.section_pricing')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className={lbl}>Retail Price</label>
+                        <label className={lbl}>{t('seller_listings.lbl_retail_price')}</label>
                         <input type="number" step="0.01" min="0" value={form.prodPrice} onChange={pf('prodPrice')} className={inp} required placeholder="0.00" />
                       </div>
                       <div>
-                        <label className={lbl}>Sale Price <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+                        <label className={lbl}>{t('seller_listings.lbl_sale_price')}{optLbl}</label>
                         <input type="number" step="0.01" min="0" value={form.SalePrice} onChange={pf('SalePrice')} className={inp} placeholder="0.00" />
                       </div>
                       <div className="flex flex-col justify-end pb-2 gap-2">
                         <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                           <input type="checkbox" checked={form.prodSaleIsActive} onChange={pb('prodSaleIsActive')} className="w-4 h-4 accent-green-600" />
-                          Sale Active
+                          {t('seller_listings.lbl_sale_active')}
                         </label>
                         <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                           <input type="checkbox" checked={form.prodCallforPrice} onChange={pb('prodCallforPrice')} className="w-4 h-4 accent-green-600" />
-                          Call for Price
+                          {t('seller_listings.lbl_call_for_price')}
                         </label>
                       </div>
                     </div>
@@ -423,16 +426,16 @@ export default function SellerListings() {
 
                   {/* ── INVENTORY ── */}
                   <div className="mb-6">
-                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Inventory</h3>
+                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">{t('seller_listings.section_inventory')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className={lbl}>Quantity Available</label>
+                        <label className={lbl}>{t('seller_listings.lbl_qty')}</label>
                         <input type="number" min="0" value={form.ProdQuantityAvailable} onChange={pf('ProdQuantityAvailable')} className={inp} placeholder="0" />
                       </div>
                       <div className="flex items-center pt-5">
                         <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                           <input type="checkbox" checked={form.prodCustomorder} onChange={pb('prodCustomorder')} className="w-4 h-4 accent-green-600" />
-                          Custom Orders Available
+                          {t('seller_listings.lbl_custom_orders')}
                         </label>
                       </div>
                     </div>
@@ -440,18 +443,18 @@ export default function SellerListings() {
 
                   {/* ── PHYSICAL ── */}
                   <div className="mb-6">
-                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Physical Details</h3>
+                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">{t('seller_listings.section_physical')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="md:col-span-3">
-                        <label className={lbl}>Materials <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
-                        <input value={form.Materials} onChange={pf('Materials')} className={inp} placeholder="e.g. 100% Merino Wool…" />
+                        <label className={lbl}>{t('seller_listings.lbl_materials')}{optLbl}</label>
+                        <input value={form.Materials} onChange={pf('Materials')} className={inp} placeholder={t('seller_listings.placeholder_materials')} />
                       </div>
                       <div>
-                        <label className={lbl}>Weight <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+                        <label className={lbl}>{t('seller_listings.lbl_weight')}{optLbl}</label>
                         <input type="number" step="0.01" min="0" value={form.prodWeight} onChange={pf('prodWeight')} className={inp} placeholder="0.00" />
                       </div>
                       <div>
-                        <label className={lbl}>Weight Unit <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+                        <label className={lbl}>{t('seller_listings.lbl_weight_unit')}{optLbl}</label>
                         <select value={form.weightUnit} onChange={pf('weightUnit')} className={inp}>
                           {['oz', 'lb', 'g', 'kg'].map(u => <option key={u} value={u}>{u}</option>)}
                         </select>
@@ -459,23 +462,23 @@ export default function SellerListings() {
                       <div className="flex items-center pt-5">
                         <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                           <input type="checkbox" checked={form.prodShip} onChange={pb('prodShip')} className="w-4 h-4 accent-green-600" />
-                          Ships Available
+                          {t('seller_listings.lbl_ships')}
                         </label>
                       </div>
                       <div>
-                        <label className={lbl}>Length (in) <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+                        <label className={lbl}>{t('seller_listings.lbl_length')}{optLbl}</label>
                         <input type="number" step="0.01" min="0" value={form.prodLength} onChange={pf('prodLength')} className={inp} placeholder="0.00" />
                       </div>
                       <div>
-                        <label className={lbl}>Width (in) <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+                        <label className={lbl}>{t('seller_listings.lbl_width')}{optLbl}</label>
                         <input type="number" step="0.01" min="0" value={form.prodWidth} onChange={pf('prodWidth')} className={inp} placeholder="0.00" />
                       </div>
                       <div>
-                        <label className={lbl}>Height (in) <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+                        <label className={lbl}>{t('seller_listings.lbl_height')}{optLbl}</label>
                         <input type="number" step="0.01" min="0" value={form.prodHeight} onChange={pf('prodHeight')} className={inp} placeholder="0.00" />
                       </div>
                       <div className="md:col-span-3">
-                        <label className={lbl}>Dimensions (free text) <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+                        <label className={lbl}>{t('seller_listings.lbl_dimensions')}{optLbl}</label>
                         <input value={form.ProdDimensions} onChange={pf('ProdDimensions')} className={inp} placeholder='e.g. 12" x 8" x 4"' />
                       </div>
                     </div>
@@ -485,17 +488,17 @@ export default function SellerListings() {
                   {showFiber && (
                     <div className="mb-6">
                       <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">
-                        Fiber Content
+                        {t('seller_listings.section_fiber')}
                         {fiberTotal > 0 && (
                           <span className={`ml-2 font-normal text-xs ${fiberTotal === 100 ? 'text-green-600' : fiberTotal > 100 ? 'text-red-500' : 'text-amber-500'}`}>
-                            Total: {fiberTotal}%
+                            {t('seller_listings.fiber_total', { total: fiberTotal })}
                           </span>
                         )}
                       </h3>
                       <div className="space-y-2">
                         {[1,2,3,4,5].map(i => (
                           <div key={i} className="flex gap-3 items-center">
-                            <input value={form[`FiberType${i}`]} onChange={pf(`FiberType${i}`)} className={`${inp} flex-grow`} placeholder={`Fiber ${i} (e.g. Merino Wool)`} />
+                            <input value={form[`FiberType${i}`]} onChange={pf(`FiberType${i}`)} className={`${inp} flex-grow`} placeholder={t('seller_listings.placeholder_fiber', { n: i })} />
                             <div className="flex items-center gap-1 w-28 shrink-0">
                               <input type="number" min="0" max="100" step="0.1" value={form[`FiberPercent${i}`]} onChange={pf(`FiberPercent${i}`)} className={inp} placeholder="%" />
                               <span className="text-sm text-gray-400">%</span>
@@ -508,35 +511,35 @@ export default function SellerListings() {
 
                   {/* ── ANIMAL LINKAGE ── */}
                   <div className="mb-6">
-                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Animal Linkage</h3>
+                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">{t('seller_listings.section_animal')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className={lbl}>Animal ID 1 <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
-                        <input value={form.ProdAnimalID} onChange={pf('ProdAnimalID')} className={inp} placeholder="Animal ID" />
+                        <label className={lbl}>{t('seller_listings.lbl_animal_id1')}{optLbl}</label>
+                        <input value={form.ProdAnimalID} onChange={pf('ProdAnimalID')} className={inp} placeholder={t('seller_listings.placeholder_animal_id')} />
                       </div>
                       <div>
-                        <label className={lbl}>Animal ID 2 <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
-                        <input value={form.ProdAnimalID2} onChange={pf('ProdAnimalID2')} className={inp} placeholder="Animal ID" />
+                        <label className={lbl}>{t('seller_listings.lbl_animal_id2')}{optLbl}</label>
+                        <input value={form.ProdAnimalID2} onChange={pf('ProdAnimalID2')} className={inp} placeholder={t('seller_listings.placeholder_animal_id')} />
                       </div>
                       <div>
-                        <label className={lbl}>Animal ID 3 <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
-                        <input value={form.ProdAnimalID3} onChange={pf('ProdAnimalID3')} className={inp} placeholder="Animal ID" />
+                        <label className={lbl}>{t('seller_listings.lbl_animal_id3')}{optLbl}</label>
+                        <input value={form.ProdAnimalID3} onChange={pf('ProdAnimalID3')} className={inp} placeholder={t('seller_listings.placeholder_animal_id')} />
                       </div>
                     </div>
                   </div>
 
                   {/* ── IMAGES ── */}
                   <div className="mb-6">
-                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">Images (up to 8)</h3>
+                    <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wide">{t('seller_listings.section_images')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {form.images.map((url, idx) => (
                         <div key={idx} className="flex gap-2 items-start">
                           <div className="flex-grow">
-                            <label className={lbl}>Image {idx + 1}</label>
+                            <label className={lbl}>{t('seller_listings.lbl_image', { n: idx + 1 })}</label>
                             <input value={url} onChange={e => setImg(idx, e.target.value)} className={inp} placeholder="https://…" />
                           </div>
                           {url && (
-                            <img src={url} alt={`Preview ${idx + 1}`}
+                            <img src={url} alt={t('seller_listings.lbl_image', { n: idx + 1 })}
                               className="w-12 h-12 rounded-lg object-cover border border-gray-200 mt-5 shrink-0"
                               onError={e => { e.target.style.display = 'none'; }} />
                           )}
@@ -548,18 +551,18 @@ export default function SellerListings() {
                   {/* ── SIZES ── */}
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">Sizes</h3>
+                      <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">{t('seller_listings.section_sizes')}</h3>
                       <button type="button" onClick={addSizeRow}
-                        className="text-xs text-[#3D6B34] hover:underline font-semibold">+ Add Size</button>
+                        className="text-xs text-[#3D6B34] hover:underline font-semibold">{t('seller_listings.btn_add_size')}</button>
                     </div>
                     {sizeRows.length === 0 && (
-                      <p className="text-xs text-gray-400">No sizes added. Click "Add Size" to add.</p>
+                      <p className="text-xs text-gray-400">{t('seller_listings.sizes_empty')}</p>
                     )}
                     <div className="space-y-2">
                       {sizeRows.map((row, idx) => (
                         <div key={idx} className="flex gap-3 items-center">
                           <input value={row.Size} onChange={e => setSizeField(idx, 'Size', e.target.value)}
-                            className={`${inp} flex-grow`} placeholder="e.g. Small, M, 8oz…" />
+                            className={`${inp} flex-grow`} placeholder={t('seller_listings.placeholder_size')} />
                           <div className="flex items-center gap-1 w-36 shrink-0">
                             <span className="text-sm text-gray-400">+$</span>
                             <input type="number" step="0.01" min="0" value={row.ExtraCost} onChange={e => setSizeField(idx, 'ExtraCost', e.target.value)}
@@ -574,18 +577,18 @@ export default function SellerListings() {
                   {/* ── COLORS ── */}
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">Colors</h3>
+                      <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">{t('seller_listings.section_colors')}</h3>
                       <button type="button" onClick={addColorRow}
-                        className="text-xs text-[#3D6B34] hover:underline font-semibold">+ Add Color</button>
+                        className="text-xs text-[#3D6B34] hover:underline font-semibold">{t('seller_listings.btn_add_color')}</button>
                     </div>
                     {colorRows.length === 0 && (
-                      <p className="text-xs text-gray-400">No colors added. Click "Add Color" to add.</p>
+                      <p className="text-xs text-gray-400">{t('seller_listings.colors_empty')}</p>
                     )}
                     <div className="space-y-2">
                       {colorRows.map((row, idx) => (
                         <div key={idx} className="flex gap-3 items-center">
                           <input value={row.Color} onChange={e => setColorField(idx, e.target.value)}
-                            className={`${inp} flex-grow`} placeholder="e.g. Natural, Charcoal, Rust…" />
+                            className={`${inp} flex-grow`} placeholder={t('seller_listings.placeholder_color')} />
                           <button type="button" onClick={() => removeColorRow(idx)} className="text-red-400 hover:text-red-600 text-sm px-1">✕</button>
                         </div>
                       ))}
@@ -595,11 +598,11 @@ export default function SellerListings() {
                   <div className="flex justify-end gap-3 mt-5">
                     <button type="button" onClick={() => { setShowForm(false); setEditingProduct(null); }}
                       className="px-5 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
-                      Cancel
+                      {t('seller_listings.btn_cancel')}
                     </button>
                     <button type="submit" disabled={saving}
                       className="bg-[#3D6B34] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#2d5226] disabled:opacity-50">
-                      {saving ? 'Saving…' : editingProduct ? 'Save Changes' : 'Create Product'}
+                      {saving ? t('seller_listings.btn_saving') : editingProduct ? t('seller_listings.btn_save_changes') : t('seller_listings.btn_create')}
                     </button>
                   </div>
                 </form>
@@ -608,14 +611,14 @@ export default function SellerListings() {
 
             {/* Products table */}
             {productsLoading ? (
-              <div className="text-center py-12 text-gray-400">Loading…</div>
+              <div className="text-center py-12 text-gray-400">{t('seller_listings.loading')}</div>
             ) : products.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
                 <div className="flex justify-center mb-2"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
-                <p className="mb-3">No products yet. List your farm goods, handcrafted items, and more.</p>
+                <p className="mb-3">{t('seller_listings.empty_msg')}</p>
                 <button onClick={openAdd}
                   className="bg-[#3D6B34] text-white font-semibold px-5 py-2 rounded-lg hover:bg-[#2d5226] text-sm">
-                  + Add Your First Product
+                  {t('seller_listings.btn_add_first')}
                 </button>
               </div>
             ) : (
@@ -623,12 +626,12 @@ export default function SellerListings() {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase">
-                      <th className="px-4 py-3">Product</th>
-                      <th className="px-4 py-3">Category</th>
-                      <th className="px-4 py-3">Price</th>
-                      <th className="px-4 py-3">Qty</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Actions</th>
+                      <th className="px-4 py-3">{t('seller_listings.th_product')}</th>
+                      <th className="px-4 py-3">{t('seller_listings.th_category')}</th>
+                      <th className="px-4 py-3">{t('seller_listings.th_price')}</th>
+                      <th className="px-4 py-3">{t('seller_listings.th_qty')}</th>
+                      <th className="px-4 py-3">{t('seller_listings.th_status')}</th>
+                      <th className="px-4 py-3">{t('seller_listings.th_actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -641,14 +644,14 @@ export default function SellerListings() {
                               : <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-lg">🛍️</div>}
                             <div>
                               <p className="font-semibold text-sm text-gray-800">{p.Title}</p>
-                              {p.prodCustomorder && <p className="text-xs text-amber-600">Custom Orders</p>}
+                              {p.prodCustomorder && <p className="text-xs text-amber-600">{t('seller_listings.custom_orders')}</p>}
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">{p.CategoryName || '—'}</td>
                         <td className="px-4 py-3 text-sm font-bold text-[#3D6B34]">
                           {p.prodCallforPrice ? (
-                            <span className="text-xs font-normal text-gray-500">Call for Price</span>
+                            <span className="text-xs font-normal text-gray-500">{t('seller_listings.call_for_price')}</span>
                           ) : (
                             <>
                               ${parseFloat(p.UnitPrice || 0).toFixed(2)}
@@ -661,15 +664,15 @@ export default function SellerListings() {
                         <td className="px-4 py-3 text-sm text-gray-600">{p.QuantityAvailable}</td>
                         <td className="px-4 py-3">
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded ${p.Publishproduct ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                            {p.Publishproduct ? 'Published' : 'Draft'}
+                            {p.Publishproduct ? t('seller_listings.status_published') : t('seller_listings.status_draft')}
                           </span>
                         </td>
                         <td className="px-4 py-3 flex items-center gap-3">
-                          <button onClick={() => openEdit(p)} className="text-xs text-blue-600 hover:underline">Edit</button>
+                          <button onClick={() => openEdit(p)} className="text-xs text-blue-600 hover:underline">{t('seller_listings.btn_edit')}</button>
                           <button onClick={() => togglePublish(p)} className="text-xs text-gray-500 hover:underline">
-                            {p.Publishproduct ? 'Unpublish' : 'Publish'}
+                            {p.Publishproduct ? t('seller_listings.btn_unpublish') : t('seller_listings.btn_publish')}
                           </button>
-                          <button onClick={() => deleteProduct(p)} className="text-xs text-red-500 hover:underline">Delete</button>
+                          <button onClick={() => deleteProduct(p)} className="text-xs text-red-500 hover:underline">{t('seller_listings.btn_delete')}</button>
                         </td>
                       </tr>
                     ))}

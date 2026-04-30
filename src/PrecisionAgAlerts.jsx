@@ -6,31 +6,87 @@ import { useAccount } from './AccountContext';
 import { useFields, API_URL } from './precisionAgUtils';
 
 const SEV_COLOR = {
-  Critical: { bg: '#FEE2E2', text: '#7F1D1D', dot: '#DC2626' },
-  High:     { bg: '#FEE2E2', text: '#B91C1C', dot: '#EF4444' },
-  Medium:   { bg: '#FEF3C7', text: '#92400E', dot: '#F59E0B' },
+  Critical: { bg: '#F9E8EE', text: '#6B1229', dot: '#9B1B4B' },
+  High:     { bg: '#FCE7F3', text: '#9D174D', dot: '#DB2777' },
+  Medium:   { bg: '#FEF9C3', text: '#854D0E', dot: '#CA8A04' },
   Low:      { bg: '#D1FAE5', text: '#065F46', dot: '#10B981' },
 };
 
+const SI = ({ children }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    {children}
+  </svg>
+);
+
 const TYPE_ICON = {
-  Health:       '🩺',
-  'NDVI Decline': '📉',
-  Scouting:     '🔍',
-  Pest:         '🐛',
-  Disease:      '🦠',
-  Weed:         '🌿',
-  Irrigation:   '💧',
-  Nutrient:     '🌱',
+  Health: (
+    <SI><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></SI>
+  ),
+  'NDVI Decline': (
+    <SI>
+      <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
+      <polyline points="17 18 23 18 23 12"/>
+    </SI>
+  ),
+  Scouting: (
+    <SI>
+      <circle cx="11" cy="11" r="8"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </SI>
+  ),
+  Pest: (
+    <SI>
+      <circle cx="12" cy="11" r="4"/>
+      <path d="M12 7V4"/>
+      <path d="M8.5 9.5L5 7"/>
+      <path d="M15.5 9.5L19 7"/>
+      <path d="M8.5 14L5 17"/>
+      <path d="M15.5 14L19 17"/>
+    </SI>
+  ),
+  Disease: (
+    <SI>
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+      <path d="M5.64 5.64l2.12 2.12M16.24 16.24l2.12 2.12M5.64 18.36l2.12-2.12M16.24 7.76l2.12-2.12"/>
+    </SI>
+  ),
+  Weed: (
+    <SI>
+      <path d="M17 8C8 10 5.9 16.17 3.82 20.99"/>
+      <path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/>
+      <path d="M17 8c0 6-5 9-5 9"/>
+    </SI>
+  ),
+  Irrigation: (
+    <SI><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></SI>
+  ),
+  Nutrient: (
+    <SI>
+      <path d="M12 22V12"/>
+      <path d="M12 12C12 7 8 4 4 4c0 4 2 8 8 8z"/>
+      <path d="M12 12c0-5 4-8 8-8c0 4-2 8-8 8z"/>
+    </SI>
+  ),
 };
+
+const DEFAULT_ICON = (
+  <SI>
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </SI>
+);
 
 function AlertCard({ alert, onDismiss }) {
   const { t } = useTranslation();
   const sev = SEV_COLOR[alert.severity] || SEV_COLOR.Low;
-  const icon = TYPE_ICON[alert.type] || '⚠️';
+  const icon = TYPE_ICON[alert.type] || DEFAULT_ICON;
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-start gap-3">
-      <div className="w-9 h-9 rounded-full flex items-center justify-center text-lg flex-shrink-0"
-        style={{ background: sev.bg }}>
+      <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{ background: sev.bg, color: sev.dot }}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">

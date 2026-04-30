@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageContext';
 
 const API = import.meta.env.VITE_API_URL || '';
@@ -71,6 +72,7 @@ function _saveStored(scope, msgs) {
 
 // ── Main widget ─────────────────────────────────────────────────
 export default function ThaiymeChat({ businessId, eventId, page }) {
+  const { t } = useTranslation();
   const { language } = useLanguage();
   const storageKey = _storageKey({ businessId, eventId });
 
@@ -119,14 +121,14 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
   useEffect(() => {
     if (open && messages.length === 0 && !greetedRef.current) {
       greetedRef.current = true;
-      const where = eventId
-        ? "this event's registrations"
+      const whereKey = eventId
+        ? 'thaiyme_chat.where_events'
         : (businessId && page === 'accounting'
-            ? "your books"
-            : "your business");
+            ? 'thaiyme_chat.where_books'
+            : 'thaiyme_chat.where_business');
       setMessages([{
         role: 'assistant',
-        content: `Hi! I'm **${AGENT_NAME}** — your business-ops assistant. I can help you make sense of ${where}, suggest next steps, and (for events) make small changes to registrations on your behalf. What would you like to look at?`,
+        content: t('thaiyme_chat.greeting', { name: AGENT_NAME, where: t(whereKey) }),
       }]);
     }
   }, [open, messages.length, businessId, eventId, page]);
@@ -169,10 +171,10 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
         proposals: proposals.length ? proposals : undefined,
       }]);
     } catch (e) {
-      setError(e.message || 'Network error.');
+      setError(e.message || t('thaiyme_chat.err_network'));
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "I couldn't reach the backend just now — please try again in a moment.",
+        content: t('thaiyme_chat.err_backend'),
       }]);
     } finally {
       setLoading(false);
@@ -205,7 +207,7 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
       }));
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Done — ${p.summary}`,
+        content: t('thaiyme_chat.done_action', { summary: p.summary }),
       }]);
     } catch (e) {
       setError(e.message || 'Network error.');
@@ -248,7 +250,7 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
     return createPortal(
       <button
         onClick={() => setOpen(true)}
-        title={`Chat with ${AGENT_NAME}`}
+        title={t('thaiyme_chat.launcher_title')}
         className="fixed bottom-6 right-6 z-50 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
         style={{ background: 'transparent', border: 'none', padding: 0 }}
       >
@@ -273,12 +275,12 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
         <ThaiymeIcon size={28} />
         <div className="flex-1 min-w-0">
           <p className="text-white font-bold text-sm leading-none">{AGENT_NAME}</p>
-          <p className="text-white/80 text-xs mt-0.5">Business Operations Assistant</p>
+          <p className="text-white/80 text-xs mt-0.5">{t('thaiyme_chat.subtitle')}</p>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setExpanded(v => !v)}
-            title={expanded ? 'Collapse panel' : 'Expand to full page'}
+            title={expanded ? t('thaiyme_chat.btn_collapse') : t('thaiyme_chat.btn_expand')}
             className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/20 transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -288,7 +290,7 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
               }
             </svg>
           </button>
-          <button onClick={clearChat} title="Clear chat" className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/20 transition-colors">
+          <button onClick={clearChat} title={t('thaiyme_chat.btn_clear')} className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/20 transition-colors">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
             </svg>
@@ -317,7 +319,7 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
                 p._dismissed ? null : (
                   <div key={pi} className="mt-2 border border-amber-300 rounded-lg p-2.5 bg-amber-50">
                     <div className="text-xs font-semibold text-[#7A5A3D] mb-1">
-                      {p._executed ? 'Done' : 'Confirm action'}
+                      {p._executed ? t('thaiyme_chat.proposal_done') : t('thaiyme_chat.proposal_confirm')}
                     </div>
                     <div className="text-xs text-gray-700 mb-2">{p.summary}</div>
                     {!p._executed && (
@@ -327,7 +329,7 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
                           disabled={loading}
                           className="text-xs px-2.5 py-1 rounded border border-gray-300 hover:bg-white disabled:opacity-50"
                         >
-                          No
+                          {t('thaiyme_chat.btn_proposal_no')}
                         </button>
                         <button
                           onClick={() => confirmProposal(i, pi)}
@@ -335,7 +337,7 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
                           className="text-xs px-2.5 py-1 rounded text-white disabled:opacity-50"
                           style={{ background: ACCENT_COLOR }}
                         >
-                          Yes, do it
+                          {t('thaiyme_chat.btn_proposal_yes')}
                         </button>
                       </div>
                     )}
@@ -391,7 +393,7 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKey}
           rows={1}
-          placeholder="Ask Thaiyme about your books or this event…"
+          placeholder={t('thaiyme_chat.placeholder')}
           className="flex-1 resize-none border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
           style={{ maxHeight: 120 }}
           disabled={loading}
@@ -402,7 +404,7 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
           className="px-3 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
           style={{ background: ACCENT_COLOR }}
         >
-          Send
+          {t('thaiyme_chat.btn_send')}
         </button>
       </div>
     </div>,

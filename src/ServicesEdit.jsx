@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -22,25 +23,29 @@ const Field = ({ label, hint, children }) => (
   </div>
 );
 
-const SaveBar = ({ saving, saved, onSave }) => (
-  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12, marginTop: 24 }}>
-    {saved && <span style={{ color: '#4a7c3f', fontWeight: 600, fontSize: 14 }}>✓ Saved!</span>}
-    <button
-      onClick={onSave}
-      disabled={saving}
-      style={{
-        background: saving ? '#9ab' : '#5a3e2b', color: '#fff',
-        border: 'none', borderRadius: 6, padding: '10px 28px',
-        fontWeight: 700, fontSize: 15, cursor: saving ? 'not-allowed' : 'pointer',
-      }}
-    >
-      {saving ? 'Saving…' : 'Save Changes'}
-    </button>
-  </div>
-);
+const SaveBar = ({ saving, saved, onSave }) => {
+  const { t } = useTranslation();
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12, marginTop: 24 }}>
+      {saved && <span style={{ color: '#4a7c3f', fontWeight: 600, fontSize: 14 }}>{t('services_edit.saved')}</span>}
+      <button
+        onClick={onSave}
+        disabled={saving}
+        style={{
+          background: saving ? '#9ab' : '#5a3e2b', color: '#fff',
+          border: 'none', borderRadius: 6, padding: '10px 28px',
+          fontWeight: 700, fontSize: 15, cursor: saving ? 'not-allowed' : 'pointer',
+        }}
+      >
+        {saving ? t('services_edit.btn_saving') : t('services_edit.btn_save_changes')}
+      </button>
+    </div>
+  );
+};
 
 // ─── BASICS TAB ──────────────────────────────────────────────────────────────
 function BasicsTab({ ServicesID, BusinessID }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(null);
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
@@ -89,25 +94,25 @@ function BasicsTab({ ServicesID, BusinessID }) {
     setSaving(false);
   };
 
-  if (!form) return <div style={{ padding: '40px 0', textAlign: 'center', color: '#8b7355' }}>Loading…</div>;
+  if (!form) return <div style={{ padding: '40px 0', textAlign: 'center', color: '#8b7355' }}>{t('services_edit.loading')}</div>;
 
   return (
     <div>
       <div style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 17, color: '#2c1a0e', borderBottom: '1px solid #e8e0d5', paddingBottom: 8, marginBottom: 20 }}>
-        Basic Facts
+        {t('services_edit.basics_heading')}
       </div>
 
-      <Field label="Service Title">
+      <Field label={t('services_edit.lbl_title')}>
         <input value={form.ServiceTitle || ''} onChange={e => set('ServiceTitle', e.target.value)} maxLength={50} style={inputStyle} />
       </Field>
 
-      <Field label="Category">
+      <Field label={t('services_edit.lbl_category')}>
         <select
           value={form.ServiceCategoryID || ''}
           onChange={e => { set('ServiceCategoryID', e.target.value); set('ServiceSubCategoryID', ''); }}
           style={inputStyle}
         >
-          <option value="">Select a category…</option>
+          <option value="">{t('services_edit.select_category')}</option>
           {categories.map(c => (
             <option key={c.ServiceCategoryID} value={c.ServiceCategoryID}>{c.ServicesCategory}</option>
           ))}
@@ -115,9 +120,9 @@ function BasicsTab({ ServicesID, BusinessID }) {
       </Field>
 
       {subCategories.length > 0 && (
-        <Field label="Sub-Category">
+        <Field label={t('services_edit.lbl_subcategory')}>
           <select value={form.ServiceSubCategoryID || ''} onChange={e => set('ServiceSubCategoryID', e.target.value)} style={inputStyle}>
-            <option value="">Select…</option>
+            <option value="">{t('services_edit.select_subcategory')}</option>
             {subCategories.map(s => (
               <option key={s.ServiceSubCategoryID} value={s.ServiceSubCategoryID}>{s.ServiceSubCategoryName}</option>
             ))}
@@ -125,45 +130,45 @@ function BasicsTab({ ServicesID, BusinessID }) {
         </Field>
       )}
 
-      <Field label="Price / Rate">
+      <Field label={t('services_edit.lbl_price')}>
         <input type="number" value={form.ServicePrice || ''} onChange={e => set('ServicePrice', e.target.value)} style={{ ...inputStyle, maxWidth: 180 }} placeholder="0.00" />
       </Field>
 
-      <Field label="Contact for Price?">
+      <Field label={t('services_edit.lbl_contact_for_price')}>
         <div style={{ display: 'flex', gap: 24 }}>
-          {['Yes', 'No'].map(v => (
-            <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14 }}>
+          {[['Yes', '1'], ['No', '0']].map(([label, val]) => (
+            <label key={val} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14 }}>
               <input
                 type="radio"
                 name="ServiceContactForPrice"
-                checked={String(form.ServiceContactForPrice) === (v === 'Yes' ? '1' : '0')}
-                onChange={() => set('ServiceContactForPrice', v === 'Yes' ? '1' : '0')}
+                checked={String(form.ServiceContactForPrice) === val}
+                onChange={() => set('ServiceContactForPrice', val)}
               />
-              {v}
+              {label === 'Yes' ? t('services_edit.radio_yes') : t('services_edit.radio_no')}
             </label>
           ))}
         </div>
       </Field>
 
-      <Field label="Availability">
-        <input value={form.ServiceAvailable || ''} onChange={e => set('ServiceAvailable', e.target.value)} style={inputStyle} placeholder="e.g. Weekdays, By appointment..." />
+      <Field label={t('services_edit.lbl_availability')}>
+        <input value={form.ServiceAvailable || ''} onChange={e => set('ServiceAvailable', e.target.value)} style={inputStyle} placeholder={t('services_edit.availability_placeholder')} />
       </Field>
 
-      <Field label="Description">
+      <Field label={t('services_edit.lbl_description')}>
         <textarea value={form.ServicesDescription || ''} onChange={e => set('ServicesDescription', e.target.value)} rows={6} style={{ ...inputStyle, resize: 'vertical' }} />
       </Field>
 
       <div style={{ background: '#f9f6f2', border: '1px solid #e8e0d5', borderRadius: 8, padding: '16px 18px', marginBottom: 16 }}>
         <div style={{ fontWeight: 700, fontSize: 14, color: '#5a3e2b', marginBottom: 12 }}>
-          Contact Info <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: 12 }}>(optional)</span>
+          {t('services_edit.contact_heading')} <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: 12 }}>{t('services_edit.contact_optional')}</span>
         </div>
-        <Field label="Phone">
+        <Field label={t('services_edit.lbl_phone')}>
           <input value={form.ServicePhone || ''} onChange={e => set('ServicePhone', e.target.value)} style={inputStyle} placeholder="555-123-4567" />
         </Field>
-        <Field label="Website">
+        <Field label={t('services_edit.lbl_website')}>
           <input value={form.Servicewebsite || ''} onChange={e => set('Servicewebsite', e.target.value)} style={inputStyle} placeholder="www.yoursite.com" />
         </Field>
-        <Field label="Email">
+        <Field label={t('services_edit.lbl_email')}>
           <input type="email" value={form.Serviceemail || ''} onChange={e => set('Serviceemail', e.target.value)} style={inputStyle} placeholder="info@yourfarm.com" />
         </Field>
       </div>
@@ -175,6 +180,7 @@ function BasicsTab({ ServicesID, BusinessID }) {
 
 // ─── PHOTOS TAB ──────────────────────────────────────────────────────────────
 function PhotosTab({ ServicesID }) {
+  const { t } = useTranslation();
   const [photos, setPhotos] = useState(Array(8).fill(null).map((_, i) => ({ slot: i + 1, url: '', caption: '' })));
   const [uploading, setUploading] = useState(null);
   const [saving, setSaving] = useState(null);
@@ -238,38 +244,38 @@ function PhotosTab({ ServicesID }) {
   return (
     <div>
       <div style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 17, color: '#2c1a0e', borderBottom: '1px solid #e8e0d5', paddingBottom: 8, marginBottom: 20 }}>
-        Service Photos
+        {t('services_edit.photos_heading')}
       </div>
       <p style={{ color: '#7a6a5a', fontSize: 13, marginBottom: 24 }}>
-        Upload up to 8 photos for this service listing.
+        {t('services_edit.photos_subtitle')}
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
         {photos.map(photo => (
           <div key={photo.slot} style={{ border: '1px solid #e8e0d5', borderRadius: 10, padding: 16, background: '#faf7f4' }}>
             <div style={{ fontWeight: 700, fontSize: 13, color: '#5a3e2b', marginBottom: 10 }}>
-              Photo {photo.slot}
+              {t('services_edit.photo_slot', { slot: photo.slot })}
             </div>
 
             {/* Preview */}
             <div style={{ width: '100%', height: 160, background: '#f0ebe3', borderRadius: 6, marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {photo.url ? (
-                <img src={photo.url} alt={`Photo ${photo.slot}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }} />
+                <img src={photo.url} alt={t('services_edit.photo_slot', { slot: photo.slot })} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }} />
               ) : (
-                <span style={{ color: '#c0a882', fontSize: 13 }}>No image</span>
+                <span style={{ color: '#c0a882', fontSize: 13 }}>{t('services_edit.no_image')}</span>
               )}
             </div>
 
             {/* Upload */}
             <label style={{ display: 'block', marginBottom: 10 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#5a3e2b', marginBottom: 4 }}>Upload Photo</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#5a3e2b', marginBottom: 4 }}>{t('services_edit.upload_photo')}</div>
               <input
                 type="file"
                 accept="image/*"
                 onChange={e => e.target.files[0] && uploadPhoto(photo.slot, e.target.files[0])}
                 style={{ fontSize: 12, width: '100%' }}
               />
-              {uploading === photo.slot && <div style={{ fontSize: 12, color: '#8b7355', marginTop: 4 }}>Uploading…</div>}
+              {uploading === photo.slot && <div style={{ fontSize: 12, color: '#8b7355', marginTop: 4 }}>{t('services_edit.uploading')}</div>}
             </label>
 
             {/* Caption */}
@@ -278,7 +284,7 @@ function PhotosTab({ ServicesID }) {
                 value={photo.caption || ''}
                 onChange={e => setCaption(photo.slot, e.target.value)}
                 maxLength={30}
-                placeholder="Caption (optional)"
+                placeholder={t('services_edit.caption_placeholder')}
                 style={{ ...inputStyle, fontSize: 12, padding: '5px 8px', flex: 1 }}
               />
               <button
@@ -286,7 +292,7 @@ function PhotosTab({ ServicesID }) {
                 disabled={saving === photo.slot}
                 style={{ background: '#5a3e2b', color: '#fff', border: 'none', borderRadius: 5, padding: '5px 10px', fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}
               >
-                {saving === photo.slot ? '…' : 'Save'}
+                {saving === photo.slot ? t('services_edit.btn_saving_caption') : t('services_edit.btn_save_caption')}
               </button>
             </div>
 
@@ -296,7 +302,7 @@ function PhotosTab({ ServicesID }) {
                 onClick={() => removePhoto(photo.slot)}
                 style={{ background: 'none', border: '1px solid #e0b0b0', borderRadius: 5, padding: '4px 12px', fontSize: 12, color: '#c0392b', cursor: 'pointer', width: '100%' }}
               >
-                Remove Image
+                {t('services_edit.btn_remove_image')}
               </button>
             )}
           </div>
@@ -307,12 +313,9 @@ function PhotosTab({ ServicesID }) {
 }
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
-const TABS = [
-  { id: 'basics', label: 'Basic Facts' },
-  { id: 'photos', label: 'Photos' },
-];
 
 export default function ServicesEdit() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const ServicesID = searchParams.get('ServicesID');
@@ -320,7 +323,12 @@ export default function ServicesEdit() {
   const PeopleID = localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();
   const [activeTab, setActiveTab] = useState('basics');
-  const [serviceTitle, setServiceTitle] = useState('Service');
+  const [serviceTitle, setServiceTitle] = useState('');
+
+  const TABS = [
+    { id: 'basics', label: t('services_edit.tab_basics') },
+    { id: 'photos', label: t('services_edit.tab_photos') },
+  ];
 
   useEffect(() => {
     if (BusinessID) LoadBusiness(BusinessID);
@@ -329,13 +337,13 @@ export default function ServicesEdit() {
       headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
     })
       .then(r => r.json())
-      .then(d => setServiceTitle(d.ServiceTitle || 'Service'))
+      .then(d => setServiceTitle(d.ServiceTitle || t('services_edit.default_title')))
       .catch(() => {});
   }, [BusinessID, ServicesID]);
 
   if (!ServicesID) return (
     <div style={{ padding: 40, textAlign: 'center', color: '#7a6a5a' }}>
-      No service selected. <a href={`/services?BusinessID=${BusinessID}`} style={{ color: '#5a3e2b' }}>Back to services</a>
+      {t('services_edit.no_service_msg')} <a href={`/services?BusinessID=${BusinessID}`} style={{ color: '#5a3e2b' }}>{t('services_edit.no_service_back')}</a>
     </div>
   );
 
@@ -345,26 +353,26 @@ export default function ServicesEdit() {
   };
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Edit Service" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Services' }, { label: 'My Services', to: `/services?BusinessID=${BusinessID}` }, { label: 'Edit' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={t('services_edit.page_title')} breadcrumbs={[{ label: t('common.dashboard'), to: '/dashboard' }, { label: t('services_edit.breadcrumb_my_services') }, { label: t('services_edit.breadcrumb_my_services'), to: `/services?BusinessID=${BusinessID}` }, { label: t('common.edit') }]}>
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 0 60px' }}>
 
         {/* Breadcrumb */}
         <div style={{ fontSize: 13, color: '#8b7355', marginBottom: 14 }}>
           <span style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate(`/services?BusinessID=${BusinessID}`)}>
-            My Services
+            {t('services_edit.breadcrumb_my_services')}
           </span>
           {' › '}
-          <span style={{ color: '#2c1a0e' }}>{serviceTitle}</span>
+          <span style={{ color: '#2c1a0e' }}>{serviceTitle || t('services_edit.default_title')}</span>
         </div>
 
         {/* Header */}
         <div style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: 10, padding: '16px 24px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ fontWeight: 700, fontSize: 20, color: '#2c1a0e', fontFamily: 'Georgia, serif' }}>{serviceTitle}</div>
+          <div style={{ fontWeight: 700, fontSize: 20, color: '#2c1a0e', fontFamily: 'Georgia, serif' }}>{serviceTitle || t('services_edit.default_title')}</div>
           <button
             onClick={() => navigate(`/services?BusinessID=${BusinessID}`)}
             style={{ background: 'none', border: '1px solid #d5c9bc', borderRadius: 6, padding: '7px 18px', fontWeight: 600, fontSize: 13, color: '#8b7355', cursor: 'pointer' }}
           >
-            ← Back to Services
+            {t('services_edit.btn_back')}
           </button>
         </div>
 

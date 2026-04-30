@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import RichTextEditor from './RichTextEditor';
 import EventAdminLayout from './EventAdminLayout';
 
@@ -14,12 +15,13 @@ const LOT_TYPES = ['Animal', 'Fleece', 'Item', 'StudService', 'Package'];
 const LOT_STATUSES = ['open', 'closed', 'passed', 'withdrawn'];
 
 function ConfigTab({ eventId }) {
+  const { t } = useTranslation();
   const [cfg, setCfg] = useState(null);
   const [msg, setMsg] = useState('');
   useEffect(() => {
     fetch(`${API}/api/events/${eventId}/auction/config`).then(r => r.json()).then(setCfg);
   }, [eventId]);
-  if (!cfg) return <div className="p-4 text-sm text-gray-500">Loading…</div>;
+  if (!cfg) return <div className="p-4 text-sm text-gray-500">{t('auction_admin.loading')}</div>;
   const set = (k) => (e) => setCfg(c => ({ ...c, [k]: e.target.value }));
   const setNum = (k) => (e) => setCfg(c => ({ ...c, [k]: e.target.value === '' ? null : Number(e.target.value) }));
   const save = async () => {
@@ -27,48 +29,49 @@ function ConfigTab({ eventId }) {
     const r = await fetch(`${API}/api/events/${eventId}/auction/config`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg),
     });
-    setMsg(r.ok ? 'Saved.' : 'Save failed');
+    setMsg(r.ok ? t('auction_admin.msg_saved') : t('auction_admin.msg_save_failed'));
   };
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div><label className={lbl}>Auction type</label>
+        <div><label className={lbl}>{t('auction_admin.lbl_auction_type')}</label>
           <select value={cfg.AuctionType || 'Live'} onChange={set('AuctionType')} className={inp}>
-            {AUCTION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            {AUCTION_TYPES.map(typ => <option key={typ} value={typ}>{typ}</option>)}
           </select></div>
-        <div><label className={lbl}>Buyer premium %</label>
+        <div><label className={lbl}>{t('auction_admin.lbl_buyer_premium')}</label>
           <input type="number" step="0.01" value={cfg.BuyerPremiumPercent ?? ''} onChange={setNum('BuyerPremiumPercent')} className={inp} /></div>
-        <div><label className={lbl}>Min bid increment</label>
+        <div><label className={lbl}>{t('auction_admin.lbl_min_increment')}</label>
           <input type="number" step="0.01" value={cfg.MinBidIncrement ?? ''} onChange={setNum('MinBidIncrement')} className={inp} /></div>
-        <div><label className={lbl}>Bidding opens</label>
+        <div><label className={lbl}>{t('auction_admin.lbl_bid_opens')}</label>
           <input type="datetime-local" value={(cfg.BidOpenDate || '').toString().substring(0, 16)} onChange={set('BidOpenDate')} className={inp} /></div>
-        <div><label className={lbl}>Bidding closes</label>
+        <div><label className={lbl}>{t('auction_admin.lbl_bid_closes')}</label>
           <input type="datetime-local" value={(cfg.BidCloseDate || '').toString().substring(0, 16)} onChange={set('BidCloseDate')} className={inp} /></div>
         <div className="flex items-end">
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={!!cfg.IsActive}
               onChange={(e) => setCfg(c => ({ ...c, IsActive: e.target.checked }))} />
-            Auction is active
+            {t('auction_admin.lbl_is_active')}
           </label>
         </div>
       </div>
-      <div><label className={lbl}>Description</label>
+      <div><label className={lbl}>{t('auction_admin.lbl_description')}</label>
         <RichTextEditor value={cfg.Description || ''}
           onChange={(v) => setCfg(c => ({ ...c, Description: v }))} minHeight={180} />
       </div>
-      <div><label className={lbl}>Payment terms</label>
+      <div><label className={lbl}>{t('auction_admin.lbl_payment_terms')}</label>
         <RichTextEditor value={cfg.PaymentTerms || ''}
           onChange={(v) => setCfg(c => ({ ...c, PaymentTerms: v }))} minHeight={120} />
       </div>
       <div className="flex justify-end items-center gap-3 pt-2">
         {msg && <span className="text-xs text-gray-500 mr-auto">{msg}</span>}
-        <button onClick={save} className={btn}>Save Config</button>
+        <button onClick={save} className={btn}>{t('auction_admin.btn_save_config')}</button>
       </div>
     </div>
   );
 }
 
 function LotForm({ initial, onSave, onCancel }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     LotNumber: '', LotType: 'Item', Title: '', Description: '', PhotoURL: '',
     SellerName: '', AnimalID: '', StartingBid: 0, ReserveBid: '', MinIncrement: '',
@@ -79,51 +82,52 @@ function LotForm({ initial, onSave, onCancel }) {
     <form onSubmit={(e) => { e.preventDefault(); onSave(form); }}
       className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <div><label className={lbl}>Lot #</label>
+        <div><label className={lbl}>{t('auction_admin.lot_lbl_number')}</label>
           <input value={form.LotNumber} onChange={set('LotNumber')} className={inp} placeholder="1A" /></div>
-        <div><label className={lbl}>Lot type</label>
+        <div><label className={lbl}>{t('auction_admin.lot_lbl_type')}</label>
           <select value={form.LotType} onChange={set('LotType')} className={inp}>
-            {LOT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            {LOT_TYPES.map(typ => <option key={typ} value={typ}>{typ}</option>)}
           </select></div>
-        <div><label className={lbl}>Order</label>
+        <div><label className={lbl}>{t('auction_admin.lot_lbl_order')}</label>
           <input type="number" value={form.DisplayOrder} onChange={set('DisplayOrder')} className={inp} /></div>
       </div>
-      <div><label className={lbl}>Title</label>
+      <div><label className={lbl}>{t('auction_admin.lot_lbl_title')}</label>
         <input required value={form.Title} onChange={set('Title')} className={inp}
-          placeholder="Snowmass Royal Fawn — 2023 Huacaya Herdsire" /></div>
-      <div><label className={lbl}>Description</label>
+          placeholder={t('auction_admin.lot_placeholder_title')} /></div>
+      <div><label className={lbl}>{t('auction_admin.lot_lbl_description')}</label>
         <RichTextEditor value={form.Description || ''}
           onChange={(v) => setForm(f => ({ ...f, Description: v }))} minHeight={150} />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <div><label className={lbl}>Photo URL</label>
+        <div><label className={lbl}>{t('auction_admin.lot_lbl_photo_url')}</label>
           <input value={form.PhotoURL || ''} onChange={set('PhotoURL')} className={inp} /></div>
-        <div><label className={lbl}>Seller name</label>
+        <div><label className={lbl}>{t('auction_admin.lot_lbl_seller_name')}</label>
           <input value={form.SellerName || ''} onChange={set('SellerName')} className={inp} /></div>
-        <div><label className={lbl}>Animal ID (optional)</label>
+        <div><label className={lbl}>{t('auction_admin.lot_lbl_animal_id')}</label>
           <input value={form.AnimalID || ''} onChange={set('AnimalID')} className={inp} /></div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div><label className={lbl}>Starting bid</label>
+        <div><label className={lbl}>{t('auction_admin.lot_lbl_starting_bid')}</label>
           <input type="number" step="0.01" value={form.StartingBid || 0} onChange={set('StartingBid')} className={inp} /></div>
-        <div><label className={lbl}>Reserve (optional)</label>
+        <div><label className={lbl}>{t('auction_admin.lot_lbl_reserve')}</label>
           <input type="number" step="0.01" value={form.ReserveBid || ''} onChange={set('ReserveBid')} className={inp} /></div>
-        <div><label className={lbl}>Min increment (optional)</label>
+        <div><label className={lbl}>{t('auction_admin.lot_lbl_min_increment')}</label>
           <input type="number" step="0.01" value={form.MinIncrement || ''} onChange={set('MinIncrement')} className={inp} /></div>
-        <div><label className={lbl}>Status</label>
+        <div><label className={lbl}>{t('auction_admin.lot_lbl_status')}</label>
           <select value={form.Status} onChange={set('Status')} className={inp}>
             {LOT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
           </select></div>
       </div>
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className={btnGhost}>Cancel</button>
-        <button type="submit" className={btn}>Save Lot</button>
+        <button type="button" onClick={onCancel} className={btnGhost}>{t('auction_admin.btn_cancel')}</button>
+        <button type="submit" className={btn}>{t('auction_admin.btn_save_lot')}</button>
       </div>
     </form>
   );
 }
 
 function LotsTab({ eventId }) {
+  const { t } = useTranslation();
   const [lots, setLots] = useState([]);
   const [editing, setEditing] = useState(null);
   const [adding, setAdding] = useState(false);
@@ -146,19 +150,19 @@ function LotsTab({ eventId }) {
       method: editing ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
-    if (!r.ok) { setErr('Save failed'); return; }
+    if (!r.ok) { setErr(t('auction_admin.err_save_failed')); return; }
     setAdding(false); setEditing(null); load();
   };
   const remove = async (l) => {
-    if (!confirm(`Delete lot "${l.Title}"? This also deletes all bids.`)) return;
+    if (!confirm(t('auction_admin.confirm_delete_lot', { title: l.Title }))) return;
     await fetch(`${API}/api/events/auction/lots/${l.LotID}`, { method: 'DELETE' });
     load();
   };
   const close = async (l) => {
-    if (!confirm(`Close lot "${l.Title}" and award to highest bidder?`)) return;
+    if (!confirm(t('auction_admin.confirm_close_lot', { title: l.Title }))) return;
     const r = await fetch(`${API}/api/events/auction/lots/${l.LotID}/close`, { method: 'POST' });
     const j = await r.json();
-    if (j.status === 'passed') alert(j.reason ? `Passed: ${j.reason}` : 'No bids — lot passed');
+    if (j.status === 'passed') alert(j.reason ? t('auction_admin.lot_passed_reason', { reason: j.reason }) : t('auction_admin.lot_passed_no_bids'));
     load();
   };
 
@@ -166,8 +170,8 @@ function LotsTab({ eventId }) {
     <div className="space-y-3">
       {err && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{err}</div>}
       <div className="flex justify-between items-center">
-        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide">Lots ({lots.length})</h3>
-        {!adding && !editing && <button onClick={() => setAdding(true)} className={btn}>+ Add Lot</button>}
+        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide">{t('auction_admin.lots_heading', { count: lots.length })}</h3>
+        {!adding && !editing && <button onClick={() => setAdding(true)} className={btn}>{t('auction_admin.btn_add_lot')}</button>}
       </div>
       {(adding || editing) && (
         <LotForm initial={editing || {}} onSave={save}
@@ -187,36 +191,37 @@ function LotsTab({ eventId }) {
                     : 'bg-yellow-100 text-yellow-700'}`}>{l.Status}</span>
                 </div>
                 <div className="font-medium mt-1">{l.Title}</div>
-                {l.SellerName && <div className="text-xs text-gray-500">Seller: {l.SellerName}</div>}
+                {l.SellerName && <div className="text-xs text-gray-500">{t('auction_admin.lot_seller', { name: l.SellerName })}</div>}
                 {l.Description && <div className="text-xs text-gray-600 mt-1 line-clamp-2">{l.Description}</div>}
               </div>
               <div className="text-right text-sm">
-                <div className="text-xs text-gray-500">Starting ${Number(l.StartingBid || 0).toFixed(2)}</div>
-                {l.ReserveBid && <div className="text-xs text-gray-500">Reserve ${Number(l.ReserveBid).toFixed(2)}</div>}
+                <div className="text-xs text-gray-500">{t('auction_admin.lot_starting', { amt: Number(l.StartingBid || 0).toFixed(2) })}</div>
+                {l.ReserveBid && <div className="text-xs text-gray-500">{t('auction_admin.lot_reserve', { amt: Number(l.ReserveBid).toFixed(2) })}</div>}
                 {l.CurrentBid > 0 && (
-                  <div className="font-bold text-[#3D6B34]">Current ${Number(l.CurrentBid).toFixed(2)}</div>
+                  <div className="font-bold text-[#3D6B34]">{t('auction_admin.lot_current', { amt: Number(l.CurrentBid).toFixed(2) })}</div>
                 )}
                 {l.Status === 'closed' && l.WinnerBid && (
-                  <div className="font-bold text-green-700">Sold ${Number(l.WinnerBid).toFixed(2)}</div>
+                  <div className="font-bold text-green-700">{t('auction_admin.lot_sold', { amt: Number(l.WinnerBid).toFixed(2) })}</div>
                 )}
                 <div className="flex gap-2 mt-2 justify-end">
                   {l.Status === 'open' && (
-                    <button onClick={() => close(l)} className="text-xs text-green-600 hover:text-green-800">Close & award</button>
+                    <button onClick={() => close(l)} className="text-xs text-green-600 hover:text-green-800">{t('auction_admin.btn_close_award')}</button>
                   )}
-                  <button onClick={() => { setEditing(l); setAdding(false); }} className="text-xs text-gray-500 hover:text-gray-800">Edit</button>
-                  <button onClick={() => remove(l)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+                  <button onClick={() => { setEditing(l); setAdding(false); }} className="text-xs text-gray-500 hover:text-gray-800">{t('auction_admin.btn_edit')}</button>
+                  <button onClick={() => remove(l)} className="text-xs text-red-500 hover:text-red-700">{t('auction_admin.btn_delete')}</button>
                 </div>
               </div>
             </div>
           </div>
         ))}
-        {lots.length === 0 && <div className="text-sm text-gray-500">No lots yet.</div>}
+        {lots.length === 0 && <div className="text-sm text-gray-500">{t('auction_admin.lots_empty')}</div>}
       </div>
     </div>
   );
 }
 
 function BidsTab({ eventId }) {
+  const { t } = useTranslation();
   const [lots, setLots] = useState([]);
   const [selected, setSelected] = useState(null);
   const [bids, setBids] = useState([]);
@@ -230,7 +235,7 @@ function BidsTab({ eventId }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div className="md:col-span-1">
-        <div className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Lots</div>
+        <div className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('auction_admin.bids_lots_header')}</div>
         <div className="bg-white border border-gray-200 rounded-lg max-h-[500px] overflow-y-auto">
           {lots.map(l => (
             <button key={l.LotID} onClick={() => loadBids(l.LotID)}
@@ -240,28 +245,28 @@ function BidsTab({ eventId }) {
                 {l.Title}
               </div>
               <div className="text-xs text-gray-500">
-                Current: ${Number(l.CurrentBid || 0).toFixed(2)} · {l.Status}
+                {t('auction_admin.bids_current', { amt: Number(l.CurrentBid || 0).toFixed(2), status: l.Status })}
               </div>
             </button>
           ))}
         </div>
       </div>
       <div className="md:col-span-2">
-        {!selected && <div className="text-sm text-gray-500">Select a lot to see bid history.</div>}
-        {selected && bids.length === 0 && <div className="text-sm text-gray-500">No bids on this lot yet.</div>}
+        {!selected && <div className="text-sm text-gray-500">{t('auction_admin.bids_select_lot')}</div>}
+        {selected && bids.length === 0 && <div className="text-sm text-gray-500">{t('auction_admin.bids_empty')}</div>}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           {bids.length > 0 && (
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-xs text-gray-500">
-                <tr><th className="text-left p-2">Bidder</th><th className="text-left p-2">Amount</th><th className="text-left p-2">Time</th><th className="text-left p-2"></th></tr>
+                <tr><th className="text-left p-2">{t('auction_admin.bids_col_bidder')}</th><th className="text-left p-2">{t('auction_admin.bids_col_amount')}</th><th className="text-left p-2">{t('auction_admin.bids_col_time')}</th><th className="text-left p-2"></th></tr>
               </thead>
               <tbody>
                 {bids.map((b, i) => (
                   <tr key={b.BidID} className={`border-t ${i === 0 ? 'bg-green-50' : ''}`}>
-                    <td className="p-2">{b.BidderName || `Person #${b.PeopleID}`}</td>
+                    <td className="p-2">{b.BidderName || t('auction_admin.bids_person_fallback', { id: b.PeopleID })}</td>
                     <td className="p-2 font-bold">${Number(b.BidAmount).toFixed(2)}</td>
                     <td className="p-2 text-xs text-gray-500">{new Date(b.BidTime).toLocaleString()}</td>
-                    <td className="p-2">{b.IsWinning && <span className="text-xs text-green-700 font-semibold">WINNER</span>}</td>
+                    <td className="p-2">{b.IsWinning && <span className="text-xs text-green-700 font-semibold">{t('auction_admin.bids_winner')}</span>}</td>
                   </tr>
                 ))}
               </tbody>
@@ -274,6 +279,7 @@ function BidsTab({ eventId }) {
 }
 
 export default function AuctionAdmin() {
+  const { t } = useTranslation();
   const { eventId } = useParams();
   const [params] = useSearchParams();
   const BusinessID = params.get('BusinessID');
@@ -283,18 +289,18 @@ export default function AuctionAdmin() {
     fetch(`${API}/api/events/${eventId}`).then(r => r.json()).then(setEvent);
   }, [eventId]);
 
-  const tabs = [['config', 'Config'], ['lots', 'Lots'], ['bids', 'Bids']];
+  const tabs = [['config', t('auction_admin.tab_config')], ['lots', t('auction_admin.tab_lots')], ['bids', t('auction_admin.tab_bids')]];
 
   return (
     <EventAdminLayout eventId={eventId}>
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Auction Admin</h1>
-            <p className="text-sm text-gray-500 mt-1">{event?.EventName || 'Event'}</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('auction_admin.heading')}</h1>
+            <p className="text-sm text-gray-500 mt-1">{event?.EventName || t('auction_admin.event_fallback')}</p>
           </div>
           <Link to={`/events/manage${BusinessID ? `?BusinessID=${BusinessID}` : ''}`}
-            className="text-sm text-gray-500 hover:text-gray-700">← Back</Link>
+            className="text-sm text-gray-500 hover:text-gray-700">{t('auction_admin.btn_back')}</Link>
         </div>
         <div className="flex gap-1 border-b border-gray-200 mb-5">
           {tabs.map(([k, label]) => (

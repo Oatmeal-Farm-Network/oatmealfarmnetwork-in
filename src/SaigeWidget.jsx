@@ -10,6 +10,7 @@
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import { useLanguage } from './LanguageContext';
 
@@ -57,6 +58,7 @@ function Bubble({ role, content }) {
 // ── Chat panel ────────────────────────────────────────────────────────────────
 
 function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onToggleFullscreen, fullscreen, sidebarWidth }) {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [input, setInput]       = useState('');
   const [sending, setSending]   = useState(false);
@@ -65,9 +67,9 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onTogg
     const pid = getPeopleId();
     const stored = localStorage.getItem(`saige_widget_thread_${pid}_${businessId || 0}`);
     if (stored) return stored;
-    const t = `saige_w_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-    localStorage.setItem(`saige_widget_thread_${pid}_${businessId || 0}`, t);
-    return t;
+    const newTid = `saige_w_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    localStorage.setItem(`saige_widget_thread_${pid}_${businessId || 0}`, newTid);
+    return newTid;
   });
   const scrollRef = useRef(null);
 
@@ -116,14 +118,14 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onTogg
         reply = q;
         if (opts.length > 0) reply += '\n\n' + opts.map(o => `• ${o}`).join('\n');
       } else if (data.status === 'error') {
-        reply = data.message || 'Sorry, something went wrong.';
+        reply = data.message || t('saige_widget.err_something_wrong');
       } else {
-        reply = data.diagnosis || data.response || '(no response)';
+        reply = data.diagnosis || data.response || t('saige_widget.no_response');
       }
-      setMessages([...nextMsgs, { role: 'assistant', content: reply || '(no response)' }]);
+      setMessages([...nextMsgs, { role: 'assistant', content: reply || t('saige_widget.no_response') }]);
     } catch (e) {
       setError(e.message);
-      setMessages([...nextMsgs, { role: 'assistant', content: `Sorry, I had trouble with that — ${e.message}` }]);
+      setMessages([...nextMsgs, { role: 'assistant', content: t('saige_widget.err_send', { msg: e.message }) }]);
     } finally {
       setSending(false);
     }
@@ -162,7 +164,7 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onTogg
         border: '1px solid #d1e8cc',
       };
 
-  const welcomeContext = pageContext ? `on the ${pageContext} page` : '';
+  const welcomeContext = pageContext ? t('saige_widget.welcome_context', { page: pageContext }) : '';
 
   return createPortal(
     <div style={panelStyle}>
@@ -180,13 +182,13 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onTogg
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 15, fontFamily: 'Lora, serif' }}>Saige</div>
           <div style={{ fontSize: 11, opacity: 0.85, fontFamily: 'Montserrat, sans-serif' }}>
-            Your AI Agricultural Assistant
+            {t('saige_widget.subtitle')}
           </div>
         </div>
-        <button onClick={onToggleFullscreen} style={hdrBtn} title={fullscreen ? 'Exit full screen' : 'Expand'}>
+        <button onClick={onToggleFullscreen} style={hdrBtn} title={fullscreen ? t('saige_widget.btn_exit_fullscreen') : t('saige_widget.btn_expand')}>
           {fullscreen ? '⤢' : '⤡'}
         </button>
-        <button onClick={onClose} style={hdrBtn} title="Close">×</button>
+        <button onClick={onClose} style={hdrBtn} title={t('saige_widget.btn_close')}>×</button>
       </div>
 
       {/* Messages */}
@@ -198,14 +200,15 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onTogg
       }}>
         {messages.length === 0 && (
           <div style={{ fontSize: 13, color: '#4b5563', padding: '12px 4px', lineHeight: 1.65, fontFamily: 'Montserrat, sans-serif' }}>
-            Hi! I'm Saige{welcomeContext ? ` — I can see you're ${welcomeContext}` : ''}. Ask me about your fields, crops, livestock,
-            soil health, alerts, irrigation, yield forecasts, or anything else on your farm.
+            {welcomeContext
+              ? t('saige_widget.welcome_with_context', { context: welcomeContext })
+              : t('saige_widget.welcome')}
           </div>
         )}
         {messages.map((m, i) => <Bubble key={i} role={m.role} content={m.content} />)}
         {sending && (
           <div style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic', fontFamily: 'Montserrat, sans-serif' }}>
-            Saige is thinking…
+            {t('saige_widget.thinking')}
           </div>
         )}
         {error && (
@@ -216,7 +219,7 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onTogg
       {/* Quick prompts — shown until first message sent */}
       {messages.length === 0 && (
         <div style={{ padding: '4px 10px 6px', display: 'flex', flexWrap: 'wrap', gap: 6, flexShrink: 0, borderTop: '1px solid #e5f0e2' }}>
-          {quickPrompts(pageContext).map(p => (
+          {quickPrompts(pageContext, t).map(p => (
             <button key={p} onClick={() => send(p)} style={chipStyle}>
               {p}
             </button>
@@ -239,7 +242,7 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onTogg
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={onKey}
-          placeholder="Ask Saige anything about your farm…"
+          placeholder={t("saige_widget.placeholder")}
           style={{
             flex: 1,
             resize: 'none',
@@ -268,7 +271,7 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onTogg
             fontFamily: 'Montserrat, sans-serif',
           }}
         >
-          Send
+          {t('saige_widget.btn_send')}
         </button>
       </div>
     </div>,
@@ -278,18 +281,18 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onTogg
 
 // ── Quick prompts per page context ────────────────────────────────────────────
 
-function quickPrompts(ctx) {
+function quickPrompts(ctx, t) {
   const c = (ctx || '').toLowerCase();
   if (c.includes('precision') || c.includes('field') || c.includes('crop monitor')) {
-    return ['How are my fields doing?', 'Any active alerts?', 'Should I irrigate?', 'Benchmark my fields'];
+    return [t('saige_widget.prompt_fields'), t('saige_widget.prompt_alerts'), t('saige_widget.prompt_irrigate'), t('saige_widget.prompt_benchmark')];
   }
   if (c.includes('livestock')) {
-    return ['List my animals', 'Show animal counts', 'Tell me about an animal'];
+    return [t('saige_widget.prompt_list_animals'), t('saige_widget.prompt_animal_counts'), t('saige_widget.prompt_animal_info')];
   }
   if (c.includes('farm 2 table') || c.includes('marketplace')) {
-    return ['What\'s in my marketplace?', 'What\'s in season?', 'Draft a produce listing'];
+    return [t('saige_widget.prompt_marketplace'), t('saige_widget.prompt_in_season'), t('saige_widget.prompt_draft_listing')];
   }
-  return ['How are my fields?', 'Any alerts?', 'What\'s in my marketplace?'];
+  return [t('saige_widget.prompt_fields_short'), t('saige_widget.prompt_alerts_short'), t('saige_widget.prompt_marketplace_short')];
 }
 
 const hdrBtn = {
@@ -320,6 +323,7 @@ const chipStyle = {
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export default function SaigeWidget({ businessId, fieldId, pageContext }) {
+  const { t } = useTranslation();
   const { Expanded: sidebarExpanded } = useAccount();
   const { language } = useLanguage();
   const sidebarWidth = sidebarExpanded ? 208 : 64;
@@ -339,8 +343,8 @@ export default function SaigeWidget({ businessId, fieldId, pageContext }) {
       {createPortal(
         <button
           onClick={() => setOpen(v => !v)}
-          aria-label="Open Saige chat"
-          title="Chat with Saige"
+          aria-label={t('saige_widget.launcher_aria')}
+          title={t('saige_widget.launcher_title')}
           style={{
             position: 'fixed',
             bottom: 20,

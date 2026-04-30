@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
@@ -26,6 +27,7 @@ const Field = ({ label, error, children, hint }) => (
 );
 
 export default function ServicesAdd() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
@@ -69,15 +71,15 @@ export default function ServicesAdd() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const validate = () => {
-    const e = {};
-    if (!form.ServiceTitle.trim()) e.ServiceTitle = 'Please enter a service title.';
-    if (!form.ServiceCategoryID) e.ServiceCategoryID = 'Please select a category.';
-    return e;
+    const errs = {};
+    if (!form.ServiceTitle.trim()) errs.ServiceTitle = t('services_add.err_title_required');
+    if (!form.ServiceCategoryID) errs.ServiceCategoryID = t('services_add.err_category_required');
+    return errs;
   };
 
   const submit = async () => {
-    const e = validate();
-    if (Object.keys(e).length > 0) { setErrors(e); return; }
+    const errs = validate();
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
     setSaving(true);
     try {
@@ -100,33 +102,33 @@ export default function ServicesAdd() {
   };
 
   return (
-    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Add Service" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Services' }, { label: 'My Services', to: `/services?BusinessID=${BusinessID}` }, { label: 'Add' }]}>
+    <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={t('services_add.page_title')} breadcrumbs={[{ label: t('services_add.breadcrumb_dashboard'), to: '/dashboard' }, { label: t('services_add.breadcrumb_services') }, { label: t('services_add.breadcrumb_my_services'), to: `/services?BusinessID=${BusinessID}` }, { label: t('services_add.breadcrumb_add') }]}>
       <div className="bg-white rounded-2xl shadow border border-gray-200 p-6" style={{ maxWidth: 600 }}>
 
         <div style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 22, color: '#2c1a0e', marginBottom: 6 }}>
-          Add a Service
+          {t('services_add.heading')}
         </div>
         <p style={{ color: '#7a6a5a', fontSize: 14, marginBottom: 24 }}>
-          Fill in the details below. You can add photos and more details after saving.
+          {t('services_add.subheading')}
         </p>
 
-        <Field label="Service Title" error={errors.ServiceTitle} hint="Max 50 characters">
+        <Field label={t('services_add.lbl_title')} error={errors.ServiceTitle} hint={t('services_add.hint_title')}>
           <input
             value={form.ServiceTitle}
             onChange={e => set('ServiceTitle', e.target.value)}
             maxLength={50}
             style={inputStyle}
-            placeholder="e.g. Farrier Services, Horse Training..."
+            placeholder={t('services_add.placeholder_title')}
           />
         </Field>
 
-        <Field label="Category" error={errors.ServiceCategoryID}>
+        <Field label={t('services_add.lbl_category')} error={errors.ServiceCategoryID}>
           <select
             value={form.ServiceCategoryID}
             onChange={e => { set('ServiceCategoryID', e.target.value); set('ServiceSubCategoryID', ''); }}
             style={selectStyle}
           >
-            <option value="">Select a category…</option>
+            <option value="">{t('services_add.select_category')}</option>
             {categories.map(c => (
               <option key={c.ServiceCategoryID} value={c.ServiceCategoryID}>{c.ServicesCategory}</option>
             ))}
@@ -134,13 +136,13 @@ export default function ServicesAdd() {
         </Field>
 
         {subCategories.length > 0 && (
-          <Field label="Sub-Category">
+          <Field label={t('services_add.lbl_subcategory')}>
             <select
               value={form.ServiceSubCategoryID}
               onChange={e => set('ServiceSubCategoryID', e.target.value)}
               style={selectStyle}
             >
-              <option value="">Select a sub-category…</option>
+              <option value="">{t('services_add.select_subcategory')}</option>
               {subCategories.map(s => (
                 <option key={s.ServiceSubCategoryID} value={s.ServiceSubCategoryID}>{s.ServiceSubCategoryName}</option>
               ))}
@@ -148,7 +150,7 @@ export default function ServicesAdd() {
           </Field>
         )}
 
-        <Field label="Price / Rate" hint="Leave blank if you prefer 'Contact for Price'">
+        <Field label={t('services_add.lbl_price')} hint={t('services_add.hint_price')}>
           <input
             type="number"
             value={form.ServicePrice}
@@ -158,39 +160,39 @@ export default function ServicesAdd() {
           />
         </Field>
 
-        <Field label="Contact for Price?">
+        <Field label={t('services_add.lbl_contact_for_price')}>
           <div style={{ display: 'flex', gap: 24 }}>
-            {['Yes', 'No'].map(v => (
-              <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14 }}>
+            {[['1', t('services_add.yes')], ['0', t('services_add.no')]].map(([val, label]) => (
+              <label key={val} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14 }}>
                 <input
                   type="radio"
                   name="ServiceContactForPrice"
-                  value={v === 'Yes' ? '1' : '0'}
-                  checked={form.ServiceContactForPrice === (v === 'Yes' ? '1' : '0')}
-                  onChange={() => set('ServiceContactForPrice', v === 'Yes' ? '1' : '0')}
+                  value={val}
+                  checked={form.ServiceContactForPrice === val}
+                  onChange={() => set('ServiceContactForPrice', val)}
                 />
-                {v}
+                {label}
               </label>
             ))}
           </div>
         </Field>
 
-        <Field label="Availability">
+        <Field label={t('services_add.lbl_availability')}>
           <input
             value={form.ServiceAvailable}
             onChange={e => set('ServiceAvailable', e.target.value)}
             style={inputStyle}
-            placeholder="e.g. Weekdays, By appointment..."
+            placeholder={t('services_add.placeholder_availability')}
           />
         </Field>
 
-        <Field label="Description">
+        <Field label={t('services_add.lbl_description')}>
           <textarea
             value={form.ServicesDescription}
             onChange={e => set('ServicesDescription', e.target.value)}
             rows={5}
             style={{ ...inputStyle, resize: 'vertical' }}
-            placeholder="Describe your service..."
+            placeholder={t('services_add.placeholder_description')}
           />
         </Field>
 
@@ -199,23 +201,23 @@ export default function ServicesAdd() {
           borderRadius: 8, padding: '16px 18px', marginBottom: 18,
         }}>
           <div style={{ fontWeight: 700, fontSize: 14, color: '#5a3e2b', marginBottom: 12 }}>
-            Contact Info <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: 12 }}>(optional)</span>
+            {t('services_add.contact_info_heading')} <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: 12 }}>({t('services_add.optional')})</span>
           </div>
-          <Field label="Phone">
-            <input value={form.ServicePhone} onChange={e => set('ServicePhone', e.target.value)} style={inputStyle} placeholder="e.g. 555-123-4567" />
+          <Field label={t('services_add.lbl_phone')}>
+            <input value={form.ServicePhone} onChange={e => set('ServicePhone', e.target.value)} style={inputStyle} placeholder={t('services_add.placeholder_phone')} />
           </Field>
-          <Field label="Website">
-            <input value={form.Servicewebsite} onChange={e => set('Servicewebsite', e.target.value)} style={inputStyle} placeholder="e.g. www.yoursite.com" />
+          <Field label={t('services_add.lbl_website')}>
+            <input value={form.Servicewebsite} onChange={e => set('Servicewebsite', e.target.value)} style={inputStyle} placeholder={t('services_add.placeholder_website')} />
           </Field>
-          <Field label="Email">
-            <input type="email" value={form.Serviceemail} onChange={e => set('Serviceemail', e.target.value)} style={inputStyle} placeholder="e.g. info@yourfarm.com" />
+          <Field label={t('services_add.lbl_email')}>
+            <input type="email" value={form.Serviceemail} onChange={e => set('Serviceemail', e.target.value)} style={inputStyle} placeholder={t('services_add.placeholder_email')} />
           </Field>
         </div>
 
         <p style={{ fontSize: 13, color: '#8b7355', marginBottom: 24 }}>
-          Don't see your category?{' '}
+          {t('services_add.suggest_category_prompt')}{' '}
           <a href={`/services/suggest-category?BusinessID=${BusinessID}`} style={{ color: '#5a3e2b', textDecoration: 'underline' }}>
-            Suggest a new category
+            {t('services_add.suggest_category_link')}
           </a>
         </p>
 
@@ -228,7 +230,7 @@ export default function ServicesAdd() {
               color: '#8b7355', cursor: 'pointer',
             }}
           >
-            Cancel
+            {t('services_add.btn_cancel')}
           </button>
           <button
             onClick={submit}
@@ -240,7 +242,7 @@ export default function ServicesAdd() {
               cursor: saving ? 'not-allowed' : 'pointer',
             }}
           >
-            {saving ? 'Saving…' : 'Save & Continue to Edit'}
+            {saving ? t('services_add.btn_saving') : t('services_add.btn_save')}
           </button>
         </div>
 

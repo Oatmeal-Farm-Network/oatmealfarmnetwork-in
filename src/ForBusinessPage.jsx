@@ -92,7 +92,7 @@ const TYPE_DATA = {
     tools: [
       { icon: I.market,    img: IMG_INGREDIENTS, link: '/marketplaces/farm-to-table' },
       { icon: I.rosemarie, img: IMG_SAIGE,       link: '/platform/rosemarie' },
-      { icon: I.source,    img: IMG_INGREDIENTS, link: '/marketplaces/farm-to-table' },
+      { icon: I.source,    img: IMG_FARM2TABLE,  link: '/marketplaces/farm-to-table' },
       { icon: I.website,   img: IMG_WEBSITE,    link: '/website-builder' },
       { icon: I.blog,      img: IMG_BLOG,         link: '/website-builder' },
       { icon: I.directory, img: IMG_DIRECTORY,  link: '/directory/artisan-producers' },

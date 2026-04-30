@@ -377,7 +377,23 @@
       "Bash(node \"f:/tmp/add_rte_saigedrafts_keys.js\")",
       "Bash(node \"f:/tmp/add_directory_list_keys.js\")",
       "Bash(node \"f:/tmp/add_vendor_digest_keys.js\")",
-      "Bash(node f:/tmp/add_unified_cart_keys.js)"
+      "Bash(node f:/tmp/add_unified_cart_keys.js)",
+      "Bash(node f:/tmp/add_services_add_keys.js)",
+      "Bash(node f:/tmp/add_wizard_attendees_keys.js)",
+      "Bash(node f:/tmp/add_saige_fields_card_keys.js)",
+      "Bash(node f:/tmp/add_rosemarie_chat_keys.js)",
+      "Bash(node f:/tmp/add_precision_ag_agronomy_keys.js)",
+      "Bash(node f:/tmp/add_auction_admin_keys.js)",
+      "Bash(node f:/tmp/add_sponsorship_admin_keys.js)",
+      "Bash(node f:/tmp/add_wizard_pay_keys.js)",
+      "Bash(node f:/tmp/add_saige_widget_keys.js)",
+      "Bash(node f:/tmp/add_services_edit_keys.js)",
+      "Bash(node f:/tmp/add_thaiyme_chat_keys.js)",
+      "Bash(node f:/tmp/add_simple_event_admin_keys.js)",
+      "Bash(node f:/tmp/add_spin_off_admin_keys.js)",
+      "Bash(node f:/tmp/add_precision_ag_boundary_map_keys.js)",
+      "Bash(node f:/tmp/add_conference_admin_keys.js)",
+      "Bash(node f:/tmp/add_seller_listings_keys.js)"
     ],
     "additionalDirectories": [
       "\\tmp"
