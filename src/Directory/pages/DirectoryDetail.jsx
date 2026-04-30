@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { API_ENDPOINTS } from '../config';
 import { DIRECTORY_TYPE_TO_IMAGE, DIRECTORY_TYPE_TO_BUSINESS_TYPE } from './directoryMappings';
 import photoNotAvailable from '../images/photo not available .jpg';
@@ -72,6 +73,7 @@ function SocialLinks({ business }) {
 }
 
 function Pagination({ currentPage, totalPages, onPageChange }) {
+    const { t } = useTranslation();
     if (totalPages <= 1) return null;
 
     let pages = [];
@@ -116,7 +118,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
                     className="px-3 h-9 text-sm font-bold rounded-lg transition-all"
                     style={{ backgroundColor: '#fff', color: '#3D6B34', border: '1px solid #3D6B34' }}
                 >
-                    Last
+                    {t('directory_detail.btn_last')}
                 </button>
             )}
         </div>
@@ -124,6 +126,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
 }
 
 function BusinessCard({ business, onProfileClick }) {
+    const { t } = useTranslation();
     return (
         <div className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200">
             {/* Left: logo */}
@@ -173,7 +176,7 @@ function BusinessCard({ business, onProfileClick }) {
                         className="text-xs font-bold hover:underline"
                         style={{ color: '#3D6B34', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                     >
-                        VIEW PROFILE →
+                        {t('directory_detail.btn_view_profile')}
                     </button>
                 </div>
             </div>
@@ -199,6 +202,7 @@ function useSelectTypeahead(options, onSelect) {
 }
 
 const DirectoryDetail = function () {
+    const { t } = useTranslation();
     const { directoryType } = useParams();
     const navigate  = useNavigate();
     const location  = useLocation();
@@ -250,7 +254,7 @@ const DirectoryDetail = function () {
     };
 
     const CATEGORY_TEXT = {
-        'business-resources': 'Consultants, lenders, accountants, and support organizations that help farm and food businesses manage finances, compliance, and growth. Whether you need help with business planning, loans, legal guidance, or marketing — find the right resource here.',
+        'business-resources': t('directory_detail.cat_text_business_resources'),
     };
 
     const businessType = DIRECTORY_TYPE_TO_BUSINESS_TYPE_ID[directoryType] || directoryType;
@@ -379,8 +383,8 @@ const DirectoryDetail = function () {
 
             <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1400px' }}>
                 <Breadcrumbs items={[
-                    { label: 'Home', to: '/' },
-                    { label: 'Directory', to: '/directory' },
+                    { label: t('directory_detail.breadcrumb_home'), to: '/' },
+                    { label: t('directory_detail.breadcrumb_directory'), to: '/directory' },
                     { label: pageTitle },
                 ]} />
             </div>
@@ -444,7 +448,7 @@ const DirectoryDetail = function () {
                                 width: 'fit-content',
                             }}
                         >
-                            ← All Categories
+                            {t('directory_detail.btn_all_categories')}
                         </Link>
                     </div>
                 </div>
@@ -456,7 +460,7 @@ const DirectoryDetail = function () {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
                     <div className="flex gap-4 flex-wrap items-end mb-4">
                         <div className="flex flex-col gap-1.5 flex-1" style={{ minWidth: '160px' }}>
-                            <label className="text-xs font-semibold text-gray-600">Country</label>
+                            <label className="text-xs font-semibold text-gray-600">{t('directory_detail.lbl_country')}</label>
                             <select
                                 value={selectedCountry}
                                 onChange={e => { setSelectedCountry(e.target.value); setSelectedState(''); }}
@@ -464,13 +468,13 @@ const DirectoryDetail = function () {
                                 className="border border-gray-300 rounded-lg text-sm text-gray-700"
                                 style={{ padding: '8px 10px' }}
                             >
-                                <option value="">Select Country</option>
+                                <option value="">{t('directory_detail.opt_select_country')}</option>
                                 {countries.map(c => <option key={c} value={c}>{COUNTRY_DISPLAY(c)}</option>)}
                             </select>
                         </div>
 
                         <div className="flex flex-col gap-1.5 flex-1" style={{ minWidth: '160px' }}>
-                            <label className="text-xs font-semibold text-gray-600">State / Province</label>
+                            <label className="text-xs font-semibold text-gray-600">{t('directory_detail.lbl_state')}</label>
                             <select
                                 value={selectedState}
                                 onChange={e => setSelectedState(e.target.value)}
@@ -479,19 +483,19 @@ const DirectoryDetail = function () {
                                 className="border border-gray-300 rounded-lg text-sm text-gray-700"
                                 style={{ padding: '8px 10px' }}
                             >
-                                <option value="">Any</option>
+                                <option value="">{t('directory_detail.opt_any')}</option>
                                 {states.map(s => <option key={s.StateIndex} value={s.name}>{s.name}</option>)}
                             </select>
                         </div>
 
 <div className="flex flex-col gap-1.5" style={{ minWidth: '200px', flex: 2 }}>
-                            <label className="text-xs font-semibold text-gray-600">Business Name</label>
+                            <label className="text-xs font-semibold text-gray-600">{t('directory_detail.lbl_business_name')}</label>
                             <input
                                 type="text"
                                 value={nameFilter}
                                 onChange={e => setNameFilter(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && handleApplyFilters()}
-                                placeholder="Search by name…"
+                                placeholder={t('directory_detail.placeholder_search')}
                                 className="border border-gray-300 rounded-lg text-sm text-gray-700"
                                 style={{ padding: '8px 10px' }}
                             />
@@ -511,7 +515,7 @@ const DirectoryDetail = function () {
                                 alignSelf: 'flex-end',
                             }}
                         >
-                            Apply Filters
+                            {t('directory_detail.btn_apply_filters')}
                         </button>
                     </div>
                 </div>
@@ -519,11 +523,11 @@ const DirectoryDetail = function () {
                 {/* ── Results heading ── */}
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-bold text-gray-900">
-                        {pageTitle} Listings
+                        {t('directory_detail.listings_heading', { type: pageTitle })}
                     </h2>
                     {!loading && filteredBusinesses.length > 0 && (
                         <span className="text-sm text-gray-400">
-                            {startIndex + 1}–{Math.min(startIndex + itemsPerPage, filteredBusinesses.length)} of {filteredBusinesses.length}
+                            {t('directory_detail.results_range', { from: startIndex + 1, to: Math.min(startIndex + itemsPerPage, filteredBusinesses.length), total: filteredBusinesses.length })}
                         </span>
                     )}
                 </div>
@@ -554,7 +558,7 @@ const DirectoryDetail = function () {
                     </div>
                 ) : (
                     <div className="bg-white rounded-xl border border-gray-200 text-center text-gray-500 py-16">
-                        No businesses found for the selected filters.
+                        {t('directory_detail.no_results')}
                     </div>
                 )}
 

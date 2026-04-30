@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
 
@@ -11,19 +12,25 @@ function authHeaders() {
 }
 
 const TYPE_META = {
-  produce_listing: { label: 'Produce listing', color: '#166534', bg: '#ecfdf5', border: '#bbf7d0' },
-  event:           { label: 'Event',            color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe' },
-  blog_post:       { label: 'Blog post',        color: '#9a3412', bg: '#fff7ed', border: '#fed7aa' },
+  produce_listing: { color: '#166534', bg: '#ecfdf5', border: '#bbf7d0' },
+  event:           { color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe' },
+  blog_post:       { color: '#9a3412', bg: '#fff7ed', border: '#fed7aa' },
 };
 
-function renderPayload(type, p) {
+const TYPE_LABEL_KEYS = {
+  produce_listing: 'saige_drafts.type_produce_listing',
+  event:           'saige_drafts.type_event',
+  blog_post:       'saige_drafts.type_blog_post',
+};
+
+function renderPayload(type, p, t) {
   if (type === 'produce_listing') {
     const qty = p.Quantity ? `${p.Quantity} ${p.Measurement || 'unit'}` : '';
     const price = p.RetailPrice ? `$${Number(p.RetailPrice).toFixed(2)}` : '';
     return (
       <div style={{ fontSize: 13, color: '#1f2937' }}>
         <div><b>{p.IngredientName || '—'}</b></div>
-        <div>{qty}{price ? ` @ ${price}` : ''}{p.AvailableDate ? ` · available ${p.AvailableDate}` : ''}</div>
+        <div>{qty}{price ? ` @ ${price}` : ''}{p.AvailableDate ? ` · ${t('saige_drafts.available_date', { date: p.AvailableDate })}` : ''}</div>
       </div>
     );
   }
@@ -32,7 +39,7 @@ function renderPayload(type, p) {
       <div style={{ fontSize: 13, color: '#1f2937' }}>
         <div><b>{p.EventName || '—'}</b></div>
         <div>
-          {p.EventStartDate || 'tbd'}{p.EventEndDate ? ` → ${p.EventEndDate}` : ''}
+          {p.EventStartDate || t('saige_drafts.tbd')}{p.EventEndDate ? ` → ${p.EventEndDate}` : ''}
           {p.EventLocationCity ? ` · ${p.EventLocationCity}${p.EventLocationState ? `, ${p.EventLocationState}` : ''}` : ''}
         </div>
         {p.EventDescription && (
@@ -56,9 +63,10 @@ function renderPayload(type, p) {
 }
 
 export default function SaigeDraftsPanel({ businessId = 0, onChange }) {
+  const { t } = useTranslation();
   const [drafts, setDrafts]   = useState([]);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy]       = useState(null); // draft_id in-flight
+  const [busy, setBusy]       = useState(null);
   const [error, setError]     = useState('');
 
   const load = useCallback(async () => {
@@ -69,7 +77,7 @@ export default function SaigeDraftsPanel({ businessId = 0, onChange }) {
       const json = r.ok ? await r.json() : null;
       setDrafts(json?.drafts || []);
     } catch (e) {
-      setError(e.message || 'Failed to load drafts');
+      setError(e.message || t('saige_drafts.err_load_failed'));
     } finally {
       setLoading(false);
     }
@@ -78,7 +86,7 @@ export default function SaigeDraftsPanel({ businessId = 0, onChange }) {
   useEffect(() => { load(); }, [load]);
 
   const approve = async (id) => {
-    if (!window.confirm('Publish this draft to your real inventory/event/blog?')) return;
+    if (!window.confirm(t('saige_drafts.confirm_approve'))) return;
     setBusy(id);
     try {
       const r = await fetch(`${SAIGE_API}/saige/drafts/${id}/approve`, {
@@ -91,14 +99,14 @@ export default function SaigeDraftsPanel({ businessId = 0, onChange }) {
       await load();
       if (onChange) onChange();
     } catch (e) {
-      alert(`Approve failed: ${e.message}`);
+      alert(t('saige_drafts.err_approve_failed', { msg: e.message }));
     } finally {
       setBusy(null);
     }
   };
 
   const reject = async (id) => {
-    const reason = window.prompt('Optional — why are you rejecting this draft?') || '';
+    const reason = window.prompt(t('saige_drafts.prompt_reject_reason')) || '';
     setBusy(id);
     try {
       await fetch(`${SAIGE_API}/saige/drafts/${id}/reject`, {
@@ -124,7 +132,7 @@ export default function SaigeDraftsPanel({ businessId = 0, onChange }) {
         marginBottom: 10,
       }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#14532d' }}>
-          Saige drafts awaiting your approval ({drafts.length})
+          {t('saige_drafts.heading', { n: drafts.length })}
         </div>
         <button
           onClick={load}
@@ -133,7 +141,7 @@ export default function SaigeDraftsPanel({ businessId = 0, onChange }) {
             border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer',
           }}
         >
-          Refresh
+          {t('saige_drafts.btn_refresh')}
         </button>
       </div>
       {error && (
@@ -146,7 +154,8 @@ export default function SaigeDraftsPanel({ businessId = 0, onChange }) {
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {drafts.map((d) => {
-          const meta = TYPE_META[d.DraftType] || { label: d.DraftType, color: '#374151', bg: '#f9fafb', border: '#e5e7eb' };
+          const meta = TYPE_META[d.DraftType] || { color: '#374151', bg: '#f9fafb', border: '#e5e7eb' };
+          const label = TYPE_LABEL_KEYS[d.DraftType] ? t(TYPE_LABEL_KEYS[d.DraftType]) : d.DraftType;
           return (
             <div
               key={d.DraftID}
@@ -166,7 +175,7 @@ export default function SaigeDraftsPanel({ businessId = 0, onChange }) {
                     background: '#fff', border: `1px solid ${meta.border}`,
                     borderRadius: 4, padding: '2px 6px',
                   }}>
-                    {meta.label}
+                    {label}
                   </span>
                   <span style={{ fontSize: 11, color: '#6b7280' }}>#{d.DraftID}</span>
                 </div>
@@ -181,7 +190,7 @@ export default function SaigeDraftsPanel({ businessId = 0, onChange }) {
                       opacity: busy === d.DraftID ? 0.5 : 1,
                     }}
                   >
-                    Reject
+                    {t('saige_drafts.btn_reject')}
                   </button>
                   <button
                     disabled={busy === d.DraftID}
@@ -193,11 +202,11 @@ export default function SaigeDraftsPanel({ businessId = 0, onChange }) {
                       opacity: busy === d.DraftID ? 0.5 : 1,
                     }}
                   >
-                    {busy === d.DraftID ? 'Working…' : 'Approve & publish'}
+                    {busy === d.DraftID ? t('saige_drafts.btn_working') : t('saige_drafts.btn_approve')}
                   </button>
                 </div>
               </div>
-              {renderPayload(d.DraftType, d.Payload || {})}
+              {renderPayload(d.DraftType, d.Payload || {}, t)}
             </div>
           );
         })}

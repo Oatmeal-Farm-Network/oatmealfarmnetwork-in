@@ -43,6 +43,7 @@ function SaigeWidgetGlobal() {
   return <SaigeWidget businessId={businessId} pageContext={pageContext} />;
 }
 import './i18n.js';
+import { useTranslation } from 'react-i18next';
 import './index.css'
 import { AccountProvider } from './AccountContext';
 import { LanguageProvider } from './LanguageContext';
@@ -318,6 +319,33 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+function LoadingScreen() {
+  const { t } = useTranslation();
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      {t('main.loading')}
+    </div>
+  );
+}
+
+function NewsFeedPage() {
+  const { t } = useTranslation();
+  return (
+    <AccountLayout allowAnonymous pageTitle={t('main.news_feed')} breadcrumbs={[{ label: t('main.dashboard'), to: '/dashboard' }, { label: t('main.news_feed') }]}>
+      <NewsFeed />
+    </AccountLayout>
+  );
+}
+
+function NewsArticlePage() {
+  const { t } = useTranslation();
+  return (
+    <AccountLayout allowAnonymous pageTitle={t('main.news_article')} breadcrumbs={[{ label: t('main.dashboard'), to: '/dashboard' }, { label: t('main.news_feed'), to: '/app/news' }, { label: t('main.article') }]}>
+      <ArticleDetail />
+    </AccountLayout>
+  );
+}
+
 // Lazy import so install-prompt JS doesn't bloat the critical bundle.
 const InstallPrompt = React.lazy(() => import('./InstallPrompt.jsx'));
 
@@ -327,7 +355,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <Suspense fallback={null}><InstallPrompt /></Suspense>
     <LanguageProvider>
     <AccountProvider>
-      <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>}>
+      <Suspense fallback={<LoadingScreen />}>
         {/* On a custom domain every path renders the public site — no OFN chrome, no auth routes */}
         {isCustomDomain ? (
           <Routes>
@@ -551,8 +579,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/produce/meat" element={<MeatInventory />} />
           <Route path="/news" element={<OFNComingSoon />} />
           <Route path="/over-the-fence" element={<OverTheFenceDM />} />
-          <Route path="/app/news" element={<AccountLayout allowAnonymous pageTitle="News Feed" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'News Feed' }]}><NewsFeed /></AccountLayout>} />
-          <Route path="/app/news/:id" element={<AccountLayout allowAnonymous pageTitle="News Article" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'News Feed', to: '/app/news' }, { label: 'Article' }]}><ArticleDetail /></AccountLayout>} />
+          <Route path="/app/news" element={<NewsFeedPage />} />
+          <Route path="/app/news/:id" element={<NewsArticlePage />} />
           <Route path="/blog/authors/manage" element={<BlogAuthors />} />
           <Route path="/blog/authors/:authorId" element={<BlogAuthorDetail />} />
           <Route path="/blog/manage" element={<BlogManage />} />

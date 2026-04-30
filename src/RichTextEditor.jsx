@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const WEB_FONTS = [
   { label: 'Arial',            value: 'Arial, sans-serif' },
@@ -32,6 +33,7 @@ const pasteAsPlainText = e => {
 };
 
 export default function RichTextEditor({ value, onChange, minHeight = 180 }) {
+  const { t } = useTranslation();
   const editorRef = useRef(null);
   const htmlRef   = useRef(null);
   const [htmlMode, setHtmlMode] = useState(false);
@@ -69,7 +71,7 @@ export default function RichTextEditor({ value, onChange, minHeight = 180 }) {
   };
 
   const insertLink = () => {
-    const input = window.prompt('Enter a URL:');
+    const input = window.prompt(t('rich_text_editor.prompt_url'));
     if (!input) return;
     const val = input.trim();
     const href = /^https?:\/\//i.test(val) ? val : /^mailto:/i.test(val) ? val : `https://${val}`;
@@ -97,49 +99,49 @@ export default function RichTextEditor({ value, onChange, minHeight = 180 }) {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '6px 8px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', alignItems: 'center' }}>
         {!htmlMode && <>
           <select style={selStyle} defaultValue="" onChange={e => { applyBlock(e.target.value); e.target.value = ''; }}>
-            <option value="" disabled>Style</option>
-            <option value="p">Body</option>
+            <option value="" disabled>{t('rich_text_editor.style')}</option>
+            <option value="p">{t('rich_text_editor.style_body')}</option>
             <option value="h1">H1</option><option value="h2">H2</option>
             <option value="h3">H3</option><option value="h4">H4</option>
           </select>
           <select style={{ ...selStyle, maxWidth: 110 }} defaultValue="" onChange={e => { applyFont(e.target.value); e.target.value = ''; }}>
-            <option value="" disabled>Font</option>
+            <option value="" disabled>{t('rich_text_editor.font')}</option>
             {WEB_FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
           </select>
           {divider}
-          <button style={{ ...btn, fontWeight: 700 }} title="Bold" onMouseDown={e => { e.preventDefault(); exec('bold'); }}>B</button>
-          <button style={{ ...btn, fontStyle: 'italic' }} title="Italic" onMouseDown={e => { e.preventDefault(); exec('italic'); }}>I</button>
-          <button style={{ ...btn, textDecoration: 'underline' }} title="Underline" onMouseDown={e => { e.preventDefault(); exec('underline'); }}>U</button>
-          <button style={{ ...btn, textDecoration: 'line-through' }} title="Strikethrough" onMouseDown={e => { e.preventDefault(); exec('strikeThrough'); }}>S</button>
+          <button style={{ ...btn, fontWeight: 700 }} title={t('rich_text_editor.title_bold')} onMouseDown={e => { e.preventDefault(); exec('bold'); }}>B</button>
+          <button style={{ ...btn, fontStyle: 'italic' }} title={t('rich_text_editor.title_italic')} onMouseDown={e => { e.preventDefault(); exec('italic'); }}>I</button>
+          <button style={{ ...btn, textDecoration: 'underline' }} title={t('rich_text_editor.title_underline')} onMouseDown={e => { e.preventDefault(); exec('underline'); }}>U</button>
+          <button style={{ ...btn, textDecoration: 'line-through' }} title={t('rich_text_editor.title_strikethrough')} onMouseDown={e => { e.preventDefault(); exec('strikeThrough'); }}>S</button>
           {divider}
-          <button style={btn} title="Align Left" onMouseDown={e => { e.preventDefault(); exec('justifyLeft'); }}>
+          <button style={btn} title={t('rich_text_editor.title_align_left')} onMouseDown={e => { e.preventDefault(); exec('justifyLeft'); }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="0" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="0" y="11.5" width="9" height="1.5"/></svg>
           </button>
-          <button style={btn} title="Center" onMouseDown={e => { e.preventDefault(); exec('justifyCenter'); }}>
+          <button style={btn} title={t('rich_text_editor.title_align_center')} onMouseDown={e => { e.preventDefault(); exec('justifyCenter'); }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="2" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="2" y="11.5" width="9" height="1.5"/></svg>
           </button>
-          <button style={btn} title="Align Right" onMouseDown={e => { e.preventDefault(); exec('justifyRight'); }}>
+          <button style={btn} title={t('rich_text_editor.title_align_right')} onMouseDown={e => { e.preventDefault(); exec('justifyRight'); }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="4" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="4" y="11.5" width="9" height="1.5"/></svg>
           </button>
           {divider}
-          <button style={btn} title="Bullet List" onMouseDown={e => { e.preventDefault(); exec('insertUnorderedList'); }}>
+          <button style={btn} title={t('rich_text_editor.title_bullet_list')} onMouseDown={e => { e.preventDefault(); exec('insertUnorderedList'); }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><circle cx="1.5" cy="2.5" r="1.2"/><rect x="4" y="1.8" width="9" height="1.4"/><circle cx="1.5" cy="6.5" r="1.2"/><rect x="4" y="5.8" width="9" height="1.4"/><circle cx="1.5" cy="10.5" r="1.2"/><rect x="4" y="9.8" width="9" height="1.4"/></svg>
           </button>
-          <button style={btn} title="Numbered List" onMouseDown={e => { e.preventDefault(); exec('insertOrderedList'); }}>
+          <button style={btn} title={t('rich_text_editor.title_numbered_list')} onMouseDown={e => { e.preventDefault(); exec('insertOrderedList'); }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><text x="0" y="4" fontSize="4.5" fontFamily="monospace">1.</text><rect x="4" y="1.8" width="9" height="1.4"/><text x="0" y="8" fontSize="4.5" fontFamily="monospace">2.</text><rect x="4" y="5.8" width="9" height="1.4"/><text x="0" y="12" fontSize="4.5" fontFamily="monospace">3.</text><rect x="4" y="9.8" width="9" height="1.4"/></svg>
           </button>
           {divider}
-          <button style={btn} title="Insert Link" onMouseDown={e => { e.preventDefault(); insertLink(); }}>
+          <button style={btn} title={t('rich_text_editor.title_insert_link')} onMouseDown={e => { e.preventDefault(); insertLink(); }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
           </button>
-          <button style={{ ...btn, fontSize: 10 }} title="Remove Link" onMouseDown={e => { e.preventDefault(); exec('unlink'); }}>✕🔗</button>
+          <button style={{ ...btn, fontSize: 10 }} title={t('rich_text_editor.title_remove_link')} onMouseDown={e => { e.preventDefault(); exec('unlink'); }}>✕🔗</button>
           {divider}
-          <button style={{ ...btn, fontSize: 10, color: '#b91c1c' }} title="Clear all formatting" onMouseDown={e => { e.preventDefault(); clearFormatting(); }}>Tx</button>
+          <button style={{ ...btn, fontSize: 10, color: '#b91c1c' }} title={t('rich_text_editor.title_clear_formatting')} onMouseDown={e => { e.preventDefault(); clearFormatting(); }}>Tx</button>
           {divider}
         </>}
         <button onClick={() => setHtmlMode(m => !m)}
           style={{ ...btn, fontFamily: 'monospace', fontSize: 11, background: htmlMode ? '#1e293b' : '#fff', color: htmlMode ? '#7dd3fc' : '#374151', border: `1px solid ${htmlMode ? '#334155' : '#d1d5db'}` }}
-          title={htmlMode ? 'Back to rich text' : 'View/edit HTML'}>&lt;/&gt;</button>
+          title={htmlMode ? t('rich_text_editor.title_back_to_rich') : t('rich_text_editor.title_view_html')}>&lt;/&gt;</button>
       </div>
       <div ref={editorRef} contentEditable suppressContentEditableWarning
         onBlur={handleBlur} onPaste={pasteAsPlainText}

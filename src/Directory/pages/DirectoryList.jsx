@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from '../../Header';
 import Footer from '../../Footer';
 import PageMeta from '../../PageMeta';
@@ -39,187 +40,47 @@ const othersImg           = '/icons/Other.png';
 // Categories surfaced in the public directory. Sourced from the
 // `businesstypelookup` table (excluding the "N/A" placeholder row) and
 // ordered alphabetically by BusinessType to match GET /api/businesses/types.
-const CATEGORIES = [
-  {
-    title: 'Agricultural Associations',
-    slug:  'agricultural-associations',
-    img:   agriAssociaImg,
-    desc:  'Trade associations, cooperatives, and advocacy groups that support farmers, ranchers, and food producers across all sectors of agriculture.',
-  },
-  {
-    title: 'Artisan Producers',
-    slug:  'artisan-producers',
-    img:   artisianImg,
-    desc:  'Small-batch makers of specialty foods — cheesemakers, bread bakers, jam crafters, and other producers who put craft and care into every product.',
-  },
-  {
-    title: 'Business Resources',
-    slug:  'business-resources',
-    img:   brImg,
-    desc:  'Consultants, lenders, accountants, and support organizations that help farm and food businesses manage finances, compliance, and growth.',
-  },
-  {
-    title: 'Crafter Organizations',
-    slug:  'crafter-organizations',
-    img:   crafOrgImg,
-    desc:  'Guilds, co-ops, and collectives for fiber artists, weavers, knitters, and other crafters who work with natural and farm-sourced materials.',
-  },
-  {
-    title: 'Farmers Markets',
-    slug:  'farmers-markets',
-    img:   farmersMarketImg,
-    desc:  'Outdoor and indoor markets where farmers, growers, and producers sell directly to consumers — the heartbeat of local food communities.',
-  },
-  {
-    title: 'Farms / Ranches',
-    slug:  'farms-ranches',
-    img:   farmsRanchesImg,
-    desc:  'Working farms and ranches growing crops, raising livestock, and producing the raw ingredients that feed families and supply the food chain.',
-  },
-  {
-    title: 'Fiber Cooperatives',
-    slug:  'fiber-cooperatives',
-    img:   fiberImg,
-    desc:  'Member-owned cooperatives that pool fiber resources — raw wool, alpaca, mohair, and more — for processing, marketing, and sale.',
-  },
-  {
-    title: 'Fiber Mills',
-    slug:  'fiber-mills',
-    img:   fiberMillsImg,
-    desc:  'Facilities that wash, card, spin, and process raw animal fiber into yarn and textiles for the handcraft and textile industries.',
-  },
-  {
-    title: 'Fisheries',
-    slug:  'fisheries',
-    img:   fisheriesImg,
-    desc:  'Aquaculture operations and wild-catch fisheries that produce fish, shellfish, and other seafood for commercial and consumer markets.',
-  },
-  {
-    title: 'Fishermen',
-    slug:  'fishermen',
-    img:   fishermenImg,
-    desc:  'Independent commercial fishermen and small fishing operations harvesting seafood from oceans, lakes, and rivers.',
-  },
-  {
-    title: 'Food Aggregators',
-    slug:  'food-aggregators',
-    img:   foodAggregatorsImg,
-    desc:  'Organizations that consolidate and resell product from multiple farms — connecting smaller producers to wholesale buyers, distributors, and institutional kitchens.',
-  },
-  {
-    title: 'Food Cooperatives',
-    slug:  'food-cooperatives',
-    img:   foodCopImg,
-    desc:  'Member-owned grocery stores and buying clubs that prioritize local sourcing, fair prices, and community ownership of the food supply.',
-  },
-  {
-    title: 'Food Hubs',
-    slug:  'food-hubs',
-    img:   foodHubImg,
-    desc:  'Aggregation and distribution centers that help small and mid-scale farms access wholesale markets, schools, hospitals, and retail buyers.',
-  },
-  {
-    title: 'Grocery Stores',
-    slug:  'grocery-stores',
-    img:   groceryStoreImg,
-    desc:  'Independent and regional grocery retailers committed to stocking local and regional food products alongside everyday staples.',
-  },
-  {
-    title: 'Herb & Tea Producers',
-    slug:  'herb-and-tea-producers',
-    img:   herbTeaImg,
-    desc:  'Growers and crafters of culinary, medicinal, and aromatic herbs, plus loose-leaf and blended tea producers working from farm to cup.',
-  },
-  {
-    title: 'Hunger Relief Organizations',
-    slug:  'hunger-relief-organizations',
-    img:   hungerReliefImg,
-    desc:  'Food banks, pantries, rescue programs, and community kitchens that connect surplus farm and food production with families in need.',
-  },
-  {
-    title: 'Manufacturers',
-    slug:  'manufacturers',
-    img:   manfacImg,
-    desc:  'Food and beverage manufacturers that transform raw agricultural ingredients into packaged products for retail, foodservice, and export.',
-  },
-  {
-    title: 'Marinas',
-    slug:  'marinas',
-    img:   marinasImg,
-    desc:  'Coastal and inland marinas that support commercial fishing operations, aquaculture businesses, and waterfront food enterprises.',
-  },
-  {
-    title: 'Meat Wholesalers',
-    slug:  'meat-wholesalers',
-    img:   meatImg,
-    desc:  'Processors and distributors that source whole animals from farms and sell cuts, carcasses, and specialty meats to restaurants and retailers.',
-  },
-  {
-    title: 'Real Estate Agents',
-    slug:  'real-estate-agents',
-    img:   realEstateImg,
-    desc:  'Agents and brokers who specialize in agricultural land, farm properties, rural acreage, and food-business real estate transactions.',
-  },
-  {
-    title: 'Restaurants',
-    slug:  'restaurants',
-    img:   restaurantsImg,
-    desc:  'Farm-to-table restaurants, local diners, and food establishments that source directly from farmers and champion regional cuisine.',
-  },
-  {
-    title: 'Retailers',
-    slug:  'retailers',
-    img:   retailersImg,
-    desc:  'Specialty food shops, farm stores, and retail outlets that bring locally and regionally produced food products to everyday shoppers.',
-  },
-  {
-    title: 'Service Providers',
-    slug:  'service-providers',
-    img:   serviceProvidersImg,
-    desc:  'Veterinarians, agronomists, equipment dealers, and other service businesses that keep farms and food enterprises running smoothly.',
-  },
-  {
-    title: 'Transporters',
-    slug:  'transporters',
-    img:   transporterImg,
-    desc:  'Refrigerated trucking, livestock haulers, and logistics providers that move farm product from field to processor, distributor, and end buyer.',
-  },
-  {
-    title: 'Universities',
-    slug:  'universities',
-    img:   universitiesImg,
-    desc:  'Agricultural colleges, land-grant universities, and extension programs that conduct research and provide education to the farming community.',
-  },
-  {
-    title: 'Veterinarians',
-    slug:  'veterinarians',
-    img:   vetImg,
-    desc:  'Large-animal and mixed-practice veterinarians who provide health care, herd management, and consulting services for livestock producers.',
-  },
-  {
-    title: 'Vineyards',
-    slug:  'vineyards',
-    img:   vineyardsImg,
-    desc:  'Grape growers and estate vineyards that cultivate wine grapes, table grapes, and specialty varietals across growing regions.',
-  },
-  {
-    title: 'Wineries',
-    slug:  'wineries',
-    img:   wineriesImg,
-    desc:  'Craft and commercial wineries that ferment, age, and bottle wine from grapes and other fruits, often sourcing from local vineyards.',
-  },
+const CATEGORIES_BASE = [
+  { slug: 'agricultural-associations', img: agriAssociaImg },
+  { slug: 'artisan-producers',         img: artisianImg },
+  { slug: 'business-resources',        img: brImg },
+  { slug: 'crafter-organizations',     img: crafOrgImg },
+  { slug: 'farmers-markets',           img: farmersMarketImg },
+  { slug: 'farms-ranches',             img: farmsRanchesImg },
+  { slug: 'fiber-cooperatives',        img: fiberImg },
+  { slug: 'fiber-mills',               img: fiberMillsImg },
+  { slug: 'fisheries',                 img: fisheriesImg },
+  { slug: 'fishermen',                 img: fishermenImg },
+  { slug: 'food-aggregators',          img: foodAggregatorsImg },
+  { slug: 'food-cooperatives',         img: foodCopImg },
+  { slug: 'food-hubs',                 img: foodHubImg },
+  { slug: 'grocery-stores',            img: groceryStoreImg },
+  { slug: 'herb-and-tea-producers',    img: herbTeaImg },
+  { slug: 'hunger-relief-organizations', img: hungerReliefImg },
+  { slug: 'manufacturers',             img: manfacImg },
+  { slug: 'marinas',                   img: marinasImg },
+  { slug: 'meat-wholesalers',          img: meatImg },
+  { slug: 'real-estate-agents',        img: realEstateImg },
+  { slug: 'restaurants',               img: restaurantsImg },
+  { slug: 'retailers',                 img: retailersImg },
+  { slug: 'service-providers',         img: serviceProvidersImg },
+  { slug: 'transporters',              img: transporterImg },
+  { slug: 'universities',              img: universitiesImg },
+  { slug: 'veterinarians',             img: vetImg },
+  { slug: 'vineyards',                 img: vineyardsImg },
+  { slug: 'wineries',                  img: wineriesImg },
   // "Other" is intentionally pinned to the bottom rather than sorted in.
-  {
-    title: 'Other',
-    slug:  'others',
-    img:   othersImg,
-    desc:  "Food system businesses and organizations that don't fit neatly into other categories — from food trucks to community gardens and beyond.",
-  },
+  { slug: 'others',                    img: othersImg },
 ];
 
 const EAGER_COUNT = 4;
 
 export default function DirectoryList() {
+  const { t } = useTranslation();
+  const CATEGORIES = CATEGORIES_BASE.map(c => {
+    const k = c.slug.replace(/-/g, '_');
+    return { ...c, title: t(`directory_list.cat_${k}_title`), desc: t(`directory_list.cat_${k}_desc`) };
+  });
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
@@ -239,8 +100,8 @@ export default function DirectoryList() {
 
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
-          { label: 'Home', to: '/' },
-          { label: 'Directory' },
+          { label: t('directory_list.breadcrumb_home'), to: '/' },
+          { label: t('directory_list.breadcrumb_directory') },
         ]} />
       </div>
 
@@ -271,17 +132,15 @@ export default function DirectoryList() {
                 lineHeight: 1.2,
               }}
             >
-              Food System &amp; Beyond Directory
+              {t('directory_list.hero_heading')}
             </h1>
-            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 8px', lineHeight: 1.6 }}>
-              Find what you're looking for across <strong>29 categories</strong> — from farms and food hubs to
-              restaurants, fiber mills, and more.
-            </p>
+            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 8px', lineHeight: 1.6 }}
+              dangerouslySetInnerHTML={{ __html: t('directory_list.hero_body1') }}
+            />
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
-              Search and connect with local farms, food businesses, and organizations in your area. Want to add
-              your business?{' '}
-              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>Contact Us</Link>
-              {' '}and we'll get you listed.
+              {t('directory_list.hero_body2')}{' '}
+              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>{t('directory_list.hero_contact_us')}</Link>
+              {' '}{t('directory_list.hero_body3')}
             </p>
           </div>
         </div>
@@ -290,7 +149,7 @@ export default function DirectoryList() {
       <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
         {/* ── Section heading ── */}
-        <h2 className="text-lg font-bold text-gray-900 mb-5">Directory Categories</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-5">{t('directory_list.section_heading')}</h2>
 
         {/* ── 2-column grid of horizontal cards ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -331,7 +190,7 @@ export default function DirectoryList() {
                     className="text-xs font-bold hover:underline"
                     style={{ color: '#3D6B34' }}
                   >
-                    EXPLORE →
+                    {t('directory_list.btn_explore')}
                   </Link>
                 </div>
               </div>

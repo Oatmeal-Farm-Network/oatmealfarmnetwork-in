@@ -3,6 +3,7 @@
 // Route: /restaurant/digest
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -13,21 +14,22 @@ import PairsleyChat from './PairsleyChat';
 const API = import.meta.env.VITE_API_URL || '';
 
 export default function RestaurantDigest() {
+  const { t } = useTranslation();
   const { businesses } = useAccount() || {};
   const restaurantBusiness = Array.isArray(businesses)
     ? businesses.find(b => (b.BusinessType || '').toLowerCase() === 'restaurant')
     : null;
   const buyerBusinessId = restaurantBusiness?.BusinessID || null;
 
-  const [sub,     setSub]     = useState(null);
-  const [email,   setEmail]   = useState('');
+  const [sub,       setSub]       = useState(null);
+  const [email,     setEmail]     = useState('');
   const [savedOnly, setSavedOnly] = useState(false);
   const [frequency, setFrequency] = useState('weekly');
-  const [preview, setPreview] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving,  setSaving]  = useState(false);
+  const [preview,   setPreview]   = useState(null);
+  const [loading,   setLoading]   = useState(true);
+  const [saving,    setSaving]    = useState(false);
   const [sendingNow, setSendingNow] = useState(false);
-  const [msg,     setMsg]     = useState('');
+  const [msg,       setMsg]       = useState('');
 
   const load = async () => {
     if (!buyerBusinessId) { setLoading(false); return; }
@@ -58,7 +60,7 @@ export default function RestaurantDigest() {
 
   const subscribe = async (e) => {
     e?.preventDefault();
-    if (!email.trim()) { setMsg('Email is required.'); return; }
+    if (!email.trim()) { setMsg(t('restaurant_digest.err_email_required')); return; }
     setSaving(true);
     setMsg('');
     try {
@@ -74,20 +76,20 @@ export default function RestaurantDigest() {
         }),
       });
       if (!res.ok) throw new Error();
-      setMsg('Subscription saved.');
+      setMsg(t('restaurant_digest.msg_saved'));
       load();
     } catch {
-      setMsg('Could not save subscription.');
+      setMsg(t('restaurant_digest.err_save_failed'));
     } finally {
       setSaving(false);
     }
   };
 
   const unsubscribe = async () => {
-    if (!window.confirm('Unsubscribe from the weekly digest?')) return;
+    if (!window.confirm(t('restaurant_digest.confirm_unsubscribe'))) return;
     await fetch(`${API}/api/marketplace/digest-subscription?buyer_business_id=${buyerBusinessId}`, { method: 'DELETE' });
     setSub(null);
-    setMsg('Unsubscribed.');
+    setMsg(t('restaurant_digest.msg_unsubscribed'));
   };
 
   const sendNow = async () => {
@@ -97,10 +99,10 @@ export default function RestaurantDigest() {
       const res = await fetch(`${API}/api/marketplace/digest-send-now?buyer_business_id=${buyerBusinessId}`, { method: 'POST' });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setMsg(`Digest queued: "${data.subject}" → ${data.to} (${data.item_count} items). ${data.note || ''}`);
+      setMsg(t('restaurant_digest.msg_digest_queued', { subject: data.subject, to: data.to, count: data.item_count }) + (data.note ? ` ${data.note}` : ''));
       load();
     } catch {
-      setMsg('Could not send digest preview.');
+      setMsg(t('restaurant_digest.err_send_failed'));
     } finally {
       setSendingNow(false);
     }
@@ -116,66 +118,70 @@ export default function RestaurantDigest() {
 
       <div className="mx-auto px-4 pt-4 pb-10" style={{ maxWidth: '900px' }}>
         <Breadcrumbs items={[
-          { label: 'Home', to: '/' },
-          { label: 'Marketplaces', to: '/marketplaces' },
-          { label: 'Farm-to-Table', to: '/marketplaces/farm-to-table' },
-          { label: 'Weekly Digest' },
+          { label: t('restaurant_digest.breadcrumb_home'), to: '/' },
+          { label: t('restaurant_digest.breadcrumb_marketplaces'), to: '/marketplaces' },
+          { label: t('restaurant_digest.breadcrumb_farm_to_table'), to: '/marketplaces/farm-to-table' },
+          { label: t('restaurant_digest.breadcrumb_digest') },
         ]} />
 
         <h1 className="mt-4 text-2xl font-bold text-gray-900" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-          📬 Available This Week
+          📬 {t('restaurant_digest.heading')}
         </h1>
         <p className="text-sm text-gray-600 mt-1 mb-6">
-          Get a weekly email with everything fresh from local farms — perfect for menu planning. Optionally restrict it to your saved farms.
+          {t('restaurant_digest.subheading')}
         </p>
 
         {!buyerBusinessId ? (
           <div className="bg-white rounded-2xl border border-gray-200 p-6 text-center">
-            <p className="text-gray-700 font-semibold">No restaurant business found on your account.</p>
-            <Link to="/account" className="text-[#3D6B34] underline text-sm">Go to account</Link>
+            <p className="text-gray-700 font-semibold">{t('restaurant_digest.no_business')}</p>
+            <Link to="/account" className="text-[#3D6B34] underline text-sm">{t('restaurant_digest.btn_go_to_account')}</Link>
           </div>
         ) : loading ? (
-          <div className="text-gray-400 text-center py-10">Loading…</div>
+          <div className="text-gray-400 text-center py-10">{t('restaurant_digest.loading')}</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* ── Subscription form ── */}
             <div className="bg-white rounded-2xl border border-gray-200 p-5">
-              <h2 className="font-bold text-gray-900 mb-3">Your subscription</h2>
+              <h2 className="font-bold text-gray-900 mb-3">{t('restaurant_digest.sub_heading')}</h2>
               {sub && (
                 <p className="text-xs bg-[#e8f0dc] text-[#3D6B34] font-semibold px-3 py-2 rounded mb-3">
-                  ✓ Active — last sent {sub.LastSentAt ? new Date(sub.LastSentAt).toLocaleDateString() : 'never'}
+                  {t('restaurant_digest.active_status', { date: sub.LastSentAt ? new Date(sub.LastSentAt).toLocaleDateString() : t('restaurant_digest.never') })}
                 </p>
               )}
               <form onSubmit={subscribe} className="space-y-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Email</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">{t('restaurant_digest.lbl_email')}</label>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Frequency</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">{t('restaurant_digest.lbl_frequency')}</label>
                   <select value={frequency} onChange={e => setFrequency(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option value="weekly">Weekly</option>
-                    <option value="biweekly">Every 2 weeks</option>
-                    <option value="monthly">Monthly</option>
+                    <option value="weekly">{t('restaurant_digest.freq_weekly')}</option>
+                    <option value="biweekly">{t('restaurant_digest.freq_biweekly')}</option>
+                    <option value="monthly">{t('restaurant_digest.freq_monthly')}</option>
                   </select>
                 </div>
                 <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                   <input type="checkbox" checked={savedOnly} onChange={e => setSavedOnly(e.target.checked)} />
-                  <span>Only include farms I've saved (<Link to="/restaurant/farms" className="text-[#3D6B34] underline">My Farms</Link>)</span>
+                  <span>
+                    {t('restaurant_digest.lbl_saved_only')}{' ('}
+                    <Link to="/restaurant/farms" className="text-[#3D6B34] underline">{t('restaurant_digest.btn_my_farms')}</Link>
+                    {')'}
+                  </span>
                 </label>
 
                 <div className="flex justify-end gap-2 pt-2">
                   {sub && (
                     <button type="button" onClick={unsubscribe}
                       className="text-xs text-red-500 hover:underline px-2">
-                      Unsubscribe
+                      {t('restaurant_digest.btn_unsubscribe')}
                     </button>
                   )}
                   <button type="submit" disabled={saving}
                     className="px-4 py-2 text-sm font-bold text-white bg-[#3D6B34] hover:bg-[#2d5225] rounded-lg disabled:opacity-60">
-                    {saving ? 'Saving…' : sub ? 'Update' : 'Subscribe'}
+                    {saving ? t('restaurant_digest.btn_saving') : sub ? t('restaurant_digest.btn_update') : t('restaurant_digest.btn_subscribe')}
                   </button>
                 </div>
               </form>
@@ -183,7 +189,7 @@ export default function RestaurantDigest() {
               {sub && (
                 <button onClick={sendNow} disabled={sendingNow}
                   className="mt-4 w-full text-xs font-semibold text-[#3D6B34] border border-[#3D6B34] hover:bg-[#e8f0dc] py-2 rounded-lg disabled:opacity-60">
-                  {sendingNow ? 'Sending…' : '📤 Send a digest now'}
+                  {sendingNow ? t('restaurant_digest.btn_sending') : t('restaurant_digest.btn_send_now')}
                 </button>
               )}
 
@@ -192,9 +198,9 @@ export default function RestaurantDigest() {
 
             {/* ── Preview ── */}
             <div className="bg-white rounded-2xl border border-gray-200 p-5">
-              <h2 className="font-bold text-gray-900 mb-3">Preview ({preview?.item_count ?? 0} items)</h2>
+              <h2 className="font-bold text-gray-900 mb-3">{t('restaurant_digest.preview_heading', { n: preview?.item_count ?? 0 })}</h2>
               {!preview || (preview.items || []).length === 0 ? (
-                <p className="text-sm text-gray-500">Nothing available right now. Save some farms or check back later.</p>
+                <p className="text-sm text-gray-500">{t('restaurant_digest.preview_empty')}</p>
               ) : (
                 <ul className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
                   {preview.items.map((it, idx) => (

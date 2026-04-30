@@ -43,6 +43,7 @@ const IMG_ASSOC      = '/images/CoreFeaturesAssociationSupport.webp';
 const IMG_RESTAURANTS= '/images/Restaurants.webp';
 const IMG_DIRECTORY  = '/images/AboutDirectoryImage.webp';
 const IMG_BLOG       = '/images/ForXBlog.webp';
+const IMG_INGREDIENTS= '/images/ForXIngredients.webp';
 
 const TYPE_DATA = {
   farms: {
@@ -89,9 +90,9 @@ const TYPE_DATA = {
     cta2To:  '/signup',
     dir:     '/directory/artisan-producers',
     tools: [
-      { icon: I.market,    img: IMG_FARM2TABLE, link: '/marketplaces/farm-to-table' },
-      { icon: I.rosemarie, img: IMG_SAIGE,      link: '/platform/rosemarie' },
-      { icon: I.source,    img: IMG_FARM2TABLE, link: '/marketplaces/farm-to-table' },
+      { icon: I.market,    img: IMG_INGREDIENTS, link: '/marketplaces/farm-to-table' },
+      { icon: I.rosemarie, img: IMG_SAIGE,       link: '/platform/rosemarie' },
+      { icon: I.source,    img: IMG_INGREDIENTS, link: '/marketplaces/farm-to-table' },
       { icon: I.website,   img: IMG_WEBSITE,    link: '/website-builder' },
       { icon: I.blog,      img: IMG_BLOG,         link: '/website-builder' },
       { icon: I.directory, img: IMG_DIRECTORY,  link: '/directory/artisan-producers' },
@@ -108,7 +109,7 @@ const TYPE_DATA = {
     dir:     '/directory/restaurants',
     tools: [
       { icon: I.pantry,    img: IMG_RESTAURANTS, link: '/chef-pantry' },
-      { icon: I.market,    img: IMG_FARM2TABLE,  link: '/marketplaces/farm-to-table' },
+      { icon: I.market,    img: IMG_INGREDIENTS, link: '/marketplaces/farm-to-table' },
       { icon: I.pairsley,  img: IMG_SAIGE,       link: '/platform/pairsley' },
       { icon: I.website,   img: IMG_WEBSITE,     link: '/website-builder' },
       { icon: I.directory, img: IMG_DIRECTORY,   link: '/directory/restaurants' },
