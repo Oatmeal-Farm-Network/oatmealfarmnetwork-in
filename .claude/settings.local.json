@@ -376,7 +376,8 @@
       "Bash(node \"f:/tmp/add_chef_dashboard_keys.js\")",
       "Bash(node \"f:/tmp/add_rte_saigedrafts_keys.js\")",
       "Bash(node \"f:/tmp/add_directory_list_keys.js\")",
-      "Bash(node \"f:/tmp/add_vendor_digest_keys.js\")"
+      "Bash(node \"f:/tmp/add_vendor_digest_keys.js\")",
+      "Bash(node f:/tmp/add_unified_cart_keys.js)"
     ],
     "additionalDirectories": [
       "\\tmp"
