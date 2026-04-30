@@ -16,11 +16,11 @@ export default function AboutPrecisionAg() {
 
   const features = [
     { img: '/images/PrecsisionAgSateliteCropMonitoring.webp',        title: t('precision.feat1_title'),  body: t('precision.feat1_body'),  link: '/oatsense' },
-    { img: '/images/PrecsisionAgGrowingDegreeDays&Maturity.webp',    title: t('precision.feat2_title'),  body: t('precision.feat2_body'),  link: '/oatsense' },
+    { img: '/images/PrecsisionProfessionalPredictiveClimateStress.webp', title: t('precision.feat2_title'),  body: t('precision.feat2_body'),  link: '/oatsense' },
     { img: '/images/PrecsisionAgSoil&IrragationIntellegence.webp',   title: t('precision.feat3_title'),  body: t('precision.feat3_body'),  link: '/oatsense' },
     { img: '/images/PrecsisionAgGrowingDegreeDays&Maturity.webp',    title: t('precision.feat4_title'),  body: t('precision.feat4_body'),  link: '/oatsense' },
     { img: '/images/PrecsisionAgFieldScouting&ActivityLog.webp',     title: t('precision.feat5_title'),  body: t('precision.feat5_body'),  link: '/oatsense' },
-    { img: '/images/PrecsisionAgSateliteCropMonitoring.webp',        title: t('precision.feat6_title'),  body: t('precision.feat6_body'),  link: '/oatsense' },
+    { img: '/images/PrecsisionAgManagementZones.webp',               title: t('precision.feat6_title'),  body: t('precision.feat6_body'),  link: '/oatsense' },
     { img: '/images/PrecsisionAgYieldForecasting.webp',              title: t('precision.feat7_title'),  body: t('precision.feat7_body'),  link: '/oatsense' },
     { img: '/images/PrecsisionCarbon&CropRotation.webp',             title: t('precision.feat8_title'),  body: t('precision.feat8_body'),  link: '/oatsense' },
     { img: '/images/PrecsisionAgAlerts.webp',                        title: t('precision.feat9_title'),  body: t('precision.feat9_body'),  link: '/oatsense' },
