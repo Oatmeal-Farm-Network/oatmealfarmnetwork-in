@@ -7,14 +7,15 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 const ACCENT = '#3D6B34';
 
-const DELIVERY_LABELS = {
-  pickup:   'Pickup only',
-  delivery: 'Delivery needed',
-  either:   'Pickup or delivery',
+const DELIVERY_KEYS = {
+  pickup:   'delivery_pickup',
+  delivery: 'delivery_needed',
+  either:   'delivery_either',
 };
 
 const TYPE_COLORS = {
@@ -27,6 +28,8 @@ const TYPE_COLORS = {
 };
 
 export default function FoodWantedAdDetail() {
+  const { t } = useTranslation();
+  const fw = k => t(`food_wanted.${k}`);
   const { adId } = useParams();
   const { BusinessID } = useAccount();
   const navigate = useNavigate();
@@ -90,7 +93,7 @@ export default function FoodWantedAdDetail() {
   if (loading) return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <Header />
-      <div className="flex items-center justify-center py-24 text-gray-400">Loading…</div>
+      <div className="flex items-center justify-center py-24 text-gray-400">{fw('loading')}</div>
       <Footer />
     </div>
   );
@@ -99,8 +102,8 @@ export default function FoodWantedAdDetail() {
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <Header />
       <div className="flex flex-col items-center justify-center py-24 text-gray-500 gap-3">
-        <p className="font-semibold">Ad not found</p>
-        <Link to="/marketplaces/food-wanted" className="text-sm underline" style={{ color: ACCENT }}>Back to Food Wanted Board</Link>
+        <p className="font-semibold">{fw('ad_not_found')}</p>
+        <Link to="/marketplaces/food-wanted" className="text-sm underline" style={{ color: ACCENT }}>{fw('back_to_board')}</Link>
       </div>
       <Footer />
     </div>
@@ -138,7 +141,7 @@ export default function FoodWantedAdDetail() {
             )}
             {ad.NeededBy && (
               <span className="text-xs px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 font-medium">
-                Needed by {new Date(ad.NeededBy).toLocaleDateString()}
+                {fw('needed_by')} {new Date(ad.NeededBy).toLocaleDateString()}
               </span>
             )}
           </div>
@@ -148,13 +151,13 @@ export default function FoodWantedAdDetail() {
           </h1>
 
           {ad.BusinessName && (
-            <p className="text-sm text-gray-500 mb-2">Posted by <span className="font-semibold text-gray-700">{ad.BusinessName}</span></p>
+            <p className="text-sm text-gray-500 mb-2">{fw('posted_by')} <span className="font-semibold text-gray-700">{ad.BusinessName}</span></p>
           )}
           <button onClick={openOtfDM} disabled={otfLoading}
             className="mb-4 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-60 transition"
             style={{ backgroundColor: '#516234' }}>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3l3 3 3-3h3a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/></svg>
-            {otfLoading ? 'Opening…' : 'Contact Buyer via Over the Fence'}
+            {otfLoading ? '…' : 'Contact Buyer via Over the Fence'}
           </button>
 
           {ad.Description && (
@@ -172,7 +175,7 @@ export default function FoodWantedAdDetail() {
             {ad.DeliveryPreference && (
               <span className="flex items-center gap-1.5">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                {DELIVERY_LABELS[ad.DeliveryPreference] || ad.DeliveryPreference}
+                {DELIVERY_KEYS[ad.DeliveryPreference] ? fw(DELIVERY_KEYS[ad.DeliveryPreference]) : ad.DeliveryPreference}
               </span>
             )}
           </div>
@@ -183,7 +186,7 @@ export default function FoodWantedAdDetail() {
           <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
             <h2 style={{ fontFamily: "'Lora','Times New Roman',serif" }}
                 className="text-lg font-bold text-gray-900 mb-4">
-              Ingredients Wanted
+              {fw('ingredients_wanted')}
             </h2>
             <div className="divide-y divide-gray-100">
               {items.map((item, i) => (
@@ -209,45 +212,45 @@ export default function FoodWantedAdDetail() {
         <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <h2 style={{ fontFamily: "'Lora','Times New Roman',serif" }}
               className="text-lg font-bold text-gray-900 mb-4">
-            I can supply this
+            {fw('supply_heading')}
           </h2>
           {sent ? (
             <div className="rounded-lg px-5 py-4 text-sm font-semibold" style={{ backgroundColor: '#e6f4ea', color: '#2d6a38' }}>
-              Response sent! The buyer will be in touch.
+              {fw('response_sent')}
             </div>
           ) : (
             <form onSubmit={submitResponse} className="flex flex-col gap-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Your Name / Farm</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">{fw('f_name_farm')}</label>
                   <input type="text" value={form.sender_name}
                     onChange={e => setForm(f => ({ ...f, sender_name: e.target.value }))}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    placeholder="Green Acres Farm" />
+                    {...{ placeholder: fw('ph_name_farm') }} />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Your Email</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">{fw('f_email')}</label>
                   <input type="email" value={form.sender_email}
                     onChange={e => setForm(f => ({ ...f, sender_email: e.target.value }))}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    placeholder="hello@greenacresfarm.com" />
+                    {...{ placeholder: fw('ph_email') }} />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
-                  Message <span className="text-red-500">*</span>
+                  {fw('f_message')} <span className="text-red-500">*</span>
                 </label>
                 <textarea required value={form.message}
                   onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
                   rows={5}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
-                  placeholder="Which items can you supply? Include quantities, availability dates, pricing range, and how you'd like to connect." />
+                  placeholder={fw('ph_message')} />
               </div>
-              {sendError && <p className="text-sm text-red-600">{sendError}</p>}
+              {sendError && <p className="text-sm text-red-600">{fw('send_error')}</p>}
               <button type="submit" disabled={sending}
                 className="px-6 py-2.5 rounded-lg text-white font-bold text-sm shadow hover:shadow-md transition disabled:opacity-60 w-fit"
                 style={{ backgroundColor: ACCENT }}>
-                {sending ? 'Sending…' : 'Send Response'}
+                {sending ? fw('btn_sending') : fw('btn_send_response')}
               </button>
             </form>
           )}
@@ -255,7 +258,7 @@ export default function FoodWantedAdDetail() {
 
         <div className="mt-6">
           <Link to="/marketplaces/food-wanted" className="text-sm underline" style={{ color: ACCENT }}>
-            ← Back to Food Wanted Board
+            {fw('back_to_board')}
           </Link>
         </div>
       </div>

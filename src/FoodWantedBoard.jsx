@@ -6,24 +6,25 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 const ACCENT = '#3D6B34';
 
 const BUYER_TYPES = [
-  { key: '',                  label: 'All Buyers' },
-  { key: 'Restaurant',        label: 'Restaurants' },
-  { key: 'Artisan Producer',  label: 'Artisan Producers' },
-  { key: 'Grocery / Retailer',label: 'Grocery / Retail' },
-  { key: 'Food Hub',          label: 'Food Hubs' },
-  { key: 'Individual',        label: 'Individuals' },
-  { key: 'Other',             label: 'Other' },
+  { key: '',                  labelKey: 'buyer_lbl_all' },
+  { key: 'Restaurant',        labelKey: 'buyer_lbl_restaurant' },
+  { key: 'Artisan Producer',  labelKey: 'buyer_lbl_artisan' },
+  { key: 'Grocery / Retailer',labelKey: 'buyer_lbl_grocery' },
+  { key: 'Food Hub',          labelKey: 'buyer_lbl_food_hub' },
+  { key: 'Individual',        labelKey: 'buyer_lbl_individual' },
+  { key: 'Other',             labelKey: 'buyer_lbl_other' },
 ];
 
-const DELIVERY_LABELS = {
-  pickup:   'Pickup only',
-  delivery: 'Delivery needed',
-  either:   'Pickup or delivery',
+const DELIVERY_KEYS = {
+  pickup:   'delivery_pickup',
+  delivery: 'delivery_needed',
+  either:   'delivery_either',
 };
 
 const TYPE_COLORS = {
@@ -46,6 +47,8 @@ function BuyerBadge({ type }) {
 }
 
 function AdCard({ ad }) {
+  const { t } = useTranslation();
+  const fw = k => t(`food_wanted.${k}`);
   const items = ad.items || [];
   const visibleItems = items.slice(0, 4);
   const overflow = items.length - visibleItems.length;
@@ -91,10 +94,10 @@ function AdCard({ ad }) {
           <span>{[ad.LocationCity, ad.LocationState].filter(Boolean).join(', ')}</span>
         )}
         {ad.DeliveryPreference && ad.DeliveryPreference !== 'either' && (
-          <span>{DELIVERY_LABELS[ad.DeliveryPreference]}</span>
+          <span>{DELIVERY_KEYS[ad.DeliveryPreference] ? fw(DELIVERY_KEYS[ad.DeliveryPreference]) : ad.DeliveryPreference}</span>
         )}
         {ad.NeededBy && (
-          <span>Needed by {new Date(ad.NeededBy).toLocaleDateString()}</span>
+          <span>{fw('needed_by')} {new Date(ad.NeededBy).toLocaleDateString()}</span>
         )}
       </div>
     </Link>
@@ -102,6 +105,8 @@ function AdCard({ ad }) {
 }
 
 export default function FoodWantedBoard() {
+  const { t } = useTranslation();
+  const fw = k => t(`food_wanted.${k}`);
   const [searchParams, setSearchParams] = useSearchParams();
   const [ads, setAds] = useState([]);
   const [total, setTotal] = useState(0);
@@ -170,15 +175,15 @@ export default function FoodWantedBoard() {
                style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.75) 45%, rgba(255,255,255,0) 78%)' }} />
           <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '680px' }}>
             <h1 style={{ color: '#000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.8rem', fontWeight: 'bold', margin: '0 0 8px', lineHeight: 1.2 }}>
-              Food Wanted Board
+              {fw('board_hero_title')}
             </h1>
             <p style={{ color: '#111', fontSize: '0.9rem', margin: '0 0 14px', lineHeight: 1.6 }}>
-              Restaurants, artisan producers, and food businesses post what they're looking to buy. Farms and suppliers browse and respond directly.
+              {fw('board_hero_body')}
             </p>
             <Link to="/food-wanted/my-ads"
               className="inline-flex items-center gap-2 font-bold px-4 py-2 rounded-lg border-2 text-sm w-fit transition hover:bg-gray-50"
               style={{ color: ACCENT, borderColor: ACCENT }}>
-              + Post a Wanted Ad
+              {fw('btn_post_wanted_ad')}
             </Link>
           </div>
         </div>
@@ -195,7 +200,7 @@ export default function FoodWantedBoard() {
               style={buyerType === opt.key
                 ? { backgroundColor: ACCENT, color: '#fff', borderColor: ACCENT }
                 : { backgroundColor: '#fff', color: '#374151', borderColor: '#d1d5db' }}>
-              {opt.label}
+              {t(`food_wanted.${opt.labelKey}`)}
             </button>
           ))}
         </div>
@@ -206,26 +211,26 @@ export default function FoodWantedBoard() {
             <input
               type="text" value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
-              placeholder="Search ingredient, buyer, or keyword…"
+              placeholder={fw('search_placeholder')}
               className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white"
             />
             <button type="submit"
               className="px-4 py-1.5 rounded-lg text-white text-sm font-semibold"
               style={{ backgroundColor: ACCENT }}>
-              Search
+              {fw('btn_search')}
             </button>
           </form>
           {(buyerType || state || search) && (
             <button onClick={() => { setSearchInput(''); setSearchParams({}); }}
               className="text-sm text-gray-500 hover:text-gray-700 underline">
-              Clear filters
+              {fw('btn_clear_filters')}
             </button>
           )}
         </div>
 
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-500">
-            {loading ? 'Loading…' : `${total.toLocaleString()} ad${total !== 1 ? 's' : ''}`}
+{loading ? fw('loading') : `${total.toLocaleString()} ad${total !== 1 ? 's' : ''}`}
           </p>
         </div>
 
@@ -238,10 +243,8 @@ export default function FoodWantedBoard() {
         ) : ads.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             <svg className="mx-auto mb-3 opacity-30" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M17 8C8 10 5.9 16.17 3.82 22"/><path d="M9.5 9.5s1-3 4.5-5c0 0 1 3-1 7"/><path d="M3.82 22s1.5-3.5 8.18-4.5"/></svg>
-            <p className="font-semibold">No ads yet</p>
-            <p className="text-sm mt-1">
-              Be the first — <Link to="/food-wanted/my-ads" className="underline" style={{ color: ACCENT }}>post a wanted ad</Link>.
-            </p>
+            <p className="font-semibold">{fw('no_ads')}</p>
+            <p className="text-sm mt-1">{fw('no_ads_cta')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

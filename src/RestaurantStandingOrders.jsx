@@ -9,13 +9,16 @@ import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
 import PairsleyChat from './PairsleyChat';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 
-const FREQUENCY_LABELS = { weekly: 'Weekly', biweekly: 'Every 2 weeks', monthly: 'Monthly' };
+const FREQUENCY_KEYS = { weekly: 'freq_weekly', biweekly: 'freq_biweekly', monthly: 'freq_monthly' };
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 export default function RestaurantStandingOrders() {
+  const { t } = useTranslation();
+  const rs = k => t(`restaurant.${k}`);
   const navigate = useNavigate();
   const { businesses } = useAccount() || {};
 
@@ -38,7 +41,7 @@ export default function RestaurantStandingOrders() {
       const data = await r.json();
       setOrders(Array.isArray(data) ? data : []);
     } catch {
-      setErr('Could not load your standing orders.');
+      setErr(rs('load_error_orders'));
     } finally {
       setLoading(false);
     }
@@ -160,7 +163,7 @@ export default function RestaurantStandingOrders() {
         <div className="mt-4 mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-              🔁 Standing Orders
+              {rs('standing_orders_title')}
             </h1>
             <p className="text-sm text-gray-600 mt-1">
               Recurring purchases for {restaurantBusiness?.BusinessName || 'your restaurant'} — set it once, reorder forever.
@@ -168,32 +171,32 @@ export default function RestaurantStandingOrders() {
           </div>
           <div className="flex gap-2">
             <Link to="/restaurant/farms" className="bg-white border border-[#3D6B34] text-[#3D6B34] hover:bg-[#e8f0dc] font-bold px-4 py-2 rounded-lg text-sm">
-              ❤️ My Farms
+              {rs('btn_my_farms')}
             </Link>
             <Link to="/marketplaces/farm-to-table" className="bg-[#3D6B34] hover:bg-[#2d5225] text-white font-bold px-4 py-2 rounded-lg text-sm">
-              + Add from marketplace
+              {rs('btn_add_from_marketplace')}
             </Link>
           </div>
         </div>
 
         {!buyerBusinessId ? (
           <EmptyState
-            title="No restaurant business found on your account"
-            body="To use standing orders, your account must include a business with type 'Restaurant'."
-            cta={<Link to="/account" className="text-[#3D6B34] underline font-semibold">Go to account</Link>}
+            title={rs('no_biz_standing_title')}
+            body={rs('no_biz_standing_body')}
+            cta={<Link to="/account" className="text-[#3D6B34] underline font-semibold">{rs('go_to_account')}</Link>}
           />
         ) : loading ? (
-          <div className="text-center py-16 text-gray-400">Loading…</div>
+          <div className="text-center py-16 text-gray-400">{rs('loading')}</div>
         ) : err ? (
           <div className="text-center py-16 text-red-500">{err}</div>
         ) : orders.length === 0 ? (
           <EmptyState
-            title="You have no standing orders yet"
-            body="Open any product in the marketplace and tap '🔁 Make this a standing order' to set up a recurring purchase."
+            title={rs('no_orders_title')}
+            body={rs('no_orders_body')}
             cta={
               <button onClick={() => navigate('/marketplaces/farm-to-table')}
                 className="bg-[#3D6B34] hover:bg-[#2d5225] text-white font-bold px-4 py-2 rounded-lg text-sm">
-                Browse marketplace
+                {rs('btn_browse_mkt')}
               </button>
             }
           />
@@ -223,6 +226,8 @@ export default function RestaurantStandingOrders() {
 }
 
 function OrderRow({ order: o, onPause, onResume, onRemove, onQtyChange, onFulfill, onSkip, onReschedule }) {
+  const { t } = useTranslation();
+  const rs = k => t(`restaurant.${k}`);
   const [qty, setQty] = useState(o.Quantity);
   const status = o.Status || 'active';
   const isOverdue = status === 'overdue';
@@ -241,7 +246,7 @@ function OrderRow({ order: o, onPause, onResume, onRemove, onQtyChange, onFulfil
       <div className="flex-grow min-w-0">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <h3 className="font-bold text-gray-900 truncate">{o.ProductTitle || `${o.ListingType} #${o.ListingSourceID}`}</h3>
-          {isOverdue && <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">Overdue</span>}
+          {isOverdue && <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">{rs('badge_overdue')}</span>}
           {!isActive && <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-600">{o.Status}</span>}
         </div>
         <Link to={`/marketplaces/livestock/ranch/${o.FarmBusinessID}`} className="text-sm text-[#3D6B34] hover:underline">
@@ -249,15 +254,15 @@ function OrderRow({ order: o, onPause, onResume, onRemove, onQtyChange, onFulfil
         </Link>
         {location && <span className="text-xs text-gray-500"> · 📍 {location}</span>}
         <div className="text-xs text-gray-500 mt-1 flex flex-wrap gap-x-3 gap-y-1">
-          <span>🔁 {FREQUENCY_LABELS[o.Frequency] || o.Frequency}</span>
+          <span>🔁 {FREQUENCY_KEYS[o.Frequency] ? rs(FREQUENCY_KEYS[o.Frequency]) : o.Frequency}</span>
           {o.DayOfWeek != null && <span>📆 {DAY_NAMES[o.DayOfWeek]}</span>}
-          {next && <span className={isOverdue ? 'text-red-600 font-semibold' : ''}>Next: {next}</span>}
+          {next && <span className={isOverdue ? 'text-red-600 font-semibold' : ''}>{rs('lbl_next')} {next}</span>}
         </div>
         {o.Notes && <p className="text-xs italic text-gray-600 mt-2">"{o.Notes}"</p>}
       </div>
 
       <div className="flex items-center gap-1 flex-shrink-0">
-        <span className="text-xs text-gray-500 mr-1">Qty</span>
+        <span className="text-xs text-gray-500 mr-1">{rs('lbl_qty')}</span>
         <button onClick={() => { const n = Math.max(1, parseFloat(qty) - 1); setQty(n); onQtyChange(n); }}
           className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-bold">−</button>
         <input
@@ -268,36 +273,36 @@ function OrderRow({ order: o, onPause, onResume, onRemove, onQtyChange, onFulfil
         />
         <button onClick={() => { const n = parseFloat(qty) + 1; setQty(n); onQtyChange(n); }}
           className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-bold">+</button>
-        <span className="text-xs text-gray-500 ml-1">{o.UnitLabel || 'unit'}</span>
+        <span className="text-xs text-gray-500 ml-1">{o.UnitLabel || rs('lbl_unit')}</span>
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
         {isActive && (
           <button onClick={onFulfill} className="text-xs font-semibold text-white bg-[#3D6B34] hover:bg-[#2d5225] px-3 py-1.5 rounded">
-            ✅ Mark fulfilled
+            {rs('btn_mark_fulfilled')}
           </button>
         )}
         {isActive && (
           <button onClick={onSkip} className="text-xs font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 px-3 py-1.5 rounded">
-            ⏭️ Skip
+            {rs('btn_skip')}
           </button>
         )}
         {isActive && (
           <button onClick={onReschedule} className="text-xs font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 px-3 py-1.5 rounded">
-            📅 Reschedule
+            {rs('btn_reschedule')}
           </button>
         )}
         {isActive ? (
           <button onClick={onPause} className="text-xs font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 px-3 py-1.5 rounded">
-            ⏸️ Pause
+            {rs('btn_pause')}
           </button>
         ) : (
           <button onClick={onResume} className="text-xs font-semibold text-[#3D6B34] border border-[#3D6B34] hover:bg-[#e8f0dc] px-3 py-1.5 rounded">
-            ▶️ Resume
+            {rs('btn_resume')}
           </button>
         )}
         <button onClick={onRemove} className="text-xs font-semibold text-red-500 hover:underline px-2 py-1.5">
-          Cancel
+          {rs('btn_cancel')}
         </button>
       </div>
     </div>

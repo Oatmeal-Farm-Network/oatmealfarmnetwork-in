@@ -300,7 +300,7 @@ function NoteCard({ note, fieldName, onEdit, onDelete }) {
           </button>
         )}
         {note.image_url && (
-          <img src={note.image_url} alt="Note attachment"
+          <img src={note.image_url}
             className="mt-3 w-48 h-32 object-cover rounded-lg border border-gray-100"
             alt={t('oatsense_notes.img_alt')}
             onError={e => e.currentTarget.style.display = 'none'} />

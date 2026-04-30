@@ -9,10 +9,13 @@ import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
 import PairsleyChat from './PairsleyChat';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 
 export default function RestaurantSavedFarms() {
+  const { t } = useTranslation();
+  const rs = k => t(`restaurant.${k}`);
   const navigate = useNavigate();
   const { businesses } = useAccount() || {};
 
@@ -35,7 +38,7 @@ export default function RestaurantSavedFarms() {
       const data = await r.json();
       setFarms(Array.isArray(data) ? data : []);
     } catch {
-      setErr('Could not load your saved farms.');
+      setErr(rs('load_error_farms'));
     } finally {
       setLoading(false);
     }
@@ -71,7 +74,7 @@ export default function RestaurantSavedFarms() {
         <div className="mt-4 mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-              ❤️ My Farms
+              {rs('saved_farms_title')}
             </h1>
             <p className="text-sm text-gray-600 mt-1">
               Saved farms for {restaurantBusiness?.BusinessName || 'your restaurant'} — quick access for re-ordering and standing relationships.
@@ -81,30 +84,30 @@ export default function RestaurantSavedFarms() {
             onClick={() => navigate('/marketplaces/farm-to-table')}
             className="bg-[#3D6B34] hover:bg-[#2d5225] text-white font-bold px-4 py-2 rounded-lg text-sm"
           >
-            + Find more farms
+            {rs('btn_find_more_farms')}
           </button>
         </div>
 
         {!buyerBusinessId ? (
           <EmptyState
-            title="No restaurant business found on your account"
-            body="To use My Farms, your account must include a business with type 'Restaurant'. Add or update a business in your account settings."
-            cta={<Link to="/account" className="text-[#3D6B34] underline font-semibold">Go to account</Link>}
+            title={rs('no_biz_title')}
+            body={rs('no_biz_body')}
+            cta={<Link to="/account" className="text-[#3D6B34] underline font-semibold">{rs('go_to_account')}</Link>}
           />
         ) : loading ? (
-          <div className="text-center py-16 text-gray-400">Loading your farms…</div>
+          <div className="text-center py-16 text-gray-400">{rs('loading_farms')}</div>
         ) : err ? (
           <div className="text-center py-16 text-red-500">{err}</div>
         ) : farms.length === 0 ? (
           <EmptyState
-            title="You haven't saved any farms yet"
-            body="Browse the marketplace and tap the 🤍 heart on any product to save its farm here for quick re-ordering."
+            title={rs('no_farms_title')}
+            body={rs('no_farms_body')}
             cta={
               <button
                 onClick={() => navigate('/marketplaces/farm-to-table')}
                 className="bg-[#3D6B34] hover:bg-[#2d5225] text-white font-bold px-4 py-2 rounded-lg text-sm"
               >
-                Browse marketplace
+                {rs('btn_browse_marketplace')}
               </button>
             }
           />
@@ -128,6 +131,8 @@ export default function RestaurantSavedFarms() {
 }
 
 function FarmCard({ farm, onRemove }) {
+  const { t } = useTranslation();
+  const rs = k => t(`restaurant.${k}`);
   const location = [farm.AddressCity, farm.AddressState].filter(Boolean).join(', ');
   const profileUrl = `/marketplaces/livestock/ranch/${farm.FarmBusinessID}`;
   const marketplaceUrl = `/marketplaces/farm-to-table?seller=${encodeURIComponent(farm.BusinessName || '')}`;
@@ -144,8 +149,8 @@ function FarmCard({ farm, onRemove }) {
         <button
           onClick={onRemove}
           className="text-gray-400 hover:text-red-500 text-lg leading-none"
-          title="Remove from My Farms"
-          aria-label="Remove from My Farms"
+          title={rs('btn_remove_farm')}
+          aria-label={rs('btn_remove_farm')}
         >
           ×
         </button>
@@ -178,13 +183,13 @@ function FarmCard({ farm, onRemove }) {
           to={profileUrl}
           className="flex-1 text-center text-xs font-semibold border border-[#3D6B34] text-[#3D6B34] hover:bg-[#e8f0dc] py-1.5 rounded-lg"
         >
-          View farm
+          {rs('btn_view_farm')}
         </Link>
         <Link
           to={marketplaceUrl}
           className="flex-1 text-center text-xs font-semibold bg-[#3D6B34] hover:bg-[#2d5225] text-white py-1.5 rounded-lg"
         >
-          Shop products
+          {rs('btn_shop_products')}
         </Link>
       </div>
     </div>

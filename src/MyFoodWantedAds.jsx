@@ -6,6 +6,7 @@ import Header from './Header';
 import Footer from './Footer';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL || '';
 const ACCENT = '#3D6B34';
@@ -29,6 +30,8 @@ const BLANK_AD = {
 const BLANK_ITEM = { ingredient_name: '', quantity: '', unit: '', notes: '' };
 
 export default function MyFoodWantedAds() {
+  const { t } = useTranslation();
+  const fw = k => t(`food_wanted.${k}`);
   const { BusinessID } = useAccount();
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -127,7 +130,7 @@ export default function MyFoodWantedAds() {
   }
 
   async function deleteAd(id) {
-    if (!window.confirm('Remove this ad?')) return;
+    if (!window.confirm(fw('btn_remove') + '?')) return;
     setDeleting(id);
     try {
       await fetch(`${API}/api/food-wanted/${id}`, { method: 'DELETE', headers });
@@ -167,13 +170,13 @@ export default function MyFoodWantedAds() {
       <div className="mx-auto px-4 py-6" style={{ maxWidth: '1000px' }}>
         <div className="flex items-center justify-between mb-6">
           <h1 style={{ fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.5rem', fontWeight: 'bold', color: '#111' }}>
-            My Food Wanted Ads
+            {fw('my_ads_title')}
           </h1>
           {!showForm && (
             <button onClick={openCreate}
               className="px-5 py-2 rounded-lg text-white font-bold text-sm shadow hover:shadow-md transition"
               style={{ backgroundColor: ACCENT }}>
-              + New Ad
+              {fw('btn_new_ad')}
             </button>
           )}
         </div>
@@ -183,58 +186,58 @@ export default function MyFoodWantedAds() {
           <form onSubmit={saveForm} className="bg-white border border-gray-200 rounded-2xl p-6 mb-8 shadow-sm">
             <h2 style={{ fontFamily: "'Lora','Times New Roman',serif" }}
                 className="text-lg font-bold text-gray-900 mb-5">
-              {editing ? 'Edit Ad' : 'Post a Food Wanted Ad'}
+              {editing ? fw('form_edit_title') : fw('form_post_title')}
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Title <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{fw('f_title')} <span className="text-red-500">*</span></label>
                 <input required value={f.title} onChange={e => set('title', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                   placeholder="e.g. Looking for heirloom tomatoes and fresh herbs for fall menu" />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Buyer Type</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{fw('f_buyer_type')}</label>
                 <select value={f.buyer_type} onChange={e => set('buyer_type', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
-                  <option value="">Select…</option>
+                  <option value="">{fw('opt_select')}</option>
                   {BUYER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Delivery Preference</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{fw('f_delivery_pref')}</label>
                 <select value={f.delivery_preference} onChange={e => set('delivery_preference', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
-                  <option value="either">Pickup or delivery</option>
-                  <option value="pickup">Pickup only</option>
-                  <option value="delivery">Delivery needed</option>
+                  <option value="either">{fw('opt_pickup_or_delivery')}</option>
+                  <option value="pickup">{fw('opt_pickup_only')}</option>
+                  <option value="delivery">{fw('opt_delivery_needed')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">City</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{fw('f_city')}</label>
                 <input value={f.location_city} onChange={e => set('location_city', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                   placeholder="e.g. Portland" />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">State / Province</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{fw('f_state')}</label>
                 <input value={f.location_state} onChange={e => set('location_state', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                   placeholder="e.g. Oregon" />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Needed By (optional)</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{fw('f_needed_by')}</label>
                 <input type="date" value={f.needed_by} onChange={e => set('needed_by', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Additional Details</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{fw('f_additional_details')}</label>
                 <textarea value={f.description} onChange={e => set('description', e.target.value)}
                   rows={3} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
                   placeholder="Describe sourcing preferences, quality standards, certifications needed (organic, local, etc.), frequency, etc." />
@@ -244,11 +247,11 @@ export default function MyFoodWantedAds() {
             {/* Ingredient list */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Ingredients Wanted</label>
+                <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{fw('ingredients_section')}</label>
                 <button type="button" onClick={addItem}
                   className="text-xs font-semibold px-3 py-1 rounded-lg border transition hover:bg-gray-50"
                   style={{ color: ACCENT, borderColor: ACCENT }}>
-                  + Add Item
+                  {fw('btn_add_item')}
                 </button>
               </div>
 
@@ -257,7 +260,7 @@ export default function MyFoodWantedAds() {
                   <div key={idx} className="grid grid-cols-12 gap-2 items-start p-3 bg-gray-50 rounded-xl border border-gray-200">
                     <div className="col-span-12 sm:col-span-4">
                       <input
-                        placeholder="Ingredient name *"
+                        placeholder={fw('ph_ingredient')}
                         value={item.ingredient_name}
                         onChange={e => setItemField(idx, 'ingredient_name', e.target.value)}
                         className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white"
@@ -265,7 +268,7 @@ export default function MyFoodWantedAds() {
                     </div>
                     <div className="col-span-5 sm:col-span-2">
                       <input
-                        placeholder="Qty"
+                        placeholder={fw('ph_qty')}
                         value={item.quantity}
                         onChange={e => setItemField(idx, 'quantity', e.target.value)}
                         className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white"
@@ -274,13 +277,13 @@ export default function MyFoodWantedAds() {
                     <div className="col-span-5 sm:col-span-2">
                       <select value={item.unit} onChange={e => setItemField(idx, 'unit', e.target.value)}
                         className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white">
-                        <option value="">Unit</option>
+                        <option value="">{fw('opt_unit')}</option>
                         {UNITS.filter(Boolean).map(u => <option key={u} value={u}>{u}</option>)}
                       </select>
                     </div>
                     <div className="col-span-10 sm:col-span-3">
                       <input
-                        placeholder="Notes (organic, heirloom…)"
+                        placeholder={fw('ph_notes')}
                         value={item.notes}
                         onChange={e => setItemField(idx, 'notes', e.target.value)}
                         className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white"
@@ -299,17 +302,17 @@ export default function MyFoodWantedAds() {
               </div>
             </div>
 
-            {saveError && <p className="text-sm text-red-600 mb-3">{saveError}</p>}
+            {saveError && <p className="text-sm text-red-600 mb-3">{fw('save_error')}</p>}
 
             <div className="flex gap-3">
               <button type="submit" disabled={saving}
                 className="px-6 py-2 rounded-lg text-white font-bold text-sm shadow hover:shadow-md transition disabled:opacity-60"
                 style={{ backgroundColor: ACCENT }}>
-                {saving ? 'Saving…' : editing ? 'Save Changes' : 'Post Ad'}
+                {saving ? fw('btn_saving') : editing ? fw('btn_save_changes') : fw('btn_post_ad')}
               </button>
               <button type="button" onClick={() => setShowForm(false)}
                 className="px-6 py-2 rounded-lg font-bold text-sm border border-gray-300 text-gray-600 hover:bg-gray-50 transition">
-                Cancel
+                {fw('btn_cancel')}
               </button>
             </div>
           </form>
@@ -317,12 +320,12 @@ export default function MyFoodWantedAds() {
 
         {/* Ads list */}
         {loading ? (
-          <div className="text-sm text-gray-400 py-12 text-center">Loading…</div>
+          <div className="text-sm text-gray-400 py-12 text-center">{fw('loading')}</div>
         ) : ads.length === 0 ? (
           <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl text-gray-500">
             <svg className="mx-auto mb-3 opacity-30" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M17 8C8 10 5.9 16.17 3.82 22"/><path d="M9.5 9.5s1-3 4.5-5c0 0 1 3-1 7"/><path d="M3.82 22s1.5-3.5 8.18-4.5"/></svg>
-            <p className="font-semibold mb-1">No ads yet</p>
-            <p className="text-sm">Post your first food wanted ad and let farms find you.</p>
+            <p className="font-semibold mb-1">{fw('no_ads_my')}</p>
+            <p className="text-sm">{fw('no_ads_my_body')}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -340,7 +343,7 @@ export default function MyFoodWantedAds() {
                           </span>
                         )}
                         {!ad.IsActive && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">Inactive</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">{fw('badge_inactive')}</span>
                         )}
                       </div>
                       <Link to={`/marketplaces/food-wanted/${ad.AdID}`}
@@ -372,16 +375,16 @@ export default function MyFoodWantedAds() {
                             {ad.ResponseCount}
                           </span>
                         )}
-                        {isExpanded ? 'Hide' : 'Responses'}
+                        {isExpanded ? fw('btn_hide') : fw('btn_responses')}
                       </button>
                       <button onClick={() => openEdit(ad)}
                         className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition">
-                        Edit
+                        {fw('btn_edit')}
                       </button>
                       <button onClick={() => deleteAd(ad.AdID)}
                         disabled={deleting === ad.AdID}
                         className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition disabled:opacity-50">
-                        {deleting === ad.AdID ? '…' : 'Remove'}
+                        {deleting === ad.AdID ? '…' : fw('btn_remove')}
                       </button>
                     </div>
                   </div>
@@ -390,9 +393,9 @@ export default function MyFoodWantedAds() {
                   {isExpanded && (
                     <div className="border-t border-gray-100 bg-gray-50 px-5 py-4">
                       {!adResponses ? (
-                        <p className="text-sm text-gray-400">Loading…</p>
+                        <p className="text-sm text-gray-400">{fw('responses_loading')}</p>
                       ) : adResponses.length === 0 ? (
-                        <p className="text-sm text-gray-400">No responses yet.</p>
+                        <p className="text-sm text-gray-400">{fw('no_responses')}</p>
                       ) : (
                         <div className="flex flex-col gap-3">
                           {adResponses.map(resp => (
