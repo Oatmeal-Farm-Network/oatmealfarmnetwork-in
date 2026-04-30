@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -11,6 +12,7 @@ const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 const niceDate = (d) => d ? new Date(d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : '';
 
 export default function UnifiedCart() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const peopleId = localStorage.getItem('people_id');
   const businessId = new URLSearchParams(window.location.search).get('BusinessID');
@@ -33,14 +35,13 @@ export default function UnifiedCart() {
         ]);
         const m = mRes.ok ? await mRes.json() : { sellers: [], itemCount: 0, subtotal: 0, platformFee: 0, total: 0 };
         const eAll = eRes.ok ? await eRes.json() : [];
-        // Show only carts the buyer can still complete (drafts + pending payment).
         const e = eAll.filter(c => ['draft', 'pending_payment'].includes((c.Status || '').toLowerCase()));
         if (!cancelled) {
           setMarketplaceCart(m);
           setEventCarts(e);
         }
-      } catch (err) {
-        if (!cancelled) setError('Could not load your cart.');
+      } catch {
+        if (!cancelled) setError(t('unified_cart.err_load_failed'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -51,6 +52,7 @@ export default function UnifiedCart() {
   const mpHasItems = (marketplaceCart?.itemCount || 0) > 0;
   const hasEventCarts = eventCarts.length > 0;
   const empty = !loading && !mpHasItems && !hasEventCarts;
+  const totalItems = (marketplaceCart?.itemCount || 0) + eventCarts.length;
 
   const goToMarketplaceCart = () => {
     const qs = businessId ? `?BusinessID=${businessId}` : '';
@@ -67,12 +69,12 @@ export default function UnifiedCart() {
       <Header />
 
       <div className="max-w-5xl mx-auto px-4 py-6">
-        <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Cart' }]} />
+        <Breadcrumbs items={[{ label: t('unified_cart.breadcrumb_home'), to: '/' }, { label: t('unified_cart.breadcrumb_cart') }]} />
 
         <div className="flex items-baseline justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Your Cart</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{t('unified_cart.heading')}</h1>
           <p className="text-sm text-gray-500">
-            {(marketplaceCart?.itemCount || 0) + eventCarts.length} item{(marketplaceCart?.itemCount || 0) + eventCarts.length === 1 ? '' : 's'} in progress
+            {t('unified_cart.items_in_progress', { count: totalItems })}
           </p>
         </div>
 
@@ -81,16 +83,16 @@ export default function UnifiedCart() {
         )}
 
         {loading ? (
-          <div className="text-center py-16 text-gray-400">Loading…</div>
+          <div className="text-center py-16 text-gray-400">{t('unified_cart.loading')}</div>
         ) : empty ? (
           <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
-            <p className="text-gray-500 text-lg mb-4">Your cart is empty.</p>
+            <p className="text-gray-500 text-lg mb-4">{t('unified_cart.empty')}</p>
             <div className="flex gap-3 justify-center flex-wrap">
               <Link to="/marketplaces/farm-to-table" className="bg-[#819360] text-white! font-semibold px-5 py-2.5 rounded-lg hover:bg-[#3D6B35]">
-                Browse Marketplace
+                {t('unified_cart.btn_browse_marketplace')}
               </Link>
               <Link to="/events" className="bg-[#819360] text-white! font-semibold px-5 py-2.5 rounded-lg hover:bg-[#3D6B35]">
-                Find Events
+                {t('unified_cart.btn_find_events')}
               </Link>
             </div>
           </div>
@@ -101,11 +103,11 @@ export default function UnifiedCart() {
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div>
-                  <h2 className="font-bold text-gray-800">Marketplace</h2>
-                  <p className="text-xs text-gray-500">Produce, meat, value-added goods, services</p>
+                  <h2 className="font-bold text-gray-800">{t('unified_cart.marketplace_heading')}</h2>
+                  <p className="text-xs text-gray-500">{t('unified_cart.marketplace_subtitle')}</p>
                 </div>
                 <span className="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded">
-                  {marketplaceCart?.itemCount || 0} item{marketplaceCart?.itemCount === 1 ? '' : 's'}
+                  {t('unified_cart.item_count', { count: marketplaceCart?.itemCount || 0 })}
                 </span>
               </div>
 
@@ -128,19 +130,19 @@ export default function UnifiedCart() {
                   ))}
                   <div className="px-5 py-4 bg-gray-50 border-t border-gray-100 text-sm space-y-1">
                     <div className="flex justify-between text-gray-600">
-                      <span>Subtotal</span><span>{fmt(marketplaceCart.subtotal)}</span>
+                      <span>{t('unified_cart.subtotal')}</span><span>{fmt(marketplaceCart.subtotal)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
-                      <span>Platform fee</span><span>{fmt(marketplaceCart.platformFee)}</span>
+                      <span>{t('unified_cart.platform_fee')}</span><span>{fmt(marketplaceCart.platformFee)}</span>
                     </div>
                     <div className="flex justify-between font-bold text-base text-gray-800 pt-1 border-t border-gray-200">
-                      <span>Total</span><span className="text-[#819360]">{fmt(marketplaceCart.total)}</span>
+                      <span>{t('unified_cart.total')}</span><span className="text-[#819360]">{fmt(marketplaceCart.total)}</span>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div className="px-5 py-10 text-center text-sm text-gray-400 grow flex items-center justify-center">
-                  No marketplace items yet.
+                  {t('unified_cart.marketplace_empty')}
                 </div>
               )}
 
@@ -150,7 +152,7 @@ export default function UnifiedCart() {
                   disabled={!mpHasItems}
                   className="bg-[#819360] hover:bg-[#3D6B35] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-2 rounded-lg"
                 >
-                  {mpHasItems ? 'Review & Checkout' : 'Empty'}
+                  {mpHasItems ? t('unified_cart.btn_checkout') : t('unified_cart.btn_empty')}
                 </button>
               </div>
             </div>
@@ -159,11 +161,11 @@ export default function UnifiedCart() {
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div>
-                  <h2 className="font-bold text-gray-800">Events</h2>
-                  <p className="text-xs text-gray-500">Registrations awaiting completion</p>
+                  <h2 className="font-bold text-gray-800">{t('unified_cart.events_heading')}</h2>
+                  <p className="text-xs text-gray-500">{t('unified_cart.events_subtitle')}</p>
                 </div>
                 <span className="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded">
-                  {eventCarts.length} cart{eventCarts.length === 1 ? '' : 's'}
+                  {t('unified_cart.cart_count', { count: eventCarts.length })}
                 </span>
               </div>
 
@@ -172,25 +174,25 @@ export default function UnifiedCart() {
                   {eventCarts.map(c => (
                     <li key={c.CartID} className="px-5 py-3 flex items-center gap-3">
                       <div className="grow min-w-0">
-                        <p className="font-semibold text-gray-800 text-sm truncate">{c.EventName || `Event ${c.EventID}`}</p>
+                        <p className="font-semibold text-gray-800 text-sm truncate">{c.EventName || t('unified_cart.event_fallback', { id: c.EventID })}</p>
                         <p className="text-xs text-gray-500">
                           {niceDate(c.EventStartDate)}
-                          {c.ItemCount ? <> · {c.ItemCount} item{c.ItemCount === 1 ? '' : 's'}</> : null}
-                          {c.Status === 'pending_payment' && <span className="ml-2 inline-block bg-amber-100 text-amber-800 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded">Awaiting payment</span>}
+                          {c.ItemCount ? <> · {t('unified_cart.item_count', { count: c.ItemCount })}</> : null}
+                          {c.Status === 'pending_payment' && <span className="ml-2 inline-block bg-amber-100 text-amber-800 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded">{t('unified_cart.awaiting_payment')}</span>}
                         </p>
                       </div>
                       <button
                         onClick={() => resumeEventCart(c)}
                         className="bg-[#7C5CBF] hover:bg-[#684aa6] text-white text-sm font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap"
                       >
-                        Resume
+                        {t('unified_cart.btn_resume')}
                       </button>
                     </li>
                   ))}
                 </ul>
               ) : (
                 <div className="px-5 py-10 text-center text-sm text-gray-400 grow flex items-center justify-center">
-                  No in-progress event registrations.
+                  {t('unified_cart.events_empty')}
                 </div>
               )}
 
@@ -199,7 +201,7 @@ export default function UnifiedCart() {
                   to="/events"
                   className="bg-[#819360] hover:bg-[#3D6B35] text-white text-sm font-semibold px-4 py-2 rounded-lg"
                 >
-                  Find Events
+                  {t('unified_cart.btn_find_events')}
                 </Link>
               </div>
             </div>
@@ -208,7 +210,7 @@ export default function UnifiedCart() {
         )}
 
         <p className="mt-6 text-xs text-gray-400 text-center">
-          Marketplace orders and event registrations check out separately so each seller and host receives the right payout.
+          {t('unified_cart.footer_note')}
         </p>
       </div>
 
