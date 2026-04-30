@@ -84,13 +84,6 @@ export default function AboutPrecisionAg() {
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                to="/oatsense"
-                className="font-bold px-5 py-2 rounded-lg shadow hover:shadow-md transition text-sm"
-                style={{ backgroundColor: ACCENT, color: '#fff' }}
-              >
-                {t('precision.hero_cta1')}
-              </Link>
-              <Link
                 to="/signup"
                 className="font-bold px-5 py-2 rounded-lg border-2 transition hover:bg-gray-50 text-sm"
                 style={{ color: ACCENT, borderColor: ACCENT }}
@@ -223,11 +216,6 @@ function ToolCard({ img, title, body, link }) {
             {title}
           </Link>
           <p className="text-xs text-gray-600 leading-relaxed mt-1">{body}</p>
-        </div>
-        <div className="mt-3">
-          <Link to={link} className="text-xs font-bold hover:underline" style={{ color: ACCENT }}>
-            Open Dashboard →
-          </Link>
         </div>
       </div>
     </div>
