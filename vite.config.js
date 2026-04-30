@@ -16,6 +16,16 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/saige': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/cm': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false,
+      },
     },
     // Don't watch the large static images folder — it has 33k+ files and
     // kills dev server startup and HMR performance.
