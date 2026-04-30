@@ -397,7 +397,9 @@
       "Bash(node f:/tmp/add_dining_admin_keys.js)",
       "Bash(node f:/tmp/add_competition_admin_keys.js)",
       "Bash(node f:/tmp/add_website_ai_agent_keys.js)",
-      "Bash(node f:/tmp/add_accounting_keys.js)"
+      "Bash(node f:/tmp/add_accounting_keys.js)",
+      "Bash(node f:/tmp/add_animal_add_wizard_keys.js)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('public/locales/en/translation.json','utf8'\\)\\); console.log\\('valid'\\)\")"
     ],
     "additionalDirectories": [
       "\\tmp"

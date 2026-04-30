@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
@@ -10,6 +10,8 @@ const API = import.meta.env.VITE_API_URL;
 export default function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from ? location.state.from.pathname + (location.state.from.search || '') : '/dashboard';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -50,7 +52,7 @@ export default function Login() {
       localStorage.setItem('last_name', data.PeopleLastName);
       localStorage.setItem('access_level', data.AccessLevel);
 
-      navigate('/dashboard');
+      navigate(from, { replace: true });
     } catch (err) {
       setError(t('auth.server_error'));
     } finally {

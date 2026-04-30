@@ -284,7 +284,8 @@ const SellerStripeConnect = lazyWithReload(() => import('./SellerStripeConnect.j
 
 function RequireAuth({ children }) {
   const token = localStorage.getItem('access_token');
-  return token ? children : <Navigate to="/login" replace />;
+  const location = useLocation();
+  return token ? children : <Navigate to="/login" state={{ from: location }} replace />;
 }
 
 // Redirect legacy ASP URL: /livestockmarketplace/Animals/Details.asp?ID=xxx
@@ -394,35 +395,35 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/saige/insurance" element={<Insurance />} />
           <Route path="/saige/push" element={<PushNotifications />} />
           <Route path="/saige/profile" element={<SaigeProfile />} />
-          <Route path="/oatsense" element={<OatSenseRedirect />} />
-          <Route path="/oatsense/crop-rotation" element={<CropRotation />} />
-          <Route path="/oatsense/notes" element={<OatSenseNotes />} />
-          <Route path="/precision-ag/field-journal" element={<OatSenseNotes />} />
-          <Route path="/precision-ag/crop-rotation" element={<CropRotation />} />
-          <Route path="/precision-ag/water-use" element={<PrecisionAgWaterUse />} />
-          <Route path="/precision-ag/agronomy" element={<PrecisionAgAgronomy />} />
+          <Route path="/oatsense" element={<RequireAuth><OatSenseRedirect /></RequireAuth>} />
+          <Route path="/oatsense/crop-rotation" element={<RequireAuth><CropRotation /></RequireAuth>} />
+          <Route path="/oatsense/notes" element={<RequireAuth><OatSenseNotes /></RequireAuth>} />
+          <Route path="/precision-ag/field-journal" element={<RequireAuth><OatSenseNotes /></RequireAuth>} />
+          <Route path="/precision-ag/crop-rotation" element={<RequireAuth><CropRotation /></RequireAuth>} />
+          <Route path="/precision-ag/water-use" element={<RequireAuth><PrecisionAgWaterUse /></RequireAuth>} />
+          <Route path="/precision-ag/agronomy" element={<RequireAuth><PrecisionAgAgronomy /></RequireAuth>} />
           <Route path="/chef" element={<ChefDashboard />} />
-          <Route path="/precision-ag/fields" element={<PrecisionAgFields />} />
-          <Route path="/precision-ag/add" element={<PrecisionAgAdd />} />
-          <Route path="/precision-ag/analyses" element={<PrecisionAgAnalyses />} />
-          <Route path="/precision-ag/analysis/histograms" element={<PrecisionAgHistograms />} />
-          <Route path="/precision-ag/analysis/zoning" element={<PrecisionAgZoning />} />
-          <Route path="/precision-ag/analysis/maps" element={<PrecisionAgMaps />} />
-          <Route path="/precision-ag/analysis/crop-status" element={<PrecisionAgCropStatus />} />
-          <Route path="/precision-ag/analysis/multi-layer" element={<PrecisionAgMultiLayer />} />
-          <Route path="/precision-ag/scouting" element={<ScoutingRedirect />} />
-          <Route path="/precision-ag/prescriptions" element={<PrecisionAgPrescriptions />} />
-          <Route path="/precision-ag/soil-samples" element={<PrecisionAgSoilSamples />} />
-          <Route path="/precision-ag/reports" element={<PrecisionAgReports />} />
-          <Route path="/precision-ag/assessment-report" element={<FieldAssessmentReport />} />
-          <Route path="/precision-ag/alerts" element={<PrecisionAgAlerts />} />
-          <Route path="/precision-ag/gdd" element={<PrecisionAgGDD />} />
-          <Route path="/precision-ag/activity-log" element={<PrecisionAgActivityLog />} />
-          <Route path="/precision-ag/irrigation" element={<PrecisionAgIrrigation />} />
-          <Route path="/precision-ag/yield-forecast" element={<PrecisionAgYieldForecast />} />
-          <Route path="/precision-ag/carbon" element={<PrecisionAgCarbon />} />
-          <Route path="/precision-ag/benchmark" element={<PrecisionAgBenchmark />} />
-          <Route path="/precision-ag/crop-detection" element={<CropDetection />} />
+          <Route path="/precision-ag/fields" element={<RequireAuth><PrecisionAgFields /></RequireAuth>} />
+          <Route path="/precision-ag/add" element={<RequireAuth><PrecisionAgAdd /></RequireAuth>} />
+          <Route path="/precision-ag/analyses" element={<RequireAuth><PrecisionAgAnalyses /></RequireAuth>} />
+          <Route path="/precision-ag/analysis/histograms" element={<RequireAuth><PrecisionAgHistograms /></RequireAuth>} />
+          <Route path="/precision-ag/analysis/zoning" element={<RequireAuth><PrecisionAgZoning /></RequireAuth>} />
+          <Route path="/precision-ag/analysis/maps" element={<RequireAuth><PrecisionAgMaps /></RequireAuth>} />
+          <Route path="/precision-ag/analysis/crop-status" element={<RequireAuth><PrecisionAgCropStatus /></RequireAuth>} />
+          <Route path="/precision-ag/analysis/multi-layer" element={<RequireAuth><PrecisionAgMultiLayer /></RequireAuth>} />
+          <Route path="/precision-ag/scouting" element={<RequireAuth><ScoutingRedirect /></RequireAuth>} />
+          <Route path="/precision-ag/prescriptions" element={<RequireAuth><PrecisionAgPrescriptions /></RequireAuth>} />
+          <Route path="/precision-ag/soil-samples" element={<RequireAuth><PrecisionAgSoilSamples /></RequireAuth>} />
+          <Route path="/precision-ag/reports" element={<RequireAuth><PrecisionAgReports /></RequireAuth>} />
+          <Route path="/precision-ag/assessment-report" element={<RequireAuth><FieldAssessmentReport /></RequireAuth>} />
+          <Route path="/precision-ag/alerts" element={<RequireAuth><PrecisionAgAlerts /></RequireAuth>} />
+          <Route path="/precision-ag/gdd" element={<RequireAuth><PrecisionAgGDD /></RequireAuth>} />
+          <Route path="/precision-ag/activity-log" element={<RequireAuth><PrecisionAgActivityLog /></RequireAuth>} />
+          <Route path="/precision-ag/irrigation" element={<RequireAuth><PrecisionAgIrrigation /></RequireAuth>} />
+          <Route path="/precision-ag/yield-forecast" element={<RequireAuth><PrecisionAgYieldForecast /></RequireAuth>} />
+          <Route path="/precision-ag/carbon" element={<RequireAuth><PrecisionAgCarbon /></RequireAuth>} />
+          <Route path="/precision-ag/benchmark" element={<RequireAuth><PrecisionAgBenchmark /></RequireAuth>} />
+          <Route path="/precision-ag/crop-detection" element={<RequireAuth><CropDetection /></RequireAuth>} />
           <Route path="/precision-ag/visualizations" element={<RequireAuth><VisualizationsDashboard /></RequireAuth>} />
           <Route path="/precision-ag/visualizations/crop-analysis-summary" element={<RequireAuth><CropAnalysisSummary /></RequireAuth>} />
           <Route path="/website/builder" element={<RequireAuth><WebsiteBuilder /></RequireAuth>} />
