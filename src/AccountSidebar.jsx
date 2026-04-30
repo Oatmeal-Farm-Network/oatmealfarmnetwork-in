@@ -40,8 +40,21 @@ const ICONS = {
   properties:    <S><path d="M2 8L8 2l6 6"/><path d="M3.5 7V14h3.5v-3.5h2V14H13V7"/></S>,
   website:       <S><circle cx="8" cy="8" r="6"/><path d="M8 2c-2 1.5-3 3.5-3 6s1 4.5 3 6"/><path d="M8 2c2 1.5 3 3.5 3 6s-1 4.5-3 6"/><line x1="2" y1="8" x2="14" y2="8"/></S>,
   accounting:    <S><rect x="2" y="3" width="12" height="10" rx="1"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="9.5" x2="9" y2="9.5"/><line x1="8" y1="1" x2="8" y2="3"/><line x1="8" y1="13" x2="8" y2="15"/></S>,
+  equipment:     <S><rect x="1" y="4" width="9" height="8" rx="1"/><path d="M10 7h3l2 2v3h-5V7z"/><circle cx="3.5" cy="13" r="1.2"/><circle cx="12" cy="13" r="1.2"/></S>,
+  foodWanted:    <S><rect x="3" y="2" width="10" height="12" rx="1"/><line x1="6" y1="6" x2="10" y2="6"/><line x1="6" y1="8.5" x2="10" y2="8.5"/><line x1="6" y1="11" x2="8.5" y2="11"/><circle cx="5" cy="6" r="0.7" fill="currentColor" stroke="none"/><circle cx="5" cy="8.5" r="0.7" fill="currentColor" stroke="none"/><circle cx="5" cy="11" r="0.7" fill="currentColor" stroke="none"/></S>,
   settings:      <S><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/><path d="M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M12.8 3.2l-1.4 1.4M4.6 11.4l-1.4 1.4"/></S>,
   otfDM: <img src="/images/Over-the-Fence-LogIcon.webp" alt="" width="16" height="16" style={{ display: 'block', borderRadius: 3, objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />,
+  jobBoard:      <S><path d="M4 4h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M6 4V3a1 1 0 0 1 2 0v1"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="5" y1="11" x2="9" y2="11"/></S>,
+  csa:           <S><path d="M8 1L9.5 5.5H14L10.5 8.5 12 13 8 10 4 13 5.5 8.5 2 5.5H6.5z"/></S>,
+  land:          <S><path d="M1 13L6 4l4 5 3-3 2 7z"/><line x1="1" y1="13" x2="15" y2="13"/></S>,
+  certifications:<S><circle cx="8" cy="7" r="4"/><path d="M5.5 13l.5-2h4l.5 2"/><line x1="8" y1="11" x2="8" y2="15"/></S>,
+  suppliers:     <S><rect x="2" y="9" width="5" height="5" rx="0.5"/><rect x="9" y="9" width="5" height="5" rx="0.5"/><rect x="5.5" y="2" width="5" height="5" rx="0.5"/><line x1="8" y1="7" x2="8" y2="9"/><line x1="4.5" y1="9" x2="4.5" y2="8"/><line x1="11.5" y1="9" x2="11.5" y2="8"/></S>,
+  grants:        <S><rect x="2" y="5" width="12" height="9" rx="1"/><path d="M5 5V4a3 3 0 0 1 6 0v1"/><line x1="8" y1="8" x2="8" y2="11"/><line x1="6.5" y1="9.5" x2="9.5" y2="9.5"/></S>,
+  education:     <S><path d="M2 8l6-4 6 4-6 4z"/><path d="M14 8v4"/><path d="M5 10v3a5 3 0 0 0 6 0v-3"/></S>,
+  commodityPrices:<S><polyline points="2,12 6,8 9,10 13,4"/><line x1="13" y1="4" x2="15" y2="4"/><line x1="13" y1="4" x2="13" y2="6"/></S>,
+  forums:        <S><path d="M2 3h9a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5L2 12V4a1 1 0 0 1 1-1z"/><path d="M14 6h1a1 1 0 0 1 1 1v4l-2 2v-3h-2"/></S>,
+  landLeasing:   <S><path d="M2 13h12"/><path d="M4 13V7l4-4 4 4v6"/><line x1="7" y1="13" x2="7" y2="10"/><line x1="9" y1="13" x2="9" y2="10"/></S>,
+  csaAdvanced:   <S><circle cx="8" cy="8" r="5"/><line x1="8" y1="5" x2="8" y2="8"/><line x1="8" y1="8" x2="11" y2="8"/><circle cx="8" cy="8" r="1" fill="currentColor" stroke="none"/><line x1="5" y1="3" x2="5" y2="1.5"/><line x1="11" y1="3" x2="11" y2="1.5"/></S>,
 };
 
 const CollapseIcon = () => (
@@ -314,6 +327,82 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
+        <NavSection icon={ICONS.equipment} label="Equipment" expanded={Expanded}
+          isOpen={OpenSections['Equipment'] || false} onToggle={() => toggleSection('Equipment')}>
+          <NavChild to="/marketplaces/equipment" label="Browse Equipment" />
+          <NavChild to={`/equipment/my-listings?BusinessID=${BusinessID}`} label="My Listings" />
+        </NavSection>
+
+        <NavSection icon={ICONS.foodWanted} label="Food Wanted" expanded={Expanded}
+          isOpen={OpenSections['Food Wanted'] || false} onToggle={() => toggleSection('Food Wanted')}>
+          <NavChild to="/marketplaces/food-wanted" label="Browse Wanted Ads" />
+          <NavChild to={`/food-wanted/my-ads?BusinessID=${BusinessID}`} label="My Ads" />
+        </NavSection>
+
+        <NavSection icon={ICONS.jobBoard} label="Job Board" expanded={Expanded}
+          isOpen={OpenSections['Job Board'] || false} onToggle={() => toggleSection('Job Board')}>
+          <NavChild to="/jobs" label="Browse Jobs" />
+          <NavChild to={`/jobs/my-listings?BusinessID=${BusinessID}`} label="My Job Listings" />
+        </NavSection>
+
+        <NavSection icon={ICONS.csaAdvanced} label="CSA Advanced" expanded={Expanded}
+          isOpen={OpenSections['CSA Advanced'] || false} onToggle={() => toggleSection('CSA Advanced')}>
+          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=contracts`} label="Contracts & Risk Sharing" />
+          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=payment-plans`} label="Payment Plans" />
+          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=work-shares`} label="Work Share Tracking" />
+          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=boxbot`} label="BoxBot Share Balancing" />
+          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=vacation-holds`} label="Vacation Holds" />
+          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=pickup-sites`} label="Pickup Sites" />
+          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=crop-progress`} label="Crop Progress" />
+          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=newsletters`} label="What's In The Box" />
+          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=harvest`} label="Harvest Allocation" />
+          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=box-labels`} label="Box Labels" />
+        </NavSection>
+
+        <NavSection icon={ICONS.csa} label="CSA Management" expanded={Expanded}
+          isOpen={OpenSections['CSA Management'] || false} onToggle={() => toggleSection('CSA Management')}>
+          <NavChild to="/csa" label="Browse CSA Plans" />
+          <NavChild to={`/csa/manage?BusinessID=${BusinessID}`} label="Manage My Plans" />
+        </NavSection>
+
+        <NavSection icon={ICONS.landLeasing} label="Land Leasing" expanded={Expanded}
+          isOpen={OpenSections['Land Leasing'] || false} onToggle={() => toggleSection('Land Leasing')}>
+          <NavChild to="/land" label="Browse Listings" />
+          <NavChild to={`/land/my-listings?BusinessID=${BusinessID}`} label="My Listings" />
+        </NavSection>
+
+        <NavSection icon={ICONS.certifications} label="Certifications" expanded={Expanded}
+          isOpen={OpenSections['Certifications'] || false} onToggle={() => toggleSection('Certifications')}>
+          <NavChild to={`/certifications?BusinessID=${BusinessID}`} label="My Certifications" />
+        </NavSection>
+
+        <NavSection icon={ICONS.suppliers} label="Supplier Directory" expanded={Expanded}
+          isOpen={OpenSections['Supplier Directory'] || false} onToggle={() => toggleSection('Supplier Directory')}>
+          <NavChild to="/suppliers" label="Browse Suppliers" />
+        </NavSection>
+
+        <NavSection icon={ICONS.grants} label="Grants & Programs" expanded={Expanded}
+          isOpen={OpenSections['Grants & Programs'] || false} onToggle={() => toggleSection('Grants & Programs')}>
+          <NavChild to="/grants" label="Browse Programs" />
+          <NavChild to={`/grants?tab=my-tracking&BusinessID=${BusinessID}`} label="My Tracker" />
+        </NavSection>
+
+        <NavSection icon={ICONS.education} label="Education Center" expanded={Expanded}
+          isOpen={OpenSections['Education Center'] || false} onToggle={() => toggleSection('Education Center')}>
+          <NavChild to="/education" label="Courses & Articles" />
+        </NavSection>
+
+        <NavSection icon={ICONS.commodityPrices} label="Commodity Prices" expanded={Expanded}
+          isOpen={OpenSections['Commodity Prices'] || false} onToggle={() => toggleSection('Commodity Prices')}>
+          <NavChild to="/commodity-prices" label="Market Prices" />
+        </NavSection>
+
+        <NavSection icon={ICONS.forums} label="Forums" expanded={Expanded}
+          isOpen={OpenSections['Forums'] || false} onToggle={() => toggleSection('Forums')}>
+          <NavChild to="/forums" label="Browse Forums" />
+          <NavChild to="/over-the-fence" label="Over the Fence DM" />
+        </NavSection>
+
         {on('livestock') && (
           <NavSection icon={ICONS.livestock} label={t('account_sidebar.sec_livestock')} expanded={Expanded}
             isOpen={OpenSections.Livestock || false} onToggle={() => toggleSection('Livestock')}>
@@ -386,14 +475,7 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        {on('rosemarie') && (
-          <NavSection icon={ICONS.rosemarie} label={t('account_sidebar.sec_rosemarie')} expanded={Expanded}
-            isOpen={OpenSections.Rosemarie || false} onToggle={() => toggleSection('Rosemarie')}>
-            <NavChild to={`/platform/rosemarie?BusinessID=${BusinessID}`} label={t('account_sidebar.about_rosemarie')} />
-          </NavSection>
-        )}
-
-        {on('properties') && (
+{on('properties') && (
           <NavSection icon={ICONS.properties} label={t('account_sidebar.sec_properties')} expanded={Expanded}
             isOpen={OpenSections.Properties || false} onToggle={() => toggleSection('Properties')}>
             <NavChild to={`/properties?BusinessID=${BusinessID}`} label={t('account_sidebar.list')} />

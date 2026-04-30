@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -14,7 +15,9 @@ const API = import.meta.env.VITE_API_URL;
  *   className    — extra class for the outer wrapper
  *   placeholder  — input placeholder text
  */
-export default function AnimalPicker({ businessId, value, animalId, onChange, className = '', placeholder = 'Type or select animal…' }) {
+export default function AnimalPicker({ businessId, value, animalId, onChange, className = '', placeholder }) {
+  const { t } = useTranslation();
+  const ap = k => t(`animal_picker.${k}`);
   const [animals, setAnimals]   = useState([]);
   const [query,   setQuery]     = useState('');
   const [open,    setOpen]      = useState(false);
@@ -69,7 +72,7 @@ export default function AnimalPicker({ businessId, value, animalId, onChange, cl
         <input
           type="text"
           value={open ? query : (value || '')}
-          placeholder={loaded ? placeholder : 'Loading animals…'}
+          placeholder={loaded ? (placeholder ?? ap('placeholder')) : ap('loading_animals')}
           className={inp}
           onFocus={() => { setOpen(true); setQuery(''); }}
           onChange={e => { setQuery(e.target.value); setOpen(true); }}
@@ -80,7 +83,7 @@ export default function AnimalPicker({ businessId, value, animalId, onChange, cl
             type="button"
             onClick={clear}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs leading-none"
-            title="Clear"
+            title={ap('clear')}
           >✕</button>
         ) : (
           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs">▾</span>
@@ -91,7 +94,7 @@ export default function AnimalPicker({ businessId, value, animalId, onChange, cl
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
           {filtered.length === 0 ? (
             <div className="px-3 py-2 text-xs text-gray-400">
-              {loaded ? (query ? 'No match' : 'No animals on this account') : 'Loading…'}
+              {loaded ? (query ? ap('no_match') : ap('no_animals')) : ap('loading')}
             </div>
           ) : (
             filtered.map(a => (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
 
@@ -25,6 +26,8 @@ function StatCard({ label, value, color, to, warning }) {
 }
 
 export default function HerdHealthDashboard() {
+  const { t } = useTranslation();
+  const hh = k => t(`herd_health.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -49,44 +52,44 @@ export default function HerdHealthDashboard() {
     <HerdHealthLayout
       Business={Business} BusinessID={BusinessID}
       PeopleID={localStorage.getItem('people_id')}
-      pageTitle="Herd Health"
+      pageTitle={hh('sidebar_heading')}
       breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Livestock' }, { label: 'Herd Health' }]}
     >
       <div className="space-y-5 max-w-5xl">
         <div>
-          <h1 className="font-lora text-2xl font-bold text-gray-900">Herd Health Dashboard</h1>
-          <p className="font-mont text-sm text-gray-500 mt-1">Overview of your herd's health status, alerts, and upcoming tasks.</p>
+          <h1 className="font-lora text-2xl font-bold text-gray-900">{hh('dashboard_title')}</h1>
+          <p className="font-mont text-sm text-gray-500 mt-1">{hh('dashboard_subtitle')}</p>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
+          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">{hh('loading')}</div>
         ) : !data ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 font-mont text-sm text-gray-400">No data available</div>
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 font-mont text-sm text-gray-400">{hh('no_data')}</div>
         ) : (
           <>
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              <StatCard label="Open Health Events" value={data.open_events} color="#DC2626"
-                to={`/herd-health/events?${q}`} warning="Requires attention" />
-              <StatCard label="Vaccinations Due" value={data.vaccinations_due} color="#D97706"
-                to={`/herd-health/vaccinations?${q}`} warning="Schedule now" />
-              <StatCard label="Active Quarantine" value={data.active_quarantine} color="#7C3AED"
+              <StatCard label={hh('stat_open_events')} value={data.open_events} color="#DC2626"
+                to={`/herd-health/events?${q}`} warning={hh('stat_open_events_warn')} />
+              <StatCard label={hh('stat_vaccinations_due')} value={data.vaccinations_due} color="#D97706"
+                to={`/herd-health/vaccinations?${q}`} warning={hh('stat_vaccinations_due_warn')} />
+              <StatCard label={hh('stat_active_quarantine')} value={data.active_quarantine} color="#7C3AED"
                 to={`/herd-health/quarantine?${q}`} />
-              <StatCard label="Active Treatments" value={data.active_treatments} color="#2563EB"
+              <StatCard label={hh('stat_active_treatments')} value={data.active_treatments} color="#2563EB"
                 to={`/herd-health/treatments?${q}`} />
-              <StatCard label="Low Stock Meds" value={data.low_medications} color="#DC2626"
-                to={`/herd-health/medications?${q}`} warning="Reorder needed" />
+              <StatCard label={hh('stat_low_meds')} value={data.low_medications} color="#DC2626"
+                to={`/herd-health/medications?${q}`} warning={hh('stat_low_meds_warn')} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {/* Recent Events */}
               <div className="bg-white rounded-xl border border-gray-200 p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-mont text-sm font-bold text-gray-700">Recent Health Events</h2>
-                  <Link to={`/herd-health/events?${q}`} className="font-mont text-xs font-semibold hover:underline" style={{ color: ACCENT }}>View all →</Link>
+                  <h2 className="font-mont text-sm font-bold text-gray-700">{hh('recent_events')}</h2>
+                  <Link to={`/herd-health/events?${q}`} className="font-mont text-xs font-semibold hover:underline" style={{ color: ACCENT }}>{hh('view_all')}</Link>
                 </div>
                 {data.recent_events?.length === 0 ? (
-                  <p className="font-mont text-xs text-gray-400 py-4 text-center">No events recorded</p>
+                  <p className="font-mont text-xs text-gray-400 py-4 text-center">{hh('no_events_recorded')}</p>
                 ) : (
                   <div className="space-y-2">
                     {data.recent_events.map(e => {
@@ -108,11 +111,11 @@ export default function HerdHealthDashboard() {
               {/* Upcoming Vaccinations */}
               <div className="bg-white rounded-xl border border-gray-200 p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-mont text-sm font-bold text-gray-700">Upcoming Vaccinations</h2>
-                  <Link to={`/herd-health/vaccinations?${q}`} className="font-mont text-xs font-semibold hover:underline" style={{ color: ACCENT }}>View all →</Link>
+                  <h2 className="font-mont text-sm font-bold text-gray-700">{hh('upcoming_vaccinations')}</h2>
+                  <Link to={`/herd-health/vaccinations?${q}`} className="font-mont text-xs font-semibold hover:underline" style={{ color: ACCENT }}>{hh('view_all')}</Link>
                 </div>
                 {data.upcoming_vaccinations?.length === 0 ? (
-                  <p className="font-mont text-xs text-gray-400 py-4 text-center">No vaccinations due</p>
+                  <p className="font-mont text-xs text-gray-400 py-4 text-center">{hh('no_vaccinations_due')}</p>
                 ) : (
                   <div className="space-y-2">
                     {data.upcoming_vaccinations.map(v => (
@@ -132,8 +135,8 @@ export default function HerdHealthDashboard() {
               {data.active_quarantine_list?.length > 0 && (
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="font-mont text-sm font-bold text-gray-700">Active Quarantine</h2>
-                    <Link to={`/herd-health/quarantine?${q}`} className="font-mont text-xs font-semibold hover:underline" style={{ color: ACCENT }}>View all →</Link>
+                    <h2 className="font-mont text-sm font-bold text-gray-700">{hh('lbl_active_quarantine')}</h2>
+                    <Link to={`/herd-health/quarantine?${q}`} className="font-mont text-xs font-semibold hover:underline" style={{ color: ACCENT }}>{hh('view_all')}</Link>
                   </div>
                   <div className="space-y-2">
                     {data.active_quarantine_list.map(q2 => (
@@ -142,7 +145,7 @@ export default function HerdHealthDashboard() {
                           <div className="font-mont text-xs font-semibold text-purple-900">#{q2.AnimalTag}</div>
                           <div className="font-mont text-xs text-purple-700">{q2.Reason}</div>
                         </div>
-                        <div className="font-mont text-xs text-purple-600">Until {q2.PlannedEndDate?.slice(0,10) || '—'}</div>
+                        <div className="font-mont text-xs text-purple-600">{hh('quarantine_until')} {q2.PlannedEndDate?.slice(0,10) || '—'}</div>
                       </div>
                     ))}
                   </div>
@@ -151,15 +154,15 @@ export default function HerdHealthDashboard() {
 
               {/* Quick links */}
               <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 className="font-mont text-sm font-bold text-gray-700 mb-3">Quick Actions</h2>
+                <h2 className="font-mont text-sm font-bold text-gray-700 mb-3">{hh('quick_actions')}</h2>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { label: 'Record Event', to: `/herd-health/events?${q}&new=1` },
-                    { label: 'Add Vaccination', to: `/herd-health/vaccinations?${q}&new=1` },
-                    { label: 'Log Treatment', to: `/herd-health/treatments?${q}&new=1` },
-                    { label: 'Log Vet Visit', to: `/herd-health/vet-visits?${q}&new=1` },
-                    { label: 'Weight & BCS', to: `/herd-health/weight?${q}&new=1` },
-                    { label: 'Parasite Check', to: `/herd-health/parasites?${q}&new=1` },
+                    { label: hh('quick_record_event'), to: `/herd-health/events?${q}&new=1` },
+                    { label: hh('quick_add_vaccination'), to: `/herd-health/vaccinations?${q}&new=1` },
+                    { label: hh('quick_log_treatment'), to: `/herd-health/treatments?${q}&new=1` },
+                    { label: hh('quick_log_vet_visit'), to: `/herd-health/vet-visits?${q}&new=1` },
+                    { label: hh('quick_weight_bcs'), to: `/herd-health/weight?${q}&new=1` },
+                    { label: hh('quick_parasite_check'), to: `/herd-health/parasites?${q}&new=1` },
                   ].map(a => (
                     <Link key={a.label} to={a.to}
                       className="font-mont text-xs font-semibold px-3 py-2 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 text-gray-700 text-center transition-colors">

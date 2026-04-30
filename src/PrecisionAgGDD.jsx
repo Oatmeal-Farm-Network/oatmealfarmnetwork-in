@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { useFields, API_URL } from './precisionAgUtils';
+import { useTranslation } from 'react-i18next';
 
 const CROP_BASES = {
   wheat: 40, barley: 40, oats: 40,
@@ -66,6 +67,8 @@ function GDDChart({ daily, totalGDD, milestones }) {
 }
 
 export default function PrecisionAgGDD() {
+  const { t } = useTranslation();
+  const pa = k => t(`precision_ag.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -109,17 +112,17 @@ export default function PrecisionAgGDD() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
-      pageTitle="GDD" breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:'Growing Degree Days' }]}>
+      pageTitle={pa('gdd_title')} breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:pa('gdd_title') }]}>
       <div className="max-w-full mx-auto space-y-5">
         <div>
-          <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">Growing Degree Days</h1>
-          <p className="font-mont text-sm text-gray-500">Heat unit accumulation to track crop development stages.</p>
+          <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">{pa('gdd_title')}</h1>
+          <p className="font-mont text-sm text-gray-500">{pa('gdd_desc')}</p>
         </div>
 
         {/* Controls */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 flex-wrap items-end">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold font-mont text-gray-500">Field</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_field')}</label>
             <select value={selectedFieldId}
               onChange={e => { setSelectedFieldId(e.target.value); setSelectedField(fields.find(f => String(f.fieldid||f.id) === e.target.value)); }}
               className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 min-w-52">
@@ -127,7 +130,7 @@ export default function PrecisionAgGDD() {
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold font-mont text-gray-500">Period</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_period')}</label>
             <select value={days} onChange={e => setDays(Number(e.target.value))}
               className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2">
               <option value={90}>90 days</option>
@@ -138,40 +141,40 @@ export default function PrecisionAgGDD() {
           </div>
           {data && (
             <div className="font-mont text-xs text-gray-400 self-end pb-2">
-              Base temp: {data.base_temp_f}°F — Crop: {data.crop_type || 'Not set'}
+              Base temp: {data.base_temp_f}°F — Crop: {data.crop_type || '—'}
             </div>
           )}
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
+          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">{pa('loading')}</div>
         ) : !data ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
             <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></div>
-            <div className="font-lora text-xl text-gray-600">No data available</div>
-            <div className="font-mont text-sm text-gray-400 mt-1">Ensure the field has coordinates set.</div>
+            <div className="font-lora text-xl text-gray-600">{pa('no_data_available')}</div>
+            <div className="font-mont text-sm text-gray-400 mt-1">{pa('no_coords')}</div>
           </div>
         ) : (
           <>
             {/* Summary cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="bg-gray-50 rounded-xl border border-gray-100 px-4 py-3">
-                <div className="font-mont text-xs text-gray-400">Total GDD</div>
+                <div className="font-mont text-xs text-gray-400">{pa('lbl_total_gdd')}</div>
                 <div className="font-mont text-2xl font-bold text-[#6D8E22]">{data.total_gdd?.toLocaleString()}</div>
               </div>
               <div className="bg-gray-50 rounded-xl border border-gray-100 px-4 py-3">
-                <div className="font-mont text-xs text-gray-400">Current Stage</div>
-                <div className="font-mont text-lg font-bold text-gray-800">{prevMilestone?.label || 'Pre-emergence'}</div>
+                <div className="font-mont text-xs text-gray-400">{pa('lbl_current_stage')}</div>
+                <div className="font-mont text-lg font-bold text-gray-800">{prevMilestone?.label || pa('pre_emergence')}</div>
               </div>
               <div className="bg-gray-50 rounded-xl border border-gray-100 px-4 py-3">
-                <div className="font-mont text-xs text-gray-400">Next Stage</div>
+                <div className="font-mont text-xs text-gray-400">{pa('lbl_next_stage')}</div>
                 <div className="font-mont text-lg font-bold text-gray-800">{nextMilestone?.label || '—'}</div>
                 {nextMilestone && (
-                  <div className="font-mont text-xs text-gray-400">{(nextMilestone.gdd - data.total_gdd).toFixed(0)} GDD remaining</div>
+                  <div className="font-mont text-xs text-gray-400">{(nextMilestone.gdd - data.total_gdd).toFixed(0)} {pa('gdd_remaining')}</div>
                 )}
               </div>
               <div className="bg-gray-50 rounded-xl border border-gray-100 px-4 py-3">
-                <div className="font-mont text-xs text-gray-400">Avg GDD/day</div>
+                <div className="font-mont text-xs text-gray-400">{pa('lbl_avg_gdd_day')}</div>
                 <div className="font-mont text-2xl font-bold text-gray-800">
                   {data.daily?.length ? (data.total_gdd / data.daily.length).toFixed(1) : '—'}
                 </div>
@@ -180,7 +183,7 @@ export default function PrecisionAgGDD() {
 
             {/* Milestones progress */}
             <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <div className="font-mont text-sm font-semibold text-gray-600 mb-4">Development Milestones</div>
+              <div className="font-mont text-sm font-semibold text-gray-600 mb-4">{pa('dev_milestones')}</div>
               <div className="relative">
                 <div className="absolute left-0 right-0 top-4 h-1 bg-gray-100 rounded-full" />
                 <div className="absolute left-0 top-4 h-1 bg-[#6D8E22] rounded-full transition-all"
@@ -202,22 +205,22 @@ export default function PrecisionAgGDD() {
 
             {/* Chart */}
             <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <div className="font-mont text-sm font-semibold text-gray-600 mb-3">Cumulative GDD — {days}-day period</div>
+              <div className="font-mont text-sm font-semibold text-gray-600 mb-3">{t('precision_ag.gdd_title')} — {days}-day period</div>
               <GDDChart daily={data.daily} totalGDD={data.total_gdd} milestones={milestones} />
             </div>
 
             {/* Daily table (last 14) */}
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">
-                Recent Daily GDD
+                {pa('recent_daily_gdd')}
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm font-mont">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100">
-                      <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Date</th>
-                      <th className="text-center px-3 py-2 text-xs font-semibold text-gray-500">Daily GDD</th>
-                      <th className="text-center px-3 py-2 text-xs font-semibold text-gray-500">Cumulative</th>
+                      <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">{pa('th_date')}</th>
+                      <th className="text-center px-3 py-2 text-xs font-semibold text-gray-500">{pa('th_daily_gdd')}</th>
+                      <th className="text-center px-3 py-2 text-xs font-semibold text-gray-500">{pa('th_cumulative')}</th>
                     </tr>
                   </thead>
                   <tbody>

@@ -1,0 +1,149 @@
+import React, { useState, useEffect } from 'react';
+import Header from './Header';
+import Footer from './Footer';
+import PageMeta from './PageMeta';
+import Breadcrumbs from './Breadcrumbs';
+
+const API = import.meta.env.VITE_API_URL || '';
+const GREEN = '#3D6B34';
+const NAV_BG = '#516234';
+
+function authHeaders() {
+  const t = localStorage.getItem('access_token') || '';
+  const pid = localStorage.getItem('people_id') || '';
+  return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}`, 'x-people-id': pid };
+}
+
+const DIFFICULTY_COLORS = { Beginner: 'bg-green-100 text-green-700', Intermediate: 'bg-yellow-100 text-yellow-700', Advanced: 'bg-red-100 text-red-700' };
+const TYPE_ICONS = { article: '📄', video: '▶', course: '🎓', webinar: '📡' };
+
+export default function EducationCenter() {
+  const [courses, setCourses] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState('');
+  const [difficulty, setDifficulty] = useState('');
+  const [q, setQ] = useState('');
+  const [selected, setSelected] = useState(null);
+  const [enrolledOk, setEnrolledOk] = useState(false);
+  const pid = parseInt(localStorage.getItem('people_id') || '0');
+
+  useEffect(() => {
+    fetch(`${API}/api/education/categories`).then(r => r.json()).then(setCategories);
+  }, []);
+
+  const load = () => {
+    const p = new URLSearchParams();
+    if (category) p.set('category', category);
+    if (difficulty) p.set('difficulty', difficulty);
+    if (q) p.set('q', q);
+    setLoading(true);
+    fetch(`${API}/api/education?${p}`).then(r => r.json()).then(d => { setCourses(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
+  };
+
+  useEffect(load, [category, difficulty]);
+
+  const openCourse = (c) => {
+    fetch(`${API}/api/education/${c.CourseID}`).then(r => r.json()).then(setSelected);
+  };
+
+  const enroll = async () => {
+    if (!pid) return;
+    await fetch(`${API}/api/education/${selected.CourseID}/enroll`, {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify({ people_id: pid }),
+    });
+    setEnrolledOk(true); setTimeout(() => setEnrolledOk(false), 2000);
+  };
+
+  const DIFFS = ['Beginner', 'Intermediate', 'Advanced'];
+
+  return (
+    <div style={{ backgroundColor: '#f7f2e8', minHeight: '100vh' }}>
+      <PageMeta title="Education Center — Oatmeal Farm Network" description="Courses, articles, and how-to guides for farmers and agricultural professionals." />
+      <Header />
+      <div style={{ background: 'linear-gradient(90deg,rgba(255,255,255,0.93) 0%,rgba(255,255,255,0) 100%)', borderBottom: '1px solid #e5e7eb' }}>
+        <div className="max-w-5xl mx-auto px-6 py-10">
+          <Breadcrumbs items={[{ label: 'Education Center' }]} />
+          <h1 className="text-3xl font-bold text-gray-900 mt-1" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>Education Center</h1>
+          <p className="text-gray-500 text-sm mt-1">Courses, articles, and how-to guides for farmers at every level.</p>
+        </div>
+      </div>
+      <div className="max-w-5xl mx-auto px-6 py-6">
+        <div className="flex flex-wrap gap-3 mb-6">
+          <select className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white" value={category} onChange={e => setCategory(e.target.value)} style={{ minWidth: 180 }}>
+            <option value="">All Topics</option>
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white" value={difficulty} onChange={e => setDifficulty(e.target.value)}>
+            <option value="">All Levels</option>
+            {DIFFS.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <input className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white flex-1" style={{ minWidth: 180 }} placeholder="Search…" value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && load()} />
+          <button onClick={load} className="px-4 py-2 rounded-lg text-white text-sm font-bold" style={{ backgroundColor: GREEN }}>Search</button>
+        </div>
+
+        {loading ? <p className="text-gray-400">Loading…</p> : courses.length === 0 ? (
+          <div className="text-center py-20 text-gray-400">No courses found.</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {courses.map(c => (
+              <button key={c.CourseID} onClick={() => openCourse(c)}
+                className="text-left bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition flex flex-col">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className="text-xl">{TYPE_ICONS[c.ContentType] || '📄'}</span>
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${DIFFICULTY_COLORS[c.Difficulty] || 'bg-gray-100 text-gray-600'}`}>{c.Difficulty}</span>
+                </div>
+                <div className="font-bold text-gray-900 text-sm leading-snug flex-1">{c.Title}</div>
+                <div className="text-xs font-semibold text-green-700 mt-1">{c.Category}</div>
+                {c.Description && <p className="text-xs text-gray-500 mt-2 line-clamp-2">{c.Description}</p>}
+                <div className="flex items-center justify-between mt-3 text-xs text-gray-400">
+                  <span>{c.DurationMin ? `${c.DurationMin} min` : ''}</span>
+                  <span>{c.EnrollmentCount ?? 0} enrolled</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {selected && (
+        <div className="fixed inset-0 z-40 flex justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} onClick={() => setSelected(null)}>
+          <div className="bg-white w-full max-w-lg h-full overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b" style={{ backgroundColor: NAV_BG }}>
+              <span className="text-white font-bold truncate">{selected.Title}</span>
+              <button onClick={() => setSelected(null)} className="text-white shrink-0">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${DIFFICULTY_COLORS[selected.Difficulty] || 'bg-gray-100 text-gray-600'}`}>{selected.Difficulty}</span>
+                <span className="text-xs font-semibold text-green-700">{selected.Category}</span>
+                {selected.DurationMin && <span className="text-xs text-gray-400">{selected.DurationMin} min</span>}
+                {selected.IsFree ? <span className="text-xs font-bold bg-green-50 text-green-700 px-1.5 py-0.5 rounded">Free</span> : null}
+              </div>
+              <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>{selected.Title}</h2>
+              {selected.AuthorName && <div className="text-xs text-gray-500">By {selected.AuthorName}</div>}
+              {selected.Description && <p className="text-sm text-gray-700 leading-relaxed">{selected.Description}</p>}
+              <div className="text-xs text-gray-400">{selected.ViewCount ?? 0} views · {selected.EnrollmentCount ?? 0} enrolled</div>
+              <div className="flex gap-3">
+                {selected.ContentUrl && (
+                  <a href={selected.ContentUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex-1 py-3 rounded-xl text-white font-bold text-center block"
+                    style={{ backgroundColor: GREEN }}>
+                    {TYPE_ICONS[selected.ContentType]} Open Content ↗
+                  </a>
+                )}
+                {pid ? (
+                  <button onClick={enroll} className="flex-1 py-3 rounded-xl font-bold text-sm border-2 transition"
+                    style={{ color: GREEN, borderColor: GREEN }}>
+                    {enrolledOk ? '✓ Saved!' : '+ Add to My List'}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <Footer />
+    </div>
+  );
+}

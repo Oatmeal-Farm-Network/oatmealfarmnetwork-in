@@ -66,6 +66,23 @@ import MarketplaceOrders from './MarketplaceOrders';
 import OrderDetail from './OrderDetail';
 import SellerOrders from './SellerOrders';
 import SellerListings from './SellerListings';
+import EquipmentMarketplace from './EquipmentMarketplace';
+import EquipmentListingDetail from './EquipmentListingDetail';
+import MyEquipmentListings from './MyEquipmentListings';
+import AboutEquipmentMarketplace from './AboutEquipmentMarketplace';
+import FoodWantedBoard from './FoodWantedBoard';
+import FoodWantedAdDetail from './FoodWantedAdDetail';
+import MyFoodWantedAds from './MyFoodWantedAds';
+import JobBoard, { MyJobListings } from './JobBoard';
+import { CSABrowse, CSAManage } from './CSAManager';
+import LandLeasing, { MyLandListings } from './LandLeasing';
+import CertificationsTracker from './CertificationsTracker';
+import SupplierDirectory from './SupplierDirectory';
+import GrantTracker from './GrantTracker';
+import CommodityPrices from './CommodityPrices';
+import EducationCenter from './EducationCenter';
+import { ForumCategories, ForumThreads, ForumThread } from './OTFForums';
+import CSAAdvanced from './CSAAdvanced';
 import ForgotPassword from './ForgotPassword';
 import ServicesDirectory from './ServicesDirectory';
 import ServiceDetail from './ServiceDetail';
@@ -598,6 +615,48 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Marketplace routes — specific before generic */}
+          <Route path="/marketplaces/equipment/:listingId" element={<EquipmentListingDetail />} />
+          <Route path="/marketplaces/equipment" element={<EquipmentMarketplace />} />
+          <Route path="/equipment/my-listings" element={<RequireAuth><MyEquipmentListings /></RequireAuth>} />
+          <Route path="/platform/equipment-marketplace" element={<AboutEquipmentMarketplace />} />
+          <Route path="/marketplaces/food-wanted/:adId" element={<FoodWantedAdDetail />} />
+          <Route path="/marketplaces/food-wanted" element={<FoodWantedBoard />} />
+          <Route path="/food-wanted/my-ads" element={<RequireAuth><MyFoodWantedAds /></RequireAuth>} />
+
+          {/* Job Board */}
+          <Route path="/jobs" element={<JobBoard />} />
+          <Route path="/jobs/my-listings" element={<RequireAuth><MyJobListings /></RequireAuth>} />
+
+          {/* CSA Management */}
+          <Route path="/csa" element={<CSABrowse />} />
+          <Route path="/csa/manage" element={<RequireAuth><CSAManage /></RequireAuth>} />
+
+          {/* CSA Advanced */}
+          <Route path="/csa-advanced" element={<RequireAuth><CSAAdvanced /></RequireAuth>} />
+
+          {/* Land Leasing */}
+          <Route path="/land" element={<LandLeasing />} />
+          <Route path="/land/my-listings" element={<RequireAuth><MyLandListings /></RequireAuth>} />
+
+          {/* Certifications */}
+          <Route path="/certifications" element={<RequireAuth><CertificationsTracker /></RequireAuth>} />
+
+          {/* Supplier Directory */}
+          <Route path="/suppliers" element={<SupplierDirectory />} />
+
+          {/* Grant & Program Tracker */}
+          <Route path="/grants" element={<GrantTracker />} />
+
+          {/* Commodity Prices */}
+          <Route path="/commodity-prices" element={<CommodityPrices />} />
+
+          {/* Education Center */}
+          <Route path="/education" element={<EducationCenter />} />
+
+          {/* Discussion Forums */}
+          <Route path="/forums" element={<ForumCategories />} />
+          <Route path="/forums/:categoryId" element={<ForumThreads />} />
+          <Route path="/forums/thread/:threadId" element={<ForumThread />} />
           <Route path="/marketplaces/farm-to-table" element={<FarmToTableMarketplace />} />
           <Route path="/marketplaces/livestock/animal/:id/progeny" element={<LivestockAnimalProgeny />} />
           <Route path="/marketplaces/livestock/animal/:id" element={<LivestockAnimalDetail />} />

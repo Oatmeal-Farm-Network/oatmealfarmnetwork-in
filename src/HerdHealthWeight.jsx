@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
 import AnimalPicker from './AnimalPicker';
@@ -16,6 +17,8 @@ const EMPTY = { AnimalTag:'', RecordDate:'', WeightLbs:'', WeightKg:'', BodyCond
 const BCS_LABEL = { 1:'Emaciated', 2:'Very Thin', 3:'Thin', 4:'Below Average', 5:'Average', 6:'Above Average', 7:'Good', 8:'Fat', 9:'Very Fat' };
 
 function Form({ init, onSave, onCancel, businessId }) {
+  const { t } = useTranslation();
+  const hh = k => t(`herd_health.${k}`);
   const [f, setF] = useState(init || EMPTY);
   const set = k => e => {
     let v = e.target.value;
@@ -26,37 +29,37 @@ function Form({ init, onSave, onCancel, businessId }) {
   return (
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Animal">
+        <Field label={hh('f_animal')}>
           <AnimalPicker businessId={businessId} value={f.AnimalTag} animalId={f.AnimalID}
             onChange={(tag, id) => setF(p => ({ ...p, AnimalTag: tag, AnimalID: id }))} />
         </Field>
-        <Field label="Record Date"><input type="date" value={f.RecordDate} onChange={set('RecordDate')} className={inp} /></Field>
-        <Field label="Weight (lbs)"><input type="number" step="0.1" value={f.WeightLbs} onChange={set('WeightLbs')} className={inp} /></Field>
-        <Field label="Weight (kg)"><input type="number" step="0.1" value={f.WeightKg} onChange={set('WeightKg')} className={inp} /></Field>
-        <Field label="Body Condition Score (1–9)">
+        <Field label={hh('f_record_date')}><input type="date" value={f.RecordDate} onChange={set('RecordDate')} className={inp} /></Field>
+        <Field label={hh('f_weight_lbs')}><input type="number" step="0.1" value={f.WeightLbs} onChange={set('WeightLbs')} className={inp} /></Field>
+        <Field label={hh('f_weight_kg')}><input type="number" step="0.1" value={f.WeightKg} onChange={set('WeightKg')} className={inp} /></Field>
+        <Field label={hh('f_bcs')}>
           <select value={f.BodyConditionScore} onChange={set('BodyConditionScore')} className={inp}>
-            <option value="">— select —</option>
+            <option value="">{hh('select_ph')}</option>
             {[1,2,3,4,5,6,7,8,9].map(n => <option key={n} value={n}>{n} – {BCS_LABEL[n]}</option>)}
           </select>
         </Field>
-        <Field label="Frame Score (1–9)">
+        <Field label={hh('f_frame_score')}>
           <select value={f.FrameScore} onChange={set('FrameScore')} className={inp}>
-            <option value="">— select —</option>
+            <option value="">{hh('select_ph')}</option>
             {[1,2,3,4,5,6,7,8,9].map(n => <option key={n} value={n}>{n}</option>)}
           </select>
         </Field>
-        <Field label="Weigh Method">
+        <Field label={hh('f_weigh_method')}>
           <select value={f.Method} onChange={set('Method')} className={inp}>
-            <option value="">— select —</option>
+            <option value="">{hh('select_ph')}</option>
             {METHODS.map(m => <option key={m}>{m}</option>)}
           </select>
         </Field>
-        <Field label="Recorded By"><input value={f.RecordedBy} onChange={set('RecordedBy')} className={inp} /></Field>
-        <Field label="Notes" className="sm:col-span-2"><textarea value={f.Notes} onChange={set('Notes')} rows={2} className={inp} /></Field>
+        <Field label={hh('f_recorded_by')}><input value={f.RecordedBy} onChange={set('RecordedBy')} className={inp} /></Field>
+        <Field label={hh('f_notes')} className="sm:col-span-2"><textarea value={f.Notes} onChange={set('Notes')} rows={2} className={inp} /></Field>
       </div>
       <div className="flex gap-2">
         <button onClick={() => onSave({ ...f, WeightLbs: f.WeightLbs ? parseFloat(f.WeightLbs) : null, WeightKg: f.WeightKg ? parseFloat(f.WeightKg) : null, BodyConditionScore: f.BodyConditionScore ? parseFloat(f.BodyConditionScore) : null, FrameScore: f.FrameScore ? parseInt(f.FrameScore) : null })}
-          className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>Save</button>
+          className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>{hh('btn_save')}</button>
         <button onClick={onCancel} className="px-4 py-2 rounded-lg text-sm font-mont text-gray-600 bg-gray-200 hover:bg-gray-300">Cancel</button>
       </div>
     </div>
@@ -66,6 +69,8 @@ function Form({ init, onSave, onCancel, businessId }) {
 const BCS_COLOR = { 1:'#DC2626',2:'#EF4444',3:'#F97316',4:'#F59E0B',5:'#10B981',6:'#059669',7:'#047857',8:'#F59E0B',9:'#EF4444' };
 
 export default function HerdHealthWeight() {
+  const { t } = useTranslation();
+  const hh = k => t(`herd_health.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -100,30 +105,30 @@ export default function HerdHealthWeight() {
 
   return (
     <HerdHealthLayout Business={Business} BusinessID={BusinessID}
-      PeopleID={localStorage.getItem('people_id')} pageTitle="Weight & BCS"
+      PeopleID={localStorage.getItem('people_id')} pageTitle={hh('nav_weight')}
       breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Herd Health', to: `/herd-health?BusinessID=${BusinessID}` }, { label: 'Weight & BCS' }]}>
       <div className="space-y-4 max-w-4xl">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-lora text-xl font-bold text-gray-900">Weight & Body Condition</h1>
-            <p className="font-mont text-xs text-gray-500">Track weights and body condition scores (Purina BCS 1–9) over time.</p>
+            <h1 className="font-lora text-xl font-bold text-gray-900">{hh('weight_title')}</h1>
+            <p className="font-mont text-xs text-gray-500">{hh('weight_subtitle')}</p>
           </div>
           <button onClick={() => { setShowForm(true); setEditing(null); }}
-            className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>+ Add Record</button>
+            className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>{hh('btn_add_record')}</button>
         </div>
 
         {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} businessId={BusinessID} />}
 
         {loading ? (
-          <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">Loading…</div>
+          <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">{hh('loading')}</div>
         ) : rows.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 font-mont text-sm text-gray-400">No weight or BCS records yet.</div>
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 font-mont text-sm text-gray-400">{hh('no_weight_records')}</div>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <table className="w-full text-xs font-mont">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  {['Animal','Date','Weight (lbs)','Weight (kg)','BCS','Frame','Method','By',''].map(h => (
+                  {[hh('th_animal'),hh('th_date'),hh('th_weight_lbs'),hh('th_weight_kg'),hh('th_bcs'),hh('th_frame'),hh('th_method'),hh('th_by'),''].map(h => (
                     <th key={h} className="px-3 py-2.5 text-left font-semibold text-gray-500">{h}</th>
                   ))}
                 </tr>
@@ -152,7 +157,7 @@ export default function HerdHealthWeight() {
                       <td className="px-3 py-2.5 text-gray-400">{row.RecordedBy}</td>
                       <td className="px-3 py-2.5">
                         <div className="flex gap-1">
-                          <button onClick={() => setEditing(row)} className="text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded hover:bg-gray-100">Edit</button>
+                          <button onClick={() => setEditing(row)} className="text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded hover:bg-gray-100">{hh('btn_edit')}</button>
                           {deleting === row.WeightID
                             ? <><button onClick={() => del(row.WeightID)} className="text-red-600 font-semibold px-1.5 py-0.5 rounded bg-red-50">✓</button>
                                 <button onClick={() => setDeleting(null)} className="text-gray-400 px-1.5 py-0.5 rounded hover:bg-gray-100">✕</button></>

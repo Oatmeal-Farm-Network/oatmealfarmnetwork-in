@@ -4,6 +4,7 @@ import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { useFields, useAnalyses, getIndex, useRaster, ndviColor } from './precisionAgUtils';
 import SaigeWidget from './SaigeWidget';
+import { useTranslation } from 'react-i18next';
 
 const INDEX_CONFIGS = [
   { key: 'NDVI',  label: 'NDVI',  desc: 'Vegetation density & biomass' },
@@ -34,16 +35,18 @@ function indexColor(v, min, max, indexKey) {
 }
 
 function FieldMap({ fieldId, indexKey, analysisId = null, height = 420 }) {
+  const { t } = useTranslation();
+  const pa = k => t(`precision_ag.${k}`);
   const { data, loading, error } = useRaster(fieldId, indexKey, COLS, analysisId);
 
   if (loading) return (
     <div className="flex items-center justify-center text-gray-400 font-mont text-sm animate-pulse" style={{ height }}>
-      Loading raster…
+      {pa('loading_raster')}
     </div>
   );
   if (error || !data?.grid?.values) return (
     <div className="flex items-center justify-center text-gray-400 font-mont text-sm" style={{ height }}>
-      {error ? `Couldn't load raster: ${error}` : 'No data — run an analysis first'}
+      {error ? pa('raster_error') : pa('no_data_run_analysis')}
     </div>
   );
 
@@ -117,7 +120,7 @@ function DateThumbnail({ fieldId, indexKey, analysisId, satelliteAcquiredAt, ind
           }} />
         )}
         {!data && !loading && !indexData && (
-          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-300 text-xs">No data</div>
+          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-300 text-xs">{t('precision_ag.no_data')}</div>
         )}
       </div>
       <div className="px-2 py-1.5 border-t border-gray-100">
@@ -159,6 +162,8 @@ function StatPill({ label, value, color }) {
 }
 
 export default function PrecisionAgMaps() {
+  const { t } = useTranslation();
+  const pa = k => t(`precision_ag.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -182,23 +187,23 @@ export default function PrecisionAgMaps() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
-      pageTitle="Maps"
-      breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:'Maps' }]}>
+      pageTitle={pa('maps_title')}
+      breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:pa('maps_title') }]}>
       <div className="max-w-full mx-auto space-y-5">
         <div>
-          <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">Maps</h1>
+          <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">{pa('maps_title')}</h1>
           <p className="font-mont text-sm text-gray-500">
-            Full-field vegetation index map — select a layer and date to visualize spatial variation across your acreage.
+            {pa('maps_desc')}
           </p>
         </div>
 
         {/* Toolbar */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 flex-wrap items-end">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold font-mont text-gray-500">Field</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_field')}</label>
             <select value={selectedFieldId} onChange={e => setSelectedFieldId(e.target.value)}
               className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 min-w-[200px]">
-              {fields.length === 0 && <option value="">No fields</option>}
+              {fields.length === 0 && <option value="">{pa('no_fields')}</option>}
               {fields.map(f => <option key={f.fieldid||f.id} value={String(f.fieldid||f.id)}>{f.name}</option>)}
             </select>
           </div>
@@ -210,7 +215,7 @@ export default function PrecisionAgMaps() {
                 {analyses.map((a, i) => (
                   <option key={i} value={i}>
                     {new Date(a.analysis_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
-                    {i === 0 ? ' (latest)' : ''}
+                    {i === 0 ? ' ' + pa('opt_latest') : ''}
                   </option>
                 ))}
               </select>
@@ -225,7 +230,7 @@ export default function PrecisionAgMaps() {
 
         {/* Index selector pills */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-semibold font-mont text-gray-500 mr-1">Layer:</span>
+          <span className="text-xs font-semibold font-mont text-gray-500 mr-1">{pa('f_layer')}</span>
           {INDEX_CONFIGS.map(cfg => {
             const active = selectedIndex === cfg.key;
             return (
@@ -245,12 +250,12 @@ export default function PrecisionAgMaps() {
 
         {/* Map area */}
         {loading ? (
-          <div className="flex items-center justify-center py-32 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
+          <div className="flex items-center justify-center py-32 text-gray-400 font-mont text-sm animate-pulse">{pa('loading')}</div>
         ) : analyses.length === 0 ? (
           <div className="text-center py-32 bg-white rounded-xl border border-gray-200">
             <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>
-            <div className="font-lora text-xl text-gray-600 mb-2">No analysis data</div>
-            <div className="font-mont text-sm text-gray-400">Run an analysis on this field to generate map data.</div>
+            <div className="font-lora text-xl text-gray-600 mb-2">{pa('no_analysis_data')}</div>
+            <div className="font-mont text-sm text-gray-400">{pa('no_analysis_map')}</div>
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -261,13 +266,13 @@ export default function PrecisionAgMaps() {
               </span>
               {analysis && (
                 <span className="font-mont text-xs text-gray-500">
-                  As of {new Date(analysis.analysis_date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
-                  {analysis.cloud_percent > 20 && <span className="ml-2 text-amber-600">☁ {analysis.cloud_percent.toFixed(0)}% cloud cover</span>}
+                  {pa('lbl_as_of')} {new Date(analysis.analysis_date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
+                  {analysis.cloud_percent > 20 && <span className="ml-2 text-amber-600">☁ {analysis.cloud_percent.toFixed(0)}% {pa('lbl_cloud')}</span>}
                 </span>
               )}
               {indexData && (
                 <span className="ml-auto font-mont text-xs font-bold" style={{ color: '#6D8E22' }}>
-                  Mean: {indexData.mean.toFixed(3)}
+                  {pa('lbl_mean')} {indexData.mean.toFixed(3)}
                 </span>
               )}
             </div>
@@ -286,13 +291,13 @@ export default function PrecisionAgMaps() {
             {/* Stats row */}
             {indexData && (
               <div className="px-5 py-4 border-t border-gray-100 flex gap-3 flex-wrap">
-                <StatPill label="Min"  value={indexData.min.toFixed(3)}  />
-                <StatPill label="Mean" value={indexData.mean.toFixed(3)} color="#6D8E22" />
-                <StatPill label="Max"  value={indexData.max.toFixed(3)}  />
-                <StatPill label="Range" value={(indexData.max - indexData.min).toFixed(3)} />
+                <StatPill label={pa('stat_min')}   value={indexData.min.toFixed(3)}  />
+                <StatPill label={pa('stat_mean')}  value={indexData.mean.toFixed(3)} color="#6D8E22" />
+                <StatPill label={pa('stat_max')}   value={indexData.max.toFixed(3)}  />
+                <StatPill label={pa('stat_range')} value={(indexData.max - indexData.min).toFixed(3)} />
                 {analysis.health_score != null && (
                   <StatPill
-                    label="Health Score"
+                    label={pa('stat_health_score')}
                     value={`${analysis.health_score}%`}
                     color={analysis.health_score >= 70 ? '#16A34A' : analysis.health_score >= 50 ? '#D97706' : '#DC2626'}
                   />
@@ -306,7 +311,7 @@ export default function PrecisionAgMaps() {
         {analyses.length >= 2 && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">
-              {INDEX_CONFIGS.find(c => c.key === selectedIndex)?.label} — All Dates
+  {INDEX_CONFIGS.find(c => c.key === selectedIndex)?.label} — {pa('all_dates')}
             </div>
             <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {analyses.map((a, i) => {

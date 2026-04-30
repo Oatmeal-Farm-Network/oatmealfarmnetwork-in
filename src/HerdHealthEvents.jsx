@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
 import AnimalPicker from './AnimalPicker';
@@ -17,43 +18,47 @@ const EMPTY = {
 };
 
 function Form({ init, onSave, onCancel, businessId }) {
+  const { t } = useTranslation();
+  const hh = k => t(`herd_health.${k}`);
   const [f, setF] = useState(init || EMPTY);
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
   return (
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Animal">
+        <Field label={hh('f_animal')}>
           <AnimalPicker businessId={businessId} value={f.AnimalTag} animalId={f.AnimalID}
             onChange={(tag, id) => setF(p => ({ ...p, AnimalTag: tag, AnimalID: id }))} />
         </Field>
-        <Field label="Event Date*"><input type="date" value={f.EventDate} onChange={set('EventDate')} className={inp} required /></Field>
-        <Field label="Event Type">
+        <Field label={hh('f_event_date')}><input type="date" value={f.EventDate} onChange={set('EventDate')} className={inp} required /></Field>
+        <Field label={hh('f_event_type')}>
           <select value={f.EventType} onChange={set('EventType')} className={inp}>
-            <option value="">— select —</option>
+            <option value="">{hh('select_ph')}</option>
             {EVENT_TYPES.map(t => <option key={t}>{t}</option>)}
           </select>
         </Field>
-        <Field label="Severity">
+        <Field label={hh('f_severity')}>
           <select value={f.Severity} onChange={set('Severity')} className={inp}>
             {SEVERITIES.map(s => <option key={s}>{s}</option>)}
           </select>
         </Field>
-        <Field label="Title" className="sm:col-span-2"><input value={f.Title} onChange={set('Title')} className={inp} /></Field>
-        <Field label="Description" className="sm:col-span-2"><textarea value={f.Description} onChange={set('Description')} rows={3} className={inp} /></Field>
-        <Field label="Treatment Given" className="sm:col-span-2"><textarea value={f.Treatment} onChange={set('Treatment')} rows={2} className={inp} /></Field>
-        <Field label="Resolved Date"><input type="date" value={f.ResolvedDate} onChange={set('ResolvedDate')} className={inp} /></Field>
-        <Field label="Recorded By"><input value={f.RecordedBy} onChange={set('RecordedBy')} className={inp} /></Field>
-        <Field label="Resolution Notes" className="sm:col-span-2"><textarea value={f.ResolvedNotes} onChange={set('ResolvedNotes')} rows={2} className={inp} /></Field>
+        <Field label={hh('f_title')} className="sm:col-span-2"><input value={f.Title} onChange={set('Title')} className={inp} /></Field>
+        <Field label={hh('f_description')} className="sm:col-span-2"><textarea value={f.Description} onChange={set('Description')} rows={3} className={inp} /></Field>
+        <Field label={hh('f_treatment_given')} className="sm:col-span-2"><textarea value={f.Treatment} onChange={set('Treatment')} rows={2} className={inp} /></Field>
+        <Field label={hh('f_resolved_date')}><input type="date" value={f.ResolvedDate} onChange={set('ResolvedDate')} className={inp} /></Field>
+        <Field label={hh('f_recorded_by')}><input value={f.RecordedBy} onChange={set('RecordedBy')} className={inp} /></Field>
+        <Field label={hh('f_resolution_notes')} className="sm:col-span-2"><textarea value={f.ResolvedNotes} onChange={set('ResolvedNotes')} rows={2} className={inp} /></Field>
       </div>
       <div className="flex gap-2 pt-1">
-        <button onClick={() => onSave(f)} className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>Save</button>
-        <button onClick={onCancel} className="px-4 py-2 rounded-lg text-sm font-mont text-gray-600 bg-gray-200 hover:bg-gray-300">Cancel</button>
+        <button onClick={() => onSave(f)} className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>{hh('btn_save')}</button>
+        <button onClick={onCancel} className="px-4 py-2 rounded-lg text-sm font-mont text-gray-600 bg-gray-200 hover:bg-gray-300">{hh('btn_cancel')}</button>
       </div>
     </div>
   );
 }
 
 export default function HerdHealthEvents() {
+  const { t } = useTranslation();
+  const hh = k => t(`herd_health.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -91,17 +96,17 @@ export default function HerdHealthEvents() {
 
   return (
     <HerdHealthLayout Business={Business} BusinessID={BusinessID}
-      PeopleID={localStorage.getItem('people_id')} pageTitle="Health Events"
+      PeopleID={localStorage.getItem('people_id')} pageTitle={hh('nav_events')}
       breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Herd Health', to: `/herd-health?BusinessID=${BusinessID}` }, { label: 'Health Events' }]}>
       <div className="space-y-4 max-w-4xl">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-lora text-xl font-bold text-gray-900">Health Events</h1>
-            <p className="font-mont text-xs text-gray-500">Illnesses, injuries, observations, and incidents.</p>
+            <h1 className="font-lora text-xl font-bold text-gray-900">{hh('events_title')}</h1>
+            <p className="font-mont text-xs text-gray-500">{hh('events_subtitle')}</p>
           </div>
           <button onClick={() => { setShowForm(true); setEditing(null); }}
             className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold"
-            style={{ backgroundColor: ACCENT }}>+ New Event</button>
+            style={{ backgroundColor: ACCENT }}>{hh('btn_new_event')}</button>
         </div>
 
         {(showForm && !editing) && (
@@ -109,9 +114,9 @@ export default function HerdHealthEvents() {
         )}
 
         {loading ? (
-          <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">Loading…</div>
+          <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">{hh('loading')}</div>
         ) : rows.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 font-mont text-sm text-gray-400">No health events recorded yet.</div>
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 font-mont text-sm text-gray-400">{hh('no_events')}</div>
         ) : (
           <div className="space-y-2">
             {rows.map(row => (
@@ -132,15 +137,15 @@ export default function HerdHealthEvents() {
                             <span className="px-1.5 py-0.5 rounded text-xs" style={{ background: SEV_COLORS[row.Severity] + '20', color: SEV_COLORS[row.Severity] }}>{row.Severity}</span>
                           </div>
                           {row.Description && <p className="font-mont text-xs text-gray-600 mt-1 line-clamp-2">{row.Description}</p>}
-                          {row.ResolvedDate && <div className="font-mont text-xs text-green-600 mt-1">✓ Resolved {row.ResolvedDate?.slice(0,10)}</div>}
+                          {row.ResolvedDate && <div className="font-mont text-xs text-green-600 mt-1">{hh('status_resolved')} {row.ResolvedDate?.slice(0,10)}</div>}
                         </div>
                       </div>
                       <div className="flex gap-2 shrink-0">
-                        <button onClick={() => setEditing(row)} className="font-mont text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100">Edit</button>
+                        <button onClick={() => setEditing(row)} className="font-mont text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100">{hh('btn_edit')}</button>
                         {deleting === row.EventID
-                          ? <><button onClick={() => del(row.EventID)} className="font-mont text-xs text-red-600 font-semibold px-2 py-1 rounded bg-red-50">Confirm</button>
-                              <button onClick={() => setDeleting(null)} className="font-mont text-xs text-gray-500 px-2 py-1 rounded hover:bg-gray-100">Cancel</button></>
-                          : <button onClick={() => setDeleting(row.EventID)} className="font-mont text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50">Delete</button>
+                          ? <><button onClick={() => del(row.EventID)} className="font-mont text-xs text-red-600 font-semibold px-2 py-1 rounded bg-red-50">{hh('btn_confirm')}</button>
+                              <button onClick={() => setDeleting(null)} className="font-mont text-xs text-gray-500 px-2 py-1 rounded hover:bg-gray-100">{hh('btn_cancel')}</button></>
+                          : <button onClick={() => setDeleting(row.EventID)} className="font-mont text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50">{hh('btn_delete')}</button>
                         }
                       </div>
                     </div>

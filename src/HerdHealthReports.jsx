@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useAccount } from './AccountContext';
+import { useTranslation } from 'react-i18next';
 import HerdHealthLayout from './HerdHealthLayout';
 
 const API = import.meta.env.VITE_API_URL;
@@ -17,6 +18,8 @@ function StatCard({ label, value, sub, color }) {
 }
 
 export default function HerdHealthReports() {
+  const { t } = useTranslation();
+  const hh = k => t(`herd_health.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -35,77 +38,77 @@ export default function HerdHealthReports() {
 
   const sections = [
     {
-      title: 'Vaccination Compliance',
+      title: hh('section_vacc_compliance'),
       icon: '💉',
-      description: 'View overdue vaccinations and upcoming due dates.',
+      description: hh('section_vacc_desc'),
       link: `/herd-health/vaccinations?BusinessID=${BusinessID}`,
-      stat: summary ? `${summary.overdue_vaccinations ?? 0} overdue` : null,
+      stat: summary ? `${summary.overdue_vaccinations ?? 0} ${hh('suffix_overdue')}` : null,
       statColor: summary?.overdue_vaccinations > 0 ? '#EF4444' : '#10B981',
     },
     {
-      title: 'Active Withdrawals',
+      title: hh('section_withdrawals'),
       icon: '⏱',
-      description: 'Animals currently under meat or milk withdrawal periods.',
+      description: hh('section_withdrawals_desc'),
       link: `/herd-health/treatments?BusinessID=${BusinessID}`,
-      stat: summary ? `${summary.active_withdrawals ?? 0} active` : null,
+      stat: summary ? `${summary.active_withdrawals ?? 0} ${hh('suffix_active')}` : null,
       statColor: summary?.active_withdrawals > 0 ? '#EF4444' : '#10B981',
     },
     {
-      title: 'Medication Inventory',
+      title: hh('section_med_inventory'),
       icon: '💊',
-      description: 'Items expiring within 30 days or below reorder point.',
+      description: hh('section_med_desc'),
       link: `/herd-health/medications?BusinessID=${BusinessID}`,
-      stat: summary ? `${(summary.expiring_medications ?? 0) + (summary.low_stock_medications ?? 0)} alerts` : null,
+      stat: summary ? `${(summary.expiring_medications ?? 0) + (summary.low_stock_medications ?? 0)} ${hh('suffix_alerts')}` : null,
       statColor: ((summary?.expiring_medications ?? 0) + (summary?.low_stock_medications ?? 0)) > 0 ? '#F59E0B' : '#10B981',
     },
     {
-      title: 'Active Quarantine',
+      title: hh('section_quarantine'),
       icon: '🔒',
-      description: 'Animals currently in isolation or quarantine.',
+      description: hh('section_quarantine_desc'),
       link: `/herd-health/quarantine?BusinessID=${BusinessID}`,
-      stat: summary ? `${summary.active_quarantine ?? 0} animals` : null,
+      stat: summary ? `${summary.active_quarantine ?? 0} ${hh('suffix_animals')}` : null,
       statColor: summary?.active_quarantine > 0 ? '#EF4444' : '#10B981',
     },
     {
-      title: 'Open Health Events',
+      title: hh('section_open_events'),
       icon: '📋',
-      description: 'Unresolved health events requiring attention.',
+      description: hh('section_open_events_desc'),
       link: `/herd-health/events?BusinessID=${BusinessID}`,
-      stat: summary ? `${summary.open_events ?? 0} open` : null,
+      stat: summary ? `${summary.open_events ?? 0} ${hh('suffix_open')}` : null,
       statColor: summary?.open_events > 0 ? '#F59E0B' : '#10B981',
     },
     {
-      title: 'Pending Lab Results',
+      title: hh('section_pending_labs'),
       icon: '🔬',
-      description: 'Lab results awaiting results or vet review.',
+      description: hh('section_pending_labs_desc'),
       link: `/herd-health/lab-results?BusinessID=${BusinessID}`,
       stat: null,
     },
     {
-      title: 'Parasite Pressure',
+      title: hh('section_parasites'),
       icon: '🐛',
-      description: 'FAMACHA scores and recent fecal egg count trends.',
+      description: hh('section_parasites_desc'),
       link: `/herd-health/parasites?BusinessID=${BusinessID}`,
       stat: null,
     },
     {
-      title: 'Mortality Summary',
+      title: hh('section_mortality'),
       icon: '📉',
-      description: 'Year-to-date mortality count by cause.',
+      description: hh('section_mortality_desc'),
       link: `/herd-health/mortality?BusinessID=${BusinessID}`,
       stat: null,
     },
     {
-      title: 'Biosecurity Log',
+      title: hh('section_biosecurity'),
       icon: '🛡',
-      description: 'Recent visitor and delivery entries, incident history.',
+      description: hh('section_biosecurity_desc'),
       link: `/herd-health/biosecurity?BusinessID=${BusinessID}`,
       stat: null,
     },
     {
-      title: 'Weight & BCS Trends',
+      title: hh('section_weight'),
       icon: '⚖️',
-      description: 'Body condition score distribution and weight change over time.',
+      description: hh('section_weight_desc'),
       link: `/herd-health/weight?BusinessID=${BusinessID}`,
       stat: null,
     },
@@ -113,22 +116,22 @@ export default function HerdHealthReports() {
 
   return (
     <HerdHealthLayout Business={Business} BusinessID={BusinessID}
-      PeopleID={localStorage.getItem('people_id')} pageTitle="Reports"
+      PeopleID={localStorage.getItem('people_id')} pageTitle={hh('nav_reports')}
       breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Herd Health', to: `/herd-health?BusinessID=${BusinessID}` }, { label: 'Reports' }]}>
       <div className="space-y-6 max-w-4xl">
         <div>
-          <h1 className="font-lora text-xl font-bold text-gray-900">Herd Health Reports</h1>
-          <p className="font-mont text-xs text-gray-500">Summary view of all herd health metrics and quick links to each section.</p>
+          <h1 className="font-lora text-xl font-bold text-gray-900">{hh('reports_title')}</h1>
+          <p className="font-mont text-xs text-gray-500">{hh('reports_subtitle')}</p>
         </div>
 
         {loading ? (
-          <div className="text-center py-8 font-mont text-sm text-gray-400 animate-pulse">Loading summary…</div>
+          <div className="text-center py-8 font-mont text-sm text-gray-400 animate-pulse">{hh('loading_summary')}</div>
         ) : summary && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatCard label="Open Events" value={summary.open_events} color={summary.open_events > 0 ? '#F59E0B' : '#10B981'} />
-            <StatCard label="Active Quarantine" value={summary.active_quarantine} color={summary.active_quarantine > 0 ? '#EF4444' : '#10B981'} />
-            <StatCard label="Overdue Vaccinations" value={summary.overdue_vaccinations} color={summary.overdue_vaccinations > 0 ? '#EF4444' : '#10B981'} />
-            <StatCard label="Active Withdrawals" value={summary.active_withdrawals} color={summary.active_withdrawals > 0 ? '#EF4444' : '#10B981'} />
+            <StatCard label={hh('stat_open_events_card')} value={summary.open_events} color={summary.open_events > 0 ? '#F59E0B' : '#10B981'} />
+            <StatCard label={hh('stat_active_quarantine_card')} value={summary.active_quarantine} color={summary.active_quarantine > 0 ? '#EF4444' : '#10B981'} />
+            <StatCard label={hh('stat_overdue_vaccinations')} value={summary.overdue_vaccinations} color={summary.overdue_vaccinations > 0 ? '#EF4444' : '#10B981'} />
+            <StatCard label={hh('stat_active_withdrawals')} value={summary.active_withdrawals} color={summary.active_withdrawals > 0 ? '#EF4444' : '#10B981'} />
           </div>
         )}
 

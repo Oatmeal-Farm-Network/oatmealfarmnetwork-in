@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { useFields, useAnalyses, getIndex, useRaster, ndviColor } from './precisionAgUtils';
+import { useTranslation } from 'react-i18next';
 
 const ALL_INDICES = [
   { key: 'NDVI',  label: 'NDVI',   desc: 'Vegetation density & biomass' },
@@ -17,9 +18,9 @@ const DEFAULT_PANEL_INDICES = ['NDVI', 'NDRE', 'GNDVI', 'NDWI'];
 const COLS = 32, ROWS = 20;
 
 const PRESET_VIEWS = [
-  { label: 'Stress Detection', indices: ['NDVI', 'NDRE', 'GNDVI', 'EVI'], layout: '2x2' },
-  { label: 'Water Stress',     indices: ['NDVI', 'NDWI'],                 layout: '1x2' },
-  { label: 'Full Audit',       indices: ['NDVI', 'NDRE', 'GNDVI', 'NDWI'], layout: '2x2' },
+  { labelKey: 'preset_stress', indices: ['NDVI', 'NDRE', 'GNDVI', 'EVI'], layout: '2x2' },
+  { labelKey: 'preset_water',  indices: ['NDVI', 'NDWI'],                 layout: '1x2' },
+  { labelKey: 'preset_audit',  indices: ['NDVI', 'NDRE', 'GNDVI', 'NDWI'], layout: '2x2' },
 ];
 
 function indexColor(v, min, max, indexKey) {
@@ -34,16 +35,18 @@ function indexColor(v, min, max, indexKey) {
 }
 
 function MiniMap({ fieldId, indexKey, height = 240 }) {
+  const { t } = useTranslation();
+  const pa = k => t(`precision_ag.${k}`);
   const { data, loading, error } = useRaster(fieldId, indexKey, COLS);
 
   if (loading) return (
     <div className="flex items-center justify-center text-gray-400 font-mont text-xs bg-gray-50 rounded-lg animate-pulse" style={{ height }}>
-      Loading…
+      {pa('loading')}
     </div>
   );
   if (error || !data?.grid?.values) return (
     <div className="flex items-center justify-center text-gray-400 font-mont text-xs bg-gray-50 rounded-lg" style={{ height }}>
-      {error ? 'Raster unavailable' : 'No data'}
+      {error ? pa('raster_unavailable') : pa('no_data')}
     </div>
   );
 
@@ -108,7 +111,7 @@ function MapPanel({ panelIdx, indexKey, onIndexChange, analysis, fieldId, analys
         />
         {indexData && (
           <span className="ml-auto font-mont text-xs font-bold text-gray-600">
-            Mean: {indexData.mean.toFixed(3)}
+{pa('lbl_mean')} {indexData.mean.toFixed(3)}
           </span>
         )}
       </div>
@@ -117,7 +120,7 @@ function MapPanel({ panelIdx, indexKey, onIndexChange, analysis, fieldId, analys
       <div className="p-3 flex-1">
         {!analysis ? (
           <div className="flex items-center justify-center text-gray-400 font-mont text-xs bg-gray-50 rounded-lg" style={{ height: 240 }}>
-            Select a field & date
+            {t('precision_ag.select_field_date')}
           </div>
         ) : (
           <>
@@ -149,6 +152,8 @@ function MapPanel({ panelIdx, indexKey, onIndexChange, analysis, fieldId, analys
 }
 
 export default function PrecisionAgMultiLayer() {
+  const { t } = useTranslation();
+  const pa = k => t(`precision_ag.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -188,23 +193,23 @@ export default function PrecisionAgMultiLayer() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
-      pageTitle="Multi-layer View"
-      breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:'Multi-layer View' }]}>
+      pageTitle={pa('multilayer_title')}
+      breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:pa('multilayer_title') }]}>
       <div className="max-w-full mx-auto space-y-5">
         <div>
-          <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">Multi-layer View</h1>
+          <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">{pa('multilayer_title')}</h1>
           <p className="font-mont text-sm text-gray-500">
-            Compare multiple vegetation indices side by side — spot divergence between NDVI, NDRE, GNDVI, and moisture in one view.
+            {pa('multilayer_desc')}
           </p>
         </div>
 
         {/* Toolbar */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 flex-wrap items-end">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold font-mont text-gray-500">Field</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_field')}</label>
             <select value={selectedFieldId} onChange={e => setSelectedFieldId(e.target.value)}
               className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 min-w-50">
-              {fields.length === 0 && <option value="">No fields</option>}
+              {fields.length === 0 && <option value="">{pa('no_fields')}</option>}
               {fields.map(f => <option key={f.fieldid||f.id} value={String(f.fieldid||f.id)}>{f.name}</option>)}
             </select>
           </div>
@@ -216,25 +221,25 @@ export default function PrecisionAgMultiLayer() {
                 {analyses.map((a, i) => (
                   <option key={i} value={i}>
                     {new Date(a.analysis_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
-                    {i === 0 ? ' (latest)' : ''}
+                    {i === 0 ? ' ' + pa('opt_latest') : ''}
                   </option>
                 ))}
               </select>
             </div>
           )}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold font-mont text-gray-500">Preset Views</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_preset_views')}</label>
             <div className="flex gap-1">
               {PRESET_VIEWS.map(p => (
-                <button key={p.label} onClick={() => { setPanelIndices([...p.indices]); setLayout(p.layout); }}
+                <button key={p.labelKey} onClick={() => { setPanelIndices([...p.indices]); setLayout(p.layout); }}
                   className="px-3 py-2 rounded-lg text-xs font-mont border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all">
-                  {p.label}
+                  {pa(p.labelKey)}
                 </button>
               ))}
             </div>
           </div>
           <div className="flex flex-col gap-1 ml-auto">
-            <label className="text-xs font-semibold font-mont text-gray-500">Layout</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_layout')}</label>
             <div className="flex gap-1">
               {[
                 { key: '2x2', label: '2×2' },
@@ -257,14 +262,14 @@ export default function PrecisionAgMultiLayer() {
 
         {/* Panels */}
         {loading ? (
-          <div className="flex items-center justify-center py-32 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
+          <div className="flex items-center justify-center py-32 text-gray-400 font-mont text-sm animate-pulse">{pa('loading')}</div>
         ) : (
           <>
             {analyses.length === 0 && (
               <div className="text-center py-32 bg-white rounded-xl border border-gray-200">
                 <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></div>
-                <div className="font-lora text-xl text-gray-600 mb-2">No analysis data</div>
-                <div className="font-mont text-sm text-gray-400">Run an analysis on this field to view multi-layer maps.</div>
+                <div className="font-lora text-xl text-gray-600 mb-2">{pa('no_analysis_data')}</div>
+                <div className="font-mont text-sm text-gray-400">{pa('no_analysis_multilayer')}</div>
               </div>
             )}
 
@@ -302,17 +307,17 @@ export default function PrecisionAgMultiLayer() {
                 {/* Quick stats comparison */}
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                   <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">
-                    Index Summary
+                    {pa('index_summary')}
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm font-mont">
                       <thead>
                         <tr className="bg-gray-50 border-b border-gray-100">
-                          <th className="text-left px-5 py-3 text-gray-500 font-semibold">Index</th>
-                          <th className="text-center px-4 py-3 text-gray-500 font-semibold">Min</th>
-                          <th className="text-center px-4 py-3 text-gray-500 font-semibold">Mean</th>
-                          <th className="text-center px-4 py-3 text-gray-500 font-semibold">Max</th>
-                          <th className="text-center px-4 py-3 text-gray-500 font-semibold">Range</th>
+                          <th className="text-left px-5 py-3 text-gray-500 font-semibold">{pa('th_index')}</th>
+                          <th className="text-center px-4 py-3 text-gray-500 font-semibold">{pa('th_min')}</th>
+                          <th className="text-center px-4 py-3 text-gray-500 font-semibold">{pa('stat_mean')}</th>
+                          <th className="text-center px-4 py-3 text-gray-500 font-semibold">{pa('th_max')}</th>
+                          <th className="text-center px-4 py-3 text-gray-500 font-semibold">{pa('th_range')}</th>
                         </tr>
                       </thead>
                       <tbody>

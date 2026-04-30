@@ -11,6 +11,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
 import 'leaflet-draw';
+import { useTranslation } from 'react-i18next';
 
 // Fix Leaflet default marker icons broken by Vite/Webpack
 delete L.Icon.Default.prototype._getIconUrl;
@@ -290,7 +291,7 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
             />
             {formData.boundary_geojson && (
               <p className="mt-1 text-xs text-green-700 font-medium">
-                ✓ Boundary captured — centre set to {formData.latitude}, {formData.longitude}
+                {pa('boundary_captured')} {formData.latitude}, {formData.longitude}
               </p>
             )}
           </div>
@@ -388,7 +389,7 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
               disabled={loading}
               className="px-8 py-2.5 bg-[#819360] hover:bg-[#3D6B35] disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors text-sm"
             >
-              {loading ? 'Adding…' : 'Add Field'}
+              {loading ? pa('btn_adding') : pa('btn_add_field')}
             </button>
           </div>
         </form>
@@ -505,7 +506,7 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
     'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6D8E22] focus:border-transparent transition';
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1';
 
-  if (fetching) return <div className="p-8 text-gray-500">Loading field…</div>;
+  if (fetching) return <div className="p-8 text-gray-500">{pa('loading_field')}</div>;
   if (!formData) return <div className="p-8 text-red-500">{error || 'Field not found.'}</div>;
 
   return (
@@ -556,7 +557,7 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
             <div ref={mapContainerRef} style={{ height: '320px', width: '100%' }} className="rounded-lg border border-gray-200 z-0" />
             {formData.boundary_geojson && (
               <p className="mt-1 text-xs text-green-700 font-medium">
-                ✓ New boundary captured — centre set to {formData.latitude}, {formData.longitude}
+                {pa('boundary_updated')} {formData.latitude}, {formData.longitude}
               </p>
             )}
           </div>
@@ -583,7 +584,7 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
               <span className="text-[#6D8E22] font-semibold">every {formData.monitoring_interval_days} days</span>
             </label>
             <input type="range" name="monitoring_interval_days" min="1" max="30" value={formData.monitoring_interval_days} onChange={handleChange} className="w-full accent-[#6D8E22]" />
-            <div className="flex justify-between text-xs text-gray-400 mt-0.5"><span>1 day</span><span>30 days</span></div>
+            <div className="flex justify-between text-xs text-gray-400 mt-0.5"><span>{pa('range_1_day')}</span><span>{pa('range_30_days')}</span></div>
           </div>
 
           <div>
@@ -592,7 +593,7 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
               <span className="text-[#6D8E22] font-semibold">health below {formData.alert_threshold_health}%</span>
             </label>
             <input type="range" name="alert_threshold_health" min="0" max="100" value={formData.alert_threshold_health} onChange={handleChange} className="w-full accent-[#6D8E22]" />
-            <div className="flex justify-between text-xs text-gray-400 mt-0.5"><span>0%</span><span>100%</span></div>
+            <div className="flex justify-between text-xs text-gray-400 mt-0.5"><span>{pa('range_0_pct')}</span><span>{pa('range_100_pct')}</span></div>
           </div>
 
           <div className="pt-2 flex justify-end">
@@ -601,7 +602,7 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
               disabled={loading}
               className="px-8 py-2.5 bg-[#819360] hover:bg-[#3D6B35] disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors text-sm"
             >
-              {loading ? 'Saving…' : 'Save Changes'}
+              {loading ? pa('btn_saving') : pa('btn_save_changes')}
             </button>
           </div>
         </form>
@@ -728,7 +729,7 @@ function FieldList({ businessId, onCreateNew }) {
             {fields.map((field, i) => {
               const fieldId = field.fieldid || field.id;
               const rowBg = i % 2 === 0 ? '#fff' : '#fafafa';
-              const serviceLinks = buildFieldServiceLinks(businessId, fieldId);
+              const serviceLinks = buildFieldServiceLinks(businessId, fieldId, t);
               const biomassOpen = openBiomass.has(fieldId);
               return (
                 <React.Fragment key={fieldId}>
@@ -783,7 +784,7 @@ function FieldList({ businessId, onCreateNew }) {
                           onClick={() => toggleBiomass(fieldId)}
                           className="text-[#3D6B34] hover:underline bg-transparent border-0 p-0 cursor-pointer"
                         >
-                          {biomassOpen ? 'Hide Biomass' : 'Biomass'}
+                          {biomassOpen ? pa('lbl_hide_biomass') : pa('lbl_biomass')}
                         </button>
                         {(field.latitude && field.longitude) && (
                           <>
@@ -854,11 +855,11 @@ function PrecisionAgFields({ businessId: propBusinessId }) {
     }
   }, [Business]);
 
-  if (!Business && !loadError) return <div className="p-8 text-gray-500">Loading...</div>;
-  if (loadError || !Business) return <div className="p-8 text-red-500">Could not load account. Please go back and try again.</div>;
+  if (!Business && !loadError) return <div className="p-8 text-gray-500">{pa('loading_account')}</div>;
+  if (loadError || !Business) return <div className="p-8 text-red-500">{pa('error_load_account')}</div>;
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID} pageTitle="Ag Dashboard" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Precision Ag' }, { label: 'Ag Dashboard' }]}>
+    <AccountLayout Business={Business} BusinessID={businessId} PeopleID={PeopleID} pageTitle={pa('ag_dashboard')} breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Precision Ag' }, { label: pa('ag_dashboard') }]}>
       <div className="max-w-5xl mx-auto">
         {view === 'list' && (
           <FieldList

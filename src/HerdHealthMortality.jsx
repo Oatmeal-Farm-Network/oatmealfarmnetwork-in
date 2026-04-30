@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
 
@@ -23,75 +24,79 @@ const EMPTY = {
 };
 
 function Form({ init, onSave, onCancel }) {
+  const { t } = useTranslation();
+  const hh = k => t(`herd_health.${k}`);
   const [f, setF] = useState(init || EMPTY);
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
   return (
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Animal Tag / ID"><input value={f.AnimalTag} onChange={set('AnimalTag')} className={inp} /></Field>
-        <Field label="Date of Death"><input type="date" value={f.DateOfDeath} onChange={set('DateOfDeath')} className={inp} /></Field>
-        <Field label="Species"><input value={f.Species} onChange={set('Species')} placeholder="e.g. Bovine, Ovine, Porcine" className={inp} /></Field>
-        <Field label="Breed"><input value={f.Breed} onChange={set('Breed')} className={inp} /></Field>
-        <Field label="Sex">
+        <Field label={hh('f_animal_tag')}><input value={f.AnimalTag} onChange={set('AnimalTag')} className={inp} /></Field>
+        <Field label={hh('f_death_date')}><input type="date" value={f.DateOfDeath} onChange={set('DateOfDeath')} className={inp} /></Field>
+        <Field label={hh('f_species')}><input value={f.Species} onChange={set('Species')} placeholder={hh('ph_species')} className={inp} /></Field>
+        <Field label={hh('f_breed')}><input value={f.Breed} onChange={set('Breed')} className={inp} /></Field>
+        <Field label={hh('f_sex')}>
           <select value={f.Sex} onChange={set('Sex')} className={inp}>
-            <option value="">— select —</option>
-            <option>Male</option><option>Female</option><option>Castrated Male</option>
+            <option value="">{hh('select_ph')}</option>
+            <option>{hh('opt_male')}</option><option>{hh('opt_female')}</option><option>{hh('opt_castrated')}</option>
           </select>
         </Field>
-        <Field label="Age (years)"><input type="number" step="0.1" value={f.AgeYears} onChange={set('AgeYears')} className={inp} /></Field>
-        <Field label="Weight (lbs)"><input type="number" step="1" value={f.WeightLbs} onChange={set('WeightLbs')} className={inp} /></Field>
-        <Field label="Cause of Death">
+        <Field label={hh('f_age_years')}><input type="number" step="0.1" value={f.AgeYears} onChange={set('AgeYears')} className={inp} /></Field>
+        <Field label={hh('f_weight_lbs')}><input type="number" step="1" value={f.WeightLbs} onChange={set('WeightLbs')} className={inp} /></Field>
+        <Field label={hh('f_cause_of_death')}>
           <select value={f.CauseOfDeath} onChange={set('CauseOfDeath')} className={inp}>
-            <option value="">— select —</option>
+            <option value="">{hh('select_ph')}</option>
             {CAUSES.map(c => <option key={c}>{c}</option>)}
           </select>
         </Field>
-        <Field label="Preliminary Diagnosis" className="sm:col-span-2"><input value={f.PreliminaryDiagnosis} onChange={set('PreliminaryDiagnosis')} className={inp} /></Field>
-        <Field label="Post-Mortem Performed?">
+        <Field label={hh('f_prelim_diagnosis')} className="sm:col-span-2"><input value={f.PreliminaryDiagnosis} onChange={set('PreliminaryDiagnosis')} className={inp} /></Field>
+        <Field label={hh('f_post_mortem')}>
           <select value={f.PostMortemPerformed} onChange={set('PostMortemPerformed')} className={inp}>
-            <option value="">— select —</option>
-            <option>Yes</option><option>No</option><option>Partial</option>
+            <option value="">{hh('select_ph')}</option>
+            <option>{hh('f_yes')}</option><option>{hh('f_no')}</option><option>{hh('f_partial')}</option>
           </select>
         </Field>
-        <Field label="Vet Notified"><input value={f.VetNotified} onChange={set('VetNotified')} className={inp} /></Field>
-        <Field label="Post-Mortem Findings" className="sm:col-span-2"><textarea value={f.PostMortemFindings} onChange={set('PostMortemFindings')} rows={2} className={inp} /></Field>
-        <Field label="Samples Submitted (Lab)"><input value={f.SamplesSubmitted} onChange={set('SamplesSubmitted')} placeholder="e.g. Brain, lung, blood" className={inp} /></Field>
-        <Field label="Lab Results Summary"><input value={f.LabResultsSummary} onChange={set('LabResultsSummary')} className={inp} /></Field>
-        <Field label="Disposal Method">
+        <Field label={hh('f_vet_notified')}><input value={f.VetNotified} onChange={set('VetNotified')} className={inp} /></Field>
+        <Field label={hh('f_post_mortem_findings')} className="sm:col-span-2"><textarea value={f.PostMortemFindings} onChange={set('PostMortemFindings')} rows={2} className={inp} /></Field>
+        <Field label={hh('f_samples_submitted')}><input value={f.SamplesSubmitted} onChange={set('SamplesSubmitted')} placeholder={hh('ph_samples')} className={inp} /></Field>
+        <Field label={hh('f_lab_results_summary')}><input value={f.LabResultsSummary} onChange={set('LabResultsSummary')} className={inp} /></Field>
+        <Field label={hh('f_disposal_method')}>
           <select value={f.DisposalMethod} onChange={set('DisposalMethod')} className={inp}>
-            <option value="">— select —</option>
+            <option value="">{hh('select_ph')}</option>
             {DISPOSAL_METHODS.map(d => <option key={d}>{d}</option>)}
           </select>
         </Field>
-        <Field label="Disposal Date"><input type="date" value={f.DisposalDate} onChange={set('DisposalDate')} className={inp} /></Field>
-        <Field label="Disposal Location / Record"><input value={f.DisposalLocation} onChange={set('DisposalLocation')} className={inp} /></Field>
-        <Field label="Reported to Authorities?">
+        <Field label={hh('f_disposal_date')}><input type="date" value={f.DisposalDate} onChange={set('DisposalDate')} className={inp} /></Field>
+        <Field label={hh('f_disposal_location')}><input value={f.DisposalLocation} onChange={set('DisposalLocation')} className={inp} /></Field>
+        <Field label={hh('f_reported_authorities')}>
           <select value={f.ReportedToAuthorities} onChange={set('ReportedToAuthorities')} className={inp}>
-            <option value="">— select —</option>
-            <option>Yes</option><option>No</option><option>Not Required</option>
+            <option value="">{hh('select_ph')}</option>
+            <option>{hh('f_yes')}</option><option>{hh('f_no')}</option><option>{hh('opt_not_required')}</option>
           </select>
         </Field>
-        <Field label="Insurance Claim Filed?">
+        <Field label={hh('f_insurance_claim')}>
           <select value={f.InsuranceClaim} onChange={set('InsuranceClaim')} className={inp}>
-            <option value="">— select —</option>
-            <option>Yes</option><option>No</option><option>N/A</option>
+            <option value="">{hh('select_ph')}</option>
+            <option>{hh('f_yes')}</option><option>{hh('f_no')}</option><option>{hh('f_na')}</option>
           </select>
         </Field>
-        <Field label="Insurance Claim Number"><input value={f.InsuranceClaimNumber} onChange={set('InsuranceClaimNumber')} className={inp} /></Field>
-        <Field label="Estimated Value ($)"><input type="number" step="0.01" value={f.EstimatedValue} onChange={set('EstimatedValue')} className={inp} /></Field>
-        <Field label="Witnessed By"><input value={f.WitnessedBy} onChange={set('WitnessedBy')} className={inp} /></Field>
-        <Field label="Notes" className="sm:col-span-2"><textarea value={f.Notes} onChange={set('Notes')} rows={2} className={inp} /></Field>
+        <Field label={hh('f_insurance_claim_num')}><input value={f.InsuranceClaimNumber} onChange={set('InsuranceClaimNumber')} className={inp} /></Field>
+        <Field label={hh('f_estimated_value')}><input type="number" step="0.01" value={f.EstimatedValue} onChange={set('EstimatedValue')} className={inp} /></Field>
+        <Field label={hh('f_witnessed_by')}><input value={f.WitnessedBy} onChange={set('WitnessedBy')} className={inp} /></Field>
+        <Field label={hh('f_notes')} className="sm:col-span-2"><textarea value={f.Notes} onChange={set('Notes')} rows={2} className={inp} /></Field>
       </div>
       <div className="flex gap-2">
         <button onClick={() => onSave({ ...f, AgeYears: f.AgeYears ? parseFloat(f.AgeYears) : null, WeightLbs: f.WeightLbs ? parseFloat(f.WeightLbs) : null, EstimatedValue: f.EstimatedValue ? parseFloat(f.EstimatedValue) : null })}
-          className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>Save</button>
-        <button onClick={onCancel} className="px-4 py-2 rounded-lg text-sm font-mont text-gray-600 bg-gray-200 hover:bg-gray-300">Cancel</button>
+          className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>{hh('btn_save')}</button>
+        <button onClick={onCancel} className="px-4 py-2 rounded-lg text-sm font-mont text-gray-600 bg-gray-200 hover:bg-gray-300">{hh('btn_cancel')}</button>
       </div>
     </div>
   );
 }
 
 export default function HerdHealthMortality() {
+  const { t } = useTranslation();
+  const hh = k => t(`herd_health.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -129,39 +134,39 @@ export default function HerdHealthMortality() {
 
   return (
     <HerdHealthLayout Business={Business} BusinessID={BusinessID}
-      PeopleID={localStorage.getItem('people_id')} pageTitle="Mortality"
+      PeopleID={localStorage.getItem('people_id')} pageTitle={hh('nav_mortality')}
       breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Herd Health', to: `/herd-health?BusinessID=${BusinessID}` }, { label: 'Mortality' }]}>
       <div className="space-y-4 max-w-5xl">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-lora text-xl font-bold text-gray-900">Mortality Records</h1>
-            <p className="font-mont text-xs text-gray-500">Death records with post-mortem findings, disposal documentation, and insurance tracking.</p>
+            <h1 className="font-lora text-xl font-bold text-gray-900">{hh('mortality_title')}</h1>
+            <p className="font-mont text-xs text-gray-500">{hh('mortality_subtitle')}</p>
           </div>
           <button onClick={() => { setShowForm(true); setEditing(null); }}
-            className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>+ Log Death</button>
+            className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>{hh('btn_log_death')}</button>
         </div>
 
         {(pendingDisposal.length > 0 || openClaims.length > 0) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {pendingDisposal.length > 0 && <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 font-mont text-sm text-amber-800">⚠ <strong>{pendingDisposal.length}</strong> record{pendingDisposal.length > 1 ? 's' : ''} missing disposal method.</div>}
-            {openClaims.length > 0 && <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 font-mont text-sm text-blue-800">ℹ <strong>{openClaims.length}</strong> insurance claim{openClaims.length > 1 ? 's' : ''} without a claim number.</div>}
+            {pendingDisposal.length > 0 && <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 font-mont text-sm text-amber-800">⚠ <strong>{pendingDisposal.length}</strong> record{pendingDisposal.length > 1 ? 's' : ''} {hh('alert_missing_disposal')}</div>}
+            {openClaims.length > 0 && <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 font-mont text-sm text-blue-800">ℹ <strong>{openClaims.length}</strong> insurance claim{openClaims.length > 1 ? 's' : ''} {hh('alert_no_claim_number')}</div>}
           </div>
         )}
 
         {rows.length > 0 && (
           <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 grid grid-cols-3 gap-4 text-center">
-            <div><div className="font-lora text-xl font-bold text-gray-900">{rows.length}</div><div className="font-mont text-xs text-gray-500">Total Deaths</div></div>
-            <div><div className="font-lora text-xl font-bold text-gray-900">{rows.filter(r => r.InsuranceClaim === 'Yes').length}</div><div className="font-mont text-xs text-gray-500">Insurance Claims</div></div>
-            <div><div className="font-lora text-xl font-bold text-gray-900">${rows.reduce((s, r) => s + (parseFloat(r.EstimatedValue) || 0), 0).toLocaleString()}</div><div className="font-mont text-xs text-gray-500">Est. Total Value</div></div>
+            <div><div className="font-lora text-xl font-bold text-gray-900">{rows.length}</div><div className="font-mont text-xs text-gray-500">{hh('stat_total_deaths')}</div></div>
+            <div><div className="font-lora text-xl font-bold text-gray-900">{rows.filter(r => r.InsuranceClaim === 'Yes').length}</div><div className="font-mont text-xs text-gray-500">{hh('stat_insurance_claims')}</div></div>
+            <div><div className="font-lora text-xl font-bold text-gray-900">${rows.reduce((s, r) => s + (parseFloat(r.EstimatedValue) || 0), 0).toLocaleString()}</div><div className="font-mont text-xs text-gray-500">{hh('stat_est_value')}</div></div>
           </div>
         )}
 
         {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} />}
 
         {loading ? (
-          <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">Loading…</div>
+          <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">{hh('loading')}</div>
         ) : rows.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 font-mont text-sm text-gray-400">No mortality records yet.</div>
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 font-mont text-sm text-gray-400">{hh('no_mortality')}</div>
         ) : (
           <div className="space-y-3">
             {rows.map(row => (
@@ -181,17 +186,17 @@ export default function HerdHealthMortality() {
                         <div className="font-mont text-xs text-gray-500 mt-1 flex flex-wrap gap-x-3">
                           {row.DateOfDeath && <span>{row.DateOfDeath.slice(0, 10)}</span>}
                           {row.EstimatedValue && <span>Value: ${parseFloat(row.EstimatedValue).toFixed(2)}</span>}
-                          {row.DisposalMethod && <span>Disposal: {row.DisposalMethod}</span>}
-                          {row.PostMortemPerformed === 'Yes' && <span className="text-blue-600">PM performed</span>}
+                          {row.DisposalMethod && <span>{hh('lbl_disposal')} {row.DisposalMethod}</span>}
+                          {row.PostMortemPerformed === 'Yes' && <span className="text-blue-600">{hh('lbl_pm_performed')}</span>}
                         </div>
                         {row.PreliminaryDiagnosis && <p className="font-mont text-xs text-gray-600 mt-1 line-clamp-1">{row.PreliminaryDiagnosis}</p>}
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        <button onClick={() => setEditing(row)} className="font-mont text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100">Edit</button>
+                        <button onClick={() => setEditing(row)} className="font-mont text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100">{hh('btn_edit')}</button>
                         {deleting === row.MortalityID
-                          ? <><button onClick={() => del(row.MortalityID)} className="font-mont text-xs text-red-600 font-semibold px-2 py-1 rounded bg-red-50">Confirm</button>
-                              <button onClick={() => setDeleting(null)} className="font-mont text-xs text-gray-400 px-2 py-1 rounded hover:bg-gray-100">Cancel</button></>
-                          : <button onClick={() => setDeleting(row.MortalityID)} className="font-mont text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50">Delete</button>
+                          ? <><button onClick={() => del(row.MortalityID)} className="font-mont text-xs text-red-600 font-semibold px-2 py-1 rounded bg-red-50">{hh('btn_confirm')}</button>
+                              <button onClick={() => setDeleting(null)} className="font-mont text-xs text-gray-400 px-2 py-1 rounded hover:bg-gray-100">{hh('btn_cancel')}</button></>
+                          : <button onClick={() => setDeleting(row.MortalityID)} className="font-mont text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50">{hh('btn_delete')}</button>
                         }
                       </div>
                     </div>

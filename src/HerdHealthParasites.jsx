@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
 import AnimalPicker from './AnimalPicker';
@@ -26,72 +27,76 @@ const EMPTY = {
 };
 
 function Form({ init, onSave, onCancel, businessId }) {
+  const { t } = useTranslation();
+  const hh = k => t(`herd_health.${k}`);
   const [f, setF] = useState(init || EMPTY);
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
   return (
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Animal (leave blank for group)">
+        <Field label={hh('f_animal_or_group2')}>
           <AnimalPicker businessId={businessId} value={f.AnimalTag} animalId={f.AnimalID}
             onChange={(tag, id) => setF(p => ({ ...p, AnimalTag: tag, AnimalID: id }))} />
         </Field>
-        <Field label="Group / Herd Name"><input value={f.GroupName} onChange={set('GroupName')} placeholder="e.g. All Ewes, Spring Lambs" className={inp} /></Field>
-        <Field label="Test Date"><input type="date" value={f.TestDate} onChange={set('TestDate')} className={inp} /></Field>
-        <Field label="Test Type">
+        <Field label={hh('f_group_name')}><input value={f.GroupName} onChange={set('GroupName')} placeholder={hh('ph_group_lambs')} className={inp} /></Field>
+        <Field label={hh('f_test_date')}><input type="date" value={f.TestDate} onChange={set('TestDate')} className={inp} /></Field>
+        <Field label={hh('f_test_type')}>
           <select value={f.TestType} onChange={set('TestType')} className={inp}>
-            <option value="">— select —</option>
+            <option value="">{hh('select_ph')}</option>
             {TEST_TYPES.map(t => <option key={t}>{t}</option>)}
           </select>
         </Field>
-        <Field label="Parasite Type">
+        <Field label={hh('f_parasite_type')}>
           <select value={f.ParasiteType} onChange={set('ParasiteType')} className={inp}>
-            <option value="">— select —</option>
+            <option value="">{hh('select_ph')}</option>
             {PARASITE_TYPES.map(p => <option key={p}>{p}</option>)}
           </select>
         </Field>
-        <Field label="FAMACHA Score (1–5)">
+        <Field label={hh('f_famacha_score')}>
           <select value={f.FamachaScore} onChange={set('FamachaScore')} className={inp}>
-            <option value="">— select —</option>
+            <option value="">{hh('select_ph')}</option>
             {FAMACHA_SCORES.map(n => <option key={n} value={n}>{n} – {FAMACHA_LABEL[n]}</option>)}
           </select>
         </Field>
-        <Field label="Fecal Egg Count">
+        <Field label={hh('f_egg_count')}>
           <div className="flex gap-2">
-            <input type="number" step="1" value={f.EggCount} onChange={set('EggCount')} className={inp} placeholder="e.g. 500" />
+            <input type="number" step="1" value={f.EggCount} onChange={set('EggCount')} className={inp} placeholder={hh('ph_egg_count')} />
             <select value={f.EggCountUnit} onChange={set('EggCountUnit')} className="border border-gray-300 rounded-lg px-2 py-2 text-sm font-mont focus:outline-none focus:border-green-500">
               <option>EPG</option><option>OPG</option>
             </select>
           </div>
         </Field>
-        <Field label="Treatment Given?">
+        <Field label={hh('f_treatment_given_q')}>
           <select value={f.TreatmentGiven} onChange={set('TreatmentGiven')} className={inp}>
-            <option value="">— select —</option>
-            <option>Yes</option><option>No</option>
+            <option value="">{hh('select_ph')}</option>
+            <option>{hh('f_yes')}</option><option>{hh('f_no')}</option>
           </select>
         </Field>
-        <Field label="Dewormer Product">
+        <Field label={hh('f_dewormer')}>
           <select value={f.DewormProduct} onChange={set('DewormProduct')} className={inp}>
-            <option value="">— select —</option>
+            <option value="">{hh('select_ph')}</option>
             {DEWORMERS.map(d => <option key={d}>{d}</option>)}
           </select>
         </Field>
-        <Field label="Dose / Amount"><input value={f.DewormDose} onChange={set('DewormDose')} placeholder="e.g. 1 mL/50 lbs" className={inp} /></Field>
-        <Field label="Route"><input value={f.DewormRoute} onChange={set('DewormRoute')} placeholder="e.g. Oral drench" className={inp} /></Field>
-        <Field label="Withdrawal Date"><input type="date" value={f.WithdrawalDate} onChange={set('WithdrawalDate')} className={inp} /></Field>
-        <Field label="Treated By"><input value={f.TreatedBy} onChange={set('TreatedBy')} className={inp} /></Field>
-        <Field label="Follow-Up Date"><input type="date" value={f.FollowUpDate} onChange={set('FollowUpDate')} className={inp} /></Field>
-        <Field label="Notes" className="sm:col-span-2"><textarea value={f.Notes} onChange={set('Notes')} rows={2} className={inp} /></Field>
+        <Field label={hh('f_dose_amount')}><input value={f.DewormDose} onChange={set('DewormDose')} placeholder={hh('ph_dose')} className={inp} /></Field>
+        <Field label={hh('f_route')}><input value={f.DewormRoute} onChange={set('DewormRoute')} placeholder={hh('ph_route')} className={inp} /></Field>
+        <Field label={hh('f_withdrawal_date')}><input type="date" value={f.WithdrawalDate} onChange={set('WithdrawalDate')} className={inp} /></Field>
+        <Field label={hh('f_treated_by')}><input value={f.TreatedBy} onChange={set('TreatedBy')} className={inp} /></Field>
+        <Field label={hh('f_followup_date')}><input type="date" value={f.FollowUpDate} onChange={set('FollowUpDate')} className={inp} /></Field>
+        <Field label={hh('f_notes')} className="sm:col-span-2"><textarea value={f.Notes} onChange={set('Notes')} rows={2} className={inp} /></Field>
       </div>
       <div className="flex gap-2">
         <button onClick={() => onSave({ ...f, FamachaScore: f.FamachaScore ? parseInt(f.FamachaScore) : null, EggCount: f.EggCount ? parseInt(f.EggCount) : null })}
-          className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>Save</button>
-        <button onClick={onCancel} className="px-4 py-2 rounded-lg text-sm font-mont text-gray-600 bg-gray-200 hover:bg-gray-300">Cancel</button>
+          className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>{hh('btn_save')}</button>
+        <button onClick={onCancel} className="px-4 py-2 rounded-lg text-sm font-mont text-gray-600 bg-gray-200 hover:bg-gray-300">{hh('btn_cancel')}</button>
       </div>
     </div>
   );
 }
 
 export default function HerdHealthParasites() {
+  const { t } = useTranslation();
+  const hh = k => t(`herd_health.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -130,37 +135,37 @@ export default function HerdHealthParasites() {
 
   return (
     <HerdHealthLayout Business={Business} BusinessID={BusinessID}
-      PeopleID={localStorage.getItem('people_id')} pageTitle="Parasite Control"
+      PeopleID={localStorage.getItem('people_id')} pageTitle={hh('nav_parasites')}
       breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Herd Health', to: `/herd-health?BusinessID=${BusinessID}` }, { label: 'Parasite Control' }]}>
       <div className="space-y-4 max-w-5xl">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-lora text-xl font-bold text-gray-900">Parasite Control</h1>
-            <p className="font-mont text-xs text-gray-500">FAMACHA scores, fecal egg counts, deworming records, and resistance monitoring.</p>
+            <h1 className="font-lora text-xl font-bold text-gray-900">{hh('parasites_title')}</h1>
+            <p className="font-mont text-xs text-gray-500">{hh('parasites_subtitle')}</p>
           </div>
           <button onClick={() => { setShowForm(true); setEditing(null); }}
-            className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>+ Add Record</button>
+            className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>{hh('btn_add_parasite')}</button>
         </div>
 
         {(followUpDue.length > 0 || highFamacha.length > 0) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {followUpDue.length > 0 && <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 font-mont text-sm text-amber-800">⚠ <strong>{followUpDue.length}</strong> follow-up{followUpDue.length > 1 ? 's' : ''} due or overdue.</div>}
-            {highFamacha.length > 0 && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 font-mont text-sm text-red-800">⚠ <strong>{highFamacha.length}</strong> animal{highFamacha.length > 1 ? 's' : ''} with FAMACHA score 4 or 5 — treatment likely needed.</div>}
+            {followUpDue.length > 0 && <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 font-mont text-sm text-amber-800">⚠ <strong>{followUpDue.length}</strong> follow-up{followUpDue.length > 1 ? 's' : ''} {hh('alert_due_overdue')}</div>}
+            {highFamacha.length > 0 && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 font-mont text-sm text-red-800">⚠ <strong>{highFamacha.length}</strong> animal{highFamacha.length > 1 ? 's' : ''} {hh('alert_treatment_needed')}</div>}
           </div>
         )}
 
         {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} businessId={BusinessID} />}
 
         {loading ? (
-          <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">Loading…</div>
+          <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">{hh('loading')}</div>
         ) : rows.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 font-mont text-sm text-gray-400">No parasite control records yet.</div>
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 font-mont text-sm text-gray-400">{hh('no_parasites')}</div>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <table className="w-full text-xs font-mont">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  {['Animal/Group', 'Date', 'Test Type', 'FAMACHA', 'Egg Count', 'Treatment', 'Withdrawal', ''].map(h => (
+                  {[hh('th_animal_group'),hh('th_date'),hh('th_test_type'),hh('th_famacha'),hh('th_egg_count'),hh('th_treatment'),hh('th_withdrawal'),''].map(h => (
                     <th key={h} className="px-3 py-2.5 text-left font-semibold text-gray-500">{h}</th>
                   ))}
                 </tr>
@@ -192,7 +197,7 @@ export default function HerdHealthParasites() {
                       </td>
                       <td className="px-3 py-2.5">
                         <div className="flex gap-1">
-                          <button onClick={() => setEditing(row)} className="text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded hover:bg-gray-100">Edit</button>
+                          <button onClick={() => setEditing(row)} className="text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded hover:bg-gray-100">{hh('btn_edit')}</button>
                           {deleting === row.ParasiteID
                             ? <><button onClick={() => del(row.ParasiteID)} className="text-red-600 font-semibold px-1.5 py-0.5 rounded bg-red-50">✓</button>
                                 <button onClick={() => setDeleting(null)} className="text-gray-400 px-1.5 py-0.5 rounded hover:bg-gray-100">✕</button></>

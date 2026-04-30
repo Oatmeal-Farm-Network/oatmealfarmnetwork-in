@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
 
@@ -24,42 +25,46 @@ const EMPTY = {
 };
 
 function Form({ init, onSave, onCancel }) {
+  const { t } = useTranslation();
+  const hh = k => t(`herd_health.${k}`);
   const [f, setF] = useState(init || EMPTY);
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
   return (
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Name*"><input value={f.Name} onChange={set('Name')} className={inp} /></Field>
-        <Field label="Role / Title">
+        <Field label={hh('f_name_req')}><input value={f.Name} onChange={set('Name')} className={inp} /></Field>
+        <Field label={hh('f_role_title')}>
           <select value={f.Role} onChange={set('Role')} className={inp}>
-            <option value="">— select —</option>
+            <option value="">{hh('select_ph')}</option>
             {ROLES.map(r => <option key={r}>{r}</option>)}
           </select>
         </Field>
-        <Field label="Clinic / Practice Name"><input value={f.ClinicName} onChange={set('ClinicName')} className={inp} /></Field>
-        <Field label="Primary Phone"><input type="tel" value={f.Phone} onChange={set('Phone')} className={inp} /></Field>
-        <Field label="Emergency / After-Hours Phone"><input type="tel" value={f.EmergencyPhone} onChange={set('EmergencyPhone')} className={inp} /></Field>
-        <Field label="Email"><input type="email" value={f.Email} onChange={set('Email')} className={inp} /></Field>
-        <Field label="Address"><input value={f.Address} onChange={set('Address')} className={inp} /></Field>
-        <Field label="City"><input value={f.City} onChange={set('City')} className={inp} /></Field>
-        <Field label="State"><input value={f.State} onChange={set('State')} className={inp} /></Field>
-        <Field label="ZIP Code"><input value={f.Zip} onChange={set('Zip')} className={inp} /></Field>
-        <Field label="License Number"><input value={f.LicenseNumber} onChange={set('LicenseNumber')} className={inp} /></Field>
-        <Field label="DEA Number"><input value={f.DEANumber} onChange={set('DEANumber')} className={inp} /></Field>
-        <Field label="Species Served"><input value={f.SpeciesServed} onChange={set('SpeciesServed')} placeholder="e.g. Bovine, Ovine, Camelid" className={inp} /></Field>
-        <Field label="Preferred Contact Method"><input value={f.PreferredContact} onChange={set('PreferredContact')} placeholder="e.g. Call, Text, Email" className={inp} /></Field>
-        <Field label="Services Offered" className="sm:col-span-2"><textarea value={f.ServicesOffered} onChange={set('ServicesOffered')} rows={2} placeholder="e.g. Pregnancy checks, AI, herd health consultations, emergency calls..." className={inp} /></Field>
-        <Field label="Notes" className="sm:col-span-2"><textarea value={f.Notes} onChange={set('Notes')} rows={2} className={inp} /></Field>
+        <Field label={hh('f_clinic_name')}><input value={f.ClinicName} onChange={set('ClinicName')} className={inp} /></Field>
+        <Field label={hh('f_primary_phone')}><input type="tel" value={f.Phone} onChange={set('Phone')} className={inp} /></Field>
+        <Field label={hh('f_emergency_phone')}><input type="tel" value={f.EmergencyPhone} onChange={set('EmergencyPhone')} className={inp} /></Field>
+        <Field label={hh('f_email')}><input type="email" value={f.Email} onChange={set('Email')} className={inp} /></Field>
+        <Field label={hh('f_address')}><input value={f.Address} onChange={set('Address')} className={inp} /></Field>
+        <Field label={hh('f_city')}><input value={f.City} onChange={set('City')} className={inp} /></Field>
+        <Field label={hh('f_state')}><input value={f.State} onChange={set('State')} className={inp} /></Field>
+        <Field label={hh('f_zip')}><input value={f.Zip} onChange={set('Zip')} className={inp} /></Field>
+        <Field label={hh('f_license_num')}><input value={f.LicenseNumber} onChange={set('LicenseNumber')} className={inp} /></Field>
+        <Field label={hh('f_dea_num')}><input value={f.DEANumber} onChange={set('DEANumber')} className={inp} /></Field>
+        <Field label={hh('f_species_served')}><input value={f.SpeciesServed} onChange={set('SpeciesServed')} placeholder={hh('ph_species_served')} className={inp} /></Field>
+        <Field label={hh('f_preferred_contact')}><input value={f.PreferredContact} onChange={set('PreferredContact')} placeholder={hh('ph_preferred_contact')} className={inp} /></Field>
+        <Field label={hh('f_services_offered')} className="sm:col-span-2"><textarea value={f.ServicesOffered} onChange={set('ServicesOffered')} rows={2} placeholder={hh('ph_services')} className={inp} /></Field>
+        <Field label={hh('f_notes')} className="sm:col-span-2"><textarea value={f.Notes} onChange={set('Notes')} rows={2} className={inp} /></Field>
       </div>
       <div className="flex gap-2">
-        <button onClick={() => onSave(f)} className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>Save</button>
-        <button onClick={onCancel} className="px-4 py-2 rounded-lg text-sm font-mont text-gray-600 bg-gray-200 hover:bg-gray-300">Cancel</button>
+        <button onClick={() => onSave(f)} className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>{hh('btn_save')}</button>
+        <button onClick={onCancel} className="px-4 py-2 rounded-lg text-sm font-mont text-gray-600 bg-gray-200 hover:bg-gray-300">{hh('btn_cancel')}</button>
       </div>
     </div>
   );
 }
 
 export default function HerdHealthVetContacts() {
+  const { t } = useTranslation();
+  const hh = k => t(`herd_health.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -99,30 +104,30 @@ export default function HerdHealthVetContacts() {
 
   return (
     <HerdHealthLayout Business={Business} BusinessID={BusinessID}
-      PeopleID={localStorage.getItem('people_id')} pageTitle="Vet Contacts"
+      PeopleID={localStorage.getItem('people_id')} pageTitle={hh('nav_vet_contacts')}
       breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Herd Health', to: `/herd-health?BusinessID=${BusinessID}` }, { label: 'Vet Contacts' }]}>
       <div className="space-y-4 max-w-4xl">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-lora text-xl font-bold text-gray-900">Veterinary Contacts</h1>
-            <p className="font-mont text-xs text-gray-500">Your vet, farrier, nutritionist, extension agent, and other livestock professional directory.</p>
+            <h1 className="font-lora text-xl font-bold text-gray-900">{hh('vet_contacts_title')}</h1>
+            <p className="font-mont text-xs text-gray-500">{hh('vet_contacts_subtitle')}</p>
           </div>
           <button onClick={() => { setShowForm(true); setEditing(null); }}
-            className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>+ Add Contact</button>
+            className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>{hh('btn_add_contact')}</button>
         </div>
 
         {rows.length > 0 && (
           <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name, clinic, role, or species…"
+            placeholder={hh('ph_search_contacts')}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mont focus:outline-none focus:border-green-500" />
         )}
 
         {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} />}
 
         {loading ? (
-          <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">Loading…</div>
+          <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">{hh('loading')}</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 font-mont text-sm text-gray-400">{rows.length === 0 ? 'No contacts yet.' : 'No contacts match your search.'}</div>
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 font-mont text-sm text-gray-400">{rows.length === 0 ? hh('no_contacts') : hh('no_contacts_match')}</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {filtered.map(row => (
@@ -138,7 +143,7 @@ export default function HerdHealthVetContacts() {
                         {row.ClinicName && <div className="font-mont text-xs text-gray-500">{row.ClinicName}</div>}
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        <button onClick={() => setEditing(row)} className="font-mont text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100">Edit</button>
+                        <button onClick={() => setEditing(row)} className="font-mont text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100">{hh('btn_edit')}</button>
                         {deleting === row.VetContactID
                           ? <><button onClick={() => del(row.VetContactID)} className="font-mont text-xs text-red-600 font-semibold px-2 py-1 rounded bg-red-50">✓</button>
                               <button onClick={() => setDeleting(null)} className="font-mont text-xs text-gray-400 px-2 py-1 rounded hover:bg-gray-100">✕</button></>
@@ -154,7 +159,7 @@ export default function HerdHealthVetContacts() {
                       )}
                       {row.EmergencyPhone && (
                         <a href={`tel:${row.EmergencyPhone}`} className="font-mont text-xs text-red-600 hover:underline flex items-center gap-1">
-                          <span>🚨</span> Emergency: {row.EmergencyPhone}
+                          <span>🚨</span> {hh('lbl_emergency')} {row.EmergencyPhone}
                         </a>
                       )}
                       {row.Email && (
@@ -163,7 +168,7 @@ export default function HerdHealthVetContacts() {
                         </a>
                       )}
                     </div>
-                    {row.SpeciesServed && <div className="font-mont text-xs text-gray-400">Species: {row.SpeciesServed}</div>}
+                    {row.SpeciesServed && <div className="font-mont text-xs text-gray-400">{hh('lbl_species')} {row.SpeciesServed}</div>}
                     {row.ServicesOffered && <div className="font-mont text-xs text-gray-400 line-clamp-2">{row.ServicesOffered}</div>}
                   </div>
                 )}

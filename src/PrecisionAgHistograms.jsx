@@ -3,26 +3,29 @@ import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { useFields, useAnalyses, getIndex, useRaster } from './precisionAgUtils';
+import { useTranslation } from 'react-i18next';
 
 // ─── Real-raster histogram (one card per index) ─────────────────────────────
 function IndexHistogramCard({ fieldId, indexKey, color = '#6D8E22', height = 130 }) {
+  const { t } = useTranslation();
+  const pa = k => t(`precision_ag.${k}`);
   const { data, loading, error } = useRaster(fieldId, indexKey, 48);
 
   if (loading) return (
     <div className="flex items-center justify-center text-gray-400 text-xs font-mont animate-pulse" style={{ height }}>
-      Loading raster…
+      {pa('loading_raster')}
     </div>
   );
   if (error || !data?.grid?.values) return (
     <div className="flex items-center justify-center text-gray-400 text-xs font-mont" style={{ height }}>
-      {error ? `Couldn't load raster` : 'No data — run an analysis first'}
+      {error ? pa('raster_error') : pa('no_data_run_analysis')}
     </div>
   );
 
   const values = data.grid.values.flat().filter(v => v != null);
   if (values.length === 0) return (
     <div className="flex items-center justify-center text-gray-400 text-xs font-mont" style={{ height }}>
-      No valid pixels
+      {pa('no_valid_pixels')}
     </div>
   );
 
@@ -66,10 +69,10 @@ function IndexHistogramCard({ fieldId, indexKey, color = '#6D8E22', height = 130
         <text x={W - PR} y={H - 6} textAnchor="end" fontSize="9" fill="#9CA3AF">{max.toFixed(2)}</text>
       </svg>
       <div className="flex gap-4 mt-1 text-xs font-mont text-gray-500 flex-wrap">
-        <span>Min <strong>{min.toFixed(3)}</strong></span>
-        <span>Mean <strong style={{ color }}>{mean.toFixed(3)}</strong></span>
-        <span>Max <strong>{max.toFixed(3)}</strong></span>
-        {std != null && <span>Std <strong>{std.toFixed(3)}</strong></span>}
+        <span>{pa('stat_min')} <strong>{min.toFixed(3)}</strong></span>
+        <span>{pa('stat_mean')} <strong style={{ color }}>{mean.toFixed(3)}</strong></span>
+        <span>{pa('stat_max')} <strong>{max.toFixed(3)}</strong></span>
+        {std != null && <span>{pa('stat_std')} <strong>{std.toFixed(3)}</strong></span>}
         <span className="ml-auto text-gray-400">{values.length} px</span>
       </div>
     </div>
@@ -96,6 +99,8 @@ const INDEX_CONFIGS = [
 ];
 
 export default function PrecisionAgHistograms() {
+  const { t } = useTranslation();
+  const pa = k => t(`precision_ag.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -117,35 +122,35 @@ export default function PrecisionAgHistograms() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
-      pageTitle="Histograms"
-      breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:'Histograms' }]}>
+      pageTitle={pa('hist_title')}
+      breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:pa('hist_title') }]}>
       <div className="max-w-full mx-auto space-y-5">
         <div>
-          <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">Histograms</h1>
+          <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">{pa('hist_title')}</h1>
           <p className="font-mont text-sm text-gray-500">
-            Pixel-value distributions for each vegetation index — per field, per satellite pass. Spot outliers and track season-over-season shifts.
+            {pa('hist_desc')}
           </p>
         </div>
 
         {/* Selectors */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 flex-wrap items-end">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold font-mont text-gray-500">Field</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_field')}</label>
             <select value={selectedFieldId} onChange={e => setSelectedFieldId(e.target.value)}
               className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 min-w-[200px]">
-              {fields.length === 0 && <option value="">No fields</option>}
+              {fields.length === 0 && <option value="">{pa('no_fields')}</option>}
               {fields.map(f => <option key={f.fieldid||f.id} value={String(f.fieldid||f.id)}>{f.name}</option>)}
             </select>
           </div>
           {analyses.length > 0 && (
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold font-mont text-gray-500">Analysis Date</label>
+              <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_analysis_date')}</label>
               <select value={selectedAnalysisIdx} onChange={e => setSelectedAnalysisIdx(Number(e.target.value))}
                 className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 min-w-[180px]">
                 {analyses.map((a, i) => (
                   <option key={i} value={i}>
                     {new Date(a.analysis_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
-                    {i === 0 ? ' (latest)' : ''}
+                    {i === 0 ? ' ' + pa('opt_latest') : ''}
                   </option>
                 ))}
               </select>
@@ -155,12 +160,12 @@ export default function PrecisionAgHistograms() {
 
         {/* Content */}
         {loading ? (
-          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
+          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">{pa('loading')}</div>
         ) : analyses.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
             <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-            <div className="font-lora text-xl text-gray-600 mb-2">No analysis data</div>
-            <div className="font-mont text-sm text-gray-400">Run an analysis on this field to generate histogram data.</div>
+            <div className="font-lora text-xl text-gray-600 mb-2">{pa('no_analysis_data')}</div>
+            <div className="font-mont text-sm text-gray-400">{pa('run_analysis_prompt')}</div>
           </div>
         ) : (
           <>
@@ -168,19 +173,19 @@ export default function PrecisionAgHistograms() {
             {analysis && (
               <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-6 flex-wrap">
                 <div className="text-sm font-mont text-gray-600">
-                  <span className="text-gray-500">As of </span>
+                  <span className="text-gray-500">{pa('lbl_as_of')} </span>
                   <span className="font-semibold text-gray-800">{new Date(analysis.analysis_date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</span>
-                  {analysis.cloud_percent != null && <span className="ml-3 text-gray-400">Cloud: {analysis.cloud_percent.toFixed(1)}%</span>}
+                  {analysis.cloud_percent != null && <span className="ml-3 text-gray-400">{pa('lbl_cloud')} {analysis.cloud_percent.toFixed(1)}%</span>}
                   {selectedField?.field_size_hectares && (
-                    <span className="ml-3 text-gray-400">Field: {(selectedField.field_size_hectares * 2.471).toFixed(1)} ac</span>
+                    <span className="ml-3 text-gray-400">{pa('lbl_field_label')} {(selectedField.field_size_hectares * 2.471).toFixed(1)} ac</span>
                   )}
                 </div>
                 <div className="flex items-center gap-3 ml-auto">
                   <span className="w-3 h-3 rounded-sm" style={{ background:'#F97316' }} />
-                  <span className="text-xs font-mont text-gray-500">Below mean</span>
+                  <span className="text-xs font-mont text-gray-500">{pa('lbl_below_mean')}</span>
                   <span className="w-3 h-3 rounded-sm ml-2" style={{ background:'#6D8E22' }} />
-                  <span className="text-xs font-mont text-gray-500">Above mean</span>
-                  <span className="text-xs font-mont text-gray-400 ml-2">— Mean value</span>
+                  <span className="text-xs font-mont text-gray-500">{pa('lbl_above_mean')}</span>
+                  <span className="text-xs font-mont text-gray-400 ml-2">{pa('lbl_mean_value')}</span>
                 </div>
               </div>
             )}
@@ -224,7 +229,7 @@ export default function PrecisionAgHistograms() {
               return (
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                   <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">
-                    NDVI Range Per Analysis (real stats from each scene)
+                    {pa('ndvi_range_title')}
                   </div>
                   <div className="p-5 space-y-2">
                     {ndviStats.map(({ a, idx }, i) => {

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { useFields, useAnalyses, getIndex, API_URL } from './precisionAgUtils';
+import { useTranslation } from 'react-i18next';
 
 // ─── Line chart (shared by index and weather panels) ─────────────────────────
 function LineChart({ series, xLabels, height = 280, yAxisLabel = 'Value' }) {
@@ -100,6 +101,8 @@ function useWeather(fieldId, enabled) {
 }
 
 export default function PrecisionAgCropStatus() {
+  const { t } = useTranslation();
+  const pa = k => t(`precision_ag.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -209,13 +212,13 @@ export default function PrecisionAgCropStatus() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
-      pageTitle="Crop Status"
-      breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:'Crop Status' }]}>
+      pageTitle={pa('crop_status_title')}
+      breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:pa('crop_status_title') }]}>
       <div className="max-w-full mx-auto space-y-5">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">Crop Status</h1>
-            <p className="font-mont text-sm text-gray-500">Vegetation index trends over time — per field, per satellite pass</p>
+            <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">{pa('crop_status_title')}</h1>
+            <p className="font-mont text-sm text-gray-500">{pa('crop_status_desc')}</p>
           </div>
           <a href={`${API_URL}/api/fields/${selectedFieldId}/report.xlsx`} download
             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-mont text-gray-600 hover:bg-gray-50">
@@ -226,7 +229,7 @@ export default function PrecisionAgCropStatus() {
         {/* Filters */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 flex-wrap items-end">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold font-mont text-gray-500">Field</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_field')}</label>
             <select value={selectedFieldId} onChange={e => setSelectedFieldId(e.target.value)}
               className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 min-w-52">
               {fields.length === 0 && <option value="">No fields</option>}
@@ -234,24 +237,24 @@ export default function PrecisionAgCropStatus() {
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold font-mont text-gray-500">From</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_from')}</label>
             <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
               className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold font-mont text-gray-500">To</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_to')}</label>
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
               className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2" />
           </div>
           {(dateFrom || dateTo) && (
             <button onClick={() => { setDateFrom(''); setDateTo(''); }}
-              className="px-3 py-2 text-xs font-mont text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">Clear</button>
+              className="px-3 py-2 text-xs font-mont text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">{pa('btn_clear')}</button>
           )}
         </div>
 
         {/* Index pills + controls */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-3 flex-wrap">
-          <span className="text-xs font-semibold font-mont text-gray-500 mr-1">Index:</span>
+          <span className="text-xs font-semibold font-mont text-gray-500 mr-1">{pa('f_index')}</span>
           {INDEX_OPTIONS.map(opt => {
             const active = selectedIndices.includes(opt.key);
             return (
@@ -267,17 +270,17 @@ export default function PrecisionAgCropStatus() {
             {/* Season compare */}
             {availableYears.length > 1 && (
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mont text-gray-500">Compare year:</span>
+                <span className="text-xs font-mont text-gray-500">{pa('f_compare_year')}</span>
                 <select value={compareYear} onChange={e => setCompareYear(e.target.value)}
                   className="border border-gray-200 rounded-lg text-xs font-mont px-2 py-1.5">
-                  <option value="">— none —</option>
+                  <option value="">{pa('opt_none')}</option>
                   {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
             )}
             <label className="flex items-center gap-2 cursor-pointer select-none">
               <input type="checkbox" checked={showWeather} onChange={e => setShowWeather(e.target.checked)} className="w-4 h-4 accent-blue-500" />
-              <span className="text-xs font-mont text-gray-500">Weather overlay</span>
+              <span className="text-xs font-mont text-gray-500">{pa('f_weather_overlay')}</span>
             </label>
           </div>
         </div>
@@ -285,13 +288,13 @@ export default function PrecisionAgCropStatus() {
         {/* Main chart */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           {loading ? (
-            <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading analyses…</div>
+            <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">{pa('loading_analyses')}</div>
           ) : sorted.length === 0 ? (
             <div className="text-center py-24">
               <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4.9 4.9A10 10 0 1 0 19.1 19.1"/><path d="M16.24 7.76A6 6 0 1 0 7.76 16.24"/><path d="M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><line x1="12" y1="12" x2="21" y2="21"/></svg></div>
-              <div className="font-lora text-xl text-gray-600 mb-2">No analysis data</div>
+              <div className="font-lora text-xl text-gray-600 mb-2">{pa('no_analysis_data')}</div>
               <div className="font-mont text-sm text-gray-400">
-                {fields.length === 0 ? 'No fields found for this account.' : 'Run an analysis on this field to see index trends.'}
+                {fields.length === 0 ? pa('no_fields_account') : pa('run_analysis_trends')}
               </div>
             </div>
           ) : (
@@ -313,36 +316,36 @@ export default function PrecisionAgCropStatus() {
         {/* Weather chart */}
         {showWeather && sorted.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="font-mont text-sm font-semibold text-gray-600 mb-4">Weather at Analysis Dates</div>
+            <div className="font-mont text-sm font-semibold text-gray-600 mb-4">{pa('weather_title')}</div>
             {loadingW ? (
-              <div className="flex items-center justify-center py-12 text-gray-400 font-mont text-sm animate-pulse">Fetching weather…</div>
+              <div className="flex items-center justify-center py-12 text-gray-400 font-mont text-sm animate-pulse">{pa('fetching_weather')}</div>
             ) : weatherSeries.length > 0 && weatherSeries.some(s => s.values.some(v => v != null)) ? (
               <LineChart series={weatherSeries} xLabels={xLabels} height={200} yAxisLabel="°F / in" />
             ) : (
               <div className="text-center py-12 font-mont text-sm text-gray-400">
-                Weather data unavailable — field may not have coordinates set.
+                {pa('weather_unavailable')}
               </div>
             )}
-            <p className="mt-2 font-mont text-xs text-gray-400">Source: Open-Meteo · Temperature in °F · Precipitation in inches</p>
+            <p className="mt-2 font-mont text-xs text-gray-400">{pa('weather_source')}</p>
           </div>
         )}
 
         {/* History table */}
         {sorted.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">Analysis History</div>
+            <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">{pa('analysis_history')}</div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm font-mont">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="text-left px-4 py-3 text-gray-500 font-semibold">Date</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-semibold">{pa('th_date')}</th>
                     {['NDVI','NDRE','EVI','GNDVI','NDWI'].map(k => (
                       <th key={k} className="text-center px-3 py-3 text-gray-500 font-semibold">{k}</th>
                     ))}
-                    <th className="text-center px-3 py-3 text-gray-500 font-semibold">Health</th>
-                    <th className="text-center px-3 py-3 text-gray-500 font-semibold">Cloud %</th>
-                    {showWeather && weather && <th className="text-center px-3 py-3 text-gray-500 font-semibold">Temp Max</th>}
-                    {showWeather && weather && <th className="text-center px-3 py-3 text-gray-500 font-semibold">Precip</th>}
+                    <th className="text-center px-3 py-3 text-gray-500 font-semibold">{pa('th_health')}</th>
+                    <th className="text-center px-3 py-3 text-gray-500 font-semibold">{pa('th_cloud_pct')}</th>
+                    {showWeather && weather && <th className="text-center px-3 py-3 text-gray-500 font-semibold">{pa('th_temp_max')}</th>}
+                    {showWeather && weather && <th className="text-center px-3 py-3 text-gray-500 font-semibold">{pa('th_precip')}</th>}
                   </tr>
                 </thead>
                 <tbody>

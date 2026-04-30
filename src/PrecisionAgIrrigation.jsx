@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { useFields, API_URL } from './precisionAgUtils';
+import { useTranslation } from 'react-i18next';
 
 const URGENCY_STYLE = {
   high:   { bg: '#FEE2E2', text: '#B91C1C', label: 'Irrigate Now',    icon: <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#B91C1C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
@@ -64,6 +65,8 @@ function WaterDeficitChart({ daily }) {
 }
 
 export default function PrecisionAgIrrigation() {
+  const { t } = useTranslation();
+  const pa = k => t(`precision_ag.${k}`);
   const [searchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
@@ -101,24 +104,24 @@ export default function PrecisionAgIrrigation() {
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
-      pageTitle="Irrigation" breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:'Irrigation' }]}>
+      pageTitle={pa('irrigation_title')} breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:pa('irrigation_title') }]}>
       <div className="max-w-full mx-auto space-y-5">
         <div>
-          <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">Irrigation Scheduling</h1>
-          <p className="font-mont text-sm text-gray-500">Water balance based on evapotranspiration (ET₀) and precipitation from Open-Meteo.</p>
+          <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">{pa('irrigation_title')}</h1>
+          <p className="font-mont text-sm text-gray-500">{pa('irrigation_desc')}</p>
         </div>
 
         {/* Controls */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 flex-wrap items-end">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold font-mont text-gray-500">Field</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_field')}</label>
             <select value={selectedFieldId} onChange={e => setSelectedFieldId(e.target.value)}
               className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 min-w-52">
               {fields.map(f => <option key={f.fieldid||f.id} value={String(f.fieldid||f.id)}>{f.name}</option>)}
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold font-mont text-gray-500">Period</label>
+            <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_period')}</label>
             <select value={days} onChange={e => setDays(Number(e.target.value))}
               className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2">
               <option value={14}>14 days</option>
@@ -129,18 +132,18 @@ export default function PrecisionAgIrrigation() {
           </div>
           {data && (
             <div className="font-mont text-xs text-gray-400 self-end pb-2">
-              Crop: {data.crop_type || 'Unknown'} — Kc: {data.kc}
+              {pa('lbl_crop')} {data.crop_type || '—'} — {pa('lbl_kc')} {data.kc}
             </div>
           )}
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
+          <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">{pa('loading')}</div>
         ) : !data ? (
           <div className="text-center py-24 bg-white rounded-xl border border-gray-200">
             <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div>
-            <div className="font-lora text-xl text-gray-600">No data available</div>
-            <div className="font-mont text-sm text-gray-400 mt-1">Ensure the field has coordinates set.</div>
+            <div className="font-lora text-xl text-gray-600">{pa('no_data_available')}</div>
+            <div className="font-mont text-sm text-gray-400 mt-1">{pa('no_coords')}</div>
           </div>
         ) : (
           <>
@@ -153,7 +156,7 @@ export default function PrecisionAgIrrigation() {
                   {data.recommendation}
                 </div>
                 <div className="font-mont text-sm mt-0.5" style={{ color: urgencyStyle.text }}>
-                  Cumulative water deficit: <strong>{data.cumulative_deficit_in.toFixed(2)}"</strong>
+                  {pa('lbl_cum_water_deficit')} <strong>{data.cumulative_deficit_in.toFixed(2)}"</strong>
                 </div>
               </div>
             </div>
@@ -161,10 +164,10 @@ export default function PrecisionAgIrrigation() {
             {/* 7-day summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { label: 'Precipitation (7d)', value: totalPrecip7.toFixed(2) + '"', color: '#2563EB' },
-                { label: 'Crop ET (7d)',        value: totalETC7.toFixed(2)    + '"', color: '#D97706' },
-                { label: 'Daily Deficit (7d)',  value: totalDeficit7.toFixed(2) + '"', color: '#DC2626' },
-                { label: 'Crop Coefficient',    value: data.kc,                        color: '#6D8E22' },
+                { label: pa('precip_7d'),       value: totalPrecip7.toFixed(2) + '"', color: '#2563EB' },
+                { label: pa('crop_et_7d'),      value: totalETC7.toFixed(2)    + '"', color: '#D97706' },
+                { label: pa('daily_deficit_7d'),value: totalDeficit7.toFixed(2) + '"', color: '#DC2626' },
+                { label: pa('crop_coefficient'),value: data.kc,                        color: '#6D8E22' },
               ].map(s => (
                 <div key={s.label} className="bg-gray-50 rounded-xl border border-gray-100 px-4 py-3">
                   <div className="font-mont text-xs text-gray-400">{s.label}</div>
@@ -176,14 +179,14 @@ export default function PrecisionAgIrrigation() {
             {/* Chart */}
             <div className="bg-white rounded-xl border border-gray-200 p-5">
               <div className="font-mont text-sm font-semibold text-gray-600 mb-3">
-                Water Deficit vs Precipitation — {days}-day period
+                Water Deficit vs Precipitation — {days}-day
               </div>
               <WaterDeficitChart daily={data.daily} />
             </div>
 
             {/* ET source note */}
             <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
-              <p className="font-mont text-xs text-gray-500 font-semibold mb-1">Data Source &amp; Model Notes</p>
+              <p className="font-mont text-xs text-gray-500 font-semibold mb-1">{pa('data_source_notes')}</p>
               <p className="font-mont text-xs text-gray-400">
                 ET₀ is sourced from Open-Meteo (ERA5 reanalysis + 7-day forecast). Coverage is global but accuracy
                 varies in remote areas — if your field shows implausible values, consider supplementing with
@@ -196,13 +199,13 @@ export default function PrecisionAgIrrigation() {
             {/* Table — last 14 days */}
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <div className="px-5 py-3 border-b border-gray-100 font-mont text-sm font-semibold text-gray-600">
-                Daily Breakdown (last 14 days)
+                {pa('daily_breakdown')}
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm font-mont">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100">
-                      {['Date','Precip (in)','ET₀ (in)','ETc (in)','Daily Deficit','Cumulative Deficit'].map(h => (
+                      {[pa('th_date'), pa('th_precip_in'), pa('th_et0_in'), pa('th_etc_in'), pa('th_daily_deficit'), pa('th_cum_deficit')].map(h => (
                         <th key={h} className="px-3 py-2.5 text-xs font-semibold text-gray-500 text-center first:text-left first:px-4">{h}</th>
                       ))}
                     </tr>
