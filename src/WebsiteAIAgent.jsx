@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import { useLanguage } from './LanguageContext';
 
@@ -27,12 +28,12 @@ function shortHost(url) {
   catch { return url || ''; }
 }
 
-function relativeAge(storedAtSec) {
+function relativeAge(storedAtSec, t) {
   if (!storedAtSec) return '';
   const diff = Math.max(0, Math.floor(Date.now() / 1000 - storedAtSec));
-  if (diff < 60)   return 'just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 60)   return t('website_ai_agent.just_now');
+  if (diff < 3600) return t('website_ai_agent.minutes_ago', { n: Math.floor(diff / 60) });
+  return t('website_ai_agent.hours_ago', { n: Math.floor(diff / 3600) });
 }
 
 function authHeaders() {
@@ -62,6 +63,7 @@ const SpeechRecognitionAPI = typeof window !== 'undefined'
 // start(continuous=false) — false: stops after natural pause (conversation mode)
 //                         — true:  keeps listening until stop() called (manual mode)
 function useSpeechRecognition(onResult, onError) {
+  const { t } = useTranslation();
   const recRef = useRef(null);
   const [listening, setListening] = useState(false);
   const shouldRestartRef = useRef(false);
@@ -76,20 +78,20 @@ function useSpeechRecognition(onResult, onError) {
       const stream = await navigator.mediaDevices.getUserMedia(
         { audio: deviceId ? { deviceId: { exact: deviceId } } : true }
       );
-      stream.getTracks().forEach(t => t.stop());
+      stream.getTracks().forEach(trk => trk.stop());
       return true;
     } catch (e) {
       const msg = e.name === 'NotAllowedError'
-        ? 'Microphone access denied. Allow it in browser settings.'
-        : `Microphone error: ${e.message}`;
+        ? t('website_ai_agent.mic_denied_settings')
+        : t('website_ai_agent.mic_error', { msg: e.message });
       onErrorRef.current?.(msg);
       return false;
     }
-  }, []);
+  }, [t]);
 
   const startRec = useCallback((continuous) => {
     if (!SpeechRecognitionAPI) {
-      onErrorRef.current?.('Speech recognition not supported. Please use Chrome.');
+      onErrorRef.current?.(t('website_ai_agent.stt_not_supported'));
       return;
     }
     const rec = new SpeechRecognitionAPI();
@@ -107,9 +109,9 @@ function useSpeechRecognition(onResult, onError) {
     };
     rec.onerror = (e) => {
       if (e.error === 'not-allowed') {
-        onErrorRef.current?.('Microphone access denied.');
+        onErrorRef.current?.(t('website_ai_agent.mic_denied'));
       } else if (e.error !== 'no-speech') {
-        onErrorRef.current?.(`Speech error: ${e.error}`);
+        onErrorRef.current?.(t('website_ai_agent.stt_error', { error: e.error }));
       }
       shouldRestartRef.current = false;
       setListening(false);
@@ -130,9 +132,9 @@ function useSpeechRecognition(onResult, onError) {
       rec.start();
       setListening(true);
     } catch {
-      onErrorRef.current?.('Could not start speech recognition.');
+      onErrorRef.current?.(t('website_ai_agent.stt_start_error'));
     }
-  }, []);
+  }, [t]);
 
   const start = useCallback(async (continuous = false) => {
     if (listening) return;
@@ -278,6 +280,7 @@ function _saveStoredChat(businessId, messages) {
 
 // ── Main component ────────────────────────────────────────────────
 export default function WebsiteAIAgent({ websiteId, businessId, currentView, autoOpen = false }) {
+  const { t } = useTranslation();
   const { Expanded: sidebarExpanded } = useAccount();
   const { language } = useLanguage();
   const sidebarWidth = sidebarExpanded ? 208 : 64;
@@ -322,7 +325,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
     if (conversationModeRef.current) {
       sendMessageRef.current?.(transcript);
     } else {
-      setInput(t => t ? `${t} ${transcript}` : transcript);
+      setInput(prev => prev ? `${prev} ${transcript}` : transcript);
     }
   }, []);
 
@@ -340,7 +343,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
       hasGreetedRef.current = true;
       const greeting = {
         role: 'assistant',
-        content: `Hi! I'm **${AGENT_NAME}**, your website design assistant. 🌿 What would you like to work on today?`,
+        content: t('website_ai_agent.greeting', { name: AGENT_NAME }),
       };
       setMessages([greeting]);
       if (ttsEnabled) speak(greeting.content);
@@ -454,7 +457,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
         speak(responseText);
       }
     } catch {
-      const errMsg = "I'm having trouble connecting right now. Please try again in a moment.";
+      const errMsg = t('website_ai_agent.chat_error');
       setMessages(prev => [...prev, { role: 'assistant', content: errMsg }]);
       if (isConv) {
         speak(errMsg, () => {
@@ -530,7 +533,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
         speak(data.content);
       }
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: t('website_ai_agent.confirm_error') }]);
     } finally {
       setConfirming(false);
     }
@@ -552,7 +555,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
     return createPortal(
       <button
         onClick={() => setOpen(true)}
-        title={`Chat with ${AGENT_NAME}`}
+        title={t('website_ai_agent.title_chat', { name: AGENT_NAME })}
         className="fixed bottom-6 right-6 z-50 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
         style={{ background: 'transparent', border: 'none', padding: 0 }}
       >
@@ -586,9 +589,9 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
             {conversationMode
               ? <span className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-300 inline-block animate-pulse" />
-                  Conversation mode active
+                  {t('website_ai_agent.conversation_mode_active')}
                 </span>
-              : 'Website Design Assistant'
+              : t('website_ai_agent.subtitle')
             }
           </p>
         </div>
@@ -597,7 +600,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
           {!conversationMode && (
             <button
               onClick={() => { setTtsEnabled(v => !v); if (ttsEnabled) window.speechSynthesis?.cancel(); }}
-              title={ttsEnabled ? 'Mute voice' : 'Enable voice'}
+              title={ttsEnabled ? t('website_ai_agent.title_mute') : t('website_ai_agent.title_enable_voice')}
               className={`p-1.5 rounded-lg transition-colors ${ttsEnabled ? 'bg-white/30 text-white' : 'text-white/60 hover:text-white hover:bg-white/20'}`}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -611,7 +614,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
           {/* Expand / collapse */}
           <button
             onClick={() => setPanelExpanded(v => !v)}
-            title={panelExpanded ? 'Collapse panel' : 'Expand to full page'}
+            title={panelExpanded ? t('website_ai_agent.title_collapse') : t('website_ai_agent.title_expand')}
             className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/20 transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -622,7 +625,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
             </svg>
           </button>
           {/* Clear chat */}
-          <button onClick={clearChat} title="Clear chat" className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/20 transition-colors">
+          <button onClick={clearChat} title={t('website_ai_agent.title_clear_chat')} className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/20 transition-colors">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
             </svg>
@@ -636,7 +639,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
       {lastScrape?.url && (
         <div className="px-3 py-1.5 border-b border-purple-100 bg-purple-50/60 shrink-0 flex items-center gap-2 text-[11px]">
           <span className="text-purple-500">📎</span>
-          <span className="text-purple-700">Remembering</span>
+          <span className="text-purple-700">{t('website_ai_agent.scrape_remembering')}</span>
           <a
             href={lastScrape.url}
             target="_blank"
@@ -649,13 +652,13 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
           {lastScrape.platform_name && (
             <span className="text-purple-400">· {lastScrape.platform_name}</span>
           )}
-          <span className="text-purple-400">· {relativeAge(lastScrape.stored_at)}</span>
+          <span className="text-purple-400">· {relativeAge(lastScrape.stored_at, t)}</span>
           <button
             onClick={clearLastScrape}
-            title="Forget this site"
+            title={t('website_ai_agent.title_forget_site')}
             className="ml-auto text-purple-400 hover:text-purple-700 px-1.5 py-0.5 rounded hover:bg-purple-100 transition-colors"
           >
-            clear
+            {t('website_ai_agent.btn_clear_scrape')}
           </button>
         </div>
       )}
@@ -694,7 +697,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
 
         {messages.length === 1 && suggestions.length > 0 && (
           <div className="flex flex-col gap-1.5 mt-1">
-            <p className="text-xs text-purple-400 pl-8">Quick suggestions:</p>
+            <p className="text-xs text-purple-400 pl-8">{t('website_ai_agent.quick_suggestions')}</p>
             {suggestions.map((s, i) => (
               <button key={i} onClick={() => sendMessage(s.text)}
                 className="ml-8 text-left text-xs text-purple-700 bg-purple-50 border border-purple-100 rounded-xl px-3 py-2 hover:bg-purple-100 transition-colors">
@@ -712,10 +715,10 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
         <div className="border-t border-purple-100 bg-white shrink-0">
           {previewImageUrl && (
             <div className="p-2">
-              <p className="text-[11px] uppercase tracking-wide text-purple-500 mb-1">Generated hero image</p>
+              <p className="text-[11px] uppercase tracking-wide text-purple-500 mb-1">{t('website_ai_agent.preview_hero_label')}</p>
               <img
                 src={previewImageUrl}
-                alt="Generated hero preview"
+                alt={t('website_ai_agent.preview_hero_alt')}
                 className="w-full rounded-lg border border-purple-100"
                 style={{ maxHeight: panelExpanded ? 420 : 180, objectFit: 'cover' }}
               />
@@ -723,7 +726,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
           )}
           {previewUrl && (
             <div className="p-2">
-              <p className="text-[11px] uppercase tracking-wide text-purple-500 mb-1">Design preview</p>
+              <p className="text-[11px] uppercase tracking-wide text-purple-500 mb-1">{t('website_ai_agent.preview_design_label')}</p>
               <iframe
                 src={previewUrl}
                 title="Lavendir design preview"
@@ -736,7 +739,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
                 rel="noreferrer"
                 className="text-[11px] text-purple-600 hover:underline mt-1 inline-block"
               >
-                Open preview in new tab ↗
+                {t('website_ai_agent.preview_open_tab')}
               </a>
             </div>
           )}
@@ -747,20 +750,20 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
       {(pendingAction || confirming) && (
         <div className="border-t border-purple-100 px-3 py-3 bg-purple-50 shrink-0">
           {confirming ? (
-            <p className="text-xs text-purple-500 text-center animate-pulse">Applying changes…</p>
+            <p className="text-xs text-purple-500 text-center animate-pulse">{t('website_ai_agent.applying_changes')}</p>
           ) : (
             <>
-              <p className="text-xs font-semibold text-purple-800 mb-2">Confirm change:</p>
+              <p className="text-xs font-semibold text-purple-800 mb-2">{t('website_ai_agent.confirm_heading')}</p>
               <p className="text-xs text-purple-700 mb-3 leading-relaxed">{pendingAction.description}</p>
               <div className="flex gap-2">
                 <button onClick={() => confirmAction(true)}
                   className="flex-1 py-1.5 rounded-lg text-xs font-bold text-white transition-colors"
                   style={{ background: AVATAR_COLOR }}>
-                  Yes, do it
+                  {t('website_ai_agent.btn_confirm_yes')}
                 </button>
                 <button onClick={() => confirmAction(false)}
                   className="flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors">
-                  No, cancel
+                  {t('website_ai_agent.btn_confirm_no')}
                 </button>
               </div>
             </>
@@ -779,7 +782,7 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
         {sttSupported && (
           <button
             onClick={handleMicClick}
-            title={conversationMode ? 'End conversation' : 'Start conversation mode'}
+            title={conversationMode ? t('website_ai_agent.title_end_conversation') : t('website_ai_agent.title_start_conversation')}
             className={`p-2 rounded-xl transition-all shrink-0 relative ${
               conversationMode || listening
                 ? 'text-white shadow-lg'
@@ -803,11 +806,11 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKey}
           placeholder={
-            conversationMode && listening ? '🎙 Listening… speak now'
-            : conversationMode && loading  ? '⏳ Processing…'
-            : conversationMode             ? '🎙 Click mic to stop conversation'
-            : listening                    ? '🎙 Listening… click mic to stop'
-            : `Ask ${AGENT_NAME} anything…`
+            conversationMode && listening ? t('website_ai_agent.placeholder_listening_conv')
+            : conversationMode && loading  ? t('website_ai_agent.placeholder_processing')
+            : conversationMode             ? t('website_ai_agent.placeholder_conv_stop')
+            : listening                    ? t('website_ai_agent.placeholder_listening')
+            : t('website_ai_agent.placeholder_default', { name: AGENT_NAME })
           }
           rows={1}
           className="flex-1 resize-none border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-purple-300"

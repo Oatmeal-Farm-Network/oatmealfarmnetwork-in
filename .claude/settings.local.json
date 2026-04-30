@@ -394,7 +394,10 @@
       "Bash(node f:/tmp/add_precision_ag_boundary_map_keys.js)",
       "Bash(node f:/tmp/add_conference_admin_keys.js)",
       "Bash(node f:/tmp/add_seller_listings_keys.js)",
-      "Bash(node f:/tmp/add_dining_admin_keys.js)"
+      "Bash(node f:/tmp/add_dining_admin_keys.js)",
+      "Bash(node f:/tmp/add_competition_admin_keys.js)",
+      "Bash(node f:/tmp/add_website_ai_agent_keys.js)",
+      "Bash(node f:/tmp/add_accounting_keys.js)"
     ],
     "additionalDirectories": [
       "\\tmp"
