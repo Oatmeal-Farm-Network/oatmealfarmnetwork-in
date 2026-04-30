@@ -386,7 +386,8 @@ const Header = () => {
                   <Link
                     to="/login"
                     title={t('nav.login')}
-                    className="text-white/80 hover:text-white transition-colors flex items-center"
+                    className="flex items-center transition-colors"
+                    style={{ color: 'rgba(255,255,255,0.8)' }}
                   >
                     <LoginIcon />
                   </Link>
@@ -485,7 +486,7 @@ const Header = () => {
                 <li><Link to="/signup" onClick={() => setIsOpen(false)} className="!text-white block">{t('nav.signup')}</Link></li>
                 <li className="flex items-center justify-center gap-5 pt-1">
                   <LanguageSelector />
-                  <Link to="/login" onClick={() => setIsOpen(false)} title={t('nav.login')} className="text-white/80 hover:text-white transition-colors flex items-center">
+                  <Link to="/login" onClick={() => setIsOpen(false)} title={t('nav.login')} className="flex items-center transition-colors" style={{ color: 'rgba(255,255,255,0.8)' }}>
                     <LoginIcon />
                   </Link>
                 </li>

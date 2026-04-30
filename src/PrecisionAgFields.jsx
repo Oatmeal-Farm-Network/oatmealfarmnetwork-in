@@ -90,6 +90,7 @@ async function updateField(fieldId, data) {
 // ─── CreateFieldView ──────────────────────────────────────────────────────────
 
 function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon }) {
+  const { t: pa } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -401,6 +402,7 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
 // ─── EditFieldView ────────────────────────────────────────────────────────────
 
 function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
+  const { t: pa } = useTranslation();
   const [formData, setFormData] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -614,6 +616,7 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
 // ─── FieldList ────────────────────────────────────────────────────────────────
 
 function FieldList({ businessId, onCreateNew }) {
+  const { t: pa } = useTranslation();
   const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -821,6 +824,7 @@ function FieldList({ businessId, onCreateNew }) {
 // ─── PrecisionAgFields (root) ─────────────────────────────────────────────────
 
 function PrecisionAgFields({ businessId: propBusinessId }) {
+  const { t: pa } = useTranslation();
   const [searchParams] = useSearchParams();
   const businessId = propBusinessId || searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('PeopleID') || localStorage.getItem('people_id');
