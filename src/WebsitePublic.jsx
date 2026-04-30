@@ -1397,7 +1397,7 @@ function ContactBlock({ data, site }) {
         )}
         {sent && (
           <div style={{ textAlign: 'center', padding: '2rem', background: '#F0FDF4', borderRadius: 16, color: '#15803D', fontWeight: 600 }}>
-            Thank you! Your message has been received.
+            {wp('contact_success')}
           </div>
         )}
       </div>
@@ -1569,6 +1569,7 @@ function PriceCard({ icon, name, price, unit, image, desc, tags, site }) {
 
 // ── PackagesBlock: package deals with clickable animals ───────────
 function PackagesBlock({ data, site, businessId }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAnimal, setSelectedAnimal] = useState(null);
@@ -1605,7 +1606,7 @@ function PackagesBlock({ data, site, businessId }) {
     return Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
   };
 
-  if (loading) return <SectionWrap site={site}><div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>Loading packages…</div></SectionWrap>;
+  if (loading) return <SectionWrap site={site}><div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>{wp('packages_loading')}</div></SectionWrap>;
 
   // If an animal detail is open, render it
   if (selectedAnimal && (detailLoading || detailData)) {
@@ -1613,19 +1614,19 @@ function PackagesBlock({ data, site, businessId }) {
       <SectionWrap site={site}>
         <button onClick={() => setSelectedAnimal(null)}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: primary, fontWeight: 600, fontSize: 14, marginBottom: 12, fontFamily }}>
-          ← Back to Packages
+          {wp('packages_back')}
         </button>
         {detailLoading ? (
-          <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#9ca3af' }}>Loading animal details…</div>
+          <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#9ca3af' }}>{wp('packages_animal_loading')}</div>
         ) : detailData ? (
           <>
-            <LivestockAnimalDetailContent animal={detailData} siteMode onBack={() => setSelectedAnimal(null)} backLabel="Packages" primaryColor={primary} fontFamily={fontFamily} animalPackages={animalPackages} onPackageClick={() => setSelectedAnimal(null)} />
+            <LivestockAnimalDetailContent animal={detailData} siteMode onBack={() => setSelectedAnimal(null)} backLabel={wp('packages_back')} primaryColor={primary} fontFamily={fontFamily} animalPackages={animalPackages} onPackageClick={() => setSelectedAnimal(null)} />
           </>
         ) : (
           <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#ef4444' }}>
-            Could not load animal details.
+            {wp('packages_animal_error')}
             <div style={{ marginTop: 12 }}>
-              <button onClick={() => setSelectedAnimal(null)} style={{ background: 'none', border: 'none', color: primary, cursor: 'pointer', fontSize: 14 }}>← Back to Packages</button>
+              <button onClick={() => setSelectedAnimal(null)} style={{ background: 'none', border: 'none', color: primary, cursor: 'pointer', fontSize: 14 }}>{wp('packages_back')}</button>
             </div>
           </div>
         )}
@@ -1638,7 +1639,7 @@ function PackagesBlock({ data, site, businessId }) {
       {data.heading && <SectionHeading site={site} headingStyle={data.heading_style || 'h1'} html={data.heading} />}
       {data.intro_body && <BodyText site={site} html={data.intro_body} />}
       {packages.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af', fontFamily }}>No packages available right now.</div>
+        <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af', fontFamily }}>{wp('packages_none')}</div>
       ) : (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem', fontFamily }}>
         {packages.map(pkg => {
@@ -1683,7 +1684,7 @@ function PackagesBlock({ data, site, businessId }) {
                       </span>
                       <a onClick={() => setSelectedAnimal(it.AnimalID)}
                         style={{ color: primary, cursor: 'pointer', fontSize: 12, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        Learn More →
+                        {wp('packages_learn_more')}
                       </a>
                     </div>
                   ))}
@@ -1693,7 +1694,7 @@ function PackagesBlock({ data, site, businessId }) {
                   {savings > 0 && (
                     <>
                       <span style={{ fontSize: 14, color: '#9ca3af', textDecoration: 'line-through' }}>{fmtPrice(totalVal)}</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#16a34a', background: '#dcfce7', padding: '2px 8px', borderRadius: 6 }}>Save {pct}%</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#16a34a', background: '#dcfce7', padding: '2px 8px', borderRadius: 6 }}>{wp('packages_save', { pct })}</span>
                     </>
                   )}
                 </div>
@@ -1710,6 +1711,7 @@ function PackagesBlock({ data, site, businessId }) {
 // ── Association widgets ──────────────────────────────────────────
 
 function MemberDirectoryBlock({ data, site, businessId }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const [members, setMembers] = useState(null);
   const [q, setQ] = useState('');
   const [state, setState] = useState('');
@@ -1742,13 +1744,13 @@ function MemberDirectoryBlock({ data, site, businessId }) {
       {(data.show_search || data.show_state_filter) && (
         <div style={{ display: 'flex', gap: 10, marginBottom: '1rem', flexWrap: 'wrap' }}>
           {data.show_search && (
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search members…"
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder={wp('members_search_ph')}
               style={{ flex: '1 1 220px', padding: '0.6rem 0.9rem', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: '0.95rem' }} />
           )}
           {data.show_state_filter && (
             <select value={state} onChange={e => setState(e.target.value)}
               style={{ padding: '0.6rem 0.9rem', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: '0.95rem', background: '#fff' }}>
-              <option value="">All states</option>
+              <option value="">{wp('members_all_states')}</option>
               {['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'].map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
@@ -1757,9 +1759,9 @@ function MemberDirectoryBlock({ data, site, businessId }) {
         </div>
       )}
       {members === null ? (
-        <p style={{ color: '#9ca3af' }}>Loading members…</p>
+        <p style={{ color: '#9ca3af' }}>{wp('members_loading')}</p>
       ) : members.length === 0 ? (
-        <p style={{ color: '#9ca3af', fontStyle: 'italic' }}>No members to display yet.</p>
+        <p style={{ color: '#9ca3af', fontStyle: 'italic' }}>{wp('members_none')}</p>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 14 }}>
           {members.map(m => (
@@ -1781,6 +1783,7 @@ function MemberDirectoryBlock({ data, site, businessId }) {
 }
 
 function PedigreeSearchBlock({ data, site, businessId }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const [name, setName]   = useState('');
   const [reg, setReg]     = useState('');
   const [owner, setOwner] = useState('');
@@ -1807,9 +1810,9 @@ function PedigreeSearchBlock({ data, site, businessId }) {
   };
 
   const fields = [];
-  if (data.show_name !== false)       fields.push(['name',       name, setName,   'Animal name']);
-  if (data.show_reg_number !== false) fields.push(['reg_number', reg,  setReg,    'Reg #']);
-  if (data.show_owner !== false)      fields.push(['owner',      owner, setOwner, 'Owner']);
+  if (data.show_name !== false)       fields.push(['name',       name, setName,   wp('pedigree_ph_name')]);
+  if (data.show_reg_number !== false) fields.push(['reg_number', reg,  setReg,    wp('pedigree_ph_reg')]);
+  if (data.show_owner !== false)      fields.push(['owner',      owner, setOwner, wp('pedigree_ph_owner')]);
 
   return (
     <SectionWrap site={site}>
@@ -1822,17 +1825,17 @@ function PedigreeSearchBlock({ data, site, businessId }) {
         ))}
         <button type="submit" disabled={searching}
           style={{ background: primary, color: '#fff', border: 'none', borderRadius: 8, padding: '0.6rem 1.4rem', fontWeight: 700, cursor: searching ? 'wait' : 'pointer' }}>
-          {searching ? 'Searching…' : 'Search'}
+          {searching ? wp('pedigree_searching') : wp('pedigree_search')}
         </button>
       </form>
       {results === null ? (
-        <p style={{ color: '#9ca3af', fontStyle: 'italic' }}>Enter a search above to look up registered animals.</p>
+        <p style={{ color: '#9ca3af', fontStyle: 'italic' }}>{wp('pedigree_prompt')}</p>
       ) : results.length === 0 ? (
-        <p style={{ color: '#9ca3af', fontStyle: 'italic' }}>No matching animals found.</p>
+        <p style={{ color: '#9ca3af', fontStyle: 'italic' }}>{wp('pedigree_no_results')}</p>
       ) : (
         <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1.2fr 100px', padding: '0.7rem 1rem', background: '#f9fafb', fontSize: '0.85rem', fontWeight: 700, color: '#374151' }}>
-            <div>Name</div><div>Reg #</div><div>Owner</div><div style={{ textAlign: 'right' }}></div>
+            <div>{wp('pedigree_th_name')}</div><div>{wp('pedigree_th_reg')}</div><div>{wp('pedigree_th_owner')}</div><div style={{ textAlign: 'right' }}></div>
           </div>
           {results.map(r => (
             <div key={r.animal_id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1.2fr 100px', padding: '0.7rem 1rem', fontSize: '0.92rem', borderTop: '1px solid #f3f4f6' }}>
@@ -1840,7 +1843,7 @@ function PedigreeSearchBlock({ data, site, businessId }) {
               <div style={{ color: '#6b7280' }}>{r.reg_number || '—'}</div>
               <div style={{ color: '#6b7280' }}>{r.owner || '—'}</div>
               <div style={{ textAlign: 'right' }}>
-                {r.detail_url && <a href={r.detail_url} style={{ color: primary, textDecoration: 'none', fontWeight: 600 }}>View ›</a>}
+                {r.detail_url && <a href={r.detail_url} style={{ color: primary, textDecoration: 'none', fontWeight: 600 }}>{wp('pedigree_view')}</a>}
               </div>
             </div>
           ))}
@@ -1851,6 +1854,7 @@ function PedigreeSearchBlock({ data, site, businessId }) {
 }
 
 function FeeScheduleBlock({ data, site }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const primary = site.primary_color || '#3D6B34';
   const rows    = Array.isArray(data.rows) ? data.rows : [];
   return (
@@ -1859,10 +1863,10 @@ function FeeScheduleBlock({ data, site }) {
       {data.intro_body && <BodyText site={site} html={data.intro_body} />}
       <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', padding: '0.7rem 1.1rem', background: '#f9fafb', fontSize: '0.9rem', fontWeight: 700, color: '#374151' }}>
-          <div>Item</div><div style={{ textAlign: 'right' }}>Amount</div><div style={{ paddingLeft: 18 }}>Notes</div>
+          <div>{wp('fee_th_item')}</div><div style={{ textAlign: 'right' }}>{wp('fee_th_amount')}</div><div style={{ paddingLeft: 18 }}>{wp('fee_th_notes')}</div>
         </div>
         {rows.length === 0 ? (
-          <div style={{ padding: '1rem 1.1rem', color: '#9ca3af', fontStyle: 'italic' }}>No fees listed.</div>
+          <div style={{ padding: '1rem 1.1rem', color: '#9ca3af', fontStyle: 'italic' }}>{wp('fee_none')}</div>
         ) : rows.map((r, i) => (
           <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', padding: '0.7rem 1.1rem', fontSize: '0.95rem', borderTop: '1px solid #f3f4f6', color: '#1f2937' }}>
             <div>{r.label || '—'}</div>
@@ -1876,6 +1880,7 @@ function FeeScheduleBlock({ data, site }) {
 }
 
 function MapLocationBlock({ data, site }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const primary = site.primary_color || '#3D6B34';
   const textColor = site.text_color || '#1f2937';
   const isGoogleMapsEmbed = typeof data.embed_url === 'string' && /^https:\/\/(www\.)?google\.com\/maps\/embed/.test(data.embed_url);
@@ -1884,13 +1889,13 @@ function MapLocationBlock({ data, site }) {
       {data.heading && <SectionHeading site={site} headingStyle={data.heading_style || 'h1'}>{data.heading}</SectionHeading>}
       <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
         {isGoogleMapsEmbed && (
-          <iframe src={data.embed_url} style={{ border: 0, width: '100%', height: data.height || 320, display: 'block' }} loading="lazy" title="Location map" />
+          <iframe src={data.embed_url} style={{ border: 0, width: '100%', height: data.height || 320, display: 'block' }} loading="lazy" title={wp('map_title')} />
         )}
         {data.address && (
           <div style={{ padding: '0.9rem 1.1rem', borderTop: isGoogleMapsEmbed ? '1px solid #e5e7eb' : 'none', fontSize: '1rem', color: textColor }}>
             📍 {data.address}
             {' '}<a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.address)}`} target="_blank" rel="noreferrer"
-                style={{ color: primary, marginLeft: 8 }}>Get directions ›</a>
+                style={{ color: primary, marginLeft: 8 }}>{wp('map_directions')}</a>
           </div>
         )}
       </div>
@@ -1899,6 +1904,7 @@ function MapLocationBlock({ data, site }) {
 }
 
 function HoursOfOperationBlock({ data, site }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const rows = Array.isArray(data.hours) ? data.hours : [];
   const textColor = site.text_color || '#1f2937';
   return (
@@ -1907,18 +1913,18 @@ function HoursOfOperationBlock({ data, site }) {
       {data.intro_body && <BodyText site={site} html={data.intro_body} />}
       <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', background: '#fff', maxWidth: 560 }}>
         {rows.length === 0 ? (
-          <div style={{ padding: '1rem 1.1rem', color: '#9ca3af', fontStyle: 'italic' }}>Hours not yet listed.</div>
+          <div style={{ padding: '1rem 1.1rem', color: '#9ca3af', fontStyle: 'italic' }}>{wp('hours_none')}</div>
         ) : rows.map((r, i) => (
           <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', padding: '0.75rem 1.1rem', fontSize: '0.98rem', borderTop: i ? '1px solid #f3f4f6' : 'none', color: textColor }}>
             <div style={{ fontWeight: 600 }}>{r.day || '—'}</div>
             <div style={{ textAlign: 'right', color: r.closed ? '#9ca3af' : textColor }}>
-              {r.closed ? 'Closed' : (r.open && r.close ? `${r.open} – ${r.close}` : '—')}
+              {r.closed ? wp('hours_closed') : (r.open && r.close ? `${r.open} – ${r.close}` : '—')}
               {r.notes && !r.closed ? <span style={{ color: '#6b7280', fontSize: '0.82rem', marginLeft: 6 }}>({r.notes})</span> : null}
             </div>
           </div>
         ))}
       </div>
-      {data.timezone ? <p style={{ fontSize: '0.82rem', color: '#9ca3af', marginTop: 8 }}>All times {data.timezone}.</p> : null}
+      {data.timezone ? <p style={{ fontSize: '0.82rem', color: '#9ca3af', marginTop: 8 }}>{wp('hours_timezone', { timezone: data.timezone })}</p> : null}
     </SectionWrap>
   );
 }
@@ -2107,6 +2113,7 @@ function TeamBlock({ data, site }) {
 }
 
 function PricingBlock({ data, site }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const tiers = Array.isArray(data.tiers) ? data.tiers : [];
   if (tiers.length === 0) return null;
   const primary   = site.primary_color || '#3D6B34';
@@ -2130,7 +2137,7 @@ function PricingBlock({ data, site }) {
             border: tier.highlight ? `2px solid ${primary}` : '1px solid #e5e7eb',
           }}>
             {tier.highlight && (
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.85 }}>Most Popular</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.85 }}>{wp('pricing_popular')}</div>
             )}
             <div style={{ fontWeight: 700, fontSize: '1.15rem', fontFamily: site.font_family }}>{tier.name}</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
@@ -2206,6 +2213,7 @@ const isCustomDomain = !OFN_HOSTS.some(h => window.location.hostname === h || wi
 
 // ── Main public site renderer ─────────────────────────────────────
 export default function WebsitePublic() {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
@@ -2738,8 +2746,4 @@ export default function WebsitePublic() {
               </div>
             </>
           )}
-        </div>
-      </footer>
-        );
-      })()}
-    </di
+  
