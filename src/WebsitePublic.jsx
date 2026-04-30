@@ -1050,7 +1050,7 @@ function BlogBlock({ data, site, businessId }) {
       <SectionWrap site={site} blockBgColor={data.bg_color || undefined}>
         {/* Back link — upper left */}
         <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '1rem' }}>
-          <button style={navLinkStyle(false)} onClick={() => setSelectedIdx(null)}>← Back to {heading}</button>
+          <button style={navLinkStyle(false)} onClick={() => setSelectedIdx(null)}>{wp('blog_back', { heading })}</button>
         </div>
 
         {/* Article */}
@@ -1071,8 +1071,8 @@ function BlogBlock({ data, site, businessId }) {
 
         {/* Bottom nav — plain text arrows */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2.5rem', paddingTop: '1.25rem', borderTop: '1px solid #e5e7eb' }}>
-          <button style={navLinkStyle(selectedIdx === 0)} onClick={() => setSelectedIdx(selectedIdx - 1)}>← Previous</button>
-          <button style={navLinkStyle(selectedIdx === posts.length - 1)} onClick={() => setSelectedIdx(selectedIdx + 1)}>Next →</button>
+          <button style={navLinkStyle(selectedIdx === 0)} onClick={() => setSelectedIdx(selectedIdx - 1)}>{wp('blog_prev')}</button>
+          <button style={navLinkStyle(selectedIdx === posts.length - 1)} onClick={() => setSelectedIdx(selectedIdx + 1)}>{wp('blog_next')}</button>
         </div>
       </SectionWrap>
     );
@@ -1104,7 +1104,7 @@ function BlogBlock({ data, site, businessId }) {
                 <div style={{ fontWeight: 700, fontSize: '1rem', color: site.text_color || '#111827', fontFamily: site.font_family, lineHeight: 1.35 }}>{p.title}</div>
                 {excerpt && <p style={{ margin: 0, fontSize: '0.88rem', color: '#4B5563', lineHeight: 1.6 }}>{excerpt}</p>}
                 <div style={{ marginTop: 'auto', paddingTop: '0.5rem', fontSize: '0.83rem', color: linkColor, fontWeight: 600 }}>
-                  Read more →
+                  {wp('blog_read_more')}
                 </div>
               </div>
             </div>
@@ -1117,6 +1117,7 @@ function BlogBlock({ data, site, businessId }) {
 
 // ── Upcoming Events block ────────────────────────────────────────
 function EventsBlock({ data, site, businessId }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const [events, setEvents] = useState([]);
   const maxItems = data.max_items || 6;
   const layout = data.layout || 'cards';
@@ -1130,7 +1131,7 @@ function EventsBlock({ data, site, businessId }) {
 
   if (events.length === 0) return null;
 
-  const heading = data.heading || 'Upcoming Events';
+  const heading = data.heading || wp('heading_events');
   const headingStyle = data.heading_style || 'h1';
   const linkColor = site.link_color || site.accent_color || site.primary_color || '#2563eb';
   const textColor = site.text_color || '#111827';
@@ -1192,7 +1193,7 @@ function EventsBlock({ data, site, businessId }) {
                 )}
                 <div style={{ marginTop: 'auto', paddingTop: '0.75rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <Link to={`/events/${ev.EventID}`} style={{ fontSize: '0.88rem', color: linkColor, fontWeight: 600, textDecoration: 'none' }}>
-                    Details →
+                    {wp('events_details')}
                   </Link>
                   {ev.RegistrationRequired ? (
                     <Link to={`/events/${ev.EventID}/register`} style={{
@@ -1200,7 +1201,7 @@ function EventsBlock({ data, site, businessId }) {
                       background: linkColor, color: '#fff',
                       padding: '0.35rem 0.9rem', borderRadius: 6, textDecoration: 'none',
                     }}>
-                      Register
+                      {wp('events_register')}
                     </Link>
                   ) : null}
                 </div>
@@ -1315,6 +1316,7 @@ const contactInp = { border: '1px solid #E5E7EB', borderRadius: 8, padding: '0.6
 const contactLbl = { display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#9CA3AF', marginBottom: 4, textTransform: 'lowercase' };
 
 function ContactBlock({ data, site }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', organization: '', message: '' });
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
@@ -1337,7 +1339,7 @@ function ContactBlock({ data, site }) {
   return (
     <SectionWrap site={site} alt>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
-        <SectionHeading site={site} centered>{data.heading || 'Get In Touch'}</SectionHeading>
+        <SectionHeading site={site} centered>{data.heading || wp('heading_contact')}</SectionHeading>
         {data.sub_heading && (
           <div className="site-rte" style={{ color: '#6B7280', textAlign: 'center', marginBottom: '1.5rem', fontFamily: site.font_family, lineHeight: 1.7 }}
                dangerouslySetInnerHTML={{ __html: addLinkTargets(data.sub_heading) }} />
@@ -2736,4 +2738,10 @@ export default function WebsitePublic() {
               </div>
             </>
           )}
-  
+        </div>
+      </footer>
+        );
+      })()}
+    </div>
+  );
+}
