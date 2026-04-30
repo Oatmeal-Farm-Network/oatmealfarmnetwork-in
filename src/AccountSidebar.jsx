@@ -323,6 +323,7 @@ export default function AccountSidebar() {
             <NavChild to={`/animals/transfer?BusinessID=${BusinessID}`} label={t('account_sidebar.transfer')} />
             <NavChild to={`/animals/packages?BusinessID=${BusinessID}`} label={t('account_sidebar.packages')} />
             <NavChild to={`/animals/stats?BusinessID=${BusinessID}`} label={t('account_sidebar.statistics')} />
+            <NavChild to={`/herd-health?BusinessID=${BusinessID}`} label="Herd Health" />
           </NavSection>
         )}
 

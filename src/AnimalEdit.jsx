@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import AccountLayout from "./AccountLayout";
 import { useAccount } from "./AccountContext";
 
@@ -84,11 +85,12 @@ function FormSelect({ value, onChange, children, ...rest }) {
 }
 
 function RadioGroup({ label, value, onChange }) {
+  const { t } = useTranslation();
   return (
     <div style={styles.field}>
       <label style={styles.label}>{label}</label>
       <div style={{ display: "flex", gap: 20 }}>
-        {["Yes", "No"].map(v => (
+        {[["Yes", t('animal_edit.opt_yes')], ["No", t('animal_edit.opt_no')]].map(([v, lbl]) => (
           <label key={v} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
             <input
               type="radio"
@@ -96,7 +98,7 @@ function RadioGroup({ label, value, onChange }) {
               checked={value === (v === "Yes" ? "1" : "0")}
               onChange={() => onChange(v === "Yes" ? "1" : "0")}
             />
-            {v}
+            {lbl}
           </label>
         ))}
       </div>
@@ -126,6 +128,8 @@ const ANCESTOR_CASCADE = {
 };
 
 function AncestorBox({ nameKey, colorKey, linkKey, ariKey, label, gender, form, set, setMany, colors, boxInput, speciesID }) {
+  const { t } = useTranslation();
+  const ae = key => t(`animal_edit.${key}`);
   const isMale = gender === "male";
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -231,7 +235,7 @@ function AncestorBox({ nameKey, colorKey, linkKey, ariKey, label, gender, form, 
         onChange={handleNameChange}
         onFocus={() => { updatePos(); if (searchResults.length > 0) setShowResults(true); }}
         onBlur={() => setTimeout(() => setShowResults(false), 180)}
-        placeholder="Name (type to search)"
+        placeholder={ae('placeholder_ancestor_name')}
         style={boxInput}
       />
       {showResults && dropdownPos && (searching || searchResults.length > 0) && createPortal(
@@ -243,10 +247,10 @@ function AncestorBox({ nameKey, colorKey, linkKey, ariKey, label, gender, form, 
           boxShadow: "0 4px 12px rgba(0,0,0,0.18)", maxHeight: 240, overflowY: "auto",
         }}>
           {searching && (
-            <div style={{ padding: "6px 10px", fontSize: 11, color: "#8b7355" }}>Searching…</div>
+            <div style={{ padding: "6px 10px", fontSize: 11, color: "#8b7355" }}>{ae('searching')}</div>
           )}
           {!searching && searchResults.length === 0 && (
-            <div style={{ padding: "6px 10px", fontSize: 11, color: "#8b7355" }}>No matches</div>
+            <div style={{ padding: "6px 10px", fontSize: 11, color: "#8b7355" }}>{ae('no_matches')}</div>
           )}
           {searchResults.map(hit => (
             <div
@@ -286,12 +290,12 @@ function AncestorBox({ nameKey, colorKey, linkKey, ariKey, label, gender, form, 
           ))}
         </div>
       ) : (
-        <input value={form[colorKey] || ""} onChange={e => set(colorKey, e.target.value)} placeholder="Colors (comma-separated)" style={boxInput} />
+        <input value={form[colorKey] || ""} onChange={e => set(colorKey, e.target.value)} placeholder={ae('placeholder_colors')} style={boxInput} />
       )}
       {ariKey && (
-        <input value={form[ariKey] || ""} onChange={e => set(ariKey, e.target.value)} placeholder="Reg #" style={boxInput} />
+        <input value={form[ariKey] || ""} onChange={e => set(ariKey, e.target.value)} placeholder={ae('placeholder_reg_num')} style={boxInput} />
       )}
-      <input value={form[linkKey] || ""} onChange={e => set(linkKey, e.target.value)} placeholder="Link (optional)" style={{ ...boxInput, fontSize: 11, marginBottom: 0 }} />
+      <input value={form[linkKey] || ""} onChange={e => set(linkKey, e.target.value)} placeholder={ae('placeholder_link_optional')} style={{ ...boxInput, fontSize: 11, marginBottom: 0 }} />
     </div>
   );
 }
@@ -365,6 +369,8 @@ const _pasteAsPlain = e => {
 };
 
 function RichTextEditor({ value, onChange }) {
+  const { t } = useTranslation();
+  const ae = key => t(`animal_edit.${key}`);
   const editorRef = useRef(null);
   const htmlRef   = useRef(null);
   const [htmlMode, setHtmlMode]   = useState(false);
@@ -403,7 +409,7 @@ function RichTextEditor({ value, onChange }) {
     try { range.surroundContents(span); } catch { document.execCommand("fontName",false,f); }
   };
   const insertLink = () => {
-    const input = window.prompt("Enter a URL:");
+    const input = window.prompt(ae('rte_link_prompt'));
     if (!input) return;
     const val = input.trim();
     const href = /^https?:\/\//i.test(val) ? val : /^mailto:/i.test(val) ? val : `https://${val}`;
@@ -571,63 +577,63 @@ function RichTextEditor({ value, onChange }) {
       <div style={{ display:"flex", flexWrap:"wrap", gap:4, padding:"6px 8px", background:"#f9fafb", borderBottom:"1px solid #e5e7eb", alignItems:"center" }}>
         {!htmlMode && <>
           <select style={_sel} defaultValue="" onChange={e => { applyBlock(e.target.value); e.target.value = ""; }}>
-            <option value="" disabled>Style</option>
-            <option value="p">Body</option><option value="h1">H1</option><option value="h2">H2</option>
+            <option value="" disabled>{ae('rte_style_label')}</option>
+            <option value="p">{ae('rte_body')}</option><option value="h1">H1</option><option value="h2">H2</option>
             <option value="h3">H3</option><option value="h4">H4</option>
           </select>
           <select style={{ ..._sel, maxWidth:110 }} defaultValue="" onChange={e => { applyFont(e.target.value); e.target.value = ""; }}>
-            <option value="" disabled>Font</option>
+            <option value="" disabled>{ae('rte_font_label')}</option>
             {_WEB_FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
           </select>
           {_div}
-          <button style={{ ..._btn, fontWeight:700 }} title="Bold" onMouseDown={e=>{e.preventDefault();exec("bold");}}>B</button>
-          <button style={{ ..._btn, fontStyle:"italic" }} title="Italic" onMouseDown={e=>{e.preventDefault();exec("italic");}}>I</button>
-          <button style={{ ..._btn, textDecoration:"underline" }} title="Underline" onMouseDown={e=>{e.preventDefault();exec("underline");}}>U</button>
-          <button style={{ ..._btn, textDecoration:"line-through" }} title="Strikethrough" onMouseDown={e=>{e.preventDefault();exec("strikeThrough");}}>S</button>
+          <button style={{ ..._btn, fontWeight:700 }} title={ae('rte_bold')} onMouseDown={e=>{e.preventDefault();exec("bold");}}>B</button>
+          <button style={{ ..._btn, fontStyle:"italic" }} title={ae('rte_italic')} onMouseDown={e=>{e.preventDefault();exec("italic");}}>I</button>
+          <button style={{ ..._btn, textDecoration:"underline" }} title={ae('rte_underline')} onMouseDown={e=>{e.preventDefault();exec("underline");}}>U</button>
+          <button style={{ ..._btn, textDecoration:"line-through" }} title={ae('rte_strikethrough')} onMouseDown={e=>{e.preventDefault();exec("strikeThrough");}}>S</button>
           {_div}
-          <button style={_btn} title="Align Left" onMouseDown={e=>{e.preventDefault();exec("justifyLeft");}}>
+          <button style={_btn} title={ae('rte_align_left')} onMouseDown={e=>{e.preventDefault();exec("justifyLeft");}}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="0" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="0" y="11.5" width="9" height="1.5"/></svg>
           </button>
-          <button style={_btn} title="Center" onMouseDown={e=>{e.preventDefault();exec("justifyCenter");}}>
+          <button style={_btn} title={ae('rte_center')} onMouseDown={e=>{e.preventDefault();exec("justifyCenter");}}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="2" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="2" y="11.5" width="9" height="1.5"/></svg>
           </button>
-          <button style={_btn} title="Align Right" onMouseDown={e=>{e.preventDefault();exec("justifyRight");}}>
+          <button style={_btn} title={ae('rte_align_right')} onMouseDown={e=>{e.preventDefault();exec("justifyRight");}}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="4" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="4" y="11.5" width="9" height="1.5"/></svg>
           </button>
           {_div}
-          <button style={_btn} title="Bullet List" onMouseDown={e=>{e.preventDefault();exec("insertUnorderedList");}}>
+          <button style={_btn} title={ae('rte_bullet_list')} onMouseDown={e=>{e.preventDefault();exec("insertUnorderedList");}}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><circle cx="1.5" cy="2.5" r="1.2"/><rect x="4" y="1.8" width="9" height="1.4"/><circle cx="1.5" cy="6.5" r="1.2"/><rect x="4" y="5.8" width="9" height="1.4"/><circle cx="1.5" cy="10.5" r="1.2"/><rect x="4" y="9.8" width="9" height="1.4"/></svg>
           </button>
-          <button style={_btn} title="Numbered List" onMouseDown={e=>{e.preventDefault();exec("insertOrderedList");}}>
+          <button style={_btn} title={ae('rte_numbered_list')} onMouseDown={e=>{e.preventDefault();exec("insertOrderedList");}}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><text x="0" y="4" fontSize="4.5" fontFamily="monospace">1.</text><rect x="4" y="1.8" width="9" height="1.4"/><text x="0" y="8" fontSize="4.5" fontFamily="monospace">2.</text><rect x="4" y="5.8" width="9" height="1.4"/><text x="0" y="12" fontSize="4.5" fontFamily="monospace">3.</text><rect x="4" y="9.8" width="9" height="1.4"/></svg>
           </button>
           {_div}
-          <button style={_btn} title="Insert Link" onMouseDown={e=>{e.preventDefault();insertLink();}}>
+          <button style={_btn} title={ae('rte_insert_link')} onMouseDown={e=>{e.preventDefault();insertLink();}}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
           </button>
-          <button style={{ ..._btn, fontSize:10 }} title="Remove Link" onMouseDown={e=>{e.preventDefault();exec("unlink");}}>✕🔗</button>
+          <button style={{ ..._btn, fontSize:10 }} title={ae('rte_remove_link')} onMouseDown={e=>{e.preventDefault();exec("unlink");}}>✕🔗</button>
           {_div}
-          <button style={{ ..._btn, fontSize:10, color:"#b91c1c" }} title="Clear formatting" onMouseDown={e=>{e.preventDefault();clearFormatting();}}>Tx</button>
+          <button style={{ ..._btn, fontSize:10, color:"#b91c1c" }} title={ae('rte_clear_formatting')} onMouseDown={e=>{e.preventDefault();clearFormatting();}}>Tx</button>
           {_div}
-          <button style={{ ..._btn, background:imgPanel?"#e0f2fe":"#fff", borderColor:imgPanel?"#7dd3fc":"#d1d5db" }} title="Insert Image" onMouseDown={e=>{e.preventDefault();openImgPanel();}}>
+          <button style={{ ..._btn, background:imgPanel?"#e0f2fe":"#fff", borderColor:imgPanel?"#7dd3fc":"#d1d5db" }} title={ae('rte_insert_image')} onMouseDown={e=>{e.preventDefault();openImgPanel();}}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           </button>
           {_div}
         </>}
         <button onClick={() => setHtmlMode(m => !m)}
           style={{ ..._btn, fontFamily:"monospace", fontSize:11, background:htmlMode?"#1e293b":"#fff", color:htmlMode?"#7dd3fc":"#374151", border:`1px solid ${htmlMode?"#334155":"#d1d5db"}` }}
-          title={htmlMode ? "Back to rich text" : "View/edit HTML"}>&lt;/&gt;</button>
+          title={htmlMode ? ae('rte_html_back') : ae('rte_html_view')}>&lt;/&gt;</button>
       </div>
 
       {/* ── image insert panel ── */}
       {imgPanel && !htmlMode && (
         <div style={{ padding:"10px", background:"#f0f9ff", borderBottom:"1px solid #bae6fd", display:"flex", flexDirection:"column", gap:"0.5rem" }}>
           <div style={{ display:"flex", gap:"0.5rem", alignItems:"center" }}>
-            <input value={imgUrl} onChange={e => setImgUrl(e.target.value)} placeholder="Paste image URL…" autoFocus
+            <input value={imgUrl} onChange={e => setImgUrl(e.target.value)} placeholder={ae('rte_img_url_placeholder')} autoFocus
               style={{ flex:1, minWidth:160, padding:"4px 8px", border:"1px solid #d1d5db", borderRadius:5, fontSize:12 }}
               onKeyDown={e => { if (e.key==="Enter"){e.preventDefault();insertImage();} if(e.key==="Escape") setImgPanel(false); }} />
             <button onClick={() => fileInputRef.current?.click()}
-              style={{ padding:"4px 10px", border:"1px solid #d1d5db", borderRadius:5, fontSize:11, cursor:"pointer", background:"#fff", color:"#374151", whiteSpace:"nowrap" }}>Browse…</button>
+              style={{ padding:"4px 10px", border:"1px solid #d1d5db", borderRadius:5, fontSize:11, cursor:"pointer", background:"#fff", color:"#374151", whiteSpace:"nowrap" }}>{ae('rte_browse')}</button>
             <input ref={fileInputRef} type="file" accept="image/*,.jfif" style={{ display:"none" }}
               onChange={e => { const f = e.target.files[0]; if (f) handlePanelFile(f); e.target.value=""; }} />
           </div>
@@ -635,7 +641,7 @@ function RichTextEditor({ value, onChange }) {
             onDrop={e=>{e.preventDefault();setPanelDragging(false);handlePanelFile(e.dataTransfer.files[0]);}}
             onClick={() => fileInputRef.current?.click()}
             style={{ border:`2px dashed ${panelDragging?"#3b82f6":"#bae6fd"}`, borderRadius:6, padding:"10px 8px", textAlign:"center", fontSize:11, color:panelDragging?"#2563eb":"#0891b2", cursor:"pointer", background:panelDragging?"#eff6ff":"transparent" }}>
-            {uploading ? "Uploading…" : "Drop image here or click to browse"}
+            {uploading ? ae('doc_uploading') : ae('rte_drop_image')}
           </div>
           <div style={{ display:"flex", gap:"0.5rem", alignItems:"center", flexWrap:"wrap" }}>
             <div style={{ display:"flex", gap:3 }}>
@@ -647,14 +653,14 @@ function RichTextEditor({ value, onChange }) {
               ))}
             </div>
             <button onClick={insertImage} disabled={!imgUrl.trim()||uploading}
-              style={{ padding:"3px 12px", borderRadius:4, border:"1px solid #0891b2", background:imgUrl.trim()&&!uploading?"#0891b2":"#94a3b8", color:"#fff", fontSize:11, cursor:imgUrl.trim()&&!uploading?"pointer":"default", fontWeight:600 }}>Insert</button>
+              style={{ padding:"3px 12px", borderRadius:4, border:"1px solid #0891b2", background:imgUrl.trim()&&!uploading?"#0891b2":"#94a3b8", color:"#fff", fontSize:11, cursor:imgUrl.trim()&&!uploading?"pointer":"default", fontWeight:600 }}>{ae('rte_insert_btn')}</button>
             <button onClick={() => setImgPanel(false)}
-              style={{ padding:"3px 8px", borderRadius:4, border:"1px solid #d1d5db", background:"#fff", color:"#6b7280", fontSize:11, cursor:"pointer" }}>Cancel</button>
+              style={{ padding:"3px 8px", borderRadius:4, border:"1px solid #d1d5db", background:"#fff", color:"#6b7280", fontSize:11, cursor:"pointer" }}>{ae('rte_cancel')}</button>
           </div>
         </div>
       )}
       {uploading && (
-        <div style={{ padding:"8px 12px", background:"#fefce8", borderBottom:"1px solid #fde68a", fontSize:12, color:"#92400e" }}>Uploading image…</div>
+        <div style={{ padding:"8px 12px", background:"#fefce8", borderBottom:"1px solid #fde68a", fontSize:12, color:"#92400e" }}>{ae('rte_uploading_bar')}</div>
       )}
 
       {/* ── editable area ── */}
@@ -697,14 +703,16 @@ function RichTextEditor({ value, onChange }) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-function SaveBar({ saving, saved, onSave, label = "Save Changes", error }) {
+function SaveBar({ saving, saved, onSave, labelKey, error }) {
+  const { t } = useTranslation();
+  const ae = key => t(`animal_edit.${key}`);
   const isSessionExpired = error && (error.includes("401") || error.toLowerCase().includes("credentials") || error.toLowerCase().includes("unauthorized"));
   return (
     <div style={{ display:"flex", justifyContent:"flex-end", alignItems:"center", gap:12, marginTop:24, flexWrap:"wrap" }}>
-      {saved && <span style={{ color:"rgb(115,131,85)", fontWeight:600, fontSize:14 }}>✓ Saved!</span>}
+      {saved && <span style={{ color:"rgb(115,131,85)", fontWeight:600, fontSize:14 }}>{ae('saved_label')}</span>}
       {error && (
         <span style={{ color:"#dc2626", fontWeight:600, fontSize:13 }}>
-          ⚠ {isSessionExpired ? <>Session expired — <a href="/login" style={{ color:"#dc2626" }}>please log in again</a></> : error}
+          ⚠ {isSessionExpired ? <>{ae('session_expired')}<a href="/login" style={{ color:"#dc2626" }}>{ae('session_expired_link')}</a></> : error}
         </span>
       )}
       <button
@@ -722,7 +730,7 @@ function SaveBar({ saving, saved, onSave, label = "Save Changes", error }) {
           letterSpacing: "0.04em",
         }}
       >
-        {saving ? "Saving…" : label}
+        {saving ? ae('saving_label') : ae(labelKey || 'save_changes')}
       </button>
     </div>
   );
@@ -730,6 +738,8 @@ function SaveBar({ saving, saved, onSave, label = "Save Changes", error }) {
 
 // ─── BASICS TAB ──────────────────────────────────────────────────────────────
 function BasicsTab({ animalID, businessID }) {
+  const { t } = useTranslation();
+  const ae = key => t(`animal_edit.${key}`);
   const [animal, setAnimal] = useState(null);
   const [allSpecies, setAllSpecies] = useState([]);
   const [breeds, setBreeds] = useState([]);
@@ -866,8 +876,8 @@ function BasicsTab({ animalID, businessID }) {
     setSaving(false);
   };
 
-  if (loading) return <div style={styles.loadingBox}>Loading animal details…</div>;
-  if (!animal) return <div style={styles.loadingBox}>Animal not found.</div>;
+  if (loading) return <div style={styles.loadingBox}>{ae('loading_animal')}</div>;
+  if (!animal) return <div style={styles.loadingBox}>{ae('animal_not_found')}</div>;
 
   const sid = Number(form.SpeciesID) || animal.SpeciesID;
   const isFowl = FOWL_IDS.includes(sid);
@@ -878,14 +888,14 @@ function BasicsTab({ animalID, businessID }) {
 
   return (
     <div>
-      <div style={styles.sectionHead}>Basic Facts</div>
+      <div style={styles.sectionHead}>{ae('section_basic_facts')}</div>
 
-      <FormField label="Name / Title" hint="This can be a full name like XYZ Ranch's MagaStud">
+      <FormField label={ae('lbl_name')} hint={ae('hint_name')}>
         <FormInput value={form.Name} onChange={v => set("Name", v)} style={styles.input} />
       </FormField>
 
       <div style={styles.formGrid}>
-        <FormField label="Species">
+        <FormField label={ae('lbl_species')}>
           <FormSelect
             value={form.SpeciesID}
             onChange={v => {
@@ -894,25 +904,25 @@ function BasicsTab({ animalID, businessID }) {
               if (v) loadSpeciesData(Number(v));
             }}
           >
-            <option value="">Select species…</option>
+            <option value="">{ae('opt_select_species')}</option>
             {allSpecies.map(s => (
               <option key={s.id} value={s.id}>{s.singular || s.plural}</option>
             ))}
           </FormSelect>
         </FormField>
         <div style={{ marginBottom:14 }}>
-          <div style={styles.label}># Animals in Listing</div>
+          <div style={styles.label}>{ae('lbl_num_animals')}</div>
           <div style={styles.staticVal}>{animal.NumberofAnimals || 1}</div>
         </div>
 
         {(animal.NumberofAnimals == null || animal.NumberofAnimals === 1) && sid !== 33 && (
-          <FormField label="Date of Birth">
+          <FormField label={ae('lbl_dob')}>
             <FormInput value={form.DOB} onChange={v => set("DOB", v)} type="date" style={styles.input} />
           </FormField>
         )}
 
         {showTemperament && (
-          <FormField label="Temperament" hint="1 = Very Calm, 10 = Very High-Spirited">
+          <FormField label={ae('lbl_temperament')} hint={ae('hint_temperament')}>
             <FormSelect value={form.Temperment} onChange={v => set("Temperment", v)} style={styles.select}>
               <option value="">-</option>
               {[...Array(10)].map((_,i) => (
@@ -924,28 +934,28 @@ function BasicsTab({ animalID, businessID }) {
 
         {!isFowl && (
           <>
-            <FormField label="Height (hands/inches)">
+            <FormField label={ae('lbl_height')}>
               <FormInput value={form.Height} onChange={v => set("Height", v)} type="number" style={styles.input} />
             </FormField>
-            <FormField label="Weight (lbs)">
+            <FormField label={ae('lbl_weight')}>
               <FormInput value={form.Weight} onChange={v => set("Weight", v)} type="number" style={styles.input} />
             </FormField>
             {[5,7].includes(sid) && (
-              <FormField label="Gaited?">
+              <FormField label={ae('lbl_gaited')}>
                 <FormSelect value={form.Gaited} onChange={v => set("Gaited", v)} style={styles.select}>
                   <option value="">-</option>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
+                  <option value="Yes">{ae('opt_yes_val')}</option>
+                  <option value="No">{ae('opt_no_val')}</option>
                 </FormSelect>
               </FormField>
             )}
             {HORNS_IDS.includes(sid) && (
-              <FormField label="Horns?">
+              <FormField label={ae('lbl_horns')}>
                 <FormSelect value={form.Horns} onChange={v => set("Horns", v)} style={styles.select}>
                   <option value="">-</option>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                  <option value="Polled">Polled</option>
+                  <option value="Yes">{ae('opt_yes_val')}</option>
+                  <option value="No">{ae('opt_no_val')}</option>
+                  <option value="Polled">{ae('opt_polled')}</option>
                 </FormSelect>
               </FormField>
             )}
@@ -953,9 +963,9 @@ function BasicsTab({ animalID, businessID }) {
         )}
 
         {categories.length > 0 && !([23,33].includes(sid)) && (
-          <FormField label="Category">
+          <FormField label={ae('lbl_category')}>
             <FormSelect value={form.Category} onChange={v => set("Category", v)}>
-              <option value="">Select…</option>
+              <option value="">{ae('opt_select')}</option>
               {categories.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -965,14 +975,14 @@ function BasicsTab({ animalID, businessID }) {
 
         {breeds.length > 0 && (
           <>
-            <FormField label={sid === 4 || sid === 23 ? "Type" : "Breed (Primary)"}>
+            <FormField label={sid === 4 || sid === 23 ? ae('lbl_type') : ae('lbl_breed_primary')}>
               <FormSelect value={form.BreedID} onChange={v => set("BreedID", v)}>
-                <option value="">Select a breed…</option>
+                <option value="">{ae('lbl_breed_select')}</option>
                 {breeds.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
               </FormSelect>
             </FormField>
             {showExtraBreeds && [2,3,4].map(n => (
-              <FormField key={n} label={`Breed ${n+1}`}>
+              <FormField key={n} label={ae('lbl_breed_n', { n: n+1 })}>
                 <FormSelect value={form[`BreedID${n+1}`]} onChange={v => set(`BreedID${n+1}`, v)}>
                   <option value="">-</option>
                   {breeds.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -985,12 +995,12 @@ function BasicsTab({ animalID, businessID }) {
 
       {showColors && (
         <>
-          <div style={styles.sectionHead}>Colors</div>
+          <div style={styles.sectionHead}>{ae('section_colors')}</div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(180px, 1fr))", gap:12, marginBottom:16 }}>
             {[...Array(maxColors)].map((_,i) => {
               const k = `Color${i+1}`;
               return (
-                <FormField key={k} label={`Color ${i+1}`}>
+                <FormField key={k} label={ae('lbl_color_n', { n: i+1 })}>
                   <FormSelect value={form[k]} onChange={v => set(k, v)}>
                     <option value="">--</option>
                     {colors.map(c => <option key={c} value={c}>{c}</option>)}
@@ -1016,7 +1026,7 @@ function BasicsTab({ animalID, businessID }) {
         if (rows.length === 0) return null;
         return (
           <>
-            <div style={styles.sectionHead}>Registrations</div>
+            <div style={styles.sectionHead}>{ae('section_registrations')}</div>
             <div style={styles.formGrid}>
               {rows.map((reg, i) => (
                 <FormField key={reg.RegType || i} label={reg.RegType}>
@@ -1042,7 +1052,7 @@ function BasicsTab({ animalID, businessID }) {
       })()}
 
       {sid !== 23 && (
-        <FormField label="Vaccinations">
+        <FormField label={ae('lbl_vaccinations')}>
           <textarea
             value={form.Vaccinations}
             onChange={e => set("Vaccinations", e.target.value)}
@@ -1059,6 +1069,8 @@ function BasicsTab({ animalID, businessID }) {
 
 // ─── PRICING TAB ─────────────────────────────────────────────────────────────
 function PricingTab({ animalID }) {
+  const { t } = useTranslation();
+  const ae = key => t(`animal_edit.${key}`);
   const [form, setForm] = useState({
     ForSale: "0", Sold: "0", Price: "", StudFee: "",
     EmbryoPrice: "", SemenPrice: "", Free: "0",
@@ -1154,65 +1166,65 @@ function PricingTab({ animalID }) {
 
   return (
     <div>
-      <div style={styles.sectionHead}>Sale Status</div>
+      <div style={styles.sectionHead}>{ae('section_sale_status')}</div>
       <div style={{ display:"flex", gap:48, flexWrap:"wrap", marginBottom:8 }}>
-        <RadioGroup label="For Sale?" value={form.ForSale} onChange={v => set("ForSale", v)} />
-        <RadioGroup label="Sold?" value={form.Sold} onChange={v => set("Sold", v)} />
-        <RadioGroup label="Free?" value={form.Free} onChange={v => set("Free", v)} />
+        <RadioGroup label={ae('lbl_for_sale')} value={form.ForSale} onChange={v => set("ForSale", v)} />
+        <RadioGroup label={ae('lbl_sold')} value={form.Sold} onChange={v => set("Sold", v)} />
+        <RadioGroup label={ae('lbl_free')} value={form.Free} onChange={v => set("Free", v)} />
       </div>
 
       {!isFowl && (
         <>
-          <div style={styles.sectionHead}>Pricing</div>
+          <div style={styles.sectionHead}>{ae('section_pricing')}</div>
           <div style={styles.formGrid}>
             <div style={styles.field}>
-              <label style={styles.label}>Price ($)</label>
+              <label style={styles.label}>{ae('lbl_price')}</label>
               <input type="number" value={form.Price} onChange={e => set("Price", e.target.value)} style={styles.input} />
             </div>
             {isMale && (
               <div style={styles.field}>
-                <label style={styles.label}>Stud Fee ($)</label>
+                <label style={styles.label}>{ae('lbl_stud_fee')}</label>
                 <input type="number" value={form.StudFee} onChange={e => set("StudFee", e.target.value)} style={styles.input} />
-                <div style={styles.hint}>Set to 0 to show "Call For Price"</div>
+                <div style={styles.hint}>{ae('hint_stud_fee')}</div>
               </div>
             )}
             {showEmbryoSemen && !isMale && (
               <div style={styles.field}>
-                <label style={styles.label}>Embryo Price ($)</label>
+                <label style={styles.label}>{ae('lbl_embryo_price')}</label>
                 <input type="number" value={form.EmbryoPrice} onChange={e => set("EmbryoPrice", e.target.value)} style={styles.input} />
               </div>
             )}
             {showEmbryoSemen && isMale && (
               <div style={styles.field}>
-                <label style={styles.label}>Semen Price ($)</label>
+                <label style={styles.label}>{ae('lbl_semen_price')}</label>
                 <input type="number" value={form.SemenPrice} onChange={e => set("SemenPrice", e.target.value)} style={styles.input} />
               </div>
             )}
           </div>
           <div style={styles.field}>
-            <label style={styles.label}>Finance Terms</label>
+            <label style={styles.label}>{ae('lbl_finance_terms')}</label>
             <textarea value={form.Financeterms} onChange={e => set("Financeterms", e.target.value)} rows={4} style={{ ...styles.input, resize:"vertical", fontFamily:"inherit" }} />
           </div>
         </>
       )}
 
       <div style={styles.field}>
-        <label style={styles.label}>Sales Comment</label>
+        <label style={styles.label}>{ae('lbl_sales_comment')}</label>
         <textarea value={form.PriceComments} onChange={e => set("PriceComments", e.target.value)} rows={3} style={{ ...styles.input, resize:"vertical", fontFamily:"inherit" }} />
-        <div style={styles.hint}>A short comment like "Great Price!" or "Great Progeny"</div>
+        <div style={styles.hint}>{ae('hint_sales_comment')}</div>
       </div>
 
       {animal?.NumberofAnimals < 2 && (
         <>
-          <div style={styles.sectionHead}>Co-Owners</div>
+          <div style={styles.sectionHead}>{ae('section_coowners')}</div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:16 }}>
           {[1,2,3].map(n => (
             <div key={n} style={{ marginBottom:16, padding:"12px 16px", background:"#f9f6f2", borderRadius:8, border:"1px solid #e8e0d5" }}>
-              <div style={{ fontWeight:600, marginBottom:8, color:"#5a3e2b" }}>Co-Owner {n}</div>
+              <div style={{ fontWeight:600, marginBottom:8, color:"#5a3e2b" }}>{ae('coowner_n', { n })}</div>
               {[
-                ["Ranch Name", `CoOwnerBusiness${n}`],
-                ["Name", `CoOwnerName${n}`],
-                ["Profile Link", `CoOwnerLink${n}`],
+                [ae('lbl_ranch_name'), `CoOwnerBusiness${n}`],
+                [ae('lbl_name'), `CoOwnerName${n}`],
+                [ae('lbl_profile_link'), `CoOwnerLink${n}`],
               ].map(([lbl, key]) => (
                 <div key={key} style={{ display:"flex", alignItems:"center", gap:12, marginBottom:8 }}>
                   <label style={{ ...styles.label, width:120, marginBottom:0 }}>{lbl}</label>
@@ -1232,6 +1244,8 @@ function PricingTab({ animalID }) {
 
 // ─── DESCRIPTION TAB ─────────────────────────────────────────────────────────
 function DescriptionTab({ animalID }) {
+  const { t } = useTranslation();
+  const ae = key => t(`animal_edit.${key}`);
   const [desc, setDesc] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -1275,13 +1289,13 @@ function DescriptionTab({ animalID }) {
     setSaving(false);
   };
 
-  if (loading) return <div style={styles.loadingBox}>Loading…</div>;
+  if (loading) return <div style={styles.loadingBox}>{ae('loading_generic')}</div>;
 
   return (
     <div>
-      <div style={styles.sectionHead}>Animal Description</div>
+      <div style={styles.sectionHead}>{ae('section_animal_description')}</div>
       <p style={{ color:"#7a6a5a", fontSize:14, marginBottom:16 }}>
-        Describe your animal for potential buyers. Include personality traits, notable accomplishments, and any other relevant information.
+        {ae('hint_description')}
       </p>
       <RichTextEditor value={desc} onChange={setDesc} />
       <SaveBar saving={saving} saved={saved} onSave={save} error={saveError} />
@@ -1293,6 +1307,8 @@ function DescriptionTab({ animalID }) {
 const ALPACA_FRACTIONS = ["Full","7/8","3/4","5/8","1/2","3/8","1/4","1/8","1/16","1/32","1/64","Unknown"];
 
 function AncestryTab({ animalID }) {
+  const { t } = useTranslation();
+  const ae = key => t(`animal_edit.${key}`);
   const ANCESTOR_FIELDS = [
     "Sire","SireColor","SireLink","SireARI",
     "SireSire","SireSireColor","SireSireLink","SireSireARI",
@@ -1380,7 +1396,7 @@ function AncestryTab({ animalID }) {
 
   const commonAncProps = { form, set, setMany, colors, boxInput, speciesID };
 
-  if (loading) return <div style={styles.loadingBox}>Loading ancestry…</div>;
+  if (loading) return <div style={styles.loadingBox}>{ae('loading_ancestry')}</div>;
 
   const isAlpaca = Number(speciesID) === 2;
 
@@ -1388,16 +1404,16 @@ function AncestryTab({ animalID }) {
     <div>
       {isAlpaca && (
         <div style={{ marginBottom: 32 }}>
-          <div style={styles.sectionHead}>Bloodline Percentages</div>
+          <div style={styles.sectionHead}>{ae('section_bloodline')}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0 40px" }}>
             {[
-              { key: "PercentPeruvian",    label: "% Peruvian" },
-              { key: "PercentChilean",     label: "% Chilean" },
-              { key: "PercentBolivian",    label: "% Bolivian" },
-              { key: "PercentUnknownOther",label: "% Other / Unknown" },
-              { key: "PercentAccoyo",      label: "% Accoyo" },
-            ].map(({ key, label }) => (
-              <FormField key={key} label={label}>
+              { key: "PercentPeruvian",    labelKey: "lbl_pct_peruvian" },
+              { key: "PercentChilean",     labelKey: "lbl_pct_chilean" },
+              { key: "PercentBolivian",    labelKey: "lbl_pct_bolivian" },
+              { key: "PercentUnknownOther",labelKey: "lbl_pct_other" },
+              { key: "PercentAccoyo",      labelKey: "lbl_pct_accoyo" },
+            ].map(({ key, labelKey }) => (
+              <FormField key={key} label={ae(labelKey)}>
                 <select
                   style={{ display:"block", width:"100%", padding:"6px 8px", border:"1px solid #d5c9bc", borderRadius:4, fontSize:13, background:"rgba(255,255,255,0.75)", boxSizing:"border-box", fontFamily:"inherit" }}
                   value={form[key] || ""}
@@ -1412,55 +1428,55 @@ function AncestryTab({ animalID }) {
         </div>
       )}
 
-      <div style={styles.sectionHead}>Ancestry</div>
+      <div style={styles.sectionHead}>{ae('section_ancestry')}</div>
       <p style={{ color: "#7a6a5a", fontSize: 13, marginBottom: 20 }}>
-        Blue = male &nbsp;·&nbsp; Pink = female
+        {ae('hint_ancestry_gender')}
       </p>
 
       <div style={{ overflowX: "auto" }}>
         <table style={{ borderCollapse: "collapse", minWidth: 820, width: "100%" }}>
           <thead>
             <tr>
-              <ColHead>Parents</ColHead>
+              <ColHead>{ae('th_parents')}</ColHead>
               <th style={{ width: 20 }} />
-              <ColHead>Grandparents</ColHead>
+              <ColHead>{ae('th_grandparents')}</ColHead>
               <th style={{ width: 20 }} />
-              <ColHead>Great-Grandparents</ColHead>
+              <ColHead>{ae('th_great_grandparents')}</ColHead>
             </tr>
           </thead>
           <tbody>
             {/* Row 1 of 8 — SireSireSire */}
             <tr>
               <td rowSpan={4} style={{ verticalAlign: "middle", paddingRight: 0, paddingBottom: 4 }}>
-                <AncestorBox label="Sire" nameKey="Sire" colorKey="SireColor" linkKey="SireLink" ariKey="SireARI" gender="male" {...commonAncProps} />
+                <AncestorBox label={ae('anc_sire')} nameKey="Sire" colorKey="SireColor" linkKey="SireLink" ariKey="SireARI" gender="male" {...commonAncProps} />
               </td>
               <LineCell top={false} bottom={true} />
               <td rowSpan={2} style={{ verticalAlign: "middle", paddingRight: 0, paddingBottom: 4 }}>
-                <AncestorBox label="Sire's Sire" nameKey="SireSire" colorKey="SireSireColor" linkKey="SireSireLink" ariKey="SireSireARI" gender="male" {...commonAncProps} />
+                <AncestorBox label={ae('anc_sire_sire')} nameKey="SireSire" colorKey="SireSireColor" linkKey="SireSireLink" ariKey="SireSireARI" gender="male" {...commonAncProps} />
               </td>
               <LineCell top={false} bottom={true} />
-              <AncPad><AncestorBox label="Sire's Sire's Sire" nameKey="SireSireSire" colorKey="SireSireSireColor" linkKey="SireSireSireLink" ariKey="SireSireSireARI" gender="male" {...commonAncProps} /></AncPad>
+              <AncPad><AncestorBox label={ae('anc_sire_sire_sire')} nameKey="SireSireSire" colorKey="SireSireSireColor" linkKey="SireSireSireLink" ariKey="SireSireSireARI" gender="male" {...commonAncProps} /></AncPad>
             </tr>
             {/* Row 2 — SireSireDam */}
             <tr>
               <td style={{ width: 20, padding: 0, borderRight: "2px solid #d5c9bc" }} />
               <LineCell top={true} bottom={false} />
-              <AncPad><AncestorBox label="Sire's Sire's Dam" nameKey="SireSireDam" colorKey="SireSireDamColor" linkKey="SireSireDamLink" ariKey="SireSireDamARI" gender="female" {...commonAncProps} /></AncPad>
+              <AncPad><AncestorBox label={ae('anc_sire_sire_dam')} nameKey="SireSireDam" colorKey="SireSireDamColor" linkKey="SireSireDamLink" ariKey="SireSireDamARI" gender="female" {...commonAncProps} /></AncPad>
             </tr>
             {/* Row 3 — SireDamSire */}
             <tr>
               <td style={{ width: 20, padding: 0, borderRight: "2px solid #d5c9bc" }} />
               <td rowSpan={2} style={{ verticalAlign: "middle", paddingRight: 0, paddingBottom: 4 }}>
-                <AncestorBox label="Sire's Dam" nameKey="SireDam" colorKey="SireDamColor" linkKey="SireDamLink" ariKey="SireDamARI" gender="female" {...commonAncProps} />
+                <AncestorBox label={ae('anc_sire_dam')} nameKey="SireDam" colorKey="SireDamColor" linkKey="SireDamLink" ariKey="SireDamARI" gender="female" {...commonAncProps} />
               </td>
               <LineCell top={false} bottom={true} />
-              <AncPad><AncestorBox label="Sire's Dam's Sire" nameKey="SireDamSire" colorKey="SireDamSireColor" linkKey="SireDamSireLink" ariKey="SireDamSireARI" gender="male" {...commonAncProps} /></AncPad>
+              <AncPad><AncestorBox label={ae('anc_sire_dam_sire')} nameKey="SireDamSire" colorKey="SireDamSireColor" linkKey="SireDamSireLink" ariKey="SireDamSireARI" gender="male" {...commonAncProps} /></AncPad>
             </tr>
             {/* Row 4 — SireDamDam */}
             <tr>
               <td style={{ width: 20, padding: 0 }} />
               <LineCell top={true} bottom={false} />
-              <AncPad><AncestorBox label="Sire's Dam's Dam" nameKey="SireDamDam" colorKey="SireDamDamColor" linkKey="SireDamDamLink" ariKey="SireDamDamARI" gender="female" {...commonAncProps} /></AncPad>
+              <AncPad><AncestorBox label={ae('anc_sire_dam_dam')} nameKey="SireDamDam" colorKey="SireDamDamColor" linkKey="SireDamDamLink" ariKey="SireDamDamARI" gender="female" {...commonAncProps} /></AncPad>
             </tr>
 
             {/* Spacer row */}
@@ -1469,35 +1485,35 @@ function AncestryTab({ animalID }) {
             {/* Row 5 — DamSireSire */}
             <tr>
               <td rowSpan={4} style={{ verticalAlign: "middle", paddingRight: 0, paddingBottom: 4 }}>
-                <AncestorBox label="Dam" nameKey="Dam" colorKey="DamColor" linkKey="DamLink" ariKey="DamARI" gender="female" {...commonAncProps} />
+                <AncestorBox label={ae('anc_dam')} nameKey="Dam" colorKey="DamColor" linkKey="DamLink" ariKey="DamARI" gender="female" {...commonAncProps} />
               </td>
               <LineCell top={false} bottom={true} />
               <td rowSpan={2} style={{ verticalAlign: "middle", paddingRight: 0, paddingBottom: 4 }}>
-                <AncestorBox label="Dam's Sire" nameKey="DamSire" colorKey="DamSireColor" linkKey="DamSireLink" ariKey="DamSireARI" gender="male" {...commonAncProps} />
+                <AncestorBox label={ae('anc_dam_sire')} nameKey="DamSire" colorKey="DamSireColor" linkKey="DamSireLink" ariKey="DamSireARI" gender="male" {...commonAncProps} />
               </td>
               <LineCell top={false} bottom={true} />
-              <AncPad><AncestorBox label="Dam's Sire's Sire" nameKey="DamSireSire" colorKey="DamSireSireColor" linkKey="DamSireSireLink" ariKey="DamSireSireARI" gender="male" {...commonAncProps} /></AncPad>
+              <AncPad><AncestorBox label={ae('anc_dam_sire_sire')} nameKey="DamSireSire" colorKey="DamSireSireColor" linkKey="DamSireSireLink" ariKey="DamSireSireARI" gender="male" {...commonAncProps} /></AncPad>
             </tr>
             {/* Row 6 — DamSireDam */}
             <tr>
               <td style={{ width: 20, padding: 0, borderRight: "2px solid #d5c9bc" }} />
               <LineCell top={true} bottom={false} />
-              <AncPad><AncestorBox label="Dam's Sire's Dam" nameKey="DamSireDam" colorKey="DamSireDamColor" linkKey="DamSireDamLink" ariKey="DamSireDamARI" gender="female" {...commonAncProps} /></AncPad>
+              <AncPad><AncestorBox label={ae('anc_dam_sire_dam')} nameKey="DamSireDam" colorKey="DamSireDamColor" linkKey="DamSireDamLink" ariKey="DamSireDamARI" gender="female" {...commonAncProps} /></AncPad>
             </tr>
             {/* Row 7 — DamDamSire */}
             <tr>
               <td style={{ width: 20, padding: 0, borderRight: "2px solid #d5c9bc" }} />
               <td rowSpan={2} style={{ verticalAlign: "middle", paddingRight: 0, paddingBottom: 4 }}>
-                <AncestorBox label="Dam's Dam" nameKey="DamDam" colorKey="DamDamColor" linkKey="DamDamLink" ariKey="DamDamARI" gender="female" {...commonAncProps} />
+                <AncestorBox label={ae('anc_dam_dam')} nameKey="DamDam" colorKey="DamDamColor" linkKey="DamDamLink" ariKey="DamDamARI" gender="female" {...commonAncProps} />
               </td>
               <LineCell top={false} bottom={true} />
-              <AncPad><AncestorBox label="Dam's Dam's Sire" nameKey="DamDamSire" colorKey="DamDamSireColor" linkKey="DamDamSireLink" ariKey="DamDamSireARI" gender="male" {...commonAncProps} /></AncPad>
+              <AncPad><AncestorBox label={ae('anc_dam_dam_sire')} nameKey="DamDamSire" colorKey="DamDamSireColor" linkKey="DamDamSireLink" ariKey="DamDamSireARI" gender="male" {...commonAncProps} /></AncPad>
             </tr>
             {/* Row 8 — DamDamDam */}
             <tr>
               <td style={{ width: 20, padding: 0 }} />
               <LineCell top={true} bottom={false} />
-              <AncPad><AncestorBox label="Dam's Dam's Dam" nameKey="DamDamDam" colorKey="DamDamDamColor" linkKey="DamDamDamLink" ariKey="DamDamDamARI" gender="female" {...commonAncProps} /></AncPad>
+              <AncPad><AncestorBox label={ae('anc_dam_dam_dam')} nameKey="DamDamDam" colorKey="DamDamDamColor" linkKey="DamDamDamLink" ariKey="DamDamDamARI" gender="female" {...commonAncProps} /></AncPad>
             </tr>
           </tbody>
         </table>
@@ -1510,6 +1526,8 @@ function AncestryTab({ animalID }) {
 
 // ─── FIBER TAB ───────────────────────────────────────────────────────────────
 function FiberTab({ animalID, speciesID }) {
+  const { t } = useTranslation();
+  const ae = key => t(`animal_edit.${key}`);
   const EMPTY_ROW = () => ({
     FiberID: null, SampleDateYear:"", Average:"", CF:"",
     StandardDev:"", CrimpPerInch:"", COV:"", Length:"",
@@ -1570,31 +1588,31 @@ function FiberTab({ animalID, speciesID }) {
   };
 
   const COLS = [
-    { key:"Average", label:"AFD" },
-    { key:"StandardDev", label:"SD" },
-    { key:"COV", label:"COV" },
-    { key:"GreaterThan30", label:">30%" },
-    { key:"Curve", label:"Curve" },
-    { key:"CF", label:"CF" },
-    { key:"CrimpPerInch", label:"Crimps/In" },
-    { key:"Length", label:"Staple Len" },
-    { key:"ShearWeight", label:"Shear Wt" },
-    { key:"BlanketWeight", label:"Blanket Wt" },
+    { key:"Average", labelKey:"th_afd" },
+    { key:"StandardDev", labelKey:"th_sd" },
+    { key:"COV", labelKey:"th_cov" },
+    { key:"GreaterThan30", labelKey:"th_gt30" },
+    { key:"Curve", labelKey:"th_curve" },
+    { key:"CF", labelKey:"th_cf" },
+    { key:"CrimpPerInch", labelKey:"th_crimps_in" },
+    { key:"Length", labelKey:"th_staple_len" },
+    { key:"ShearWeight", labelKey:"th_shear_wt" },
+    { key:"BlanketWeight", labelKey:"th_blanket_wt" },
   ];
 
-  if (loading) return <div style={styles.loadingBox}>Loading…</div>;
+  if (loading) return <div style={styles.loadingBox}>{ae('loading_generic')}</div>;
 
   return (
     <div>
       <div style={styles.sectionHead}>
-        {FIBER_SPECIES.includes(speciesID) ? "Fiber Test Results" : "Wool Test Results"}
+        {FIBER_SPECIES.includes(speciesID) ? ae('section_fiber_results') : ae('section_wool_results')}
       </div>
       <div style={{ overflowX:"auto", marginBottom:16 }}>
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
           <thead>
             <tr style={{ background:"#f2ebe3" }}>
-              <th style={{ ...styles.th, minWidth: 90 }}>Year</th>
-              {COLS.map(c => <th key={c.key} style={styles.th}>{c.label}</th>)}
+              <th style={{ ...styles.th, minWidth: 90 }}>{ae('th_year')}</th>
+              {COLS.map(c => <th key={c.key} style={styles.th}>{ae(c.labelKey)}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -1626,7 +1644,7 @@ function FiberTab({ animalID, speciesID }) {
         </table>
       </div>
       <button onClick={() => setRows(rs => [...rs, EMPTY_ROW()])} style={styles.addRowBtn}>
-        + Add Row
+        {ae('btn_add_row')}
       </button>
       <SaveBar saving={saving} saved={saved} onSave={save} error={saveError} />
     </div>
@@ -1635,6 +1653,8 @@ function FiberTab({ animalID, speciesID }) {
 
 // ─── AWARDS TAB ──────────────────────────────────────────────────────────────
 function AwardsTab({ animalID }) {
+  const { t } = useTranslation();
+  const ae = key => t(`animal_edit.${key}`);
   const EMPTY = () => ({ AwardsID: null, AwardYear:"", ShowName:"", Type:"", Placing:"", Awardcomments:"" });
   const [rows, setRows] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -1685,16 +1705,16 @@ function AwardsTab({ animalID }) {
     setSaving(false);
   };
 
-  if (loading) return <div style={styles.loadingBox}>Loading awards…</div>;
+  if (loading) return <div style={styles.loadingBox}>{ae('loading_awards')}</div>;
 
   return (
     <div>
-      <div style={styles.sectionHead}>Show Awards</div>
+      <div style={styles.sectionHead}>{ae('section_show_awards')}</div>
       <div style={{ overflowX:"auto", marginBottom:16 }}>
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
           <thead>
             <tr style={{ background:"#f2ebe3" }}>
-              {["Year","Show Name","Class","Placing","Comments",""].map((h,i) => (
+              {[ae('th_year_col'), ae('th_show_name'), ae('th_class'), ae('th_placing'), ae('th_comments'), ""].map((h,i) => (
                 <th key={i} style={styles.th}>{h}</th>
               ))}
             </tr>
@@ -1708,11 +1728,11 @@ function AwardsTab({ animalID }) {
                     onChange={e => setCell(i, "AwardYear", e.target.value)}
                     style={{ ...styles.select, fontSize:12, padding:"4px 6px", width:90 }}
                   >
-                    <option value="">Year</option>
+                    <option value="">{ae('th_year_col')}</option>
                     {years.map(y => <option key={y} value={y}>{y}</option>)}
                   </select>
                 </td>
-                {[["ShowName","Show Name"],["Type","Class"],["Placing","Placing"],["Awardcomments","Comments"]].map(([k,ph]) => (
+                {[["ShowName",ae('ph_show_name')],["Type",ae('ph_class')],["Placing",ae('ph_placing')],["Awardcomments",ae('ph_comments')]].map(([k,ph]) => (
                   <td key={k} style={styles.td}>
                     <input
                       value={row[k] || ""}
@@ -1736,7 +1756,7 @@ function AwardsTab({ animalID }) {
         </table>
       </div>
       <button onClick={() => setRows(rs => [...rs, EMPTY()])} style={styles.addRowBtn}>
-        + Add Award
+        {ae('btn_add_award')}
       </button>
       <SaveBar saving={saving} saved={saved} onSave={save} error={saveError} />
     </div>
@@ -1745,6 +1765,8 @@ function AwardsTab({ animalID }) {
 
 // ─── PHOTOS TAB ──────────────────────────────────────────────────────────────
 function PhotosTab({ animalID }) {
+  const { t } = useTranslation();
+  const ae = key => t(`animal_edit.${key}`);
   const MAX_PHOTOS = 8;
   const [photos, setPhotos]       = useState(Array(MAX_PHOTOS).fill(null));
   const [captions, setCaptions]   = useState(Array(MAX_PHOTOS).fill(""));
@@ -1964,14 +1986,13 @@ function PhotosTab({ animalID }) {
     setCoverSaving(false);
   };
 
-  if (loading) return <div style={styles.loadingBox}>Loading photos…</div>;
+  if (loading) return <div style={styles.loadingBox}>{ae('loading_photos')}</div>;
 
   return (
     <div>
-      <div style={styles.sectionHead}>Photos and Documents</div>
+      <div style={styles.sectionHead}>{ae('section_photos_docs')}</div>
       <p style={{ fontSize: 13, color: "#7a6a5a", marginBottom: 20 }}>
-        Upload up to 8 photos. Drag photos to reorder or drop image files directly onto a slot.
-        Images are automatically converted to WebP format.
+        {ae('hint_photos')}
       </p>
 
       {savedMsg && (
@@ -2034,7 +2055,7 @@ function PhotosTab({ animalID }) {
                   fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 10,
                   zIndex: 2,
                 }}>
-                  COVER
+                  {ae('cover_badge')}
                 </div>
               )}
 
@@ -2046,7 +2067,7 @@ function PhotosTab({ animalID }) {
                   fontSize: 13, fontWeight: 700, color: "#7c5cbf",
                   pointerEvents: "none", zIndex: 3,
                 }}>
-                  {dragSrc.current !== null ? "Move here" : "Drop to upload"}
+                  {dragSrc.current !== null ? ae('drag_move') : ae('drag_upload')}
                 </div>
               )}
 
@@ -2054,7 +2075,7 @@ function PhotosTab({ animalID }) {
                 <>
                   <img
                     src={url}
-                    alt={`Photo ${i + 1}`}
+                    alt={ae('photo_alt', { n: i + 1 })}
                     style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
                     onError={e => { e.target.style.display = "none"; }}
                   />
@@ -2070,14 +2091,14 @@ function PhotosTab({ animalID }) {
                         title="Set as cover"
                         style={{ background: "rgb(115, 131, 85)", color: "#fff", border: "none", borderRadius: 5, fontSize: 11, padding: "3px 8px", cursor: "pointer", fontWeight: 600 }}
                       >
-                        {coverSaving ? "…" : "Set Cover"}
+                        {coverSaving ? "…" : ae('btn_set_cover')}
                       </button>
                     )}
                     <label
                       title="Replace photo"
                       style={{ background: "rgb(115, 131, 85)", color: "#fff", border: "none", borderRadius: 5, fontSize: 11, padding: "3px 8px", cursor: "pointer", fontWeight: 600 }}
                     >
-                      {isUploading ? "…" : "Replace"}
+                      {isUploading ? "…" : ae('btn_replace')}
                       <input
                         type="file" accept="image/*,.jfif"
                         style={{ display: "none" }}
@@ -2097,11 +2118,11 @@ function PhotosTab({ animalID }) {
               ) : (
                 <label style={{ cursor: "pointer", textAlign: "center", padding: 12, width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   {isUploading ? (
-                    <div style={{ color: "#8b7355", fontSize: 13 }}>Uploading…</div>
+                    <div style={{ color: "#8b7355", fontSize: 13 }}>{ae('doc_uploading')}</div>
                   ) : (
                     <>
                       <div style={{ fontSize: 32, color: isDragOver ? "#7c5cbf" : "#c8bfb5", marginBottom: 6 }}>+</div>
-                      <div style={{ fontSize: 12, color: "#8b7355" }}>Click or drop</div>
+                      <div style={{ fontSize: 12, color: "#8b7355" }}>{ae('drag_upload')}</div>
                     </>
                   )}
                   <input
@@ -2121,7 +2142,7 @@ function PhotosTab({ animalID }) {
                 next[i] = e.target.value;
                 return next;
               })}
-              placeholder="Add a caption…"
+              placeholder={ae('caption_placeholder')}
               maxLength={500}
               style={{
                 width: "100%", boxSizing: "border-box",
@@ -2146,18 +2167,18 @@ function PhotosTab({ animalID }) {
             cursor: captionSaving ? "not-allowed" : "pointer",
           }}
         >
-          {captionSaving ? "Saving…" : "Save Changes"}
+          {captionSaving ? ae('saving_label') : ae('btn_save_captions')}
         </button>
       </div>
 
-      <div style={{ ...styles.sectionHead, marginTop: 36 }}>Documents</div>
+      <div style={{ ...styles.sectionHead, marginTop: 36 }}>{ae('section_documents')}</div>
       <p style={{ fontSize: 13, color: "#7a6a5a", marginBottom: 16 }}>
-        Upload a PDF or image for this animal. These will be available for download on the public detail page.
+        {ae('hint_documents')}
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
         {[
-          { kind: "registration", label: "Registration Certificate", url: registrationUrl },
-          { kind: "histogram",    label: "Histogram",                url: histogramUrl },
+          { kind: "registration", label: ae('doc_reg_cert'), url: registrationUrl },
+          { kind: "histogram",    label: ae('doc_histogram'), url: histogramUrl },
         ].map(doc => {
           const isDragOver = docDragOver === doc.kind;
           const onDocDragOver = e => {
@@ -2200,21 +2221,21 @@ function PhotosTab({ animalID }) {
                 fontSize: 14, fontWeight: 700, color: "#7c5cbf",
                 pointerEvents: "none", borderRadius: 10,
               }}>
-                Drop PDF or image to upload
+                {ae('drop_pdf')}
               </div>
             )}
             {doc.url ? (
               <>
                 <a href={doc.url} target="_blank" rel="noopener noreferrer"
                    style={{ color: "#4a7c3f", fontSize: 13, fontWeight: 600, wordBreak: "break-all" }}>
-                  📄 View / Download current file
+                  {ae('doc_view_download')}
                 </a>
                 <div style={{ display: "flex", gap: 8 }}>
                   <label style={{
                     background: "rgb(115,131,85)", color: "#fff", border: "none", borderRadius: 5,
                     fontSize: 12, padding: "6px 12px", cursor: "pointer", fontWeight: 600,
                   }}>
-                    {docUploading[doc.kind] ? "…" : "Replace"}
+                    {docUploading[doc.kind] ? "…" : ae('btn_doc_replace')}
                     <input type="file" accept="application/pdf,image/*"
                            style={{ display: "none" }}
                            onChange={e => e.target.files[0] && uploadDocument(doc.kind, e.target.files[0])} />
@@ -2227,7 +2248,7 @@ function PhotosTab({ animalID }) {
                       fontSize: 12, padding: "6px 12px", cursor: "pointer", fontWeight: 600,
                     }}
                   >
-                    Delete
+                    {ae('btn_doc_delete')}
                   </button>
                 </div>
               </>
@@ -2237,7 +2258,7 @@ function PhotosTab({ animalID }) {
                 fontSize: 13, padding: "8px 14px", cursor: "pointer", fontWeight: 600,
                 alignSelf: "flex-start",
               }}>
-                {docUploading[doc.kind] ? "Uploading…" : "Upload PDF or image, or drop here"}
+                {docUploading[doc.kind] ? ae('doc_uploading') : ae('btn_upload_pdf')}
                 <input type="file" accept="application/pdf,image/*"
                        style={{ display: "none" }}
                        onChange={e => e.target.files[0] && uploadDocument(doc.kind, e.target.files[0])} />
@@ -2253,6 +2274,8 @@ function PhotosTab({ animalID }) {
 
 // ─── PUBLISH BANNER ──────────────────────────────────────────────────────────
 function PublishBanner({ animalID, animalName, published, onToggle }) {
+  const { t } = useTranslation();
+  const ae = key => t(`animal_edit.${key}`);
   const [toggling, setToggling] = useState(false);
 
   const toggle = async () => {
@@ -2286,7 +2309,7 @@ function PublishBanner({ animalID, animalName, published, onToggle }) {
     }}>
       <div style={{ fontWeight: 700, fontSize: 20, color: "#2c1a0e" }}>{animalName}</div>
       <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-        <span style={{ color:"#7a6a5a", fontSize:14 }}>Sales Listing:</span>
+        <span style={{ color:"#7a6a5a", fontSize:14 }}>{ae('lbl_sales_listing')}</span>
         <span style={{
           fontWeight: 700,
           color: published ? "#4a7c3f" : "#8b7355",
@@ -2295,7 +2318,7 @@ function PublishBanner({ animalID, animalName, published, onToggle }) {
           borderRadius: 20,
           fontSize: 13,
         }}>
-          {published ? "Published" : "Draft"}
+          {published ? ae('status_published') : ae('status_draft')}
         </span>
         <button
           onClick={toggle}
@@ -2311,7 +2334,7 @@ function PublishBanner({ animalID, animalName, published, onToggle }) {
             cursor: toggling ? "not-allowed" : "pointer",
           }}
         >
-          {toggling ? "…" : published ? "Unpublish" : "Publish"}
+          {toggling ? "…" : published ? ae('btn_unpublish') : ae('btn_publish')}
         </button>
       </div>
     </div>
@@ -2320,6 +2343,8 @@ function PublishBanner({ animalID, animalName, published, onToggle }) {
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export default function AnimalEdit() {
+  const { t } = useTranslation();
+  const ae = key => t(`animal_edit.${key}`);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const animalID = searchParams.get("AnimalID");
@@ -2330,6 +2355,16 @@ export default function AnimalEdit() {
   const [published, setPublished] = useState(false);
   const [speciesID, setSpeciesID] = useState(null);
   const { Business, LoadBusiness } = useAccount();
+
+  const TAB_LABELS = {
+    basics:      ae('tab_basics'),
+    pricing:     ae('tab_pricing'),
+    description: ae('tab_description'),
+    ancestry:    ae('tab_ancestry'),
+    fiber:       ae('tab_fiber_wool'),
+    awards:      ae('tab_awards'),
+    photos:      ae('tab_photos'),
+  };
 
   useEffect(() => {
     if (businessID) LoadBusiness(businessID);
@@ -2350,17 +2385,17 @@ export default function AnimalEdit() {
   }, [animalID]);
 
   // Compute fiber tab label — null means hide the tab entirely
-  const fiberTabLabel = FIBER_SPECIES.includes(speciesID) ? "Fiber Test Results"
-    : WOOL_SPECIES.includes(speciesID) ? "Wool Test Results"
+  const fiberTabLabel = FIBER_SPECIES.includes(speciesID) ? ae('section_fiber_results')
+    : WOOL_SPECIES.includes(speciesID) ? ae('section_wool_results')
     : null;
 
-  const visibleTabs = TABS.map(t =>
-    t.id === "fiber" ? (fiberTabLabel ? { ...t, label: fiberTabLabel } : null) : t
+  const visibleTabs = TABS.map(tab =>
+    tab.id === "fiber" ? (fiberTabLabel ? { ...tab, label: fiberTabLabel } : null) : { ...tab, label: TAB_LABELS[tab.id] || tab.label }
   ).filter(Boolean);
 
   if (!animalID) return (
     <div style={{ padding:40, textAlign:"center", color:"#7a6a5a" }}>
-      No animal selected. <a href="/animals" style={{ color:"#5a3e2b" }}>Back to animals</a>
+      {ae('no_animal_selected')} <a href="/animals" style={{ color:"#5a3e2b" }}>{ae('back_to_animals')}</a>
     </div>
   );
 
@@ -2378,11 +2413,11 @@ export default function AnimalEdit() {
     <div style={{ maxWidth: "100%", padding: "0 32px 60px" }}>
       {/* Breadcrumb */}
       <div style={{ fontSize:13, color:"#8b7355", marginBottom:14 }}>
-        <span style={{ cursor:"pointer", textDecoration:"underline" }} onClick={() => navigate("/dashboard")}>Dashboard</span>
+        <span style={{ cursor:"pointer", textDecoration:"underline" }} onClick={() => navigate("/dashboard")}>{ae('bc_dashboard')}</span>
         {" › "}
-        <span style={{ cursor:"pointer", textDecoration:"underline" }} onClick={() => navigate(`/account?BusinessID=${businessID}`)}>Account Dashboard</span>
+        <span style={{ cursor:"pointer", textDecoration:"underline" }} onClick={() => navigate(`/account?BusinessID=${businessID}`)}>{ae('bc_account_dashboard')}</span>
         {" › "}
-        <span style={{ color:"#2c1a0e" }}>{animalName} — Edit Animal Details</span>
+        <span style={{ color:"#2c1a0e" }}>{ae('breadcrumb_edit_suffix', { name: animalName })}</span>
       </div>
 
       <PublishBanner
@@ -2434,7 +2469,7 @@ export default function AnimalEdit() {
   );
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessID} PeopleID={localStorage.getItem("people_id")} pageTitle="Edit Animal" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Livestock' }, { label: 'My Animals', to: `/animals?BusinessID=${businessID}` }, { label: 'Edit' }]}>
+    <AccountLayout Business={Business} BusinessID={businessID} PeopleID={localStorage.getItem("people_id")} pageTitle={ae('page_title')} breadcrumbs={[{ label: ae('bc_dashboard'), to: '/dashboard' }, { label: ae('bc_livestock') }, { label: ae('bc_my_animals'), to: `/animals?BusinessID=${businessID}` }, { label: ae('bc_edit') }]}>
       {content}
     </AccountLayout>
   );

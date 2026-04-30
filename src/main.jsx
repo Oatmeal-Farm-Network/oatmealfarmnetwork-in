@@ -212,6 +212,21 @@ const SaigeProfile = lazyWithReload(() => import('./SaigeProfile.jsx'))
 const AnimalsHome = lazyWithReload(() => import('./AnimalsHome.jsx'))
 const AnimalDelete = lazyWithReload(() => import('./AnimalDelete.jsx'))
 const AnimalPackages = lazyWithReload(() => import('./AnimalPackages.jsx'))
+const HerdHealthDashboard = lazyWithReload(() => import('./HerdHealthDashboard.jsx'))
+const HerdHealthEvents = lazyWithReload(() => import('./HerdHealthEvents.jsx'))
+const HerdHealthVaccinations = lazyWithReload(() => import('./HerdHealthVaccinations.jsx'))
+const HerdHealthTreatments = lazyWithReload(() => import('./HerdHealthTreatments.jsx'))
+const HerdHealthVetVisits = lazyWithReload(() => import('./HerdHealthVetVisits.jsx'))
+const HerdHealthMedications = lazyWithReload(() => import('./HerdHealthMedications.jsx'))
+const HerdHealthWeight = lazyWithReload(() => import('./HerdHealthWeight.jsx'))
+const HerdHealthParasites = lazyWithReload(() => import('./HerdHealthParasites.jsx'))
+const HerdHealthQuarantine = lazyWithReload(() => import('./HerdHealthQuarantine.jsx'))
+const HerdHealthMortality = lazyWithReload(() => import('./HerdHealthMortality.jsx'))
+const HerdHealthLabResults = lazyWithReload(() => import('./HerdHealthLabResults.jsx'))
+const HerdHealthBiosecurity = lazyWithReload(() => import('./HerdHealthBiosecurity.jsx'))
+const HerdHealthVetContacts = lazyWithReload(() => import('./HerdHealthVetContacts.jsx'))
+const HerdHealthReproduction = lazyWithReload(() => import('./HerdHealthReproduction.jsx'))
+const HerdHealthReports = lazyWithReload(() => import('./HerdHealthReports.jsx'))
 const AccountChangeType = lazyWithReload(() => import('./AccountChangeType.jsx'))
 const AnimalAddWizard = lazyWithReload(() => import('./AnimalAddWizard'))
 const DirectoryList = lazyWithReload(() => import('./Directory/pages/DirectoryList'))
@@ -383,6 +398,21 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/animals/edit" element={<AnimalEdit />} />
           <Route path="/animals/delete" element={<AnimalDelete />} />
           <Route path="/animals/packages" element={<AnimalPackages />} />
+          <Route path="/herd-health" element={<RequireAuth><HerdHealthDashboard /></RequireAuth>} />
+          <Route path="/herd-health/events" element={<RequireAuth><HerdHealthEvents /></RequireAuth>} />
+          <Route path="/herd-health/vaccinations" element={<RequireAuth><HerdHealthVaccinations /></RequireAuth>} />
+          <Route path="/herd-health/treatments" element={<RequireAuth><HerdHealthTreatments /></RequireAuth>} />
+          <Route path="/herd-health/vet-visits" element={<RequireAuth><HerdHealthVetVisits /></RequireAuth>} />
+          <Route path="/herd-health/medications" element={<RequireAuth><HerdHealthMedications /></RequireAuth>} />
+          <Route path="/herd-health/weight" element={<RequireAuth><HerdHealthWeight /></RequireAuth>} />
+          <Route path="/herd-health/parasites" element={<RequireAuth><HerdHealthParasites /></RequireAuth>} />
+          <Route path="/herd-health/quarantine" element={<RequireAuth><HerdHealthQuarantine /></RequireAuth>} />
+          <Route path="/herd-health/mortality" element={<RequireAuth><HerdHealthMortality /></RequireAuth>} />
+          <Route path="/herd-health/lab-results" element={<RequireAuth><HerdHealthLabResults /></RequireAuth>} />
+          <Route path="/herd-health/biosecurity" element={<RequireAuth><HerdHealthBiosecurity /></RequireAuth>} />
+          <Route path="/herd-health/vet-contacts" element={<RequireAuth><HerdHealthVetContacts /></RequireAuth>} />
+          <Route path="/herd-health/reproduction" element={<RequireAuth><HerdHealthReproduction /></RequireAuth>} />
+          <Route path="/herd-health/reports" element={<RequireAuth><HerdHealthReports /></RequireAuth>} />
           <Route path="/saige" element={<SaigePage />} />
           <Route path="/saige/companion-planting" element={<CompanionPlanting />} />
           <Route path="/saige/crop-names" element={<CropNames />} />

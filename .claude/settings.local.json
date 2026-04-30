@@ -399,7 +399,13 @@
       "Bash(node f:/tmp/add_website_ai_agent_keys.js)",
       "Bash(node f:/tmp/add_accounting_keys.js)",
       "Bash(node f:/tmp/add_animal_add_wizard_keys.js)",
-      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('public/locales/en/translation.json','utf8'\\)\\); console.log\\('valid'\\)\")"
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('public/locales/en/translation.json','utf8'\\)\\); console.log\\('valid'\\)\")",
+      "Bash(node -e \"const fs=require\\('fs'\\),p='f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/public/locales/en/translation.json',j=JSON.parse\\(fs.readFileSync\\(p,'utf8'\\)\\);j.animal_add_wizard.btn_remove='Remove';fs.writeFileSync\\(p,JSON.stringify\\(j,null,2\\)\\);console.log\\('OK'\\)\")",
+      "Bash(npx --no-install vite build --mode development)",
+      "Bash(node_modules/.bin/vite build *)",
+      "Bash(node \"f:/tmp/add_animal_edit_keys.js\")",
+      "Bash(node f:/tmp/add_website_public_keys.js)",
+      "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('public/locales/en/translation.json','utf8'\\)\\); console.log\\('JSON valid'\\); console.log\\('Keys in website_public:', Object.keys\\(j.website_public\\).length\\);\")"
     ],
     "additionalDirectories": [
       "\\tmp"

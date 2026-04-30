@@ -23,11 +23,20 @@ import OTFDMWidget from './OTFDMWidget';
 const NEWS_API = import.meta.env.VITE_NEWS_API_URL || import.meta.env.VITE_API_URL || '';
 
 // Strip HTML tags + decode entities (Brownfield/USDA articles arrive with HTML)
+function decodeEntities(str) {
+  return str
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&nbsp;/g, ' ');
+}
+
 function plainText(html) {
   if (!html) return '';
-  if (typeof window === 'undefined' || !window.DOMParser) return String(html);
+  if (typeof window === 'undefined' || !window.DOMParser)
+    return decodeEntities(String(html).replace(/<[^>]*>/g, ''));
   const doc = new DOMParser().parseFromString(String(html), 'text/html');
-  return (doc.body.textContent || '').replace(/\s+/g, ' ').trim();
+  return decodeEntities((doc.body.textContent || '').replace(/\s+/g, ' ').trim());
 }
 
 function firstNWords(text, n = 100) {
@@ -189,7 +198,7 @@ function MarketNewsCard() {
   return (
     <NewsCard
       eyebrow={t('home.industry_news_eyebrow')}
-      title={article.title || t('home.market_news_title')}
+      title={plainText(article.title) || t('home.market_news_title')}
       description={excerpt}
       img={article.image}
       link={`/app/news/${article.id}`}

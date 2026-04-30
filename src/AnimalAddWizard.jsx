@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { useAccount } from "./AccountContext";
 import { useSearchParams } from "react-router-dom";
 import AccountLayout from "./AccountLayout";
@@ -58,6 +59,7 @@ const _pasteAsPlainText = e => {
 };
 
 function AnimalRichTextEditor({ value, onChange }) {
+  const { t } = useTranslation();
   const editorRef = useRef(null);
   const htmlRef   = useRef(null);
   const [htmlMode, setHtmlMode] = useState(false);
@@ -91,7 +93,7 @@ function AnimalRichTextEditor({ value, onChange }) {
   };
 
   const insertLink = () => {
-    const input = window.prompt('Enter a URL:');
+    const input = window.prompt(t('animal_add_wizard.rte_link_prompt'));
     if (!input) return;
     const val = input.trim();
     const href = /^https?:\/\//i.test(val) ? val : /^mailto:/i.test(val) ? val : `https://${val}`;
@@ -348,64 +350,64 @@ function AnimalRichTextEditor({ value, onChange }) {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '6px 8px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', alignItems: 'center' }}>
         {!htmlMode && <>
           <select style={selStyle} defaultValue="" onChange={e => { applyBlock(e.target.value); e.target.value = ''; }}>
-            <option value="" disabled>Style</option>
-            <option value="p">Body</option>
+            <option value="" disabled>{t('animal_add_wizard.rte_style_label')}</option>
+            <option value="p">{t('animal_add_wizard.rte_body')}</option>
             <option value="h1">H1</option><option value="h2">H2</option>
             <option value="h3">H3</option><option value="h4">H4</option>
           </select>
           <select style={{ ...selStyle, maxWidth: 110 }} defaultValue="" onChange={e => { applyFont(e.target.value); e.target.value = ''; }}>
-            <option value="" disabled>Font</option>
+            <option value="" disabled>{t('animal_add_wizard.rte_font_label')}</option>
             {WEB_FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
           </select>
           {divider}
-          <button style={{ ...btn, fontWeight: 700 }} title="Bold" onMouseDown={e => { e.preventDefault(); exec('bold'); }}>B</button>
-          <button style={{ ...btn, fontStyle: 'italic' }} title="Italic" onMouseDown={e => { e.preventDefault(); exec('italic'); }}>I</button>
-          <button style={{ ...btn, textDecoration: 'underline' }} title="Underline" onMouseDown={e => { e.preventDefault(); exec('underline'); }}>U</button>
-          <button style={{ ...btn, textDecoration: 'line-through' }} title="Strikethrough" onMouseDown={e => { e.preventDefault(); exec('strikeThrough'); }}>S</button>
+          <button style={{ ...btn, fontWeight: 700 }} title={t('animal_add_wizard.rte_bold')} onMouseDown={e => { e.preventDefault(); exec('bold'); }}>B</button>
+          <button style={{ ...btn, fontStyle: 'italic' }} title={t('animal_add_wizard.rte_italic')} onMouseDown={e => { e.preventDefault(); exec('italic'); }}>I</button>
+          <button style={{ ...btn, textDecoration: 'underline' }} title={t('animal_add_wizard.rte_underline')} onMouseDown={e => { e.preventDefault(); exec('underline'); }}>U</button>
+          <button style={{ ...btn, textDecoration: 'line-through' }} title={t('animal_add_wizard.rte_strikethrough')} onMouseDown={e => { e.preventDefault(); exec('strikeThrough'); }}>S</button>
           {divider}
-          <button style={btn} title="Align Left" onMouseDown={e => { e.preventDefault(); exec('justifyLeft'); }}>
+          <button style={btn} title={t('animal_add_wizard.rte_align_left')} onMouseDown={e => { e.preventDefault(); exec('justifyLeft'); }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="0" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="0" y="11.5" width="9" height="1.5"/></svg>
           </button>
-          <button style={btn} title="Center" onMouseDown={e => { e.preventDefault(); exec('justifyCenter'); }}>
+          <button style={btn} title={t('animal_add_wizard.rte_center')} onMouseDown={e => { e.preventDefault(); exec('justifyCenter'); }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="2" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="2" y="11.5" width="9" height="1.5"/></svg>
           </button>
-          <button style={btn} title="Align Right" onMouseDown={e => { e.preventDefault(); exec('justifyRight'); }}>
+          <button style={btn} title={t('animal_add_wizard.rte_align_right')} onMouseDown={e => { e.preventDefault(); exec('justifyRight'); }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="1" width="13" height="1.5"/><rect x="4" y="4.5" width="9" height="1.5"/><rect x="0" y="8" width="13" height="1.5"/><rect x="4" y="11.5" width="9" height="1.5"/></svg>
           </button>
           {divider}
-          <button style={btn} title="Bullet List" onMouseDown={e => { e.preventDefault(); exec('insertUnorderedList'); }}>
+          <button style={btn} title={t('animal_add_wizard.rte_bullet_list')} onMouseDown={e => { e.preventDefault(); exec('insertUnorderedList'); }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><circle cx="1.5" cy="2.5" r="1.2"/><rect x="4" y="1.8" width="9" height="1.4"/><circle cx="1.5" cy="6.5" r="1.2"/><rect x="4" y="5.8" width="9" height="1.4"/><circle cx="1.5" cy="10.5" r="1.2"/><rect x="4" y="9.8" width="9" height="1.4"/></svg>
           </button>
-          <button style={btn} title="Numbered List" onMouseDown={e => { e.preventDefault(); exec('insertOrderedList'); }}>
+          <button style={btn} title={t('animal_add_wizard.rte_numbered_list')} onMouseDown={e => { e.preventDefault(); exec('insertOrderedList'); }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><text x="0" y="4" fontSize="4.5" fontFamily="monospace">1.</text><rect x="4" y="1.8" width="9" height="1.4"/><text x="0" y="8" fontSize="4.5" fontFamily="monospace">2.</text><rect x="4" y="5.8" width="9" height="1.4"/><text x="0" y="12" fontSize="4.5" fontFamily="monospace">3.</text><rect x="4" y="9.8" width="9" height="1.4"/></svg>
           </button>
           {divider}
-          <button style={btn} title="Insert Link" onMouseDown={e => { e.preventDefault(); insertLink(); }}>
+          <button style={btn} title={t('animal_add_wizard.rte_insert_link')} onMouseDown={e => { e.preventDefault(); insertLink(); }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
           </button>
-          <button style={{ ...btn, fontSize: 10 }} title="Remove Link" onMouseDown={e => { e.preventDefault(); exec('unlink'); }}>✕🔗</button>
+          <button style={{ ...btn, fontSize: 10 }} title={t('animal_add_wizard.rte_remove_link')} onMouseDown={e => { e.preventDefault(); exec('unlink'); }}>✕🔗</button>
           {divider}
-          <button style={{ ...btn, fontSize: 10, color: '#b91c1c' }} title="Clear all formatting" onMouseDown={e => { e.preventDefault(); clearFormatting(); }}>Tx</button>
+          <button style={{ ...btn, fontSize: 10, color: '#b91c1c' }} title={t('animal_add_wizard.rte_clear_formatting')} onMouseDown={e => { e.preventDefault(); clearFormatting(); }}>Tx</button>
           {divider}
-          <button style={{ ...btn, background: imgPanel ? '#e0f2fe' : '#fff', borderColor: imgPanel ? '#7dd3fc' : '#d1d5db' }} title="Insert Image" onMouseDown={e => { e.preventDefault(); openImgPanel(); }}>
+          <button style={{ ...btn, background: imgPanel ? '#e0f2fe' : '#fff', borderColor: imgPanel ? '#7dd3fc' : '#d1d5db' }} title={t('animal_add_wizard.rte_insert_image')} onMouseDown={e => { e.preventDefault(); openImgPanel(); }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           </button>
           {divider}
         </>}
         <button onClick={() => setHtmlMode(m => !m)}
           style={{ ...btn, fontFamily: 'monospace', fontSize: 11, background: htmlMode ? '#1e293b' : '#fff', color: htmlMode ? '#7dd3fc' : '#374151', border: `1px solid ${htmlMode ? '#334155' : '#d1d5db'}` }}
-          title={htmlMode ? 'Back to rich text' : 'View/edit HTML'}>&lt;/&gt;</button>
+          title={htmlMode ? t('animal_add_wizard.rte_html_back') : t('animal_add_wizard.rte_html_view')}>&lt;/&gt;</button>
       </div>
 
       {imgPanel && !htmlMode && (
         <div style={{ padding: '10px', background: '#f0f9ff', borderBottom: '1px solid #bae6fd', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <input value={imgUrl} onChange={e => setImgUrl(e.target.value)} placeholder="Paste image URL…" autoFocus
+            <input value={imgUrl} onChange={e => setImgUrl(e.target.value)} placeholder={t('animal_add_wizard.rte_img_url_placeholder')} autoFocus
               style={{ flex: 1, minWidth: 160, padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: 5, fontSize: 12 }}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); insertImage(); } if (e.key === 'Escape') setImgPanel(false); }} />
             <button onClick={() => fileInputRef.current?.click()}
               style={{ padding: '4px 10px', border: '1px solid #d1d5db', borderRadius: 5, fontSize: 11, cursor: 'pointer', background: '#fff', color: '#374151', whiteSpace: 'nowrap' }}>
-              Browse…
+              {t('animal_add_wizard.rte_browse')}
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
               onChange={e => { const f = e.target.files[0]; if (f) handlePanelFile(f); e.target.value = ''; }} />
@@ -415,7 +417,7 @@ function AnimalRichTextEditor({ value, onChange }) {
             onDrop={e => { e.preventDefault(); setPanelDragging(false); handlePanelFile(e.dataTransfer.files[0]); }}
             onClick={() => fileInputRef.current?.click()}
             style={{ border: `2px dashed ${panelDragging ? '#3b82f6' : '#bae6fd'}`, borderRadius: 6, padding: '10px 8px', textAlign: 'center', fontSize: 11, color: panelDragging ? '#2563eb' : '#0891b2', cursor: 'pointer', background: panelDragging ? '#eff6ff' : 'transparent', transition: 'all 0.15s' }}>
-            {uploading ? 'Uploading…' : 'Drop image here or click to browse'}
+            {uploading ? t('animal_add_wizard.rte_uploading_panel') : t('animal_add_wizard.rte_drop_image')}
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', gap: 3 }}>
@@ -429,11 +431,11 @@ function AnimalRichTextEditor({ value, onChange }) {
             </div>
             <button onClick={insertImage} disabled={!imgUrl.trim() || uploading}
               style={{ padding: '3px 12px', borderRadius: 4, border: '1px solid #0891b2', background: imgUrl.trim() && !uploading ? '#0891b2' : '#94a3b8', color: '#fff', fontSize: 11, cursor: imgUrl.trim() && !uploading ? 'pointer' : 'default', fontWeight: 600 }}>
-              Insert
+              {t('animal_add_wizard.rte_insert_btn')}
             </button>
             <button onClick={() => setImgPanel(false)}
               style={{ padding: '3px 8px', borderRadius: 4, border: '1px solid #d1d5db', background: '#fff', color: '#6b7280', fontSize: 11, cursor: 'pointer' }}>
-              Cancel
+              {t('animal_add_wizard.rte_cancel')}
             </button>
           </div>
         </div>
@@ -442,7 +444,7 @@ function AnimalRichTextEditor({ value, onChange }) {
       {uploading && (
         <div style={{ padding: '8px 12px', background: '#fefce8', borderBottom: '1px solid #fde68a', fontSize: 12, color: '#92400e', display: 'flex', alignItems: 'center', gap: 6 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".2"/><path d="M21 12a9 9 0 00-9-9"/></svg>
-          Uploading image…
+          {t('animal_add_wizard.rte_uploading_bar')}
         </div>
       )}
 
@@ -474,7 +476,7 @@ function AnimalRichTextEditor({ value, onChange }) {
           </div>
           <div style={{ position: 'fixed', top: imgToolbarPos.top, left: imgRect.left, zIndex: 10000, background: '#1e293b', borderRadius: 6, padding: '5px 7px', display: 'flex', flexDirection: 'column', gap: 5, boxShadow: '0 2px 10px rgba(0,0,0,0.25)' }}>
             <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
-              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>Position:</span>
+              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>{t('animal_add_wizard.rte_position')}</span>
               {[[-1,'↑'],[1,'↓']].map(([d, icon]) => (
                 <button key={d} onMouseDown={e => { e.preventDefault(); moveImg(d); }}
                   style={{ padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 12, cursor: 'pointer', background: '#334155', color: '#e2e8f0' }}>
@@ -482,7 +484,7 @@ function AnimalRichTextEditor({ value, onChange }) {
                 </button>
               ))}
               <div style={{ width: 1, background: '#475569', alignSelf: 'stretch', margin: '0 3px' }} />
-              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>Align:</span>
+              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>{t('animal_add_wizard.rte_align_label')}</span>
               {[['left','←'],['center','↔'],['right','→']].map(([a, icon]) => (
                 <button key={a} onMouseDown={e => { e.preventDefault(); applyImgAlign(a); }}
                   style={{ padding: '3px 9px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#334155', color: '#e2e8f0', fontWeight: 500 }}>
@@ -493,11 +495,11 @@ function AnimalRichTextEditor({ value, onChange }) {
                 style={{ padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#334155', color: '#94a3b8', marginLeft: 2 }}>✕</button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ fontSize: 10, color: '#94a3b8', whiteSpace: 'nowrap' }}>Caption:</span>
+              <span style={{ fontSize: 10, color: '#94a3b8', whiteSpace: 'nowrap' }}>{t('animal_add_wizard.rte_caption_label')}</span>
               <input value={imgCaption} onChange={e => setImgCaption(e.target.value)}
                 onBlur={() => applyCaption(imgCaption)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCaption(imgCaption); } }}
-                placeholder="Add a caption…"
+                placeholder={t('animal_add_wizard.rte_caption_placeholder')}
                 style={{ flex: 1, minWidth: 180, padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 11, background: '#334155', color: '#e2e8f0', outline: 'none' }} />
             </div>
           </div>
@@ -650,37 +652,40 @@ function StepHeader({ title, subtitle }) {
 }
 
 function CategoryOptions({ speciesID, isMultiple }) {
+  const { t } = useTranslation();
   const isFowl = FOWL_IDS.includes(Number(speciesID));
+  const aw = key => t(`animal_add_wizard.${key}`);
   if (isFowl) {
     const opts = isMultiple
-      ? [{v:"adult_males",l:"Adult Males"},{v:"adult_females",l:"Adult Females"},{v:"male_chicks",l:"Male Chicks"},{v:"female_chicks",l:"Female Chicks"},{v:"eggs",l:"Eggs"},{v:"preborn_chicks",l:"Preborn Chicks"}]
-      : [{v:"adult_male",l:"Adult Male"},{v:"adult_female",l:"Adult Female"},{v:"male_chick",l:"Male Chick"},{v:"female_chick",l:"Female Chick"},{v:"eggs",l:"Eggs"},{v:"preborn_chick",l:"Preborn Chick"}];
+      ? [{v:"adult_males",l:aw('cat_adult_males')},{v:"adult_females",l:aw('cat_adult_females')},{v:"male_chicks",l:aw('cat_male_chicks')},{v:"female_chicks",l:aw('cat_female_chicks')},{v:"eggs",l:aw('cat_eggs')},{v:"preborn_chicks",l:aw('cat_preborn_chicks')}]
+      : [{v:"adult_male",l:aw('cat_adult_male')},{v:"adult_female",l:aw('cat_adult_female')},{v:"male_chick",l:aw('cat_male_chick')},{v:"female_chick",l:aw('cat_female_chick')},{v:"eggs",l:aw('cat_eggs')},{v:"preborn_chick",l:aw('cat_preborn_chick')}];
     return opts.map(({v,l}) => <option key={v} value={v}>{l}</option>);
   }
-  const single   = [{v:"exp_male",l:"Experienced Male"},{v:"exp_female",l:"Experienced Female"},{v:"inexp_male",l:"Inexperienced Male"},{v:"inexp_female",l:"Inexperienced Female"},{v:"non_breeder",l:"Non-Breeder"},{v:"preborn_male",l:"Preborn Male"},{v:"preborn_female",l:"Preborn Female"},{v:"preborn_baby",l:"Preborn Baby"}];
-  const multiple = [{v:"exp_males",l:"Experienced Males"},{v:"exp_females",l:"Experienced Females"},{v:"inexp_males",l:"Inexperienced Males"},{v:"inexp_females",l:"Inexperienced Females"},{v:"assortment",l:"Assortment"},{v:"non_breeders",l:"Non-Breeders"},{v:"preborn_males",l:"Preborn Males"},{v:"preborn_females",l:"Preborn Females"},{v:"preborn_babies",l:"Preborn Babies"}];
+  const single   = [{v:"exp_male",l:aw('cat_exp_male')},{v:"exp_female",l:aw('cat_exp_female')},{v:"inexp_male",l:aw('cat_inexp_male')},{v:"inexp_female",l:aw('cat_inexp_female')},{v:"non_breeder",l:aw('cat_non_breeder')},{v:"preborn_male",l:aw('cat_preborn_male')},{v:"preborn_female",l:aw('cat_preborn_female')},{v:"preborn_baby",l:aw('cat_preborn_baby')}];
+  const multiple = [{v:"exp_males",l:aw('cat_exp_males')},{v:"exp_females",l:aw('cat_exp_females')},{v:"inexp_males",l:aw('cat_inexp_males')},{v:"inexp_females",l:aw('cat_inexp_females')},{v:"assortment",l:aw('cat_assortment')},{v:"non_breeders",l:aw('cat_non_breeders')},{v:"preborn_males",l:aw('cat_preborn_males')},{v:"preborn_females",l:aw('cat_preborn_females')},{v:"preborn_babies",l:aw('cat_preborn_babies')}];
   return (isMultiple ? multiple : single).map(({v,l}) => <option key={v} value={v}>{l}</option>);
 }
 
 // ── Step 1 ────────────────────────────────────────────────────────────────────
 function Step1Basics({ formData, onChange, errors, subscriptionLevel, speciesList }) {
+  const { t } = useTranslation();
   return (
     <div className="step-content">
-      <StepHeader title="Basics" subtitle="Tell us about your animal listing" />
-      <FormField label="Name / Title" required error={errors.name}
-        hint={subscriptionLevel === 1 ? "This is either the animal's name or a title describing your animal." : "This is either the animal's name or a title describing your animal or animals."}>
+      <StepHeader title={t('animal_add_wizard.step1_title')} subtitle={t('animal_add_wizard.step1_subtitle')} />
+      <FormField label={t('animal_add_wizard.lbl_animal_name')} required error={errors.name}
+        hint={subscriptionLevel === 1 ? t('animal_add_wizard.hint_name_single') : t('animal_add_wizard.hint_name_multi')}>
         <input className={`form-input ${errors.name ? "input-error" : ""}`} type="text" maxLength={90}
-          value={formData.name} onChange={(e) => onChange("name", e.target.value)} placeholder="Enter animal name or listing title" />
+          value={formData.name} onChange={(e) => onChange("name", e.target.value)} placeholder={t('animal_add_wizard.placeholder_animal_name')} />
       </FormField>
       {subscriptionLevel > 0 && (
-        <FormField label="# Animals in Listing" required error={errors.numberOfAnimals} hint="If you list only 1 animal you will be able to add a lot more information!">
+        <FormField label={t('animal_add_wizard.lbl_num_animals')} required error={errors.numberOfAnimals} hint={t('animal_add_wizard.hint_num_animals')}>
           <input className={`form-input number-input ${errors.numberOfAnimals ? "input-error" : ""}`} type="number" min="1" max="9000000"
             value={formData.numberOfAnimals} onChange={(e) => onChange("numberOfAnimals", e.target.value)} />
         </FormField>
       )}
-      <FormField label="Species" required error={errors.speciesID}>
+      <FormField label={t('animal_add_wizard.lbl_species')} required error={errors.speciesID}>
         <select className={`form-select ${errors.speciesID ? "input-error" : ""}`} value={formData.speciesID} onChange={(e) => onChange("speciesID", e.target.value)}>
-          <option value="">-- Select Species --</option>
+          <option value="">{t('animal_add_wizard.opt_select_species')}</option>
           {(speciesList.length > 0 ? speciesList : SPECIES_LIST.map(s => ({ id: s.id, singular: s.name, plural: s.name }))).map((s) => (
             <option key={s.id} value={s.id}>
               {s.singular} / {s.plural}
@@ -694,20 +699,21 @@ function Step1Basics({ formData, onChange, errors, subscriptionLevel, speciesLis
 
 // ── Step 2 ────────────────────────────────────────────────────────────────────
 function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registrationTypes, categories }) {
+  const { t } = useTranslation();
   const sid        = Number(formData.speciesID);
   const isMultiple = Number(formData.numberOfAnimals) > 1;
   const today      = new Date().toISOString().split("T")[0];
-  const breedLabel = LLAMA_IDS.includes(sid) ? "Type" : "Breed";
+  const breedLabel = LLAMA_IDS.includes(sid) ? t('animal_add_wizard.breed_label_type') : t('animal_add_wizard.breed_label_breed');
   const showBreed2 = ![18,4,33,23,34].includes(sid) && breeds.length > 0;
   const showBreed3 = ![2,18,33,9,23].includes(sid) && breeds.length > 0 && showBreed2;
 
   return (
     <div className="step-content">
-      <StepHeader title="General Facts" subtitle="Physical characteristics and registration details" />
+      <StepHeader title={t('animal_add_wizard.step2_title')} subtitle={t('animal_add_wizard.step2_subtitle')} />
 
       {registrationTypes.length > 0 && (
         <div className="section-group">
-          <h3 className="section-group-title">Registration Numbers</h3>
+          <h3 className="section-group-title">{t('animal_add_wizard.section_registrations')}</h3>
           {registrationTypes.map((reg, i) => (
             <FormField key={i} label={reg.type}>
               <input className="form-input" type="text" value={formData.registrations?.[i]?.number || ""}
@@ -718,15 +724,15 @@ function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registr
       )}
 
       {!NO_DOB_IDS.includes(sid) && !isMultiple && (
-        <FormField label="Date of Birth">
+        <FormField label={t('animal_add_wizard.lbl_dob')}>
           <input className="form-input date-input" type="date" max={today} value={formData.dob||""} onChange={(e)=>onChange("dob",e.target.value)} />
         </FormField>
       )}
 
       {![23,33].includes(sid) && (
-        <FormField label="Category" required error={errors.category}>
+        <FormField label={t('animal_add_wizard.lbl_category')} required error={errors.category}>
           <select className={`form-select ${errors.category?"input-error":""}`} value={formData.category||""} onChange={(e)=>onChange("category",e.target.value)}>
-            <option value="">-- Select Category --</option>
+            <option value="">{t('animal_add_wizard.opt_select_category')}</option>
             {categories && categories.length > 0
               ? categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)
               : <CategoryOptions speciesID={sid} isMultiple={isMultiple} />
@@ -773,7 +779,7 @@ function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registr
             {[1,2,3,4].map((num) => {
               if (num > 2 && [14,21,33,23,22,15].includes(sid)) return null;
               return (
-                <FormField key={num} label={`Color ${num}`}>
+                <FormField key={num} label={t('animal_add_wizard.lbl_color_n', { n: num })}>
                   <select className="form-select" value={formData[`color${num}`]||""} onChange={(e)=>onChange(`color${num}`,e.target.value)}>
                     <option value="">--</option>{colors.map((c,i)=><option key={i} value={c}>{c}</option>)}
                   </select>
@@ -787,8 +793,8 @@ function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registr
       {HAS_HEIGHT_WEIGHT.includes(sid) && (
         <div className="section-group">
           <div className="two-col">
-            <FormField label="Height"><input className="form-input" type="number" step="0.1" min="0" placeholder="inches" value={formData.height||""} onChange={(e)=>onChange("height",e.target.value)} /></FormField>
-            <FormField label="Weight"><input className="form-input" type="number" step="0.1" min="0" placeholder="lbs"    value={formData.weight||""} onChange={(e)=>onChange("weight",e.target.value)} /></FormField>
+            <FormField label={t('animal_add_wizard.lbl_height')}><input className="form-input" type="number" step="0.1" min="0" placeholder={t('animal_add_wizard.placeholder_height')} value={formData.height||""} onChange={(e)=>onChange("height",e.target.value)} /></FormField>
+            <FormField label={t('animal_add_wizard.lbl_weight')}><input className="form-input" type="number" step="0.1" min="0" placeholder={t('animal_add_wizard.placeholder_weight')} value={formData.weight||""} onChange={(e)=>onChange("weight",e.target.value)} /></FormField>
           </div>
         </div>
       )}
@@ -796,24 +802,24 @@ function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registr
       {HAS_GAITED_WARMBLOOD.includes(sid) && (
         <div className="section-group">
           <div className="two-col">
-            <FormField label="Gaited">
-              <div className="radio-group">{["Yes","No"].map((v)=><label key={v} className="radio-label"><input type="radio" name="gaited" value={v} checked={formData.gaited===v} onChange={(e)=>onChange("gaited",e.target.value)} />{v}</label>)}</div>
+            <FormField label={t('animal_add_wizard.lbl_gaited')}>
+              <div className="radio-group">{[['Yes', t('animal_add_wizard.opt_yes')],['No', t('animal_add_wizard.opt_no')]].map(([v,lbl])=><label key={v} className="radio-label"><input type="radio" name="gaited" value={v} checked={formData.gaited===v} onChange={(e)=>onChange("gaited",e.target.value)} />{lbl}</label>)}</div>
             </FormField>
-            <FormField label="Warmblood">
-              <div className="radio-group">{["Yes","No"].map((v)=><label key={v} className="radio-label"><input type="radio" name="warmblood" value={v} checked={formData.warmblood===v} onChange={(e)=>onChange("warmblood",e.target.value)} />{v}</label>)}</div>
+            <FormField label={t('animal_add_wizard.lbl_warmblood')}>
+              <div className="radio-group">{[['Yes', t('animal_add_wizard.opt_yes')],['No', t('animal_add_wizard.opt_no')]].map(([v,lbl])=><label key={v} className="radio-label"><input type="radio" name="warmblood" value={v} checked={formData.warmblood===v} onChange={(e)=>onChange("warmblood",e.target.value)} />{lbl}</label>)}</div>
             </FormField>
           </div>
         </div>
       )}
 
       {HAS_HORNS.includes(sid) && (
-        <FormField label="Horns">
-          <div className="radio-group">{["Yes","No","Not Set"].map((v)=><label key={v} className="radio-label"><input type="radio" name="horns" value={v} checked={formData.horns===v} onChange={(e)=>onChange("horns",e.target.value)} />{v}</label>)}</div>
+        <FormField label={t('animal_add_wizard.lbl_horns')}>
+          <div className="radio-group">{[['Yes', t('animal_add_wizard.opt_yes')],['No', t('animal_add_wizard.opt_no')],['Not Set', t('animal_add_wizard.opt_not_set')]].map(([v,lbl])=><label key={v} className="radio-label"><input type="radio" name="horns" value={v} checked={formData.horns===v} onChange={(e)=>onChange("horns",e.target.value)} />{lbl}</label>)}</div>
         </FormField>
       )}
 
       {!NO_TEMPERAMENT.includes(sid) && (
-        <FormField label="Temperament" hint="1 = Very Gentle, 10 = Very Aggressive">
+        <FormField label={t('animal_add_wizard.lbl_temperament')} hint={t('animal_add_wizard.hint_temperament')}>
           <div className="temperament-scale">
             {[1,2,3,4,5,6,7,8,9,10].map((n)=>(
               <label key={n} className="temp-label">
@@ -822,7 +828,7 @@ function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registr
               </label>
             ))}
           </div>
-          <div className="temp-legend"><span>Gentle</span><span>Aggressive</span></div>
+          <div className="temp-legend"><span>{t('animal_add_wizard.legend_gentle')}</span><span>{t('animal_add_wizard.legend_aggressive')}</span></div>
         </FormField>
       )}
 
@@ -832,6 +838,7 @@ function Step2GeneralFacts({ formData, onChange, errors, breeds, colors, registr
 
 // ── Step 3 ────────────────────────────────────────────────────────────────────
 function AncestorBox({ label, value, onChange, onPick, isMale, isAlpaca, colors, speciesID }) {
+  const { t } = useTranslation();
   const bg     = isMale ? '#EBF3FF' : '#FFF0F3';
   const border = isMale ? '#93C5FD' : '#FBCFE8';
   const inp = { border: '1px solid #D1D5DB', borderRadius: '4px', padding: '3px 6px', fontSize: '12px', width: '100%', boxSizing: 'border-box' };
@@ -888,7 +895,7 @@ function AncestorBox({ label, value, onChange, onPick, isMale, isAlpaca, colors,
         <input
           ref={inputRef}
           type="text"
-          placeholder="Name (type to search)"
+          placeholder={t('animal_add_wizard.placeholder_ancestor_name')}
           value={value?.name||''}
           onChange={handleNameChange}
           onFocus={() => { if (results.length > 0) { updatePos(); setShowResults(true); } }}
@@ -901,8 +908,8 @@ function AncestorBox({ label, value, onChange, onPick, isMale, isAlpaca, colors,
             zIndex: 9999, background: '#fff', border: '1px solid #c9b89e', borderRadius: 4,
             boxShadow: '0 4px 12px rgba(0,0,0,0.12)', maxHeight: 220, overflowY: 'auto',
           }}>
-            {searching && <div style={{ padding: '6px 10px', fontSize: 11, color: '#6B7280' }}>Searching…</div>}
-            {!searching && results.length === 0 && <div style={{ padding: '6px 10px', fontSize: 11, color: '#6B7280' }}>No matches</div>}
+            {searching && <div style={{ padding: '6px 10px', fontSize: 11, color: '#6B7280' }}>{t('animal_add_wizard.searching')}</div>}
+            {!searching && results.length === 0 && <div style={{ padding: '6px 10px', fontSize: 11, color: '#6B7280' }}>{t('animal_add_wizard.no_matches')}</div>}
             {results.map(hit => (
               <div key={hit.animal_id}
                    onMouseDown={e => { e.preventDefault(); pick(hit); }}
@@ -945,17 +952,18 @@ function AncestorBox({ label, value, onChange, onPick, isMale, isAlpaca, colors,
           );
         })()
       ) : (
-        <input type="text" placeholder="Colors (comma-separated)" value={value?.color||''} onChange={e=>onChange('color',e.target.value)} style={inp} />
+        <input type="text" placeholder={t('animal_add_wizard.placeholder_colors')} value={value?.color||''} onChange={e=>onChange('color',e.target.value)} style={inp} />
       )}
       {isAlpaca && <>
-        <input type="text" placeholder="AOA #"  value={value?.ari||''}  onChange={e=>onChange('ari',e.target.value)}  style={inp} />
-        <input type="text" placeholder="CLAA #" value={value?.claa||''} onChange={e=>onChange('claa',e.target.value)} style={inp} />
+        <input type="text" placeholder={t('animal_add_wizard.placeholder_aoa')}  value={value?.ari||''}  onChange={e=>onChange('ari',e.target.value)}  style={inp} />
+        <input type="text" placeholder={t('animal_add_wizard.placeholder_claa')} value={value?.claa||''} onChange={e=>onChange('claa',e.target.value)} style={inp} />
       </>}
     </div>
   );
 }
 
 function Step3Ancestry({ formData, onChange, colors }) {
+  const { t } = useTranslation();
   const isAlpaca = Number(formData.speciesID) === 2;
   const anc = formData.ancestry || {};
   const upd = (key, field, val) => onChange('ancestry', { ...(formData.ancestry || {}), [key]: { ...((formData.ancestry || {})[key] || {}), [field]: val } });
@@ -1004,13 +1012,13 @@ function Step3Ancestry({ formData, onChange, colors }) {
 
   return (
     <div className="step-content">
-      <StepHeader title="Ancestry / Pedigree" subtitle="Enter up to 3 generations of lineage" />
+      <StepHeader title={t('animal_add_wizard.step3_title')} subtitle={t('animal_add_wizard.step3_subtitle')} />
 
       {HAS_ALPACA_PERCENTS.includes(Number(formData.speciesID)) && (
         <div className="section-group">
-          <h3 className="section-group-title">Bloodline Percentages</h3>
+          <h3 className="section-group-title">{t('animal_add_wizard.section_bloodline')}</h3>
           <div className="alpaca-percents">
-            {[{key:"percentPeruvian",label:"% Peruvian"},{key:"percentChilean",label:"% Chilean"},{key:"percentBolivian",label:"% Bolivian"},{key:"percentUnknownOther",label:"% Other / Unknown"},{key:"percentAccoyo",label:"% Accoyo"}].map(({key,label})=>(
+            {[{key:"percentPeruvian",label:t('animal_add_wizard.lbl_pct_peruvian')},{key:"percentChilean",label:t('animal_add_wizard.lbl_pct_chilean')},{key:"percentBolivian",label:t('animal_add_wizard.lbl_pct_bolivian')},{key:"percentUnknownOther",label:t('animal_add_wizard.lbl_pct_other')},{key:"percentAccoyo",label:t('animal_add_wizard.lbl_pct_accoyo')}].map(({key,label})=>(
               <FormField key={key} label={label}>
                 <select className="form-select" value={formData[key]||""} onChange={(e)=>onChange(key,e.target.value)}>
                   <option value="">--</option>{ALPACA_FRACTIONS.map((f)=><option key={f} value={f}>{f}</option>)}
@@ -1023,34 +1031,34 @@ function Step3Ancestry({ formData, onChange, colors }) {
 
       <div style={{ overflowX: 'auto', paddingBottom: '8px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: 'repeat(8, auto)', gap: '8px 20px', minWidth: '680px', alignItems: 'stretch' }}>
-          <div style={{ gridColumn: 1, gridRow: '1 / 5', display: 'flex', alignItems: 'center' }}>{box('sire', 'Sire', true)}</div>
-          <div style={{ gridColumn: 1, gridRow: '5 / 9', display: 'flex', alignItems: 'center' }}>{box('dam', 'Dam', false)}</div>
-          <div style={{ gridColumn: 2, gridRow: '1 / 3', display: 'flex', alignItems: 'center' }}>{box('sireSire', "Sire's Sire", true)}</div>
-          <div style={{ gridColumn: 2, gridRow: '3 / 5', display: 'flex', alignItems: 'center' }}>{box('sireDam',  "Sire's Dam",  false)}</div>
-          <div style={{ gridColumn: 2, gridRow: '5 / 7', display: 'flex', alignItems: 'center' }}>{box('damSire',  "Dam's Sire",  true)}</div>
-          <div style={{ gridColumn: 2, gridRow: '7 / 9', display: 'flex', alignItems: 'center' }}>{box('damDam',   "Dam's Dam",   false)}</div>
-          <div style={{ gridColumn: 3, gridRow: 1 }}>{box('sireSireSire', "Sire's Sire's Sire", true)}</div>
-          <div style={{ gridColumn: 3, gridRow: 2 }}>{box('sireSireDam',  "Sire's Sire's Dam",  false)}</div>
-          <div style={{ gridColumn: 3, gridRow: 3 }}>{box('sireDamSire',  "Sire's Dam's Sire",  true)}</div>
-          <div style={{ gridColumn: 3, gridRow: 4 }}>{box('sireDamDam',   "Sire's Dam's Dam",   false)}</div>
-          <div style={{ gridColumn: 3, gridRow: 5 }}>{box('damSireSire',  "Dam's Sire's Sire",  true)}</div>
-          <div style={{ gridColumn: 3, gridRow: 6 }}>{box('damSireDam',   "Dam's Sire's Dam",   false)}</div>
-          <div style={{ gridColumn: 3, gridRow: 7 }}>{box('damDamSire',   "Dam's Dam's Sire",   true)}</div>
-          <div style={{ gridColumn: 3, gridRow: 8 }}>{box('damDamDam',    "Dam's Dam's Dam",    false)}</div>
+          <div style={{ gridColumn: 1, gridRow: '1 / 5', display: 'flex', alignItems: 'center' }}>{box('sire', t('animal_add_wizard.anc_sire'), true)}</div>
+          <div style={{ gridColumn: 1, gridRow: '5 / 9', display: 'flex', alignItems: 'center' }}>{box('dam', t('animal_add_wizard.anc_dam'), false)}</div>
+          <div style={{ gridColumn: 2, gridRow: '1 / 3', display: 'flex', alignItems: 'center' }}>{box('sireSire', t('animal_add_wizard.anc_sire_sire'), true)}</div>
+          <div style={{ gridColumn: 2, gridRow: '3 / 5', display: 'flex', alignItems: 'center' }}>{box('sireDam',  t('animal_add_wizard.anc_sire_dam'),  false)}</div>
+          <div style={{ gridColumn: 2, gridRow: '5 / 7', display: 'flex', alignItems: 'center' }}>{box('damSire',  t('animal_add_wizard.anc_dam_sire'),  true)}</div>
+          <div style={{ gridColumn: 2, gridRow: '7 / 9', display: 'flex', alignItems: 'center' }}>{box('damDam',   t('animal_add_wizard.anc_dam_dam'),   false)}</div>
+          <div style={{ gridColumn: 3, gridRow: 1 }}>{box('sireSireSire', t('animal_add_wizard.anc_sire_sire_sire'), true)}</div>
+          <div style={{ gridColumn: 3, gridRow: 2 }}>{box('sireSireDam',  t('animal_add_wizard.anc_sire_sire_dam'),  false)}</div>
+          <div style={{ gridColumn: 3, gridRow: 3 }}>{box('sireDamSire',  t('animal_add_wizard.anc_sire_dam_sire'),  true)}</div>
+          <div style={{ gridColumn: 3, gridRow: 4 }}>{box('sireDamDam',   t('animal_add_wizard.anc_sire_dam_dam'),   false)}</div>
+          <div style={{ gridColumn: 3, gridRow: 5 }}>{box('damSireSire',  t('animal_add_wizard.anc_dam_sire_sire'),  true)}</div>
+          <div style={{ gridColumn: 3, gridRow: 6 }}>{box('damSireDam',   t('animal_add_wizard.anc_dam_sire_dam'),   false)}</div>
+          <div style={{ gridColumn: 3, gridRow: 7 }}>{box('damDamSire',   t('animal_add_wizard.anc_dam_dam_sire'),   true)}</div>
+          <div style={{ gridColumn: 3, gridRow: 8 }}>{box('damDamDam',    t('animal_add_wizard.anc_dam_dam_dam'),    false)}</div>
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: '16px', marginTop: '10px', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#6B7280' }}>
-          <div style={{ width: '14px', height: '14px', borderRadius: '3px', backgroundColor: '#EBF3FF', border: '1px solid #93C5FD' }} /> Male
+          <div style={{ width: '14px', height: '14px', borderRadius: '3px', backgroundColor: '#EBF3FF', border: '1px solid #93C5FD' }} /> {t('animal_add_wizard.legend_male')}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#6B7280' }}>
-          <div style={{ width: '14px', height: '14px', borderRadius: '3px', backgroundColor: '#FFF0F3', border: '1px solid #FBCFE8' }} /> Female
+          <div style={{ width: '14px', height: '14px', borderRadius: '3px', backgroundColor: '#FFF0F3', border: '1px solid #FBCFE8' }} /> {t('animal_add_wizard.legend_female')}
         </div>
       </div>
 
-      <FormField label="Ancestry Description / Percentages">
-        <textarea className="form-textarea" rows={4} value={formData.ancestryDescription||""} onChange={(e)=>onChange("ancestryDescription",e.target.value)} placeholder="Describe bloodline percentages or additional details..." />
+      <FormField label={t('animal_add_wizard.lbl_ancestry_desc')}>
+        <textarea className="form-textarea" rows={4} value={formData.ancestryDescription||""} onChange={(e)=>onChange("ancestryDescription",e.target.value)} placeholder={t('animal_add_wizard.placeholder_ancestry_desc')} />
       </FormField>
     </div>
   );
@@ -1058,20 +1066,32 @@ function Step3Ancestry({ formData, onChange, colors }) {
 
 // ── Step 4 ────────────────────────────────────────────────────────────────────
 function Step4FiberFacts({ formData, onChange }) {
+  const { t } = useTranslation();
   const samples = formData.fiberSamples || Array(10).fill({});
   const upd = (i,field,val) => { const u=[...samples]; u[i]={...u[i],[field]:val}; onChange("fiberSamples",u); };
-  const fields = [{key:"afd",label:"AFD (Avg Fiber Diameter)"},{key:"sd",label:"SD (Std Deviation)"},{key:"cov",label:"COV (%)"},{key:"cf",label:"CF (Comfort Factor %)"},{key:"gt30",label:"% > 30 Microns"},{key:"curve",label:"Curve"},{key:"crimpsPerInch",label:"Crimps / Inch"},{key:"stapleLength",label:"Staple Length (in)"},{key:"shearWeight",label:"Shear Weight (lbs)"},{key:"blanketWeight",label:"Blanket Weight (lbs)"}];
+  const fields = [
+    {key:"afd",          label:t('animal_add_wizard.fiber_afd')},
+    {key:"sd",           label:t('animal_add_wizard.fiber_sd')},
+    {key:"cov",          label:t('animal_add_wizard.fiber_cov')},
+    {key:"cf",           label:t('animal_add_wizard.fiber_cf')},
+    {key:"gt30",         label:t('animal_add_wizard.fiber_gt30')},
+    {key:"curve",        label:t('animal_add_wizard.fiber_curve')},
+    {key:"crimpsPerInch",label:t('animal_add_wizard.fiber_crimps')},
+    {key:"stapleLength", label:t('animal_add_wizard.fiber_staple')},
+    {key:"shearWeight",  label:t('animal_add_wizard.fiber_shear')},
+    {key:"blanketWeight",label:t('animal_add_wizard.fiber_blanket')},
+  ];
   const currentYear = new Date().getFullYear();
 
   return (
     <div className="step-content">
-      <StepHeader title="Fiber Facts" subtitle="Enter up to 10 fiber sample records" />
+      <StepHeader title={t('animal_add_wizard.step4_title')} subtitle={t('animal_add_wizard.step4_subtitle')} />
       <div className="fiber-samples">
         {samples.map((sample,i) => (
           <details key={i} className="fiber-sample">
-            <summary className="fiber-sample-title">Sample {i+1}{sample.sampleYear ? ` — ${sample.sampleYear}` : ""}</summary>
+            <summary className="fiber-sample-title">{t('animal_add_wizard.sample_n', { n: i+1 })}{sample.sampleYear ? ` — ${sample.sampleYear}` : ""}</summary>
             <div className="fiber-sample-fields">
-              <FormField label="Year">
+              <FormField label={t('animal_add_wizard.lbl_year')}>
                 <input
                   type="number"
                   className="form-input"
@@ -1097,10 +1117,11 @@ function Step4FiberFacts({ formData, onChange }) {
 
 // ── Step 5 ────────────────────────────────────────────────────────────────────
 function Step5Description({ formData, onChange }) {
+  const { t } = useTranslation();
   return (
     <div className="step-content">
-      <StepHeader title="Description" subtitle="Write a detailed description of your animal or listing" />
-      <FormField label="Description">
+      <StepHeader title={t('animal_add_wizard.step5_title')} subtitle={t('animal_add_wizard.step5_subtitle')} />
+      <FormField label={t('animal_add_wizard.lbl_description')}>
         <AnimalRichTextEditor
           value={formData.description || ""}
           onChange={v => onChange("description", v)}
@@ -1112,6 +1133,7 @@ function Step5Description({ formData, onChange }) {
 
 // ── Step 6 ────────────────────────────────────────────────────────────────────
 function Step6Awards({ formData, onChange }) {
+  const { t } = useTranslation();
   const isAlpaca = Number(formData.speciesID)===2;
   const awards   = formData.awards||Array(10).fill({});
   const yr       = new Date().getFullYear();
@@ -1122,31 +1144,31 @@ function Step6Awards({ formData, onChange }) {
 
   return (
     <div className="step-content">
-      <StepHeader title="Awards" subtitle="Record up to 10 show awards and achievements" />
+      <StepHeader title={t('animal_add_wizard.step6_title')} subtitle={t('animal_add_wizard.step6_subtitle')} />
       <div className="awards-list">
         {awards.map((award,i)=>(
           <details key={i} className="award-item">
-            <summary className="award-title">Award {i+1}{award.year?` — ${award.year}`:""}{award.show?` · ${award.show}`:""}</summary>
+            <summary className="award-title">{t('animal_add_wizard.award_n', { n: i+1 })}{award.year?` — ${award.year}`:""}{award.show?` · ${award.show}`:""}</summary>
             <div className="award-fields">
               <div className="two-col">
-                <FormField label="Year">
+                <FormField label={t('animal_add_wizard.lbl_year')}>
                   <select className="form-select" value={award.year||""} onChange={(e)=>upd(i,"year",e.target.value)}>
                     <option value="">--</option>{years.map((y)=><option key={y} value={y}>{y}</option>)}
                   </select>
                 </FormField>
-                <FormField label="Show"><input type="text" className="form-input" value={award.show||""} onChange={(e)=>upd(i,"show",e.target.value)} /></FormField>
+                <FormField label={t('animal_add_wizard.lbl_show')}><input type="text" className="form-input" value={award.show||""} onChange={(e)=>upd(i,"show",e.target.value)} /></FormField>
               </div>
               <div className="two-col">
-                <FormField label="Class">
+                <FormField label={t('animal_add_wizard.lbl_class')}>
                   {isAlpaca ? <select className="form-select" value={award.class||""} onChange={(e)=>upd(i,"class",e.target.value)}><option value="">--</option>{classes.map((c)=><option key={c} value={c}>{c}</option>)}</select>
                             : <input type="text" className="form-input" value={award.class||""} onChange={(e)=>upd(i,"class",e.target.value)} />}
                 </FormField>
-                <FormField label="Placing">
+                <FormField label={t('animal_add_wizard.lbl_placing')}>
                   {isAlpaca ? <select className="form-select" value={award.placing||""} onChange={(e)=>upd(i,"placing",e.target.value)}><option value="">--</option>{placings.map((p)=><option key={p} value={p}>{p}</option>)}</select>
                             : <input type="text" className="form-input" value={award.placing||""} onChange={(e)=>upd(i,"placing",e.target.value)} />}
                 </FormField>
               </div>
-              <FormField label="Description"><textarea className="form-textarea" rows={3} value={award.description||""} onChange={(e)=>upd(i,"description",e.target.value)} /></FormField>
+              <FormField label={t('animal_add_wizard.lbl_award_desc')}><textarea className="form-textarea" rows={3} value={award.description||""} onChange={(e)=>upd(i,"description",e.target.value)} /></FormField>
             </div>
           </details>
         ))}
@@ -1157,6 +1179,7 @@ function Step6Awards({ formData, onChange }) {
 
 // ── Step 7 ────────────────────────────────────────────────────────────────────
 function Step7Pricing({ formData, onChange, errors }) {
+  const { t } = useTranslation();
   const sid      = Number(formData.speciesID);
   const isFowl   = FOWL_IDS.includes(sid);
   const cat      = formData.category||"";
@@ -1168,68 +1191,73 @@ function Step7Pricing({ formData, onChange, errors }) {
 
   return (
     <div className="step-content">
-      <StepHeader title="Pricing" subtitle="Set your sale price and listing options" />
+      <StepHeader title={t('animal_add_wizard.step7_title')} subtitle={t('animal_add_wizard.step7_subtitle')} />
       <div className="pricing-grid">
-        <FormField label="For Sale?"><div className="radio-group">{["Yes","No"].map((v)=><Radio key={v} name="forSale" value={v} checked={(formData.forSale??"Yes")===v} onChange={(e)=>onChange("forSale",e.target.value)} />)}</div></FormField>
+        <FormField label={t('animal_add_wizard.lbl_for_sale')}><div className="radio-group">{[['Yes',t('animal_add_wizard.opt_yes')],['No',t('animal_add_wizard.opt_no')]].map(([v,lbl])=><Radio key={v} name="forSale" value={v} checked={(formData.forSale??"Yes")===v} onChange={(e)=>onChange("forSale",e.target.value)} />)}</div></FormField>
 
         {formData.forSale!=="No" && <>
-          <FormField label="Free?"><div className="radio-group">{["Yes","No"].map((v)=><Radio key={v} name="free" value={v} checked={(formData.free??"No")===v} onChange={(e)=>onChange("free",e.target.value)} />)}</div></FormField>
+          <FormField label={t('animal_add_wizard.lbl_free')}><div className="radio-group">{[['Yes',t('animal_add_wizard.opt_yes')],['No',t('animal_add_wizard.opt_no')]].map(([v,lbl])=><Radio key={v} name="free" value={v} checked={(formData.free??"No")===v} onChange={(e)=>onChange("free",e.target.value)} />)}</div></FormField>
 
           {formData.free!=="Yes" && <>
             {isEggs && isFowl ? (
               <div className="section-group">
-                <h3 className="section-group-title">Egg Pricing</h3>
-                {[{key:"price",label:"Unsexed",mk:"minOrder1",xk:"maxOrder1"},{key:"price2",label:"Female",mk:"minOrder2",xk:"maxOrder2"},{key:"price3",label:"Male",mk:"minOrder3",xk:"maxOrder3"},{key:"price4",label:"Fertilized",mk:"minOrder4",xk:"maxOrder4"}].map(({key,label,mk,xk})=>(
+                <h3 className="section-group-title">{t('animal_add_wizard.section_egg_pricing')}</h3>
+                {[
+                  {key:"price",  label:t('animal_add_wizard.egg_unsexed'),   mk:"minOrder1",xk:"maxOrder1"},
+                  {key:"price2", label:t('animal_add_wizard.egg_female'),    mk:"minOrder2",xk:"maxOrder2"},
+                  {key:"price3", label:t('animal_add_wizard.egg_male'),      mk:"minOrder3",xk:"maxOrder3"},
+                  {key:"price4", label:t('animal_add_wizard.egg_fertilized'),mk:"minOrder4",xk:"maxOrder4"},
+                ].map(({key,label,mk,xk})=>(
                   <div key={key} className="egg-pricing-row">
-                    <FormField label={`${label} Price`}><div className="price-input-wrap"><span className="price-symbol">$</span><input type="number" className="form-input price-input" min="0" step="0.01" value={formData[key]||""} onChange={(e)=>onChange(key,e.target.value)} /></div></FormField>
+                    <FormField label={t('animal_add_wizard.lbl_price_of', { label })}><div className="price-input-wrap"><span className="price-symbol">$</span><input type="number" className="form-input price-input" min="0" step="0.01" value={formData[key]||""} onChange={(e)=>onChange(key,e.target.value)} /></div></FormField>
                     <div className="two-col">
-                      <FormField label="Min Order"><input type="number" className="form-input" min="1" value={formData[mk]||""} onChange={(e)=>onChange(mk,e.target.value)} /></FormField>
-                      <FormField label="Max Order"><input type="number" className="form-input" min="1" value={formData[xk]||""} onChange={(e)=>onChange(xk,e.target.value)} /></FormField>
+                      <FormField label={t('animal_add_wizard.lbl_min_order')}><input type="number" className="form-input" min="1" value={formData[mk]||""} onChange={(e)=>onChange(mk,e.target.value)} /></FormField>
+                      <FormField label={t('animal_add_wizard.lbl_max_order')}><input type="number" className="form-input" min="1" value={formData[xk]||""} onChange={(e)=>onChange(xk,e.target.value)} /></FormField>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <FormField label="Price" error={errors?.price}><div className="price-input-wrap"><span className="price-symbol">$</span><input type="number" className={`form-input price-input ${errors?.price?"input-error":""}`} min="0" step="0.01" value={formData.price||""} onChange={(e)=>onChange("price",e.target.value)} /></div></FormField>
+              <FormField label={t('animal_add_wizard.lbl_price')} error={errors?.price}><div className="price-input-wrap"><span className="price-symbol">$</span><input type="number" className={`form-input price-input ${errors?.price?"input-error":""}`} min="0" step="0.01" value={formData.price||""} onChange={(e)=>onChange("price",e.target.value)} /></div></FormField>
             )}
-            <FormField label="Or Best Offer (OBO)?"><div className="radio-group">{["Yes","No"].map((v)=><Radio key={v} name="obo" value={v} checked={(formData.obo??"No")===v} onChange={(e)=>onChange("obo",e.target.value)} />)}</div></FormField>
-            <FormField label="Discount"><select className="form-select" value={formData.discount||"0"} onChange={(e)=>onChange("discount",e.target.value)}>{discounts.map((d)=><option key={d} value={d}>{d}%</option>)}</select></FormField>
+            <FormField label={t('animal_add_wizard.lbl_obo')}><div className="radio-group">{[['Yes',t('animal_add_wizard.opt_yes')],['No',t('animal_add_wizard.opt_no')]].map(([v,lbl])=><Radio key={v} name="obo" value={v} checked={(formData.obo??"No")===v} onChange={(e)=>onChange("obo",e.target.value)} />)}</div></FormField>
+            <FormField label={t('animal_add_wizard.lbl_discount')}><select className="form-select" value={formData.discount||"0"} onChange={(e)=>onChange("discount",e.target.value)}>{discounts.map((d)=><option key={d} value={d}>{d}%</option>)}</select></FormField>
           </>}
         </>}
 
-        <FormField label="Foundation Animal?">
-          <div className="radio-group">{["Yes","No"].map((v)=><Radio key={v} name="foundation" value={v} checked={(formData.foundation??"No")===v} onChange={(e)=>onChange("foundation",e.target.value)} />)}</div>
-          <p className="field-hint">Mark as Foundation if this is an important breeding animal not for sale.</p>
+        <FormField label={t('animal_add_wizard.lbl_foundation')}>
+          <div className="radio-group">{[['Yes',t('animal_add_wizard.opt_yes')],['No',t('animal_add_wizard.opt_no')]].map(([v,lbl])=><Radio key={v} name="foundation" value={v} checked={(formData.foundation??"No")===v} onChange={(e)=>onChange("foundation",e.target.value)} />)}</div>
+          <p className="field-hint">{t('animal_add_wizard.hint_foundation')}</p>
         </FormField>
       </div>
 
       {isMale && !isFowl && (
         <div className="section-group">
-          <h3 className="section-group-title">Stud Services</h3>
-          <FormField label="Stud Fee"><div className="price-input-wrap"><span className="price-symbol">$</span><input type="number" className="form-input price-input" min="0" step="0.01" value={formData.studFee||""} onChange={(e)=>onChange("studFee",e.target.value)} /></div></FormField>
-          <FormField label="Pay What You Can?"><div className="radio-group">{["Yes","No"].map((v)=><Radio key={v} name="payWhatYouCan" value={v} checked={(formData.payWhatYouCan??"No")===v} onChange={(e)=>onChange("payWhatYouCan",e.target.value)} />)}</div></FormField>
-          <FormField label="Semen Available?"><div className="radio-group">{["Yes","No"].map((v)=><Radio key={v} name="donorMale" value={v} checked={(formData.donorMale??"No")===v} onChange={(e)=>onChange("donorMale",e.target.value)} />)}</div></FormField>
-          {formData.donorMale==="Yes" && <FormField label="Semen Price (per straw)"><div className="price-input-wrap"><span className="price-symbol">$</span><input type="number" className="form-input price-input" min="0" step="0.01" value={formData.semenPrice||""} onChange={(e)=>onChange("semenPrice",e.target.value)} /></div></FormField>}
+          <h3 className="section-group-title">{t('animal_add_wizard.section_stud')}</h3>
+          <FormField label={t('animal_add_wizard.lbl_stud_fee')}><div className="price-input-wrap"><span className="price-symbol">$</span><input type="number" className="form-input price-input" min="0" step="0.01" value={formData.studFee||""} onChange={(e)=>onChange("studFee",e.target.value)} /></div></FormField>
+          <FormField label={t('animal_add_wizard.lbl_pay_what_you_can')}><div className="radio-group">{[['Yes',t('animal_add_wizard.opt_yes')],['No',t('animal_add_wizard.opt_no')]].map(([v,lbl])=><Radio key={v} name="payWhatYouCan" value={v} checked={(formData.payWhatYouCan??"No")===v} onChange={(e)=>onChange("payWhatYouCan",e.target.value)} />)}</div></FormField>
+          <FormField label={t('animal_add_wizard.lbl_semen_avail')}><div className="radio-group">{[['Yes',t('animal_add_wizard.opt_yes')],['No',t('animal_add_wizard.opt_no')]].map(([v,lbl])=><Radio key={v} name="donorMale" value={v} checked={(formData.donorMale??"No")===v} onChange={(e)=>onChange("donorMale",e.target.value)} />)}</div></FormField>
+          {formData.donorMale==="Yes" && <FormField label={t('animal_add_wizard.lbl_semen_price')}><div className="price-input-wrap"><span className="price-symbol">$</span><input type="number" className="form-input price-input" min="0" step="0.01" value={formData.semenPrice||""} onChange={(e)=>onChange("semenPrice",e.target.value)} /></div></FormField>}
         </div>
       )}
 
       {isFemale && !isFowl && (
         <div className="section-group">
-          <h3 className="section-group-title">Embryo / Donor</h3>
-          <FormField label="Embryo Donor?"><div className="radio-group">{["Yes","No"].map((v)=><Radio key={v} name="donorFemale" value={v} checked={(formData.donorFemale??"No")===v} onChange={(e)=>onChange("donorFemale",e.target.value)} />)}</div></FormField>
-          {formData.donorFemale==="Yes" && <FormField label="Embryo Price (per embryo)"><div className="price-input-wrap"><span className="price-symbol">$</span><input type="number" className="form-input price-input" min="0" step="0.01" value={formData.embryoPrice||""} onChange={(e)=>onChange("embryoPrice",e.target.value)} /></div></FormField>}
+          <h3 className="section-group-title">{t('animal_add_wizard.section_embryo')}</h3>
+          <FormField label={t('animal_add_wizard.lbl_embryo_donor')}><div className="radio-group">{[['Yes',t('animal_add_wizard.opt_yes')],['No',t('animal_add_wizard.opt_no')]].map(([v,lbl])=><Radio key={v} name="donorFemale" value={v} checked={(formData.donorFemale??"No")===v} onChange={(e)=>onChange("donorFemale",e.target.value)} />)}</div></FormField>
+          {formData.donorFemale==="Yes" && <FormField label={t('animal_add_wizard.lbl_embryo_price')}><div className="price-input-wrap"><span className="price-symbol">$</span><input type="number" className="form-input price-input" min="0" step="0.01" value={formData.embryoPrice||""} onChange={(e)=>onChange("embryoPrice",e.target.value)} /></div></FormField>}
         </div>
       )}
 
-      <FormField label="Price Comments"><textarea className="form-textarea" rows={3} maxLength={500} value={formData.priceComments||""} onChange={(e)=>onChange("priceComments",e.target.value)} /></FormField>
+      <FormField label={t('animal_add_wizard.lbl_price_comments')}><textarea className="form-textarea" rows={3} maxLength={500} value={formData.priceComments||""} onChange={(e)=>onChange("priceComments",e.target.value)} /></FormField>
 
       <div className="section-group">
-        <h3 className="section-group-title">Co-Owners (Optional)</h3>
+        <h3 className="section-group-title">{t('animal_add_wizard.section_coowners')}</h3>
         {[1,2,3].map((n)=>(
           <div key={n} className="coowner-row">
-            <FormField label={`Co-Owner ${n} Business`}><input type="text" className="form-input" value={formData[`coOwnerBusiness${n}`]||""} onChange={(e)=>onChange(`coOwnerBusiness${n}`,e.target.value)} /></FormField>
-            <FormField label="Name"><input type="text" className="form-input" value={formData[`coOwnerName${n}`]||""} onChange={(e)=>onChange(`coOwnerName${n}`,e.target.value)} /></FormField>
-            <FormField label="Link (http://)"><input type="url" className="form-input" value={formData[`coOwnerLink${n}`]||""} onChange={(e)=>onChange(`coOwnerLink${n}`,e.target.value)} placeholder="http://" /></FormField>
+            <FormField label={t('animal_add_wizard.lbl_coowner_business', { n })}><input type="text" className="form-input" value={formData[`coOwnerBusiness${n}`]||""} onChange={(e)=>onChange(`coOwnerBusiness${n}`,e.target.value)} /></FormField>
+            <FormField label={t('animal_add_wizard.lbl_coowner_name')}><input type="text" className="form-input" value={formData[`coOwnerName${n}`]||""} onChange={(e)=>onChange(`coOwnerName${n}`,e.target.value)} /></FormField>
+            <FormField label={t('animal_add_wizard.lbl_coowner_link')}><input type="url" className="form-input" value={formData[`coOwnerLink${n}`]||""} onChange={(e)=>onChange(`coOwnerLink${n}`,e.target.value)} placeholder="http://" /></FormField>
           </div>
         ))}
       </div>
@@ -1261,6 +1289,7 @@ function convertToWebP(file, quality = 0.88) {
 
 // ── Step 8 ────────────────────────────────────────────────────────────────────
 function Step8Photos({ formData, onChange, subscriptionLevel }) {
+  const { t } = useTranslation();
   const sid       = Number(formData.speciesID);
   const hasDocs   = [2,4,6,10,11].includes(sid);
   const hasVideo  = subscriptionLevel >= 3;
@@ -1373,8 +1402,8 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
   return (
     <div className="step-content">
       <StepHeader
-        title="Photos & Documents"
-        subtitle={`Upload up to ${MAX_PHOTOS} photos. Drag photos to reorder or drop image files directly onto a slot. Images are automatically converted to WebP format.`}
+        title={t('animal_add_wizard.step8_title')}
+        subtitle={t('animal_add_wizard.step8_subtitle', { max: MAX_PHOTOS })}
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
@@ -1427,7 +1456,7 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
                     background: '#4a7c3f', color: '#fff',
                     fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10,
                     zIndex: 2,
-                  }}>COVER</div>
+                  }}>{t('animal_add_wizard.cover_badge')}</div>
                 )}
 
                 {isDragOver && (
@@ -1437,7 +1466,7 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
                     fontSize: 13, fontWeight: 700, color: '#7c5cbf',
                     pointerEvents: 'none', zIndex: 3,
                   }}>
-                    {dragSrc.current !== null ? 'Move here' : 'Drop to upload'}
+                    {dragSrc.current !== null ? t('animal_add_wizard.drag_move') : t('animal_add_wizard.drag_upload')}
                   </div>
                 )}
 
@@ -1445,7 +1474,7 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
                   <>
                     <img
                       src={url}
-                      alt={`Photo ${i + 1}`}
+                      alt={t('animal_add_wizard.photo_alt', { n: i + 1 })}
                       style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                       onError={e => { e.target.style.display = 'none'; }}
                     />
@@ -1458,15 +1487,15 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
                         <button
                           type="button"
                           onClick={() => handleSetCover(i)}
-                          title="Set as cover"
+                          title={t('animal_add_wizard.btn_set_cover')}
                           style={{ background: 'rgb(115, 131, 85)', color: '#fff', border: 'none', borderRadius: 5, fontSize: 11, padding: '3px 8px', cursor: 'pointer', fontWeight: 600 }}
-                        >Set Cover</button>
+                        >{t('animal_add_wizard.btn_set_cover')}</button>
                       )}
                       <label
-                        title="Replace photo"
+                        title={t('animal_add_wizard.btn_replace')}
                         style={{ background: 'rgb(115, 131, 85)', color: '#fff', border: 'none', borderRadius: 5, fontSize: 11, padding: '3px 8px', cursor: 'pointer', fontWeight: 600 }}
                       >
-                        Replace
+                        {t('animal_add_wizard.btn_replace')}
                         <input
                           type="file" accept="image/*,.jfif"
                           style={{ display: 'none' }}
@@ -1484,7 +1513,7 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
                 ) : (
                   <label style={{ cursor: 'pointer', textAlign: 'center', padding: 12, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                     <div style={{ fontSize: 32, color: isDragOver ? '#7c5cbf' : '#c8bfb5', marginBottom: 6 }}>+</div>
-                    <div style={{ fontSize: 12, color: '#8b7355' }}>Click or drop</div>
+                    <div style={{ fontSize: 12, color: '#8b7355' }}>{t('animal_add_wizard.click_or_drop')}</div>
                     <input
                       type="file" accept="image/*,.jfif"
                       style={{ display: 'none' }}
@@ -1498,7 +1527,7 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
               <input
                 type="text"
                 value={photo?.caption || ''}
-                placeholder="Add a caption…"
+                placeholder={t('animal_add_wizard.photo_caption_placeholder')}
                 maxLength={500}
                 onChange={e => {
                   const val = e.target.value;
@@ -1524,14 +1553,14 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
       </div>
 
       <div className="section-group" style={{ marginTop: 24 }}>
-        <h3 className="section-group-title">Documents</h3>
+        <h3 className="section-group-title">{t('animal_add_wizard.section_documents')}</h3>
         <p style={{ fontSize: 13, color: "#7a6a5a", marginBottom: 16 }}>
-          Upload a PDF or image for this animal. These will be available for download on the public detail page.
+          {t('animal_add_wizard.doc_instructions')}
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
           {[
-            { kind: "ariDoc",       label: "Registration Certificate", show: true },
-            { kind: "histogramDoc", label: "Histogram / Fiber Analysis", show: hasDocs },
+            { kind: "ariDoc",       label: t('animal_add_wizard.doc_reg_cert'),  show: true },
+            { kind: "histogramDoc", label: t('animal_add_wizard.doc_histogram'), show: hasDocs },
           ].filter(d => d.show).map(doc => {
             const file = formData[doc.kind];
             const isDragOver = docDragOver === doc.kind;
@@ -1575,7 +1604,7 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
                     fontSize: 14, fontWeight: 700, color: "#7c5cbf",
                     pointerEvents: "none", borderRadius: 10,
                   }}>
-                    Drop PDF or image to upload
+                    {t('animal_add_wizard.drag_drop_pdf')}
                   </div>
                 )}
                 {file ? (
@@ -1588,7 +1617,7 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
                         background: "rgb(115,131,85)", color: "#fff", border: "none", borderRadius: 5,
                         fontSize: 12, padding: "6px 12px", cursor: "pointer", fontWeight: 600,
                       }}>
-                        Replace
+                        {t('animal_add_wizard.btn_replace')}
                         <input type="file" accept="application/pdf,image/*"
                                style={{ display: "none" }}
                                onChange={e => e.target.files[0] && onChange(doc.kind, e.target.files[0])} />
@@ -1601,7 +1630,7 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
                           fontSize: 12, padding: "6px 12px", cursor: "pointer", fontWeight: 600,
                         }}
                       >
-                        Remove
+                        {t('animal_add_wizard.btn_remove')}
                       </button>
                     </div>
                   </>
@@ -1611,7 +1640,7 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
                     fontSize: 13, padding: "8px 14px", cursor: "pointer", fontWeight: 600,
                     alignSelf: "flex-start",
                   }}>
-                    Upload PDF or image, or drop here
+                    {t('animal_add_wizard.btn_upload_pdf')}
                     <input type="file" accept="application/pdf,image/*"
                            style={{ display: "none" }}
                            onChange={e => e.target.files[0] && onChange(doc.kind, e.target.files[0])} />
@@ -1623,7 +1652,7 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
         </div>
         {hasVideo && (
           <div style={{ marginTop: 20 }}>
-            <FormField label="Video (YouTube Embed Code)">
+            <FormField label={t('animal_add_wizard.lbl_video')}>
               <textarea className="form-textarea" rows={3}
                         value={formData.videoEmbed||""}
                         onChange={(e)=>onChange("videoEmbed",e.target.value)}
@@ -1638,6 +1667,7 @@ function Step8Photos({ formData, onChange, subscriptionLevel }) {
 
 // ── Main Wizard ───────────────────────────────────────────────────────────────
 export default function AnimalAddWizard() {
+  const { t } = useTranslation();
   const [searchParams]    = useSearchParams();
   const businessID        = searchParams.get("BusinessID");
   const subscriptionLevel = Number(localStorage.getItem("SubscriptionLevel")||0);
@@ -1668,6 +1698,17 @@ export default function AnimalAddWizard() {
   const [draftRestored,     setDraftRestored]     = useState(() =>
     !!sessionStorage.getItem(draftKey)
   );
+
+  const STEP_LABELS = {
+    1: t('animal_add_wizard.step_basics'),
+    2: t('animal_add_wizard.step_general_facts'),
+    3: t('animal_add_wizard.step_ancestry'),
+    4: t('animal_add_wizard.step_fiber_facts'),
+    5: t('animal_add_wizard.step_description'),
+    6: t('animal_add_wizard.step_awards'),
+    7: t('animal_add_wizard.step_pricing'),
+    8: t('animal_add_wizard.step_photos'),
+  };
 
   const visibleSteps     = getVisibleSteps(formData);
   const currentStepIndex = visibleSteps.findIndex((s)=>s.id===currentStepId);
@@ -1712,15 +1753,15 @@ export default function AnimalAddWizard() {
   const validateStep = (stepId) => {
     const e={};
     if (stepId===1) {
-      if (!formData.name?.trim())     e.name="Name is required";
-      if (formData.name?.length>90)   e.name="Name must be 90 characters or fewer";
-      if (!formData.speciesID)        e.speciesID="Please select a species";
-      if (!formData.numberOfAnimals||formData.numberOfAnimals<1) e.numberOfAnimals="Please enter number of animals";
+      if (!formData.name?.trim())     e.name=t('animal_add_wizard.err_name_required');
+      if (formData.name?.length>90)   e.name=t('animal_add_wizard.err_name_length');
+      if (!formData.speciesID)        e.speciesID=t('animal_add_wizard.err_species_required');
+      if (!formData.numberOfAnimals||formData.numberOfAnimals<1) e.numberOfAnimals=t('animal_add_wizard.err_num_animals');
     }
     if (stepId===2) {
       const sid=Number(formData.speciesID);
-      if (![23,33].includes(sid)&&!formData.category) e.category="Please select a category";
-      if (breeds.length>0&&![4,23,25,33,34].includes(sid)&&!formData.breedID) e.breedID="Please select a breed";
+      if (![23,33].includes(sid)&&!formData.category) e.category=t('animal_add_wizard.err_category_required');
+      if (breeds.length>0&&![4,23,25,33,34].includes(sid)&&!formData.breedID) e.breedID=t('animal_add_wizard.err_breed_required');
     }
     return e;
   };
@@ -1853,7 +1894,7 @@ export default function AnimalAddWizard() {
 
       if (!res.ok) {
         const err = await res.json().catch(()=>({}));
-        throw new Error(err.detail || "Failed to save animal");
+        throw new Error(err.detail || t('animal_add_wizard.err_save_failed'));
       }
 
       sessionStorage.removeItem(draftKey);
@@ -1869,11 +1910,11 @@ export default function AnimalAddWizard() {
 
   if (submitSuccess) {
     return (
-      <AccountLayout Business={Business} BusinessID={businessID} PeopleID={PeopleID} pageTitle="Add Animal" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Livestock' }, { label: 'My Animals', to: `/animals?BusinessID=${businessID}` }, { label: 'Add Animal' }]}>
+      <AccountLayout Business={Business} BusinessID={businessID} PeopleID={PeopleID} pageTitle={t('animal_add_wizard.page_title')} breadcrumbs={[{ label: t('animal_add_wizard.bc_dashboard'), to: '/dashboard' }, { label: t('animal_add_wizard.bc_livestock') }, { label: t('animal_add_wizard.bc_my_animals'), to: `/animals?BusinessID=${businessID}` }, { label: t('animal_add_wizard.bc_add_animal') }]}>
         <div className="wizard-success">
           <div className="success-icon"></div>
-          <h2>Animal Added Successfully!</h2>
-          <p>Redirecting to your animals...</p>
+          <h2>{t('animal_add_wizard.success_title')}</h2>
+          <p>{t('animal_add_wizard.success_redirect')}</p>
         </div>
       </AccountLayout>
     );
@@ -1882,7 +1923,7 @@ export default function AnimalAddWizard() {
   const step = visibleSteps[currentStepIndex];
 
   return (
-    <AccountLayout Business={Business} BusinessID={businessID} PeopleID={PeopleID} pageTitle="Add Animal" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Livestock' }, { label: 'My Animals', to: `/animals?BusinessID=${businessID}` }, { label: 'Add Animal' }]}>
+    <AccountLayout Business={Business} BusinessID={businessID} PeopleID={PeopleID} pageTitle={t('animal_add_wizard.page_title')} breadcrumbs={[{ label: t('animal_add_wizard.bc_dashboard'), to: '/dashboard' }, { label: t('animal_add_wizard.bc_livestock') }, { label: t('animal_add_wizard.bc_my_animals'), to: `/animals?BusinessID=${businessID}` }, { label: t('animal_add_wizard.bc_add_animal') }]}>
       <div className="animal-wizard">
         <div className="wizard-progress">
           <div className="progress-steps">
@@ -1891,7 +1932,7 @@ export default function AnimalAddWizard() {
               return (
                 <div key={s.id} className={`progress-step ${status}`}>
                   <div className="step-dot">{status==="completed" ? <span>✓</span> : <span>{s.icon}</span>}</div>
-                  <span className="step-dot-label">{s.label}</span>
+                  <span className="step-dot-label">{STEP_LABELS[s.id] || s.label}</span>
                   {i<visibleSteps.length-1 && <div className={`step-connector ${status==="completed"?"filled":""}`} />}
                 </div>
               );
@@ -1906,13 +1947,13 @@ export default function AnimalAddWizard() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
             padding: '10px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0',
             borderRadius: 8, marginBottom: 12, fontSize: '0.82rem', color: '#166534' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Your progress has been restored from your last session.</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> {t('animal_add_wizard.draft_restored')}</span>
             <button
               type="button"
               onClick={() => { setFormData(INITIAL_FORM_DATA); setCurrentStepId(1); sessionStorage.removeItem(draftKey); setDraftRestored(false); }}
               style={{ background: 'none', border: '1px solid #86efac', borderRadius: 5, padding: '2px 10px',
                 fontSize: '0.78rem', color: '#166534', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              Start over
+              {t('animal_add_wizard.btn_start_over')}
             </button>
           </div>
         )}
@@ -1930,11 +1971,11 @@ export default function AnimalAddWizard() {
         </div>
 
         <div className="wizard-nav">
-          <button className="nav-btn back-btn"   onClick={handleBack}   disabled={isFirstStep}>← Back</button>
-          <span className="step-counter">Step {currentStepIndex+1} of {visibleSteps.length}</span>
+          <button className="nav-btn back-btn"   onClick={handleBack}   disabled={isFirstStep}>{t('animal_add_wizard.btn_back')}</button>
+          <span className="step-counter">{t('animal_add_wizard.step_counter', { current: currentStepIndex+1, total: visibleSteps.length })}</span>
           {isLastStep
-            ? <button className="nav-btn submit-btn" onClick={handleSubmit} disabled={isSubmitting}>{isSubmitting ? "Saving..." : "Save Animal ✓"}</button>
-            : <button className="nav-btn next-btn"   onClick={handleNext}>Next →</button>}
+            ? <button className="nav-btn submit-btn" onClick={handleSubmit} disabled={isSubmitting}>{isSubmitting ? t('animal_add_wizard.btn_saving') : t('animal_add_wizard.btn_save')}</button>
+            : <button className="nav-btn next-btn"   onClick={handleNext}>{t('animal_add_wizard.btn_next')}</button>}
         </div>
       </div>
     </AccountLayout>

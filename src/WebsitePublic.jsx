@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import PageMeta from './PageMeta';
 import { LivestockAnimalDetailContent } from './LivestockAnimalDetail';
 
@@ -176,6 +177,7 @@ function DropdownItem({ label, active, navColor, hoverColor, fontFamily, onClick
 // ── Block renderers ───────────────────────────────────────────────
 
 function SlideshowBlock({ data, site }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   // Images can be array of strings or objects {url, caption}
   const raw = Array.isArray(data.images) ? data.images : [];
   const slides = raw
@@ -230,7 +232,7 @@ function SlideshowBlock({ data, site }) {
               <button
                 key={i}
                 onClick={() => setIdx(i)}
-                aria-label={`Slide ${i + 1}`}
+                aria-label={wp('slide_n', { n: i + 1 })}
                 style={{
                   width: 10, height: 10, borderRadius: '50%',
                   border: 'none', cursor: 'pointer',
@@ -510,6 +512,7 @@ function MultiColumnBlock({ data, site, columnCount }) {
 }
 
 function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const isStud = mode === 'stud';
   const [animals, setAnimals] = useState([]);
   const [selectedIdx, setSelectedIdx] = useState(null);
@@ -602,7 +605,7 @@ function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
 
   const flat = useMemo(() => groups.flatMap(g => g.items), [groups]);
   const indexOf = (animal) => flat.findIndex(x => x.AnimalID === animal.AnimalID);
-  const defaultHeading = isStud ? 'Stud Services' : 'Animals For Sale';
+  const defaultHeading = isStud ? wp('stud_default_heading') : wp('livestock_default_heading');
   const groupHeading = (g) => g.plural || g.name;
 
   const breedCount = useMemo(() => {
@@ -641,7 +644,7 @@ function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
     return (
       <SectionWrap site={site} blockBgColor={data.bg_color}>
         {detailLoading && !detailAnimal ? (
-          <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#9ca3af' }}>Loading animal details…</div>
+          <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#9ca3af' }}>{wp('livestock_loading')}</div>
         ) : detailAnimal ? (
           <LivestockAnimalDetailContent
             animal={detailAnimal}
@@ -657,9 +660,9 @@ function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
           />
         ) : (
           <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#ef4444' }}>
-            Could not load animal details.
+            {wp('livestock_error')}
             <div style={{ marginTop: 12 }}>
-              <button onClick={() => setSelectedIdx(null)} style={{ background: 'none', border: 'none', color: primary, cursor: 'pointer', fontSize: bodySize }}>← Back to {data.heading || defaultHeading}</button>
+              <button onClick={() => setSelectedIdx(null)} style={{ background: 'none', border: 'none', color: primary, cursor: 'pointer', fontSize: bodySize }}>{wp('livestock_back', { heading: data.heading || defaultHeading })}</button>
             </div>
           </div>
         )}
@@ -684,7 +687,7 @@ function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
         {isStud ? (
           fmtPrice(a.StudFee) && (
             <div style={{ fontSize: '0.85rem', marginTop: 2 }}>
-              <span style={{ color: primary, fontWeight: 700 }}>Stud Fee: {fmtPrice(a.StudFee)}</span>
+              <span style={{ color: primary, fontWeight: 700 }}>{wp('lbl_stud_fee_colon')}{fmtPrice(a.StudFee)}</span>
             </div>
           )
         ) : (fmtPrice(a.Price) || showStud(a)) && (
@@ -695,7 +698,7 @@ function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
                 {fmtPrice(a.SalePrice) && <span style={{ color: '#ef4444', marginLeft: 4 }}>({fmtPrice(a.SalePrice)})</span>}
               </span>
             )}
-            {showStud(a) && <span style={{ color: '#6B7280' }}>Stud {fmtPrice(a.StudFee)}</span>}
+            {showStud(a) && <span style={{ color: '#6B7280' }}>{wp('lbl_stud_space')}{fmtPrice(a.StudFee)}</span>}
           </div>
         )}
         {a.PriceComments && <div style={{ fontSize: '0.74rem', color: '#9ca3af', fontStyle: 'italic' }}>{stripHtml(a.PriceComments)}</div>}
@@ -719,7 +722,7 @@ function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
         {isStud ? (
           fmtPrice(a.StudFee) && (
             <div style={{ fontSize: '0.92rem', marginTop: 2 }}>
-              <span style={{ color: primary, fontWeight: 700 }}>Stud Fee: {fmtPrice(a.StudFee)}</span>
+              <span style={{ color: primary, fontWeight: 700 }}>{wp('lbl_stud_fee_colon')}{fmtPrice(a.StudFee)}</span>
             </div>
           )
         ) : (fmtPrice(a.Price) || showStud(a)) && (
@@ -730,7 +733,7 @@ function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
                 {fmtPrice(a.SalePrice) && <span style={{ color: '#ef4444', marginLeft: 4 }}>({fmtPrice(a.SalePrice)})</span>}
               </span>
             )}
-            {showStud(a) && <span style={{ color: '#6B7280' }}>Stud: <strong style={{ color: textColor }}>{fmtPrice(a.StudFee)}</strong></span>}
+            {showStud(a) && <span style={{ color: '#6B7280' }}>{wp('lbl_stud_colon')}<strong style={{ color: textColor }}>{fmtPrice(a.StudFee)}</strong></span>}
           </div>
         )}
         {a.PriceComments && <div style={{ fontSize: '0.78rem', color: '#9ca3af', fontStyle: 'italic' }}>{stripHtml(a.PriceComments)}</div>}
@@ -750,27 +753,27 @@ function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search name, breed, description…"
+          placeholder={wp('livestock_search_ph')}
           style={{ flex: '1 1 200px', minWidth: 160, padding: '7px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 14, background: '#fff' }}
         />
         <select value={sortKey} onChange={e => setSortKey(e.target.value)}
           style={{ padding: '7px 8px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13, background: '#fff', color: '#374151' }}>
-          <option value="name">Sort: Name</option>
-          {breedCount > 1 && <option value="breed">Sort: Breed</option>}
-          <option value="price_asc">Sort: Price (low → high)</option>
-          <option value="price_desc">Sort: Price (high → low)</option>
+          <option value="name">{wp('sort_name')}</option>
+          {breedCount > 1 && <option value="breed">{wp('sort_breed')}</option>}
+          <option value="price_asc">{wp('sort_price_low')}</option>
+          <option value="price_desc">{wp('sort_price_high')}</option>
         </select>
         <div style={{ display: 'flex', gap: 0, border: '1px solid #e2e8f0', borderRadius: 6, overflow: 'hidden', marginLeft: 'auto' }}>
-          <button onClick={() => setViewMode('grid')}  title="Grid view"  style={{ ...ctrlBtn(viewMode === 'grid'),  borderRadius: 0, border: 'none', borderRight: '1px solid #e2e8f0' }}>▦ Grid</button>
-          <button onClick={() => setViewMode('list')}  title="List view"  style={{ ...ctrlBtn(viewMode === 'list'),  borderRadius: 0, border: 'none', borderRight: '1px solid #e2e8f0' }}>☰ List</button>
-          <button onClick={() => setViewMode('table')} title="Table view" style={{ ...ctrlBtn(viewMode === 'table'), borderRadius: 0, border: 'none' }}>▤ Table</button>
+          <button onClick={() => setViewMode('grid')}  title="Grid view"  style={{ ...ctrlBtn(viewMode === 'grid'),  borderRadius: 0, border: 'none', borderRight: '1px solid #e2e8f0' }}>{wp('view_grid')}</button>
+          <button onClick={() => setViewMode('list')}  title="List view"  style={{ ...ctrlBtn(viewMode === 'list'),  borderRadius: 0, border: 'none', borderRight: '1px solid #e2e8f0' }}>{wp('view_list')}</button>
+          <button onClick={() => setViewMode('table')} title="Table view" style={{ ...ctrlBtn(viewMode === 'table'), borderRadius: 0, border: 'none' }}>{wp('view_table')}</button>
         </div>
       </div>
 
       {visible.length === 0 ? (
         <div style={{ textAlign: 'center', color: '#6b7280', padding: '2rem', fontSize: 14, border: '1px dashed #e2e8f0', borderRadius: 8, background: '#fff' }}>
-          <div style={{ fontWeight: 600, marginBottom: 4 }}>No animals match your search</div>
-          <div style={{ fontSize: 12, color: '#9ca3af' }}>Try clearing the search box above.</div>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>{wp('no_animals')}</div>
+          <div style={{ fontSize: 12, color: '#9ca3af' }}>{wp('no_animals_hint')}</div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -790,17 +793,17 @@ function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                     <thead>
                       <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-                        <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Photo</th>
-                        <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Name</th>
-                        <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Breed</th>
+                        <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>{wp('th_photo')}</th>
+                        <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>{wp('th_name')}</th>
+                        <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>{wp('th_breed')}</th>
                         {isStud
-                          ? <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Stud Fee</th>
+                          ? <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>{wp('th_stud_fee')}</th>
                           : <>
-                              <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Price</th>
-                              <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Stud Fee</th>
+                              <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>{wp('th_price')}</th>
+                              <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>{wp('th_stud_fee')}</th>
                             </>
                         }
-                        <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Description</th>
+                        <th style={{ padding: '0.7rem 0.9rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>{wp('th_description')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -851,6 +854,7 @@ function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
 }
 
 function ProduceBlock({ data, site, businessId }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const [items, setItems] = useState([]);
   useEffect(() => {
     fetchContent(`${API}/api/website/content/produce?business_id=${businessId}`)
@@ -859,11 +863,11 @@ function ProduceBlock({ data, site, businessId }) {
   if (items.length === 0) return null;
   return (
     <SectionWrap site={site}>
-      <SectionHeading site={site}>{data.heading || 'Fresh Produce'}</SectionHeading>
+      <SectionHeading site={site}>{data.heading || wp('heading_produce')}</SectionHeading>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
         {items.map(p => (
           <PriceCard key={p.ProduceID} icon={<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M7 20s4-6 4-10a4 4 0 0 0-8 0c0 4 4 10 4 10z"/><path d="M7 20h10"/><path d="M13 12s2-3 5-3"/></svg>} name={p.IngredientName} price={p.RetailPrice}
-            unit={p.QuantityMeasurement} tags={[p.IsOrganic && 'Organic', p.IsLocal && 'Local'].filter(Boolean)}
+            unit={p.QuantityMeasurement} tags={[p.IsOrganic && wp('tag_organic'), p.IsLocal && wp('tag_local')].filter(Boolean)}
             site={site} />
         ))}
       </div>
@@ -872,6 +876,7 @@ function ProduceBlock({ data, site, businessId }) {
 }
 
 function MeatBlock({ data, site, businessId }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const [items, setItems] = useState([]);
   useEffect(() => {
     fetchContent(`${API}/api/website/content/meat?business_id=${businessId}`)
@@ -880,7 +885,7 @@ function MeatBlock({ data, site, businessId }) {
   if (items.length === 0) return null;
   return (
     <SectionWrap site={site} alt>
-      <SectionHeading site={site}>{data.heading || 'Meat'}</SectionHeading>
+      <SectionHeading site={site}>{data.heading || wp('heading_meat')}</SectionHeading>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
         {items.map(m => (
           <PriceCard key={m.MeatInventoryID} icon={<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 13L5 21l7-4 7 4-1-8"/><path d="M5 4l7 4 7-4"/><path d="M5 4v9m14-9v9"/></svg>} name={m.IngredientName}
@@ -893,6 +898,7 @@ function MeatBlock({ data, site, businessId }) {
 }
 
 function ProcessedFoodBlock({ data, site, businessId }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const [items, setItems] = useState([]);
   useEffect(() => {
     fetchContent(`${API}/api/website/content/processed-food?business_id=${businessId}`)
@@ -901,7 +907,7 @@ function ProcessedFoodBlock({ data, site, businessId }) {
   if (items.length === 0) return null;
   return (
     <SectionWrap site={site}>
-      <SectionHeading site={site}>{data.heading || 'Farm Products'}</SectionHeading>
+      <SectionHeading site={site}>{data.heading || wp('heading_processed_food')}</SectionHeading>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
         {items.map(f => (
           <PriceCard key={f.ProcessedFoodID} icon={<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2h18l-2 7H5z"/><path d="M5 9l1 11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-11"/></svg>} name={f.Name} price={f.RetailPrice}
@@ -913,6 +919,7 @@ function ProcessedFoodBlock({ data, site, businessId }) {
 }
 
 function ServicesBlock({ data, site, businessId }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const [items, setItems] = useState([]);
   useEffect(() => {
     fetchContent(`${API}/api/website/content/services?business_id=${businessId}`)
@@ -921,7 +928,7 @@ function ServicesBlock({ data, site, businessId }) {
   if (items.length === 0) return null;
   return (
     <SectionWrap site={site} alt>
-      <SectionHeading site={site}>{data.heading || 'Our Services'}</SectionHeading>
+      <SectionHeading site={site}>{data.heading || wp('heading_services')}</SectionHeading>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
         {items.map(s => (
           <div key={s.ServicesID} style={{ background: '#fff', borderRadius: 14, padding: '1.25rem', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
@@ -939,6 +946,7 @@ function ServicesBlock({ data, site, businessId }) {
 }
 
 function MarketplaceBlock({ data, site, businessId }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const [items, setItems] = useState([]);
   useEffect(() => {
     fetchContent(`${API}/api/website/content/marketplace?business_id=${businessId}`)
@@ -947,12 +955,12 @@ function MarketplaceBlock({ data, site, businessId }) {
   if (items.length === 0) return null;
   return (
     <SectionWrap site={site}>
-      <SectionHeading site={site}>{data.heading || 'Shop Our Store'}</SectionHeading>
+      <SectionHeading site={site}>{data.heading || wp('heading_marketplace')}</SectionHeading>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
         {items.map(m => (
           <PriceCard key={m.ListingID} name={m.Title} price={m.UnitPrice}
             unit={m.UnitLabel} image={m.ImageURL} desc={m.Description}
-            tags={[m.IsFeatured && 'Featured', m.IsOrganic && 'Organic', m.IsLocal && 'Local'].filter(Boolean)}
+            tags={[m.IsFeatured && wp('tag_featured'), m.IsOrganic && wp('tag_organic'), m.IsLocal && wp('tag_local')].filter(Boolean)}
             site={site} />
         ))}
       </div>
@@ -961,6 +969,7 @@ function MarketplaceBlock({ data, site, businessId }) {
 }
 
 function GalleryBlock({ data, site, businessId }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const [items, setItems] = useState([]);
   const [lightbox, setLightbox] = useState(null);
   useEffect(() => {
@@ -971,7 +980,7 @@ function GalleryBlock({ data, site, businessId }) {
   const cols = data.columns || 3;
   return (
     <SectionWrap site={site} alt>
-      <SectionHeading site={site}>{data.heading || 'Gallery'}</SectionHeading>
+      <SectionHeading site={site}>{data.heading || wp('heading_gallery')}</SectionHeading>
       <div className={`grid gap-3 mt-4`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
         {items.map(g => (
           <div key={g.GalleryID} onClick={() => setLightbox(g)}
@@ -993,6 +1002,7 @@ function GalleryBlock({ data, site, businessId }) {
 }
 
 function BlogBlock({ data, site, businessId }) {
+  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
   const [posts, setPosts] = useState([]);
   const [selectedIdx, setSelectedIdx] = useState(null);
   const maxPosts = data.max_posts || 100;
@@ -2726,10 +2736,4 @@ export default function WebsitePublic() {
               </div>
             </>
           )}
-        </div>
-      </footer>
-        );
-      })()}
-    </div>
-  );
-}
+  
