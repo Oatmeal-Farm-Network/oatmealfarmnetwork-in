@@ -1362,36 +1362,36 @@ function ContactBlock({ data, site }) {
             style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div>
-                <label style={contactLbl}>first name</label>
-                <input required placeholder="First name" value={form.first_name} onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))} style={contactInp} />
+                <label style={contactLbl}>{wp('contact_lbl_first_name')}</label>
+                <input required placeholder={wp('contact_ph_first')} value={form.first_name} onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))} style={contactInp} />
               </div>
               <div>
-                <label style={contactLbl}>last name</label>
-                <input required placeholder="Last name" value={form.last_name} onChange={e => setForm(p => ({ ...p, last_name: e.target.value }))} style={contactInp} />
+                <label style={contactLbl}>{wp('contact_lbl_last_name')}</label>
+                <input required placeholder={wp('contact_ph_last')} value={form.last_name} onChange={e => setForm(p => ({ ...p, last_name: e.target.value }))} style={contactInp} />
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div>
-                <label style={contactLbl}>email</label>
-                <input required type="email" placeholder="Email address" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} style={contactInp} />
+                <label style={contactLbl}>{wp('contact_lbl_email')}</label>
+                <input required type="email" placeholder={wp('contact_ph_email')} value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} style={contactInp} />
               </div>
               <div>
-                <label style={contactLbl}>phone number <span style={{ fontWeight: 400 }}>(optional)</span></label>
-                <input type="tel" placeholder="Phone number" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} style={contactInp} />
+                <label style={contactLbl}>{wp('contact_lbl_phone')} <span style={{ fontWeight: 400 }}>{wp('contact_lbl_optional')}</span></label>
+                <input type="tel" placeholder={wp('contact_ph_phone')} value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} style={contactInp} />
               </div>
             </div>
             <div>
-              <label style={contactLbl}>organization <span style={{ fontWeight: 400 }}>(optional)</span></label>
-              <input placeholder="Organization" value={form.organization} onChange={e => setForm(p => ({ ...p, organization: e.target.value }))} style={contactInp} />
+              <label style={contactLbl}>{wp('contact_lbl_org')} <span style={{ fontWeight: 400 }}>{wp('contact_lbl_optional')}</span></label>
+              <input placeholder={wp('contact_ph_org')} value={form.organization} onChange={e => setForm(p => ({ ...p, organization: e.target.value }))} style={contactInp} />
             </div>
             <div>
-              <label style={contactLbl}>message</label>
-              <textarea required placeholder="Your message" value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
+              <label style={contactLbl}>{wp('contact_lbl_message')}</label>
+              <textarea required placeholder={wp('contact_ph_message')} value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
                 style={{ ...contactInp, minHeight: 110, resize: 'vertical' }} />
             </div>
             <button type="submit" disabled={sending}
               style={{ background: site.primary_color, color: '#fff', fontWeight: 700, padding: '0.7rem 2rem', borderRadius: 8, border: 0, cursor: sending ? 'not-allowed' : 'pointer', fontSize: '0.9rem', opacity: sending ? 0.7 : 1 }}>
-              {sending ? 'Sending…' : 'Send Message'}
+              {sending ? wp('contact_sending') : wp('contact_send')}
             </button>
           </form>
         )}
@@ -2742,6 +2742,4 @@ export default function WebsitePublic() {
       </footer>
         );
       })()}
-    </div>
-  );
-}
+    </di
