@@ -73,12 +73,24 @@ export default function AboutPrecisionAg() {
                 fontFamily: "'Lora','Times New Roman',serif",
                 fontSize: '2rem',
                 fontWeight: 'bold',
+                margin: '0 0 4px',
+                lineHeight: 1.2,
+              }}
+            >
+              Oatsense
+            </h1>
+            <h2
+              style={{
+                color: '#000000',
+                fontFamily: "'Lora','Times New Roman',serif",
+                fontSize: '1.25rem',
+                fontWeight: '600',
                 margin: '0 0 12px',
                 lineHeight: 1.2,
               }}
             >
-              {t('precision.hero_title')}
-            </h1>
+              Precision Agriculture
+            </h2>
             <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
               {t('precision.hero_body')}
             </p>

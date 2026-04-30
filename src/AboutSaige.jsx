@@ -60,9 +60,6 @@ export default function AboutSaige() {
               {t('saige.hero_body')}
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/saige" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
-                {t('saige.hero_cta1')}
-              </Link>
               <Link to="/signup" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: '#ffffff', color: '#ffffff' }}>
                 {t('saige.hero_cta2')}
               </Link>
@@ -145,11 +142,6 @@ export default function AboutSaige() {
           </h3>
           <p className="text-sm text-gray-600 mb-4">{t('saige.cta_body')}</p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/saige"
-              className="px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
-              style={{ backgroundColor: ACCENT }}>
-              {t('saige.cta1')}
-            </Link>
             <Link to="/account"
               className="px-6 py-3 rounded-lg border-2 font-bold transition"
               style={{ borderColor: ACCENT, color: ACCENT }}>

@@ -405,7 +405,11 @@
       "Bash(node_modules/.bin/vite build *)",
       "Bash(node \"f:/tmp/add_animal_edit_keys.js\")",
       "Bash(node f:/tmp/add_website_public_keys.js)",
-      "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('public/locales/en/translation.json','utf8'\\)\\); console.log\\('JSON valid'\\); console.log\\('Keys in website_public:', Object.keys\\(j.website_public\\).length\\);\")"
+      "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('public/locales/en/translation.json','utf8'\\)\\); console.log\\('JSON valid'\\); console.log\\('Keys in website_public:', Object.keys\\(j.website_public\\).length\\);\")",
+      "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/public/locales/de/translation.json','utf8'\\)\\); console.log\\('has website_public:', !!j.website_public\\); console.log\\('keys:', j.website_public ? Object.keys\\(j.website_public\\).length : 0\\);\")",
+      "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/public/locales/fr/translation.json','utf8'\\)\\); console.log\\('website_public keys in fr:', j.website_public ? Object.keys\\(j.website_public\\).length : 'MISSING'\\);\")",
+      "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/public/locales/ja/translation.json','utf8'\\)\\); console.log\\('website_public keys in ja:', j.website_public ? Object.keys\\(j.website_public\\).length : 'MISSING'\\);\")",
+      "Bash(node \"f:/tmp/add_website_builder_keys.js\")"
     ],
     "additionalDirectories": [
       "\\tmp"

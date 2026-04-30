@@ -2319,23 +2319,23 @@ export default function WebsitePublic() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#6B7280' }}>
-      Loading…
+      {wp('site_loading')}
     </div>
   );
 
   if (!siteData) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', fontFamily: 'Inter, sans-serif' }}>
       <div style={{ fontSize: '3rem' }}>🌾</div>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827' }}>Site Not Found</h1>
-      <p style={{ color: '#6B7280' }}>No site exists at this address.</p>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827' }}>{wp('site_not_found')}</h1>
+      <p style={{ color: '#6B7280' }}>{wp('site_not_found_msg')}</p>
     </div>
   );
 
   if (!siteData.is_published && !isPreview) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', fontFamily: 'Inter, sans-serif' }}>
       <div style={{ fontSize: '3rem' }}>🚧</div>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827' }}>Coming Soon</h1>
-      <p style={{ color: '#6B7280' }}>This site is not yet published.</p>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827' }}>{wp('coming_soon')}</h1>
+      <p style={{ color: '#6B7280' }}>{wp('coming_soon_msg')}</p>
     </div>
   );
 
@@ -2414,7 +2414,7 @@ export default function WebsitePublic() {
       {/* Preview banner */}
       {isPreview && (
         <div style={{ background: '#1E3A5F', color: '#fff', textAlign: 'center', padding: '0.5rem', fontSize: '0.8rem', fontFamily: 'Inter, sans-serif' }}>
-          Preview Mode — <strong>Not Published</strong>
+          {wp('preview_mode')}<strong>{wp('preview_not_published')}</strong>
         </div>
       )}
 
@@ -2715,7 +2715,7 @@ export default function WebsitePublic() {
                   </span>
                   <a href="https://www.OatmealFarmNetwork.com" target="_blank" rel="noopener noreferrer"
                     style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>
-                    Powered by Oatmeal Farm Network
+                    {wp('powered_by')}
                   </a>
                 </div>
               </div>
@@ -2740,10 +2740,16 @@ export default function WebsitePublic() {
                   </span>
                   <a href="https://www.OatmealFarmNetwork.com" target="_blank" rel="noopener noreferrer"
                     style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>
-                    Powered by Oatmeal Farm Network
+                    {wp('powered_by')}
                   </a>
                 </div>
               </div>
             </>
           )}
-  
+        </div>
+      </footer>
+        );
+      })()}
+    </div>
+  );
+}

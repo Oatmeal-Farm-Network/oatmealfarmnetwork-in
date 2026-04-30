@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import WebsiteAIAgent from './WebsiteAIAgent';
@@ -912,6 +913,7 @@ const pasteAsBodyText = e => {
 
 // ── CaptionField: editable image caption with visible placeholder ────────
 function CaptionField({ initial, onSave }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const ref = useRef(null);
   const [focused, setFocused] = useState(false);
   useEffect(() => {
@@ -928,7 +930,7 @@ function CaptionField({ initial, onSave }) {
           fontSize: '0.76rem', color: '#94a3b8', fontStyle: 'italic',
           pointerEvents: 'none',
         }}>
-          Add a caption…
+          {wb('caption_ph')}
         </span>
       )}
       <div
@@ -954,6 +956,7 @@ function CaptionField({ initial, onSave }) {
 // is still called by the editor for every change, but the parent decides where
 // the save goes (top-level vs. nested column).
 function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, bodyField = 'body', bodyOnly = false }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const d          = data || block.block_data || {};
   const fontFamily = site?.font_family        || 'inherit';
   const bgColor    = d.bg_color || site?.page_background_color || site?.bg_color || '#fff';
@@ -1687,19 +1690,19 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
           {/* Toolbar */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '6px 10px', background: '#1e293b', alignItems: 'center' }}>
             <select style={tbSel} value={selStyle} onMouseDown={saveSel} onChange={e => { applyBlock(e.target.value); setSelStyle(e.target.value); }}>
-              <option value="">Style</option>
-              <option value="p">Body</option>
+              <option value="">{wb('toolbar_style')}</option>
+              <option value="p">{wb('toolbar_body')}</option>
               <option value="h1">H1</option>
               <option value="h2">H2</option>
               <option value="h3">H3</option>
               <option value="h4">H4</option>
             </select>
             <select style={{ ...tbSel, maxWidth: 120 }} value={selFont} onMouseDown={saveSel} onChange={e => { applyFont(e.target.value); setSelFont(e.target.value); }}>
-              <option value="">Font</option>
+              <option value="">{wb('toolbar_font')}</option>
               {WEB_FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
             <select style={{ ...tbSel, width: 62 }} value={selSize} onMouseDown={saveSel} onChange={e => { if (e.target.value) { applyFontSize(e.target.value); setSelSize(e.target.value); } }}>
-              <option value="">Size</option>
+              <option value="">{wb('toolbar_size')}</option>
               {[10,11,12,13,14,16,18,20,22,24,28,32,36,42,48,56,64,72].map(s => (
                 <option key={s} value={String(s)}>{s}px</option>
               ))}
@@ -1835,7 +1838,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                 <input
                   autoFocus
                   type="text"
-                  placeholder="Paste image URL…"
+                  placeholder={wb('img_url_ph')}
                   value={imgUrl}
                   onChange={e => setImgUrl(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && imgUrl) insertBodyImage(imgUrl, imgAlign); }}
@@ -1844,14 +1847,14 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                 <button
                   onMouseDown={e => { e.preventDefault(); if (imgUrl) insertBodyImage(imgUrl, imgAlign); }}
                   style={{ padding: '5px 12px', background: '#3D6B34', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                  Insert
+                  {wb('img_insert')}
                 </button>
                 <button onMouseDown={e => { e.preventDefault(); setImgPanel(false); }}
                   style={{ padding: '5px 8px', background: '#334155', color: '#94a3b8', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>✕</button>
               </div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <span style={{ fontSize: 11, color: '#94a3b8' }}>Align:</span>
-                {[['left','← Left'],['center','↔ Center'],['right','Right →']].map(([a, lbl]) => (
+                <span style={{ fontSize: 11, color: '#94a3b8' }}>{wb('img_align')}:</span>
+                {[[`left`,wb('img_align_left')],[`center`,wb('img_align_center')],[`right`,wb('img_align_right')]].map(([a, lbl]) => (
                   <button key={a} onMouseDown={e => { e.preventDefault(); setImgAlign(a); }}
                     style={{ padding: '3px 8px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', fontWeight: imgAlign === a ? 700 : 400, background: imgAlign === a ? '#3D6B34' : '#334155', color: imgAlign === a ? '#fff' : '#e2e8f0' }}>
                     {lbl}
@@ -1871,8 +1874,8 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                 }}
               >
                 {uploading
-                  ? <span style={{ fontSize: 12, color: '#94a3b8' }}>Uploading…</span>
-                  : <span style={{ fontSize: 12, color: '#64748b' }}>Drop image here or <span style={{ color: '#7dd3fc' }}>browse</span></span>}
+                  ? <span style={{ fontSize: 12, color: '#94a3b8' }}>{wb('img_uploading')}</span>
+                  : <span style={{ fontSize: 12, color: '#64748b' }}>{wb('img_drop')}<span style={{ color: '#7dd3fc' }}>{wb('img_browse')}</span></span>}
               </div>
             </div>
           )}
@@ -1884,7 +1887,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                 <textarea
                   autoFocus
                   rows={2}
-                  placeholder="YouTube / Vimeo URL, direct video URL, or paste full <iframe…> code"
+                  placeholder={wb('video_ph')}
                   value={vidUrl}
                   onChange={e => setVidUrl(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && vidUrl) { e.preventDefault(); insertBodyVideo(vidUrl, vidAlign); } }}
@@ -1893,14 +1896,14 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                 <button
                   onMouseDown={e => { e.preventDefault(); if (vidUrl) insertBodyVideo(vidUrl, vidAlign); }}
                   style={{ padding: '5px 12px', background: '#3D6B34', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                  Embed
+                  {wb('video_embed')}
                 </button>
                 <button onMouseDown={e => { e.preventDefault(); setVidPanel(false); }}
                   style={{ padding: '5px 8px', background: '#334155', color: '#94a3b8', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>✕</button>
               </div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <span style={{ fontSize: 11, color: '#94a3b8' }}>Align:</span>
-                {[['left','← Left'],['center','↔ Center'],['right','Right →']].map(([a, lbl]) => (
+                <span style={{ fontSize: 11, color: '#94a3b8' }}>{wb('img_align')}:</span>
+                {[[`left`,wb('img_align_left')],[`center`,wb('img_align_center')],[`right`,wb('img_align_right')]].map(([a, lbl]) => (
                   <button key={a} onMouseDown={e => { e.preventDefault(); setVidAlign(a); }}
                     style={{ padding: '3px 8px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', fontWeight: vidAlign === a ? 700 : 400, background: vidAlign === a ? '#3D6B34' : '#334155', color: vidAlign === a ? '#fff' : '#e2e8f0' }}>
                     {lbl}
@@ -1908,7 +1911,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                 ))}
               </div>
               <div style={{ fontSize: 10, color: '#64748b', lineHeight: 1.4 }}>
-                Paste a YouTube/Vimeo link, a direct MP4/WebM URL, or a full <code style={{ background:'#1e293b', padding:'0 3px', borderRadius:3 }}>&lt;iframe&gt;</code> embed code.
+                {wb('video_hint')}
               </div>
             </div>
           )}
@@ -1917,7 +1920,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
           {linkPanel && (
             <div style={{ background: '#0f172a', borderBottom: '1px solid #334155', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', gap: 4 }}>
-                {[['url','External URL'],['page','Page on this site']].map(([m, lbl]) => (
+                {[[`url`,wb('link_external')],[`page`,wb('link_internal')]].map(([m, lbl]) => (
                   <button key={m} onMouseDown={e => { e.preventDefault(); setLinkMode(m); }}
                     style={{ padding: '4px 10px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', fontWeight: linkMode === m ? 700 : 400, background: linkMode === m ? '#3D6B34' : '#334155', color: linkMode === m ? '#fff' : '#e2e8f0' }}>
                     {lbl}
@@ -1932,7 +1935,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                   <input
                     autoFocus
                     type="text"
-                    placeholder="https://example.com or name@example.com"
+                    placeholder={wb('link_ph')}
                     value={linkHref}
                     onChange={e => setLinkHref(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyUrlLink(); } }}
@@ -1940,7 +1943,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                   />
                   <button onMouseDown={e => { e.preventDefault(); applyUrlLink(); }}
                     style={{ padding: '5px 14px', background: '#3D6B34', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                    Link
+                    {wb('link_btn')}
                   </button>
                 </div>
               ) : (
@@ -1950,7 +1953,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                     value={linkPageSlug}
                     onChange={e => setLinkPageSlug(e.target.value)}
                     style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: 6, padding: '5px 8px', fontSize: 12, color: '#e2e8f0', outline: 'none' }}>
-                    <option value="">— Choose a page —</option>
+                    <option value="">{wb('link_choose_page')}</option>
                     {(() => {
                       // Mirror the public nav: top-level first (sort_order),
                       // then each parent's children indented underneath.
@@ -1987,12 +1990,12 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                   <button onMouseDown={e => { e.preventDefault(); applyPageLink(); }}
                     disabled={!linkPageSlug}
                     style={{ padding: '5px 14px', background: linkPageSlug ? '#3D6B34' : '#475569', color: '#fff', border: 'none', borderRadius: 6, cursor: linkPageSlug ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: 600 }}>
-                    Link
+                    {wb('link_btn')}
                   </button>
                 </div>
               )}
               <div style={{ fontSize: 10, color: '#64748b', lineHeight: 1.4 }}>
-                Select text first, then choose a link destination. Internal page links navigate within this site.
+                {wb('link_hint')}
               </div>
             </div>
           )}
@@ -2007,7 +2010,7 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                     {/* Resize handle */}
                     <div
                       onMouseDown={startResize}
-                      title="Drag to resize"
+                      title={wb('img_drag_resize')}
                       style={{
                         position: 'absolute', top: '50%', [isLeft ? 'right' : 'left']: -8,
                         transform: 'translateY(-50%)',
@@ -2126,14 +2129,14 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                       : dir === 'nw' || dir === 'se' ? 'nwse-resize' : 'nesw-resize',
                 zIndex: 99999,
               }}
-              title={dir === 'n' || dir === 's' ? 'Drag to resize height only' : 'Drag to resize'}
+              title={dir === 'n' || dir === 's' ? wb('img_drag_height') : wb('img_drag_resize')}
             />
           ))}
           {/* Floating toolbar */}
           <div style={{ position: 'fixed', top: imgToolbarPos.top, left: imgToolbarPos.left, zIndex: 99999, background: '#1e293b', borderRadius: 6, padding: '5px 7px', display: 'flex', flexDirection: 'column', gap: 5, boxShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
             {/* Row 1: position + align + close */}
             <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
-              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>Position:</span>
+              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>{wb('img_position')}</span>
               {[[-1,'↑'],[1,'↓']].map(([dir, icon]) => (
                 <button key={dir} onMouseDown={e => { e.preventDefault(); moveBodyImg(dir); }}
                   style={{ padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 12, cursor: 'pointer', background: '#334155', color: '#e2e8f0' }}>
@@ -2141,8 +2144,8 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                 </button>
               ))}
               <div style={{ width: 1, background: '#475569', alignSelf: 'stretch', margin: '0 3px' }} />
-              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>Align:</span>
-              {[['left','← Left'],['center','↔'],['right','Right →']].map(([a, icon]) => (
+              <span style={{ fontSize: 10, color: '#94a3b8', paddingRight: 2 }}>{wb('img_align')}</span>
+              {[[`left`,wb('img_align_left')],[`center`,'↔'],[`right`,wb('img_align_right')]].map(([a, icon]) => (
                 <button key={a} onMouseDown={e => { e.preventDefault(); applyImgAlign(a); }}
                   style={{ padding: '3px 8px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#334155', color: '#e2e8f0', fontWeight: 500 }}>
                   {icon}
@@ -2155,20 +2158,20 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
                 const isRaw   = !!target?.hasAttribute?.('data-no-style');
                 return (
                   <button onMouseDown={e => { e.preventDefault(); toggleImgRawStyle(); }}
-                    title={isRaw ? 'Site image styling disabled — click to re-enable' : 'Remove site image styling for this image'}
+                    title={isRaw ? wb('img_style_disabled') : wb('img_style_remove')}
                     style={{ padding: '3px 8px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: isRaw ? '#7dd3fc' : '#334155', color: isRaw ? '#0f172a' : '#e2e8f0', fontWeight: 600 }}>
-                    {isRaw ? 'Raw ✓' : 'Raw'}
+                    {isRaw ? wb('img_raw_on') : wb('img_raw_off')}
                   </button>
                 );
               })()}
               <div style={{ width: 1, background: '#475569', alignSelf: 'stretch', margin: '0 3px' }} />
               <button onMouseDown={e => { e.preventDefault(); deleteBodyImg(); }}
-                title="Delete image"
+                title={wb('img_delete_title')}
                 style={{ padding: '3px 8px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#7f1d1d', color: '#fecaca', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 012-2h2a2 2 0 012 2v2"/>
                 </svg>
-                Delete
+                {wb('img_delete')}
               </button>
               <button onMouseDown={e => { e.preventDefault(); setSelectedImg(null); setImgRect(null); }}
                 style={{ padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#334155', color: '#94a3b8', marginLeft: 2 }}>✕</button>
@@ -2176,13 +2179,13 @@ function InlineContentEditor({ block, site, onFieldSave, data, compact, pages, b
             {/* Row 2: caption input (only for figure-wrapped images) */}
             {selectedImg?.parentElement?.tagName === 'FIGURE' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ fontSize: 10, color: '#94a3b8', whiteSpace: 'nowrap' }}>Caption:</span>
+                <span style={{ fontSize: 10, color: '#94a3b8', whiteSpace: 'nowrap' }}>{wb('img_caption')}</span>
                 <input
                   value={imgCaption}
                   onChange={e => setImgCaption(e.target.value)}
                   onBlur={() => applyCaption(imgCaption)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCaption(imgCaption); } }}
-                  placeholder="Add caption…"
+                  placeholder={wb('caption_ph')}
                   style={{ flex: 1, minWidth: 160, padding: '3px 7px', borderRadius: 4, border: 'none', fontSize: 11, background: '#334155', color: '#e2e8f0', outline: 'none' }}
                 />
               </div>
@@ -2925,6 +2928,7 @@ function LinkItemEditor({ item, index, linkColor, linkUline, bodyFont, bodySize,
 }
 
 function InlineLinksEditor({ block, site, onFieldSave }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const d         = block.block_data || {};
   const groups    = normLinksGroups(d);
   const cols      = d.columns || 3;
@@ -3094,7 +3098,7 @@ function InlineLinksEditor({ block, site, onFieldSave }) {
   const insertLink = () => {
     // Save selection before prompt steals it
     saveSel();
-    const input = window.prompt('Enter a URL or email address:');
+    const input = window.prompt(wb('rte_link_prompt'));
     if (!input) return;
     const val = input.trim();
     const href = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ? `mailto:${val}`
@@ -3182,7 +3186,7 @@ function InlineLinksEditor({ block, site, onFieldSave }) {
         <button style={{ ...tbBtn, fontSize:10, color:'#fca5a5' }} title="Clear all formatting"
           onMouseDown={e => { e.preventDefault(); clearFormatting(); }}>Tx</button>
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize:10, color:'#475569', fontStyle:'italic' }}>Click any text to edit · icons &amp; URLs in side panel</span>
+        <span style={{ fontSize:10, color:'#475569', fontStyle:'italic' }}>{wb('links_hint')}</span>
       </div>
 
       {/* Content */}
@@ -3218,7 +3222,7 @@ function InlineLinksEditor({ block, site, onFieldSave }) {
                     title="Remove this group"
                     onMouseDown={e => { e.preventDefault(); e.stopPropagation(); removeGroup(gi); }}
                     style={{ flexShrink: 0, marginTop: 4, padding: '2px 8px', fontSize: 11, border: 'none', borderRadius: 4, background: '#C0382B', color: '#fff', cursor: 'pointer' }}
-                  >✕ Remove Group</button>
+                  >{wb('links_remove_group')}</button>
                 )}
               </div>
 
@@ -3244,14 +3248,14 @@ function InlineLinksEditor({ block, site, onFieldSave }) {
 
               {/* Add link button */}
               <button style={addItemBtn} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); addItem(gi); }}>
-                + Add Link
+                {wb('links_add_link')}
               </button>
             </div>
           ))}
 
           {/* Add group button */}
           <button style={addGroupBtn} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); addGroup(); }}>
-            + Add Group
+            {wb('links_add_group')}
           </button>
         </div>
       </div>
@@ -3261,6 +3265,7 @@ function InlineLinksEditor({ block, site, onFieldSave }) {
 
 // ── CanvasBlock: click-to-select with ↑↓ + delete controls ────────
 function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onDragStart, onDragOver, onDrop, isDragging, site, onFieldSave, businessId, pages }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const meta = BLOCK_TYPES.find(b => b.type === block.block_type);
   // Blocks that edit in-place on the canvas — disable drag so text selection works.
   const INLINE_TYPES = ['about', 'content', 'content_2col', 'content_4col', 'links', 'livestock', 'studs', 'testimonials', 'testimonial_random', 'packages'];
@@ -3311,7 +3316,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
               onMouseDown={e => e.stopPropagation()}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '2px 6px', fontSize: 11, color: '#374151' }}
             >
-              <span style={{ fontWeight: 600, color: '#64748b' }}>Heading:</span>
+              <span style={{ fontWeight: 600, color: '#64748b' }}>{wb('canvas_heading_label')}</span>
               <select
                 value={block.block_data?.heading_style || 'h1'}
                 onClick={e => e.stopPropagation()}
@@ -3330,7 +3335,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
               onMouseDown={e => e.stopPropagation()}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '2px 6px', fontSize: 11, color: '#374151' }}
             >
-              <span style={{ fontWeight: 600, color: '#64748b' }}>Default Layout:</span>
+              <span style={{ fontWeight: 600, color: '#64748b' }}>{wb('canvas_default_layout')}</span>
               <select
                 value={block.block_data?.default_view || 'grid'}
                 onClick={e => e.stopPropagation()}
@@ -3338,9 +3343,9 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
                 onChange={e => { e.stopPropagation(); onFieldSave('default_view', e.target.value); }}
                 style={{ border: 'none', background: 'transparent', fontSize: 11, color: '#374151', cursor: 'pointer', outline: 'none' }}
               >
-                <option value="grid">▦ Grid</option>
-                <option value="list">☰ List</option>
-                <option value="table">▤ Table</option>
+                <option value="grid">{wb('canvas_grid')}</option>
+                <option value="list">{wb('canvas_list')}</option>
+                <option value="table">{wb('canvas_table')}</option>
               </select>
             </label>
             )}
@@ -3351,7 +3356,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
                 onMouseDown={e => e.stopPropagation()}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '2px 6px', fontSize: 11, color: '#374151' }}
               >
-                <span style={{ fontWeight: 600, color: '#64748b' }}>Font:</span>
+                <span style={{ fontWeight: 600, color: '#64748b' }}>{wb('canvas_font_label')}</span>
                 <select
                   value={block.block_data?.testimonial_font || ''}
                   onClick={e => e.stopPropagation()}
@@ -3359,7 +3364,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
                   onChange={e => { e.stopPropagation(); onFieldSave('testimonial_font', e.target.value); }}
                   style={{ border: 'none', background: 'transparent', fontSize: 11, color: '#374151', cursor: 'pointer', outline: 'none', maxWidth: 100 }}
                 >
-                  <option value="">Site default</option>
+                  <option value="">{wb('canvas_site_default')}</option>
                   <option value="Arial, sans-serif">Arial</option>
                   <option value="Georgia, serif">Georgia</option>
                   <option value="Inter, sans-serif">Inter</option>
@@ -3380,7 +3385,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
                 onMouseDown={e => e.stopPropagation()}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '2px 6px', fontSize: 11, color: '#374151' }}
               >
-                <span style={{ fontWeight: 600, color: '#64748b' }}>Size:</span>
+                <span style={{ fontWeight: 600, color: '#64748b' }}>{wb('canvas_size_label')}</span>
                 <select
                   value={block.block_data?.testimonial_size || ''}
                   onClick={e => e.stopPropagation()}
@@ -3388,7 +3393,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
                   onChange={e => { e.stopPropagation(); onFieldSave('testimonial_size', e.target.value); }}
                   style={{ border: 'none', background: 'transparent', fontSize: 11, color: '#374151', cursor: 'pointer', outline: 'none' }}
                 >
-                  <option value="">Site default</option>
+                  <option value="">{wb('canvas_site_default')}</option>
                   <option value="0.75rem">XS</option>
                   <option value="0.875rem">S</option>
                   <option value="1rem">M</option>
@@ -3405,7 +3410,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
                 onMouseDown={e => e.stopPropagation()}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '2px 6px', fontSize: 11, color: '#374151' }}
               >
-                <span style={{ fontWeight: 600, color: '#64748b' }}>Align:</span>
+                <span style={{ fontWeight: 600, color: '#64748b' }}>{wb('canvas_align_label')}</span>
                 <select
                   value={block.block_data?.align || 'left'}
                   onClick={e => e.stopPropagation()}
@@ -3413,9 +3418,9 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
                   onChange={e => { e.stopPropagation(); onFieldSave('align', e.target.value); }}
                   style={{ border: 'none', background: 'transparent', fontSize: 11, color: '#374151', cursor: 'pointer', outline: 'none' }}
                 >
-                  <option value="left">Left</option>
-                  <option value="center">Center</option>
-                  <option value="right">Right</option>
+                  <option value="left">{wb('canvas_align_left')}</option>
+                  <option value="center">{wb('canvas_align_center')}</option>
+                  <option value="right">{wb('canvas_align_right')}</option>
                 </select>
               </label>
             )}
@@ -3425,7 +3430,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
           style={{ padding: '3px 8px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, cursor: isFirst ? 'default' : 'pointer', fontSize: 12, opacity: isFirst ? 0.35 : 1 }}>↑</button>
         <button onClick={e => { e.stopPropagation(); onMoveDown(); }} disabled={isLast}
           style={{ padding: '3px 8px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, cursor: isLast ? 'default' : 'pointer', fontSize: 12, opacity: isLast ? 0.35 : 1 }}>↓</button>
-        <button onClick={e => { e.stopPropagation(); if (window.confirm('Delete this widget?')) onDelete(block.block_id); }}
+        <button onClick={e => { e.stopPropagation(); if (window.confirm(wb('canvas_delete_confirm'))) onDelete(block.block_id); }}
           style={{ padding: '3px 8px', background: '#C0382B', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>🗑</button>
       </div>
       <style>{`.canvas-block:hover .block-controls { opacity: 1 !important; }`}</style>
@@ -3435,6 +3440,7 @@ function CanvasBlock({ block, index, isSelected, onSelect, onDelete, onMoveUp, o
 
 // ── RichTextEditor: toolbar + contenteditable rich text ─────────────
 function RichTextEditor({ value, onChange }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const editorRef  = useRef(null);
   const htmlRef    = useRef(null);
   const [htmlMode, setHtmlMode] = useState(false);
@@ -3489,7 +3495,7 @@ function RichTextEditor({ value, onChange }) {
   };
 
   const insertLink = () => {
-    const input = window.prompt('Enter a URL or email address:');
+    const input = window.prompt(wb('rte_link_prompt'));
     if (!input) return;
     const val  = input.trim();
     const href = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ? `mailto:${val}`
@@ -3531,15 +3537,15 @@ function RichTextEditor({ value, onChange }) {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '6px 8px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', alignItems: 'center' }}>
         {!htmlMode && <>
           <select style={sel} defaultValue="" onChange={e => { applyBlock(e.target.value); e.target.value = ''; }}>
-            <option value="" disabled>Style</option>
-            <option value="p">Body</option>
+            <option value="" disabled>{wb('toolbar_style')}</option>
+            <option value="p">{wb('toolbar_body')}</option>
             <option value="h1">H1</option>
             <option value="h2">H2</option>
             <option value="h3">H3</option>
             <option value="h4">H4</option>
           </select>
           <select style={{ ...sel, maxWidth: 110 }} defaultValue="" onChange={e => { applyFont(e.target.value); e.target.value = ''; }}>
-            <option value="" disabled>Font</option>
+            <option value="" disabled>{wb('toolbar_font')}</option>
             {WEB_FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
           </select>
           <div style={{ width: 1, background: '#e5e7eb', alignSelf: 'stretch', margin: '0 2px' }} />
@@ -3875,6 +3881,7 @@ function TestimonialRandomBlockCanvas({ block, site, businessId, onFieldSave }) 
 }
 
 function BlogBlockCanvas({ block, site, businessId }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const d = block.block_data || {};
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -3927,7 +3934,7 @@ function BlogBlockCanvas({ block, site, businessId }) {
         <div style={{ width: '100%', maxWidth: bgWidth, background: bgColor, fontFamily, padding: '1.75rem 2.5rem' }}>
           {/* Back link — upper left */}
           <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '0.75rem' }}>
-            <button onMouseDown={e => { e.stopPropagation(); setSelectedIdx(null); }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily, fontSize: bodySize, color: primary }}>← Back to {heading}</button>
+            <button onMouseDown={e => { e.stopPropagation(); setSelectedIdx(null); }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily, fontSize: bodySize, color: primary }}>{wb('blog_canvas_back', { heading })}</button>
           </div>
 
           {/* Article */}
@@ -3939,8 +3946,8 @@ function BlogBlockCanvas({ block, site, businessId }) {
           </div>
           {/* Bottom nav — plain text arrows */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
-            <button {...navLink(selectedIdx === 0, () => setSelectedIdx(selectedIdx - 1), '← Previous')}>← Previous</button>
-            <button {...navLink(selectedIdx === posts.length - 1, () => setSelectedIdx(selectedIdx + 1), 'Next →')}>Next →</button>
+            <button {...navLink(selectedIdx === 0, () => setSelectedIdx(selectedIdx - 1), wb('blog_canvas_prev'))}>{wb('blog_canvas_prev')}</button>
+            <button {...navLink(selectedIdx === posts.length - 1, () => setSelectedIdx(selectedIdx + 1), wb('blog_canvas_next'))}>{wb('blog_canvas_next')}</button>
           </div>
         </div>
       </div>
@@ -3960,15 +3967,15 @@ function BlogBlockCanvas({ block, site, businessId }) {
             style={{ padding: '4px 10px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 6, cursor: 'pointer', fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}
             title="Refresh posts"
           >
-            {loading ? '…' : '↺'} Refresh
+            {loading ? '…' : '↺'} {wb('blog_canvas_refresh')}
           </button>
         </div>
         {loading && posts.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem', fontSize: 13 }}>Loading posts…</div>
+          <div style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem', fontSize: 13 }}>{wb('blog_canvas_loading')}</div>
         ) : posts.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem', fontSize: 13, border: '1px dashed #e2e8f0', borderRadius: 8 }}>
-            No published posts found{d.category ? ` in category "${d.category}"` : ''}.<br />
-            <span style={{ fontSize: 11, marginTop: 4, display: 'block' }}>Publish posts in Blog Manager to see them here.</span>
+            {d.category ? wb('blog_canvas_none_cat', { category: d.category }) : wb('blog_canvas_none')}<br />
+            <span style={{ fontSize: 11, marginTop: 4, display: 'block' }}>{wb('blog_canvas_publish_hint')}</span>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -4027,7 +4034,7 @@ function BlogBlockCanvas({ block, site, businessId }) {
                     <div style={{ fontSize: '0.72rem', color: '#9ca3af' }}>{dateStr}</div>
                     <div style={{ fontWeight: 700, fontSize: '0.95rem', color: textColor, fontFamily, lineHeight: 1.35 }}>{p.title}</div>
                     {excerpt && <p style={{ margin: 0, fontSize: '0.82rem', color: '#4b5563', lineHeight: 1.6 }}>{excerpt}</p>}
-                    <div style={{ marginTop: 'auto', paddingTop: '0.4rem', fontSize: '0.8rem', color: primary, fontWeight: 600 }}>Read more →</div>
+                    <div style={{ marginTop: 'auto', paddingTop: '0.4rem', fontSize: '0.8rem', color: primary, fontWeight: 600 }}>{wb('blog_canvas_read_more')}</div>
                   </div>
                 </div>
               );
@@ -4041,6 +4048,7 @@ function BlogBlockCanvas({ block, site, businessId }) {
 
 // ── PackagesBlockCanvas: package deals with animal thumbnails ──
 function PackagesBlockCanvas({ block, site, businessId, onFieldSave }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const d = block.block_data || {};
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -4104,12 +4112,12 @@ function PackagesBlockCanvas({ block, site, businessId, onFieldSave }) {
       <div style={{ padding: '0 1.5rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
         <button onClick={load} style={{ fontSize: 11, padding: '3px 10px', border: '1px solid #e5e7eb', borderRadius: 6, background: '#fff', cursor: 'pointer', color: '#6b7280' }}>
-          {loading ? '...' : '↺ Refresh'}
+          {loading ? '...' : `↺ ${wb('pkg_refresh')}`}
         </button>
       </div>
       {packages.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af', fontSize: 13 }}>
-          {loading ? 'Loading packages...' : 'No packages yet. Create packages in the Livestock > Packages tab.'}
+          {loading ? wb('pkg_loading') : wb('pkg_none')}
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
@@ -4148,7 +4156,7 @@ function PackagesBlockCanvas({ block, site, businessId, onFieldSave }) {
                         <span style={{ color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {it.FullName}{it.Breed ? ` (${it.Breed})` : ''}{it.IncludeType === 'stud' ? ' — Stud' : ''}
                         </span>
-                        <span style={{ color: primary, fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>Learn More →</span>
+                        <span style={{ color: primary, fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{wb('pkg_learn_more')}</span>
                       </div>
                     ))}
                   </div>
@@ -4157,7 +4165,7 @@ function PackagesBlockCanvas({ block, site, businessId, onFieldSave }) {
                     {savings > 0 && (
                       <>
                         <span style={{ fontSize: 13, color: '#9ca3af', textDecoration: 'line-through' }}>{fmtPrice(totalVal)}</span>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: 4 }}>Save {pct}%</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: 4 }}>{wb('pkg_save', { pct })}</span>
                       </>
                     )}
                   </div>
@@ -4175,6 +4183,7 @@ function PackagesBlockCanvas({ block, site, businessId, onFieldSave }) {
 // ── LivestockBlockCanvas: live "for sale" or "stud" animals, grouped by category ──
 // mode='sale' (default) shows PublishForSale animals; mode='stud' shows PublishStud animals.
 function LivestockBlockCanvas({ block, site, businessId, onFieldSave, mode = 'sale' }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const isStud = mode === 'stud';
   const d = block.block_data || {};
   const [animals, setAnimals] = useState([]);
@@ -4340,7 +4349,7 @@ function LivestockBlockCanvas({ block, site, businessId, onFieldSave, mode = 'sa
       <div style={{ display: 'flex', justifyContent: 'center' }} onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
         <div style={{ width: '100%', maxWidth: bgWidth, background: bgColor, fontFamily }}>
           {detailLoading && !detailAnimal ? (
-            <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Loading animal details…</div>
+            <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>{wb('ls_loading')}</div>
           ) : detailAnimal ? (
             <LivestockAnimalDetailContent
               animal={detailAnimal}
@@ -4356,9 +4365,9 @@ function LivestockBlockCanvas({ block, site, businessId, onFieldSave, mode = 'sa
             />
           ) : (
             <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#ef4444', fontSize: 13 }}>
-              Could not load animal details.
+              {wb('ls_error')}
               <div style={{ marginTop: 12 }}>
-                <button onClick={() => setSelectedIdx(null)} style={{ background: 'none', border: 'none', color: primary, cursor: 'pointer', fontSize: 13 }}>← Back to {heading}</button>
+                <button onClick={() => setSelectedIdx(null)} style={{ background: 'none', border: 'none', color: primary, cursor: 'pointer', fontSize: 13 }}>{wb('ls_back', { heading })}</button>
               </div>
             </div>
           )}
@@ -4490,7 +4499,7 @@ function LivestockBlockCanvas({ block, site, businessId, onFieldSave, mode = 'sa
             style={{ padding: '4px 10px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 6, cursor: 'pointer', fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}
             title="Refresh animals"
           >
-            {loading ? '…' : '↺'} Refresh
+            {loading ? '…' : '↺'} {wb('ls_refresh')}
           </button>
         </div>
 
@@ -4503,40 +4512,40 @@ function LivestockBlockCanvas({ block, site, businessId, onFieldSave, mode = 'sa
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search name, breed, description…"
+            placeholder={wb('ls_no_match')}
             style={{ flex: '1 1 200px', minWidth: 160, padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13, background: '#fff' }}
           />
           <select value={sortKey} onChange={e => setSortKey(e.target.value)}
             style={{ padding: '6px 8px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12, background: '#fff', color: '#374151' }}>
-            <option value="name">Sort: Name</option>
-            {breedCount > 1 && <option value="breed">Sort: Breed</option>}
-            <option value="price_asc">Sort: Price (low → high)</option>
-            <option value="price_desc">Sort: Price (high → low)</option>
+            <option value="name">{wb('ls_sort_name')}</option>
+            {breedCount > 1 && <option value="breed">{wb('ls_sort_breed')}</option>}
+            <option value="price_asc">{wb('ls_sort_price_low')}</option>
+            <option value="price_desc">{wb('ls_sort_price_high')}</option>
           </select>
           <div style={{ display: 'flex', gap: 0, border: '1px solid #e2e8f0', borderRadius: 6, overflow: 'hidden', marginLeft: 'auto' }}>
-            <button onClick={() => setViewMode('grid')}  title="Grid view"  style={{ ...ctrlBtn(viewMode === 'grid'),  borderRadius: 0, border: 'none', borderRight: '1px solid #e2e8f0' }}>▦ Grid</button>
-            <button onClick={() => setViewMode('list')}  title="List view"  style={{ ...ctrlBtn(viewMode === 'list'),  borderRadius: 0, border: 'none', borderRight: '1px solid #e2e8f0' }}>☰ List</button>
-            <button onClick={() => setViewMode('table')} title="Table view" style={{ ...ctrlBtn(viewMode === 'table'), borderRadius: 0, border: 'none' }}>▤ Table</button>
+            <button onClick={() => setViewMode('grid')}  title="Grid view"  style={{ ...ctrlBtn(viewMode === 'grid'),  borderRadius: 0, border: 'none', borderRight: '1px solid #e2e8f0' }}>{wb('ls_view_grid')}</button>
+            <button onClick={() => setViewMode('list')}  title="List view"  style={{ ...ctrlBtn(viewMode === 'list'),  borderRadius: 0, border: 'none', borderRight: '1px solid #e2e8f0' }}>{wb('ls_view_list')}</button>
+            <button onClick={() => setViewMode('table')} title="Table view" style={{ ...ctrlBtn(viewMode === 'table'), borderRadius: 0, border: 'none' }}>{wb('ls_view_table')}</button>
           </div>
         </div>
 
         {loading && animals.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem', fontSize: 13 }}>Loading animals…</div>
+          <div style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem', fontSize: 13 }}>{wb('ls_loading')}</div>
         ) : forSale.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#6b7280', padding: '2rem', fontSize: 13, border: '1px dashed #e2e8f0', borderRadius: 8, background: '#fff' }}>
             <div style={{ fontSize: '2rem', marginBottom: 8 }}>{isStud ? '🐂' : '🐄'}</div>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>{isStud ? 'No stud animals published' : 'No animals marked for sale'}</div>
-            <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 10 }}>Open an animal from your Animals List and mark it {isStud ? '"Publish Stud"' : '"Published"'} to show it here.</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>{isStud ? wb('ls_no_stud') : wb('ls_no_animals')}</div>
+            <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 10 }}>{wb('ls_open_hint')}</div>
             <a href={`/animals?BusinessID=${businessId}`} target="_blank" rel="noreferrer"
               onClick={e => e.stopPropagation()}
               style={{ display: 'inline-block', padding: '6px 14px', background: primary, color: '#fff', borderRadius: 6, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
-              Manage Animals →
+              {wb('ls_manage')}
             </a>
           </div>
         ) : visible.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#6b7280', padding: '2rem', fontSize: 13, border: '1px dashed #e2e8f0', borderRadius: 8, background: '#fff' }}>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>No animals match your search</div>
-            <div style={{ fontSize: 12, color: '#9ca3af' }}>Try clearing the search box above.</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>{wb('ls_no_match')}</div>
+            <div style={{ fontSize: 12, color: '#9ca3af' }}>{wb('ls_clear_hint')}</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
@@ -4556,17 +4565,17 @@ function LivestockBlockCanvas({ block, site, businessId, onFieldSave, mode = 'sa
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                       <thead>
                         <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-                          <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Photo</th>
-                          <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Name</th>
-                          <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Breed</th>
+                          <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>{wb('ls_th_photo')}</th>
+                          <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>{wb('ls_th_name')}</th>
+                          <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>{wb('ls_th_breed')}</th>
                           {isStud
-                            ? <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Stud Fee</th>
+                            ? <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>{wb('ls_th_stud_fee')}</th>
                             : <>
-                                <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Price</th>
-                                <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Stud Fee</th>
+                                <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>{wb('ls_th_price')}</th>
+                                <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>{wb('ls_th_stud_fee')}</th>
                               </>
                           }
-                          <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>Description</th>
+                          <th style={{ padding: '0.6rem 0.8rem', fontWeight: 700, color: '#64748b', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3, borderBottom: '1px solid #e5e7eb' }}>{wb('ls_th_description')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -4620,6 +4629,7 @@ function LivestockBlockCanvas({ block, site, businessId, onFieldSave, mode = 'sa
 
 // ── EventsBlockEditor: right-panel editor for the Upcoming Events block ──
 function EventsBlockEditor({ block, businessId, onFieldSave, BgField }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const d = block.block_data || {};
   const [myEvents, setMyEvents] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -4670,11 +4680,11 @@ function EventsBlockEditor({ block, businessId, onFieldSave, BgField }) {
   return (
     <div style={{ padding: 16 }}>
       <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
-        🎪 Upcoming Events Block
+        {wb('ev_panel_heading')}
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Section Heading</label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>{wb('ev_section_heading')}</label>
         <div style={{ display: 'flex', gap: 6 }}>
           <select className={inp} style={{ width: 68, flexShrink: 0 }}
             value={d.heading_style || 'h1'}
@@ -4693,7 +4703,7 @@ function EventsBlockEditor({ block, businessId, onFieldSave, BgField }) {
       </div>
 
       <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Layout</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>{wb('ev_layout')}</div>
         <div>
           {[['cards','Cards'],['list','List']].map(([v,l]) => (
             <button key={v} onClick={() => onFieldSave('layout', v)}
@@ -4711,7 +4721,7 @@ function EventsBlockEditor({ block, businessId, onFieldSave, BgField }) {
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Max Events to Show</label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>{wb('ev_max')}</label>
         <input key={`${block.block_id}-maxevents`} type="number" className={inp}
           defaultValue={d.max_items || 6} min={1} max={50}
           onBlur={e => onFieldSave('max_items', Number(e.target.value) || 6)} />
@@ -4722,17 +4732,17 @@ function EventsBlockEditor({ block, businessId, onFieldSave, BgField }) {
       {/* Your events — publish drafts inline */}
       <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid #f3f4f6' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>Your Events</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>{wb('ev_your_events')}</div>
           <button onClick={loadEvents} disabled={loading}
             style={{ fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-            {loading ? 'Loading…' : 'Refresh'}
+            {loading ? wb('ev_loading') : wb('ev_refresh')}
           </button>
         </div>
 
         {drafts.length > 0 && (
           <div style={{ marginBottom: 10 }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#b45309', marginBottom: 4 }}>
-              Drafts ({drafts.length})
+              {wb('ev_drafts', { n: drafts.length })}
             </div>
             {drafts.map(ev => (
               <div key={ev.EventID} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 8px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 6, marginBottom: 4 }}>
@@ -4742,7 +4752,7 @@ function EventsBlockEditor({ block, businessId, onFieldSave, BgField }) {
                 </div>
                 <button onClick={() => togglePublish(ev)} disabled={!!working[ev.EventID]}
                   style={{ fontSize: 11, padding: '4px 10px', borderRadius: 4, background: '#059669', color: '#fff', border: 'none', cursor: working[ev.EventID] ? 'not-allowed' : 'pointer', opacity: working[ev.EventID] ? 0.6 : 1, whiteSpace: 'nowrap' }}>
-                  {working[ev.EventID] ? '…' : 'Publish'}
+                  {working[ev.EventID] ? '…' : wb('ev_publish')}
                 </button>
               </div>
             ))}
@@ -4752,7 +4762,7 @@ function EventsBlockEditor({ block, businessId, onFieldSave, BgField }) {
         {published.length > 0 && (
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#047857', marginBottom: 4 }}>
-              Published ({published.length})
+              {wb('ev_published_n', { n: published.length })}
             </div>
             {published.slice(0, 5).map(ev => (
               <div key={ev.EventID} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 8px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, marginBottom: 4 }}>
@@ -4762,7 +4772,7 @@ function EventsBlockEditor({ block, businessId, onFieldSave, BgField }) {
                 </div>
                 <button onClick={() => togglePublish(ev)} disabled={!!working[ev.EventID]}
                   style={{ fontSize: 11, padding: '4px 8px', borderRadius: 4, background: '#fff', color: '#6b7280', border: '1px solid #d1d5db', cursor: working[ev.EventID] ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
-                  {working[ev.EventID] ? '…' : 'Unpublish'}
+                  {working[ev.EventID] ? '…' : wb('ev_unpublish')}
                 </button>
               </div>
             ))}
@@ -4774,13 +4784,13 @@ function EventsBlockEditor({ block, businessId, onFieldSave, BgField }) {
 
         {!loading && myEvents.length === 0 && (
           <div style={{ fontSize: 11, color: '#9ca3af' }}>
-            No events yet. Create one from the Events dashboard.
+            {wb('ev_none')}
           </div>
         )}
       </div>
 
       <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 12 }}>
-        Shows published events with upcoming end dates. Drafts stay hidden from visitors until you publish.
+        {wb('ev_hint')}
       </p>
     </div>
   );
@@ -4788,6 +4798,7 @@ function EventsBlockEditor({ block, businessId, onFieldSave, BgField }) {
 
 // ── BlogBlockEditor: right-panel editor for blog blocks with category picker ──
 function BlogBlockEditor({ block, site, businessId, onFieldSave }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const d = block.block_data || {};
   const [globalCats, setGlobalCats] = useState([]);
   const [customCats, setCustomCats] = useState([]);
@@ -4827,33 +4838,33 @@ function BlogBlockEditor({ block, site, businessId, onFieldSave }) {
   return (
     <div style={{ padding: 16 }}>
       <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
-        📝 Blog Posts Block
+        {wb('blog_panel_heading')}
       </div>
 
       {/* Category */}
       <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Category</label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>{wb('blog_category')}</label>
         <select className={inp} value={d.category || ''} onChange={e => handleCategoryChange(e.target.value)}>
-          <option value="">All Posts</option>
+          <option value="">{wb('blog_all_posts')}</option>
           {globalCats.length > 0 && (
-            <optgroup label="Network Categories">
+            <optgroup label={wb('blog_network_cats')}>
               {globalCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
             </optgroup>
           )}
           {customCats.length > 0 && (
-            <optgroup label="Your Categories">
+            <optgroup label={wb('blog_your_cats')}>
               {customCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
             </optgroup>
           )}
         </select>
         <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 4, marginBottom: 0 }}>
-          Filter posts by category, or leave blank to show all posts.
+          {wb('blog_filter_hint')}
         </p>
       </div>
 
       {/* Heading */}
       <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Section Heading</label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>{wb('blog_section_heading')}</label>
         <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
           <select className={inp} style={{ width: 68, flexShrink: 0 }}
             value={d.heading_style || 'h1'}
@@ -4867,23 +4878,23 @@ function BlogBlockEditor({ block, site, businessId, onFieldSave }) {
             value={headingVal}
             onChange={e => setHeadingVal(e.target.value)}
             onBlur={() => onFieldSave('heading', headingVal)}
-            placeholder="From the Blog"
+            placeholder={wb('blog_from_blog_ph')}
           />
         </div>
       </div>
 
       {/* Max posts */}
       <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Max Posts to Show</label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>{wb('blog_max')}</label>
         <input key={`${block.block_id}-maxposts`} type="number" className={inp}
           defaultValue={d.max_posts || ''} min={1}
-          placeholder="Unlimited"
+          placeholder={wb('blog_unlimited_ph')}
           onBlur={e => onFieldSave('max_posts', e.target.value ? Number(e.target.value) : 0)} />
       </div>
 
       {/* Background color */}
       <div style={{ marginBottom: 4 }}>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>Background Color</label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>{wb('blog_bg_color')}</label>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {paletteColors.map(c => (
             <button key={c} onClick={() => onFieldSave('bg_color', c)}
@@ -4895,7 +4906,7 @@ function BlogBlockEditor({ block, site, businessId, onFieldSave }) {
           {d.bg_color && (
             <button onClick={() => onFieldSave('bg_color', '')}
               style={{ fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
-              Reset
+              {wb('blog_reset')}
             </button>
           )}
         </div>
@@ -4906,6 +4917,7 @@ function BlogBlockEditor({ block, site, businessId, onFieldSave }) {
 
 // ── BlockEditorPanel: sidebar form editor for the selected block ───
 function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, pages = [] }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   if (!block) return null;
   const d  = block.block_data || {};
   const bt = block.block_type;
@@ -4969,7 +4981,7 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
   );
 
   const BgField = () => (
-    <Field label="Background Color">
+    <Field label={wb('blog_bg_color')}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         {paletteColors.map(c => (
           <button key={c} onClick={() => onFieldSave('bg_color', c)}
@@ -4982,7 +4994,7 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
         {d.bg_color && (
           <button onClick={() => onFieldSave('bg_color', '')}
             style={{ fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
-            Reset
+            {wb('blog_reset')}
           </button>
         )}
       </div>
@@ -5014,42 +5026,42 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
   // ── Hero ──
   if (bt === 'hero') return (
     <div style={{ padding: 16 }}>
-      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>Hero Banner</div>
-      <Field label="Headline">
-        <TxtInp field="headline" placeholder="Welcome to our farm…" />
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_hero')}</div>
+      <Field label={wb('f_headline')}>
+        <TxtInp field="headline" placeholder={wb('ph_welcome')} />
       </Field>
-      <Field label="Sub-text">
+      <Field label={wb('f_subtext')}>
         <RichBody field="subtext" />
       </Field>
-      <Field label="Button Text">
-        <TxtInp field="cta_text" placeholder="Learn More" />
+      <Field label={wb('f_button_text')}>
+        <TxtInp field="cta_text" placeholder={wb('ph_learn_more')} />
       </Field>
-      <Field label="Button Link">
-        <TxtInp field="cta_link" placeholder="#about or https://…" />
+      <Field label={wb('f_button_link')}>
+        <TxtInp field="cta_link" placeholder={wb('ph_hash_or_url')} />
       </Field>
-      <Field label="Background Image">
+      <Field label={wb('f_bg_image')}>
         <ImageUploadField value={d.image_url || ''} onChange={url => onFieldSave('image_url', url)} />
       </Field>
-      <Field label="Text Alignment">
-        {[['left','Left'],['center','Center'],['right','Right']].map(([v,l]) => (
+      <Field label={wb('f_text_align')}>
+        {[['left',wb('canvas_align_left')],['center',wb('canvas_align_center')],['right',wb('canvas_align_right')]].map(([v,l]) => (
           <Pill key={v} label={l} active={(d.align || 'center') === v} onClick={() => onFieldSave('align', v)} />
         ))}
       </Field>
-      <Field label="Dark Overlay">
+      <Field label={wb('f_dark_overlay')}>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#374151' }}>
           <input type="checkbox" checked={!!d.overlay} onChange={e => onFieldSave('overlay', e.target.checked)}
             style={{ width: 16, height: 16, accentColor: '#3b82f6' }} />
-          Show dark overlay over image
+          {wb('overlay_show_dark')}
         </label>
       </Field>
       {d.overlay && (
-        <Field label="Overlay Color">
+        <Field label={wb('f_overlay_color')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <input
               type="text"
               value={d.overlay_color || ''}
               onChange={e => onFieldSave('overlay_color', e.target.value)}
-              placeholder="rgba(0,0,0,0.45)"
+              placeholder={wb('ph_overlay_color')}
               style={{ flex: 1, padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, fontFamily: 'monospace' }}
             />
             {d.overlay_color && (
@@ -5063,11 +5075,11 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
             )}
           </div>
           <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
-            Any CSS color: rgba/hex/hsla. Blank = default dark.
+            {wb('ph_overlay_hint')}
           </div>
         </Field>
       )}
-      <Field label={`Banner Height ${d.min_height_px ? `(${d.min_height_px}px)` : '(default 70vh)'}`}>
+      <Field label={d.min_height_px ? wb('f_banner_height_px', { px: d.min_height_px }) : wb('f_banner_height')}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input
             type="range"
@@ -5082,9 +5094,9 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
             <button
               onClick={() => onFieldSave('min_height_px', 0)}
               style={{ padding: '4px 8px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, cursor: 'pointer', color: '#6b7280' }}
-              title="Reset to default (70vh)"
+              title={wb('banner_height_reset_title')}
             >
-              Reset
+              {wb('banner_height_reset')}
             </button>
           )}
         </div>
@@ -5103,20 +5115,20 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
     const addSlide = (url) => { if (!url) return; setSlides([...slides, { url, caption: '' }]); };
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>Slideshow</div>
-        <Field label="Interval (ms)">
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_slideshow')}</div>
+        <Field label={wb('f_interval')}>
           <TxtInp field="interval_ms" placeholder="5000" />
         </Field>
-        <Field label="Show Dots">
+        <Field label={wb('f_show_dots')}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#374151' }}>
             <input type="checkbox" checked={d.show_dots !== false}
                    onChange={e => onFieldSave('show_dots', e.target.checked)}
                    style={{ width: 16, height: 16, accentColor: '#3b82f6' }} />
-            Show navigation dots
+            {wb('nav_dots_show')}
           </label>
         </Field>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', margin: '20px 0 10px' }}>
-          Slides ({slides.length})
+          {wb('f_slides_n', { n: slides.length })}
         </div>
         {slides.map((s, i) => (
           <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 10, marginBottom: 8, background: '#fafafa' }}>
@@ -5127,13 +5139,13 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
               type="text"
               value={s.caption}
               onChange={e => updateAt(i, { caption: e.target.value })}
-              placeholder="Caption (optional)"
+              placeholder={wb('f_caption')}
               style={{ width: '100%', padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, marginBottom: 6 }}
             />
             <div style={{ display: 'flex', gap: 6 }}>
               <button onClick={() => removeAt(i)}
                       style={{ padding: '4px 10px', background: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>
-                Remove
+                {wb('f_remove')}
               </button>
               {i > 0 && (
                 <button onClick={() => { const n = [...slides]; [n[i-1], n[i]] = [n[i], n[i-1]]; setSlides(n); }}
@@ -5150,7 +5162,7 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
             </div>
           </div>
         ))}
-        <Field label="Add Slide">
+        <Field label={wb('f_add_slide')}>
           <ImageUploadField value="" onChange={addSlide} />
         </Field>
         <BgField />
@@ -5178,14 +5190,14 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
     return (
       <div style={{ padding: 16 }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
-          {bt === 'about' ? 'About Widget' : 'Content Widget'}
+          {bt === 'about' ? wb('block_about') : wb('block_content')}
         </div>
-        <Field label="Image">
+        <Field label={wb('f_image')}>
           <ImageUploadField value={imgUrl} onChange={setImg} />
         </Field>
         {imgUrl && (
-          <Field label="Image Position">
-            {[['left','Left'],['center','Center'],['full','Full'],['right','Right']].map(([v,l]) => (
+          <Field label={wb('f_image_pos')}>
+            {[['left',wb('canvas_align_left')],['center',wb('canvas_align_center')],['full','Full'],['right',wb('canvas_align_right')]].map(([v,l]) => (
               <Pill key={v} label={l} active={imgPos === v} onClick={() => setPos(v)} />
             ))}
           </Field>
@@ -5207,35 +5219,35 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
 
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>Links Block</div>
-        <Field label="Columns">
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_links')}</div>
+        <Field label={wb('f_columns')}>
           <select className={inp} defaultValue={d.columns || 3} onBlur={e => onFieldSave('columns', Number(e.target.value))}>
             {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
           </select>
         </Field>
         <div style={{ marginBottom: 8 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Icons &amp; URLs</label>
-          <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>Edit headings and link text directly on the canvas. Set icons and URLs here.</p>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>{wb('links_icons_urls')}</label>
+          <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>{wb('links_canvas_edit_hint')}</p>
           {groups.map((group, gi) => (
             <div key={gi} style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 6, paddingBottom: 4, borderBottom: '1px solid #f3f4f6' }}>
-                {group.heading || `Group ${gi + 1}`}
+                {group.heading || wb('group_n', { n: gi + 1 })}
               </div>
               {(group.items || []).map((item, ii) => (
                 <div key={ii} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 6, background: '#f9fafb' }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>
-                    {String(item.label || '').replace(/<[^>]*>/g, '') || `Link ${ii + 1}`}
+                    {String(item.label || '').replace(/<[^>]*>/g, '') || wb('link_n', { n: ii + 1 })}
                   </div>
                   <div style={{ marginBottom: 5 }}>
-                    <label style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>Icon</label>
+                    <label style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>{wb('links_icon_lbl')}</label>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       {item.icon_url && <img src={item.icon_url} alt="" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 3, border: '1px solid #e5e7eb' }} />}
                       <ImageUploadField compact value={item.icon_url || ''} onChange={url => updateItem(gi, ii, 'icon_url', url)} />
                     </div>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>URL</label>
-                    <input className={inp} defaultValue={item.url || ''} placeholder="https://…"
+                    <label style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>{wb('links_url_lbl')}</label>
+                    <input className={inp} defaultValue={item.url || ''} placeholder={wb('ph_https')}
                       onBlur={e => updateItem(gi, ii, 'url', e.target.value)} />
                   </div>
                 </div>
@@ -5252,15 +5264,15 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
   // ── Contact ──
   if (bt === 'contact') return (
     <div style={{ padding: 16 }}>
-      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>📬 Contact Form</div>
-      <Field label="Heading">
-        <TxtInp field="heading" placeholder="Get In Touch" />
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_contact')}</div>
+      <Field label={wb('f_heading')}>
+        <TxtInp field="heading" placeholder={wb('ph_contact_heading')} />
       </Field>
-      <Field label="Sub-heading Text">
+      <Field label={wb('f_subheading')}>
         <RichBody field="sub_heading" />
       </Field>
-      <Field label="Send Form To (Email)">
-        <TxtInp field="contact_email" placeholder="you@yourdomain.com" />
+      <Field label={wb('f_send_to')}>
+        <TxtInp field="contact_email" placeholder={wb('ph_contact_email')} />
       </Field>
       <BgField />
     </div>
@@ -5268,8 +5280,8 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
 
   if (bt === 'divider') return (
     <div style={{ padding: 16 }}>
-      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>Spacer / Divider</div>
-      <Field label="Height (px)">
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_spacer')}</div>
+      <Field label={wb('f_height_px')}>
         <input key={`${block.block_id}-height`} type="number" className={inp} defaultValue={d.height || 40} min={8} max={400}
           onBlur={e => onFieldSave('height', Number(e.target.value))} />
       </Field>
@@ -5280,28 +5292,28 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
   // ── Member Directory (association widget) ──
   if (bt === 'member_directory') return (
     <div style={{ padding: 16 }}>
-      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>👥 Member Directory</div>
-      <Field label="Heading"><TxtInp field="heading" placeholder="Member Directory" /></Field>
-      <Field label="Intro"><RichBody field="intro_body" /></Field>
-      <Field label="Columns">
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_members')}</div>
+      <Field label={wb('f_heading')}><TxtInp field="heading" placeholder={wb('ph_member_dir')} /></Field>
+      <Field label={wb('f_intro')}><RichBody field="intro_body" /></Field>
+      <Field label={wb('f_columns')}>
         <select className={inp} defaultValue={d.columns || 3} onBlur={e => onFieldSave('columns', Number(e.target.value))}>
           {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
         </select>
       </Field>
-      <Field label="Max Members to Show">
+      <Field label={wb('f_max_members')}>
         <input key={`${block.block_id}-max`} type="number" className={inp} defaultValue={d.max_items || 24} min={1} max={500}
           onBlur={e => onFieldSave('max_items', Number(e.target.value))} />
       </Field>
-      <Field label="Show Search Box">
+      <Field label={wb('f_show_search')}>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151' }}>
           <input type="checkbox" checked={!!d.show_search} onChange={e => onFieldSave('show_search', e.target.checked)} style={{ width: 16, height: 16 }} />
-          Enable keyword search
+          {wb('f_keyword_search')}
         </label>
       </Field>
-      <Field label="Show State Filter">
+      <Field label={wb('f_show_state')}>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151' }}>
           <input type="checkbox" checked={!!d.show_state_filter} onChange={e => onFieldSave('show_state_filter', e.target.checked)} style={{ width: 16, height: 16 }} />
-          Enable state dropdown
+          {wb('f_state_dropdown')}
         </label>
       </Field>
       <BgField />
@@ -5311,14 +5323,14 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
   // ── Pedigree / Registry Search (association widget) ──
   if (bt === 'pedigree_search') return (
     <div style={{ padding: 16 }}>
-      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>🧬 Registry Search</div>
-      <Field label="Heading"><TxtInp field="heading" placeholder="Registry Search" /></Field>
-      <Field label="Intro"><RichBody field="intro_body" /></Field>
-      <Field label="Search Fields">
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_pedigree')}</div>
+      <Field label={wb('f_heading')}><TxtInp field="heading" placeholder={wb('ph_registry')} /></Field>
+      <Field label={wb('f_intro')}><RichBody field="intro_body" /></Field>
+      <Field label={wb('f_search_fields')}>
         {[
-          ['show_name', 'Animal name'],
-          ['show_reg_number', 'Registration number'],
-          ['show_owner', 'Owner name'],
+          ['show_name', wb('ped_field_name')],
+          ['show_reg_number', wb('ped_field_reg')],
+          ['show_owner', wb('ped_field_owner')],
         ].map(([key, lbl]) => (
           <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151', marginBottom: 4 }}>
             <input type="checkbox" checked={d[key] !== false} onChange={e => onFieldSave(key, e.target.checked)} style={{ width: 16, height: 16 }} />
@@ -5326,7 +5338,7 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
           </label>
         ))}
       </Field>
-      <Field label="Max Results">
+      <Field label={wb('f_max_results')}>
         <input key={`${block.block_id}-maxr`} type="number" className={inp} defaultValue={d.max_results || 20} min={1} max={200}
           onBlur={e => onFieldSave('max_results', Number(e.target.value))} />
       </Field>
@@ -5343,19 +5355,19 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
     const removeRow = (i) => saveRows(rows.filter((_, j) => j !== i));
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>💲 Fee Schedule</div>
-        <Field label="Heading"><TxtInp field="heading" placeholder="Fee Schedule" /></Field>
-        <Field label="Intro"><RichBody field="intro_body" /></Field>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_fees')}</div>
+        <Field label={wb('f_heading')}><TxtInp field="heading" placeholder={wb('ph_fee_schedule')} /></Field>
+        <Field label={wb('f_intro')}><RichBody field="intro_body" /></Field>
         <div style={{ marginBottom: 8 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Rows</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{wb('f_rows')}</label>
           {rows.map((r, i) => (
             <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 6, background: '#f9fafb' }}>
-              <input className={inp} defaultValue={r.label || ''} placeholder="Item label"
+              <input className={inp} defaultValue={r.label || ''} placeholder={wb('ph_item_label')}
                 onBlur={e => updateRow(i, 'label', e.target.value)} style={{ marginBottom: 4 }} />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr auto', gap: 6 }}>
-                <input className={inp} defaultValue={r.amount || ''} placeholder="$0"
+                <input className={inp} defaultValue={r.amount || ''} placeholder={wb('ph_amount')}
                   onBlur={e => updateRow(i, 'amount', e.target.value)} />
-                <input className={inp} defaultValue={r.notes || ''} placeholder="Notes"
+                <input className={inp} defaultValue={r.notes || ''} placeholder={wb('ph_notes')}
                   onBlur={e => updateRow(i, 'notes', e.target.value)} />
                 <button type="button" onClick={() => removeRow(i)}
                   style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '0 10px', cursor: 'pointer', fontSize: 12 }}>✕</button>
@@ -5363,7 +5375,7 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
             </div>
           ))}
           <button type="button" onClick={addRow}
-            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add row</button>
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>{wb('add_row')}</button>
         </div>
         <BgField />
       </div>
@@ -5373,16 +5385,16 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
   // ── Map & Location (universal widget) ──
   if (bt === 'map_location') return (
     <div style={{ padding: 16 }}>
-      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>📍 Map & Location</div>
-      <Field label="Heading"><TxtInp field="heading" placeholder="Find Us" /></Field>
-      <Field label="Address"><TxtArea field="address" rows={2} /></Field>
-      <Field label="Google Maps Embed URL">
+      <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_map')}</div>
+      <Field label={wb('f_heading')}><TxtInp field="heading" placeholder={wb('ph_map')} /></Field>
+      <Field label={wb('f_address')}><TxtArea field="address" rows={2} /></Field>
+      <Field label={wb('map_embed_url_lbl')}>
         <TxtArea field="embed_url" rows={3} />
         <p style={{ fontSize: 11, color: '#6b7280', marginTop: 4, lineHeight: 1.4 }}>
-          On Google Maps, click <strong>Share → Embed a map → Copy HTML</strong> and paste the <code>src=</code> URL here (starts with <code>https://www.google.com/maps/embed?…</code>).
+          {wb('map_embed_hint')}
         </p>
       </Field>
-      <Field label="Map Height (px)">
+      <Field label={wb('map_height_lbl')}>
         <input key={`${block.block_id}-h`} type="number" className={inp} defaultValue={d.height || 320} min={150} max={800}
           onBlur={e => onFieldSave('height', Number(e.target.value))} />
       </Field>
@@ -5399,20 +5411,20 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
     const removeRow = (i) => saveRows(rows.filter((_, j) => j !== i));
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>🕒 Hours of Operation</div>
-        <Field label="Heading"><TxtInp field="heading" placeholder="Hours" /></Field>
-        <Field label="Intro"><RichBody field="intro_body" /></Field>
-        <Field label="Timezone (optional)"><TxtInp field="timezone" placeholder="e.g. PT, ET, Mountain Time" /></Field>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_hours')}</div>
+        <Field label={wb('f_heading')}><TxtInp field="heading" placeholder={wb('ph_hours')} /></Field>
+        <Field label={wb('f_intro')}><RichBody field="intro_body" /></Field>
+        <Field label={wb('f_timezone')}><TxtInp field="timezone" placeholder={wb('ph_timezone')} /></Field>
         <div style={{ marginBottom: 8 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Weekly Hours</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{wb('f_weekly_hours')}</label>
           {rows.map((r, i) => (
             <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 6, background: '#f9fafb' }}>
-              <input className={inp} defaultValue={r.day || ''} placeholder="Day"
+              <input className={inp} defaultValue={r.day || ''} placeholder={wb('ph_day')}
                 onBlur={e => updateRow(i, 'day', e.target.value)} style={{ marginBottom: 4 }} />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 6, marginBottom: 4 }}>
-                <input className={inp} defaultValue={r.open || ''} placeholder="Open"
+                <input className={inp} defaultValue={r.open || ''} placeholder={wb('ph_open')}
                   onBlur={e => updateRow(i, 'open', e.target.value)} disabled={!!r.closed} />
-                <input className={inp} defaultValue={r.close || ''} placeholder="Close"
+                <input className={inp} defaultValue={r.close || ''} placeholder={wb('ph_close')}
                   onBlur={e => updateRow(i, 'close', e.target.value)} disabled={!!r.closed} />
                 <button type="button" onClick={() => removeRow(i)}
                   style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '0 10px', cursor: 'pointer', fontSize: 12 }}>✕</button>
@@ -5420,15 +5432,15 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
               <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 6, alignItems: 'center' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#374151' }}>
                   <input type="checkbox" checked={!!r.closed} onChange={e => updateRow(i, 'closed', e.target.checked)} style={{ width: 14, height: 14 }} />
-                  Closed
+                  {wb('f_closed')}
                 </label>
-                <input className={inp} defaultValue={r.notes || ''} placeholder="Notes (optional)"
+                <input className={inp} defaultValue={r.notes || ''} placeholder={wb('f_notes_optional')}
                   onBlur={e => updateRow(i, 'notes', e.target.value)} />
               </div>
             </div>
           ))}
           <button type="button" onClick={addRow}
-            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add day</button>
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>{wb('add_day')}</button>
         </div>
         <BgField />
       </div>
@@ -5444,26 +5456,26 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
     const removeItem = (i) => saveItems(items.filter((_, j) => j !== i));
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>❓ FAQ</div>
-        <Field label="Section Heading"><TxtInp field="heading" placeholder="Frequently Asked Questions" /></Field>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_faq')}</div>
+        <Field label={wb('f_section_heading')}><TxtInp field="heading" placeholder={wb('ph_faq')} /></Field>
         <div style={{ marginBottom: 8 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Questions ({items.length})</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{wb('f_questions_n', { n: items.length })}</label>
           {items.map((item, i) => (
             <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 6, background: '#f9fafb' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>Q{i + 1}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>{wb('q_n', { n: i + 1 })}</span>
                 <button type="button" onClick={() => removeItem(i)}
                   style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: 11 }}>✕</button>
               </div>
-              <input className={inp} defaultValue={item.question || ''} placeholder="Question?"
+              <input className={inp} defaultValue={item.question || ''} placeholder={wb('ph_question')}
                 onBlur={e => updateItem(i, 'question', e.target.value)} style={{ marginBottom: 6 }} />
-              <textarea className={inp} defaultValue={item.answer || ''} placeholder="Answer…"
+              <textarea className={inp} defaultValue={item.answer || ''} placeholder={wb('ph_answer')}
                 onBlur={e => updateItem(i, 'answer', e.target.value)}
                 rows={3} style={{ resize: 'vertical' }} />
             </div>
           ))}
           <button type="button" onClick={addItem}
-            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add question</button>
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>{wb('add_question')}</button>
         </div>
         <BgField />
       </div>
@@ -5479,28 +5491,28 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
     const removeItem = (i) => saveItems(items.filter((_, j) => j !== i));
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>⭐ Features / Services Grid</div>
-        <Field label="Section Heading (optional)"><TxtInp field="heading" placeholder="What We Offer" /></Field>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_features')}</div>
+        <Field label={wb('f_section_heading')}><TxtInp field="heading" placeholder={wb('ph_features')} /></Field>
         <div style={{ marginBottom: 8 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Cards ({items.length})</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{wb('f_cards_n', { n: items.length })}</label>
           {items.map((item, i) => (
             <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 6, background: '#f9fafb' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>Card {i + 1}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>{wb('card_n', { n: i + 1 })}</span>
                 <button type="button" onClick={() => removeItem(i)}
                   style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: 11 }}>✕</button>
               </div>
-              <input className={inp} defaultValue={item.title || ''} placeholder="Title"
+              <input className={inp} defaultValue={item.title || ''} placeholder={wb('ph_title')}
                 onBlur={e => updateItem(i, 'title', e.target.value)} style={{ marginBottom: 6 }} />
-              <textarea className={inp} defaultValue={item.description || ''} placeholder="Description"
+              <textarea className={inp} defaultValue={item.description || ''} placeholder={wb('ph_desc')}
                 onBlur={e => updateItem(i, 'description', e.target.value)}
                 rows={2} style={{ resize: 'vertical', marginBottom: 6 }} />
-              <input className={inp} defaultValue={item.icon_url || ''} placeholder="Icon image URL (optional)"
+              <input className={inp} defaultValue={item.icon_url || ''} placeholder={wb('ph_icon_url')}
                 onBlur={e => updateItem(i, 'icon_url', e.target.value)} />
             </div>
           ))}
           <button type="button" onClick={addItem}
-            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add card</button>
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>{wb('add_card')}</button>
         </div>
         <BgField />
       </div>
@@ -5516,34 +5528,34 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
     const removeMember = (i) => saveMembers(members.filter((_, j) => j !== i));
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>👥 Team / Staff</div>
-        <Field label="Section Heading"><TxtInp field="heading" placeholder="Meet Our Team" /></Field>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_team')}</div>
+        <Field label={wb('f_section_heading')}><TxtInp field="heading" placeholder={wb('ph_team')} /></Field>
         <div style={{ marginBottom: 8 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Members ({members.length})</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{wb('f_members_n', { n: members.length })}</label>
           {members.map((m, i) => (
             <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 8, background: '#f9fafb' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>Member {i + 1}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>{wb('member_n', { n: i + 1 })}</span>
                 <button type="button" onClick={() => removeMember(i)}
                   style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: 11 }}>✕</button>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
                 {m.photo_url && <img src={m.photo_url} alt="" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '1px solid #e5e7eb' }} />}
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>Photo</label>
+                  <label style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>{wb('photo_lbl')}</label>
                   <ImageUploadField compact value={m.photo_url || ''} onChange={url => updateMember(i, 'photo_url', url)} />
                 </div>
               </div>
-              <input className={inp} defaultValue={m.name || ''} placeholder="Full name"
+              <input className={inp} defaultValue={m.name || ''} placeholder={wb('ph_full_name')}
                 onBlur={e => updateMember(i, 'name', e.target.value)} style={{ marginBottom: 4 }} />
-              <input className={inp} defaultValue={m.role || ''} placeholder="Title / role"
+              <input className={inp} defaultValue={m.role || ''} placeholder={wb('ph_title_role')}
                 onBlur={e => updateMember(i, 'role', e.target.value)} style={{ marginBottom: 4 }} />
-              <textarea className={inp} defaultValue={m.bio || ''} placeholder="Short bio (optional)"
+              <textarea className={inp} defaultValue={m.bio || ''} placeholder={wb('ph_short_bio')}
                 onBlur={e => updateMember(i, 'bio', e.target.value)} rows={2} style={{ resize: 'vertical' }} />
             </div>
           ))}
           <button type="button" onClick={addMember}
-            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add member</button>
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>{wb('add_member')}</button>
         </div>
       </div>
     );
@@ -5559,47 +5571,47 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
     const updateFeatures = (i, raw) => updateTier(i, 'features', raw.split('\n').map(s => s.trim()).filter(Boolean));
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>💲 Pricing / Plans</div>
-        <Field label="Section Heading"><TxtInp field="heading" placeholder="Plans & Pricing" /></Field>
-        <Field label="Intro Text"><TxtInp field="intro_body" placeholder="Choose the plan that's right for you." /></Field>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_pricing')}</div>
+        <Field label={wb('f_section_heading')}><TxtInp field="heading" placeholder={wb('ph_pricing')} /></Field>
+        <Field label={wb('f_intro_text')}><TxtInp field="intro_body" placeholder={wb('ph_plans_intro')} /></Field>
         <div style={{ marginBottom: 8 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Tiers ({tiers.length})</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{wb('f_tiers_n', { n: tiers.length })}</label>
           {tiers.map((tier, i) => (
             <div key={i} style={{ border: `1px solid ${tier.highlight ? '#7C5CBF' : '#e5e7eb'}`, borderRadius: 6, padding: 8, marginBottom: 8, background: tier.highlight ? '#f5f3ff' : '#f9fafb' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>Tier {i + 1}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>{wb('tier_n', { n: i + 1 })}</span>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#7C5CBF', cursor: 'pointer' }}>
                     <input type="checkbox" checked={!!tier.highlight} onChange={e => updateTier(i, 'highlight', e.target.checked)} />
-                    Featured
+                    {wb('f_featured')}
                   </label>
                   <button type="button" onClick={() => removeTier(i)}
                     style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: 11 }}>✕</button>
                 </div>
               </div>
-              <input className={inp} defaultValue={tier.name || ''} placeholder="Plan name (e.g. Basic)"
+              <input className={inp} defaultValue={tier.name || ''} placeholder={wb('ph_plan_name')}
                 onBlur={e => updateTier(i, 'name', e.target.value)} style={{ marginBottom: 4 }} />
               <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
-                <input className={inp} defaultValue={tier.price || ''} placeholder="Price (e.g. $49)"
+                <input className={inp} defaultValue={tier.price || ''} placeholder={wb('ph_price')}
                   onBlur={e => updateTier(i, 'price', e.target.value)} style={{ flex: 2 }} />
                 <select className={inp} defaultValue={tier.period || 'month'} onChange={e => updateTier(i, 'period', e.target.value)} style={{ flex: 1 }}>
-                  <option value="">one-time</option>
-                  <option value="month">/ month</option>
-                  <option value="year">/ year</option>
-                  <option value="week">/ week</option>
+                  <option value="">{wb('price_one_time')}</option>
+                  <option value="month">{wb('price_per_month')}</option>
+                  <option value="year">{wb('price_per_year')}</option>
+                  <option value="week">{wb('price_per_week')}</option>
                 </select>
               </div>
-              <input className={inp} defaultValue={tier.description || ''} placeholder="Short description"
+              <input className={inp} defaultValue={tier.description || ''} placeholder={wb('ph_plan_desc')}
                 onBlur={e => updateTier(i, 'description', e.target.value)} style={{ marginBottom: 4 }} />
               <textarea className={inp}
                 defaultValue={Array.isArray(tier.features) ? tier.features.join('\n') : ''}
-                placeholder="Features — one per line"
+                placeholder={wb('ph_feature_line')}
                 onBlur={e => updateFeatures(i, e.target.value)}
                 rows={3} style={{ resize: 'vertical' }} />
             </div>
           ))}
           <button type="button" onClick={addTier}
-            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add tier</button>
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>{wb('add_tier')}</button>
         </div>
         <BgField />
       </div>
@@ -5615,45 +5627,45 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
     const removeSponsor = (i) => saveSponsors(sponsors.filter((_, j) => j !== i));
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>🏆 Sponsors</div>
-        <Field label="Heading"><TxtInp field="heading" placeholder="Our Sponsors" /></Field>
-        <Field label="Intro"><RichBody field="intro_body" /></Field>
-        <Field label="Columns">
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_sponsors')}</div>
+        <Field label={wb('f_heading')}><TxtInp field="heading" placeholder={wb('ph_sponsors')} /></Field>
+        <Field label={wb('f_intro')}><RichBody field="intro_body" /></Field>
+        <Field label={wb('f_columns')}>
           <select className={inp} defaultValue={d.columns || 4} onBlur={e => onFieldSave('columns', Number(e.target.value))}>
             {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n}</option>)}
           </select>
         </Field>
-        <Field label="Logo Height (px)">
+        <Field label={wb('f_logo_height')}>
           <input key={`${block.block_id}-lh`} type="number" className={inp} defaultValue={d.logo_height || 80} min={40} max={200}
             onBlur={e => onFieldSave('logo_height', Number(e.target.value))} />
         </Field>
-        <Field label="Show Sponsor Names">
+        <Field label={wb('f_show_names')}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151' }}>
             <input type="checkbox" checked={d.show_names !== false} onChange={e => onFieldSave('show_names', e.target.checked)} style={{ width: 16, height: 16 }} />
-            Show name caption under logo
+            {wb('f_show_name_caption')}
           </label>
         </Field>
         <div style={{ marginBottom: 8 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Sponsors</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{wb('f_sponsors_list')}</label>
           {sponsors.map((s, i) => (
             <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 6, background: '#f9fafb' }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
                 {s.logo_url && <img src={s.logo_url} alt="" style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 3, border: '1px solid #e5e7eb', background: '#fff' }} />}
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>Logo</label>
+                  <label style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>{wb('links_icon_lbl')}</label>
                   <ImageUploadField compact value={s.logo_url || ''} onChange={url => updateSponsor(i, 'logo_url', url)} />
                 </div>
                 <button type="button" onClick={() => removeSponsor(i)}
                   style={{ border: '1px solid #fca5a5', background: '#fff', color: '#b91c1c', borderRadius: 6, padding: '0 10px', cursor: 'pointer', fontSize: 12, height: 28 }}>✕</button>
               </div>
-              <input className={inp} defaultValue={s.name || ''} placeholder="Sponsor name"
+              <input className={inp} defaultValue={s.name || ''} placeholder={wb('ph_sponsor_name')}
                 onBlur={e => updateSponsor(i, 'name', e.target.value)} style={{ marginBottom: 4 }} />
-              <input className={inp} defaultValue={s.url || ''} placeholder="https://sponsor-website.com"
+              <input className={inp} defaultValue={s.url || ''} placeholder={wb('ph_sponsor_url')}
                 onBlur={e => updateSponsor(i, 'url', e.target.value)} />
             </div>
           ))}
           <button type="button" onClick={addSponsor}
-            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>+ Add sponsor</button>
+            style={{ border: '1px dashed #9ca3af', background: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#374151', width: '100%' }}>{wb('add_sponsor')}</button>
         </div>
         <BgField />
       </div>
@@ -5664,29 +5676,29 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
   if (bt === 'cta') {
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>📣 CTA Banner</div>
-        <Field label="Headline"><TxtInp field="headline" placeholder="Don't Miss Out!" /></Field>
-        <Field label="Button Text"><TxtInp field="button_text" placeholder="Renew Your Membership" /></Field>
-        <Field label="Button Link"><TxtInp field="button_link" placeholder="https://… or /page" /></Field>
-        <Field label="Layout">
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>{wb('block_cta')}</div>
+        <Field label={wb('f_headline')}><TxtInp field="headline" placeholder={wb('ph_cta')} /></Field>
+        <Field label={wb('f_button_text')}><TxtInp field="button_text" placeholder={wb('ph_cta2')} /></Field>
+        <Field label={wb('f_button_link')}><TxtInp field="button_link" placeholder={wb('ph_cta_link')} /></Field>
+        <Field label={wb('f_layout')}>
           <select className={inp} defaultValue={d.align || 'split'} onBlur={e => onFieldSave('align', e.target.value)}>
-            <option value="split">Headline left, button right</option>
-            <option value="center">Stacked, centered</option>
+            <option value="split">{wb('layout_headline_left')}</option>
+            <option value="center">{wb('layout_stacked')}</option>
           </select>
         </Field>
-        <Field label="Background Color">
+        <Field label={wb('blog_bg_color')}>
           <input type="color" className={inp} defaultValue={d.bg_color || '#1a1a1a'}
             onBlur={e => onFieldSave('bg_color', e.target.value)} style={{ height: 36, padding: 2 }} />
         </Field>
-        <Field label="Headline Color">
+        <Field label={wb('cta_headline_color')}>
           <input type="color" className={inp} defaultValue={d.text_color || '#ffffff'}
             onBlur={e => onFieldSave('text_color', e.target.value)} style={{ height: 36, padding: 2 }} />
         </Field>
-        <Field label="Button Background (blank = site accent)">
+        <Field label={wb('cta_btn_bg')}>
           <input type="color" className={inp} defaultValue={d.button_bg_color || (site?.accent_color || '#7CB342')}
             onBlur={e => onFieldSave('button_bg_color', e.target.value)} style={{ height: 36, padding: 2 }} />
         </Field>
-        <Field label="Button Text Color">
+        <Field label={wb('cta_btn_color')}>
           <input type="color" className={inp} defaultValue={d.button_text_color || '#ffffff'}
             onBlur={e => onFieldSave('button_text_color', e.target.value)} style={{ height: 36, padding: 2 }} />
         </Field>
@@ -5702,29 +5714,29 @@ function BlockEditorPanel({ block, onFieldSave, onFieldsSave, site, businessId, 
         <span style={{ color: '#3D6B34', display: 'flex' }}>{meta.icon}</span>{meta.label}
       </div>
       <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 14, lineHeight: 1.5 }}>
-        This block pulls live data from your account automatically.
+        {wb('live_data_note')}
       </p>
       {d.heading !== undefined && (
-        <Field label="Section Heading">
-          <TxtInp field="heading" placeholder="Section heading…" />
+        <Field label={wb('gen_section_heading')}>
+          <TxtInp field="heading" placeholder={wb('ph_section_heading')} />
         </Field>
       )}
       {d.max_items !== undefined && (
-        <Field label="Max Items to Show">
+        <Field label={wb('gen_max_items')}>
           <input key={`${block.block_id}-max`} type="number" className={inp} defaultValue={d.max_items} min={1} max={50}
             onBlur={e => onFieldSave('max_items', Number(e.target.value))} />
         </Field>
       )}
       {d.max_posts !== undefined && (
-        <Field label="Max Posts to Show">
+        <Field label={wb('gen_max_posts')}>
           <input key={`${block.block_id}-posts`} type="number" className={inp} defaultValue={d.max_posts} min={1} max={20}
             onBlur={e => onFieldSave('max_posts', Number(e.target.value))} />
         </Field>
       )}
       {d.max_posts !== undefined && (
-        <Field label="Filter by Category (optional)">
+        <Field label={wb('gen_filter_cat')}>
           <input key={`${block.block_id}-cat`} type="text" className={inp} defaultValue={d.category || ''}
-            placeholder="e.g. Recipes, Farm News…"
+            placeholder={wb('ph_category_filter')}
             onBlur={e => onFieldSave('category', e.target.value.trim())} />
         </Field>
       )}
@@ -6014,6 +6026,7 @@ function CanvasSiteFooter({ site }) {
 
 // ── MediaPanel: localStorage-based media library ──────────────────
 function MediaPanel({ siteId }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const storageKey = `ofn_media_${siteId}`;
   const [items, setItems] = useState(() => {
     try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch { return []; }
@@ -6060,20 +6073,20 @@ function MediaPanel({ siteId }) {
           onDragLeave={() => setMediaDragging(false)}
           onDrop={e => { e.preventDefault(); e.stopPropagation(); setMediaDragging(false); handleUpload(e.dataTransfer.files); }}
           style={{ width: '100%', padding: '10px 0', borderRadius: 8, border: `1.5px dashed ${mediaDragging ? '#3b82f6' : '#bfdbfe'}`, background: mediaDragging ? '#dbeafe' : '#eff6ff', color: mediaDragging ? '#1d4ed8' : '#3b82f6', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.15s', textAlign: 'center' }}>
-          {uploading ? '⏳ Uploading…' : mediaDragging ? '📂 Drop images here' : '+ Upload Images or Drop Here'}
+          {uploading ? wb('media_uploading') : mediaDragging ? wb('media_dropping') : wb('media_upload_prompt')}
         </div>
         <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
           onChange={e => handleUpload(e.target.files)} />
         <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
           <input
             style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 6, padding: '5px 8px', fontSize: 11, outline: 'none' }}
-            placeholder="YouTube / Vimeo URL"
+            placeholder={wb('media_video_ph')}
             value={videoUrl}
             onChange={e => setVideoUrl(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addVideo()} />
           <button onClick={addVideo}
             style={{ padding: '5px 10px', borderRadius: 6, background: '#f3f4f6', border: '1px solid #e5e7eb', fontSize: 11, cursor: 'pointer', color: '#374151', fontWeight: 600 }}>
-            Add
+            {wb('media_add_video')}
           </button>
         </div>
       </div>
@@ -6083,7 +6096,7 @@ function MediaPanel({ siteId }) {
         {items.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#9ca3af' }}>
             <div style={{ fontSize: '2rem', marginBottom: 8 }}>🖼️</div>
-            <div style={{ fontSize: 12 }}>Upload images or add videos.<br />Drag items onto blocks to add them.</div>
+            <div style={{ fontSize: 12 }}>{wb('media_empty_hint')}</div>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
@@ -6118,7 +6131,7 @@ function MediaPanel({ siteId }) {
                 </button>
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.55)', color: '#fff', fontSize: 9, padding: '2px 4px', opacity: 0, transition: 'opacity 0.15s' }}
                   className="media-label">
-                  Drag to block
+                  {wb('media_drag_to_block')}
                 </div>
               </div>
             ))}
@@ -6139,6 +6152,7 @@ function MediaPanel({ siteId }) {
 // MAIN COMPONENT
 // ══════════════════════════════════════════════════════════════════
 export default function WebsiteBuilder() {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const BusinessID = searchParams.get('BusinessID');
@@ -6504,7 +6518,7 @@ export default function WebsiteBuilder() {
   const applyStarterPack = async () => {
     const keys = getStarterPackKeys();
     if (!keys.length) return;
-    if (!confirm(`Add ${keys.length} starter pages to your site? You can edit or delete each one.`)) return;
+    if (!confirm(wb('templates_starter_confirm', { n: keys.length }))) return;
     setTemplateApplying('__starter__');
     try {
       const resp = await apiFetch('/api/website/pages/from-templates-bulk', {
@@ -6556,7 +6570,7 @@ export default function WebsiteBuilder() {
   };
 
   const deletePage = async (pageId) => {
-    if (!confirm('Delete this page and all its blocks?')) return;
+    if (!confirm(wb('delete_page_confirm'))) return;
     try {
       await apiFetch(`/api/website/pages/${pageId}`, { method: 'DELETE' });
       // Remove deleted page; children get promoted to top-level by backend
@@ -6664,7 +6678,7 @@ export default function WebsiteBuilder() {
   };
 
   const deleteBlock = async (blockId) => {
-    if (!confirm('Delete this widget?')) return;
+    if (!confirm(wb('canvas_delete_confirm'))) return;
     try {
       await apiFetch(`/api/website/blocks/${blockId}`, { method: 'DELETE' });
       setBlocks(prev => prev.filter(b => b.block_id !== blockId));
@@ -6769,7 +6783,7 @@ export default function WebsiteBuilder() {
 
   if (loading) return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Website Builder" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Website Builder' }]}>
-      <div className="p-8 text-gray-400">Loading website builder…</div>
+      <div className="p-8 text-gray-400">{wb('setup_loading')}</div>
     </AccountLayout>
   );
 
@@ -6782,13 +6796,13 @@ export default function WebsiteBuilder() {
       <div style={{ minHeight: 'calc(100vh - 230px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 max-w-md w-full text-center">
           <div style={{ width: 56, height: 56, margin: '0 auto 1.25rem', borderRadius: '50%', border: '4px solid #e5e7eb', borderTopColor: '#7C5CBF', animation: 'wb-spin 0.9s linear infinite' }} />
-          <h2 className="text-lg font-bold text-gray-900 mb-1">Building your website…</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-1">{wb('setup_building')}</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            {buildStatus || 'Setting things up. This usually takes a few seconds.'}
+            {buildStatus || wb('setup_building_hint')}
           </p>
           {setupData.import_enabled && (
             <p className="text-xs text-gray-400 mt-3 italic">
-              Please don't close this tab while Lavendir works.
+              {wb('setup_building_lavendir_hint')}
             </p>
           )}
           <style>{`@keyframes wb-spin { to { transform: rotate(360deg); } }`}</style>
@@ -6802,12 +6816,12 @@ export default function WebsiteBuilder() {
     <>
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Website Builder" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Website Builder' }]}>
       <div style={{ maxWidth: 700, margin: '0 auto' }}>
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Create Your Website</h1>
-        <p className="text-gray-500 text-sm mb-6">Set up your public business website. You can change everything later.</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">{wb('setup_heading')}</h1>
+        <p className="text-gray-500 text-sm mb-6">{wb('setup_hint')}</p>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow p-6 mb-4">
-          <h2 className="text-base font-bold text-gray-800 mb-1">Choose a Starting Design</h2>
-          <p className="text-xs text-gray-400 mb-4">Pick a color scheme to start with. You can customize every detail afterwards.</p>
+          <h2 className="text-base font-bold text-gray-800 mb-1">{wb('setup_design_heading')}</h2>
+          <p className="text-xs text-gray-400 mb-4">{wb('setup_design_hint')}</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {TEMPLATES.map(t => (
               <button key={t.id}
@@ -6815,30 +6829,30 @@ export default function WebsiteBuilder() {
                 className={`rounded-xl border-2 overflow-hidden text-left transition-all ${setupData.primary_color === t.primary_color ? 'border-[#3D6B34] shadow-md' : 'border-gray-100 hover:border-gray-300'}`}>
                 <div className="flex h-8">{[t.primary_color, t.secondary_color, t.accent_color, t.bg_color].map((c, i) => <div key={i} className="flex-1" style={{ background: c }} />)}</div>
                 <div className="px-2 py-1" style={{ background: t.primary_color }}><span className="text-xs font-bold" style={{ color: t.nav_text_color, fontFamily: t.font_family }}>{t.name}</span></div>
-                <div className="px-2 py-1.5" style={{ background: t.bg_color }}><span className="text-xs" style={{ color: t.text_color, fontFamily: t.font_family }}>Sample text</span></div>
+                <div className="px-2 py-1.5" style={{ background: t.bg_color }}><span className="text-xs" style={{ color: t.text_color, fontFamily: t.font_family }}>{wb('setup_sample_text')}</span></div>
               </button>
             ))}
           </div>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow p-6 flex flex-col gap-3">
-          <FormField label="Site Name">
-            <input className={inp} value={setupData.site_name} placeholder="Green Acres Farm"
+          <FormField label={wb('setup_site_name')}>
+            <input className={inp} value={setupData.site_name} placeholder={wb('setup_site_name_ph')}
               onChange={e => setSetupData(p => ({ ...p, site_name: e.target.value }))} />
           </FormField>
-          <FormField label={`URL Slug — your site will be at ${SITE_BASE_URL}/sites/${setupData.slug || 'your-farm'}`}>
-            <input className={inp} value={setupData.slug} placeholder="green-acres-farm"
+          <FormField label={`${wb('slug_label')} — ${wb('slug_hint', { url: `${SITE_BASE_URL}/sites/${setupData.slug || 'your-farm'}` })}`}>
+            <input className={inp} value={setupData.slug} placeholder={wb('setup_slug_ph')}
               onChange={e => setSetupData(p => ({ ...p, slug: slugify(e.target.value) }))} />
           </FormField>
-          <FormField label="Tagline (Optional)">
-            <input className={inp} value={setupData.tagline} placeholder="Fresh, local, sustainably grown."
+          <FormField label={wb('setup_tagline')}>
+            <input className={inp} value={setupData.tagline} placeholder={wb('setup_tagline_ph')}
               onChange={e => setSetupData(p => ({ ...p, tagline: e.target.value }))} />
           </FormField>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Phone (Optional)">
+            <FormField label={wb('setup_phone')}>
               <input className={inp} value={setupData.phone} onChange={e => setSetupData(p => ({ ...p, phone: e.target.value }))} />
             </FormField>
-            <FormField label="Email (Optional)">
+            <FormField label={wb('setup_email')}>
               <input className={inp} value={setupData.email} onChange={e => setSetupData(p => ({ ...p, email: e.target.value }))} />
             </FormField>
           </div>
@@ -6852,9 +6866,9 @@ export default function WebsiteBuilder() {
                 style={{ width: 16, height: 16, accentColor: '#7C5CBF' }}
               />
               <span className="text-sm text-gray-700">
-                <span className="font-semibold">Import from existing website</span>
+                <span className="font-semibold">{wb('setup_import')}</span>
                 <span className="block text-xs text-gray-500 mt-0.5">
-                  Lavendir will scrape an existing website and copy its design, navigation, and content into your new site.
+                  {wb('setup_import_hint')}
                 </span>
               </span>
             </label>
@@ -6864,16 +6878,15 @@ export default function WebsiteBuilder() {
                   className={inp}
                   type="url"
                   value={setupData.import_url}
-                  placeholder="https://example.com"
+                  placeholder={wb('setup_import_url_ph')}
                   onChange={e => setSetupData(p => ({ ...p, import_url: e.target.value }))}
                 />
-                <p className="text-xs text-gray-400 mt-1">Paste the full URL of the site you want to copy.</p>
+                <p className="text-xs text-gray-400 mt-1">{wb('setup_import_url_hint')}</p>
 
                 <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                  <p className="text-xs font-semibold text-amber-900 mb-1.5">⚠️ Legal acknowledgement required</p>
+                  <p className="text-xs font-semibold text-amber-900 mb-1.5">{wb('setup_legal_heading')}</p>
                   <p className="text-xs text-amber-900 leading-relaxed mb-2">
-                    Website content, layouts, images, and trademarks are typically protected by copyright and other laws.
-                    Copying another website without permission may violate those laws.
+                    {wb('setup_legal_warning')}
                   </p>
                   <label className="flex items-start gap-2 cursor-pointer">
                     <input
@@ -6884,10 +6897,7 @@ export default function WebsiteBuilder() {
                       style={{ width: 16, height: 16, accentColor: '#7C5CBF' }}
                     />
                     <span className="text-xs text-amber-900 leading-relaxed">
-                      I confirm that I own this website or have the legal right to copy its design and content.
-                      I agree that <strong>Oatmeal AI</strong> and its operators are not responsible for any
-                      copyright, trademark, or other claims arising from this import, and I will indemnify
-                      Oatmeal AI against any such claims.
+                      {wb('setup_legal_ack')}
                     </span>
                   </label>
                 </div>
@@ -6897,7 +6907,7 @@ export default function WebsiteBuilder() {
 
           <button onClick={createSite} disabled={saving || !setupData.site_name || !setupData.slug || (setupData.import_enabled && (!setupData.import_url.trim() || !setupData.import_legal_ack))}
             className="regsubmit2 w-full py-3 text-base mt-2 disabled:opacity-50">
-            {saving ? (setupData.import_enabled ? 'Building & importing…' : 'Creating your site…') : 'Create My Website →'}
+            {saving ? (setupData.import_enabled ? wb('setup_creating_import') : wb('setup_creating')) : wb('setup_create_btn')}
           </button>
         </div>
       </div>
@@ -6932,13 +6942,13 @@ export default function WebsiteBuilder() {
               <span style={{ fontWeight: 700, fontSize: 14, color: '#111827' }}>{site.site_name}</span>
               <span style={{ color: '#9ca3af', fontSize: 13, marginLeft: 8 }}>/ {activePage.page_name}</span>
               <span className={`ml-3 text-xs font-medium px-2 py-0.5 rounded-full ${activePage.is_published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                {activePage.is_published ? 'Visible' : 'Hidden'}
+                {activePage.is_published ? wb('page_visible_badge') : wb('page_hidden_badge')}
               </span>
             </div>
 
             {/* Center note */}
             <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', fontSize: 12, color: '#9ca3af', fontStyle: 'italic', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
-              ✓ Changes are automagically saved
+              {wb('topbar_autosave')}
             </div>
 
             {/* Responsive preview */}
@@ -6953,17 +6963,17 @@ export default function WebsiteBuilder() {
 
             <button onClick={() => window.open(`/sites/${site.slug}?preview=1`, '_blank')}
               style={{ padding: '5px 14px', fontSize: 13, fontWeight: 500, color: '#374151', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, cursor: 'pointer' }}>
-              Preview ↗
+              {wb('topbar_preview')}
             </button>
             {site.is_published && (
               <a href={`${SITE_BASE_URL}/sites/${site.slug}`} target="_blank" rel="noreferrer"
                 style={{ padding: '5px 14px', fontSize: 13, fontWeight: 500, color: '#3D6B34', background: '#fff', border: '1px solid #3D6B34', borderRadius: 8, cursor: 'pointer', textDecoration: 'none' }}>
-                View Live ↗
+                {wb('topbar_view_live')}
               </a>
             )}
             <button onClick={togglePublish} disabled={saving}
               style={{ padding: '5px 14px', fontSize: 13, fontWeight: 700, color: '#fff', background: site.is_published ? '#C0382B' : '#819360', border: 'none', borderRadius: 8, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
-              {site.is_published ? 'Unpublish' : 'Publish Site'}
+              {site.is_published ? wb('topbar_unpublish') : wb('topbar_publish')}
             </button>
           </div>
 
@@ -6972,22 +6982,22 @@ export default function WebsiteBuilder() {
 
             {/* ── Left icon tabs (52px) ── */}
             <div style={{ width: 52, flexShrink: 0, background: '#f9fafb', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 8, gap: 4 }}>
-              {[['pages','📄','Pages'],['blocks','➕','Blocks']].map(([id, icon, label]) => (
+              {[[`pages`,'📄',wb('tab_pages')],[`blocks`,'➕',wb('tab_blocks')]].map(([id, icon, label]) => (
                 <button key={id} onClick={() => { if (activeTab === id) { setSidebarOpen(o => !o); } else { setActiveTab(id); setSidebarOpen(true); } }} title={label}
                   style={{ width: 40, height: 40, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', background: activeTab === id && sidebarOpen ? '#e0f2fe' : 'transparent', color: activeTab === id && sidebarOpen ? '#0369a1' : '#6b7280' }}>
                   {icon}
                 </button>
               ))}
               <div style={{ flex: 1 }} />
-              <button onClick={() => setActivePage('manage-pages')} title="Manage Pages"
+              <button onClick={() => setActivePage('manage-pages')} title={wb('tab_manage_pages')}
                 style={{ width: 40, height: 40, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 18, background: 'transparent', color: '#6b7280', marginBottom: 4 }}>
                 📋
               </button>
-              <button onClick={() => setActivePage('design')} title="Design"
+              <button onClick={() => setActivePage('design')} title={wb('tab_design')}
                 style={{ width: 40, height: 40, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 18, background: 'transparent', color: '#6b7280', marginBottom: 4 }}>
                 🎨
               </button>
-              <button onClick={() => setActivePage('settings')} title="Website Settings"
+              <button onClick={() => setActivePage('settings')} title={wb('tab_settings')}
                 style={{ width: 40, height: 40, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 18, background: 'transparent', color: '#6b7280', marginBottom: 8 }}>
                 ⚙️
               </button>
@@ -7000,8 +7010,8 @@ export default function WebsiteBuilder() {
               {activeTab === 'pages' && (
                 <div style={{ flex: 1, overflowY: 'auto', padding: 8, minWidth: 240 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px 8px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>Pages</span>
-                    <button onClick={() => setSidebarOpen(false)} title="Close panel" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16, lineHeight: 1, padding: '0 2px' }}>×</button>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>{wb('tab_pages')}</span>
+                    <button onClick={() => setSidebarOpen(false)} title={wb('sidebar_close')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16, lineHeight: 1, padding: '0 2px' }}>×</button>
                   </div>
                   {(() => {
                     // Build ordered tree: top-level pages, each followed by their children
@@ -7019,12 +7029,12 @@ export default function WebsiteBuilder() {
                         {/* Parent picker shown inline when this page is being nested */}
                         {nestingPageId === page.page_id ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' }}>
-                            <span style={{ fontSize: 11, color: '#3b82f6', whiteSpace: 'nowrap' }}>Nest under:</span>
+                            <span style={{ fontSize: 11, color: '#3b82f6', whiteSpace: 'nowrap' }}>{wb('sidebar_nest_under')}</span>
                             <select autoFocus size={1}
                               style={{ flex: 1, fontSize: 11, border: '1px solid #93c5fd', borderRadius: 4, padding: '1px 3px' }}
                               defaultValue=""
                               onChange={e => { if (e.target.value) setPageParent(page.page_id, parseInt(e.target.value)); }}>
-                              <option value="" disabled>Pick parent…</option>
+                              <option value="" disabled>{wb('sidebar_pick_parent')}</option>
                               {topLevel.filter(p => p.page_id !== page.page_id).map(p => (
                                 <option key={p.page_id} value={p.page_id}>{p.page_name}</option>
                               ))}
@@ -7091,7 +7101,7 @@ export default function WebsiteBuilder() {
 
                   {showNewPage ? (
                     <div style={{ display: 'flex', gap: 4, padding: '4px 6px', marginTop: 4 }}>
-                      <input autoFocus value={newPageName} placeholder="Page name"
+                      <input autoFocus value={newPageName} placeholder={wb('sidebar_page_name_ph')}
                         onChange={e => setNewPageName(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') addPage(); if (e.key === 'Escape') { setShowNewPage(false); setNewPageName(''); } }}
                         style={{ flex: 1, border: '1px solid #3b82f6', borderRadius: 6, padding: '4px 8px', fontSize: 12 }} />
@@ -7102,17 +7112,17 @@ export default function WebsiteBuilder() {
                     <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
                       <button onClick={() => setShowNewPage(true)}
                         style={{ flex: 1, padding: '6px 10px', background: 'none', border: '1px dashed #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: '#6b7280', textAlign: 'left' }}>
-                        + Add Page
+                        {wb('sidebar_add_page')}
                       </button>
                       <button onClick={openTemplatesModal} title="Start from a page template"
                         style={{ padding: '6px 10px', background: '#f3f0ff', border: '1px solid #d8ccf5', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: '#7C5CBF', fontWeight: 600 }}>
-                        📋 Template
+                        {wb('sidebar_template')}
                       </button>
                     </div>
                   )}
                   <button onClick={() => setActivePage('manage-pages')}
                     style={{ width: '100%', marginTop: 10, padding: '6px 10px', background: 'none', border: '1px solid #e5e7eb', borderRadius: 8, cursor: 'pointer', fontSize: 11, color: '#6b7280', textAlign: 'center' }}>
-                    📋 Manage All Pages →
+                    {wb('sidebar_manage_pages')}
                   </button>
                   <style>{`.group:hover .group-actions { opacity: 1 !important; }`}</style>
                 </div>
@@ -7122,8 +7132,8 @@ export default function WebsiteBuilder() {
               {activeTab === 'blocks' && (
                 <div style={{ flex: 1, overflowY: 'auto', padding: 8, minWidth: 240 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px 8px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>Add Widget</span>
-                    <button onClick={() => setSidebarOpen(false)} title="Close panel" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16, lineHeight: 1, padding: '0 2px' }}>×</button>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>{wb('sidebar_add_widget')}</span>
+                    <button onClick={() => setSidebarOpen(false)} title={wb('sidebar_close')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16, lineHeight: 1, padding: '0 2px' }}>×</button>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
                     {BLOCK_TYPES.map(bt => (
@@ -7144,8 +7154,8 @@ export default function WebsiteBuilder() {
               {activeTab === 'media' && (
                 <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minWidth: 240 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 12px 4px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>Media Library</span>
-                    <button onClick={() => setSidebarOpen(false)} title="Close panel" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16, lineHeight: 1, padding: '0 2px' }}>×</button>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>{wb('sidebar_media_library')}</span>
+                    <button onClick={() => setSidebarOpen(false)} title={wb('sidebar_close')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16, lineHeight: 1, padding: '0 2px' }}>×</button>
                   </div>
                   <div style={{ flex: 1, overflow: 'hidden' }}>
                     <MediaPanel siteId={site?.website_id} />
@@ -7192,11 +7202,11 @@ export default function WebsiteBuilder() {
                 {blocks.length === 0 ? (
                   <div style={{ padding: '4rem', textAlign: 'center', color: '#9ca3af', background: site?.page_background_color || site?.screen_background_color || site?.bg_color || '#fff' }}>
                     <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>📄</div>
-                    <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, color: '#374151' }}>This page has no widgets yet</div>
-                    <div style={{ fontSize: 13, marginBottom: 20 }}>Click the ➕ tab on the left to add widgets</div>
+                    <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, color: '#374151' }}>{wb('canvas_empty')}</div>
+                    <div style={{ fontSize: 13, marginBottom: 20 }}>{wb('canvas_empty_hint')}</div>
                     <button onClick={() => { setActiveTab('blocks'); setSidebarOpen(true); }}
                       style={{ padding: '8px 20px', background: site?.primary_color || '#3D6B34', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 14 }}>
-                      + Add First Widget
+                      {wb('canvas_add_first')}
                     </button>
                   </div>
                 ) : (
@@ -7271,8 +7281,8 @@ export default function WebsiteBuilder() {
           <h1 className="text-xl font-bold text-gray-900">{site.site_name}</h1>
           <p className="text-xs text-gray-400 mt-0.5">
             {site.is_published
-              ? <span className="text-green-600 font-medium">● Published</span>
-              : <span className="text-gray-400">○ Unpublished</span>}
+              ? <span className="text-green-600 font-medium">{wb('topbar_published_badge')}</span>
+              : <span className="text-gray-400">{wb('topbar_unpublished_badge')}</span>}
             <span className="ml-2">{SITE_BASE_URL}/sites/{site.slug}</span>
           </p>
         </div>
@@ -7291,17 +7301,17 @@ export default function WebsiteBuilder() {
           </div>
           <button onClick={() => window.open(`/sites/${site.slug}?preview=1`, '_blank')}
             className="text-sm font-medium text-gray-600 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-            Preview ↗
+            {wb('topbar_preview')}
           </button>
           {site.is_published && (
             <a href={`${SITE_BASE_URL}/sites/${site.slug}`} target="_blank" rel="noreferrer"
               className="text-sm font-medium text-[#3D6B34] border border-[#3D6B34]/30 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors">
-              View Live ↗
+              {wb('topbar_view_live')}
             </a>
           )}
           <button onClick={togglePublish} disabled={saving}
             className={`text-sm font-bold px-5 py-2 rounded-lg transition-colors ${site.is_published ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-[#3D6B34] text-white hover:bg-[#2d5226]'}`}>
-            {site.is_published ? 'Unpublish' : 'Publish Site'}
+            {site.is_published ? wb('topbar_unpublish') : wb('topbar_publish')}
           </button>
         </div>
       </div>
@@ -7347,16 +7357,16 @@ export default function WebsiteBuilder() {
           )}
           {isDelete && (
             <div className="bg-white rounded-xl border border-red-100 shadow-sm p-6 max-w-lg">
-              <h2 className="text-lg font-bold text-red-700 mb-2">Delete Website</h2>
-              <p className="text-sm text-gray-600 mb-4">This will permanently delete <strong>{site.site_name}</strong>, all its pages, and all content. This action cannot be undone.</p>
+              <h2 className="text-lg font-bold text-red-700 mb-2">{wb('delete_site_btn')}</h2>
+              <p className="text-sm text-gray-600 mb-4">{wb('delete_site_body_full', { name: site.site_name })}</p>
               <button onClick={deleteSite} className="px-6 py-2 text-white font-bold rounded-xl transition-colors" style={{ background: '#C0382B' }}>
-                Permanently Delete
+                {wb('delete_site_confirm_btn')}
               </button>
             </div>
           )}
           {!isDesign && !isSettings && !isDelete && !isManagePages && (
             <div className="flex items-center justify-center bg-white rounded-xl border border-gray-100 text-gray-400 p-12">
-              Select a page to start editing.
+              {wb('canvas_select_page')}
             </div>
           )}
         </div>
@@ -7380,9 +7390,9 @@ export default function WebsiteBuilder() {
              style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 880, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
           <div style={{ padding: '18px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ minWidth: 0 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>📋 Page Templates</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>{wb('templates_heading')}</h2>
               <p style={{ fontSize: 12, color: '#6b7280', margin: '2px 0 0' }}>
-                Pick a template to start a new page with seeded blocks. You can edit everything after creating it.
+                {wb('templates_hint_full')}
               </p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -7393,7 +7403,7 @@ export default function WebsiteBuilder() {
                     color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px',
                     fontSize: 13, fontWeight: 600, cursor: templateApplying ? 'not-allowed' : 'pointer',
                   }}>
-                  {templateApplying === '__starter__' ? 'Adding…' : '✨ Starter Pack'}
+                  {templateApplying === '__starter__' ? wb('templates_applying') : wb('templates_starter')}
                 </button>
               )}
               <button onClick={() => !templateApplying && setShowTemplatesModal(false)}
@@ -7403,12 +7413,12 @@ export default function WebsiteBuilder() {
 
           <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
             {templatesLoading ? (
-              <div style={{ textAlign: 'center', color: '#9ca3af', padding: 40 }}>Loading templates…</div>
+              <div style={{ textAlign: 'center', color: '#9ca3af', padding: 40 }}>{wb('templates_loading')}</div>
             ) : templates.length === 0 ? (
               <div style={{ textAlign: 'center', color: '#6b7280', padding: 40 }}>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
-                <p style={{ margin: 0 }}>No templates available for this business type{templatesBusinessTypeId != null ? ` (BusinessTypeID ${templatesBusinessTypeId})` : ''}.</p>
-                <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 6 }}>Use <strong>+ Add Page</strong> to create a blank page.</p>
+                <p style={{ margin: 0 }}>{wb('templates_none_full')}{templatesBusinessTypeId != null ? ` (BusinessTypeID ${templatesBusinessTypeId})` : ''}</p>
+                <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 6 }}>{wb('templates_blank_hint')}</p>
               </div>
             ) : (() => {
               const bySection = {};
@@ -7433,7 +7443,7 @@ export default function WebsiteBuilder() {
                           {tpl.meta_description && (
                             <div style={{ fontSize: 11, color: '#6b7280', marginTop: 5, lineHeight: 1.4 }}>{tpl.meta_description}</div>
                           )}
-                          {applying && <div style={{ fontSize: 11, color: '#7C5CBF', marginTop: 6, fontWeight: 600 }}>Creating…</div>}
+                          {applying && <div style={{ fontSize: 11, color: '#7C5CBF', marginTop: 6, fontWeight: 600 }}>{wb('templates_creating')}</div>}
                         </button>
                       );
                     })}
@@ -7948,6 +7958,7 @@ function WidthControl({ label, hint, value, onChange }) {
 
 // ── Page Management Dashboard ─────────────────────────────────────
 function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublished, onSetHome, onDelete, onSetParent, onRename, onAddPage, onSelectPage }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const [editingId, setEditingId] = useState(null);
   const [editingName, setEditingName] = useState('');
   const [newPageName, setNewPageName] = useState('');
@@ -8029,17 +8040,17 @@ function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublish
       {/* Header */}
       <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Page Management</h2>
-          <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>Click a name to rename · Drag rows to reorder</p>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>{wb('pm_heading')}</h2>
+          <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>{wb('pm_hint')}</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => setAddingType(t => t === 'heading' ? null : 'heading')}
             style={{ padding: '7px 14px', background: addingType === 'heading' ? '#7C5CBF' : '#f3f4f6', color: addingType === 'heading' ? '#fff' : '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-            + Nav Heading
+            {wb('pm_add_heading_btn')}
           </button>
           <button onClick={() => setAddingType(t => t === 'page' ? null : 'page')}
             style={{ padding: '7px 14px', background: addingType === 'page' ? '#3D6B34' : '#3D6B34', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-            + Add Page
+            {wb('pm_add_page_btn')}
           </button>
         </div>
       </div>
@@ -8048,27 +8059,27 @@ function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublish
       {addingType && (
         <div style={{ padding: '12px 20px', background: addingType === 'heading' ? '#f5f3ff' : '#f0fdf4', borderBottom: `1px solid ${addingType === 'heading' ? '#ddd6fe' : '#d1fae5'}`, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: addingType === 'heading' ? '#7C5CBF' : '#3D6B34', whiteSpace: 'nowrap' }}>
-            {addingType === 'heading' ? '📌 New nav heading:' : '📄 New page:'}
+            {addingType === 'heading' ? wb('pm_new_heading') : wb('pm_new_page')}
           </span>
           <input
             autoFocus
             value={newPageName}
             onChange={e => setNewPageName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setAddingType(null); }}
-            placeholder={addingType === 'heading' ? 'Heading label…' : 'Page name…'}
+            placeholder={addingType === 'heading' ? wb('pm_heading_ph') : wb('pm_page_ph')}
             style={{ flex: '1 1 160px', border: `1px solid ${addingType === 'heading' ? '#c4b5fd' : '#6ee7b7'}`, borderRadius: 6, padding: '6px 10px', fontSize: 13 }}
           />
           {addingType === 'page' && (
             <select value={newPageParent} onChange={e => setNewPageParent(e.target.value)}
               style={{ flex: '1 1 160px', border: '1px solid #6ee7b7', borderRadius: 6, padding: '6px 10px', fontSize: 13, background: '#fff' }}>
-              <option value="">Top-level page</option>
-              {headings.map(h => <option key={h.page_id} value={h.page_id}>Under heading: {h.page_name}</option>)}
-              {topLevel.filter(p => !p.is_nav_heading).map(p => <option key={p.page_id} value={p.page_id}>Under page: {p.page_name}</option>)}
+              <option value="">{wb('pm_top_level')}</option>
+              {headings.map(h => <option key={h.page_id} value={h.page_id}>{wb('pm_under_heading', { name: h.page_name })}</option>)}
+              {topLevel.filter(p => !p.is_nav_heading).map(p => <option key={p.page_id} value={p.page_id}>{wb('pm_under_page', { name: p.page_name })}</option>)}
             </select>
           )}
           <button onClick={handleAdd}
             style={{ padding: '6px 16px', background: addingType === 'heading' ? '#7C5CBF' : '#3D6B34', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-            Add
+            {wb('pm_add_btn')}
           </button>
           <button onClick={() => { setAddingType(null); setNewPageName(''); setNewPageParent(''); }}
             style={{ padding: '6px 10px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#9ca3af', lineHeight: 1 }}>
@@ -8079,8 +8090,8 @@ function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublish
 
       {/* Column headers */}
       <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 200px 90px 72px 60px', padding: '6px 16px', background: '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
-        {['', 'Name', 'Under Heading / Group', 'Visible', 'Home', 'Actions'].map(h => (
-          <span key={h} style={{ fontSize: 10, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+        {['', wb('pm_col_name'), wb('pm_col_parent'), wb('pm_col_visible'), wb('pm_col_home'), wb('pm_col_actions')].map((h, i) => (
+          <span key={i} style={{ fontSize: 10, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
         ))}
       </div>
 
@@ -8141,14 +8152,14 @@ function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublish
 
             {/* Menu group (parent) — headings are always top-level */}
             {isHeading ? (
-              <span style={{ fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>— top level —</span>
+              <span style={{ fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>{wb('pm_top_level_dash')}</span>
             ) : (
               <select
                 value={page.parent_page_id || ''}
                 onChange={e => onSetParent(page.page_id, e.target.value ? parseInt(e.target.value) : null)}
                 style={{ fontSize: 12, border: '1px solid #e5e7eb', borderRadius: 5, padding: '3px 6px', background: '#fff', color: '#374151', width: '100%' }}
               >
-                <option value="">— Top level —</option>
+                <option value="">{wb('pm_top_level_cap')}</option>
                 {topLevel.filter(p => p.page_id !== page.page_id).map(p => (
                   <option key={p.page_id} value={p.page_id}>{p.is_nav_heading ? '📌 ' : ''}{p.page_name}</option>
                 ))}
@@ -8159,7 +8170,7 @@ function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublish
             <button onClick={() => onTogglePublished(page)}
               title={isHeading && !page.is_published ? 'Group and all its pages are hidden from nav' : undefined}
               style={{ ...btnBase, background: page.is_published ? '#dcfce7' : '#f3f4f6', color: page.is_published ? '#166534' : '#6b7280', border: `1px solid ${page.is_published ? '#86efac' : '#e5e7eb'}`, fontWeight: 600, textAlign: 'center' }}>
-              {page.is_published ? '● Visible' : '○ Hidden'}
+              {page.is_published ? wb('pm_status_visible') : wb('pm_status_hidden')}
             </button>
 
             {/* Home — headings can't be home */}
@@ -8192,7 +8203,7 @@ function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublish
 
       {rows.length === 0 && (
         <div style={{ padding: '3rem', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
-          No pages yet. Use the buttons above to add a nav heading or a page.
+          {wb('pm_empty')}
         </div>
       )}
     </div>
@@ -8201,6 +8212,7 @@ function PageManagementView({ pages, onMovePage, onReorderPages, onTogglePublish
 
 // ── Design full view ──────────────────────────────────────────────
 function DesignView({ site, onSave, saving, pages = [] }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const [local, setLocal] = useState({
     primary_color:      site.primary_color      || '#3D6B34',
     secondary_color:    site.secondary_color    || '#819360',
@@ -8543,22 +8555,22 @@ function DesignView({ site, onSave, saving, pages = [] }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-lg font-bold text-gray-900">Design</h2>
+        <h2 className="text-lg font-bold text-gray-900">{wb('design_heading')}</h2>
         <div className="flex items-center gap-3">
           {autoSaved && !saving && (
-            <span className="text-xs text-green-600 font-medium animate-pulse">✓ Saved</span>
+            <span className="text-xs text-green-600 font-medium animate-pulse">{wb('design_saved')}</span>
           )}
           <button onClick={() => onSave(local)} disabled={saving}
             className="regsubmit2 px-6 py-2 text-sm disabled:opacity-50">
-            {saving ? 'Saving…' : 'Save Design'}
+            {saving ? wb('design_saving') : wb('design_save')}
           </button>
         </div>
       </div>
-      <p className="text-sm text-gray-500 mb-4">Customize the look, colors, fonts, header, and footer of your website.</p>
+      <p className="text-sm text-gray-500 mb-4">{wb('design_subheading')}</p>
 
       {/* ── Tab bar ── */}
       <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1">
-        {[['colors','Colors & Widths'],['typography','Typography'],['images','Images'],['header','Header & Footer']].map(([id, label]) => (
+        {[['colors',wb('design_tab_colors')],['typography',wb('design_tab_type')],['images',wb('design_tab_images')],['header',wb('design_tab_header')]].map(([id, label]) => (
           <button key={id} onClick={() => setDesignTab(id)}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors
               ${designTab === id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -8572,8 +8584,8 @@ function DesignView({ site, onSave, saving, pages = [] }) {
         <div>
           {/* Colors: palettes + page colors */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
-            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Colors</h3>
-            <p className="text-xs text-gray-400 mb-4">Apply a preset palette or fine-tune individual colors by clicking any swatch.</p>
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">{wb('colors_heading')}</h3>
+            <p className="text-xs text-gray-400 mb-4">{wb('colors_apply_preset')}</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-5">
               {TEMPLATES.map(t => {
                 const active = local.primary_color === t.primary_color && local.secondary_color === t.secondary_color;
@@ -8583,18 +8595,18 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                     className={`rounded-xl border-2 overflow-hidden text-left transition-all ${active ? 'border-[#3D6B34] shadow-md ring-2 ring-[#3D6B34]/20' : 'border-gray-100 hover:border-gray-300'}`}>
                     <div className="flex h-7">{[t.primary_color, t.secondary_color, t.accent_color, t.bg_color].map((c, i) => <div key={i} className="flex-1" style={{ background: c }} />)}</div>
                     <div className="px-2 py-1" style={{ background: t.primary_color }}><span className="text-xs font-bold truncate block" style={{ color: t.nav_text_color, fontFamily: t.font_family }}>{t.name}</span></div>
-                    <div className="px-2 py-1" style={{ background: t.bg_color }}><span className="text-xs truncate block" style={{ color: t.text_color, fontFamily: t.font_family }}>Sample text</span></div>
+                    <div className="px-2 py-1" style={{ background: t.bg_color }}><span className="text-xs truncate block" style={{ color: t.text_color, fontFamily: t.font_family }}>{wb('design_sample_text')}</span></div>
                   </button>
                 );
               })}
             </div>
             <div className="border-t border-gray-100 pt-4">
-              <p className="text-xs font-semibold text-gray-500 mb-3">Page Colors</p>
+              <p className="text-xs font-semibold text-gray-500 mb-3">{wb('colors_page')}</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
-                  { label: 'Secondary Color', field: 'secondary_color', hint: 'Link hover, borders, secondary nav and accent bars' },
-                  { label: 'Button Color',    field: 'accent_color',    hint: 'CTA buttons, badges and highlight chips' },
-                  { label: 'Body Text Color', field: 'text_color',      hint: 'Default paragraph and body text color' },
+                  { label: wb('colors_secondary'), field: 'secondary_color', hint: wb('colors_secondary_hint') },
+                  { label: wb('colors_button'),    field: 'accent_color',    hint: wb('colors_button_hint') },
+                  { label: wb('colors_body_text'), field: 'text_color',      hint: wb('colors_body_text_hint') },
                 ].map(({ label, field, hint }) => (
                   <div key={field} className="flex flex-col gap-1">
                     <span className="text-xs font-semibold text-gray-700 leading-tight">{label}</span>
@@ -8607,14 +8619,14 @@ function DesignView({ site, onSave, saving, pages = [] }) {
 
             {/* ── Screen Background (outer viewport) ── */}
             <div className="border-t border-gray-100 pt-4 mt-4">
-              <p className="text-xs font-semibold text-gray-500 mb-1">Screen Background</p>
+              <p className="text-xs font-semibold text-gray-500 mb-1">{wb('colors_screen_bg')}</p>
               <p className="text-[10px] text-gray-400 mb-3 leading-tight">
-                Outer layer. Fills the entire browser viewport behind everything — including the area around the page when the page is narrower than the screen. An image overrides the color or gradient.
+                {wb('colors_screen_bg_hint')}
               </p>
               <div className="mb-4">
-                <label className="block text-xs font-medium text-gray-600 mb-2">Background Type</label>
+                <label className="block text-xs font-medium text-gray-600 mb-2">{wb('colors_bg_type')}</label>
                 <div className="flex gap-2">
-                  {[['none','None'],['solid','Solid Color'],['gradient','Vertical Gradient']].map(([mode, label]) => (
+                  {[['none',wb('colors_bg_none')],['solid',wb('colors_bg_solid')],['gradient',wb('colors_bg_gradient')]].map(([mode, label]) => (
                     <button key={mode} onClick={() => {
                       if (mode === 'none') setLocal(p => ({ ...p, bg_mode: 'none', bg_gradient: '', screen_background_color: '#FFFFFF' }));
                       else if (mode === 'solid') setLocal(p => ({ ...p, bg_mode: 'solid', bg_gradient: '' }));
@@ -8628,7 +8640,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
               </div>
               {local.bg_mode === 'solid' && (
                 <div className="mb-4">
-                  <label className="block text-xs font-medium text-gray-600 mb-2">Color</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-2">{wb('colors_color')}</label>
                   <InlineColorPicker value={local.screen_background_color} onChange={v => set('screen_background_color', v)} paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.screen_background_color, local.page_background_color, local.text_color].filter(Boolean)} />
                   <div className="mt-3 h-10 rounded-lg border border-gray-200" style={{ background: local.screen_background_color }} />
                 </div>
@@ -8637,16 +8649,16 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                 <div className="mb-4">
                   <div className="flex flex-col gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1.5">Top Color</label>
+                      <label className="block text-xs font-medium text-gray-500 mb-1.5">{wb('colors_top_color')}</label>
                       <InlineColorPicker value={local.bg_gradient_color1} onChange={v => { const c2 = local.bg_gradient_color2 || '#ffffff'; setLocal(p => ({ ...p, bg_gradient_color1: v, bg_gradient: `linear-gradient(to bottom, ${v}, ${c2})` })); }} paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.screen_background_color, local.page_background_color, local.text_color].filter(Boolean)} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1.5">Bottom Color</label>
+                      <label className="block text-xs font-medium text-gray-500 mb-1.5">{wb('colors_bottom_color')}</label>
                       <InlineColorPicker value={local.bg_gradient_color2} onChange={v => { const c1 = local.bg_gradient_color1 || '#e8f5e9'; setLocal(p => ({ ...p, bg_gradient_color2: v, bg_gradient: `linear-gradient(to bottom, ${c1}, ${v})` })); }} paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.screen_background_color, local.page_background_color, local.text_color].filter(Boolean)} />
                     </div>
                   </div>
                   <div className="mt-3">
-                    <p className="text-xs text-gray-400 mb-2">Presets</p>
+                    <p className="text-xs text-gray-400 mb-2">{wb('colors_presets')}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {[['Warm Sand','#fdf6e3','#e8d5b7'],['Soft Sky','#e0f2fe','#bae6fd'],['Meadow','#f0fdf4','#bbf7d0'],['Sunset','#fff7ed','#fed7aa'],['Slate','#f8fafc','#e2e8f0'],['Lavender','#faf5ff','#e9d5ff']].map(([name,c1,c2]) => (
                         <button key={name} onClick={() => setLocal(p => ({ ...p, bg_gradient_color1: c1, bg_gradient_color2: c2, bg_gradient: `linear-gradient(to bottom, ${c1}, ${c2})` }))}
@@ -8660,15 +8672,15 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                 </div>
               )}
               <div className={local.bg_mode !== 'none' ? 'mt-2 pt-4 border-t border-gray-100' : ''}>
-                <ImageUploadField label="Screen Background Image" value={local.bg_image_url} onChange={url => set('bg_image_url', url)} hint="Overrides the color or gradient above. Leave blank to use the color/gradient setting." />
+                <ImageUploadField label={wb('colors_screen_bg_img_lbl')} value={local.bg_image_url} onChange={url => set('bg_image_url', url)} hint={wb('colors_screen_bg_img_hint')} />
               </div>
             </div>
 
             {/* ── Page Background (inner content band) ── */}
             <div className="border-t border-gray-100 pt-4 mt-4">
-              <p className="text-xs font-semibold text-gray-500 mb-1">Page Background</p>
+              <p className="text-xs font-semibold text-gray-500 mb-1">{wb('colors_page_bg')}</p>
               <p className="text-[10px] text-gray-400 mb-3 leading-tight">
-                Inner layer. Fills the page content band that sits on top of the Screen Background. Leave blank to let the Screen Background show through. Individual blocks can still override their own background.
+                {wb('colors_page_bg_hint')}
               </p>
               <InlineColorPicker
                 value={local.page_background_color || ''}
@@ -8680,7 +8692,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                 {local.page_background_color && (
                   <button onClick={() => set('page_background_color', '')}
                     className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded border border-gray-200 hover:border-gray-400">
-                    Clear
+                    {wb('f_clear')}
                   </button>
                 )}
               </div>
@@ -8689,28 +8701,28 @@ function DesignView({ site, onSave, saving, pages = [] }) {
 
           {/* Content Widths */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
-            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Content Widths</h3>
-            <p className="text-xs text-gray-400 mb-4">Control how wide the background band and inner content are for each zone. All zones are centered on the page.</p>
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">{wb('colors_content_widths')}</h3>
+            <p className="text-xs text-gray-400 mb-4">{wb('colors_content_widths_hint')}</p>
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex flex-col gap-4 flex-1">
                 <div className="border-l-4 pl-3" style={{ borderColor: local.primary_color }}>
-                  <p className="text-xs font-semibold text-gray-500 mb-1">Header</p>
-                  <WidthControl label="Header Background Width" hint="How wide the header color/image band spans." value={local.header_bg_width} onChange={v => set('header_bg_width', v)} />
-                  <WidthControl label="Header Content Width" hint="Width of the logo, site name, and nav bar within the header band." value={local.header_content_width} onChange={v => set('header_content_width', v)} />
+                  <p className="text-xs font-semibold text-gray-500 mb-1">{wb('colors_header_sub')}</p>
+                  <WidthControl label={wb('colors_header_bg_width')} hint={wb('colors_header_bg_width_hint')} value={local.header_bg_width} onChange={v => set('header_bg_width', v)} />
+                  <WidthControl label={wb('colors_header_content_width')} hint={wb('colors_header_content_width_hint')} value={local.header_content_width} onChange={v => set('header_content_width', v)} />
                 </div>
                 <div className="border-l-4 pl-3" style={{ borderColor: local.secondary_color }}>
-                  <p className="text-xs font-semibold text-gray-500 mb-1">Body</p>
-                  <WidthControl label="Body Background Width" hint="Width of the color band behind each content widget." value={local.body_bg_width} onChange={v => set('body_bg_width', v)} />
-                  <WidthControl label="Body Text Width" hint="Width of the text/content inside each block (must be ≤ background width)." value={local.body_content_width} onChange={v => set('body_content_width', v)} />
+                  <p className="text-xs font-semibold text-gray-500 mb-1">{wb('colors_body_sub')}</p>
+                  <WidthControl label={wb('colors_body_bg_width')} hint={wb('colors_body_bg_width_hint')} value={local.body_bg_width} onChange={v => set('body_bg_width', v)} />
+                  <WidthControl label={wb('colors_body_text_width')} hint={wb('colors_body_text_width_hint')} value={local.body_content_width} onChange={v => set('body_content_width', v)} />
                 </div>
                 <div className="border-l-4 pl-3" style={{ borderColor: local.footer_bg_color }}>
-                  <p className="text-xs font-semibold text-gray-500 mb-1">Footer</p>
-                  <WidthControl label="Footer Background Width" hint="How wide the footer color/image band spans." value={local.footer_bg_width} onChange={v => set('footer_bg_width', v)} />
-                  <WidthControl label="Footer Content Width" hint="Width of the footer text and copyright bar within the footer band." value={local.footer_content_width} onChange={v => set('footer_content_width', v)} />
+                  <p className="text-xs font-semibold text-gray-500 mb-1">{wb('colors_footer_sub')}</p>
+                  <WidthControl label={wb('colors_footer_bg_width')} hint={wb('colors_footer_bg_width_hint')} value={local.footer_bg_width} onChange={v => set('footer_bg_width', v)} />
+                  <WidthControl label={wb('colors_footer_content_width')} hint={wb('colors_footer_content_width_hint')} value={local.footer_content_width} onChange={v => set('footer_content_width', v)} />
                 </div>
               </div>
               <div className="flex-1 min-w-0 lg:min-w-72">
-                <p className="text-xs font-semibold text-gray-500 mb-2">Live Preview</p>
+                <p className="text-xs font-semibold text-gray-500 mb-2">{wb('colors_live_preview')}</p>
                 <WidthDiagram local={local} />
               </div>
             </div>
@@ -8724,8 +8736,8 @@ function DesignView({ site, onSave, saving, pages = [] }) {
         <div>
           {/* Base font */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
-            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Base Font</h3>
-            <p className="text-xs text-gray-400 mb-3">The default font used across the entire site. Individual heading levels can override this below.</p>
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">{wb('typo_base_font')}</h3>
+            <p className="text-xs text-gray-400 mb-3">{wb('typo_base_font_hint')}</p>
             <FontPickerDropdown
               value={local.font_family}
               onChange={v => set('font_family', v)}
@@ -8746,8 +8758,8 @@ function DesignView({ site, onSave, saving, pages = [] }) {
 
           {/* Type scale */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
-            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Type Scale</h3>
-            <p className="text-xs text-gray-400 mb-4">Set size, weight, and color for each heading and text level. Click a color swatch to change it.</p>
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">{wb('typo_scale')}</h3>
+            <p className="text-xs text-gray-400 mb-4">{wb('typo_scale_hint')}</p>
 
             {[
               { key: 'h1',   label: 'H1',        sample: 'Page Title',           defaultSize: '40px', defaultWeight: '800', hasRule: true },
@@ -8772,7 +8784,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
               const ruleColor = local[ruleColorKey] || local.text_color || '#111827';
               const currentSize = remToPx(local[sizeKey]) || defaultSize;
               const SIZE_PRESETS = ['10px','12px','14px','16px','18px','20px','24px','30px','36px','48px'];
-              const ALIGN_LABELS = { left: 'Left', center: 'Center', right: 'Right', justify: 'Justify' };
+              const ALIGN_LABELS = { left: wb('align_left'), center: wb('align_center'), right: wb('align_right'), justify: wb('align_justify') };
               return (
                 <div key={key} className="py-3 border-b border-gray-50 last:border-0">
                   {/* Row 1: Level | Preview | Size | Weight | Color */}
@@ -8820,11 +8832,11 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                     </div>
                     <select value={local[weightKey] || defaultWeight} onChange={e => set(weightKey, e.target.value)}
                       className="border border-gray-200 rounded-lg px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-300">
-                      <option value="400">Normal (400)</option>
-                      <option value="500">Medium (500)</option>
-                      <option value="600">Semibold (600)</option>
-                      <option value="700">Bold (700)</option>
-                      <option value="800">Extra Bold (800)</option>
+                      <option value="400">{wb('typo_weight_normal')}</option>
+                      <option value="500">{wb('typo_weight_medium')}</option>
+                      <option value="600">{wb('typo_weight_semibold')}</option>
+                      <option value="700">{wb('typo_weight_bold')}</option>
+                      <option value="800">{wb('typo_weight_extrabold')}</option>
                     </select>
                     <InlineColorPicker value={color} onChange={v => set(colorKey, v)} paletteColors={paletteColors} popupAlign="right" />
                   </div>
@@ -8841,22 +8853,22 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                     <div className="w-px h-5 bg-gray-200" />
                     <label className="flex items-center gap-1.5 cursor-pointer select-none">
                       <input type="checkbox" checked={!!local[underlineKey]} onChange={e => set(underlineKey, e.target.checked)} className="w-3.5 h-3.5 accent-blue-500" />
-                      <span className="text-xs text-gray-500" style={{ textDecoration: 'underline' }}>Underline</span>
+                      <span className="text-xs text-gray-500" style={{ textDecoration: 'underline' }}>{wb('typo_underline')}</span>
                     </label>
                     <label className="flex items-center gap-1.5 cursor-pointer select-none">
                       <input type="checkbox" checked={!!local[italicKey]} onChange={e => set(italicKey, e.target.checked)} className="w-3.5 h-3.5 accent-blue-500" />
-                      <span className="text-xs text-gray-500" style={{ fontStyle: 'italic' }}>Italic</span>
+                      <span className="text-xs text-gray-500" style={{ fontStyle: 'italic' }}>{wb('typo_italic')}</span>
                     </label>
                     {hasRule && (
                       <>
                         <div className="w-px h-5 bg-gray-200" />
                         <label className="flex items-center gap-1.5 cursor-pointer select-none">
                           <input type="checkbox" checked={!!local[ruleKey]} onChange={e => set(ruleKey, e.target.checked)} className="w-3.5 h-3.5 accent-blue-500" />
-                          <span className="text-xs text-gray-500">Rule</span>
+                          <span className="text-xs text-gray-500">{wb('typo_rule')}</span>
                         </label>
                         {local[ruleKey] && (
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs text-gray-400">Color</span>
+                            <span className="text-xs text-gray-400">{wb('typo_color')}</span>
                             <InlineColorPicker value={ruleColor} onChange={v => set(ruleColorKey, v)} paletteColors={paletteColors} popupAlign="right" />
                           </div>
                         )}
@@ -8864,7 +8876,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                     )}
                     <div className="w-px h-5 bg-gray-200" />
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-gray-400">Margin</span>
+                      <span className="text-xs text-gray-400">{wb('typo_margin')}</span>
                       <span className="text-xs text-gray-400">↑</span>
                       <input type="number" min="0" max="200" value={local[marginTopKey] ?? 0}
                         onChange={e => set(marginTopKey, Number(e.target.value))}
@@ -8877,7 +8889,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                     </div>
                     <div className="w-px h-5 bg-gray-200" />
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-gray-400">Font</span>
+                      <span className="text-xs text-gray-400">{wb('typo_font')}</span>
                       <FontPickerDropdown
                         value={local[fontKey] || ''}
                         onChange={v => set(fontKey, v)}
@@ -8892,17 +8904,17 @@ function DesignView({ site, onSave, saving, pages = [] }) {
 
             {/* Body line height row */}
             <div className="flex items-center gap-3 pt-3 border-t border-gray-100 mt-1">
-              <span className="text-xs font-bold text-gray-500 w-16 shrink-0">Body Line Height</span>
+              <span className="text-xs font-bold text-gray-500 w-16 shrink-0">{wb('typo_line_height')}</span>
               <input type="text" value={local.body_line_height || '1.75'} onChange={e => set('body_line_height', e.target.value)}
                 className="w-20 border border-gray-200 rounded-lg px-2 py-1 text-xs font-mono text-center focus:outline-none focus:ring-1 focus:ring-green-300" />
-              <span className="text-xs text-gray-400">e.g. 1.5, 1.75, 2 — controls spacing between body text lines</span>
+              <span className="text-xs text-gray-400">{wb('typo_body_line_height_hint')}</span>
             </div>
           </div>
 
           {/* Links */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Links</h3>
-            <p className="text-xs text-gray-400 mb-4">Style for hyperlinks within body content.</p>
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">{wb('typo_links')}</h3>
+            <p className="text-xs text-gray-400 mb-4">{wb('typo_links_hint')}</p>
             <div className="flex items-center gap-4">
               <div className="flex-1 p-3 rounded-lg border border-gray-100" style={{ background: local.bg_color }}>
                 <span style={{
@@ -8911,17 +8923,17 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                   color: local.link_color || local.accent_color || '#FFC567',
                   textDecoration: local.link_underline !== false ? 'underline' : 'none',
                 }}>
-                  Click here to learn more
+                  {wb('typo_link_example')}
                 </span>
               </div>
               <div className="flex flex-col gap-3 shrink-0">
                 <div className="flex items-center gap-2">
-                  <label className="text-xs font-medium text-gray-600 w-12">Color</label>
+                  <label className="text-xs font-medium text-gray-600 w-12">{wb('typo_color')}</label>
                   <InlineColorPicker value={local.link_color || local.accent_color || '#FFC567'} onChange={v => set('link_color', v)} paletteColors={paletteColors} />
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={local.link_underline !== false} onChange={e => set('link_underline', e.target.checked)} className="w-4 h-4 accent-green-600" />
-                  <span className="text-xs font-medium text-gray-600" style={{ textDecoration: 'underline' }}>Underline links</span>
+                  <span className="text-xs font-medium text-gray-600" style={{ textDecoration: 'underline' }}>{wb('typo_link_underline')}</span>
                 </label>
               </div>
             </div>
@@ -8933,8 +8945,8 @@ function DesignView({ site, onSave, saving, pages = [] }) {
       {designTab === 'images' && (
         <div>
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
-            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Image Styling</h3>
-            <p className="text-xs text-gray-400 mb-4">These styles apply to every image added inside content widgets across all pages of your site.</p>
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">{wb('img_styling_heading')}</h3>
+            <p className="text-xs text-gray-400 mb-4">{wb('img_styling_hint')}</p>
 
             {/* Live preview */}
             {(() => {
@@ -8956,10 +8968,10 @@ function DesignView({ site, onSave, saving, pages = [] }) {
             {/* Rounded corners */}
             <div className="pt-2 pb-4 border-b border-gray-100">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-gray-700">Rounded Corners</span>
+                <span className="text-sm font-semibold text-gray-700">{wb('img_rounded_corners')}</span>
                 <span className="text-xs font-mono text-gray-500">{local.image_border_radius || 0}%</span>
               </div>
-              <p className="text-xs text-gray-400 mb-3">0% is square. 50% makes a square image fully round (circle).</p>
+              <p className="text-xs text-gray-400 mb-3">{wb('img_rounded_hint')}</p>
               <input
                 type="range" min="0" max="50" step="1"
                 value={local.image_border_radius || 0}
@@ -8967,16 +8979,16 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                 className="w-full accent-green-600"
               />
               <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                <span>0% (square)</span>
-                <span>25%</span>
-                <span>50% (circle)</span>
+                <span>{wb('img_sq')}</span>
+                <span>{wb('img_25pct')}</span>
+                <span>{wb('img_circle')}</span>
               </div>
             </div>
 
             {/* Drop shadow */}
             <div className="pt-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-gray-700">Drop Shadow</span>
+                <span className="text-sm font-semibold text-gray-700">{wb('img_drop_shadow')}</span>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -8984,13 +8996,13 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                     onChange={e => set('image_shadow_enabled', e.target.checked)}
                     className="w-4 h-4 accent-green-600"
                   />
-                  <span className="text-xs font-medium text-gray-600">Enabled</span>
+                  <span className="text-xs font-medium text-gray-600">{wb('img_shadow_enabled')}</span>
                 </label>
               </div>
               {local.image_shadow_enabled && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Color</label>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">{wb('img_shadow_color')}</label>
                     <InlineColorPicker
                       value={local.image_shadow_color || 'rgba(0,0,0,0.35)'}
                       onChange={v => set('image_shadow_color', v)}
@@ -8999,7 +9011,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-xs font-medium text-gray-600">Distance</label>
+                      <label className="text-xs font-medium text-gray-600">{wb('img_shadow_distance')}</label>
                       <span className="text-xs font-mono text-gray-500">{local.image_shadow_distance || 0}px</span>
                     </div>
                     <input
@@ -9011,7 +9023,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-xs font-medium text-gray-600">Angle</label>
+                      <label className="text-xs font-medium text-gray-600">{wb('img_shadow_angle')}</label>
                       <span className="text-xs font-mono text-gray-500">{local.image_shadow_angle || 0}°</span>
                     </div>
                     <input
@@ -9021,15 +9033,15 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                       className="w-full accent-green-600"
                     />
                     <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                      <span>0° →</span>
-                      <span>90° ↓</span>
-                      <span>180° ←</span>
-                      <span>270° ↑</span>
+                      <span>{wb('img_shadow_angle_0')}</span>
+                      <span>{wb('img_shadow_angle_90')}</span>
+                      <span>{wb('img_shadow_angle_180')}</span>
+                      <span>{wb('img_shadow_angle_270')}</span>
                     </div>
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-xs font-medium text-gray-600">Blur</label>
+                      <label className="text-xs font-medium text-gray-600">{wb('img_shadow_blur')}</label>
                       <span className="text-xs font-mono text-gray-500">{local.image_shadow_blur || 0}px</span>
                     </div>
                     <input
@@ -9053,25 +9065,25 @@ function DesignView({ site, onSave, saving, pages = [] }) {
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
             <div className="flex items-center justify-between pb-2 border-b border-gray-100 mb-3">
               <div>
-                <h3 className="font-bold text-gray-800">Top Bar</h3>
-                <p className="text-xs text-gray-400 mt-0.5">Optional strip above the header — great for contact info or announcements.</p>
+                <h3 className="font-bold text-gray-800">{wb('header_top_bar')}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{wb('header_top_bar_hint')}</p>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={!!local.top_bar_enabled} onChange={e => set('top_bar_enabled', e.target.checked)} className="w-4 h-4 accent-green-600" />
-                <span className="text-sm font-medium text-gray-700">Enabled</span>
+                <span className="text-sm font-medium text-gray-700">{wb('header_top_bar_enabled')}</span>
               </label>
             </div>
             {local.top_bar_enabled && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{wb('header_top_bar_content')}</label>
                   <TopBarEditor value={local.top_bar_html} onChange={v => set('top_bar_html', v)} bgColor={local.top_bar_bg_color}
                     paletteColors={[local.primary_color, local.secondary_color, local.accent_color, local.bg_color, local.text_color, local.nav_text_color, local.footer_bg_color, local.top_bar_bg_color, local.top_bar_text_color].filter(Boolean)}
                     pages={pages} />
-                  <p className="text-xs text-gray-400 mt-1">Highlight text to apply formatting. Use 🔗 to insert a link or email address.</p>
+                  <p className="text-xs text-gray-400 mt-1">{wb('header_top_bar_content_hint')}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{wb('header_top_bar_bg')}</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     {local.top_bar_bg_color !== 'transparent' && (
                       <InlineColorPicker value={local.top_bar_bg_color || '#f8f5ef'} onChange={v => set('top_bar_bg_color', v)} paletteColors={paletteColors} />
@@ -9084,18 +9096,18 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                         color: local.top_bar_bg_color === 'transparent' ? '#2563eb' : '#6b7280' }}>
                       <span style={{ width:12, height:12, borderRadius:2, display:'inline-block', border:'1px solid #d1d5db',
                         background: checkered, backgroundSize:'6px 6px', backgroundPosition:'0 0,0 3px,3px -3px,-3px 0' }} />
-                      {local.top_bar_bg_color === 'transparent' ? 'Transparent ✓' : 'Transparent'}
+                      {local.top_bar_bg_color === 'transparent' ? wb('transparent_checked') : wb('transparent')}
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{wb('header_top_bar_text')}</label>
                   <InlineColorPicker value={local.top_bar_text_color} onChange={v => set('top_bar_text_color', v)} paletteColors={paletteColors} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Alignment</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{wb('header_top_bar_align')}</label>
                   <div className="flex gap-2">
-                    {[['left','Left'],['center','Center'],['right','Right']].map(([v,l]) => (
+                    {[['left',wb('align_left')],['center',wb('align_center')],['right',wb('align_right')]].map(([v,l]) => (
                       <button key={v} onClick={() => set('top_bar_align', v)}
                         className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${local.top_bar_align === v ? 'bg-[#3D6B34] text-white border-[#3D6B34]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
                         {l}
@@ -9109,13 +9121,13 @@ function DesignView({ site, onSave, saving, pages = [] }) {
 
           {/* Header Banner */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Header Banner</h3>
-            <p className="text-xs text-gray-400 mb-3">Large image area above the navigation — contains your logo and site name.</p>
-            <FormField label="Header Layout">
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">{wb('header_banner')}</h3>
+            <p className="text-xs text-gray-400 mb-3">{wb('header_banner_hint')}</p>
+            <FormField label={wb('header_layout_lbl')}>
               <div className="flex gap-2">
                 {[
-                  ['banner_top', 'Banner above Nav', 'Logo on a colored banner, then the nav bar'],
-                  ['nav_top', 'Nav above Logo', 'Slim nav bar on top, large centered logo below'],
+                  ['banner_top', wb('header_layout_banner_top'), 'Logo on a colored banner, then the nav bar'],
+                  ['nav_top', wb('header_layout_nav_top'), 'Slim nav bar on top, large centered logo below'],
                 ].map(([v, l, hint]) => (
                   <button key={v}
                     onClick={() => set('header_layout', v)}
@@ -9128,28 +9140,28 @@ function DesignView({ site, onSave, saving, pages = [] }) {
             </FormField>
             <HeaderImagesManager websiteId={site.website_id} hideTitle />
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <FormField label="Banner Height (px)">
+              <FormField label={wb('banner_height_lbl')}>
                 <div className="flex items-center gap-3">
                   <input type="range" min={60} max={400} value={local.header_height || 120} onChange={e => set('header_height', Number(e.target.value))} className="flex-1 accent-green-600" />
                   <span className="text-sm font-mono text-gray-600 w-12">{local.header_height || 120}px</span>
                 </div>
               </FormField>
               <div className="mt-3">
-                <ImageUploadField label="Logo" value={local.logo_url} onChange={url => set('logo_url', url)} hint="Appears in the banner. Recommended: PNG with transparent background." />
+                <ImageUploadField label={wb('logo_lbl')} value={local.logo_url} onChange={url => set('logo_url', url)} hint={wb('logo_hint')} />
               </div>
               <div className="mt-3">
-                <ImageUploadField label="Favicon" value={local.favicon_url} onChange={url => set('favicon_url', url)} hint="Your website's browser tab icon (shown on your site only, not on OatmealFarmNetwork.com). Recommended: square PNG or ICO, 32×32 or 64×64 px." />
+                <ImageUploadField label={wb('favicon_lbl')} value={local.favicon_url} onChange={url => set('favicon_url', url)} hint={wb('favicon_hint')} />
               </div>
-              <ColorRowTransparent label="Banner Background Color" field="header_banner_bg_color" fallback={local.primary_color || '#3D6B34'} hint="Solid color shown when no banner image is uploaded. Transparent shows nothing behind the logo." />
-              <ColorRow label="Site Name / Logo Text Color" field="nav_text_color" hint="Color of the site name displayed in the banner" />
+              <ColorRowTransparent label={wb('banner_bg_lbl')} field="header_banner_bg_color" fallback={local.primary_color || '#3D6B34'} hint={wb('banner_bg_hint')} />
+              <ColorRow label={wb('site_name_color_lbl')} field="nav_text_color" hint={wb('site_name_color_hint')} />
               <div className="flex items-center justify-between py-3 border-t border-gray-50 mt-1">
                 <div>
-                  <span className="text-sm font-medium text-gray-700">Show Site Name</span>
-                  <p className="text-xs text-gray-400 mt-0.5">Hide if your logo already contains your site name</p>
+                  <span className="text-sm font-medium text-gray-700">{wb('show_site_name_lbl')}</span>
+                  <p className="text-xs text-gray-400 mt-0.5">{wb('show_site_name_hint')}</p>
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={local.show_site_name !== false} onChange={e => set('show_site_name', e.target.checked)} className="w-4 h-4 accent-green-600" />
-                  <span className="text-sm text-gray-600">{local.show_site_name !== false ? 'Visible' : 'Hidden'}</span>
+                  <span className="text-sm text-gray-600">{local.show_site_name !== false ? wb('show_site_name_visible') : wb('show_site_name_hidden')}</span>
                 </label>
               </div>
             </div>
@@ -9157,41 +9169,41 @@ function DesignView({ site, onSave, saving, pages = [] }) {
 
           {/* Navigation Bar */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Navigation Bar</h3>
-            <p className="text-xs text-gray-400 mb-3">The bar containing your site's navigation links.</p>
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">{wb('nav_heading')}</h3>
+            <p className="text-xs text-gray-400 mb-3">{wb('nav_hint')}</p>
             <div className="mb-3">
-              <ImageUploadField label="Nav Bar Background Image" value={local.nav_bg_image_url} onChange={url => set('nav_bg_image_url', url)} hint="Optional texture or image behind the nav links. Leave blank to use the solid color below." />
+              <ImageUploadField label={wb('nav_bg_img_lbl')} value={local.nav_bg_image_url} onChange={url => set('nav_bg_image_url', url)} hint={wb('nav_bg_img_hint')} />
             </div>
-            <ColorRow label="Nav Background Color" field="primary_color" hint="Solid color — used when no background image is set, or as overlay" />
-            <ColorRow label="Nav Link Color" field="nav_text_color" hint="Color of the navigation links" />
-            <ColorRow label="Dropdown Background Color" field="dropdown_bg_color" hint="Background color of dropdown menus" />
-            <ColorRow label="Dropdown Hover Color" field="dropdown_hover_color" hint="Background color when hovering a dropdown item" />
+            <ColorRow label={wb('nav_bg_color_lbl')} field="primary_color" hint={wb('nav_bg_color_hint')} />
+            <ColorRow label={wb('nav_link_color_lbl')} field="nav_text_color" hint={wb('nav_link_color_hint')} />
+            <ColorRow label={wb('nav_dropdown_bg_lbl')} field="dropdown_bg_color" hint={wb('nav_dropdown_bg_hint')} />
+            <ColorRow label={wb('nav_dropdown_hover_lbl')} field="dropdown_hover_color" hint={wb('nav_dropdown_hover_hint')} />
             {/* Gradient second color + direction */}
             <div className="py-3 border-b border-gray-50">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-medium text-gray-700">Dropdown Gradient (optional)</span>
-                  <p className="text-xs text-gray-400 mt-0.5">Add a second color to make the dropdown a gradient</p>
+                  <span className="text-sm font-medium text-gray-700">{wb('nav_gradient_lbl')}</span>
+                  <p className="text-xs text-gray-400 mt-0.5">{wb('nav_gradient_hint')}</p>
                 </div>
                 <InlineColorPicker value={local.dropdown_bg_color2 || '#000000'} onChange={v => set('dropdown_bg_color2', v)} paletteColors={paletteColors} popupAlign="right" />
               </div>
               {local.dropdown_bg_color2 && (
                 <div className="mt-2 flex items-center gap-3">
-                  <span className="text-xs text-gray-500 w-28 shrink-0">Gradient Direction</span>
+                  <span className="text-xs text-gray-500 w-28 shrink-0">{wb('nav_gradient_dir_lbl')}</span>
                   <select
                     value={local.dropdown_gradient_dir || '135deg'}
                     onChange={e => set('dropdown_gradient_dir', e.target.value)}
                     className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 bg-white"
                   >
-                    <option value="to bottom">Top → Bottom</option>
-                    <option value="to right">Left → Right</option>
-                    <option value="135deg">Diagonal ↘</option>
-                    <option value="45deg">Diagonal ↗</option>
+                    <option value="to bottom">{wb('nav_dir_top_bottom')}</option>
+                    <option value="to right">{wb('nav_dir_left_right')}</option>
+                    <option value="135deg">{wb('nav_dir_diag_down')}</option>
+                    <option value="45deg">{wb('nav_dir_diag_up')}</option>
                   </select>
                   <button
                     onClick={() => set('dropdown_bg_color2', '')}
                     className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded border border-gray-200 hover:border-red-300"
-                  >Clear</button>
+                  >{wb('nav_gradient_clear')}</button>
                   <div style={{
                     width: 40, height: 20, borderRadius: 4, border: '1px solid #e5e7eb',
                     background: `linear-gradient(${local.dropdown_gradient_dir || '135deg'}, ${local.dropdown_bg_color || local.primary_color || '#3D6B34'}, ${local.dropdown_bg_color2})`
@@ -9199,29 +9211,29 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                 </div>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-3">Live preview below shows top bar + banner + nav together.</p>
+            <p className="text-xs text-gray-400 mt-3">{wb('nav_preview_hint')}</p>
             {renderHeaderPreview()}
           </div>
 
           {/* ── Footer ── */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
-            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Footer</h3>
+            <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">{wb('footer_heading')}</h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-3">
               <div>
                 <div className="mb-3">
-                  <ImageUploadField label="Background Image" value={local.footer_bg_image_url} onChange={url => set('footer_bg_image_url', url)} hint="Optional texture or image. Leave blank to use the solid color." />
+                  <ImageUploadField label={wb('footer_bg_img_lbl')} value={local.footer_bg_image_url} onChange={url => set('footer_bg_image_url', url)} hint={wb('footer_bg_img_hint')} />
                 </div>
-                <ColorRowTransparent label="Footer Background Color" field="footer_bg_color" fallback={local.primary_color || '#3D6B34'} hint="Used when no background image is set" />
-                <ColorRowTransparent label="Copyright Bar Background" field="copyright_bar_bg_color" fallback="rgba(0,0,0,0.15)" hint="Strip at the very bottom containing the copyright line" />
+                <ColorRowTransparent label={wb('footer_bg_color_lbl')} field="footer_bg_color" fallback={local.primary_color || '#3D6B34'} hint={wb('footer_bg_color_hint')} />
+                <ColorRowTransparent label={wb('footer_copyright_bar_lbl')} field="copyright_bar_bg_color" fallback="rgba(0,0,0,0.15)" hint={wb('footer_copyright_bar_hint')} />
                 <div className="mt-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Footer Height (px)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{wb('footer_height_lbl')}</label>
                   <div className="flex items-center gap-3">
                     <input type="range" min={80} max={600} value={local.footer_height || 200} onChange={e => set('footer_height', Number(e.target.value))} className="flex-1 accent-green-600" />
                     <span className="text-sm font-mono text-gray-600 w-12">{local.footer_height || 200}px</span>
                   </div>
                 </div>
                 <div className="mt-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Bottom Corner Radius (px)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{wb('footer_radius_lbl')}</label>
                   <div className="flex items-center gap-3">
                     <input type="range" min={0} max={60} value={local.footer_bottom_radius || 0} onChange={e => set('footer_bottom_radius', Number(e.target.value))} className="flex-1 accent-green-600" />
                     <span className="text-sm font-mono text-gray-600 w-12">{local.footer_bottom_radius || 0}px</span>
@@ -9229,23 +9241,23 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Copyright Text</label>
-                <p className="text-xs text-gray-400 mb-2">Always displayed in the lower-left corner of the footer.</p>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{wb('footer_copyright_text_lbl')}</label>
+                <p className="text-xs text-gray-400 mb-2">{wb('footer_copyright_hint')}</p>
                 <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
                   placeholder={`© ${new Date().getFullYear()} ${site.site_name} · All rights reserved`}
                   value={local.copyright_text} onChange={e => set('copyright_text', e.target.value)} />
-                <p className="text-xs text-gray-400 mt-1">Leave blank to use the default copyright line.</p>
+                <p className="text-xs text-gray-400 mt-1">{wb('footer_copyright_blank_hint')}</p>
               </div>
             </div>
             <div className="mt-4">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700">Footer Content</label>
-                  <p className="text-xs text-gray-400 mt-0.5">Displayed above the copyright bar. Clear all text to remove.</p>
+                  <label className="block text-sm font-semibold text-gray-700">{wb('footer_content_lbl')}</label>
+                  <p className="text-xs text-gray-400 mt-0.5">{wb('footer_content_hint')}</p>
                 </div>
                 {local.footer_html && (
                   <button onClick={() => set('footer_html', '')} className="text-xs text-white rounded-lg px-3 py-1 transition-colors" style={{ background: '#C0382B' }}>
-                    Remove Content
+                    {wb('footer_remove_content')}
                   </button>
                 )}
               </div>
@@ -9255,7 +9267,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
                 pages={pages} />
             </div>
             <div className="mt-4">
-              <p className="text-xs text-gray-400 mb-2 font-medium">Preview</p>
+              <p className="text-xs text-gray-400 mb-2 font-medium">{wb('footer_preview')}</p>
               {renderFooterPreview()}
             </div>
           </div>
@@ -9265,11 +9277,11 @@ function DesignView({ site, onSave, saving, pages = [] }) {
       {/* Always visible: palette strip + save */}
       <div className="mt-5 flex items-center justify-end gap-3">
         {autoSaved && !saving && (
-          <span className="text-xs text-green-600 font-medium animate-pulse">✓ Auto-saved</span>
+          <span className="text-xs text-green-600 font-medium animate-pulse">{wb('design_auto_saved')}</span>
         )}
         <button onClick={() => onSave(local)} disabled={saving}
           className="regsubmit2 px-8 py-2.5 text-sm disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save Design'}
+          {saving ? wb('design_saving') : wb('design_save')}
         </button>
       </div>
     </div>
@@ -9278,6 +9290,7 @@ function DesignView({ site, onSave, saving, pages = [] }) {
 
 // ── Version History panel ─────────────────────────────────────────
 function VersionHistoryPanel({ websiteId }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const [versions, setVersions]   = useState([]);
   const [label, setLabel]         = useState('');
   const [saving, setSaving]       = useState(false);
@@ -9299,12 +9312,12 @@ function VersionHistoryPanel({ websiteId }) {
       });
       setLabel('');
       load();
-    } catch { alert('Could not save version.'); }
+    } catch { alert(wb('version_save_error')); }
     finally { setSaving(false); }
   };
 
   const restore = async (vid, lbl) => {
-    if (!window.confirm(`Restore version "${lbl}"? Your current site will be replaced.`)) return;
+    if (!window.confirm(wb('version_restore_confirm', { label: lbl }))) return;
     setRestoring(vid);
     try {
       await fetch(`${API}/api/website/versions/${vid}/restore`, {
@@ -9312,37 +9325,37 @@ function VersionHistoryPanel({ websiteId }) {
         headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
       });
       window.location.reload();
-    } catch { alert('Could not restore version.'); }
+    } catch { alert(wb('version_restore_error')); }
     finally { setRestoring(false); }
   };
 
   return (
     <div>
-      <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Version History</h3>
-      <p className="text-xs text-gray-400 mb-3">Save a snapshot of your site to roll back later.</p>
+      <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">{wb('version_heading')}</h3>
+      <p className="text-xs text-gray-400 mb-3">{wb('version_hint')}</p>
       <div className="flex gap-2 mb-4">
         <input className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
-          placeholder="Version label (Optional)"
+          placeholder={wb('version_label_ph')}
           value={label} onChange={e => setLabel(e.target.value)} />
         <button onClick={save} disabled={saving}
           className="bg-[#3D6B34] text-white text-sm font-semibold px-4 rounded-lg hover:bg-[#2d5226] transition-colors disabled:opacity-50">
-          {saving ? '…' : 'Save Version'}
+          {saving ? '…' : wb('version_save_btn')}
         </button>
       </div>
       {versions.length === 0
-        ? <p className="text-xs text-gray-400">No saved versions yet.</p>
+        ? <p className="text-xs text-gray-400">{wb('version_none')}</p>
         : (
           <div className="space-y-2">
             {versions.map(v => (
               <div key={v.version_id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
                 <div>
-                  <p className="text-sm font-medium text-gray-800">{v.version_label || `Version ${v.version_id}`}</p>
+                  <p className="text-sm font-medium text-gray-800">{v.version_label || wb('version_n', { n: v.version_id })}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{new Date(v.created_at).toLocaleString()}</p>
                 </div>
-                <button onClick={() => restore(v.version_id, v.version_label || `Version ${v.version_id}`)}
+                <button onClick={() => restore(v.version_id, v.version_label || wb('version_n', { n: v.version_id }))}
                   disabled={restoring === v.version_id}
                   className="text-xs font-medium text-[#3D6B34] border border-[#3D6B34]/30 px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50">
-                  {restoring === v.version_id ? 'Restoring…' : 'Restore'}
+                  {restoring === v.version_id ? wb('version_restoring') : wb('version_restore')}
                 </button>
               </div>
             ))}
@@ -9355,6 +9368,7 @@ function VersionHistoryPanel({ websiteId }) {
 
 // ── Settings full view ────────────────────────────────────────────
 function SettingsView({ site, onSave, saving, onDelete }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [local, setLocal] = useState({
     site_name:     site.site_name     || '',
@@ -9381,58 +9395,58 @@ function SettingsView({ site, onSave, saving, onDelete }) {
 
   return (
     <div>
-      <h2 className="text-lg font-bold text-gray-900 mb-1">Settings</h2>
-      <p className="text-sm text-gray-500 mb-5">Update your site name, contact information, and social links.</p>
+      <h2 className="text-lg font-bold text-gray-900 mb-1">{wb('settings_heading')}</h2>
+      <p className="text-sm text-gray-500 mb-5">{wb('settings_hint')}</p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 className="font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100">Site Info</h3>
-          {fi('site_name', 'Site Name')}
-          <FormField label="URL Slug">
+          <h3 className="font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100">{wb('settings_site_info')}</h3>
+          {fi('site_name', wb('settings_site_name'))}
+          <FormField label={wb('settings_url_slug')}>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-400 shrink-0">{SITE_BASE_URL}/sites/</span>
               <input className={inp} value={local.slug} placeholder="my-farm"
                 onChange={e => setLocal(p => ({ ...p, slug: slugify(e.target.value) }))} />
             </div>
           </FormField>
-          {fi('tagline', 'Tagline', 'Fresh, local, sustainably grown.')}
+          {fi('tagline', wb('settings_tagline'), wb('settings_tagline_ph'))}
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 className="font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100">Contact Info</h3>
-          {fi('phone', 'Phone', '(555) 000-0000', 'tel')}
-          {fi('email', 'Email', 'hello@yourfarm.com', 'email')}
-          {fi('address', 'Address', '123 Farm Rd, Town, ST 12345')}
+          <h3 className="font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100">{wb('settings_contact')}</h3>
+          {fi('phone', wb('settings_phone'), wb('settings_phone_ph'), 'tel')}
+          {fi('email', wb('settings_email'), wb('settings_email_ph'), 'email')}
+          {fi('address', wb('settings_address'), wb('settings_address_ph'))}
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
-          <h3 className="font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100">Social Media</h3>
+          <h3 className="font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100">{wb('settings_social')}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {fi('facebook_url',  'Facebook URL',  'https://facebook.com/yourpage')}
-            {fi('instagram_url', 'Instagram URL', 'https://instagram.com/yourhandle')}
-            {fi('twitter_url',   'X / Twitter URL', 'https://x.com/yourhandle')}
+            {fi('facebook_url',  wb('settings_facebook'),  wb('settings_facebook_ph'))}
+            {fi('instagram_url', wb('settings_instagram'), wb('settings_instagram_ph'))}
+            {fi('twitter_url',   wb('settings_twitter'),   wb('settings_twitter_ph'))}
           </div>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
-          <h3 className="font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100">SEO &amp; Metadata</h3>
+          <h3 className="font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100">{wb('settings_seo')}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Meta Title (Optional)">
+            <FormField label={wb('settings_meta_title')}>
               <input className={inp} value={local.meta_title} placeholder={local.site_name}
                 onChange={e => setLocal(p => ({ ...p, meta_title: e.target.value }))} />
-              <p className="text-xs text-gray-400 mt-1">Shown in browser tab and Google results. Defaults to site name.</p>
+              <p className="text-xs text-gray-400 mt-1">{wb('settings_meta_title_hint')}</p>
             </FormField>
-            <FormField label="Canonical URL (Optional)">
-              <input className={inp} value={local.canonical_url} placeholder="https://yourfarm.com"
+            <FormField label={wb('settings_canonical')}>
+              <input className={inp} value={local.canonical_url} placeholder={wb('settings_canonical_ph')}
                 onChange={e => setLocal(p => ({ ...p, canonical_url: e.target.value }))} />
-              <p className="text-xs text-gray-400 mt-1">Your primary domain if using a custom domain.</p>
+              <p className="text-xs text-gray-400 mt-1">{wb('settings_canonical_hint')}</p>
             </FormField>
-            <FormField label="Social Share Image URL (Optional)">
-              <input className={inp} value={local.og_image_url} placeholder="https://…/og-image.jpg"
+            <FormField label={wb('settings_og_image')}>
+              <input className={inp} value={local.og_image_url} placeholder={wb('settings_og_image_ph')}
                 onChange={e => setLocal(p => ({ ...p, og_image_url: e.target.value }))} />
-              <p className="text-xs text-gray-400 mt-1">Image shown when sharing on Facebook, Twitter, etc. Recommended: 1200×630px.</p>
+              <p className="text-xs text-gray-400 mt-1">{wb('settings_og_image_hint')}</p>
             </FormField>
-            <FormField label="Schema / Structured Data (JSON-LD, Optional)">
+            <FormField label={wb('settings_schema')}>
               <textarea className={`${inp} font-mono text-xs min-h-[80px] resize-y`}
                 value={(() => { try { const p = JSON.parse(local.seo_extras_json || '{}'); return p.schema_jsonld || ''; } catch { return ''; } })()}
                 placeholder={'{\n  "@context": "https://schema.org",\n  "@type": "LocalBusiness",\n  "name": "Your Farm"\n}'}
@@ -9442,13 +9456,13 @@ function SettingsView({ site, onSave, saving, onDelete }) {
                     setLocal(p => ({ ...p, seo_extras_json: JSON.stringify({ ...parsed, schema_jsonld: e.target.value }) }));
                   } catch { setLocal(p => ({ ...p, seo_extras_json: JSON.stringify({ schema_jsonld: e.target.value }) })); }
                 }} />
-              <p className="text-xs text-gray-400 mt-1">Structured data helps search engines understand your business.</p>
+              <p className="text-xs text-gray-400 mt-1">{wb('settings_schema_hint')}</p>
             </FormField>
           </div>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
-          <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Custom Domain</h3>
+          <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">{wb('settings_custom_domain')}</h3>
           <DomainInstructions siteSlug={site.slug} />
         </div>
       </div>
@@ -9456,11 +9470,11 @@ function SettingsView({ site, onSave, saving, onDelete }) {
       <div className="mt-5 flex items-center justify-between">
         <button onClick={() => setConfirmDelete(true)}
           className="text-sm text-white rounded-xl px-4 py-2.5 transition-colors" style={{ background: '#C0382B' }}>
-          Delete Website
+          {wb('settings_delete')}
         </button>
         <button onClick={() => onSave(local)} disabled={saving}
           className="regsubmit2 px-8 py-2.5 text-sm disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save Settings'}
+          {saving ? wb('settings_saving') : wb('settings_save')}
         </button>
       </div>
 
@@ -9473,21 +9487,21 @@ function SettingsView({ site, onSave, saving, onDelete }) {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 440, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
             <div style={{ fontSize: 36, marginBottom: 12, textAlign: 'center' }}>⚠️</div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 8, textAlign: 'center' }}>Delete Website?</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 8, textAlign: 'center' }}>{wb('settings_delete_title')}</h2>
             <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 6, textAlign: 'center' }}>
-              This will <strong>permanently delete</strong> your website, all pages, and all content.
+              {wb('settings_delete_body')}
             </p>
             <p style={{ fontSize: 14, color: '#C0382B', fontWeight: 600, marginBottom: 24, textAlign: 'center' }}>
-              This action cannot be undone.
+              {wb('settings_delete_warning')}
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
               <button onClick={() => setConfirmDelete(false)}
                 style={{ flex: 1, padding: '10px 20px', borderRadius: 10, border: '1px solid #d1d5db', background: '#fff', color: '#374151', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-                Cancel
+                {wb('settings_delete_cancel')}
               </button>
               <button onClick={() => { setConfirmDelete(false); onDelete(); }}
                 style={{ flex: 1, padding: '10px 20px', borderRadius: 10, border: 'none', background: '#C0382B', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-                Yes, Delete Website
+                {wb('settings_delete_yes')}
               </button>
             </div>
           </div>
@@ -9499,6 +9513,7 @@ function SettingsView({ site, onSave, saving, onDelete }) {
 
 // ── Domain connection instructions ───────────────────────────────
 function DomainInstructions({ siteSlug }) {
+  const { t } = useTranslation(); const wb = k => t(`website_builder.${k}`);
   const [registrar, setRegistrar] = useState('godaddy');
   const [domain, setDomain] = useState('');
   const [copied, setCopied] = useState(null);
@@ -9515,7 +9530,7 @@ function DomainInstructions({ siteSlug }) {
   const CopyBtn = ({ text, id }) => (
     <button onClick={() => copy(text, id)}
       className={`ml-2 px-2 py-0.5 text-xs rounded font-medium transition-colors ${copied === id ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-      {copied === id ? '✓ Copied' : 'Copy'}
+      {copied === id ? wb('domain_copied') : wb('domain_copy')}
     </button>
   );
 
@@ -9530,16 +9545,16 @@ function DomainInstructions({ siteSlug }) {
   return (
     <div className="mt-3">
       <p className="text-sm text-gray-600 mb-4">
-        Connect a custom domain (e.g. <strong>yourfarm.com</strong>) to your website. Your site is currently accessible at:
+        {wb('domain_intro')}
         <a href={PUBLIC_URL} target="_blank" rel="noreferrer" className="ml-1 text-[#3D6B34] underline break-all">{PUBLIC_URL}</a>
       </p>
 
       <div className="flex gap-2 mb-5 flex-wrap">
         {[
-          { id: 'godaddy',    label: '🐢 GoDaddy' },
-          { id: 'namecheap',  label: 'Namecheap' },
-          { id: 'cloudflare', label: 'Cloudflare' },
-          { id: 'other',      label: 'Other Registrar' },
+          { id: 'godaddy',    label: wb('domain_godaddy') },
+          { id: 'namecheap',  label: wb('domain_namecheap') },
+          { id: 'cloudflare', label: wb('domain_cloudflare') },
+          { id: 'other',      label: wb('domain_other') },
         ].map(r => (
           <button key={r.id} onClick={() => setRegistrar(r.id)}
             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${registrar === r.id ? 'bg-[#3D6B34] text-white border-[#3D6B34]' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}>
@@ -9549,8 +9564,8 @@ function DomainInstructions({ siteSlug }) {
       </div>
 
       <div className="mb-5">
-        <label className="block text-sm font-semibold text-gray-700 mb-1">Your Domain Name</label>
-        <input className={inp + ' max-w-sm'} placeholder="yourfarm.com" value={domain}
+        <label className="block text-sm font-semibold text-gray-700 mb-1">{wb('domain_your_domain')}</label>
+        <input className={inp + ' max-w-sm'} placeholder={wb('domain_ph')} value={domain}
           onChange={e => setDomain(e.target.value.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, ''))} />
       </div>
 
@@ -9644,7 +9659,7 @@ function DomainInstructions({ siteSlug }) {
       )}
 
       <div className="mt-5 p-4 rounded-xl bg-[#3D6B34]/5 border border-[#3D6B34]/20">
-        <p className="text-sm font-semibold text-[#3D6B34] mb-1">Need help?</p>
+        <p className="text-sm font-semibold text-[#3D6B34] mb-1">{wb('domain_need_help')}</p>
         <p className="text-xs text-gray-600">
           Email <a href="mailto:john@oatmealfarmnetwork.com" className="text-[#3D6B34] underline font-medium">john@oatmealfarmnetwork.com</a> with:
           <br />• Your domain name (e.g. {domain || 'yourfarm.com'})

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
+import SaigeWidget from './SaigeWidget';
 
 const ACCENT = '#3D6B34';
 
@@ -186,6 +187,7 @@ export default function HerdHealthLayout({ children, Business, BusinessID, Peopl
           {children}
         </div>
       </div>
+      <SaigeWidget businessId={BusinessID} pageContext="Herd Health" />
     </AccountLayout>
   );
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
+import AnimalPicker from './AnimalPicker';
 
 const API = import.meta.env.VITE_API_URL;
 const ACCENT = '#3D6B34';
@@ -17,13 +18,16 @@ const EMPTY = {
   PrescribedBy:'', AdministeredBy:'', Cost:'', Outcome:'', Notes:'',
 };
 
-function Form({ init, onSave, onCancel }) {
+function Form({ init, onSave, onCancel, businessId }) {
   const [f, setF] = useState(init || EMPTY);
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
   return (
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Animal Tag / ID"><input value={f.AnimalTag} onChange={set('AnimalTag')} className={inp} /></Field>
+        <Field label="Animal">
+          <AnimalPicker businessId={businessId} value={f.AnimalTag} animalId={f.AnimalID}
+            onChange={(tag, id) => setF(p => ({ ...p, AnimalTag: tag, AnimalID: id }))} />
+        </Field>
         <Field label="Treatment Date"><input type="date" value={f.TreatmentDate} onChange={set('TreatmentDate')} className={inp} /></Field>
         <Field label="Diagnosis" className="sm:col-span-2"><input value={f.Diagnosis} onChange={set('Diagnosis')} className={inp} /></Field>
         <Field label="Medication / Drug"><input value={f.Medication} onChange={set('Medication')} className={inp} /></Field>
@@ -116,7 +120,7 @@ export default function HerdHealthTreatments() {
           </div>
         )}
 
-        {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} />}
+        {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} businessId={BusinessID} />}
 
         {loading ? (
           <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">Loading…</div>
@@ -127,7 +131,7 @@ export default function HerdHealthTreatments() {
             {rows.map(row => (
               <div key={row.TreatmentID}>
                 {editing?.TreatmentID === row.TreatmentID ? (
-                  <Form init={editing} onSave={save} onCancel={() => setEditing(null)} />
+                  <Form init={editing} onSave={save} onCancel={() => setEditing(null)} businessId={BusinessID} />
                 ) : (
                   <div className="bg-white rounded-xl border border-gray-200 p-4">
                     <div className="flex items-start justify-between gap-3">

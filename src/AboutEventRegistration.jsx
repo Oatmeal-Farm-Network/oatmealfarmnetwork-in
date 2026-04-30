@@ -6,7 +6,7 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 
-const ACCENT = '#B87F0B';
+const ACCENT = '#3D6B34';
 
 const S16 = ({ children }) => (
   <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor"
@@ -83,84 +83,129 @@ export default function AboutEventRegistration() {
       />
       <Header />
 
-      {/* Hero */}
-      <div className="relative text-white py-20 px-4" style={{ backgroundColor: ACCENT }}>
-        <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-white">
-              <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="1" y="3" width="14" height="11" rx="1"/>
-                <path d="M5 3V1M11 3V1"/>
-                <line x1="1" y1="7" x2="15" y2="7"/>
-              </svg>
+      {/* ── Hero ── */}
+      <div className="mx-auto px-4 pt-2 md:pt-6 w-full" style={{ maxWidth: '1300px' }}>
+        <Breadcrumbs items={[
+          { label: 'Home', to: '/' },
+          { label: t('event_reg_about.hero_title') },
+        ]} />
+
+        <div className="relative w-full overflow-hidden rounded-xl rounded-b-none md:rounded-b-xl">
+          <img
+            src="/images/CoreFeaturesEventRegistration.webp"
+            alt={t('event_reg_about.hero_title')}
+            className="w-full object-cover block h-[160px] md:h-[250px]"
+            loading="eager"
+            onError={e => { e.target.onerror = null; e.target.src = '/images/OFNEvents.webp'; }}
+          />
+          <div
+            className="hidden md:block absolute inset-0"
+            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }}
+          />
+          <div className="hidden md:flex absolute inset-0 flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
+            <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
+              {t('event_reg_about.hero_title')}
+            </h1>
+            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+              {t('event_reg_about.hero_body')}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/events/add"
+                className="font-bold px-5 py-2 rounded-lg text-white text-sm transition hover:opacity-90"
+                style={{ backgroundColor: ACCENT }}
+              >
+                {t('event_reg_about.hero_cta1')}
+              </Link>
+              <Link
+                to="/events"
+                className="font-bold px-5 py-2 rounded-lg border-2 text-sm transition hover:bg-gray-50"
+                style={{ color: ACCENT, borderColor: ACCENT }}
+              >
+                {t('event_reg_about.hero_cta2')}
+              </Link>
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-white/90">{t('event_reg_about.hero_badge')}</span>
           </div>
-          <h1 className="text-4xl font-bold mb-3 drop-shadow">{t('event_reg_about.hero_title')}</h1>
-          <p className="text-lg text-white/95 drop-shadow max-w-2xl">{t('event_reg_about.hero_body')}</p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/events/add"
-              className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition"
-              style={{ color: ACCENT }}>
+        </div>
+
+        {/* Mobile: text below image */}
+        <div className="md:hidden bg-white px-5 py-4 rounded-b-xl border border-t-0 border-gray-200">
+          <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.4rem', fontWeight: 'bold', margin: '0 0 8px', lineHeight: 1.2 }}>
+            {t('event_reg_about.hero_title')}
+          </h1>
+          <p style={{ color: '#111111', fontSize: '0.85rem', margin: '0 0 12px', lineHeight: 1.6 }}>
+            {t('event_reg_about.hero_body')}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to="/events/add"
+              className="font-bold px-4 py-2 rounded-lg text-white text-sm transition hover:opacity-90"
+              style={{ backgroundColor: ACCENT }}
+            >
               {t('event_reg_about.hero_cta1')}
             </Link>
-            <Link to="/events"
-              className="border-2 border-white/60 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-white/10 transition">
+            <Link
+              to="/events"
+              className="font-bold px-4 py-2 rounded-lg border-2 text-sm transition hover:bg-gray-50"
+              style={{ color: ACCENT, borderColor: ACCENT }}
+            >
               {t('event_reg_about.hero_cta2')}
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 py-5 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          {stats.map(s => (
-            <div key={s.l}>
-              <div className="text-2xl font-bold" style={{ color: ACCENT }}>{s.v}</div>
-              <div className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide font-semibold">{s.l}</div>
-            </div>
-          ))}
+      {/* ── Main content ── */}
+      <div className="mx-auto px-4 py-8 w-full flex-grow" style={{ maxWidth: '1300px' }}>
+
+        {/* Stats bar */}
+        <div className="bg-white border border-gray-200 rounded-xl mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-100">
+            {stats.map(s => (
+              <div key={s.l} className="text-center py-4 px-2">
+                <div className="text-2xl font-bold" style={{ color: ACCENT }}>{s.v}</div>
+                <div className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide font-semibold">{s.l}</div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8 grow w-full">
-        <Breadcrumbs items={[
-          { label: 'Home', to: '/' },
-          { label: t('event_reg_about.hero_title') },
-        ]} />
-
-        <section className="mt-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3"
+        {/* What is it */}
+        <section className="mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-3"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
             {t('event_reg_about.what_title')}
           </h2>
-          <p className="text-gray-700 leading-relaxed">{t('event_reg_about.what_body')}</p>
+          <p className="text-sm text-gray-700 leading-relaxed max-w-3xl">{t('event_reg_about.what_body')}</p>
         </section>
 
-        <section className="mt-10">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4"
+        {/* Event types */}
+        <section className="mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-4"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
             {t('event_reg_about.types_title')}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {eventTypes.map(et => (
-              <div key={et.label}
-                className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-start gap-3">
-                <span className="shrink-0 flex items-start mt-0.5">{et.icon}</span>
-                <div>
-                  <div className="font-bold text-gray-900 text-sm">{et.label}</div>
-                  <div className="text-xs text-gray-500 mt-0.5 leading-relaxed">{et.desc}</div>
+              <div
+                key={et.label}
+                className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200"
+              >
+                <div className="shrink-0 flex items-center justify-center px-4" style={{ color: ACCENT, minWidth: '56px' }}>
+                  {et.icon}
+                </div>
+                <div className="flex flex-col justify-center px-4 py-4 flex-1 min-w-0">
+                  <div className="font-bold text-sm" style={{ color: ACCENT }}>{et.label}</div>
+                  <div className="text-xs text-gray-600 mt-1 leading-relaxed">{et.desc}</div>
                 </div>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="mt-10">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4"
+        {/* Features / what's included */}
+        <section className="mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-4"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
             {t('event_reg_about.included_title')}
           </h2>
@@ -171,29 +216,41 @@ export default function AboutEventRegistration() {
           </div>
         </section>
 
-        <section className="mt-10 text-center bg-white border border-gray-200 rounded-2xl p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2"
-              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            {t('event_reg_about.cta_title')}
-          </h3>
-          <p className="text-sm text-gray-600 mb-5">{t('event_reg_about.cta_body')}</p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/events/add"
-              className="px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
-              style={{ backgroundColor: ACCENT }}>
+        {/* Bottom CTA */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-gray-200 rounded-xl px-8 py-6">
+          <div>
+            <h3
+              className="font-bold text-gray-900 text-base mb-1"
+              style={{ fontFamily: "'Lora','Times New Roman',serif" }}
+            >
+              {t('event_reg_about.cta_title')}
+            </h3>
+            <p className="text-sm text-gray-600">{t('event_reg_about.cta_body')}</p>
+          </div>
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <Link
+              to="/events/add"
+              className="px-5 py-2.5 rounded-lg text-white font-bold text-sm shadow hover:shadow-md transition"
+              style={{ backgroundColor: ACCENT }}
+            >
               {t('event_reg_about.cta1')}
             </Link>
-            <Link to="/events"
-              className="px-6 py-3 rounded-lg font-bold border-2 transition"
-              style={{ color: ACCENT, borderColor: ACCENT }}>
+            <Link
+              to="/events"
+              className="px-5 py-2.5 rounded-lg font-bold border-2 text-sm transition hover:bg-gray-50"
+              style={{ color: ACCENT, borderColor: ACCENT }}
+            >
               {t('event_reg_about.cta2')}
             </Link>
-            <Link to="/signup"
-              className="px-6 py-3 rounded-lg font-bold border border-gray-300 text-gray-600 hover:bg-gray-50 transition">
+            <Link
+              to="/signup"
+              className="px-5 py-2.5 rounded-lg font-bold border border-gray-300 text-sm text-gray-600 hover:bg-gray-50 transition"
+            >
               {t('event_reg_about.cta3')}
             </Link>
           </div>
-        </section>
+        </div>
+
       </div>
 
       <Footer />
@@ -203,12 +260,12 @@ export default function AboutEventRegistration() {
 
 function FeatureCard({ icon, title, body }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
+    <div className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm hover:border-[#819360] transition-all duration-200">
       <div className="flex items-center gap-2 mb-1">
         <span className="flex items-center shrink-0" style={{ color: ACCENT }}>{icon}</span>
-        <h3 className="font-bold text-gray-900">{title}</h3>
+        <h3 className="font-bold text-sm text-gray-900">{title}</h3>
       </div>
-      <p className="text-sm text-gray-600 leading-relaxed">{body}</p>
+      <p className="text-xs text-gray-600 leading-relaxed">{body}</p>
     </div>
   );
 }

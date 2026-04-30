@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
+import AnimalPicker from './AnimalPicker';
 
 const API = import.meta.env.VITE_API_URL;
 const ACCENT = '#3D6B34';
@@ -15,13 +16,16 @@ const EMPTY = {
   Description:'', Treatment:'', ResolvedDate:'', ResolvedNotes:'', RecordedBy:'',
 };
 
-function Form({ init, onSave, onCancel }) {
+function Form({ init, onSave, onCancel, businessId }) {
   const [f, setF] = useState(init || EMPTY);
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
   return (
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Animal Tag / ID"><input value={f.AnimalTag} onChange={set('AnimalTag')} className={inp} /></Field>
+        <Field label="Animal">
+          <AnimalPicker businessId={businessId} value={f.AnimalTag} animalId={f.AnimalID}
+            onChange={(tag, id) => setF(p => ({ ...p, AnimalTag: tag, AnimalID: id }))} />
+        </Field>
         <Field label="Event Date*"><input type="date" value={f.EventDate} onChange={set('EventDate')} className={inp} required /></Field>
         <Field label="Event Type">
           <select value={f.EventType} onChange={set('EventType')} className={inp}>
@@ -101,7 +105,7 @@ export default function HerdHealthEvents() {
         </div>
 
         {(showForm && !editing) && (
-          <Form onSave={save} onCancel={() => setShowForm(false)} />
+          <Form onSave={save} onCancel={() => setShowForm(false)} businessId={BusinessID} />
         )}
 
         {loading ? (
@@ -113,7 +117,7 @@ export default function HerdHealthEvents() {
             {rows.map(row => (
               <div key={row.EventID}>
                 {editing?.EventID === row.EventID ? (
-                  <Form init={editing} onSave={save} onCancel={() => setEditing(null)} />
+                  <Form init={editing} onSave={save} onCancel={() => setEditing(null)} businessId={BusinessID} />
                 ) : (
                   <div className="bg-white rounded-xl border border-gray-200 p-4">
                     <div className="flex items-start justify-between gap-3">

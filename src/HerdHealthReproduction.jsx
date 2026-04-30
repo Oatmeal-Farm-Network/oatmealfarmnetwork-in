@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
+import AnimalPicker from './AnimalPicker';
 
 const API = import.meta.env.VITE_API_URL;
 const ACCENT = '#3D6B34';
@@ -35,7 +36,7 @@ const EMPTY = {
   WeanDate: '', WeanWeightLbs: '', PerformedBy: '', Notes: '',
 };
 
-function Form({ init, onSave, onCancel }) {
+function Form({ init, onSave, onCancel, businessId }) {
   const [f, setF] = useState(init || EMPTY);
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
 
@@ -48,8 +49,11 @@ function Form({ init, onSave, onCancel }) {
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Core fields always shown */}
-        <Field label="Dam Tag / Animal ID*"><input value={f.AnimalTag} onChange={set('AnimalTag')} className={inp} /></Field>
-        <Field label="Species"><input value={f.Species} onChange={set('Species')} placeholder="e.g. Bovine, Ovine, Caprine, Porcine" className={inp} /></Field>
+        <Field label="Dam / Animal*">
+          <AnimalPicker businessId={businessId} value={f.AnimalTag} animalId={f.AnimalID}
+            onChange={(tag, id, animal) => setF(p => ({ ...p, AnimalTag: tag, AnimalID: id, Species: animal?.SpeciesName || p.Species }))} />
+        </Field>
+        <Field label="Species"><input value={f.Species} onChange={set('Species')} placeholder="Auto-filled or type manually" className={inp} /></Field>
         <Field label="Event Type*">
           <select value={f.EventType} onChange={set('EventType')} className={inp}>
             <option value="">— select —</option>
@@ -210,7 +214,7 @@ export default function HerdHealthReproduction() {
           </div>
         )}
 
-        {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} />}
+        {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} businessId={BusinessID} />}
 
         {loading ? (
           <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">Loading…</div>
@@ -221,7 +225,7 @@ export default function HerdHealthReproduction() {
             {rows.map(row => (
               <div key={row.ReproductionID}>
                 {editing?.ReproductionID === row.ReproductionID ? (
-                  <Form init={editing} onSave={save} onCancel={() => setEditing(null)} />
+                  <Form init={editing} onSave={save} onCancel={() => setEditing(null)} businessId={BusinessID} />
                 ) : (
                   <div className="bg-white rounded-xl border border-gray-200 p-4">
                     <div className="flex items-start justify-between gap-3">

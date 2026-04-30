@@ -35,9 +35,11 @@ function ScoutingRedirect() {
 function SaigeWidgetGlobal() {
   const { pathname, search } = useLocation();
   let pageContext = null;
-  if (pathname.startsWith('/precision-ag')) pageContext = 'Precision Ag';
-  else if (pathname.startsWith('/oatsense'))    pageContext = 'OatSense';
-  else if (pathname.startsWith('/livestock'))   pageContext = 'Livestock';
+  if (pathname.startsWith('/precision-ag'))  pageContext = 'Precision Ag';
+  else if (pathname.startsWith('/oatsense'))   pageContext = 'OatSense';
+  else if (pathname.startsWith('/herd-health')) pageContext = null; // handled by HerdHealthLayout
+  else if (pathname.startsWith('/livestock'))  pageContext = 'Livestock';
+  else if (pathname.startsWith('/animals'))    pageContext = 'Livestock';
   if (!pageContext) return null;
   const businessId = new URLSearchParams(search).get('BusinessID');
   return <SaigeWidget businessId={businessId} pageContext={pageContext} />;

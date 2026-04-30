@@ -12,12 +12,20 @@ import { useLanguage } from './LanguageContext';
 
 const API = import.meta.env.VITE_API_URL || '';
 
+const TYPE_ICONS = {
+  all:            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>,
+  produce:        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 22"/><path d="M9.5 9.5s1-3 4.5-5c0 0 1 3-1 7"/><path d="M3.82 22s1.5-3.5 8.18-4.5"/></svg>,
+  meat:           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.6 6.62a2.5 2.5 0 0 1-3.53 3.53L5 20a2 2 0 0 1-2.83-2.83l10.16-10.16a2.5 2.5 0 0 1 3.53-3.53"/><path d="m15.5 5.5-3 3"/></svg>,
+  processed_food: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2h8l1 7H7L8 2z"/><path d="M7 9c0 7 2 11 5 11s5-4 5-11"/></svg>,
+  service:        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>,
+};
+
 const PRODUCT_TYPES = [
-  { key: 'all',            emoji: '🛒' },
-  { key: 'produce',        emoji: '🥬' },
-  { key: 'meat',           emoji: '🥩' },
-  { key: 'processed_food', emoji: '🫙' },
-  { key: 'service',        emoji: '🛠️' },
+  { key: 'all' },
+  { key: 'produce' },
+  { key: 'meat' },
+  { key: 'processed_food' },
+  { key: 'service' },
 ];
 
 const SORT_OPTIONS = [
@@ -374,7 +382,7 @@ export default function FarmToTableMarketplace() {
       <Header />
 
       {/* ── Hero ── */}
-      <div className="mx-auto px-4 pt-2 md:pt-6" style={{ maxWidth: '1300px' }}>
+      <div className="mx-auto px-4 pt-2 md:pt-6" style={{ maxWidth: '1400px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
           { label: t('farm_mkt.crumb_marketplaces'), to: '/marketplaces' },
@@ -422,7 +430,7 @@ export default function FarmToTableMarketplace() {
 
       {/* ── Filters bar ── */}
       <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
-        <div className="px-4 py-3 flex flex-wrap items-center gap-3">
+        <div className="mx-auto px-4 py-3 flex flex-wrap items-center gap-3" style={{ maxWidth: '1400px' }}>
           {/* Type pills */}
           <div className="flex gap-2 flex-wrap">
             {PRODUCT_TYPES.map(pt => (
@@ -430,11 +438,11 @@ export default function FarmToTableMarketplace() {
                 key={pt.key}
                 onClick={() => setTypeFilter(pt.key)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all"
-              style={typeFilter === pt.key
-                ? { backgroundColor: '#3D6B34', color: '#fff', borderColor: '#3D6B34' }
-                : { backgroundColor: '#fff', color: '#3D6B34', borderColor: '#3D6B34' }}
+                style={typeFilter === pt.key
+                  ? { backgroundColor: '#3D6B34', color: '#fff', borderColor: '#3D6B34' }
+                  : { backgroundColor: '#fff', color: '#3D6B34', borderColor: '#3D6B34' }}
               >
-                {pt.emoji} {t('farm_mkt.type_' + pt.key)}
+                {TYPE_ICONS[pt.key]} {t('farm_mkt.type_' + pt.key)}
               </button>
             ))}
           </div>
@@ -475,7 +483,8 @@ export default function FarmToTableMarketplace() {
             onClick={() => document.getElementById('cart-drawer').classList.toggle('translate-x-full')}
             className="relative bg-[#2d3a1e] text-white px-4 py-1.5 rounded-xl text-sm font-bold hover:bg-[#3f5229] transition-colors flex items-center gap-2"
           >
-            🛒 {t('farm_mkt.cart_btn')}
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            {t('farm_mkt.cart_btn')}
             {count > 0 && (
               <span className="absolute -top-1.5 -right-1.5 bg-[#A3301E] text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
                 {count}
@@ -485,7 +494,7 @@ export default function FarmToTableMarketplace() {
         </div>
 
         {/* ── Restaurant / bulk buyer filters (secondary row) ── */}
-        <div className="px-4 pb-3 flex flex-wrap items-center gap-3 text-xs">
+        <div className="mx-auto px-4 pb-3 flex flex-wrap items-center gap-3 text-xs" style={{ maxWidth: '1400px' }}>
           <span className="font-semibold uppercase tracking-wider text-gray-500">{t('farm_mkt.for_buyers')}</span>
 
           {isRestaurant && (
@@ -564,7 +573,7 @@ export default function FarmToTableMarketplace() {
       </div>
 
       {/* ── Products grid ── */}
-      <main className="px-4 py-8">
+      <main className="mx-auto px-4 py-8" style={{ maxWidth: '1400px' }}>
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5">
             {Array.from({ length: 8 }).map((_, i) => (

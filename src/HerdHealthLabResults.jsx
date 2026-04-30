@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
+import AnimalPicker from './AnimalPicker';
 
 const API = import.meta.env.VITE_API_URL;
 const ACCENT = '#3D6B34';
@@ -27,13 +28,16 @@ const EMPTY = {
   VetReviewed: '', FollowUpRequired: '', FollowUpDate: '', Notes: '',
 };
 
-function Form({ init, onSave, onCancel }) {
+function Form({ init, onSave, onCancel, businessId }) {
   const [f, setF] = useState(init || EMPTY);
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
   return (
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Animal Tag / ID"><input value={f.AnimalTag} onChange={set('AnimalTag')} className={inp} /></Field>
+        <Field label="Animal (leave blank for group)">
+          <AnimalPicker businessId={businessId} value={f.AnimalTag} animalId={f.AnimalID}
+            onChange={(tag, id) => setF(p => ({ ...p, AnimalTag: tag, AnimalID: id }))} />
+        </Field>
         <Field label="Group Name"><input value={f.GroupName} onChange={set('GroupName')} placeholder="e.g. Spring calves" className={inp} /></Field>
         <Field label="Sample Date"><input type="date" value={f.SampleDate} onChange={set('SampleDate')} className={inp} /></Field>
         <Field label="Result Date"><input type="date" value={f.ResultDate} onChange={set('ResultDate')} className={inp} /></Field>
@@ -132,7 +136,7 @@ export default function HerdHealthLabResults() {
           </div>
         )}
 
-        {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} />}
+        {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} businessId={BusinessID} />}
 
         {loading ? (
           <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">Loading…</div>
@@ -152,7 +156,7 @@ export default function HerdHealthLabResults() {
                 {rows.map(row => (
                   editing?.LabResultID === row.LabResultID ? (
                     <tr key={row.LabResultID}><td colSpan={7} className="p-3">
-                      <Form init={editing} onSave={save} onCancel={() => setEditing(null)} />
+                      <Form init={editing} onSave={save} onCancel={() => setEditing(null)} businessId={BusinessID} />
                     </td></tr>
                   ) : (
                     <tr key={row.LabResultID} className="hover:bg-gray-50">

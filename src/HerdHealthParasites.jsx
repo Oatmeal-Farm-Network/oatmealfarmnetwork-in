@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
+import AnimalPicker from './AnimalPicker';
 
 const API = import.meta.env.VITE_API_URL;
 const ACCENT = '#3D6B34';
@@ -24,13 +25,16 @@ const EMPTY = {
   TreatedBy: '', FollowUpDate: '', Notes: '',
 };
 
-function Form({ init, onSave, onCancel }) {
+function Form({ init, onSave, onCancel, businessId }) {
   const [f, setF] = useState(init || EMPTY);
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
   return (
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Animal Tag (or leave blank for group)"><input value={f.AnimalTag} onChange={set('AnimalTag')} className={inp} /></Field>
+        <Field label="Animal (leave blank for group)">
+          <AnimalPicker businessId={businessId} value={f.AnimalTag} animalId={f.AnimalID}
+            onChange={(tag, id) => setF(p => ({ ...p, AnimalTag: tag, AnimalID: id }))} />
+        </Field>
         <Field label="Group / Herd Name"><input value={f.GroupName} onChange={set('GroupName')} placeholder="e.g. All Ewes, Spring Lambs" className={inp} /></Field>
         <Field label="Test Date"><input type="date" value={f.TestDate} onChange={set('TestDate')} className={inp} /></Field>
         <Field label="Test Type">
@@ -145,7 +149,7 @@ export default function HerdHealthParasites() {
           </div>
         )}
 
-        {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} />}
+        {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} businessId={BusinessID} />}
 
         {loading ? (
           <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">Loading…</div>
@@ -165,7 +169,7 @@ export default function HerdHealthParasites() {
                 {rows.map(row => (
                   editing?.ParasiteID === row.ParasiteID ? (
                     <tr key={row.ParasiteID}><td colSpan={8} className="p-3">
-                      <Form init={editing} onSave={save} onCancel={() => setEditing(null)} />
+                      <Form init={editing} onSave={save} onCancel={() => setEditing(null)} businessId={BusinessID} />
                     </td></tr>
                   ) : (
                     <tr key={row.ParasiteID} className="hover:bg-gray-50">

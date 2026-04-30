@@ -44,39 +44,41 @@ export default function AboutWebsiteBuilder() {
         ]} />
       </div>
 
-      {/* Hero — photo + gradient overlay */}
+      {/* Hero — white gradient overlay matching /directory */}
       <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
-            src="/images/1wmain.webp"
+            src="/OFN Public/image/WebsiteBuilderHeading.webp"
             alt="Farm Website Builder"
             className="w-full object-cover"
-            style={{ height: '260px', display: 'block' }}
+            style={{ height: '250px', display: 'block' }}
             loading="eager"
             onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
           />
           <div
             className="absolute inset-0"
-            style={{ background: 'linear-gradient(to right, rgba(18,72,38,0.92) 0%, rgba(18,72,38,0.75) 45%, rgba(18,72,38,0) 78%)' }}
+            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.75) 45%, rgba(255,255,255,0) 78%)' }}
           />
           <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '720px' }}>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}>
-                <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="2" width="14" height="10" rx="1"/><line x1="4" y1="15" x2="12" y2="15"/><line x1="8" y1="12" x2="8" y2="15"/></svg>
-              </div>
-              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#ffffff' }}>{t('web_build.hero_badge')}</span>
-            </div>
-            <h1 style={{ color: '#ffffff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
+            <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 12px', lineHeight: 1.2 }}>
               {t('web_build.hero_title')}
             </h1>
-            <p style={{ color: '#ffffff', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
               {t('web_build.hero_body')}
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/website/builder" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
+              <Link
+                to="/website/builder"
+                className="font-bold px-5 py-2 rounded-lg border-2 transition hover:bg-gray-50 text-sm"
+                style={{ color: ACCENT, borderColor: ACCENT }}
+              >
                 {t('web_build.hero_cta1')}
               </Link>
-              <Link to="/signup" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: '#ffffff', color: '#ffffff' }}>
+              <Link
+                to="/signup"
+                className="font-bold px-5 py-2 rounded-lg border-2 transition hover:bg-gray-50 text-sm"
+                style={{ color: ACCENT, borderColor: ACCENT }}
+              >
                 {t('web_build.hero_cta2')}
               </Link>
             </div>
@@ -86,45 +88,58 @@ export default function AboutWebsiteBuilder() {
 
       <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
-        <section className="mt-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3"
+        <section className="mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-3"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
             {t('web_build.what_title')}
           </h2>
-          <p className="text-gray-700 leading-relaxed">
+          <p className="text-sm text-gray-700 leading-relaxed max-w-3xl">
             {t('web_build.what_body')}
           </p>
         </section>
 
-        <section className="mt-10">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4"
-              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            {t('web_build.included_title')}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Feature icon={FEAT_ICONS.widgets} title={t('web_build.feat1_title')} body={t('web_build.feat1_body')} />
-            <Feature icon={FEAT_ICONS.source}  title={t('web_build.feat2_title')} body={t('web_build.feat2_body')} />
-            <Feature icon={FEAT_ICONS.domain}  title={t('web_build.feat3_title')} body={t('web_build.feat3_body')} />
-            <Feature icon={<img src="/images/LavendirIcon.png" alt="Lavendir" className="w-5 h-5" />} title={t('web_build.feat4_title')} body={t('web_build.feat4_body')} />
-            <Feature icon={FEAT_ICONS.mobile}  title={t('web_build.feat5_title')} body={t('web_build.feat5_body')} />
-            <Feature icon={FEAT_ICONS.blog}    title={t('web_build.feat6_title')} body={t('web_build.feat6_body')} />
-          </div>
-        </section>
+        <h2 className="text-lg font-bold text-gray-900 mb-5"
+            style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
+          {t('web_build.included_title')}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
+          <Feature icon={FEAT_ICONS.widgets} title={t('web_build.feat1_title')} body={t('web_build.feat1_body')} />
+          <Feature icon={FEAT_ICONS.source}  title={t('web_build.feat2_title')} body={t('web_build.feat2_body')} />
+          <Feature icon={FEAT_ICONS.domain}  title={t('web_build.feat3_title')} body={t('web_build.feat3_body')} />
+          <Feature icon={<img src="/images/LavendirIcon.png" alt="Lavendir" className="w-5 h-5" />} title={t('web_build.feat4_title')} body={t('web_build.feat4_body')} />
+          <Feature icon={FEAT_ICONS.mobile}  title={t('web_build.feat5_title')} body={t('web_build.feat5_body')} />
+          <Feature icon={FEAT_ICONS.blog}    title={t('web_build.feat6_title')} body={t('web_build.feat6_body')} />
+        </div>
 
-        <section className="mt-10 text-center bg-white border border-gray-200 rounded-2xl p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2"
-              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            {t('web_build.cta_title')}
-          </h3>
-          <p className="text-sm text-gray-600 mb-4">
-            {t('web_build.cta_body')}
-          </p>
-          <Link to="/website/builder"
-            className="inline-block px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
-            style={{ backgroundColor: ACCENT }}>
-            {t('web_build.cta')}
-          </Link>
-        </section>
+        {/* Bottom CTA — left/right banner matching /precision-ag */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-gray-200 rounded-xl px-8 py-6">
+          <div>
+            <h3
+              className="font-bold text-gray-900 text-base mb-1"
+              style={{ fontFamily: "'Lora','Times New Roman',serif" }}
+            >
+              {t('web_build.cta_title')}
+            </h3>
+            <p className="text-sm text-gray-600">{t('web_build.cta_body')}</p>
+          </div>
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <Link
+              to="/website/builder"
+              className="px-5 py-2.5 rounded-lg text-white font-bold text-sm shadow hover:shadow-md transition"
+              style={{ backgroundColor: ACCENT }}
+            >
+              {t('web_build.cta')}
+            </Link>
+            <Link
+              to="/signup"
+              className="px-5 py-2.5 rounded-lg font-bold border-2 text-sm transition hover:bg-gray-50"
+              style={{ color: ACCENT, borderColor: ACCENT }}
+            >
+              {t('web_build.hero_cta2')}
+            </Link>
+          </div>
+        </div>
+
       </div>
 
       <Footer />
@@ -134,12 +149,17 @@ export default function AboutWebsiteBuilder() {
 
 function Feature({ icon, title, body }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-[#3D6B34] flex items-center shrink-0">{icon}</span>
-        <h3 className="font-bold text-gray-900">{title}</h3>
+    <div className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200">
+      <div
+        className="shrink-0 flex items-center justify-center"
+        style={{ width: '155px', minHeight: '155px', backgroundColor: '#f0f7ed', color: ACCENT }}
+      >
+        {icon}
       </div>
-      <p className="text-sm text-gray-600">{body}</p>
+      <div className="flex flex-col justify-center px-5 py-4 flex-1 min-w-0">
+        <h3 className="font-bold text-sm" style={{ color: ACCENT }}>{title}</h3>
+        <p className="text-xs text-gray-600 leading-relaxed mt-1">{body}</p>
+      </div>
     </div>
   );
 }

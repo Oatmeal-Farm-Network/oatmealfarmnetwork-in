@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
+import AnimalPicker from './AnimalPicker';
 
 const API = import.meta.env.VITE_API_URL;
 const ACCENT = '#3D6B34';
@@ -14,7 +15,7 @@ const EMPTY = { AnimalTag:'', RecordDate:'', WeightLbs:'', WeightKg:'', BodyCond
 
 const BCS_LABEL = { 1:'Emaciated', 2:'Very Thin', 3:'Thin', 4:'Below Average', 5:'Average', 6:'Above Average', 7:'Good', 8:'Fat', 9:'Very Fat' };
 
-function Form({ init, onSave, onCancel }) {
+function Form({ init, onSave, onCancel, businessId }) {
   const [f, setF] = useState(init || EMPTY);
   const set = k => e => {
     let v = e.target.value;
@@ -25,7 +26,10 @@ function Form({ init, onSave, onCancel }) {
   return (
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Animal Tag / ID"><input value={f.AnimalTag} onChange={set('AnimalTag')} className={inp} /></Field>
+        <Field label="Animal">
+          <AnimalPicker businessId={businessId} value={f.AnimalTag} animalId={f.AnimalID}
+            onChange={(tag, id) => setF(p => ({ ...p, AnimalTag: tag, AnimalID: id }))} />
+        </Field>
         <Field label="Record Date"><input type="date" value={f.RecordDate} onChange={set('RecordDate')} className={inp} /></Field>
         <Field label="Weight (lbs)"><input type="number" step="0.1" value={f.WeightLbs} onChange={set('WeightLbs')} className={inp} /></Field>
         <Field label="Weight (kg)"><input type="number" step="0.1" value={f.WeightKg} onChange={set('WeightKg')} className={inp} /></Field>
@@ -108,7 +112,7 @@ export default function HerdHealthWeight() {
             className="px-4 py-2 rounded-lg text-white text-sm font-mont font-semibold" style={{ backgroundColor: ACCENT }}>+ Add Record</button>
         </div>
 
-        {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} />}
+        {(showForm && !editing) && <Form onSave={save} onCancel={() => setShowForm(false)} businessId={BusinessID} />}
 
         {loading ? (
           <div className="text-center py-12 font-mont text-sm text-gray-400 animate-pulse">Loading…</div>
@@ -128,7 +132,7 @@ export default function HerdHealthWeight() {
                 {rows.map(row => (
                   editing?.WeightID === row.WeightID ? (
                     <tr key={row.WeightID}><td colSpan={9} className="p-3">
-                      <Form init={editing} onSave={save} onCancel={() => setEditing(null)} />
+                      <Form init={editing} onSave={save} onCancel={() => setEditing(null)} businessId={BusinessID} />
                     </td></tr>
                   ) : (
                     <tr key={row.WeightID} className="hover:bg-gray-50">

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAccount } from './AccountContext';
 import HerdHealthLayout from './HerdHealthLayout';
+import AnimalPicker from './AnimalPicker';
 
 const API = import.meta.env.VITE_API_URL;
 const ACCENT = '#3D6B34';
@@ -25,13 +26,16 @@ function Field({ label, children, className }) {
   );
 }
 
-function Form({ init, onSave, onCancel }) {
+function Form({ init, onSave, onCancel, businessId }) {
   const [f, setF] = useState(init || EMPTY);
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
   return (
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Animal Tag (leave blank for herd group)"><input value={f.AnimalTag} onChange={set('AnimalTag')} className={inp} /></Field>
+        <Field label="Animal (leave blank for herd group)">
+          <AnimalPicker businessId={businessId} value={f.AnimalTag} animalId={f.AnimalID}
+            onChange={(tag, id) => setF(p => ({ ...p, AnimalTag: tag, AnimalID: id }))} />
+        </Field>
         <Field label="Group / Herd Name"><input value={f.GroupName} onChange={set('GroupName')} placeholder="e.g. All Ewes, Spring Calves" className={inp} /></Field>
         <Field label="Vaccine Name*"><input value={f.VaccineName} onChange={set('VaccineName')} className={inp} required /></Field>
         <Field label="Manufacturer"><input value={f.VaccineManufacturer} onChange={set('VaccineManufacturer')} className={inp} /></Field>
@@ -124,7 +128,7 @@ export default function HerdHealthVaccinations() {
         )}
 
         {(showForm && !editing) && (
-          <Form onSave={save} onCancel={() => setShowForm(false)} />
+          <Form onSave={save} onCancel={() => setShowForm(false)} businessId={BusinessID} />
         )}
 
         {loading ? (
@@ -147,7 +151,7 @@ export default function HerdHealthVaccinations() {
                   const isOverdue = due && due < today;
                   return editing?.VaccinationID === row.VaccinationID ? (
                     <tr key={row.VaccinationID}><td colSpan={7} className="p-3">
-                      <Form init={editing} onSave={save} onCancel={() => setEditing(null)} />
+                      <Form init={editing} onSave={save} onCancel={() => setEditing(null)} businessId={BusinessID} />
                     </td></tr>
                   ) : (
                     <tr key={row.VaccinationID} className="hover:bg-gray-50">
