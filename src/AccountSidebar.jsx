@@ -327,81 +327,105 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        <NavSection icon={ICONS.equipment} label="Equipment" expanded={Expanded}
-          isOpen={OpenSections['Equipment'] || false} onToggle={() => toggleSection('Equipment')}>
-          <NavChild to="/marketplaces/equipment" label="Browse Equipment" />
-          <NavChild to={`/equipment/my-listings?BusinessID=${BusinessID}`} label="My Listings" />
-        </NavSection>
+        {on('equipment') && (
+          <NavSection icon={ICONS.equipment} label="Equipment" expanded={Expanded}
+            isOpen={OpenSections['Equipment'] || false} onToggle={() => toggleSection('Equipment')}>
+            <NavChild to="/marketplaces/equipment" label="Browse Equipment" />
+            <NavChild to={`/equipment/my-listings?BusinessID=${BusinessID}`} label="My Listings" />
+          </NavSection>
+        )}
 
-        <NavSection icon={ICONS.foodWanted} label="Food Wanted" expanded={Expanded}
-          isOpen={OpenSections['Food Wanted'] || false} onToggle={() => toggleSection('Food Wanted')}>
-          <NavChild to="/marketplaces/food-wanted" label="Browse Wanted Ads" />
-          <NavChild to={`/food-wanted/my-ads?BusinessID=${BusinessID}`} label="My Ads" />
-        </NavSection>
+        {on('food_wanted') && (
+          <NavSection icon={ICONS.foodWanted} label="Food Wanted" expanded={Expanded}
+            isOpen={OpenSections['Food Wanted'] || false} onToggle={() => toggleSection('Food Wanted')}>
+            <NavChild to="/marketplaces/food-wanted" label="Browse Wanted Ads" />
+            <NavChild to={`/food-wanted/my-ads?BusinessID=${BusinessID}`} label="My Ads" />
+          </NavSection>
+        )}
 
-        <NavSection icon={ICONS.jobBoard} label="Job Board" expanded={Expanded}
-          isOpen={OpenSections['Job Board'] || false} onToggle={() => toggleSection('Job Board')}>
-          <NavChild to="/jobs" label="Browse Jobs" />
-          <NavChild to={`/jobs/my-listings?BusinessID=${BusinessID}`} label="My Job Listings" />
-        </NavSection>
+        {on('job_board') && (
+          <NavSection icon={ICONS.jobBoard} label="Job Board" expanded={Expanded}
+            isOpen={OpenSections['Job Board'] || false} onToggle={() => toggleSection('Job Board')}>
+            <NavChild to="/jobs" label="Browse Jobs" />
+            <NavChild to={`/jobs/my-listings?BusinessID=${BusinessID}`} label="My Job Listings" />
+          </NavSection>
+        )}
 
-        <NavSection icon={ICONS.csaAdvanced} label="CSA Advanced" expanded={Expanded}
-          isOpen={OpenSections['CSA Advanced'] || false} onToggle={() => toggleSection('CSA Advanced')}>
-          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=contracts`} label="Contracts & Risk Sharing" />
-          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=payment-plans`} label="Payment Plans" />
-          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=work-shares`} label="Work Share Tracking" />
-          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=boxbot`} label="BoxBot Share Balancing" />
-          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=vacation-holds`} label="Vacation Holds" />
-          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=pickup-sites`} label="Pickup Sites" />
-          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=crop-progress`} label="Crop Progress" />
-          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=newsletters`} label="What's In The Box" />
-          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=harvest`} label="Harvest Allocation" />
-          <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=box-labels`} label="Box Labels" />
-        </NavSection>
+        {on('csa_advanced') && (
+          <NavSection icon={ICONS.csaAdvanced} label="CSA Advanced" expanded={Expanded}
+            isOpen={OpenSections['CSA Advanced'] || false} onToggle={() => toggleSection('CSA Advanced')}>
+            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=contracts`} label="Contracts & Risk Sharing" />
+            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=payment-plans`} label="Payment Plans" />
+            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=work-shares`} label="Work Share Tracking" />
+            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=boxbot`} label="BoxBot Share Balancing" />
+            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=vacation-holds`} label="Vacation Holds" />
+            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=pickup-sites`} label="Pickup Sites" />
+            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=crop-progress`} label="Crop Progress" />
+            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=newsletters`} label="What's In The Box" />
+            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=harvest`} label="Harvest Allocation" />
+            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=box-labels`} label="Box Labels" />
+          </NavSection>
+        )}
 
-        <NavSection icon={ICONS.csa} label="CSA Management" expanded={Expanded}
-          isOpen={OpenSections['CSA Management'] || false} onToggle={() => toggleSection('CSA Management')}>
-          <NavChild to="/csa" label="Browse CSA Plans" />
-          <NavChild to={`/csa/manage?BusinessID=${BusinessID}`} label="Manage My Plans" />
-        </NavSection>
+        {on('csa_management') && (
+          <NavSection icon={ICONS.csa} label="CSA Management" expanded={Expanded}
+            isOpen={OpenSections['CSA Management'] || false} onToggle={() => toggleSection('CSA Management')}>
+            <NavChild to="/csa" label="Browse CSA Plans" />
+            <NavChild to={`/csa/manage?BusinessID=${BusinessID}`} label="Manage My Plans" />
+          </NavSection>
+        )}
 
-        <NavSection icon={ICONS.landLeasing} label="Land Leasing" expanded={Expanded}
-          isOpen={OpenSections['Land Leasing'] || false} onToggle={() => toggleSection('Land Leasing')}>
-          <NavChild to="/land" label="Browse Listings" />
-          <NavChild to={`/land/my-listings?BusinessID=${BusinessID}`} label="My Listings" />
-        </NavSection>
+        {on('land_leasing') && (
+          <NavSection icon={ICONS.landLeasing} label="Land Leasing" expanded={Expanded}
+            isOpen={OpenSections['Land Leasing'] || false} onToggle={() => toggleSection('Land Leasing')}>
+            <NavChild to="/land" label="Browse Listings" />
+            <NavChild to={`/land/my-listings?BusinessID=${BusinessID}`} label="My Listings" />
+          </NavSection>
+        )}
 
-        <NavSection icon={ICONS.certifications} label="Certifications" expanded={Expanded}
-          isOpen={OpenSections['Certifications'] || false} onToggle={() => toggleSection('Certifications')}>
-          <NavChild to={`/certifications?BusinessID=${BusinessID}`} label="My Certifications" />
-        </NavSection>
+        {on('certifications') && (
+          <NavSection icon={ICONS.certifications} label="Certifications" expanded={Expanded}
+            isOpen={OpenSections['Certifications'] || false} onToggle={() => toggleSection('Certifications')}>
+            <NavChild to={`/certifications?BusinessID=${BusinessID}`} label="My Certifications" />
+          </NavSection>
+        )}
 
-        <NavSection icon={ICONS.suppliers} label="Supplier Directory" expanded={Expanded}
-          isOpen={OpenSections['Supplier Directory'] || false} onToggle={() => toggleSection('Supplier Directory')}>
-          <NavChild to="/suppliers" label="Browse Suppliers" />
-        </NavSection>
+        {on('supplier_directory') && (
+          <NavSection icon={ICONS.suppliers} label="Supplier Directory" expanded={Expanded}
+            isOpen={OpenSections['Supplier Directory'] || false} onToggle={() => toggleSection('Supplier Directory')}>
+            <NavChild to="/suppliers" label="Browse Suppliers" />
+          </NavSection>
+        )}
 
-        <NavSection icon={ICONS.grants} label="Grants & Programs" expanded={Expanded}
-          isOpen={OpenSections['Grants & Programs'] || false} onToggle={() => toggleSection('Grants & Programs')}>
-          <NavChild to="/grants" label="Browse Programs" />
-          <NavChild to={`/grants?tab=my-tracking&BusinessID=${BusinessID}`} label="My Tracker" />
-        </NavSection>
+        {on('grants_programs') && (
+          <NavSection icon={ICONS.grants} label="Grants & Programs" expanded={Expanded}
+            isOpen={OpenSections['Grants & Programs'] || false} onToggle={() => toggleSection('Grants & Programs')}>
+            <NavChild to="/grants" label="Browse Programs" />
+            <NavChild to={`/grants?tab=my-tracking&BusinessID=${BusinessID}`} label="My Tracker" />
+          </NavSection>
+        )}
 
-        <NavSection icon={ICONS.education} label="Education Center" expanded={Expanded}
-          isOpen={OpenSections['Education Center'] || false} onToggle={() => toggleSection('Education Center')}>
-          <NavChild to="/education" label="Courses & Articles" />
-        </NavSection>
+        {on('education_center') && (
+          <NavSection icon={ICONS.education} label="Education Center" expanded={Expanded}
+            isOpen={OpenSections['Education Center'] || false} onToggle={() => toggleSection('Education Center')}>
+            <NavChild to="/education" label="Courses & Articles" />
+          </NavSection>
+        )}
 
-        <NavSection icon={ICONS.commodityPrices} label="Commodity Prices" expanded={Expanded}
-          isOpen={OpenSections['Commodity Prices'] || false} onToggle={() => toggleSection('Commodity Prices')}>
-          <NavChild to="/commodity-prices" label="Market Prices" />
-        </NavSection>
+        {on('commodity_prices') && (
+          <NavSection icon={ICONS.commodityPrices} label="Commodity Prices" expanded={Expanded}
+            isOpen={OpenSections['Commodity Prices'] || false} onToggle={() => toggleSection('Commodity Prices')}>
+            <NavChild to="/commodity-prices" label="Market Prices" />
+          </NavSection>
+        )}
 
-        <NavSection icon={ICONS.forums} label="Forums" expanded={Expanded}
-          isOpen={OpenSections['Forums'] || false} onToggle={() => toggleSection('Forums')}>
-          <NavChild to="/forums" label="Browse Forums" />
-          <NavChild to="/over-the-fence" label="Over the Fence DM" />
-        </NavSection>
+        {on('forums') && (
+          <NavSection icon={ICONS.forums} label="Forums" expanded={Expanded}
+            isOpen={OpenSections['Forums'] || false} onToggle={() => toggleSection('Forums')}>
+            <NavChild to="/forums" label="Browse Forums" />
+            <NavChild to="/over-the-fence" label="Over the Fence DM" />
+          </NavSection>
+        )}
 
         {on('livestock') && (
           <NavSection icon={ICONS.livestock} label={t('account_sidebar.sec_livestock')} expanded={Expanded}
