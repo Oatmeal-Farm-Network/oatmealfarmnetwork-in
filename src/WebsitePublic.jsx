@@ -2211,6 +2211,30 @@ function RenderBlock({ block, site, businessId }) {
 const OFN_HOSTS = ['oatmealfarmnetwork.com', 'www.oatmealfarmnetwork.com', 'localhost', '127.0.0.1'];
 const isCustomDomain = !OFN_HOSTS.some(h => window.location.hostname === h || window.location.hostname.endsWith(`.${h}`));
 
+// Pick the header image whose month/day range covers today.
+// Falls back to header_banner_url if no images are configured.
+function resolveActiveBanner(site) {
+  const imgs = site.header_images;
+  if (!imgs || imgs.length === 0) return site.header_banner_url || null;
+  if (imgs.length === 1) return imgs[0].image_url;
+  const now = new Date();
+  const m = now.getMonth() + 1;
+  const d = now.getDate();
+  const today = m * 100 + d; // e.g. March 15 → 315
+  for (const img of imgs) {
+    if (!img.start_date || !img.end_date) continue;
+    const [, sm, sd] = img.start_date.split('-').map(Number);
+    const [, em, ed] = img.end_date.split('-').map(Number);
+    const start = sm * 100 + sd;
+    const end   = em * 100 + ed;
+    const inRange = start <= end
+      ? today >= start && today <= end          // normal: Jan–Mar
+      : today >= start || today <= end;         // year-wrap: Nov–Feb
+    if (inRange) return img.image_url;
+  }
+  return imgs[0].image_url; // fallback: first image
+}
+
 // ── Main public site renderer ─────────────────────────────────────
 export default function WebsitePublic() {
   const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
@@ -2447,13 +2471,14 @@ export default function WebsitePublic() {
             const logoMaxHeight = isNavTop
               ? Math.min(bannerHeight * 0.85, 150)
               : Math.min(bannerHeight * 0.55, 90);
-            const bannerEl = (site.header_banner_url || site.logo_url || site.show_site_name !== false) ? (
+            const activeBannerUrl = resolveActiveBanner(site);
+            const bannerEl = (activeBannerUrl || site.logo_url || site.show_site_name !== false) ? (
               <div style={{
                 width: '100%', maxWidth: site.header_content_width || '100%',
                 position: 'relative',
               }}>
-                {site.header_banner_url ? (
-                  <img src={site.header_banner_url} alt=""
+                {activeBannerUrl ? (
+                  <img src={activeBannerUrl} alt=""
                     style={{ width: '100%', display: 'block' }} />
                 ) : (
                   <div style={{ height: bannerHeight, background: bannerBg }} />
@@ -2478,7 +2503,7 @@ export default function WebsitePublic() {
                         ? (site.h1_color || site.text_color || '#111827')
                         : (site.nav_text_color || '#fff'),
                       fontSize: 'clamp(1.1rem, 2.5vw, 1.8rem)',
-                      textShadow: (!isNavTop && site.header_banner_url) ? '1px 2px 6px rgba(0,0,0,0.55)' : 'none',
+                      textShadow: (!isNavTop && activeBannerUrl) ? '1px 2px 6px rgba(0,0,0,0.55)' : 'none',
                     }}>{site.site_name}</span>
                   )}
                 </div>
