@@ -301,6 +301,44 @@ function ImageUploadField({ label, value, onChange, hint, compact = false }) {
 }
 
 // ── Header images manager ─────────────────────────────────────────
+const MONTHS = [
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December',
+];
+const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+
+// Parse any stored date string (YYYY-MM-DD or 2000-MM-DD) into {month, day} (1-based).
+function parseMD(dateStr) {
+  if (!dateStr) return { month: '', day: '' };
+  const parts = dateStr.split('-');
+  return { month: parseInt(parts[1], 10) || '', day: parseInt(parts[2], 10) || '' };
+}
+
+// Encode month+day back to the sentinel format the DB expects.
+function encodeMD(month, day) {
+  if (!month || !day) return null;
+  return `2000-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
+
+// Compare MM-DD continuity: end + 1 day should equal nextStart, wrapping Dec 31 -> Jan 1.
+function mdContinuous(endStr, nextStartStr) {
+  const e = parseMD(endStr);
+  const n = parseMD(nextStartStr);
+  if (!e.month || !e.day || !n.month || !n.day) return true;
+  const endDate = new Date(2000, e.month - 1, e.day);
+  endDate.setDate(endDate.getDate() + 1);
+  // wrap: Jan 1 of 2001 means Dec 31 -> Jan 1 is valid
+  const endM = endDate.getMonth() + 1;
+  const endD = endDate.getDate();
+  return endM === n.month && endD === n.day;
+}
+
+function fmtMD(dateStr) {
+  const { month, day } = parseMD(dateStr);
+  if (!month || !day) return '';
+  return `${MONTHS[month - 1]} ${day}`;
+}
+
 function HeaderImagesManager({ websiteId, hideTitle = false }) {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -323,11 +361,8 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
     const sorted = [...imgs].sort((a, b) => (a.start_date || '') < (b.start_date || '') ? -1 : 1);
     for (let i = 0; i < sorted.length - 1; i++) {
       if (!sorted[i].end_date || !sorted[i + 1].start_date) continue;
-      const endDate = new Date(sorted[i].end_date);
-      const nextStart = new Date(sorted[i + 1].start_date);
-      endDate.setDate(endDate.getDate() + 1);
-      if (endDate.toDateString() !== nextStart.toDateString()) {
-        return `Gap detected between "${sorted[i].end_date}" and "${sorted[i + 1].start_date}". Dates must be continuous with no gaps.`;
+      if (!mdContinuous(sorted[i].end_date, sorted[i + 1].start_date)) {
+        return `Gap detected between "${fmtMD(sorted[i].end_date)}" and "${fmtMD(sorted[i + 1].start_date)}". Dates must be continuous with no gaps.`;
       }
     }
     return '';
@@ -360,6 +395,14 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
     }
   };
 
+  const updateMD = (id, field, part, val) => {
+    const img = images.find(i => i.header_image_id === id);
+    if (!img) return;
+    const cur = parseMD(img[field]);
+    const next = { ...cur, [part]: val ? parseInt(val, 10) : '' };
+    updateImage(id, field, encodeMD(next.month, next.day));
+  };
+
   const deleteImage = async (id) => {
     await fetch(`${API}/api/website/header-images/${id}`, {
       method: 'DELETE',
@@ -371,12 +414,42 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
   };
 
   const sorted = [...images].sort((a, b) => (a.start_date || '') < (b.start_date || '') ? -1 : 1);
+  const optional = images.length <= 1;
+
+  const MonthDayPicker = ({ label, dateStr, imgId, field }) => {
+    const { month, day } = parseMD(dateStr);
+    return (
+      <div className="flex-1">
+        <label className="block text-xs text-gray-500 mb-0.5">
+          {label} {optional && <span className="text-gray-300">(Optional)</span>}
+        </label>
+        <div className="flex gap-1">
+          <select
+            value={month || ''}
+            onChange={e => updateMD(imgId, field, 'month', e.target.value)}
+            className="flex-1 border border-gray-200 rounded-lg px-1 py-1 text-xs bg-white"
+          >
+            <option value="">Month</option>
+            {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+          </select>
+          <select
+            value={day || ''}
+            onChange={e => updateMD(imgId, field, 'day', e.target.value)}
+            className="w-14 border border-gray-200 rounded-lg px-1 py-1 text-xs bg-white"
+          >
+            <option value="">Day</option>
+            {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div>
       {!hideTitle && <h3 className="font-bold text-gray-800 mb-1 pb-2 border-b border-gray-100">Header Images</h3>}
       <p className="text-xs text-gray-400 mb-3">
-        Upload one or more banner images. If using multiple, assign start/end dates with no gaps between them.
+        Upload one or more banner images. If using multiple, assign start/end month and day with no gaps between them.
       </p>
       {error && (
         <div className="mb-3 bg-amber-50 border border-amber-300 text-amber-700 rounded-lg px-3 py-2 text-xs">{error}</div>
@@ -393,16 +466,8 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
                 )}
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex gap-2">
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-0.5">Start Date {images.length > 1 ? '' : <span className="text-gray-300">(Optional)</span>}</label>
-                      <input type="date" value={img.start_date || ''} className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs"
-                        onChange={e => updateImage(img.header_image_id, 'start_date', e.target.value)} />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-0.5">End Date {images.length > 1 ? '' : <span className="text-gray-300">(Optional)</span>}</label>
-                      <input type="date" value={img.end_date || ''} className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs"
-                        onChange={e => updateImage(img.header_image_id, 'end_date', e.target.value)} />
-                    </div>
+                    <MonthDayPicker label="Start" dateStr={img.start_date} imgId={img.header_image_id} field="start_date" />
+                    <MonthDayPicker label="End"   dateStr={img.end_date}   imgId={img.header_image_id} field="end_date" />
                   </div>
                 </div>
                 <button onClick={() => deleteImage(img.header_image_id)}
