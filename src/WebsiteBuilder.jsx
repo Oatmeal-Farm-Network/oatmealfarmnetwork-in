@@ -344,6 +344,9 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  // Tracks in-progress month/day selections per image before both fields are set.
+  // { [imgId]: { start_date: {month, day}, end_date: {month, day} } }
+  const [partials, setPartials] = useState({});
 
   useEffect(() => {
     if (!websiteId) return;
@@ -351,7 +354,18 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
       headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
     })
       .then(r => r.json())
-      .then(data => setImages(Array.isArray(data) ? data : []))
+      .then(data => {
+        const imgs = Array.isArray(data) ? data : [];
+        setImages(imgs);
+        const init = {};
+        imgs.forEach(img => {
+          init[img.header_image_id] = {
+            start_date: parseMD(img.start_date),
+            end_date:   parseMD(img.end_date),
+          };
+        });
+        setPartials(init);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [websiteId]);
@@ -378,6 +392,7 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
       });
       const newImg = await res.json();
       setImages(prev => [...prev, newImg]);
+      setPartials(prev => ({ ...prev, [newImg.header_image_id]: { start_date: { month: '', day: '' }, end_date: { month: '', day: '' } } }));
     } finally { setSaving(false); }
   };
 
@@ -395,12 +410,14 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
     }
   };
 
-  const updateMD = (id, field, part, val) => {
-    const img = images.find(i => i.header_image_id === id);
-    if (!img) return;
-    const cur = parseMD(img[field]);
+  const handleMDChange = (imgId, field, part, val) => {
+    const cur = partials[imgId]?.[field] || { month: '', day: '' };
     const next = { ...cur, [part]: val ? parseInt(val, 10) : '' };
-    updateImage(id, field, encodeMD(next.month, next.day));
+    setPartials(prev => ({ ...prev, [imgId]: { ...(prev[imgId] || {}), [field]: next } }));
+    // Only persist to the backend once both month and day are chosen.
+    if (next.month && next.day) {
+      updateImage(imgId, field, encodeMD(next.month, next.day));
+    }
   };
 
   const deleteImage = async (id) => {
@@ -410,40 +427,12 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
     });
     const updated = images.filter(img => img.header_image_id !== id);
     setImages(updated);
+    setPartials(prev => { const p = { ...prev }; delete p[id]; return p; });
     setError(validate(updated));
   };
 
   const sorted = [...images].sort((a, b) => (a.start_date || '') < (b.start_date || '') ? -1 : 1);
   const optional = images.length <= 1;
-
-  const MonthDayPicker = ({ label, dateStr, imgId, field }) => {
-    const { month, day } = parseMD(dateStr);
-    return (
-      <div className="flex-1">
-        <label className="block text-xs text-gray-500 mb-0.5">
-          {label} {optional && <span className="text-gray-300">(Optional)</span>}
-        </label>
-        <div className="flex gap-1">
-          <select
-            value={month || ''}
-            onChange={e => updateMD(imgId, field, 'month', e.target.value)}
-            className="flex-1 border border-gray-200 rounded-lg px-1 py-1 text-xs bg-white"
-          >
-            <option value="">Month</option>
-            {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
-          </select>
-          <select
-            value={day || ''}
-            onChange={e => updateMD(imgId, field, 'day', e.target.value)}
-            className="w-14 border border-gray-200 rounded-lg px-1 py-1 text-xs bg-white"
-          >
-            <option value="">Day</option>
-            {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div>
@@ -458,7 +447,10 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
         <p className="text-xs text-gray-400">Loading…</p>
       ) : (
         <div className="space-y-3 mb-3">
-          {sorted.map((img) => (
+          {sorted.map((img) => {
+            const sd = partials[img.header_image_id]?.start_date || { month: '', day: '' };
+            const ed = partials[img.header_image_id]?.end_date   || { month: '', day: '' };
+            return (
             <div key={img.header_image_id} className="border border-gray-100 rounded-xl p-3 bg-gray-50">
               <div className="flex items-start gap-3">
                 {img.image_url && (
@@ -466,8 +458,31 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
                 )}
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex gap-2">
-                    <MonthDayPicker label="Start" dateStr={img.start_date} imgId={img.header_image_id} field="start_date" />
-                    <MonthDayPicker label="End"   dateStr={img.end_date}   imgId={img.header_image_id} field="end_date" />
+                    {[['Start', sd, 'start_date'], ['End', ed, 'end_date']].map(([lbl, val, field]) => (
+                      <div key={field} className="flex-1">
+                        <label className="block text-xs text-gray-500 mb-0.5">
+                          {lbl} {optional && <span className="text-gray-300">(Optional)</span>}
+                        </label>
+                        <div className="flex gap-1">
+                          <select
+                            value={val.month || ''}
+                            onChange={e => handleMDChange(img.header_image_id, field, 'month', e.target.value)}
+                            className="flex-1 border border-gray-200 rounded-lg px-1 py-1 text-xs bg-white"
+                          >
+                            <option value="">Month</option>
+                            {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                          </select>
+                          <select
+                            value={val.day || ''}
+                            onChange={e => handleMDChange(img.header_image_id, field, 'day', e.target.value)}
+                            className="w-14 border border-gray-200 rounded-lg px-1 py-1 text-xs bg-white"
+                          >
+                            <option value="">Day</option>
+                            {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <button onClick={() => deleteImage(img.header_image_id)}
@@ -477,7 +492,8 @@ function HeaderImagesManager({ websiteId, hideTitle = false }) {
                 <ImageUploadField compact value={img.image_url} onChange={url => updateImage(img.header_image_id, 'image_url', url)} />
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
       <ImageUploadField
