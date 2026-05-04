@@ -159,7 +159,7 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
   });
 
   // ── Voice state ──────────────────────────────────────────────────────────────
-  const ttsSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  const ttsSupported = typeof window !== 'undefined' && typeof Audio !== 'undefined';
   const sttSupported = typeof window !== 'undefined' &&
     Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 
@@ -175,11 +175,16 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
   const transcriptRef = useRef('');
   const pausedTtsRef  = useRef(false);
   const sendRef       = useRef(() => {});
+  const audioRef      = useRef(null);
 
   const showVoiceErr = (msg) => { setVoiceErr(msg); setTimeout(() => setVoiceErr(null), 4000); };
 
   const stopTTS = useCallback(() => {
-    if (ttsSupported) window.speechSynthesis.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      if (audioRef.current._objectUrl) URL.revokeObjectURL(audioRef.current._objectUrl);
+      audioRef.current = null;
+    }
     setSpeaking(false);
     if (pausedTtsRef.current && recRef.current && isRecRef.current) {
       pausedTtsRef.current = false;
@@ -187,9 +192,9 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
     } else {
       pausedTtsRef.current = false;
     }
-  }, [ttsSupported]);
+  }, []);
 
-  const playTTS = useCallback((text) => {
+  const playTTS = useCallback(async (text) => {
     if (!ttsSupported) return;
     const cleaned = cleanForSpeech(text);
     if (!cleaned) return;
@@ -197,27 +202,47 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
       pausedTtsRef.current = true;
       try { recRef.current.stop(); } catch {}
     }
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(cleaned);
-    utter.rate = 1.0; utter.pitch = 1.0; utter.volume = 1.0;
-    const voices = window.speechSynthesis.getVoices();
-    const preferred =
-      voices.find(v => /en[-_]US/i.test(v.lang) && /female|samantha|jenny|aria|zira/i.test(v.name)) ||
-      voices.find(v => /en[-_]GB/i.test(v.lang) && /female|hazel|libby/i.test(v.name)) ||
-      voices.find(v => /^en/i.test(v.lang));
-    if (preferred) utter.voice = preferred;
-    utter.onend = () => {
-      setSpeaking(false);
-      if (pausedTtsRef.current && recRef.current && isRecRef.current) {
-        pausedTtsRef.current = false;
-        setTimeout(() => { try { recRef.current?.start(); } catch {} }, 350);
-      } else {
-        pausedTtsRef.current = false;
-      }
-    };
-    utter.onerror = () => { setSpeaking(false); pausedTtsRef.current = false; };
+    if (audioRef.current) {
+      audioRef.current.pause();
+      if (audioRef.current._objectUrl) URL.revokeObjectURL(audioRef.current._objectUrl);
+      audioRef.current = null;
+    }
     setSpeaking(true);
-    window.speechSynthesis.speak(utter);
+    try {
+      const res = await fetch(`${SAIGE_API}/tts`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ text: cleaned }),
+      });
+      if (!res.ok) throw new Error(`TTS ${res.status}`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const audio = new Audio(objectUrl);
+      audio._objectUrl = objectUrl;
+      audioRef.current = audio;
+      audio.onended = () => {
+        URL.revokeObjectURL(objectUrl);
+        audioRef.current = null;
+        setSpeaking(false);
+        if (pausedTtsRef.current && recRef.current && isRecRef.current) {
+          pausedTtsRef.current = false;
+          setTimeout(() => { try { recRef.current?.start(); } catch {} }, 350);
+        } else {
+          pausedTtsRef.current = false;
+        }
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        audioRef.current = null;
+        setSpeaking(false);
+        pausedTtsRef.current = false;
+      };
+      await audio.play();
+    } catch (e) {
+      setSpeaking(false);
+      pausedTtsRef.current = false;
+      console.warn('[TTS]', e);
+    }
   }, [ttsSupported]);
 
   const saveAutoSpeak = (v) => {
@@ -280,8 +305,11 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
   useEffect(() => () => {
     isRecRef.current = false;
     if (recRef.current) { try { recRef.current.stop(); } catch {} }
-    if (ttsSupported) { try { window.speechSynthesis.cancel(); } catch {} }
-  }, [ttsSupported]);
+    if (audioRef.current) {
+      try { audioRef.current.pause(); } catch {}
+      if (audioRef.current._objectUrl) { try { URL.revokeObjectURL(audioRef.current._objectUrl); } catch {} }
+    }
+  }, []);
 
   const scrollRef = useRef(null);
   useEffect(() => {
