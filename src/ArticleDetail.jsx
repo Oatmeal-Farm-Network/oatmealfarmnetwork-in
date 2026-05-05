@@ -82,8 +82,52 @@ const ArticleDetail = () => {
   const fullContent = article.content || '';
   const displayContent = isSignedIn ? fullContent : buildPreviewHtml(fullContent);
 
+  const heroImg = getHeroImage(article);
+  const articleCanonical = `https://oatmealfarmnetwork.com/app/news/${id}`;
+  const pubIso = article.pubDate ? new Date(article.pubDate).toISOString() : undefined;
+  const articleDesc = article.description
+    ? article.description.replace(/<[^>]+>/g, '').slice(0, 155)
+    : article.title;
+
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', paddingTop: '2rem', paddingBottom: '3rem', paddingLeft: '2rem', paddingRight: '2rem' }}>
+      <PageMeta
+        title={article.title}
+        description={articleDesc}
+        keywords={`${article.category || 'agriculture'}, farm news, agricultural news, ${article.source}, Oatmeal Farm Network`}
+        image={heroImg?.startsWith('http') ? heroImg : undefined}
+        imageAlt={article.title}
+        canonical={articleCanonical}
+        ogType="article"
+        publishedTime={pubIso}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'NewsArticle',
+            'headline': article.title,
+            'description': articleDesc,
+            ...(heroImg?.startsWith('http') ? { 'image': heroImg } : {}),
+            ...(pubIso ? { 'datePublished': pubIso, 'dateModified': pubIso } : {}),
+            'author': { '@type': 'Organization', 'name': article.source || 'Oatmeal Farm Network' },
+            'publisher': {
+              '@type': 'Organization',
+              'name': 'Oatmeal Farm Network',
+              'logo': { '@type': 'ImageObject', 'url': 'https://oatmealfarmnetwork.com/images/OFN-Logo.png' },
+            },
+            'mainEntityOfPage': { '@type': 'WebPage', '@id': articleCanonical },
+            ...(article.link ? { 'url': article.link } : {}),
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            'itemListElement': [
+              { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': 'https://oatmealfarmnetwork.com' },
+              { '@type': 'ListItem', 'position': 2, 'name': 'News', 'item': 'https://oatmealfarmnetwork.com/app/news' },
+              { '@type': 'ListItem', 'position': 3, 'name': article.title, 'item': articleCanonical },
+            ],
+          },
+        ]}
+      />
       <button onClick={() => navigate('/app/news')}
         style={{ background: 'none', border: 'none', color: '#819360', cursor: 'pointer', fontWeight: 600, marginBottom: '1rem', fontSize: '0.9rem' }}>
         {t('article.back_news')}
