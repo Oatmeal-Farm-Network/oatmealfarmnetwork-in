@@ -347,7 +347,7 @@ const Header = () => {
           </ul>
         </div>
 
-        {/* Right side: icons on desktop, hamburger on mobile */}
+        {/* Right: icons on desktop, hamburger on mobile */}
         <div className="flex items-center gap-3 shrink-0">
           {isLoggedIn ? (
             <div className="hidden lg:flex items-center gap-3">
@@ -367,10 +367,7 @@ const Header = () => {
                   </svg>
                 </button>
                 {psOpen && (
-                  <div
-                    className="absolute right-0 top-full pt-2 w-52 z-10000"
-                    onMouseLeave={() => setPsOpen(false)}
-                  >
+                  <div className="absolute right-0 top-full pt-2 w-52 z-10000" onMouseLeave={() => setPsOpen(false)}>
                     <div className="bg-white rounded shadow-lg overflow-hidden">
                       <Link to="/account/settings" onClick={() => setPsOpen(false)} className="block px-3 py-2 text-xs text-gray-700 hover:bg-gray-100">Login &amp; Account</Link>
                       <Link to="/account/settings?tab=audio" onClick={() => setPsOpen(false)} className="block px-3 py-2 text-xs text-gray-700 hover:bg-gray-100">Language &amp; Audio Settings</Link>
@@ -378,23 +375,14 @@ const Header = () => {
                   </div>
                 )}
               </div>
-              <button
-                onClick={handleLogout}
-                title={t('nav.log_out')}
-                className="text-white/80 hover:text-white transition-colors flex items-center"
-              >
+              <button onClick={handleLogout} title={t('nav.log_out')} className="text-white/80 hover:text-white transition-colors flex items-center">
                 <LogoutIcon />
               </button>
             </div>
           ) : (
             <div className="hidden lg:flex items-center gap-3">
               <LanguageSelector />
-              <Link
-                to="/login"
-                title={t('nav.login')}
-                className="flex items-center transition-colors"
-                style={{ color: 'rgba(255,255,255,0.8)' }}
-              >
+              <Link to="/login" title={t('nav.login')} className="flex items-center transition-colors" style={{ color: 'rgba(255,255,255,0.8)' }}>
                 <LoginIcon />
               </Link>
             </div>

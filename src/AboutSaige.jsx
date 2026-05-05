@@ -35,7 +35,7 @@ export default function AboutSaige() {
       <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
-            src="/images/CoreFeaturesFarm2Table.webp"
+            src="/images/SaigeBanner.webp"
             alt="Saige AI Agricultural Assistant"
             className="w-full object-cover"
             style={{ height: '260px', display: 'block' }}

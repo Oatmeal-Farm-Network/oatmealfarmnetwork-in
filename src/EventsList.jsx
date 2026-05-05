@@ -61,18 +61,20 @@ export default function EventsList() {
       <Header />
 
       {/* Hero */}
-      <div
-        className="relative bg-[#3D6B34] text-white py-16 px-4 bg-center bg-cover"
-        style={{ backgroundImage: "url('/images/EventsHeader.webp')" }}
-      >
-        <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
-        <div className="relative max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2 drop-shadow" style={{ color: '#fff' }}>{t('events.title')}</h1>
-          <p className="text-white drop-shadow">{t('events.subtitle')}</p>
+      <div className="w-full mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
+        <div
+          className="relative bg-[#3D6B34] text-white py-16 px-8 bg-center bg-cover rounded-xl overflow-hidden"
+          style={{ backgroundImage: "url('/images/EventsHeader.webp')" }}
+        >
+          <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
+          <div className="relative">
+            <h1 className="text-3xl font-bold mb-2 drop-shadow" style={{ color: '#fff' }}>{t('events.title')}</h1>
+            <p className="text-white drop-shadow">{t('events.subtitle')}</p>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8 grow w-full">
+      <div className="max-w-[1300px] mx-auto px-4 py-8 grow w-full">
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
           { label: t('events.title') },
