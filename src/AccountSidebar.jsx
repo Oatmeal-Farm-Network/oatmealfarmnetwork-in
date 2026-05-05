@@ -543,12 +543,14 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        <NavSection icon={ICONS.meetings} label="Meetings" expanded={Expanded}
-          isOpen={OpenSections['Meetings'] || false} onToggle={() => toggleSection('Meetings')}>
-          <NavChild to={`/meetings?BusinessID=${BusinessID}`} label="All Meetings" />
-          <NavChild to={`/meetings?BusinessID=${BusinessID}&view=new`} label="New Meeting" />
-          <NavChild to={`/meetings?BusinessID=${BusinessID}&view=projects`} label="Projects" />
-        </NavSection>
+        {on('meetings') && (
+          <NavSection icon={ICONS.meetings} label="Meetings" expanded={Expanded}
+            isOpen={OpenSections['Meetings'] || false} onToggle={() => toggleSection('Meetings')}>
+            <NavChild to={`/meetings?BusinessID=${BusinessID}`} label="All Meetings" />
+            <NavChild to={`/meetings?BusinessID=${BusinessID}&view=new`} label="New Meeting" />
+            <NavChild to={`/meetings?BusinessID=${BusinessID}&view=projects`} label="Projects" />
+          </NavSection>
+        )}
 
         <NavSection icon={ICONS.settings} label={t('account_sidebar.sec_settings')} expanded={Expanded}
           isOpen={OpenSections['Account Settings'] || false} onToggle={() => toggleSection('Account Settings')}>
