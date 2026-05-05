@@ -336,69 +336,69 @@ const Header = () => {
             </li>
 
             {isLoggedIn ? (
-              <>
-                <li><Link to="/contact-us" className="nav-link">{t('nav.contact')}</Link></li>
-                <li className="flex items-center gap-3">
-                  <CartBell />
-                  <NotificationBell />
-                  <LanguageSelector />
-                  {/* Personal Settings dropdown */}
-                  <div className="relative" ref={psRef}>
-                    <button
-                      onClick={() => setPsOpen(o => !o)}
-                      onMouseEnter={() => setPsOpen(true)}
-                      title="Personal Settings"
-                      className="text-white/80 hover:text-white transition-colors flex items-center"
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-                      </svg>
-                    </button>
-                    {psOpen && (
-                      <div
-                        className="absolute right-0 top-full pt-2 w-52 z-10000"
-                        onMouseLeave={() => setPsOpen(false)}
-                      >
-                        <div className="bg-white rounded shadow-lg overflow-hidden">
-                          <Link to="/account/settings" onClick={() => setPsOpen(false)} className="block px-3 py-2 text-xs text-gray-700 hover:bg-gray-100">Login &amp; Account</Link>
-                          <Link to="/account/settings?tab=audio" onClick={() => setPsOpen(false)} className="block px-3 py-2 text-xs text-gray-700 hover:bg-gray-100">Language &amp; Audio Settings</Link>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    title={t('nav.log_out')}
-                    className="text-white/80 hover:text-white transition-colors flex items-center"
-                  >
-                    <LogoutIcon />
-                  </button>
-                </li>
-              </>
+              <li><Link to="/contact-us" className="nav-link">{t('nav.contact')}</Link></li>
             ) : (
               <>
                 <li><Link to="/about" className="nav-link">{t('nav.about')}</Link></li>
                 <li><Link to="/contact-us" className="nav-link">{t('nav.contact')}</Link></li>
                 <li><Link to="/signup" className="nav-link">{t('nav.signup')}</Link></li>
-                <li className="flex items-center gap-3">
-                  <LanguageSelector />
-                  <Link
-                    to="/login"
-                    title={t('nav.login')}
-                    className="flex items-center transition-colors"
-                    style={{ color: 'rgba(255,255,255,0.8)' }}
-                  >
-                    <LoginIcon />
-                  </Link>
-                </li>
               </>
             )}
           </ul>
         </div>
 
-        {/* Hamburger */}
-        <div className="lg:w-[180px] flex justify-end">
+        {/* Right side: icons on desktop, hamburger on mobile */}
+        <div className="flex items-center gap-3 shrink-0">
+          {isLoggedIn ? (
+            <div className="hidden lg:flex items-center gap-3">
+              <CartBell />
+              <NotificationBell />
+              <LanguageSelector />
+              <div className="relative" ref={psRef}>
+                <button
+                  onClick={() => setPsOpen(o => !o)}
+                  onMouseEnter={() => setPsOpen(true)}
+                  title="Personal Settings"
+                  className="text-white/80 hover:text-white transition-colors flex items-center"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                  </svg>
+                </button>
+                {psOpen && (
+                  <div
+                    className="absolute right-0 top-full pt-2 w-52 z-10000"
+                    onMouseLeave={() => setPsOpen(false)}
+                  >
+                    <div className="bg-white rounded shadow-lg overflow-hidden">
+                      <Link to="/account/settings" onClick={() => setPsOpen(false)} className="block px-3 py-2 text-xs text-gray-700 hover:bg-gray-100">Login &amp; Account</Link>
+                      <Link to="/account/settings?tab=audio" onClick={() => setPsOpen(false)} className="block px-3 py-2 text-xs text-gray-700 hover:bg-gray-100">Language &amp; Audio Settings</Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={handleLogout}
+                title={t('nav.log_out')}
+                className="text-white/80 hover:text-white transition-colors flex items-center"
+              >
+                <LogoutIcon />
+              </button>
+            </div>
+          ) : (
+            <div className="hidden lg:flex items-center gap-3">
+              <LanguageSelector />
+              <Link
+                to="/login"
+                title={t('nav.login')}
+                className="flex items-center transition-colors"
+                style={{ color: 'rgba(255,255,255,0.8)' }}
+              >
+                <LoginIcon />
+              </Link>
+            </div>
+          )}
           <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-white text-3xl focus:outline-none" type="button">
             {isOpen ? '✕' : '☰'}
           </button>
