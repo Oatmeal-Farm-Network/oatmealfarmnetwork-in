@@ -1,8 +1,23 @@
 # robots.txt for https://oatmealfarmnetwork.com
 # Public marketplace + databases; auth-gated app surfaces are disallowed
 
+# robots.txt for https://oatmealfarmnetwork.com
+# Public content is open; auth-gated app surfaces are disallowed.
+
 User-agent: *
 Allow: /
+Allow: /platform/
+Allow: /app/news
+Allow: /newsroom
+Allow: /blog
+Allow: /events
+Allow: /directory
+Allow: /marketplaces/
+Allow: /knowledgebases
+Allow: /plant-knowledgebase
+Allow: /livestock
+Allow: /ingredient-knowledgebase
+Allow: /services/directory
 Disallow: /account
 Disallow: /accounts
 Disallow: /dashboard
@@ -27,34 +42,6 @@ Disallow: /events/manage
 Disallow: /events/my-registrations
 Disallow: /blog/manage
 Disallow: /blog/authors/manage
-Disallow: /api/
-
-User-agent: Googlebot
-Allow: /
-Disallow: /account
-Disallow: /accounts
-Disallow: /dashboard
-Disallow: /login
-Disallow: /signup
-Disallow: /forgot-password
-Disallow: /cart
-Disallow: /orders
-Disallow: /seller/
-Disallow: /website/builder
-Disallow: /accounting
-Disallow: /api/
-
-User-agent: Bingbot
-Allow: /
-Disallow: /account
-Disallow: /accounts
-Disallow: /dashboard
-Disallow: /login
-Disallow: /signup
-Disallow: /forgot-password
-Disallow: /cart
-Disallow: /orders
-Disallow: /seller/
 Disallow: /api/
 
 User-agent: Twitterbot

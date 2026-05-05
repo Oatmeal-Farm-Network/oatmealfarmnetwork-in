@@ -27,14 +27,17 @@
     <meta name="googlebot" content="index,follow" />
 
     <!-- Open Graph -->
-    <meta property="og:type"        content="website" />
-    <meta property="og:site_name"   content="Oatmeal Farm Network" />
-    <meta property="og:title"       content="Oatmeal Farm Network | AI-Powered Farm &amp; Food Network" />
-    <meta property="og:description" content="Connect farms, buyers, and food businesses with AI-powered tools. Browse livestock, plants, ingredients, and local food markets." />
-    <meta property="og:image"       content="https://oatmealfarmnetwork.com/images/Oatmeal-Farm-Network-og-default.jpg" />
-    <meta property="og:image:alt"   content="Oatmeal Farm Network" />
-    <meta property="og:url"         content="https://oatmealfarmnetwork.com" />
-    <meta property="og:locale"      content="en_US" />
+    <meta property="og:type"         content="website" />
+    <meta property="og:site_name"    content="Oatmeal Farm Network" />
+    <meta property="og:title"        content="Oatmeal Farm Network | AI-Powered Farm &amp; Food Network" />
+    <meta property="og:description"  content="Connect farms, buyers, and food businesses with AI-powered tools. Browse livestock, plants, ingredients, and local food markets." />
+    <meta property="og:image"        content="https://oatmealfarmnetwork.com/images/Oatmeal-Farm-Network-og-default.jpg" />
+    <meta property="og:image:alt"    content="Oatmeal Farm Network — AI-Powered Farm &amp; Food Network" />
+    <meta property="og:image:width"  content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type"   content="image/jpeg" />
+    <meta property="og:url"          content="https://oatmealfarmnetwork.com" />
+    <meta property="og:locale"       content="en_US" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card"        content="summary_large_image" />
@@ -60,13 +63,76 @@
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "Oatmeal Farm Network",
+      "alternateName": "OFN",
       "url": "https://oatmealfarmnetwork.com",
-      "logo": "https://oatmealfarmnetwork.com/images/OFN-Logo.png",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://oatmealfarmnetwork.com/images/OFN-Logo.png",
+        "width": 512,
+        "height": 512
+      },
       "description": "Oatmeal Farm Network connects farms, ranches, and food businesses through AI-powered tools, livestock and plant databases, and local food marketplaces.",
+      "areaServed": "US",
+      "knowsAbout": ["agriculture", "farm to table", "livestock", "precision agriculture", "artisan food production", "restaurant sourcing"],
       "sameAs": [
         "https://oatmeal-ai.com"
-      ]
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "url": "https://oatmealfarmnetwork.com/contact-us"
+      }
     }
+    </script>
+
+    <!-- AI Software Suite structured data -->
+    <script type="application/ld+json">
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Saige",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "url": "https://oatmealfarmnetwork.com/platform/saige",
+        "description": "AI agricultural assistant for farmers and ranchers — crops, livestock, soil, weather, markets, and precision-ag field analysis.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "provider": { "@type": "Organization", "name": "Oatmeal Farm Network" }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Pairsley",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "url": "https://oatmealfarmnetwork.com/platform/pairsley",
+        "description": "AI consultant for chefs and restaurant operators — local sourcing, menu costing, specials writing, and farm connections.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "provider": { "@type": "Organization", "name": "Oatmeal Farm Network" }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Rosemarie",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "url": "https://oatmealfarmnetwork.com/platform/rosemarie",
+        "description": "AI consultant for artisan food producers — recipe management, batch tracking, ingredient sourcing, and production operations.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "provider": { "@type": "Organization", "name": "Oatmeal Farm Network" }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Thaiyme",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "url": "https://oatmealfarmnetwork.com/platform/thaiyme",
+        "description": "AI business-operations consultant — accounting analysis, event management, sponsorship tracking, lead retrieval, and field reporting.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "provider": { "@type": "Organization", "name": "Oatmeal Farm Network" }
+      }
+    ]
     </script>
 
     <!-- WebSite + SearchAction structured data -->

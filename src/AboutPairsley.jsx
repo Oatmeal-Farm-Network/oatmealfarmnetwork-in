@@ -100,7 +100,20 @@ export default function AboutPairsley() {
       <PageMeta
         title="Pairsley | AI Agent for Restaurants & Professional Kitchens"
         description="Pairsley is the Oatmeal Farm Network AI agent for restaurateurs, chefs, and professional kitchens — sourcing, seasonal menus, costing, and vendor relationships."
+        keywords="restaurant AI assistant, chef AI tool, farm to table sourcing, menu costing software, local food sourcing app, Pairsley AI, Oatmeal Farm Network, restaurant technology"
         canonical="https://oatmealfarmnetwork.com/platform/pairsley"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          'name': 'Pairsley',
+          'applicationCategory': 'BusinessApplication',
+          'operatingSystem': 'Web',
+          'url': 'https://oatmealfarmnetwork.com/platform/pairsley',
+          'description': 'AI consultant for chefs and restaurant operators — local sourcing, menu costing, specials writing, and farm connections.',
+          'featureList': ['Local farm sourcing', 'Menu costing', 'Specials writing', 'Vendor management', 'Seasonal produce lookup'],
+          'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
+          'provider': { '@type': 'Organization', 'name': 'Oatmeal Farm Network', 'url': 'https://oatmealfarmnetwork.com' },
+        }}
       />
       <Header />
 

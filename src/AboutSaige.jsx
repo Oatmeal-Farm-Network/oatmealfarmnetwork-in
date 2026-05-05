@@ -18,7 +18,22 @@ export default function AboutSaige() {
       <PageMeta
         title="Saige | AI Agricultural Assistant"
         description="Saige is the Oatmeal Farm Network AI agent for growers and ranchers — crops, livestock, soil, weather, markets, and more."
+        keywords="farm AI assistant, agricultural AI, livestock AI, crop monitoring AI, precision agriculture software, farm management app, Saige AI, Oatmeal Farm Network"
         canonical="https://oatmealfarmnetwork.com/platform/saige"
+        image="https://oatmealfarmnetwork.com/images/SaigeBanner.webp"
+        imageAlt="Saige AI Agricultural Assistant — Oatmeal Farm Network"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          'name': 'Saige',
+          'applicationCategory': 'BusinessApplication',
+          'operatingSystem': 'Web',
+          'url': 'https://oatmealfarmnetwork.com/platform/saige',
+          'description': 'AI agricultural assistant for farmers and ranchers — crops, livestock, soil, weather, markets, and precision-ag field analysis.',
+          'featureList': ['Crop monitoring', 'Livestock management', 'Weather analysis', 'Market prices', 'Precision agriculture', 'Field reports'],
+          'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
+          'provider': { '@type': 'Organization', 'name': 'Oatmeal Farm Network', 'url': 'https://oatmealfarmnetwork.com' },
+        }}
       />
       <Header />
 

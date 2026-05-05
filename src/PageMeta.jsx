@@ -64,9 +64,14 @@ export default function PageMeta({
   description,
   keywords,
   image,
+  imageAlt,
+  imageWidth,
+  imageHeight,
   canonical,
   noIndex = false,
   ogType = 'website',
+  publishedTime,
+  modifiedTime,
   jsonLd,
 }) {
   useEffect(() => {
@@ -81,22 +86,30 @@ export default function PageMeta({
 
     // Standard meta
     setMeta('description', desc);
-    setMeta('keywords', keywords || '');
+    if (keywords) setMeta('keywords', keywords);
     setMeta('robots', noIndex ? 'noindex,nofollow' : 'index,follow,max-image-preview:large,max-snippet:-1');
 
     // Open Graph
-    setOG('og:type',        ogType);
-    setOG('og:title',       fullTitle);
-    setOG('og:description', desc);
-    setOG('og:image',       img);
-    setOG('og:url',         canon);
-    setOG('og:site_name',   SITE_NAME);
+    setOG('og:type',         ogType);
+    setOG('og:title',        fullTitle);
+    setOG('og:description',  desc);
+    setOG('og:image',        img);
+    setOG('og:image:alt',    imageAlt || fullTitle);
+    if (imageWidth)  setOG('og:image:width',  String(imageWidth));
+    if (imageHeight) setOG('og:image:height', String(imageHeight));
+    setOG('og:url',          canon);
+    setOG('og:site_name',    SITE_NAME);
+    if (ogType === 'article') {
+      if (publishedTime) setOG('article:published_time', publishedTime);
+      if (modifiedTime)  setOG('article:modified_time',  modifiedTime);
+    }
 
     // Twitter Card
     setMeta('twitter:card',        'summary_large_image');
     setMeta('twitter:title',       fullTitle);
     setMeta('twitter:description', desc);
     setMeta('twitter:image',       img);
+    setMeta('twitter:image:alt',   imageAlt || fullTitle);
 
     setCanonical(canon);
 
@@ -107,7 +120,7 @@ export default function PageMeta({
     return () => {
       clearJsonLd();
     };
-  }, [title, description, keywords, image, canonical, noIndex, ogType, jsonLd]);
+  }, [title, description, keywords, image, imageAlt, imageWidth, imageHeight, canonical, noIndex, ogType, publishedTime, modifiedTime, jsonLd]);
 
   return null;
 }

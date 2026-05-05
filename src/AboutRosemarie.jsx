@@ -41,7 +41,20 @@ export default function AboutRosemarie() {
       <PageMeta
         title="Rosemarie | AI Agent for Artisan Food Producers"
         description="Rosemarie is the Oatmeal Farm Network AI agent for mills, bakers, cheesemakers, and artisan food producers — recipes, yields, sourcing, labeling, and small-batch operations."
+        keywords="artisan food producer AI, bakery software, recipe management AI, batch tracking software, small food business tools, Rosemarie AI, Oatmeal Farm Network, artisan producer technology"
         canonical="https://oatmealfarmnetwork.com/platform/rosemarie"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          'name': 'Rosemarie',
+          'applicationCategory': 'BusinessApplication',
+          'operatingSystem': 'Web',
+          'url': 'https://oatmealfarmnetwork.com/platform/rosemarie',
+          'description': 'AI consultant for artisan food producers — recipe management, batch tracking, ingredient sourcing, and production operations.',
+          'featureList': ['Recipe management', 'Batch tracking', 'Ingredient sourcing', 'Yield calculation', 'Production planning', 'Labeling guidance'],
+          'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
+          'provider': { '@type': 'Organization', 'name': 'Oatmeal Farm Network', 'url': 'https://oatmealfarmnetwork.com' },
+        }}
       />
       <Header />
 

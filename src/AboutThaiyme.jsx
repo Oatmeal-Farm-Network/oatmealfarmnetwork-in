@@ -133,7 +133,22 @@ export default function AboutThaiyme() {
       <PageMeta
         title="Thaiyme | Business Operations AI for OFN"
         description="Thaiyme is the Oatmeal Farm Network business-operations AI — accounting assistant, event organizer analyst, sponsorship tracker, lead retrieval, and precision-ag field advisor."
+        keywords="business operations AI, accounting AI assistant, event management software, sponsorship tracking, lead retrieval AI, Thaiyme AI, Oatmeal Farm Network, farm business software"
         canonical="https://oatmealfarmnetwork.com/platform/thaiyme"
+        image="https://oatmealfarmnetwork.com/images/ThaiymeBanner.webp"
+        imageAlt="Thaiyme Business Operations AI — Oatmeal Farm Network"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          'name': 'Thaiyme',
+          'applicationCategory': 'BusinessApplication',
+          'operatingSystem': 'Web',
+          'url': 'https://oatmealfarmnetwork.com/platform/thaiyme',
+          'description': 'AI business-operations consultant — accounting analysis, event management, sponsorship tracking, lead retrieval, and field reporting.',
+          'featureList': ['Accounting analysis', 'Event management', 'Sponsorship tracking', 'Lead retrieval', 'Floor plan management', 'Field reports'],
+          'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
+          'provider': { '@type': 'Organization', 'name': 'Oatmeal Farm Network', 'url': 'https://oatmealfarmnetwork.com' },
+        }}
       />
       <Header />
 
