@@ -794,11 +794,12 @@ function NewMeetingModal({ businessId, projects, onCreated, onClose }) {
 export default function Meetings() {
   const [params] = useSearchParams();
   const businessId = parseInt(params.get('BusinessID') || '0', 10);
+  const urlView = params.get('view') || '';
 
   const [view, setView]             = useState('list'); // list | editor
   const [editMeetingId, setEditMeetingId] = useState(null);
-  const [showNewModal, setShowNewModal]   = useState(false);
-  const [showProjects, setShowProjects]   = useState(false);
+  const [showNewModal, setShowNewModal]   = useState(urlView === 'new');
+  const [showProjects, setShowProjects]   = useState(urlView === 'projects');
   const [projects, setProjects]     = useState([]);
 
   const loadProjects = useCallback(() => {
