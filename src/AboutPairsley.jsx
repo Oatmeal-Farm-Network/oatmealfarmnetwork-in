@@ -169,22 +169,6 @@ export default function AboutPairsley() {
             <p style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.84rem', margin: '0 0 16px', lineHeight: 1.5, fontStyle: 'italic' }}>
               {t('pairsley.hero_tagline')}
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                to="/restaurant/farms"
-                className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm"
-                style={{ color: ACCENT }}
-              >
-                {t('pairsley.hero_cta1')}
-              </Link>
-              <Link
-                to="/marketplaces/farm-to-table"
-                className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10"
-                style={{ borderColor: 'rgba(255,255,255,0.55)', color: '#ffffff' }}
-              >
-                {t('pairsley.hero_cta2')}
-              </Link>
-            </div>
           </div>
         </div>
       </div>

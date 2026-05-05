@@ -317,6 +317,15 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
+        {on('rosemarie') && (
+          <NavSection icon={ICONS.rosemarie} label="Recipes & Batches" expanded={Expanded}
+            isOpen={OpenSections['Recipes'] || false} onToggle={() => toggleSection('Recipes')}>
+            <NavChild to={`/recipes?BusinessID=${BusinessID}`} label="Recipe Manager" />
+            <NavChild to={`/batches?BusinessID=${BusinessID}`} label="Batch Tracker" />
+            <NavChild to={`/platform/rosemarie?BusinessID=${BusinessID}`} label="About Rosemarie" />
+          </NavSection>
+        )}
+
         {on('restaurant_sourcing') && (
           <NavSection icon={ICONS.restaurant} label={t('account_sidebar.sec_restaurant')} expanded={Expanded}
             isOpen={OpenSections['Restaurant Sourcing'] || false} onToggle={() => toggleSection('Restaurant Sourcing')}>

@@ -284,6 +284,9 @@ export default function RosemarieChat({ businessId }) {
     localStorage.getItem('people_id') || localStorage.getItem('PeopleID') || 'anon'
   ), []);
 
+  const isLoggedIn = !!(localStorage.getItem('access_token') || localStorage.getItem('AccessToken'));
+  if (!isLoggedIn) return null;
+
   useEffect(() => {
     if (!fullscreen) return;
     const onEsc = (e) => { if (e.key === 'Escape') setFullscreen(false); };

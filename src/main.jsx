@@ -280,6 +280,8 @@ const ServicesHome = lazyWithReload(() => import('./ServicesHome.jsx'))
 const AboutSaige = lazyWithReload(() => import('./AboutSaige.jsx'))
 const AboutRosemarie = lazyWithReload(() => import('./AboutRosemarie.jsx'))
 const AboutPairsley = lazyWithReload(() => import('./AboutPairsley.jsx'))
+const RecipeManager = lazyWithReload(() => import('./RecipeManager.jsx'))
+const BatchTracker = lazyWithReload(() => import('./BatchTracker.jsx'))
 const AboutWebsiteBuilder = lazyWithReload(() => import('./AboutWebsiteBuilder.jsx'))
 const AboutMarketplace = lazyWithReload(() => import('./AboutMarketplace.jsx'))
 const AboutEvents = lazyWithReload(() => import('./AboutEvents.jsx'))
@@ -511,6 +513,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/platform/saige" element={<AboutSaige />} />
           <Route path="/platform/rosemarie" element={<AboutRosemarie />} />
           <Route path="/platform/pairsley" element={<AboutPairsley />} />
+          <Route path="/recipes" element={<RecipeManager />} />
+          <Route path="/batches" element={<BatchTracker />} />
           <Route path="/platform/precision-ag" element={<AboutPrecisionAg />} />
           <Route path="/agriculture-support" element={<AboutAgSupport />} />
           <Route path="/ai-agents" element={<AboutAIAgents />} />
