@@ -264,8 +264,8 @@ const Header = () => {
   );
 
   return (
-    <nav className="bg-[#A3301E] py-3 px-4 shadow-2xl sticky top-0 z-10000 font-montserrat">
-      <div className="max-w-350 mx-auto flex justify-between items-center">
+    <nav className="bg-[#A3301E] py-3 shadow-2xl sticky top-0 z-10000 font-montserrat">
+      <div className="max-w-[1300px] mx-auto px-4 flex justify-between items-center">
 
         {/* Logo */}
         <Link to={isLoggedIn ? "/dashboard" : "/"} className="flex items-center shrink-0">
