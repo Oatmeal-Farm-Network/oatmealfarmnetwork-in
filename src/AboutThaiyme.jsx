@@ -171,11 +171,6 @@ export default function AboutThaiyme() {
                 style={{ color: ACCENT }}>
                 Open My Account →
               </Link>
-              <Link to="/accounting"
-                className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10"
-                style={{ borderColor: '#ffffff', color: '#ffffff' }}>
-                Go to Accounting
-              </Link>
             </div>
           </div>
           <div className="absolute right-8 top-1/2 -translate-y-1/2 hidden lg:block opacity-10" aria-hidden="true">
@@ -304,28 +299,6 @@ export default function AboutThaiyme() {
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="mt-10 text-center bg-white border border-gray-200 rounded-2xl p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2"
-              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
-            Thaiyme Is Already in Your Account
-          </h3>
-          <p className="text-sm text-gray-600 mb-4 max-w-xl mx-auto">
-            No installation. No configuration. Open your accounting dashboard or any event management page and tap the brown bubble in the corner.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/accounting"
-              className="px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
-              style={{ backgroundColor: ACCENT }}>
-              Go to Accounting
-            </Link>
-            <Link to="/events"
-              className="px-6 py-3 rounded-lg border-2 font-bold transition hover:bg-gray-50"
-              style={{ borderColor: ACCENT, color: ACCENT }}>
-              Manage Events
-            </Link>
-          </div>
-        </section>
 
       </div>
       <Footer />
