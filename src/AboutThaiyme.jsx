@@ -2,7 +2,6 @@
 // Route: /platform/thaiyme
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -13,8 +12,6 @@ const ACCENT_LIGHT = '#fdf6ee';
 const ACCENT_BORDER = '#e8d5bc';
 
 export default function AboutThaiyme() {
-  const { t } = useTranslation();
-
   const S = (p) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={ACCENT}
       strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} />
@@ -24,55 +21,109 @@ export default function AboutThaiyme() {
     {
       icon: <S><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></S>,
       title: 'Accounting Assistant',
-      body: 'Explains revenue, expenses, invoice summaries, and cash-flow trends in plain language — no spreadsheet required.',
+      body: 'Revenue snapshot, open invoices, recent payments, customer search — answers questions about your books in plain language without you leaving the page.',
     },
     {
       icon: <S><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></S>,
       title: 'Event Registration',
-      body: 'Reviews registrant lists, flags incomplete entries, answers attendee questions, and can make small edits on your behalf with one-click confirmation.',
+      body: 'Lists registrants with payment status, and can propose updates to payment status, contact info, or notes — and cancel registrations — via a one-click confirmation card.',
     },
     {
-      icon: <S><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></S>,
-      title: 'Context-Aware',
-      body: 'Knows which page you\'re on and loads the relevant data automatically — no copy-pasting numbers into a chat window.',
+      icon: <S><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></S>,
+      title: 'Sponsorship',
+      body: 'Revenue by tier, slots sold vs available, and a filterable sponsor list with paid/pending/declined status — so you always know where your sponsorship program stands.',
     },
     {
-      icon: <S><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></S>,
-      title: 'PII-Safe by Design',
-      body: 'Sensitive attendee data — SSNs, payment info, routing numbers, emails, and phone numbers — is redacted server-side before any of it reaches the AI model.',
+      icon: <S><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/></S>,
+      title: 'Floor Plan & Booth Services',
+      body: 'Booth-sales status breakdown (available / reserved / sold / blocked) by tier, plus à la carte services revenue (electrical, water, AV, internet) from add-on purchases.',
+    },
+    {
+      icon: <S><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></S>,
+      title: 'Certificates of Insurance',
+      body: 'COI status counts (pending / approved / rejected / expired) for your event, plus a flag for any certificates expiring within 30 days.',
+    },
+    {
+      icon: <S><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></S>,
+      title: 'Exhibitor Lead Retrieval',
+      body: 'Your badge-scan leads from an event, filterable by follow-up status (new / contacted / qualified / won / lost) and minimum star rating — all PII masked.',
+    },
+    {
+      icon: <S><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></S>,
+      title: 'Precision Ag Fields',
+      body: 'Your satellite-monitored fields: agronomy snapshot, spray decisions, NDVI trend over time, and stress-zone mapping — all from the same chat bubble.',
     },
     {
       icon: <S><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></S>,
       title: 'Confirm Before Executing',
-      body: 'All write actions — editing a registration, updating an invoice — surface as a confirmation card you approve explicitly. Thaiyme never mutates data without your say-so.',
+      body: 'Every write action surfaces as a confirmation card you approve explicitly. Thaiyme never mutates data — registrations, payment status, notes — without your say-so.',
     },
     {
-      icon: <S><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></S>,
-      title: 'Works Across Business Types',
-      body: 'Whether you run a farm, a ranch, a restaurant, a fiber studio, or a trade show — Thaiyme understands your account type and adjusts its questions and suggestions accordingly.',
+      icon: <S><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></S>,
+      title: 'PII-Safe by Design',
+      body: 'SSNs, card numbers, routing numbers, emails, and phone numbers are redacted server-side before any payload reaches the AI model. The model never sees raw sensitive data.',
+    },
+    {
+      icon: <S><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></S>,
+      title: 'Context-Aware',
+      body: 'Knows which page you\'re on and loads the relevant data automatically — accounting, event registrations, sponsorship, floor plan — based on what\'s in scope.',
     },
   ];
 
-  const questions = [
-    '"What was my total revenue last month, and how does it compare to the month before?"',
-    '"Show me all registrants for the Fall Harvest Fair who haven\'t paid yet."',
-    '"Are there any duplicate registrations in tonight\'s event?"',
-    '"Update the booth assignment for vendor #14 to Aisle B, spot 6."',
-    '"Which of my invoices are more than 30 days overdue?"',
-    '"Summarize the expense categories from Q3 and flag anything unusual."',
+  const questionGroups = [
+    {
+      label: 'Accounting',
+      questions: [
+        '"What was my total revenue last month, and how does that compare to the prior month?"',
+        '"Which of my invoices are more than 30 days overdue?"',
+        '"Show me the last ten payments I received."',
+      ],
+    },
+    {
+      label: 'Event Registration',
+      questions: [
+        '"Show me all registrants for the Fall Harvest Fair who haven\'t paid yet."',
+        '"Are there any duplicate registrations in tonight\'s event?"',
+        '"Mark registration #284 as paid."',
+      ],
+    },
+    {
+      label: 'Sponsorship & Floor Plan',
+      questions: [
+        '"How is the Gold sponsorship tier selling — any slots left?"',
+        '"How many booths have been sold versus what\'s still available?"',
+        '"How much have we collected in booth services add-ons so far?"',
+      ],
+    },
+    {
+      label: 'Leads & COI',
+      questions: [
+        '"Show me my qualified leads from the Midwest Ag Expo, 3 stars and up."',
+        '"How many COIs are still pending approval for the trade show?"',
+        '"Any insurance certificates expiring in the next 30 days?"',
+      ],
+    },
+    {
+      label: 'Precision Ag',
+      questions: [
+        '"What\'s the NDVI trend on my North Field over the last 6 months?"',
+        '"Should I be spraying fungicide on Field 3 right now?"',
+        '"Which zones in my South Field are showing stress?"',
+      ],
+    },
   ];
 
   const where = [
     {
       icon: <S><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></S>,
       title: 'Accounting Dashboard',
-      body: 'Available as a floating bubble on every accounting page — invoices, expenses, customers, vendors, and reports.',
+      body: 'Available on every accounting page — invoices, expenses, customers, vendors, and reports.',
       to: '/accounting',
     },
     {
       icon: <S><rect x="2" y="3" width="20" height="15" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/></S>,
-      title: 'Event Registration',
-      body: 'Appears on all event organizer pages — registrant lists, check-in, floor plan, sponsorship, and more.',
+      title: 'Event Management Pages',
+      body: 'Appears on event registration, check-in, floor plan, sponsorship, leads, and COI pages.',
       to: '/events',
     },
   ];
@@ -81,7 +132,7 @@ export default function AboutThaiyme() {
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
         title="Thaiyme | Business Operations AI for OFN"
-        description="Thaiyme is the Oatmeal Farm Network business-operations AI — accounting assistant, event registration analyst, and action-confirmation agent for OFN directory businesses."
+        description="Thaiyme is the Oatmeal Farm Network business-operations AI — accounting assistant, event organizer analyst, sponsorship tracker, lead retrieval, and precision-ag field advisor."
         canonical="https://oatmealfarmnetwork.com/platform/thaiyme"
       />
       <Header />
@@ -96,7 +147,8 @@ export default function AboutThaiyme() {
 
       {/* Hero */}
       <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
-        <div className="relative w-full overflow-hidden rounded-xl" style={{ background: 'linear-gradient(135deg, #3d2210 0%, #7A5A3D 60%, #b8956a 100%)', minHeight: 260 }}>
+        <div className="relative w-full overflow-hidden rounded-xl" style={{ backgroundImage: 'url(/images/ThaiymeBanner.webp)', backgroundSize: 'cover', backgroundPosition: 'center', minHeight: 260 }}>
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(30,15,5,0.72) 0%, rgba(30,15,5,0.45) 65%, rgba(30,15,5,0.1) 100%)' }} />
           <div className="absolute inset-0 flex flex-col justify-center px-8 py-8" style={{ maxWidth: '720px' }}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}>
@@ -108,7 +160,7 @@ export default function AboutThaiyme() {
               Meet Thaiyme
             </h1>
             <p style={{ color: 'rgba(255,255,255,0.92)', fontSize: '0.92rem', margin: '0 0 6px', lineHeight: 1.6 }}>
-              The AI agent that lives inside your accounting and event registration pages. Ask about revenue, dig into registrant data, or hand off small edits — all without leaving the page you're on.
+              The AI agent that lives inside your accounting, event management, and field monitoring pages. Ask about revenue, dig into registrant data, check sponsorship sales, retrieve exhibitor leads, or review your fields — all without leaving the page you're on.
             </p>
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.84rem', margin: '0 0 18px', lineHeight: 1.5, fontStyle: 'italic' }}>
               Available to all OFN business account holders. No setup required.
@@ -126,7 +178,6 @@ export default function AboutThaiyme() {
               </Link>
             </div>
           </div>
-          {/* Decorative thyme-sprig motif */}
           <div className="absolute right-8 top-1/2 -translate-y-1/2 hidden lg:block opacity-10" aria-hidden="true">
             <svg width="180" height="180" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2c0 0-4 4-4 8a4 4 0 0 0 8 0c0-4-4-8-4-8z"/>
@@ -149,7 +200,7 @@ export default function AboutThaiyme() {
             What Thaiyme Does
           </h2>
           <p className="text-gray-700 leading-relaxed max-w-3xl">
-            Thaiyme is a conversational AI built into the operations layer of your OFN account. He reads your accounting records and event registrant data, answers questions about both in plain language, and can propose small changes — updating a registration, flagging an overdue invoice — that you approve with a single click before anything executes. Sensitive data never leaves your control: all PII is stripped server-side before it reaches the model.
+            Thaiyme is a conversational AI built into the operations layer of your OFN account. He reads your accounting records, event registrant data, sponsorship pipeline, floor plan sales, COI filings, exhibitor lead scans, and satellite field data — then answers questions about all of it in plain language. For write actions, he proposes the change and waits for your explicit approval before anything executes. Sensitive data never reaches the model: all PII is stripped server-side first.
           </p>
         </section>
 
@@ -180,8 +231,7 @@ export default function AboutThaiyme() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {where.map(w => (
-              <div key={w.title} className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200"
-                   style={{ borderColor: ACCENT_BORDER }}>
+              <div key={w.title} className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
                 <div className="shrink-0 flex items-center justify-center"
                      style={{ width: '100px', minHeight: '100px', backgroundColor: ACCENT_LIGHT, color: ACCENT }}>
                   {w.icon}
@@ -205,22 +255,31 @@ export default function AboutThaiyme() {
           </p>
         </section>
 
-        {/* Example questions */}
+        {/* Example questions — grouped by topic */}
         <section className="mt-10">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4"
+          <h2 className="text-2xl font-bold text-gray-900 mb-5"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
             What You Can Ask
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {questions.map((q, i) => (
-              <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 text-sm text-gray-800 italic">
-                {q}
+          <div className="space-y-6">
+            {questionGroups.map(group => (
+              <div key={group.label}>
+                <h3 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: ACCENT }}>
+                  {group.label}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {group.questions.map((q, i) => (
+                    <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 text-sm text-gray-800 italic">
+                      {q}
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* How it works */}
+        {/* How the confirm flow works */}
         <section className="mt-10 bg-white border border-gray-200 rounded-2xl p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4"
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
@@ -230,7 +289,7 @@ export default function AboutThaiyme() {
             {[
               { step: '1', title: 'You ask', body: 'Type a question or request into the Thaiyme bubble on any supported page.' },
               { step: '2', title: 'Thaiyme proposes', body: 'For read actions, he answers immediately. For write actions, he surfaces a confirmation card summarizing exactly what will change.' },
-              { step: '3', title: 'You approve', body: 'Click Yes to execute, or No to discard. Nothing changes in your account until you confirm.' },
+              { step: '3', title: 'You approve', body: 'Click Yes to execute, or No to discard. Nothing in your account changes until you confirm.' },
             ].map(s => (
               <div key={s.step} className="flex gap-3">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>
