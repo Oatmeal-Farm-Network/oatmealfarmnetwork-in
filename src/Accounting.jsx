@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import ThaiymeChat from './ThaiymeChat';
+import { useAccount } from './AccountContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -227,7 +228,8 @@ function PaymentsTab() {
 export default function Accounting() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const businessId = searchParams.get('BusinessID');
+  const { BusinessID: ctxBusinessID } = useAccount();
+  const businessId = searchParams.get('BusinessID') || (ctxBusinessID ? String(ctxBusinessID) : null);
   const peopleId   = localStorage.getItem('PeopleID');
 
   const [tab, setTab] = useState('Dashboard');

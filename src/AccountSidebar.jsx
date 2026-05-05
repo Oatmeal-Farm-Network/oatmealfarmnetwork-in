@@ -55,6 +55,7 @@ const ICONS = {
   forums:        <S><path d="M2 3h9a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5L2 12V4a1 1 0 0 1 1-1z"/><path d="M14 6h1a1 1 0 0 1 1 1v4l-2 2v-3h-2"/></S>,
   landLeasing:   <S><path d="M2 13h12"/><path d="M4 13V7l4-4 4 4v6"/><line x1="7" y1="13" x2="7" y2="10"/><line x1="9" y1="13" x2="9" y2="10"/></S>,
   csaAdvanced:   <S><circle cx="8" cy="8" r="5"/><line x1="8" y1="5" x2="8" y2="8"/><line x1="8" y1="8" x2="11" y2="8"/><circle cx="8" cy="8" r="1" fill="currentColor" stroke="none"/><line x1="5" y1="3" x2="5" y2="1.5"/><line x1="11" y1="3" x2="11" y2="1.5"/></S>,
+  meetings:      <S><rect x="2" y="3" width="12" height="11" rx="1"/><line x1="2" y1="7" x2="14" y2="7"/><line x1="5" y1="1" x2="5" y2="5"/><line x1="11" y1="1" x2="11" y2="5"/><polyline points="5,10 7,12 11,9"/></S>,
 };
 
 const CollapseIcon = () => (
@@ -541,6 +542,13 @@ export default function AccountSidebar() {
             <NavChild to={`/accounting?BusinessID=${BusinessID}#reports`} label={t('account_sidebar.reports')} />
           </NavSection>
         )}
+
+        <NavSection icon={ICONS.meetings} label="Meetings" expanded={Expanded}
+          isOpen={OpenSections['Meetings'] || false} onToggle={() => toggleSection('Meetings')}>
+          <NavChild to={`/meetings?BusinessID=${BusinessID}`} label="All Meetings" />
+          <NavChild to={`/meetings?BusinessID=${BusinessID}&view=new`} label="New Meeting" />
+          <NavChild to={`/meetings?BusinessID=${BusinessID}&view=projects`} label="Projects" />
+        </NavSection>
 
         <NavSection icon={ICONS.settings} label={t('account_sidebar.sec_settings')} expanded={Expanded}
           isOpen={OpenSections['Account Settings'] || false} onToggle={() => toggleSection('Account Settings')}>

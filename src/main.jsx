@@ -315,6 +315,7 @@ const RestaurantStandingOrders = lazyWithReload(() => import('./RestaurantStandi
 const FarmStandingOrders = lazyWithReload(() => import('./FarmStandingOrders.jsx'))
 const RestaurantDigest = lazyWithReload(() => import('./RestaurantDigest.jsx'))
 const SellerStripeConnect = lazyWithReload(() => import('./SellerStripeConnect.jsx'))
+const Meetings = lazyWithReload(() => import('./Meetings.jsx'))
 
 function RequireAuth({ children }) {
   const token = localStorage.getItem('access_token');
@@ -705,6 +706,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           {/* Properties */}
           <Route path="/properties" element={<RequireAuth><Properties /></RequireAuth>} />
           <Route path="/properties/add" element={<RequireAuth><Properties /></RequireAuth>} />
+
+          {/* Meetings */}
+          <Route path="/meetings" element={<RequireAuth><Meetings /></RequireAuth>} />
 
         </Routes>
         <SaigeWidgetGlobal />
