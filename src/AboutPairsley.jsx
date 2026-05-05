@@ -177,7 +177,7 @@ export default function AboutPairsley() {
       <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
         {/* What Pairsley does */}
-        <p className="text-gray-700 leading-relaxed mb-8 max-w-3xl">{t('pairsley.what_body')}</p>
+        <p className="text-gray-700 leading-relaxed mb-8">{t('pairsley.what_body')}</p>
 
         {/* Capabilities — horizontal cards matching /directory card style */}
         <h2 className="text-lg font-bold text-gray-900 mb-5">{t('pairsley.cap_title')}</h2>
@@ -263,6 +263,22 @@ export default function AboutPairsley() {
             </div>
           ))}
         </div>
+
+        {/* CTA */}
+        <section className="mt-10 text-center bg-white border border-gray-200 rounded-2xl p-8">
+          <h3 className="text-2xl font-bold text-gray-900 mb-2"
+              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
+            Pairsley Is Ready When You Are
+          </h3>
+          <p className="text-sm text-gray-600 mb-5 max-w-xl mx-auto">
+            No setup required. Open your chef dashboard or any restaurant page and tap the green bubble in the corner to start a conversation.
+          </p>
+          <Link to="/signup"
+            className="inline-block px-6 py-3 rounded-lg font-bold shadow hover:shadow-md transition"
+            style={{ backgroundColor: ACCENT, color: '#ffffff' }}>
+            Create an Account
+          </Link>
+        </section>
 
       </div>
 

@@ -82,15 +82,9 @@ export default function AboutRosemarie() {
             <p style={{ color: '#ffffff', fontSize: '0.92rem', margin: '0 0 4px', lineHeight: 1.6 }}>
               {t('rosemarie.hero_body')}
             </p>
-            <p style={{ color: '#ffffff', fontSize: '0.84rem', margin: '0 0 16px', lineHeight: 1.5, fontStyle: 'italic' }}>
-              {t('rosemarie.hero_note')}
-            </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/account" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
-                {t('rosemarie.hero_cta1')}
-              </Link>
-              <Link to="/marketplaces/farm-to-table" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: '#ffffff', color: '#ffffff' }}>
-                {t('rosemarie.hero_cta2')}
+              <Link to="/signup" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
+                Open an Account
               </Link>
             </div>
           </div>
@@ -155,15 +149,10 @@ export default function AboutRosemarie() {
           </h3>
           <p className="text-sm text-gray-600 mb-4">{t('rosemarie.cta_body')}</p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/account"
-              className="px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
-              style={{ backgroundColor: ACCENT }}>
+            <Link to="/signup"
+              className="px-6 py-3 rounded-lg font-bold shadow hover:shadow-md transition"
+              style={{ backgroundColor: '#3D6B35', color: '#ffffff' }}>
               {t('rosemarie.cta1')}
-            </Link>
-            <Link to="/processed-food-inventory"
-              className="px-6 py-3 rounded-lg border-2 font-bold transition"
-              style={{ borderColor: ACCENT, color: ACCENT }}>
-              {t('rosemarie.cta2')}
             </Link>
           </div>
         </section>

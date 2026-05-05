@@ -183,40 +183,62 @@ const NewsFeed = () => {
 
   return (
     <div className="news-page">
-      <section className="news-header">
-        <div className="news-header-inner" style={{ position: 'relative' }}>
-          <h1>{t('news.header_title')}</h1>
-          <p>{t('news.header_body')}</p>
-          {syncStatus?.lastSync && (
-            <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
-              {t('news.last_synced')} {new Date(syncStatus.lastSync).toLocaleString()} · {syncStatus.articleCount} articles
-              {isAdmin && (
-                <button onClick={handleSync} disabled={syncing}
-                  style={{ marginLeft: '0.75rem', fontSize: '0.7rem', paddingTop: '2px', paddingBottom: '2px', paddingLeft: '8px', paddingRight: '8px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>
-                  {syncing ? t('news.syncing') : t('news.sync_now')}
+      {/* Hero — matches Saige/Thaiyme/Rosemarie pattern */}
+      <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
+        <div className="relative w-full overflow-hidden rounded-xl">
+          <img
+            src="/images/NewsroomBanner.webp"
+            alt="Agriculture News"
+            className="w-full object-cover"
+            style={{ height: '260px', display: 'block' }}
+            loading="eager"
+            onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to right, rgba(10,30,10,0.92) 0%, rgba(10,30,10,0.75) 45%, rgba(10,30,10,0) 78%)' }}
+          />
+          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '720px' }}>
+            <span className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              Oatmeal Farm Network
+            </span>
+            <h1 style={{ color: '#ffffff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
+              {t('news.header_title')}
+            </h1>
+            <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+              {t('news.header_body')}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {isSignedIn ? (
+                <button
+                  onClick={openPrefs}
+                  className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10"
+                  style={{ borderColor: '#ffffff', color: '#ffffff', background: 'transparent', cursor: 'pointer' }}
+                >
+                  {t('news.prefs_btn')}
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10"
+                  style={{ borderColor: '#ffffff', color: '#ffffff', background: 'transparent', cursor: 'pointer' }}
+                >
+                  {t('news.signin_btn')}
                 </button>
               )}
             </div>
-          )}
-          <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            {isSignedIn ? (
-              <button
-                onClick={openPrefs}
-                style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', fontWeight: 600, border: '1px solid #819360', backgroundColor: '#fff', color: '#819360', borderRadius: '6px', cursor: 'pointer' }}
-              >
-                {t('news.prefs_btn')}
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate('/login')}
-                style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', fontWeight: 600, border: 'none', backgroundColor: '#819360', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}
-              >
-                {t('news.signin_btn')}
-              </button>
+            {syncStatus?.lastSync && isAdmin && (
+              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', marginTop: '0.5rem' }}>
+                {t('news.last_synced')} {new Date(syncStatus.lastSync).toLocaleString()} · {syncStatus.articleCount} articles
+                <button onClick={handleSync} disabled={syncing}
+                  style={{ marginLeft: '0.5rem', fontSize: '0.7rem', padding: '1px 6px', backgroundColor: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '4px', color: '#fff', cursor: 'pointer' }}>
+                  {syncing ? t('news.syncing') : t('news.sync_now')}
+                </button>
+              </div>
             )}
           </div>
         </div>
-      </section>
+      </div>
 
       <section className="news-controls">
         <div className="news-controls-row">

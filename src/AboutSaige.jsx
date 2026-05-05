@@ -140,7 +140,6 @@ export default function AboutSaige() {
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
             {t('saige.cta_title')}
           </h3>
-          <p className="text-sm text-gray-600 mb-4">{t('saige.cta_body')}</p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/account"
               className="px-6 py-3 rounded-lg border-2 font-bold transition"

@@ -1,10 +1,10 @@
 /* News Page — ported from oatmeal-ai.com */
 .news-page { background: #faf7f0; }
 
-.news-header { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 2rem 1rem; }
-.news-header-inner { max-width: 1200px; margin: 0 auto; text-align: center; }
-.news-header h1 { font-size: 1.75rem; font-weight: 700; color: #111827; margin: 0 0 0.35rem; }
-.news-header p { color: #475569; font-size: 0.95rem; margin: 0; }
+.news-header { padding: 2rem 1rem; }
+.news-header-inner { max-width: 1300px; margin: 0 auto; text-align: center; }
+.news-header h1 { font-size: 1.75rem; font-weight: 700; color: #ffffff; margin: 0 0 0.35rem; }
+.news-header p { color: rgba(255,255,255,0.85); font-size: 0.95rem; margin: 0; }
 
 .news-controls { max-width: 1200px; margin: 0 auto; padding: 1.25rem 1rem; }
 .news-controls-row { display: grid; grid-template-columns: 1fr 200px 160px; gap: 0.75rem; }

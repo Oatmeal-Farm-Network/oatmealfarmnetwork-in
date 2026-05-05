@@ -159,11 +159,11 @@ export default function AboutThaiyme() {
             <h1 style={{ color: '#ffffff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
               Meet Thaiyme
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.92)', fontSize: '0.97rem', margin: '0 0 22px', lineHeight: 1.7 }}>
-              Thaiyme is an AI consultant integrated directly into your OFN account. By analyzing your financial records, event data, floor plan sales, and field reports, it provides clear answers to your complex operational questions. When making updates, Thaiyme always drafts the changes for your approval before taking action. To ensure security, all personal identifying information is removed before data is processed, keeping your sensitive details private.
+            <p style={{ color: 'rgba(255,255,255,0.92)', fontSize: '0.92rem', margin: '0 0 6px', lineHeight: 1.6 }}>
+              The AI agent that lives inside your accounting, event management, and field monitoring pages. Ask about revenue, dig into registrant data, check sponsorship sales, retrieve exhibitor leads, or review your fields — all without leaving the page you're on.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/account"
+              <Link to="/signup"
                 className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm"
                 style={{ color: ACCENT }}>
                 Open My Account →
@@ -181,8 +181,8 @@ export default function AboutThaiyme() {
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
             What Thaiyme Does
           </h2>
-          <p className="text-gray-700 leading-relaxed max-w-3xl">
-            Thaiyme is a conversational AI built into the operations layer of your OFN account. He reads your accounting records, event registrant data, sponsorship pipeline, floor plan sales, COI filings, exhibitor lead scans, and satellite field data — then answers questions about all of it in plain language. For write actions, he proposes the change and waits for your explicit approval before anything executes. Sensitive data never reaches the model: all PII is stripped server-side first.
+          <p className="text-gray-700 leading-relaxed">
+            Thaiyme is an AI consultant integrated directly into your OFN account. By analyzing your financial records, event data, floor plan sales, and field reports, it provides clear answers to your complex operational questions. When making updates, Thaiyme always drafts the changes for your approval before taking action. To ensure security, all personal identifying information is removed before data is processed, keeping your sensitive details private.
           </p>
         </section>
 
@@ -286,6 +286,21 @@ export default function AboutThaiyme() {
           </div>
         </section>
 
+        {/* CTA */}
+        <section className="mt-10 text-center bg-white border border-gray-200 rounded-2xl p-8">
+          <h3 className="text-2xl font-bold text-gray-900 mb-2"
+              style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
+            Thaiyme Is Already in Your Account
+          </h3>
+          <p className="text-sm text-gray-600 mb-5 max-w-xl mx-auto">
+            No installation. No configuration. Open your accounting dashboard or any event management page and tap the brown bubble in the corner.
+          </p>
+          <Link to="/signup"
+            className="inline-block px-6 py-3 rounded-lg font-bold shadow hover:shadow-md transition text-white"
+            style={{ backgroundColor: ACCENT, color: '#ffffff' }}>
+            Create an Account
+          </Link>
+        </section>
 
       </div>
       <Footer />

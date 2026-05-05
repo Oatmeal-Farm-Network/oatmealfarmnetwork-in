@@ -476,7 +476,7 @@
     "cta_title": "Ready to talk farming with Saige?",
     "cta_body": "Free for every OFN member. Join the network or jump straight in.",
     "cta1": "Open Saige →",
-    "cta2": "Create an account"
+    "cta2": "Create an Account"
   },
   "ai_agents": {
     "hero_badge": "AI Agents",
@@ -821,7 +821,7 @@
     "hero_cta1": "Open Pairsley →",
     "hero_cta2": "Browse Farm 2 Table",
     "what_title": "What Pairsley does",
-    "what_body": "Pairsley is a conversational AI purpose-built for people who cook for a living. She knows your concept, your vendors, your menu structure, and the produce, meat, and artisan goods on offer from farms in your region. She helps you write tonight's specials, cost a plate, chase down a short order, and keep your saved-farm roster tight — and she can make profile changes for you directly, from inside the chat.",
+    "what_body": "Pairsley is a AI consultant built for people who cook for a living. She knows your concept, your vendors, your menu structure, and the produce, meat, and artisan goods on offer from farms in your region. She helps you write tonight's specials, cost a plate, chase down a short order, and keep your saved-farm roster tight — and she can make profile changes for you directly, from inside the chat.",
     "cap_title": "Capabilities",
     "cap1_title": "What's available this week",
     "cap1_body": "Real-time view of what's harvestable and in inventory at farms near you — and a weekly email digest if you'd rather have it pushed.",
@@ -899,7 +899,7 @@
     "q6": "\"Mark order 4689 as shipped, tracking 1Z999AA10123456784.\"",
     "cta_title": "Put Rosemarie to Work in Your Shop",
     "cta_body": "Free with any OFN artisan producer account. Rosemarie rides along as a purple bubble on every producer page in the app — tap it and start a conversation.",
-    "cta1": "Open my producer account →",
+    "cta1": "Open My Account",
     "cta2": "Manage my products"
   },
   "chef_pantry": {
