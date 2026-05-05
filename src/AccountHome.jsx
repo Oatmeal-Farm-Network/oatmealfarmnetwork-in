@@ -17,6 +17,7 @@ export default function AccountHome() {
   const [Error, setError] = useState(false);
 
   useEffect(() => {
+    if (!BusinessID) return;
     fetch(`${API_URL}/auth/account-home?BusinessID=${BusinessID}`)
       .then(Res => Res.json())
       .then(Data => setBusiness(Data))

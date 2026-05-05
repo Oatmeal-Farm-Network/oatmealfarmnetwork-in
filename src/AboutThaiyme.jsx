@@ -173,16 +173,6 @@ export default function AboutThaiyme() {
               </Link>
             </div>
           </div>
-          <div className="absolute right-8 top-1/2 -translate-y-1/2 hidden lg:block opacity-10" aria-hidden="true">
-            <svg width="180" height="180" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2c0 0-4 4-4 8a4 4 0 0 0 8 0c0-4-4-8-4-8z"/>
-              <path d="M12 10v12"/>
-              <path d="M8 14c-2 0-4-1-4-3s2-3 4-3"/>
-              <path d="M16 14c2 0 4-1 4-3s-2-3-4-3"/>
-              <path d="M8 18c-2 0-4-1-4-3"/>
-              <path d="M16 18c2 0 4-1 4-3"/>
-            </svg>
-          </div>
         </div>
       </div>
 
