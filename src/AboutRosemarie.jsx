@@ -43,18 +43,29 @@ export default function AboutRosemarie() {
         description="Rosemarie is the Oatmeal Farm Network AI agent for mills, bakers, cheesemakers, and artisan food producers — recipes, yields, sourcing, labeling, and small-batch operations."
         keywords="artisan food producer AI, bakery software, recipe management AI, batch tracking software, small food business tools, Rosemarie AI, Oatmeal Farm Network, artisan producer technology"
         canonical="https://oatmealfarmnetwork.com/platform/rosemarie"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'SoftwareApplication',
-          'name': 'Rosemarie',
-          'applicationCategory': 'BusinessApplication',
-          'operatingSystem': 'Web',
-          'url': 'https://oatmealfarmnetwork.com/platform/rosemarie',
-          'description': 'AI consultant for artisan food producers — recipe management, batch tracking, ingredient sourcing, and production operations.',
-          'featureList': ['Recipe management', 'Batch tracking', 'Ingredient sourcing', 'Yield calculation', 'Production planning', 'Labeling guidance'],
-          'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
-          'provider': { '@type': 'Organization', 'name': 'Oatmeal Farm Network', 'url': 'https://oatmealfarmnetwork.com' },
-        }}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            'name': 'Rosemarie',
+            'applicationCategory': 'BusinessApplication',
+            'operatingSystem': 'Web',
+            'url': 'https://oatmealfarmnetwork.com/platform/rosemarie',
+            'description': 'AI consultant for artisan food producers — recipe management, batch tracking, ingredient sourcing, and production operations.',
+            'featureList': ['Recipe management', 'Batch tracking', 'Ingredient sourcing', 'Yield calculation', 'Production planning', 'Labeling guidance'],
+            'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
+            'provider': { '@type': 'Organization', 'name': 'Oatmeal Farm Network', 'url': 'https://oatmealfarmnetwork.com' },
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            'itemListElement': [
+              { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': 'https://oatmealfarmnetwork.com' },
+              { '@type': 'ListItem', 'position': 2, 'name': 'Services', 'item': 'https://oatmealfarmnetwork.com/platform' },
+              { '@type': 'ListItem', 'position': 3, 'name': 'Rosemarie', 'item': 'https://oatmealfarmnetwork.com/platform/rosemarie' },
+            ],
+          },
+        ]}
       />
       <Header />
 

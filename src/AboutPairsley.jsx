@@ -102,18 +102,29 @@ export default function AboutPairsley() {
         description="Pairsley is the Oatmeal Farm Network AI agent for restaurateurs, chefs, and professional kitchens — sourcing, seasonal menus, costing, and vendor relationships."
         keywords="restaurant AI assistant, chef AI tool, farm to table sourcing, menu costing software, local food sourcing app, Pairsley AI, Oatmeal Farm Network, restaurant technology"
         canonical="https://oatmealfarmnetwork.com/platform/pairsley"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'SoftwareApplication',
-          'name': 'Pairsley',
-          'applicationCategory': 'BusinessApplication',
-          'operatingSystem': 'Web',
-          'url': 'https://oatmealfarmnetwork.com/platform/pairsley',
-          'description': 'AI consultant for chefs and restaurant operators — local sourcing, menu costing, specials writing, and farm connections.',
-          'featureList': ['Local farm sourcing', 'Menu costing', 'Specials writing', 'Vendor management', 'Seasonal produce lookup'],
-          'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
-          'provider': { '@type': 'Organization', 'name': 'Oatmeal Farm Network', 'url': 'https://oatmealfarmnetwork.com' },
-        }}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            'name': 'Pairsley',
+            'applicationCategory': 'BusinessApplication',
+            'operatingSystem': 'Web',
+            'url': 'https://oatmealfarmnetwork.com/platform/pairsley',
+            'description': 'AI consultant for chefs and restaurant operators — local sourcing, menu costing, specials writing, and farm connections.',
+            'featureList': ['Local farm sourcing', 'Menu costing', 'Specials writing', 'Vendor management', 'Seasonal produce lookup'],
+            'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
+            'provider': { '@type': 'Organization', 'name': 'Oatmeal Farm Network', 'url': 'https://oatmealfarmnetwork.com' },
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            'itemListElement': [
+              { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': 'https://oatmealfarmnetwork.com' },
+              { '@type': 'ListItem', 'position': 2, 'name': 'Services', 'item': 'https://oatmealfarmnetwork.com/platform' },
+              { '@type': 'ListItem', 'position': 3, 'name': 'Pairsley', 'item': 'https://oatmealfarmnetwork.com/platform/pairsley' },
+            ],
+          },
+        ]}
       />
       <Header />
 

@@ -22,18 +22,29 @@ export default function AboutSaige() {
         canonical="https://oatmealfarmnetwork.com/platform/saige"
         image="https://oatmealfarmnetwork.com/images/SaigeBanner.webp"
         imageAlt="Saige AI Agricultural Assistant — Oatmeal Farm Network"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'SoftwareApplication',
-          'name': 'Saige',
-          'applicationCategory': 'BusinessApplication',
-          'operatingSystem': 'Web',
-          'url': 'https://oatmealfarmnetwork.com/platform/saige',
-          'description': 'AI agricultural assistant for farmers and ranchers — crops, livestock, soil, weather, markets, and precision-ag field analysis.',
-          'featureList': ['Crop monitoring', 'Livestock management', 'Weather analysis', 'Market prices', 'Precision agriculture', 'Field reports'],
-          'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
-          'provider': { '@type': 'Organization', 'name': 'Oatmeal Farm Network', 'url': 'https://oatmealfarmnetwork.com' },
-        }}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            'name': 'Saige',
+            'applicationCategory': 'BusinessApplication',
+            'operatingSystem': 'Web',
+            'url': 'https://oatmealfarmnetwork.com/platform/saige',
+            'description': 'AI agricultural assistant for farmers and ranchers — crops, livestock, soil, weather, markets, and precision-ag field analysis.',
+            'featureList': ['Crop monitoring', 'Livestock management', 'Weather analysis', 'Market prices', 'Precision agriculture', 'Field reports'],
+            'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
+            'provider': { '@type': 'Organization', 'name': 'Oatmeal Farm Network', 'url': 'https://oatmealfarmnetwork.com' },
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            'itemListElement': [
+              { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': 'https://oatmealfarmnetwork.com' },
+              { '@type': 'ListItem', 'position': 2, 'name': 'Services', 'item': 'https://oatmealfarmnetwork.com/platform' },
+              { '@type': 'ListItem', 'position': 3, 'name': 'Saige', 'item': 'https://oatmealfarmnetwork.com/platform/saige' },
+            ],
+          },
+        ]}
       />
       <Header />
 
