@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
+import RichTextEditor from './RichTextEditor';
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -233,8 +234,16 @@ function MeetingEditor({ businessId, meetingId, projects, onSaved, onBack }) {
   const [editItem, setEditItem] = useState(null);
   const [newItem, setNewItem] = useState({});
   const [acctSnap, setAcctSnap] = useState(null);
+  const [teamMembers, setTeamMembers] = useState([]);
 
   const isMinutes = meeting?.status === 'minutes' || meeting?.status === 'minutes_sent';
+
+  useEffect(() => {
+    if (!businessId) return;
+    apiFetch(`/api/businesses/${businessId}/team`)
+      .then(data => setTeamMembers(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, [businessId]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -260,6 +269,7 @@ function MeetingEditor({ businessId, meetingId, projects, onSaved, onBack }) {
         method: 'PUT', body: JSON.stringify({
           title: meeting.title, description: meeting.description,
           meeting_date: meeting.meeting_date, location: meeting.location,
+          google_meet_link: meeting.google_meet_link,
           project_id: meeting.project_id, accounting_scope: meeting.accounting_scope,
         }),
       });
@@ -311,6 +321,10 @@ function MeetingEditor({ businessId, meetingId, projects, onSaved, onBack }) {
     if (!payload?.title) return;
     await apiFetch(`/api/meetings/${meetingId}/sections/${sectionId}/items?business_id=${businessId}`, {
       method: 'POST', body: JSON.stringify(payload),
+    });
+    // Auto-create a second blank item so there's always a follow-on block ready
+    await apiFetch(`/api/meetings/${meetingId}/sections/${sectionId}/items?business_id=${businessId}`, {
+      method: 'POST', body: JSON.stringify({ title: 'New Item' }),
     });
     setNewItem(p => ({ ...p, [sectionId]: {} }));
     load();
@@ -394,6 +408,7 @@ function MeetingEditor({ businessId, meetingId, projects, onSaved, onBack }) {
                 <Input label="Date & Time" type="datetime-local" value={meeting.meeting_date?.slice(0, 16)} onChange={v => setMeeting(p => ({ ...p, meeting_date: v }))} />
                 <Input label="Location" value={meeting.location} onChange={v => setMeeting(p => ({ ...p, location: v }))} placeholder="Room, Zoom link, etc." />
               </div>
+              <Input label="Google Meet Link" value={meeting.google_meet_link || ''} onChange={v => setMeeting(p => ({ ...p, google_meet_link: v }))} placeholder="https://meet.google.com/…" />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <Select label="Project" value={String(meeting.project_id || '')} onChange={v => setMeeting(p => ({ ...p, project_id: v || null }))} options={projectOptions} />
                 <Select label="Include Accounting" value={meeting.accounting_scope || 'none'} onChange={v => setMeeting(p => ({ ...p, accounting_scope: v }))} options={SCOPE_OPTIONS} />
@@ -453,7 +468,10 @@ function MeetingEditor({ businessId, meetingId, projects, onSaved, onBack }) {
                           <Input label="Presenter" value={editItem.presenter} onChange={v => setEditItem(p => ({ ...p, presenter: v }))} />
                           <Input label="Duration (min)" type="number" value={editItem.duration_minutes} onChange={v => setEditItem(p => ({ ...p, duration_minutes: v }))} />
                         </div>
-                        <Textarea label="Notes / Context" value={editItem.notes_template} onChange={v => setEditItem(p => ({ ...p, notes_template: v }))} rows={2} />
+                        <div>
+                          <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Notes / Context</label>
+                          <RichTextEditor value={editItem.notes_template || ''} onChange={v => setEditItem(p => ({ ...p, notes_template: v }))} minHeight={120} />
+                        </div>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <Btn onClick={() => updateItem(editItem)}>Save Item</Btn>
                           <Btn variant="secondary" onClick={() => setEditItem(null)}>Cancel</Btn>
@@ -473,7 +491,10 @@ function MeetingEditor({ businessId, meetingId, projects, onSaved, onBack }) {
                             {item.presenter && <span>{item.presenter}</span>}
                             {item.duration_minutes && <span style={{ marginLeft: 8 }}>{item.duration_minutes} min</span>}
                           </div>
-                          {item.notes_template && <div style={{ fontSize: 12, color: '#374151', marginTop: 4 }}>{item.notes_template}</div>}
+                          {item.notes_template && (
+                            <div style={{ fontSize: 12, color: '#374151', marginTop: 4 }}
+                              dangerouslySetInnerHTML={{ __html: item.notes_template }} />
+                          )}
                         </div>
                         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                           <Btn small variant="secondary" onClick={() => setEditItem({ ...item })}>Edit</Btn>
@@ -552,6 +573,29 @@ function MeetingEditor({ businessId, meetingId, projects, onSaved, onBack }) {
               )}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {teamMembers.length > 0 && (
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>From team</label>
+                  <select
+                    value=""
+                    onChange={e => {
+                      const tm = teamMembers.find(m => String(m.PeopleID) === e.target.value);
+                      if (tm) setAddingAttendee({
+                        name: `${tm.PeopleFirstName || ''} ${tm.PeopleLastName || ''}`.trim(),
+                        email: tm.PeopleEmail || '',
+                      });
+                    }}
+                    style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 6, padding: '7px 10px', fontSize: 13, color: '#111', background: '#fff' }}
+                  >
+                    <option value="">— Pick a team member —</option>
+                    {teamMembers.map(m => (
+                      <option key={m.PeopleID} value={String(m.PeopleID)}>
+                        {m.PeopleFirstName} {m.PeopleLastName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <Input placeholder="Name" value={addingAttendee.name} onChange={v => setAddingAttendee(p => ({ ...p, name: v }))} />
               <Input type="email" placeholder="Email" value={addingAttendee.email} onChange={v => setAddingAttendee(p => ({ ...p, email: v }))} />
               <Btn onClick={addAttendee}>+ Add Attendee</Btn>
@@ -628,9 +672,18 @@ function MinuteItemEditor({ item, onSave }) {
       </button>
       {open && (
         <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <Textarea label="Discussion Notes" value={data.notes} onChange={v => setData(p => ({ ...p, notes: v }))} rows={3} />
-          <Textarea label="Decisions Made" value={data.decisions} onChange={v => setData(p => ({ ...p, decisions: v }))} rows={2} />
-          <Textarea label="Action Items" value={data.action_items} onChange={v => setData(p => ({ ...p, action_items: v }))} rows={2} />
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Discussion Notes</label>
+            <RichTextEditor value={data.notes || ''} onChange={v => setData(p => ({ ...p, notes: v }))} minHeight={100} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Decisions Made</label>
+            <RichTextEditor value={data.decisions || ''} onChange={v => setData(p => ({ ...p, decisions: v }))} minHeight={80} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Action Items</label>
+            <RichTextEditor value={data.action_items || ''} onChange={v => setData(p => ({ ...p, action_items: v }))} minHeight={80} />
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <Input label="Assigned To" value={data.assigned_to} onChange={v => setData(p => ({ ...p, assigned_to: v }))} />
             <Input label="Due Date" type="date" value={data.due_date} onChange={v => setData(p => ({ ...p, due_date: v }))} />
