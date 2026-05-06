@@ -75,9 +75,9 @@ function Section({ title, children }) {
 }
 
 export default function ESGDashboard() {
-  const { account } = useAccount();
+  const { businesses: ctxBusinesses } = useAccount();
+  const isLoggedIn = !!localStorage.getItem('access_token');
   const [businessId, setBusinessId] = useState(null);
-  const [businesses, setBusinesses] = useState([]);
   const [snapshot, setSnapshot]     = useState(null);
   const [metrics, setMetrics]       = useState([]);
   const [reports, setReports]       = useState([]);
@@ -87,18 +87,12 @@ export default function ESGDashboard() {
 
   const token = () => localStorage.getItem('access_token');
 
-  // Load user's businesses
+  // Pick first business from context once it loads
   useEffect(() => {
-    if (!account?.PeopleID) return;
-    fetch(`${API}/api/businesses/my`, { headers: { Authorization: `Bearer ${token()}` } })
-      .then(r => r.ok ? r.json() : [])
-      .then(d => {
-        const list = Array.isArray(d) ? d : [];
-        setBusinesses(list);
-        if (list.length > 0 && !businessId) setBusinessId(list[0].BusinessID || list[0].id);
-      })
-      .catch(() => {});
-  }, [account?.PeopleID]);
+    if (!ctxBusinesses?.length || businessId) return;
+    const first = ctxBusinesses[0];
+    setBusinessId(first.BusinessID ?? first.businessId ?? first.id);
+  }, [ctxBusinesses]);
 
   const loadData = useCallback(() => {
     if (!businessId) return;
@@ -144,28 +138,35 @@ export default function ESGDashboard() {
     finally { setGenerating(false); }
   }
 
-  if (!account?.PeopleID) {
+  if (!isLoggedIn) {
     return (
-      <>
+      <div>
         <Header />
-        <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+        <div style={{ minHeight: '60vh', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Montserrat, system-ui, sans-serif' }}>
           <div style={{ textAlign: 'center' }}>
             <p style={{ color: '#6b7280', marginBottom: 12 }}>Please log in to view your ESG dashboard.</p>
             <Link to="/login" style={{ color: GREEN, fontWeight: 700 }}>Log In →</Link>
           </div>
         </div>
         <Footer />
-      </>
+      </div>
     );
   }
 
-  const s = snapshot || {};
-  const certPct  = pct(s.farms_certified, s.farm_count);
-  const residuePct = s.residue_total > 0 ? pct(s.residue_pass, s.residue_total) : null;
-  const coldChainPct = s.dispatch_total > 0 ? pct(s.dispatch_ok, s.dispatch_total) : null;
+  // API returns { business_id, live: { sourcing, procurement, cold_chain, ... }, manual_metrics }
+  const live = snapshot?.live || {};
+  const src  = live.sourcing     || {};
+  const proc = live.procurement  || {};
+  const cc   = live.cold_chain   || {};
+  const certPct      = src.farms_certified != null && src.active_farms > 0
+    ? pct(src.farms_certified, src.active_farms) : null;
+  const residuePct   = proc.purchase_count > 0
+    ? pct(proc.residue_passed, proc.purchase_count) : null;
+  const coldChainPct = cc.dispatches > 0
+    ? pct((cc.dispatches - (cc.breaches || 0)), cc.dispatches) : null;
 
   return (
-    <>
+    <div>
       <PageMeta title="ESG Dashboard" description="Environmental, social, and governance intelligence for your farm or food business." />
       <Header />
       <main style={{ minHeight: '80vh', background: '#f9fafb', fontFamily: 'Montserrat, system-ui, sans-serif' }}>
@@ -187,15 +188,15 @@ export default function ESGDashboard() {
 
           {/* Controls */}
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-            {businesses.length > 1 && (
+            {(ctxBusinesses?.length ?? 0) > 1 && (
               <select
                 value={businessId || ''}
                 onChange={e => setBusinessId(Number(e.target.value))}
                 style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 13, fontFamily: 'inherit' }}
               >
-                {businesses.map(b => (
-                  <option key={b.BusinessID || b.id} value={b.BusinessID || b.id}>
-                    {b.BusinessName || b.name}
+                {ctxBusinesses.map(b => (
+                  <option key={b.BusinessID ?? b.id} value={b.BusinessID ?? b.id}>
+                    {b.BusinessName ?? b.name}
                   </option>
                 ))}
               </select>
@@ -235,7 +236,7 @@ export default function ESGDashboard() {
             <p style={{ color: '#9ca3af', fontSize: 13 }}>Loading ESG data…</p>
           )}
 
-          {!loading && !snapshot && (
+          {!loading && !snapshot && businessId && (
             <div style={{ background: GREEN_LIGHT, border: `1px solid ${GREEN_BORDER}`, borderRadius: 12, padding: 20, color: '#374151', fontSize: 13 }}>
               No ESG data available yet. This dashboard uses your food aggregator sourcing, residue testing,
               cold-chain logistics, and IoT sensor data. Start by registering your supplier farms and running
@@ -253,28 +254,28 @@ export default function ESGDashboard() {
                   <ScoreRing value={coldChainPct} label="Cold-Chain Integrity" color="#0284c7" />
                 </div>
                 <p style={{ fontSize: 11, color: '#9ca3af', textAlign: 'center', marginTop: 8 }}>
-                  Based on {parseInt(period, 10)}-day period · {s.farm_count || 0} supplier farms
+                  Based on {parseInt(period, 10)}-day period · {src.active_farms || 0} supplier farms
                 </p>
               </Section>
 
               {/* Sourcing transparency */}
               <Section title="Sourcing Transparency">
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                  <StatCard label="Active Farms" value={s.farm_count} color={GREEN} />
-                  <StatCard label="Certified Farms" value={s.farms_certified} color={GREEN}
+                  <StatCard label="Active Farms" value={src.active_farms} color={GREEN} />
+                  <StatCard label="Certified Farms" value={src.farms_certified} color={GREEN}
                     sub={certPct != null ? `${certPct}% of supply base` : null} />
-                  <StatCard label="Purchases" value={s.purchase_count} color="#374151"
-                    sub={s.total_kg ? `${parseFloat(s.total_kg).toLocaleString()} kg` : null} />
-                  <StatCard label="Total Spend" value={s.total_paid ? `$${parseFloat(s.total_paid).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : null} color="#374151" />
+                  <StatCard label="Purchases" value={proc.purchase_count} color="#374151"
+                    sub={proc.kg_received ? `${parseFloat(proc.kg_received).toLocaleString()} kg` : null} />
+                  <StatCard label="Total Spend" value={proc.spend ? `$${parseFloat(proc.spend).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : null} color="#374151" />
                 </div>
-                {s.cert_breakdown?.length > 0 && (
+                {src.certifications?.length > 0 && (
                   <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {s.cert_breakdown.map(c => (
-                      <span key={c.cert || c[0]} style={{
+                    {src.certifications.map(c => (
+                      <span key={c.Certification} style={{
                         fontSize: 11, background: GREEN_LIGHT, border: `1px solid ${GREEN_BORDER}`,
                         borderRadius: 20, padding: '3px 10px', color: GREEN_DARK, fontWeight: 600,
                       }}>
-                        {c.cert || c[0]} · {c.n || c[1]}
+                        {c.Certification} · {c.N}
                       </span>
                     ))}
                   </div>
@@ -284,14 +285,14 @@ export default function ESGDashboard() {
               {/* Residue & cold chain */}
               <Section title="Quality &amp; Cold-Chain Integrity">
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                  <StatCard label="Residue Tests" value={s.residue_total} />
-                  <StatCard label="Tests Passed" value={s.residue_pass} color="#16a34a"
+                  <StatCard label="Residue Tests" value={proc.purchase_count} />
+                  <StatCard label="Tests Passed" value={proc.residue_passed} color="#16a34a"
                     sub={residuePct != null ? `${residuePct}% pass rate` : null} />
-                  <StatCard label="Tests Failed" value={s.residue_fail} color={s.residue_fail > 0 ? '#dc2626' : '#6b7280'} />
-                  <StatCard label="Cold-Chain Dispatches" value={s.dispatch_total} />
-                  <StatCard label="No Breach" value={s.dispatch_ok} color="#0284c7"
+                  <StatCard label="Tests Failed" value={proc.residue_failed} color={(proc.residue_failed || 0) > 0 ? '#dc2626' : '#6b7280'} />
+                  <StatCard label="Cold-Chain Dispatches" value={cc.dispatches} />
+                  <StatCard label="No Breach" value={cc.dispatches != null ? (cc.dispatches - (cc.breaches || 0)) : null} color="#0284c7"
                     sub={coldChainPct != null ? `${coldChainPct}% integrity` : null} />
-                  <StatCard label="Breaches" value={s.dispatch_breach} color={s.dispatch_breach > 0 ? '#f59e0b' : '#6b7280'} />
+                  <StatCard label="Breaches" value={cc.breaches} color={(cc.breaches || 0) > 0 ? '#f59e0b' : '#6b7280'} />
                 </div>
               </Section>
 
@@ -390,6 +391,6 @@ export default function ESGDashboard() {
           @page { margin: 0.75in; }
         }
       `}</style>
-    </>
+    </div>
   );
 }
