@@ -219,6 +219,7 @@ const AccountSettings = lazyWithReload(() => import('./AccountSettings.jsx'))
 const AccountAssociations = lazyWithReload(() => import('./AccountAssociations.jsx'))
 const AccountTeamMembers = lazyWithReload(() => import('./AccountTeamMembers.jsx'))
 const SaigePage = lazyWithReload(() => import('./SaigePage.jsx'))
+const CassiaPage = lazyWithReload(() => import('./CassiaPage.jsx'))
 const CompanionPlanting = lazyWithReload(() => import('./CompanionPlanting.jsx'))
 const CropNames = lazyWithReload(() => import('./CropNames.jsx'))
 const WeatherMitigation = lazyWithReload(() => import('./WeatherMitigation.jsx'))
@@ -450,6 +451,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/herd-health/reproduction" element={<RequireAuth><HerdHealthReproduction /></RequireAuth>} />
           <Route path="/herd-health/reports" element={<RequireAuth><HerdHealthReports /></RequireAuth>} />
           <Route path="/saige" element={<SaigePage />} />
+          <Route path="/cassia" element={<CassiaPage />} />
           <Route path="/saige/companion-planting" element={<CompanionPlanting />} />
           <Route path="/saige/crop-names" element={<CropNames />} />
           <Route path="/saige/weather-mitigation" element={<WeatherMitigation />} />
