@@ -7,6 +7,7 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import { useLanguage } from './LanguageContext';
+import ListingProvenancePanel from './ListingProvenancePanel';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -203,6 +204,20 @@ export default function MarketplaceProduct() {
             </div>
           </div>
         )}
+
+        {/* Farm traceability — grow method, inputs, harvest date, AI farm story */}
+        {(() => {
+          const prefix = { produce: 'P', meat: 'M', processed_food: 'F', sfproducts: 'G', services: 'S' };
+          const rawId = l.ListingID ? String(l.ListingID).replace(/^[PMFGS]/, '') : null;
+          if (!rawId) return null;
+          return (
+            <ListingProvenancePanel
+              listingType={l.ProductType || 'produce'}
+              sourceId={parseInt(rawId, 10)}
+              canEdit={isLoggedIn}
+            />
+          );
+        })()}
 
         {/* Related from same seller */}
         {l.relatedListings && l.relatedListings.length > 0 && (

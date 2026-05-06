@@ -291,6 +291,7 @@ export default function AccountSidebar() {
             isOpen={OpenSections['Precision Ag'] || false} onToggle={() => toggleSection('Precision Ag')}>
             <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}`} label={t('account_sidebar.ag_dashboard')} />
             <NavChild to={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} label={t('account_sidebar.crop_detection')} />
+            <NavChild to="/esg-dashboard" label="ESG Dashboard" />
             {fields.length > 0 && (
               <div className="mt-1 pt-1 border-t border-gray-300/40">
                 {fields.map(f => {

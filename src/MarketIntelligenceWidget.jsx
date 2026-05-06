@@ -30,6 +30,15 @@ const AMS_COMMODITIES = [
   },
 ];
 
+// Produce commodities fetched server-side from USDA F&V Market News; displayed from price history
+const PRODUCE_COMMODITY_LABELS = [
+  { label: 'Strawberries',  unit: 'flat' },
+  { label: 'Blueberries',   unit: 'flat' },
+  { label: 'Microgreens',   unit: 'lb'   },
+  { label: 'Mixed Greens',  unit: 'lb'   },
+  { label: 'Roma Tomatoes', unit: 'lb'   },
+];
+
 // CME/ICE futures — no free machine-readable API; link out
 const CME_COMMODITIES = [
   { key: 'corn',       label: 'Corn',         symbol: 'ZC', unit: 'bu',  url: 'https://www.cmegroup.com/markets/agriculture/grains/corn.html' },
@@ -348,6 +357,73 @@ export default function MarketIntelligenceWidget() {
               );
             })}
           </div>
+
+          {/* Produce & specialty crop prices from USDA F&V (server-fetched) */}
+          {PRODUCE_COMMODITY_LABELS.some(c => priceHistory[c.label]?.latest) && (
+            <>
+              <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 8 }}>Live USDA produce prices</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+                {PRODUCE_COMMODITY_LABELS.map(c => {
+                  const hist = priceHistory[c.label];
+                  if (!hist?.latest) return null;
+                  const myAlerts = alertsFor(c.label);
+                  const hasAlert = myAlerts.length > 0;
+                  return (
+                    <div key={c.label} style={{
+                      background: GREEN_LIGHT, borderRadius: 10, padding: '10px 12px',
+                      border: `1px solid ${GREEN_BORDER}`, position: 'relative',
+                    }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: GREEN, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
+                        {c.label}
+                      </div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>
+                        ${hist.latest.toFixed(2)}
+                        <span style={{ fontSize: 11, fontWeight: 400, color: '#6b7280', marginLeft: 3 }}>/ {c.unit}</span>
+                      </div>
+                      {isLoggedIn && (
+                        <button
+                          onClick={() => openAlertModal(c.label, c.unit)}
+                          title={hasAlert ? `${myAlerts.length} alert(s) set` : 'Set price alert'}
+                          style={{
+                            position: 'absolute', top: 8, right: 8,
+                            background: hasAlert ? GREEN : 'transparent',
+                            color: hasAlert ? '#fff' : GREEN,
+                            border: `1px solid ${hasAlert ? GREEN : GREEN_BORDER}`,
+                            borderRadius: 6, padding: '2px 5px', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 3, fontSize: 10,
+                          }}
+                        >
+                          <BellIcon active={hasAlert} />
+                          {hasAlert && <span>{myAlerts.length}</span>}
+                        </button>
+                      )}
+                      <div style={{ marginTop: 4 }}>
+                        <Sparkline points={hist.points} width={80} height={24} />
+                        {hist.pct_change != null && (
+                          <span style={{ fontSize: 9, color: hist.pct_change >= 0 ? '#16a34a' : '#ef4444', fontWeight: 600 }}>
+                            {hist.pct_change >= 0 ? '▲' : '▼'} {Math.abs(hist.pct_change).toFixed(1)}% 30d
+                          </span>
+                        )}
+                      </div>
+                      {hasAlert && (
+                        <div style={{ marginTop: 4 }}>
+                          {myAlerts.map(a => (
+                            <div key={a.AlertID} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 10, color: GREEN_DARK }}>
+                              <span>{a.Direction === 'above' ? '▲' : '▼'} ${parseFloat(a.ThresholdPrice).toFixed(2)}</span>
+                              <button onClick={() => deleteAlert(a.AlertID)}
+                                style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: 10, padding: 0 }}>
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           {/* CME futures links */}
           <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 8 }}>Futures quotes (CME / ICE)</p>
