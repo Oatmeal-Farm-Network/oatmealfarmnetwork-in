@@ -72,6 +72,7 @@ import MyEquipmentListings from './MyEquipmentListings';
 import AboutEquipmentMarketplace from './AboutEquipmentMarketplace';
 import RealEstateMarketplace from './RealEstateMarketplace';
 import AboutMarketplaces from './AboutMarketplaces';
+import ESGDashboard from './ESGDashboard';
 import FoodWantedBoard from './FoodWantedBoard';
 import FoodWantedAdDetail from './FoodWantedAdDetail';
 import MyFoodWantedAds from './MyFoodWantedAds';
@@ -549,6 +550,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/website-builder" element={<AboutWebsiteBuilder />} />
           <Route path="/platform/marketplace" element={<AboutMarketplace />} />
           <Route path="/platform/marketplaces" element={<AboutMarketplaces />} />
+          <Route path="/esg-dashboard" element={<ESGDashboard />} />
           <Route path="/platform/events" element={<AboutEvents />} />
           <Route path="/platform/crop-monitor" element={<AboutCropMonitor />} />
           <Route path="/platform/directory" element={<AboutDirectory />} />

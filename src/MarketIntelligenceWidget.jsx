@@ -67,12 +67,32 @@ function ChevronDown({ open }) {
   );
 }
 
+function Sparkline({ points, width = 80, height = 28 }) {
+  if (!points || points.length < 2) return null;
+  const prices = points.map(p => p.price);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const range = max - min || 1;
+  const n = prices.length;
+  const xs = prices.map((_, i) => (i / (n - 1)) * width);
+  const ys = prices.map(p => height - ((p - min) / range) * (height - 2) - 1);
+  const d = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  const rising = prices[prices.length - 1] >= prices[0];
+  const color = rising ? '#16a34a' : '#ef4444';
+  return (
+    <svg width={width} height={height} style={{ display: 'block', marginTop: 4 }}>
+      <path d={d} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 export default function MarketIntelligenceWidget() {
   const { account } = useAccount();
   const isLoggedIn = !!account?.PeopleID;
 
   const [collapsed, setCollapsed]     = useState(false);
   const [amsData, setAmsData]         = useState({});   // key → price
+  const [priceHistory, setPriceHistory] = useState({}); // label → { points, pct_change, trend }
   const [loadingAms, setLoadingAms]   = useState(true);
   const [news, setNews]               = useState([]);
   const [alerts, setAlerts]           = useState([]);   // user's saved alerts
@@ -110,6 +130,15 @@ export default function MarketIntelligenceWidget() {
     });
     return () => { clearTimeout(timeout); controller.abort(); };
   }, []);
+
+  // ── Fetch 30-day price history for sparklines ─────────────────────────────
+  useEffect(() => {
+    if (loadingAms) return;
+    fetch(`${API}/api/commodity-prices/history?days=30`)
+      .then(r => r.ok ? r.json() : {})
+      .then(d => setPriceHistory(typeof d === 'object' ? d : {}))
+      .catch(() => {});
+  }, [loadingAms]);
 
   // ── Fetch market news ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -285,6 +314,22 @@ export default function MarketIntelligenceWidget() {
                       {hasAlert && <span>{myAlerts.length}</span>}
                     </button>
                   )}
+                  {/* Price sparkline */}
+                  {(() => {
+                    const hist = priceHistory[c.label];
+                    if (!hist || !hist.points?.length) return null;
+                    const pct = hist.pct_change;
+                    return (
+                      <div style={{ marginTop: 4 }}>
+                        <Sparkline points={hist.points} width={80} height={24} />
+                        {pct != null && (
+                          <span style={{ fontSize: 9, color: pct >= 0 ? '#16a34a' : '#ef4444', fontWeight: 600 }}>
+                            {pct >= 0 ? '▲' : '▼'} {Math.abs(pct).toFixed(1)}% 30d
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                   {/* Active alerts summary */}
                   {hasAlert && (
                     <div style={{ marginTop: 4 }}>
