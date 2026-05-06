@@ -8,6 +8,7 @@ import PageMeta from './PageMeta';
 import { useAccount } from './AccountContext';
 import SaigeFieldsCard from './SaigeFieldsCard';
 import SaigeDraftsPanel from './SaigeDraftsPanel';
+import MarketIntelligenceWidget from './MarketIntelligenceWidget';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
@@ -977,6 +978,11 @@ export default function SaigePage() {
               {isLoggedIn && activeChat.length <= 1 && (
                 <div style={{ maxWidth: 800, margin: '0 auto 16px' }}>
                   <SaigeFieldsCard />
+                </div>
+              )}
+              {activeChat.length <= 1 && (
+                <div style={{ maxWidth: 800, margin: '0 auto 16px' }}>
+                  <MarketIntelligenceWidget />
                 </div>
               )}
               {activeChat.map((msg, i) => (
