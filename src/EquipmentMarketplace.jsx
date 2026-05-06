@@ -139,6 +139,7 @@ export default function EquipmentMarketplace() {
   const search      = searchParams.get('search') || '';
 
   const [searchInput, setSearchInput] = useState(search);
+  const [stateInput, setStateInput] = useState(state);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -238,7 +239,7 @@ export default function EquipmentMarketplace() {
           ))}
         </div>
 
-        {/* Search + category row */}
+        {/* Search + filters row */}
         <div className="flex flex-wrap gap-3 mb-6 items-center">
           <form onSubmit={submitSearch} className="flex gap-2 flex-1 min-w-[220px]">
             <input
@@ -264,9 +265,19 @@ export default function EquipmentMarketplace() {
             {categories.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
 
+          <input
+            type="text"
+            value={stateInput}
+            onChange={e => setStateInput(e.target.value)}
+            onBlur={() => setParam('state', stateInput.trim())}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); setParam('state', stateInput.trim()); } }}
+            placeholder={eq('filter_state_placeholder')}
+            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white w-36"
+          />
+
           {(listingType || category || state || search) && (
             <button
-              onClick={() => { setSearchInput(''); setSearchParams({}); }}
+              onClick={() => { setSearchInput(''); setStateInput(''); setSearchParams({}); }}
               className="text-sm text-gray-500 hover:text-gray-700 underline"
             >
               {eq('btn_clear_filters')}

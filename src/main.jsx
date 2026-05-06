@@ -70,6 +70,8 @@ import EquipmentMarketplace from './EquipmentMarketplace';
 import EquipmentListingDetail from './EquipmentListingDetail';
 import MyEquipmentListings from './MyEquipmentListings';
 import AboutEquipmentMarketplace from './AboutEquipmentMarketplace';
+import RealEstateMarketplace from './RealEstateMarketplace';
+import AboutMarketplaces from './AboutMarketplaces';
 import FoodWantedBoard from './FoodWantedBoard';
 import FoodWantedAdDetail from './FoodWantedAdDetail';
 import MyFoodWantedAds from './MyFoodWantedAds';
@@ -294,6 +296,18 @@ const AboutChefPantry = lazyWithReload(() => import('./AboutChefPantry.jsx'))
 const AboutEventRegistration = lazyWithReload(() => import('./AboutEventRegistration.jsx'))
 const ForBusinessPage = lazyWithReload(() => import('./ForBusinessPage.jsx'))
 const AboutDirectory = lazyWithReload(() => import('./AboutDirectory.jsx'))
+const AboutLivestockMarketplace = lazyWithReload(() => import('./AboutLivestockMarketplace.jsx'))
+const AboutLivestockHerdHealth = lazyWithReload(() => import('./AboutLivestockHerdHealth.jsx'))
+const AboutProductsStorefront = lazyWithReload(() => import('./AboutProductsStorefront.jsx'))
+const AboutCSA = lazyWithReload(() => import('./AboutCSA.jsx'))
+const AboutAggregator = lazyWithReload(() => import('./AboutAggregator.jsx'))
+const AboutJobBoard = lazyWithReload(() => import('./AboutJobBoard.jsx'))
+const AboutLandLeasing = lazyWithReload(() => import('./AboutLandLeasing.jsx'))
+const AboutCertificationsTracker = lazyWithReload(() => import('./AboutCertificationsTracker.jsx'))
+const AboutGrants = lazyWithReload(() => import('./AboutGrants.jsx'))
+const AboutCommunity = lazyWithReload(() => import('./AboutCommunity.jsx'))
+const AboutBlog = lazyWithReload(() => import('./AboutBlog.jsx'))
+const AboutAccounting = lazyWithReload(() => import('./AboutAccounting.jsx'))
 const ServicesAdd = lazyWithReload(() => import('./ServicesAdd.jsx'))
 const ServicesSuggestCategory = lazyWithReload(() => import('./ServicesSuggestCategory.jsx'))
 const ServicesEdit = lazyWithReload(() => import('./ServicesEdit.jsx'))
@@ -511,6 +525,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/services/directory/:categoryId" element={<ServicesDirectory />} />
           <Route path="/services/directory" element={<ServicesDirectory />} />
           {/* Platform services — OFN's own AI agents and offerings */}
+          <Route path="/platform" element={<ServicesHome />} />
           <Route path="/platform/saige" element={<AboutSaige />} />
           <Route path="/platform/rosemarie" element={<AboutRosemarie />} />
           <Route path="/platform/pairsley" element={<AboutPairsley />} />
@@ -529,9 +544,22 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/platform/website-builder" element={<AboutWebsiteBuilder />} />
           <Route path="/website-builder" element={<AboutWebsiteBuilder />} />
           <Route path="/platform/marketplace" element={<AboutMarketplace />} />
+          <Route path="/platform/marketplaces" element={<AboutMarketplaces />} />
           <Route path="/platform/events" element={<AboutEvents />} />
           <Route path="/platform/crop-monitor" element={<AboutCropMonitor />} />
           <Route path="/platform/directory" element={<AboutDirectory />} />
+          <Route path="/platform/livestock-marketplace" element={<AboutLivestockMarketplace />} />
+          <Route path="/platform/livestock-herd-health" element={<AboutLivestockHerdHealth />} />
+          <Route path="/platform/products-storefront" element={<AboutProductsStorefront />} />
+          <Route path="/platform/csa" element={<AboutCSA />} />
+          <Route path="/platform/aggregator" element={<AboutAggregator />} />
+          <Route path="/platform/jobs" element={<AboutJobBoard />} />
+          <Route path="/platform/land-leasing" element={<AboutLandLeasing />} />
+          <Route path="/platform/certifications-tracker" element={<AboutCertificationsTracker />} />
+          <Route path="/platform/grants" element={<AboutGrants />} />
+          <Route path="/platform/community" element={<AboutCommunity />} />
+          <Route path="/platform/blog" element={<AboutBlog />} />
+          <Route path="/platform/accounting" element={<AboutAccounting />} />
 
           {/* Events routes — specific before generic */}
           <Route path="/account/events" element={<AccountEventsRedirect />} />
@@ -623,6 +651,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           {/* Marketplace routes — specific before generic */}
           <Route path="/marketplaces/equipment/:listingId" element={<EquipmentListingDetail />} />
           <Route path="/marketplaces/equipment" element={<EquipmentMarketplace />} />
+          <Route path="/marketplaces/real-estate" element={<RealEstateMarketplace />} />
           <Route path="/equipment/my-listings" element={<RequireAuth><MyEquipmentListings /></RequireAuth>} />
           <Route path="/platform/equipment-marketplace" element={<AboutEquipmentMarketplace />} />
           <Route path="/marketplaces/food-wanted/:adId" element={<FoodWantedAdDetail />} />

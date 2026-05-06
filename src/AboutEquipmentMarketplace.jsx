@@ -7,6 +7,7 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import { useTranslation } from 'react-i18next';
+import { useIsLoggedIn } from './useIsLoggedIn';
 
 const ACCENT = '#3D6B34';
 
@@ -47,15 +48,12 @@ function Feature({ icon, titleKey, bodyKey }) {
   const { t } = useTranslation();
   const eq = k => t(`equipment.${k}`);
   return (
-    <div className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200">
-      <div className="shrink-0 flex items-center justify-center"
-           style={{ width: '155px', minHeight: '155px', backgroundColor: '#f0f7ed', color: ACCENT }}>
-        {icon}
+    <div className="bg-white border border-gray-200 rounded-xl p-4">
+      <div className="flex items-center gap-2 mb-1" style={{ color: ACCENT }}>
+        <span className="flex items-center">{icon}</span>
+        <h3 className="font-bold text-gray-900">{eq(titleKey)}</h3>
       </div>
-      <div className="flex flex-col justify-center px-5 py-4 flex-1 min-w-0">
-        <h3 className="font-bold text-sm" style={{ color: ACCENT }}>{eq(titleKey)}</h3>
-        <p className="text-xs text-gray-600 leading-relaxed mt-1">{eq(bodyKey)}</p>
-      </div>
+      <p className="text-sm text-gray-600">{eq(bodyKey)}</p>
     </div>
   );
 }
@@ -63,6 +61,7 @@ function Feature({ icon, titleKey, bodyKey }) {
 export default function AboutEquipmentMarketplace() {
   const { t } = useTranslation();
   const eq = k => t(`equipment.${k}`);
+  const isLoggedIn = useIsLoggedIn();
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
@@ -75,6 +74,7 @@ export default function AboutEquipmentMarketplace() {
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
+          { label: 'Our Services', to: '/platform' },
           { label: 'Equipment Marketplace' },
         ]} />
       </div>
@@ -86,28 +86,37 @@ export default function AboutEquipmentMarketplace() {
             src="/images/EquipmentMarketplaceHeader.webp"
             alt="Farm Equipment Marketplace"
             className="w-full object-cover"
-            style={{ height: '250px', display: 'block' }}
+            style={{ height: '260px', display: 'block' }}
             loading="eager"
+            fetchPriority="high"
+            width="1300"
+            height="260"
             onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
           />
           <div className="absolute inset-0"
-               style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.75) 45%, rgba(255,255,255,0) 78%)' }} />
+               style={{ background: 'linear-gradient(to right, rgba(18,72,38,0.92) 0%, rgba(18,72,38,0.75) 45%, rgba(18,72,38,0) 78%)' }} />
           <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '720px' }}>
-            <h1 style={{ color: '#000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 12px', lineHeight: 1.2 }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              </div>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#ffffff' }}>Equipment Marketplace</span>
+            </div>
+            <h1 style={{ color: '#fff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
               {eq('about_hero_title')}
             </h1>
-            <p style={{ color: '#111', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+            <p style={{ color: '#fff', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
               {eq('about_hero_body')}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link to="/marketplaces/equipment"
-                className="font-bold px-5 py-2 rounded-lg border-2 transition hover:bg-gray-50 text-sm"
-                style={{ color: ACCENT, borderColor: ACCENT }}>
+                className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm"
+                style={{ color: ACCENT }}>
                 {eq('btn_browse_equipment')}
               </Link>
-              <Link to="/equipment/my-listings"
-                className="px-5 py-2 rounded-lg text-white font-bold text-sm shadow hover:shadow-md transition"
-                style={{ backgroundColor: ACCENT }}>
+              <Link to={isLoggedIn ? "/equipment/my-listings" : "/signup"}
+                className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10"
+                style={{ borderColor: '#ffffff', color: '#ffffff' }}>
                 {eq('btn_post_listing')}
               </Link>
             </div>
@@ -122,9 +131,14 @@ export default function AboutEquipmentMarketplace() {
               style={{ fontFamily: "'Lora','Times New Roman',serif" }}>
             {eq('section_intro_title')}
           </h2>
-          <p className="text-sm text-gray-700 leading-relaxed max-w-3xl">
+          <p className="text-sm text-gray-700 leading-relaxed max-w-3xl mb-4">
             {eq('section_intro_body')}
           </p>
+          <Link to="/marketplaces/equipment"
+            className="inline-flex items-center gap-2 font-bold px-5 py-2.5 rounded-lg text-white text-sm shadow hover:shadow-md transition"
+            style={{ backgroundColor: ACCENT }}>
+            Browse the Equipment Marketplace →
+          </Link>
         </section>
 
         <h2 className="text-lg font-bold text-gray-900 mb-5"
@@ -167,7 +181,7 @@ export default function AboutEquipmentMarketplace() {
             <p className="text-sm text-gray-600">{eq('cta_body')}</p>
           </div>
           <div className="flex flex-wrap gap-3 shrink-0">
-            <Link to="/equipment/my-listings"
+            <Link to={isLoggedIn ? "/equipment/my-listings" : "/signup"}
               className="px-5 py-2.5 rounded-lg text-white font-bold text-sm shadow hover:shadow-md transition"
               style={{ backgroundColor: ACCENT }}>
               {eq('btn_post_listing')}

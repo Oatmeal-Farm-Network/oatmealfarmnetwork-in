@@ -7,6 +7,10 @@
     <link rel="icon" type="image/png" href="/images/OFNFavico.png" />
     <link rel="apple-touch-icon" href="/images/OFNFavico.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="preload" as="image" href="/images/Oatmeal-Farm-Network-og-default.jpg" />
+    <link rel="alternate" hreflang="en" href="https://oatmealfarmnetwork.com/" />
+    <link rel="alternate" hreflang="tl" href="https://oatmealfarmnetwork.com/" />
+    <link rel="alternate" hreflang="x-default" href="https://oatmealfarmnetwork.com/" />
 
     <!-- Lora — referenced throughout the app via cascade rules in index.css.
          Without this <link> the family falls back to Times New Roman. -->
@@ -37,7 +41,8 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type"   content="image/jpeg" />
     <meta property="og:url"          content="https://oatmealfarmnetwork.com" />
-    <meta property="og:locale"       content="en_US" />
+    <meta property="og:locale"           content="en_US" />
+    <meta property="og:locale:alternate" content="tl_PH" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card"        content="summary_large_image" />
@@ -133,6 +138,26 @@
         "provider": { "@type": "Organization", "name": "Oatmeal Farm Network" }
       }
     ]
+    </script>
+
+    <!-- NewsMediaOrganization structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "NewsMediaOrganization",
+      "name": "Oatmeal Farm Network",
+      "url": "https://oatmealfarmnetwork.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://oatmealfarmnetwork.com/images/OFN-Logo.png",
+        "width": 512,
+        "height": 512
+      },
+      "description": "Oatmeal Farm Network publishes agricultural news covering markets, weather, policy, AgTech, and livestock for farmers, ranchers, and food producers.",
+      "publishingPrinciples": "https://oatmealfarmnetwork.com/about",
+      "masthead": "https://oatmealfarmnetwork.com/app/news",
+      "sameAs": ["https://oatmeal-ai.com"]
+    }
     </script>
 
     <!-- WebSite + SearchAction structured data -->

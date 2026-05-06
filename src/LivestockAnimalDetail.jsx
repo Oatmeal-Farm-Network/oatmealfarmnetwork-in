@@ -859,21 +859,32 @@ export default function LivestockAnimalDetail() {
         keywords={`${animal.full_name}, ${animal.species_singular} for sale, ${backLabel || ''}, livestock marketplace`}
         canonical={`https://oatmealfarmnetwork.com/marketplaces/livestock/animal/${id}`}
         ogType="product"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'Product',
-          name: animal.full_name,
-          description: metaDesc,
-          url: `https://oatmealfarmnetwork.com/marketplaces/livestock/animal/${id}`,
-          ...(pricing.price ? {
-            offers: {
-              '@type': 'Offer',
-              price: pricing.price,
-              priceCurrency: 'USD',
-              availability: animal.sold ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
-            }
-          } : {})
-        }}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: animal.full_name,
+            description: metaDesc,
+            url: `https://oatmealfarmnetwork.com/marketplaces/livestock/animal/${id}`,
+            ...(pricing.price ? {
+              offers: {
+                '@type': 'Offer',
+                price: pricing.price,
+                priceCurrency: 'USD',
+                availability: animal.sold ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
+              }
+            } : {})
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://oatmealfarmnetwork.com' },
+              { '@type': 'ListItem', position: 2, name: 'Livestock Marketplace', item: 'https://oatmealfarmnetwork.com/marketplaces/livestock' },
+              { '@type': 'ListItem', position: 3, name: animal.full_name, item: `https://oatmealfarmnetwork.com/marketplaces/livestock/animal/${id}` },
+            ],
+          },
+        ]}
       />
       <Header />
       <LivestockAnimalDetailContent animal={animal} />

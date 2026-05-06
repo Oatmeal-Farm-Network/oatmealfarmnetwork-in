@@ -44,9 +44,18 @@ export default function Accounts() {
 
         <Breadcrumbs items={[{ label: t('nav.home'), to: '/' }, { label: t('accounts.heading') }]} />
 
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-3 border-b-2 border-gray-200">
-          {t('accounts.heading')}
-        </h2>
+        <div className="flex items-center justify-between mb-6 pb-3 border-b-2 border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-800">{t('accounts.heading')}</h2>
+          {!loading && (
+            <Link
+              to={`/accounts/new?PeopleID=${peopleId}`}
+              className="regsubmit2"
+              style={{ fontSize: '0.85rem', padding: '0.4rem 1rem' }}
+            >
+              + {t('accounts.add_account_btn') || 'Add Account'}
+            </Link>
+          )}
+        </div>
 
         {loading ? (
           <p className="text-gray-500 py-8">{t('accounts.loading')}</p>

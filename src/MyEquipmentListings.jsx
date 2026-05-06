@@ -1,12 +1,13 @@
 // src/MyEquipmentListings.jsx
 // Route: /equipment/my-listings  (requires auth)
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
 import { useTranslation } from 'react-i18next';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL || '';
 const ACCENT = '#3D6B34';
@@ -35,6 +36,12 @@ const TYPE_BADGE = {
   borrow: { labelKey: 'badge_borrow',   bg: '#eaf1fb', text: '#1d4e89' },
 };
 
+const INQ_STATUS_COLORS = {
+  pending: { bg: '#fff8e1', text: '#7d5a00' },
+  replied: { bg: '#e6f4ea', text: '#2d6a38' },
+  closed:  { bg: '#f3f4f6', text: '#6b7280' },
+};
+
 export default function MyEquipmentListings() {
   const { t } = useTranslation();
   const eq = k => t(`equipment.${k}`);
@@ -48,6 +55,19 @@ export default function MyEquipmentListings() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [deleting, setDeleting] = useState(null);
+
+  // Photos panel state
+  const [photosListingId, setPhotosListingId] = useState(null);
+  const [photosData, setPhotosData] = useState({});
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoUploadError, setPhotoUploadError] = useState('');
+  const photoInputRef = useRef(null);
+
+  // Inquiries panel state
+  const [inquiriesListingId, setInquiriesListingId] = useState(null);
+  const [inquiriesData, setInquiriesData] = useState({});
+  const [inquiriesLoading, setInquiriesLoading] = useState(false);
+  const [updatingInqId, setUpdatingInqId] = useState(null);
 
   const headers = authHeaders();
 
@@ -68,6 +88,8 @@ export default function MyEquipmentListings() {
     setForm(BLANK);
     setSaveError('');
     setShowForm(true);
+    setPhotosListingId(null);
+    setInquiriesListingId(null);
   }
 
   function openEdit(item) {
@@ -92,6 +114,8 @@ export default function MyEquipmentListings() {
     });
     setSaveError('');
     setShowForm(true);
+    setPhotosListingId(null);
+    setInquiriesListingId(null);
   }
 
   async function saveForm(e) {
@@ -134,11 +158,105 @@ export default function MyEquipmentListings() {
     setDeleting(null);
   }
 
+  // ── Photos panel ──────────────────────────────────────────────────────────────
+
+  async function togglePhotos(listingId) {
+    if (photosListingId === listingId) { setPhotosListingId(null); return; }
+    setInquiriesListingId(null);
+    setPhotosListingId(listingId);
+    if (!photosData[listingId]) {
+      try {
+        const r = await fetch(`${API}/api/equipment/${listingId}`, { headers });
+        const d = await r.json();
+        setPhotosData(prev => ({ ...prev, [listingId]: d.images || [] }));
+      } catch {
+        setPhotosData(prev => ({ ...prev, [listingId]: [] }));
+      }
+    }
+  }
+
+  async function uploadPhoto(listingId, file) {
+    if (!file) return;
+    setUploadingPhoto(true);
+    setPhotoUploadError('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const r = await fetch(`${API}/api/equipment/${listingId}/upload-image`, {
+        method: 'POST',
+        headers,
+        body: fd,
+      });
+      if (!r.ok) throw new Error();
+      const d = await r.json();
+      setPhotosData(prev => ({
+        ...prev,
+        [listingId]: [...(prev[listingId] || []), { ImageID: d.image_id, ImageURL: d.url, SortOrder: 999 }],
+      }));
+      loadListings();
+    } catch {
+      setPhotoUploadError(eq('photo_upload_error'));
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
+  async function deletePhoto(listingId, imageId) {
+    try {
+      await fetch(`${API}/api/equipment/images/${imageId}`, { method: 'DELETE', headers });
+      setPhotosData(prev => ({
+        ...prev,
+        [listingId]: (prev[listingId] || []).filter(img => img.ImageID !== imageId),
+      }));
+      loadListings();
+    } catch {}
+  }
+
+  // ── Inquiries panel ───────────────────────────────────────────────────────────
+
+  async function toggleInquiries(listingId) {
+    if (inquiriesListingId === listingId) { setInquiriesListingId(null); return; }
+    setPhotosListingId(null);
+    setInquiriesListingId(listingId);
+    if (!inquiriesData[listingId]) {
+      setInquiriesLoading(true);
+      try {
+        const r = await fetch(`${API}/api/equipment/${listingId}/inquiries`, { headers });
+        const d = await r.json();
+        setInquiriesData(prev => ({ ...prev, [listingId]: Array.isArray(d) ? d : [] }));
+      } catch {
+        setInquiriesData(prev => ({ ...prev, [listingId]: [] }));
+      } finally {
+        setInquiriesLoading(false);
+      }
+    }
+  }
+
+  async function updateInquiryStatus(listingId, inquiryId, status) {
+    setUpdatingInqId(inquiryId);
+    try {
+      await fetch(`${API}/api/equipment/inquiry/${inquiryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ status }),
+      });
+      setInquiriesData(prev => ({
+        ...prev,
+        [listingId]: (prev[listingId] || []).map(inq =>
+          inq.InquiryID === inquiryId ? { ...inq, Status: status } : inq
+        ),
+      }));
+      loadListings();
+    } catch {}
+    setUpdatingInqId(null);
+  }
+
   const f = form;
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
+      <PageMeta title="My Equipment Listings | OFN" noIndex />
       <Header />
 
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1100px' }}>
@@ -302,21 +420,21 @@ export default function MyEquipmentListings() {
 
             {saveError && <p className="text-sm text-red-600 mb-3">{eq('save_error')}</p>}
 
-            <div className="flex gap-3">
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => setShowForm(false)}
+                className="px-6 py-2 rounded-lg font-bold text-sm border border-gray-300 text-gray-600 hover:bg-gray-50 transition">
+                {eq('btn_cancel')}
+              </button>
               <button type="submit" disabled={saving}
                 className="px-6 py-2 rounded-lg text-white font-bold text-sm shadow hover:shadow-md transition disabled:opacity-60"
                 style={{ backgroundColor: ACCENT }}>
                 {saving ? eq('btn_saving') : editing ? eq('btn_save_changes') : eq('btn_post_listing_action')}
               </button>
-              <button type="button" onClick={() => setShowForm(false)}
-                className="px-6 py-2 rounded-lg font-bold text-sm border border-gray-300 text-gray-600 hover:bg-gray-50 transition">
-                {eq('btn_cancel')}
-              </button>
             </div>
           </form>
         )}
 
-        {/* Listings table */}
+        {/* Listings */}
         {loading ? (
           <div className="text-sm text-gray-400 py-12 text-center">{eq('loading')}</div>
         ) : listings.length === 0 ? (
@@ -329,52 +447,191 @@ export default function MyEquipmentListings() {
           <div className="flex flex-col gap-3">
             {listings.map(item => {
               const badge = TYPE_BADGE[item.ListingType] || { label: item.ListingType, bg: '#f3f4f6', text: '#374151' };
+              const showPhotos = photosListingId === item.ListingID;
+              const showInquiries = inquiriesListingId === item.ListingID;
+              const pendingCount = item.PendingInquiries || 0;
+              const imageCount = item.ImageCount || 0;
               return (
                 <div key={item.ListingID}
-                     className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:border-[#819360] transition-all duration-200">
-                  <div className="shrink-0 bg-gray-100 flex items-center justify-center" style={{ width: '100px', minHeight: '100px' }}>
-                    {item.PrimaryImage
-                      ? <img src={item.PrimaryImage} alt="" className="w-full h-full object-cover" style={{ minHeight: '100px' }} />
-                      : <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                    }
+                     className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:border-[#819360] transition-all duration-200">
+
+                  {/* Main row */}
+                  <div className="flex">
+                    <div className="shrink-0 bg-gray-100 flex items-center justify-center" style={{ width: '100px', minHeight: '100px' }}>
+                      {item.PrimaryImage
+                        ? <img src={item.PrimaryImage} alt="" className="w-full h-full object-cover" style={{ minHeight: '100px' }} />
+                        : <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                      }
+                    </div>
+                    <div className="flex flex-col justify-between px-5 py-3 flex-1 min-w-0">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                                style={{ backgroundColor: badge.bg, color: badge.text }}>
+                            {badge.labelKey ? eq(badge.labelKey) : item.ListingType}
+                          </span>
+                          {!item.IsActive && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{eq('badge_inactive')}</span>
+                          )}
+                        </div>
+                        <Link to={`/marketplaces/equipment/${item.ListingID}`}
+                              className="font-bold text-sm hover:underline" style={{ color: ACCENT }}>
+                          {item.Title}
+                        </Link>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {[item.YearMade, item.Make, item.Model].filter(Boolean).join(' ')}
+                          {item.StateProvince ? ` · ${item.StateProvince}` : ''}
+                        </p>
+                      </div>
+                      {item.ListingType === 'sale' && item.AskingPrice != null && (
+                        <p className="text-sm font-bold mt-1" style={{ color: ACCENT }}>
+                          ${Number(item.AskingPrice).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col justify-center gap-2 px-4 py-3 shrink-0">
+                      <div className="flex gap-2">
+                        <button onClick={() => openEdit(item)}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition">
+                          {eq('btn_edit')}
+                        </button>
+                        <button onClick={() => deleteListing(item.ListingID)}
+                          disabled={deleting === item.ListingID}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition disabled:opacity-50">
+                          {deleting === item.ListingID ? '…' : eq('btn_remove')}
+                        </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => togglePhotos(item.ListingID)}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition"
+                          style={showPhotos
+                            ? { backgroundColor: ACCENT, color: '#fff', borderColor: ACCENT }
+                            : { borderColor: '#d1d5db', color: '#374151' }}>
+                          {eq('btn_manage_photos')}{imageCount > 0 ? ` (${imageCount})` : ''}
+                        </button>
+                        <button
+                          onClick={() => toggleInquiries(item.ListingID)}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition"
+                          style={showInquiries
+                            ? { backgroundColor: ACCENT, color: '#fff', borderColor: ACCENT }
+                            : pendingCount > 0
+                            ? { backgroundColor: '#fff8e1', color: '#7d5a00', borderColor: '#f9d76b' }
+                            : { borderColor: '#d1d5db', color: '#374151' }}>
+                          {eq('btn_inquiries')}{pendingCount > 0 ? ` (${pendingCount})` : ''}
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex flex-col justify-between px-5 py-3 flex-1 min-w-0">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-                              style={{ backgroundColor: badge.bg, color: badge.text }}>
-                          {badge.labelKey ? eq(badge.labelKey) : item.ListingType}
-                        </span>
-                        {!item.IsActive && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{eq('badge_inactive')}</span>
+
+                  {/* Photos panel */}
+                  {showPhotos && (
+                    <div className="border-t border-gray-100 bg-gray-50 px-5 py-4">
+                      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">{eq('photos_heading')}</p>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {(photosData[item.ListingID] || []).map(img => (
+                          <div key={img.ImageID} className="relative group">
+                            <img src={img.ImageURL} alt=""
+                              className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                            <button
+                              onClick={() => deletePhoto(item.ListingID, img.ImageID)}
+                              className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition leading-none"
+                              title={eq('btn_delete_photo')}>
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        {(photosData[item.ListingID] || []).length === 0 && !uploadingPhoto && (
+                          <p className="text-xs text-gray-400">{eq('no_photos')}</p>
+                        )}
+                        {uploadingPhoto && (
+                          <div className="w-20 h-20 rounded-lg border border-dashed border-gray-300 flex items-center justify-center">
+                            <span className="text-xs text-gray-400">{eq('uploading_photo')}</span>
+                          </div>
                         )}
                       </div>
-                      <Link to={`/marketplaces/equipment/${item.ListingID}`}
-                            className="font-bold text-sm hover:underline" style={{ color: ACCENT }}>
-                        {item.Title}
-                      </Link>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {[item.YearMade, item.Make, item.Model].filter(Boolean).join(' ')}
-                        {item.StateProvince ? ` · ${item.StateProvince}` : ''}
-                      </p>
+                      {photoUploadError && <p className="text-xs text-red-600 mb-2">{photoUploadError}</p>}
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) uploadPhoto(item.ListingID, file);
+                          e.target.value = '';
+                        }}
+                      />
+                      <button
+                        onClick={() => photoInputRef.current?.click()}
+                        disabled={uploadingPhoto}
+                        className="text-xs font-semibold px-4 py-1.5 rounded-lg border border-dashed border-gray-400 text-gray-600 hover:bg-white transition disabled:opacity-50">
+                        + {eq('btn_upload_photo')}
+                      </button>
                     </div>
-                    {item.ListingType === 'sale' && item.AskingPrice != null && (
-                      <p className="text-sm font-bold mt-1" style={{ color: ACCENT }}>
-                        ${Number(item.AskingPrice).toLocaleString()}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 px-4 shrink-0">
-                    <button onClick={() => openEdit(item)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition">
-                      {eq('btn_edit')}
-                    </button>
-                    <button onClick={() => deleteListing(item.ListingID)}
-                      disabled={deleting === item.ListingID}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition disabled:opacity-50">
-                      {deleting === item.ListingID ? '…' : eq('btn_remove')}
-                    </button>
-                  </div>
+                  )}
+
+                  {/* Inquiries panel */}
+                  {showInquiries && (
+                    <div className="border-t border-gray-100 bg-gray-50 px-5 py-4">
+                      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">{eq('inquiries_heading')}</p>
+                      {inquiriesLoading ? (
+                        <p className="text-xs text-gray-400">{eq('loading')}</p>
+                      ) : (inquiriesData[item.ListingID] || []).length === 0 ? (
+                        <p className="text-xs text-gray-400">{eq('no_inquiries')}</p>
+                      ) : (
+                        <div className="flex flex-col gap-3">
+                          {(inquiriesData[item.ListingID] || []).map(inq => {
+                            const sc = INQ_STATUS_COLORS[inq.Status] || INQ_STATUS_COLORS.pending;
+                            const isUpdating = updatingInqId === inq.InquiryID;
+                            return (
+                              <div key={inq.InquiryID} className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+                                <div className="flex items-start justify-between gap-3 mb-1">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                                      <span className="text-xs font-semibold text-gray-800">
+                                        {inq.SenderName || inq.FromBusinessName || eq('inq_anonymous')}
+                                      </span>
+                                      {inq.SenderEmail && (
+                                        <a href={`mailto:${inq.SenderEmail}`}
+                                          className="text-xs text-blue-600 hover:underline">{inq.SenderEmail}</a>
+                                      )}
+                                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                                            style={{ backgroundColor: sc.bg, color: sc.text }}>
+                                        {eq(`inq_status_${inq.Status}`) || inq.Status}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mb-1">
+                                      {inq.InquiryType} · {new Date(inq.CreatedAt).toLocaleDateString()}
+                                    </p>
+                                    <p className="text-sm text-gray-700 leading-relaxed">{inq.Message}</p>
+                                  </div>
+                                </div>
+                                {inq.Status !== 'closed' && (
+                                  <div className="flex gap-2 mt-2">
+                                    {inq.Status === 'pending' && (
+                                      <button
+                                        onClick={() => updateInquiryStatus(item.ListingID, inq.InquiryID, 'replied')}
+                                        disabled={isUpdating}
+                                        className="text-xs font-semibold px-3 py-1 rounded-lg border border-green-300 text-green-700 hover:bg-green-50 transition disabled:opacity-50">
+                                        {isUpdating ? '…' : eq('btn_mark_replied')}
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => updateInquiryStatus(item.ListingID, inq.InquiryID, 'closed')}
+                                      disabled={isUpdating}
+                                      className="text-xs font-semibold px-3 py-1 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition disabled:opacity-50">
+                                      {isUpdating ? '…' : eq('btn_close_inq')}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

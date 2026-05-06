@@ -70,6 +70,7 @@ export default function PageMeta({
   canonical,
   noIndex = false,
   ogType = 'website',
+  locale = 'en_US',
   publishedTime,
   modifiedTime,
   jsonLd,
@@ -91,6 +92,7 @@ export default function PageMeta({
 
     // Open Graph
     setOG('og:type',         ogType);
+    setOG('og:locale',       locale);
     setOG('og:title',        fullTitle);
     setOG('og:description',  desc);
     setOG('og:image',        img);
@@ -120,7 +122,7 @@ export default function PageMeta({
     return () => {
       clearJsonLd();
     };
-  }, [title, description, keywords, image, imageAlt, imageWidth, imageHeight, canonical, noIndex, ogType, publishedTime, modifiedTime, jsonLd]);
+  }, [title, description, keywords, image, imageAlt, imageWidth, imageHeight, canonical, noIndex, ogType, locale, publishedTime, modifiedTime, jsonLd]);
 
   return null;
 }

@@ -64,33 +64,44 @@ export default function ServiceDetail() {
         image={mainPhoto || undefined}
         canonical={svcCanonical}
         ogType="article"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'Service',
-          name: svc.ServiceTitle,
-          description: svcDesc,
-          ...(mainPhoto ? { image: mainPhoto } : {}),
-          ...(svc.ServicesCategory ? { category: svc.ServicesCategory } : {}),
-          provider: {
-            '@type': 'LocalBusiness',
-            name: svc.BusinessName,
-            ...(location || svc.AddressCity ? {
-              address: {
-                '@type': 'PostalAddress',
-                ...(svc.AddressCity ? { addressLocality: svc.AddressCity } : {}),
-                ...(svc.AddressState ? { addressRegion: svc.AddressState } : {}),
-              },
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Service',
+            name: svc.ServiceTitle,
+            description: svcDesc,
+            ...(mainPhoto ? { image: mainPhoto } : {}),
+            ...(svc.ServicesCategory ? { category: svc.ServicesCategory } : {}),
+            provider: {
+              '@type': 'LocalBusiness',
+              name: svc.BusinessName,
+              ...(location || svc.AddressCity ? {
+                address: {
+                  '@type': 'PostalAddress',
+                  ...(svc.AddressCity ? { addressLocality: svc.AddressCity } : {}),
+                  ...(svc.AddressState ? { addressRegion: svc.AddressState } : {}),
+                },
+              } : {}),
+              ...(svc.ServicePhone ? { telephone: svc.ServicePhone } : {}),
+            },
+            ...(svc.ServicePrice && !svc.ServiceContactForPrice ? {
+              offers: {
+                '@type': 'Offer',
+                price: svc.ServicePrice,
+                priceCurrency: 'USD',
+              }
             } : {}),
-            ...(svc.ServicePhone ? { telephone: svc.ServicePhone } : {}),
           },
-          ...(svc.ServicePrice && !svc.ServiceContactForPrice ? {
-            offers: {
-              '@type': 'Offer',
-              price: svc.ServicePrice,
-              priceCurrency: 'USD',
-            }
-          } : {}),
-        }}
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://oatmealfarmnetwork.com' },
+              { '@type': 'ListItem', position: 2, name: 'Services Directory', item: 'https://oatmealfarmnetwork.com/services/directory' },
+              ...(svc.ServicesCategory ? [{ '@type': 'ListItem', position: 3, name: svc.ServicesCategory, item: `https://oatmealfarmnetwork.com/services/directory/${svc.ServiceCategoryID}` }, { '@type': 'ListItem', position: 4, name: svc.ServiceTitle, item: svcCanonical }] : [{ '@type': 'ListItem', position: 3, name: svc.ServiceTitle, item: svcCanonical }]),
+            ],
+          },
+        ]}
       />
       <Header />
 

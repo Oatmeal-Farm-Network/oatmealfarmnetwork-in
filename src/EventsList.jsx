@@ -50,13 +50,26 @@ export default function EventsList() {
         description="Discover upcoming farm events, agricultural workshops, farm tours, and food industry conferences near you. Browse and register for events on Oatmeal Farm Network."
         keywords="farm events, agricultural workshops, farm tours, farmers market events, livestock shows, harvest festivals, ag conferences, food industry events"
         canonical="https://oatmealfarmnetwork.com/events"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'CollectionPage',
-          name: 'Farm Events & Agricultural Workshops',
-          description: 'Upcoming farm events, workshops, tours, and agricultural gatherings.',
-          url: 'https://oatmealfarmnetwork.com/events',
-        }}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            name: 'Farm Events & Agricultural Workshops',
+            description: 'Upcoming farm events, workshops, tours, and agricultural gatherings.',
+            url: 'https://oatmealfarmnetwork.com/events',
+          },
+          filtered.length > 0 ? {
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            url: 'https://oatmealfarmnetwork.com/events',
+            itemListElement: filtered.slice(0, 10).map((ev, i) => ({
+              '@type': 'ListItem',
+              position: i + 1,
+              url: `https://oatmealfarmnetwork.com/events/${ev.EventID}`,
+              name: ev.EventName,
+            })),
+          } : null,
+        ].filter(Boolean)}
       />
       <Header />
 

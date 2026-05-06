@@ -8,7 +8,235 @@ import Breadcrumbs from './Breadcrumbs';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const OTF_API = import.meta.env.VITE_OTF_API_URL || import.meta.env.VITE_API_URL || '';
-const FORM_MAX_WIDTH = '640px';
+const FORM_MAX_WIDTH = '780px';
+
+const SAGE = '#4A5C43';
+const SAGE_BG = '#EEF1EC';
+const SAGE_BORDER = '#C8D5C2';
+
+// ── Inline Cassia chat for the plan-selection step ──────────────────────────
+function CassiaChat({ businessId, peopleId, onSkip }) {
+  const [msgs, setMsgs] = React.useState([]);
+  const [history, setHistory] = React.useState([]);
+  const [input, setInput] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [rec, setRec] = React.useState(null); // recommendation data
+  const [paying, setPaying] = React.useState(false);
+  const [err, setErr] = React.useState('');
+  const bottomRef = React.useRef(null);
+
+  const cassiaHeaders = React.useMemo(() => ({
+    'Content-Type':   'application/json',
+    'x-people-id':    String(peopleId || localStorage.getItem('people_id') || '0'),
+    'x-access-level': localStorage.getItem('access_level') || '1',
+    'x-business-id':  String(businessId || '0'),
+  }), [businessId, peopleId]);
+
+  const send = React.useCallback(async (userText, isOpening = false) => {
+    const trimmed = userText.trim();
+    if (!trimmed) return;
+    if (!isOpening) setMsgs(m => [...m, { role: 'user', content: trimmed }]);
+    setLoading(true);
+    setErr('');
+    try {
+      const res = await fetch(`${OTF_API}/api/cassia/chat`, {
+        method: 'POST',
+        headers: cassiaHeaders,
+        body: JSON.stringify({ messages: history, userMessage: trimmed }),
+      });
+      if (!res.ok) throw new Error('Cassia is unavailable right now.');
+      const data = await res.json();
+      setMsgs(m => [...m, { role: 'assistant', content: data.message }]);
+      setHistory(h => [
+        ...h,
+        { role: 'user', content: trimmed },
+        data.assistantMessage || { role: 'assistant', content: data.message },
+      ]);
+      if (data.action === 'show_recommendation' || data.action === 'ready_to_checkout') {
+        if (data.data) setRec(data.data);
+      }
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [history, cassiaHeaders]);
+
+  // Opening greeting on mount
+  React.useEffect(() => { send('<<START>>', true); }, []);
+
+  React.useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs, loading]);
+
+  const handleCheckout = async () => {
+    if (!rec) return;
+    setPaying(true);
+    setErr('');
+    try {
+      const returnBase = window.location.origin;
+      const res = await fetch(`${OTF_API}/api/cassia/checkout`, {
+        method: 'POST',
+        headers: cassiaHeaders,
+        body: JSON.stringify({
+          tier:        rec.tier,
+          categories:  rec.categories || [],
+          lineItems:   rec.lineItems  || [],
+          monthlyTotal: rec.monthlyTotal || 0,
+          successUrl: `${returnBase}/account?PeopleID=${peopleId}&BusinessID=${businessId}&subscribed=1`,
+          cancelUrl:  `${returnBase}/accounts/new?PeopleID=${peopleId}&cancelled=1`,
+        }),
+      });
+      if (!res.ok) throw new Error('Could not create checkout session.');
+      const { stripeUrl, token } = await res.json();
+      if (stripeUrl) {
+        window.location.href = stripeUrl;
+      } else {
+        // Free plan — just navigate back to account
+        window.location.href = `${returnBase}/account?PeopleID=${peopleId}&BusinessID=${businessId}&subscribed=1`;
+      }
+    } catch (e) {
+      setErr(e.message);
+      setPaying(false);
+    }
+  };
+
+  const TIER_COLORS = {
+    hobby:      { bg: '#eff6ff', color: '#3b82f6', border: '#bfdbfe' },
+    starter:    { bg: '#dcfce7', color: '#16a34a', border: '#86efac' },
+    business:   { bg: '#f3e8ff', color: '#7c3aed', border: '#d8b4fe' },
+    enterprise: { bg: '#fef3c7', color: '#d97706', border: '#fde68a' },
+  };
+  const TIER_LABELS = { hobby: 'Hobby (Free)', starter: 'Starter', business: 'Business', enterprise: 'Enterprise' };
+
+  const tc = rec ? (TIER_COLORS[rec.tier] || TIER_COLORS.starter) : TIER_COLORS.starter;
+
+  return (
+    <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+
+      {/* Chat pane */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10,
+          background: SAGE, borderRadius: 10, padding: '0.75rem 1rem', color: '#fff' }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '0.9rem', fontWeight: 700, color: SAGE, flexShrink: 0 }}>C</div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Cassia</div>
+            <div style={{ fontSize: '0.7rem', opacity: 0.85 }}>Your Oatmeal Farm Network guide</div>
+          </div>
+          <button onClick={onSkip}
+            style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.15)', border: 'none',
+              color: '#fff', borderRadius: 6, fontSize: '0.72rem', padding: '0.2rem 0.6rem',
+              cursor: 'pointer', opacity: 0.8 }}>
+            Skip →
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div style={{ maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {msgs.map((m, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+              <div style={{
+                maxWidth: '85%', padding: '0.55rem 0.8rem', borderRadius: 12,
+                fontSize: '0.84rem', lineHeight: 1.5,
+                background: m.role === 'user' ? SAGE : SAGE_BG,
+                color: m.role === 'user' ? '#fff' : '#1f2937',
+                border: m.role === 'assistant' ? `1px solid ${SAGE_BORDER}` : 'none',
+              }}>
+                {m.content}
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div style={{ display: 'flex' }}>
+              <div style={{ padding: '0.55rem 0.8rem', background: SAGE_BG, border: `1px solid ${SAGE_BORDER}`,
+                borderRadius: 12, fontSize: '0.84rem', color: '#6b7280' }}>
+                Cassia is thinking…
+              </div>
+            </div>
+          )}
+          {err && <div style={{ color: '#dc2626', fontSize: '0.78rem', padding: '0.25rem 0.5rem' }}>{err}</div>}
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Input */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && input.trim()) { send(input); setInput(''); } }}
+            placeholder="Type your reply…"
+            disabled={loading}
+            style={{ flex: 1, border: `1px solid ${SAGE_BORDER}`, borderRadius: 8,
+              padding: '0.5rem 0.75rem', fontSize: '0.85rem',
+              outline: 'none', background: '#fff' }}
+          />
+          <button
+            onClick={() => { if (input.trim()) { send(input); setInput(''); } }}
+            disabled={loading || !input.trim()}
+            style={{ background: SAGE, color: '#fff', border: 'none', borderRadius: 8,
+              padding: '0.5rem 0.9rem', fontWeight: 700, cursor: 'pointer',
+              fontSize: '0.85rem', opacity: (loading || !input.trim()) ? 0.5 : 1 }}>
+            Send
+          </button>
+        </div>
+      </div>
+
+      {/* Recommendation panel — appears once Cassia has a suggestion */}
+      {rec && (
+        <div style={{ width: 260, flexShrink: 0, background: '#fff',
+          border: `1px solid ${SAGE_BORDER}`, borderRadius: 12, padding: '1rem', fontSize: '0.82rem' }}>
+
+          <div style={{ fontWeight: 700, color: SAGE, marginBottom: 8, fontSize: '0.8rem',
+            textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cassia's Recommendation</div>
+
+          <span style={{ padding: '2px 10px', borderRadius: 12, fontWeight: 700, fontSize: '0.75rem',
+            textTransform: 'uppercase', letterSpacing: '0.04em',
+            background: tc.bg, color: tc.color, border: `1px solid ${tc.border}`,
+            display: 'inline-block', marginBottom: 8 }}>
+            {TIER_LABELS[rec.tier] || rec.tier}
+          </span>
+
+          {rec.reasoning && (
+            <p style={{ color: '#4b5563', lineHeight: 1.5, marginBottom: 8 }}>{rec.reasoning}</p>
+          )}
+
+          {rec.lineItems?.length > 0 && (
+            <div style={{ borderTop: `1px solid ${SAGE_BORDER}`, paddingTop: 8, marginBottom: 8 }}>
+              {rec.lineItems.map((item, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between',
+                  gap: 6, marginBottom: 4, color: '#374151' }}>
+                  <span style={{ flex: 1 }}>{item.name}</span>
+                  <span style={{ fontWeight: 600, color: item.price === 0 ? '#16a34a' : '#111827', flexShrink: 0 }}>
+                    {item.price === 0 ? 'Free' : `$${Number(item.price).toFixed(2)}`}
+                  </span>
+                </div>
+              ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between',
+                borderTop: `1px solid ${SAGE_BORDER}`, paddingTop: 6, marginTop: 4,
+                fontWeight: 700, color: SAGE }}>
+                <span>Total/mo</span>
+                <span>{rec.monthlyTotal === 0 ? 'Free' : `$${Number(rec.monthlyTotal).toFixed(2)}`}</span>
+              </div>
+            </div>
+          )}
+
+          {err && <div style={{ color: '#dc2626', fontSize: '0.75rem', marginBottom: 6 }}>{err}</div>}
+
+          <button onClick={handleCheckout} disabled={paying}
+            style={{ width: '100%', padding: '0.6rem', background: SAGE, color: '#fff',
+              border: 'none', borderRadius: 8, fontWeight: 700, fontSize: '0.85rem',
+              cursor: paying ? 'not-allowed' : 'pointer', opacity: paying ? 0.7 : 1 }}>
+            {paying ? 'Processing…' : rec.monthlyTotal === 0
+              ? 'Activate Free Plan →'
+              : `Pay $${Number(rec.monthlyTotal).toFixed(2)}/mo →`}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 async function createOTFCommunity(businessId, businessName, knownPeopleId) {
   try {
@@ -46,9 +274,6 @@ async function createOTFCommunity(businessId, businessName, knownPeopleId) {
   }
 }
 
-const money = (n, ccy = 'USD') =>
-  new Intl.NumberFormat(undefined, { style: 'currency', currency: ccy }).format(Number(n) || 0);
-
 export default function AccountNew() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -58,15 +283,7 @@ export default function AccountNew() {
   const [states, setStates] = useState([]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
-
-  // Plan picker state (steps 2 & 3). Packages come from the SubscriptionPackage
-  // table managed by the oatmeal_main admin (http://localhost:8080/app/admin/subscriptions).
-  const [plans, setPlans] = useState([]);
-  const [plansMode, setPlansMode] = useState(null); // 'test' | 'live'
-  const [plansLoading, setPlansLoading] = useState(false);
-  const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [createdBusinessId, setCreatedBusinessId] = useState(null);
-  const [paying, setPaying] = useState(false);
 
   const [form, setForm] = useState({
     BusinessTypeID: '',
@@ -119,23 +336,6 @@ export default function AccountNew() {
       .catch(() => {});
   }, [form.country]);
 
-  // Load packages when user reaches the plan step. Filter by the chosen
-  // business type so sellers don't see irrelevant offerings.
-  useEffect(() => {
-    if (step !== 2 || plans.length > 0) return;
-    setPlansLoading(true);
-    const url = new URL(`${API_URL}/api/platform-subscriptions/packages`);
-    if (form.BusinessTypeID) url.searchParams.set('business_type_id', form.BusinessTypeID);
-    fetch(url.toString())
-      .then(r => r.json())
-      .then(data => {
-        setPlansMode(data.mode || 'test');
-        setPlans(Array.isArray(data.packages) ? data.packages : []);
-      })
-      .catch(() => setErrors(e => ({ ...e, plans: 'Could not load plans.' })))
-      .finally(() => setPlansLoading(false));
-  }, [step, plans.length, form.BusinessTypeID]);
-
   const update = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
   const validateDetails = () => {
@@ -176,50 +376,13 @@ export default function AccountNew() {
     }
   };
 
-  const handleChoosePlan = (plan) => {
-    if (!plan) return;
-    setSelectedPlanId(plan.PackageID);
-    setStep(3);
-  };
-
-  const handlePay = async () => {
-    if (!selectedPlanId || !createdBusinessId) return;
-    setPaying(true);
-    setErrors({});
-    const authHeaders = {
-      Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-      'Content-Type': 'application/json',
-    };
-    try {
-      if (plansMode === 'test') {
-        const res = await fetch(`${API_URL}/api/platform-subscriptions/assign-package/${createdBusinessId}`, {
-          method: 'POST',
-          headers: authHeaders,
-          body: JSON.stringify({ package_id: selectedPlanId, billing_cycle: 'monthly' }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Could not activate subscription.');
-        navigate(`/account?PeopleID=${peopleId}&BusinessID=${createdBusinessId}`);
-      } else {
-        setErrors({ pay: t('account_new.err_stripe_live') });
-        setPaying(false);
-      }
-    } catch (e) {
-      setErrors({ pay: e.message || t('account_new.err_payment') });
-      setPaying(false);
-    }
-  };
-
   const inputClass = "w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#819360]";
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
   const errorClass = "text-red-600 text-xs mt-1";
 
-  const selectedPlan = plans.find(p => p.PackageID === selectedPlanId);
-
   const stepTitle = {
-    1: t('account_new.step1_title'),
-    2: t('account_new.step2_title'),
-    3: plansMode === 'test' ? t('account_new.step3_title_test') : t('account_new.step3_title_live'),
+    1: t('account_new.step1_title') || 'Account Details',
+    2: 'Choose Your Plan with Cassia',
   }[step];
 
   return (
@@ -237,12 +400,12 @@ export default function AccountNew() {
 
           <h1 className="text-2xl font-bold text-gray-800 mb-2">{stepTitle}</h1>
 
-          {/* 3-segment step indicator */}
+          {/* 2-segment step indicator */}
           <div className="flex items-center gap-2 mb-6">
-            {[1, 2, 3].map((n, i) => (
+            {[1, 2].map((n, i) => (
               <React.Fragment key={n}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= n ? 'bg-[#819360] text-white' : 'bg-gray-200 text-gray-500'}`}>{n}</div>
-                {i < 2 && <div className={`flex-1 h-1 rounded ${step > n ? 'bg-[#819360]' : 'bg-gray-200'}`} />}
+                {i < 1 && <div className={`flex-1 h-1 rounded ${step > n ? 'bg-[#819360]' : 'bg-gray-200'}`} />}
               </React.Fragment>
             ))}
           </div>
@@ -387,116 +550,20 @@ export default function AccountNew() {
             </div>
           )}
 
-          {/* STEP 2 — plan picker */}
+          {/* STEP 2 — Cassia subscription guide */}
           {step === 2 && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                {t('account_new.plan_intro')}
+            <div>
+              <p className="text-sm text-gray-500 mb-4">
+                Chat with Cassia to find the right plan for your operation — she'll ask a few quick questions and build a custom quote.
               </p>
-
-              {plansMode === 'test' && (
-                <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 rounded px-4 py-2 text-xs">
-                  {t('account_new.test_mode_notice')}
-                </div>
-              )}
-
-              {errors.plans && (
-                <div className="bg-red-50 border border-red-300 text-red-700 rounded px-4 py-3 text-sm">
-                  {errors.plans}
-                </div>
-              )}
-
-              {plansLoading ? (
-                <div className="text-center py-8 text-gray-400">{t('account_new.plans_loading')}</div>
-              ) : plans.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 border border-dashed border-gray-300 rounded-lg">
-                  {t('account_new.no_plans')}
-                </div>
-              ) : (
-                <div className="grid gap-3">
-                  {plans.map(p => {
-                    const isSelected = selectedPlanId === p.PackageID;
-                    return (
-                      <button
-                        key={p.PackageID}
-                        type="button"
-                        onClick={() => setSelectedPlanId(p.PackageID)}
-                        className={`text-left rounded-lg border p-4 transition ${
-                          isSelected ? 'border-[#3D6B34] ring-2 ring-[#3D6B34]/30 bg-green-50/40' : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="font-bold text-gray-800">{p.PackageName || `Plan ${p.PackageID}`}</div>
-                            {p.Description && (
-                              <div className="text-sm text-gray-600 mt-1 leading-relaxed">{p.Description}</div>
-                            )}
-                          </div>
-                          <div className="text-right whitespace-nowrap">
-                            <div className="text-xl font-bold text-gray-900">{money(p.MonthlyPrice)}</div>
-                            <div className="text-xs text-gray-500">{t('account_new.per_mo')}</div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 mt-4">
+              <CassiaChat
+                businessId={createdBusinessId}
+                peopleId={peopleId}
+                onSkip={() => navigate(`/account?PeopleID=${peopleId}&BusinessID=${createdBusinessId}`)}
+              />
+              <div className="mt-4 flex justify-start">
                 <button onClick={() => setStep(1)} className="border border-gray-300 rounded px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
-                  {t('account_new.btn_back')}
-                </button>
-                <button
-                  onClick={() => selectedPlanId && handleChoosePlan(plans.find(p => p.PackageID === selectedPlanId))}
-                  disabled={!selectedPlanId}
-                  className="regsubmit2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {t('account_new.btn_next')}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3 — payment / confirm */}
-          {step === 3 && (
-            <div className="space-y-4">
-              {selectedPlan && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <div className="text-sm text-gray-500 mb-1">{t('account_new.you_selected')}</div>
-                  <div className="flex items-center justify-between">
-                    <div className="font-bold text-gray-800">{selectedPlan.PackageName}</div>
-                    <div className="text-lg font-bold text-gray-900">
-                      {money(selectedPlan.MonthlyPrice)}<span className="text-xs font-normal text-gray-500"> {t('account_new.per_mo')}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {plansMode === 'test' ? (
-                <div className="bg-yellow-50 border border-yellow-300 text-yellow-900 rounded px-4 py-3 text-sm">
-                  <strong>{t('account_new.test_mode_label')}</strong> {t('account_new.test_mode_confirm_body')}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-600">
-                  {t('account_new.stripe_redirect_body')}
-                </p>
-              )}
-
-              {errors.pay && (
-                <div className="bg-red-50 border border-red-300 text-red-700 rounded px-4 py-3 text-sm">
-                  {errors.pay}
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 mt-4">
-                <button onClick={() => setStep(2)} className="border border-gray-300 rounded px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
-                  {t('account_new.btn_back')}
-                </button>
-                <button onClick={handlePay} disabled={paying} className="regsubmit2">
-                  {paying
-                    ? (plansMode === 'test' ? t('account_new.btn_activating') : t('account_new.btn_redirecting'))
-                    : (plansMode === 'test' ? t('account_new.btn_confirm_sub') : t('account_new.btn_pay'))}
+                  ← Back
                 </button>
               </div>
             </div>

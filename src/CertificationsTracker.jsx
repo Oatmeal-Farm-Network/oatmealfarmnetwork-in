@@ -3,6 +3,7 @@ import Header from './Header';
 import Footer from './Footer';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL || '';
 const GREEN = '#3D6B34';
@@ -80,6 +81,7 @@ export default function CertificationsTracker() {
 
   return (
     <div style={{ backgroundColor: '#f7f2e8', minHeight: '100vh' }}>
+      <PageMeta title="Certifications Tracker | OFN" noIndex />
       <Header />
       <div className="max-w-4xl mx-auto px-6 py-8">
         <Breadcrumbs items={[{ label: 'Certifications Tracker' }]} />

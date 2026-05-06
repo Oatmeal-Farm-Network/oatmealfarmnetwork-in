@@ -91,7 +91,7 @@ function PostCard({ post }) {
   );
 }
 
-function BlogListContent() {
+function BlogListContent({ onPostsReady }) {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [posts, setPosts] = useState([]);
@@ -119,6 +119,10 @@ function BlogListContent() {
       .catch(() => setPosts([]))
       .finally(() => setLoading(false));
   }, [activeCategory, language]);
+
+  useEffect(() => {
+    if (onPostsReady && posts.length > 0) onPostsReady(posts);
+  }, [posts]);
 
   const filtered = search.trim()
     ? posts.filter(p =>
@@ -181,6 +185,7 @@ export default function BlogList() {
   const [searchParams] = useSearchParams();
   const { Business, businesses, LoadBusiness } = useAccount();
   const isLoggedIn = !!localStorage.getItem('access_token');
+  const [topPosts, setTopPosts] = useState([]);
 
   const urlBusinessID = searchParams.get('BusinessID');
   const BusinessID = urlBusinessID || (businesses?.[0]?.BusinessID ?? null);
@@ -205,17 +210,30 @@ export default function BlogList() {
         description="Read the latest blog posts from farmers, ranchers, and food producers on Oatmeal Farm Network — farm news, recipes, seasonal updates, market insights, and community stories."
         keywords="farm blog, ranch blog, farmer stories, farm recipes, agricultural news, food producer blog, seasonal farming, market updates"
         canonical="https://oatmealfarmnetwork.com/blog"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'Blog',
-          name: 'Oatmeal Farm Network Blog',
-          url: 'https://oatmealfarmnetwork.com/blog',
-          description: 'Stories from farmers, ranchers, and food producers.'
-        }}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Blog',
+            name: 'Oatmeal Farm Network Blog',
+            url: 'https://oatmealfarmnetwork.com/blog',
+            description: 'Stories from farmers, ranchers, and food producers.',
+          },
+          topPosts.length > 0 ? {
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            url: 'https://oatmealfarmnetwork.com/blog',
+            itemListElement: topPosts.slice(0, 10).map((p, i) => ({
+              '@type': 'ListItem',
+              position: i + 1,
+              url: `https://oatmealfarmnetwork.com/blog/${p.blog_id}`,
+              name: p.title,
+            })),
+          } : null,
+        ].filter(Boolean)}
       />
       <Header />
       <div style={{ flex: 1 }}>
-        <BlogListContent />
+        <BlogListContent onPostsReady={setTopPosts} />
       </div>
       <Footer />
     </div>

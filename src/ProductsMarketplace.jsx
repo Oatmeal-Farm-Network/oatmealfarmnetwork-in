@@ -191,7 +191,7 @@ export default function ProductsMarketplace() {
       <Header />
 
       {/* ── Hero ── */}
-      <div className="mx-auto px-4 pt-2 md:pt-6" style={{ maxWidth: '1300px' }}>
+      <div className="mx-auto w-full px-4 pt-2 md:pt-6" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
           { label: 'Marketplaces', to: '/marketplaces' },
@@ -250,7 +250,7 @@ export default function ProductsMarketplace() {
 
       </div>
 
-      <div className="max-w-6xl mx-auto w-full px-4 py-6 flex gap-6 flex-grow">
+      <div className="mx-auto w-full px-4 py-6 flex gap-6 flex-grow" style={{ maxWidth: '1300px' }}>
 
         {/* Sidebar filters */}
         <aside className="w-48 shrink-0 hidden md:block">

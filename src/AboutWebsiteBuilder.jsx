@@ -7,6 +7,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useIsLoggedIn } from './useIsLoggedIn';
 
 const ACCENT = '#3D6B34';
 
@@ -27,6 +28,7 @@ const FEAT_ICONS = {
 
 export default function AboutWebsiteBuilder() {
   const { t } = useTranslation();
+  const isLoggedIn = useIsLoggedIn();
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
@@ -40,47 +42,59 @@ export default function AboutWebsiteBuilder() {
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
+          { label: 'Our Services', to: '/platform' },
           { label: 'Website Builder' },
         ]} />
       </div>
 
-      {/* Hero — white gradient overlay matching /directory */}
+      {/* Hero — photo + gradient overlay */}
       <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
             src="/OFN Public/image/WebsiteBuilderHeading.webp"
             alt="Farm Website Builder"
             className="w-full object-cover"
-            style={{ height: '250px', display: 'block' }}
+            style={{ height: '260px', display: 'block' }}
             loading="eager"
+            fetchPriority="high"
+            width="1300"
+            height="260"
             onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
           />
           <div
             className="absolute inset-0"
-            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.75) 45%, rgba(255,255,255,0) 78%)' }}
+            style={{ background: 'linear-gradient(to right, rgba(18,72,38,0.92) 0%, rgba(18,72,38,0.75) 45%, rgba(18,72,38,0) 78%)' }}
           />
           <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '720px' }}>
-            <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 12px', lineHeight: 1.2 }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+              </div>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#ffffff' }}>{t('web_build.hero_badge', 'Website Builder')}</span>
+            </div>
+            <h1 style={{ color: '#ffffff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
               {t('web_build.hero_title')}
             </h1>
-            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+            <p style={{ color: '#ffffff', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
               {t('web_build.hero_body')}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
                 to="/website/builder"
-                className="font-bold px-5 py-2 rounded-lg border-2 transition hover:bg-gray-50 text-sm"
-                style={{ color: ACCENT, borderColor: ACCENT }}
+                className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm"
+                style={{ color: ACCENT }}
               >
                 {t('web_build.hero_cta1')}
               </Link>
-              <Link
-                to="/signup"
-                className="font-bold px-5 py-2 rounded-lg border-2 transition hover:bg-gray-50 text-sm"
-                style={{ color: ACCENT, borderColor: ACCENT }}
-              >
-                {t('web_build.hero_cta2')}
-              </Link>
+              {!isLoggedIn && (
+                <Link
+                  to="/signup"
+                  className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10"
+                  style={{ borderColor: '#ffffff', color: '#ffffff' }}
+                >
+                  {t('web_build.hero_cta2')}
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -130,13 +144,15 @@ export default function AboutWebsiteBuilder() {
             >
               {t('web_build.cta')}
             </Link>
-            <Link
-              to="/signup"
-              className="px-5 py-2.5 rounded-lg font-bold border-2 text-sm transition hover:bg-gray-50"
-              style={{ color: ACCENT, borderColor: ACCENT }}
-            >
-              {t('web_build.hero_cta2')}
-            </Link>
+            {!isLoggedIn && (
+              <Link
+                to="/signup"
+                className="px-5 py-2.5 rounded-lg font-bold border-2 text-sm transition hover:bg-gray-50"
+                style={{ color: ACCENT, borderColor: ACCENT }}
+              >
+                {t('web_build.hero_cta2')}
+              </Link>
+            )}
           </div>
         </div>
 
@@ -149,17 +165,12 @@ export default function AboutWebsiteBuilder() {
 
 function Feature({ icon, title, body }) {
   return (
-    <div className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200">
-      <div
-        className="shrink-0 flex items-center justify-center"
-        style={{ width: '155px', minHeight: '155px', backgroundColor: '#f0f7ed', color: ACCENT }}
-      >
-        {icon}
+    <div className="bg-white border border-gray-200 rounded-xl p-4">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="flex items-center" style={{ color: ACCENT }}>{icon}</span>
+        <h3 className="font-bold text-gray-900">{title}</h3>
       </div>
-      <div className="flex flex-col justify-center px-5 py-4 flex-1 min-w-0">
-        <h3 className="font-bold text-sm" style={{ color: ACCENT }}>{title}</h3>
-        <p className="text-xs text-gray-600 leading-relaxed mt-1">{body}</p>
-      </div>
+      <p className="text-sm text-gray-600">{body}</p>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import Footer from './Footer';
 import Breadcrumbs from './Breadcrumbs';
 import { useAccount } from './AccountContext';
 import { useTranslation } from 'react-i18next';
+import PageMeta from './PageMeta';
 
 const API = import.meta.env.VITE_API_URL || '';
 const ACCENT = '#3D6B34';
@@ -157,6 +158,7 @@ export default function MyFoodWantedAds() {
 
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
+      <PageMeta title="My Food Wanted Ads | OFN" noIndex />
       <Header />
 
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1000px' }}>

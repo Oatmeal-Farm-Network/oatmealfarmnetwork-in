@@ -51,3 +51,4 @@ User-agent: facebookexternalhit
 Allow: /
 
 Sitemap: https://oatmealfarmnetwork.com/sitemap.xml
+Sitemap: https://oatmealfarmnewtorkbackend-802455386518.us-central1.run.app/sitemap.xml

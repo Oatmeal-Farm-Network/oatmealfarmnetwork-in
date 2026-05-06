@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import Header from './Header';
 import Footer from './Footer';
+import PageMeta from './PageMeta';
 import { useAccount } from './AccountContext';
 import SaigeFieldsCard from './SaigeFieldsCard';
 import SaigeDraftsPanel from './SaigeDraftsPanel';
@@ -907,6 +908,8 @@ export default function SaigePage() {
   if (!isLoggedIn) return <AboutSaige />;
 
   return (
+    <>
+    <PageMeta title="Saige | Agricultural AI Assistant | OFN" noIndex />
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={userId} pageTitle={t('saige_page.page_title')} breadcrumbs={[{ label: t('nav.dashboard'), to: '/dashboard' }, { label: t('saige_page.breadcrumb') }]}>
       <div style={{ margin: '-24px', display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 180px)' }}>
 
@@ -1109,5 +1112,6 @@ export default function SaigePage() {
         .saige-msg:hover .saige-speak { opacity: 1 !important; }
       `}</style>
     </AccountLayout>
+    </>
   );
 }

@@ -8,11 +8,13 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useIsLoggedIn } from './useIsLoggedIn';
 
 const ACCENT = '#3D6B34';
 
 export default function AboutSaige() {
   const { t } = useTranslation();
+  const isLoggedIn = useIsLoggedIn();
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
@@ -44,6 +46,18 @@ export default function AboutSaige() {
               { '@type': 'ListItem', 'position': 3, 'name': 'Saige', 'item': 'https://oatmealfarmnetwork.com/platform/saige' },
             ],
           },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: [
+              { '@type': 'Question', name: t('saige.cap1_title'), acceptedAnswer: { '@type': 'Answer', text: t('saige.cap1_body') } },
+              { '@type': 'Question', name: t('saige.cap2_title'), acceptedAnswer: { '@type': 'Answer', text: t('saige.cap2_body') } },
+              { '@type': 'Question', name: t('saige.cap3_title'), acceptedAnswer: { '@type': 'Answer', text: t('saige.cap3_body') } },
+              { '@type': 'Question', name: t('saige.cap4_title'), acceptedAnswer: { '@type': 'Answer', text: t('saige.cap4_body') } },
+              { '@type': 'Question', name: t('saige.cap5_title'), acceptedAnswer: { '@type': 'Answer', text: t('saige.cap5_body') } },
+              { '@type': 'Question', name: t('saige.cap6_title'), acceptedAnswer: { '@type': 'Answer', text: t('saige.cap6_body') } },
+            ],
+          },
         ]}
       />
       <Header />
@@ -52,7 +66,7 @@ export default function AboutSaige() {
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: 'Services', to: '/platform' },
+          { label: 'Our Services', to: '/platform' },
           { label: 'Saige' },
         ]} />
       </div>
@@ -66,6 +80,9 @@ export default function AboutSaige() {
             className="w-full object-cover"
             style={{ height: '260px', display: 'block' }}
             loading="eager"
+            fetchPriority="high"
+            width="1300"
+            height="260"
             onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
           />
           <div
@@ -86,9 +103,11 @@ export default function AboutSaige() {
               {t('saige.hero_body')}
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/signup" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: '#ffffff', color: '#ffffff' }}>
-                {t('saige.hero_cta2')}
-              </Link>
+              {!isLoggedIn && (
+                <Link to="/signup" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: '#ffffff', color: '#ffffff' }}>
+                  {t('saige.hero_cta2')}
+                </Link>
+              )}
             </div>
           </div>
         </div>

@@ -8,11 +8,13 @@ import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
 import RosemarieChat from './RosemarieChat';
+import { useIsLoggedIn } from './useIsLoggedIn';
 
 const ACCENT = '#8B5CF6';
 
 export default function AboutRosemarie() {
   const { t } = useTranslation();
+  const isLoggedIn = useIsLoggedIn();
 
   const S = (p) => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}/>;
 
@@ -65,6 +67,18 @@ export default function AboutRosemarie() {
               { '@type': 'ListItem', 'position': 3, 'name': 'Rosemarie', 'item': 'https://oatmealfarmnetwork.com/platform/rosemarie' },
             ],
           },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: [
+              { '@type': 'Question', name: t('rosemarie.cap1_title'), acceptedAnswer: { '@type': 'Answer', text: t('rosemarie.cap1_body') } },
+              { '@type': 'Question', name: t('rosemarie.cap2_title'), acceptedAnswer: { '@type': 'Answer', text: t('rosemarie.cap2_body') } },
+              { '@type': 'Question', name: t('rosemarie.cap3_title'), acceptedAnswer: { '@type': 'Answer', text: t('rosemarie.cap3_body') } },
+              { '@type': 'Question', name: t('rosemarie.cap4_title'), acceptedAnswer: { '@type': 'Answer', text: t('rosemarie.cap4_body') } },
+              { '@type': 'Question', name: t('rosemarie.cap5_title'), acceptedAnswer: { '@type': 'Answer', text: t('rosemarie.cap5_body') } },
+              { '@type': 'Question', name: t('rosemarie.cap6_title'), acceptedAnswer: { '@type': 'Answer', text: t('rosemarie.cap6_body') } },
+            ],
+          },
         ]}
       />
       <Header />
@@ -73,7 +87,7 @@ export default function AboutRosemarie() {
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: 'Services', to: '/platform' },
+          { label: 'Our Services', to: '/platform' },
           { label: 'Rosemarie' },
         ]} />
       </div>
@@ -87,6 +101,9 @@ export default function AboutRosemarie() {
             className="w-full object-cover"
             style={{ height: '260px', display: 'block' }}
             loading="eager"
+            fetchPriority="high"
+            width="1300"
+            height="260"
             onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
           />
           <div
@@ -107,9 +124,11 @@ export default function AboutRosemarie() {
               {t('rosemarie.hero_body')}
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/signup" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
-                Open an Account
-              </Link>
+              {!isLoggedIn && (
+                <Link to="/signup" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
+                  Open an Account
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -173,11 +192,13 @@ export default function AboutRosemarie() {
           </h3>
           <p className="text-sm text-gray-600 mb-4">{t('rosemarie.cta_body')}</p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/signup"
-              className="px-6 py-3 rounded-lg font-bold shadow hover:shadow-md transition"
-              style={{ backgroundColor: '#3D6B35', color: '#ffffff' }}>
-              {t('rosemarie.cta1')}
-            </Link>
+            {!isLoggedIn && (
+              <Link to="/signup"
+                className="px-6 py-3 rounded-lg font-bold shadow hover:shadow-md transition"
+                style={{ backgroundColor: '#3D6B35', color: '#ffffff' }}>
+                {t('rosemarie.cta1')}
+              </Link>
+            )}
           </div>
         </section>
       </div>

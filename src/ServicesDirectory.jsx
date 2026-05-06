@@ -146,15 +146,39 @@ export default function ServicesDirectory() {
         canonical={categoryId
           ? `https://oatmealfarmnetwork.com/services/directory/${categoryId}`
           : 'https://oatmealfarmnetwork.com/services/directory'}
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'CollectionPage',
-          name: catName ? `${catName} Services` : 'Agricultural Services Directory',
-          description: 'Browse farm and agricultural services by category.',
-          url: categoryId
-            ? `https://oatmealfarmnetwork.com/services/directory/${categoryId}`
-            : 'https://oatmealfarmnetwork.com/services/directory',
-        }}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            name: catName ? `${catName} Services` : 'Agricultural Services Directory',
+            description: 'Browse farm and agricultural services by category.',
+            url: categoryId
+              ? `https://oatmealfarmnetwork.com/services/directory/${categoryId}`
+              : 'https://oatmealfarmnetwork.com/services/directory',
+          },
+          !categoryId && categories.length > 0 ? {
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            url: 'https://oatmealfarmnetwork.com/services/directory',
+            itemListElement: categories.slice(0, 20).map((c, i) => ({
+              '@type': 'ListItem',
+              position: i + 1,
+              url: `https://oatmealfarmnetwork.com/services/directory/${c.ServiceCategoryID}`,
+              name: c.ServicesCategory,
+            })),
+          } : null,
+          categoryId && services.length > 0 ? {
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            url: `https://oatmealfarmnetwork.com/services/directory/${categoryId}`,
+            itemListElement: services.slice(0, 10).map((s, i) => ({
+              '@type': 'ListItem',
+              position: i + 1,
+              url: `https://oatmealfarmnetwork.com/services/public/${s.ServicesID}`,
+              name: s.ServiceTitle,
+            })),
+          } : null,
+        ].filter(Boolean)}
       />
       <Header />
 
@@ -172,6 +196,9 @@ export default function ServicesDirectory() {
             alt={t('services_dir.hero_alt')}
             className="w-full object-cover block h-[160px] md:h-[250px]"
             loading="eager"
+            fetchPriority="high"
+            width="1300"
+            height="250"
           />
           <div className="hidden md:block absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }} />
           <div className="hidden md:flex absolute inset-0 flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>

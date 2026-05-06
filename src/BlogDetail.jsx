@@ -123,22 +123,33 @@ export default function BlogDetail() {
     return isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
   })() : undefined;
   const postCanonical = `https://oatmealfarmnetwork.com/blog/${postId}`;
-  const postJsonLd = post ? {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: post.title,
-    description: postDesc,
-    ...(postImg ? { image: postImg } : {}),
-    author: { '@type': 'Person', name: post.author || post.business_name || 'Oatmeal Farm Network' },
-    publisher: {
-      '@type': 'Organization',
-      name: 'Oatmeal Farm Network',
-      logo: { '@type': 'ImageObject', url: 'https://oatmealfarmnetwork.com/images/OFN-Logo.png' },
+  const postJsonLd = post ? [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: post.title,
+      description: postDesc,
+      ...(postImg ? { image: postImg } : {}),
+      author: { '@type': 'Person', name: post.author || post.business_name || 'Oatmeal Farm Network' },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Oatmeal Farm Network',
+        logo: { '@type': 'ImageObject', url: 'https://oatmealfarmnetwork.com/images/OFN-Logo.png' },
+      },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': postCanonical },
+      ...(publishedIso ? { datePublished: publishedIso, dateModified: publishedIso } : {}),
+      ...(post.category ? { articleSection: post.category } : {}),
     },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': postCanonical },
-    ...(publishedIso ? { datePublished: publishedIso, dateModified: publishedIso } : {}),
-    ...(post.category ? { articleSection: post.category } : {}),
-  } : null;
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://oatmealfarmnetwork.com' },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://oatmealfarmnetwork.com/blog' },
+        ...(post.business_name ? [{ '@type': 'ListItem', position: 3, name: post.business_name }, { '@type': 'ListItem', position: 4, name: post.title, item: postCanonical }] : [{ '@type': 'ListItem', position: 3, name: post.title, item: postCanonical }]),
+      ],
+    },
+  ] : null;
 
   const profileBase = post?.business_id ? `/marketplaces/livestock/ranch/${post.business_id}` : null;
   const ranchLocation = ranch ? [ranch.address_city, ranch.address_state].filter(Boolean).join(', ') : '';

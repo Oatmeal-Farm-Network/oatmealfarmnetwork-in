@@ -159,22 +159,35 @@ export default function ProductDetail() {
         keywords={`${productName}, ${product.SellerName || 'farm products'}, ${product.CategoryName || 'local farm goods'}, buy direct from farm`}
         image={mainImg || undefined}
         ogType="product"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'Product',
-          name: productName,
-          description: productDesc ? productDesc.replace(/<[^>]+>/g, '').slice(0, 500) : undefined,
-          image: mainImg || undefined,
-          ...(product.SellerName ? { brand: { '@type': 'Brand', name: product.SellerName } } : {}),
-          ...(product.prodPrice ? {
-            offers: {
-              '@type': 'Offer',
-              price: product.prodPrice,
-              priceCurrency: 'USD',
-              availability: 'https://schema.org/InStock',
-            }
-          } : {})
-        }}
+        canonical={`https://oatmealfarmnetwork.com/marketplace/products/${id}`}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: productName,
+            description: productDesc ? productDesc.replace(/<[^>]+>/g, '').slice(0, 500) : undefined,
+            image: mainImg || undefined,
+            ...(product.SellerName ? { brand: { '@type': 'Brand', name: product.SellerName } } : {}),
+            ...(product.prodPrice ? {
+              offers: {
+                '@type': 'Offer',
+                price: product.prodPrice,
+                priceCurrency: 'USD',
+                availability: 'https://schema.org/InStock',
+              }
+            } : {})
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://oatmealfarmnetwork.com' },
+              { '@type': 'ListItem', position: 2, name: 'Marketplaces', item: 'https://oatmealfarmnetwork.com/marketplaces' },
+              { '@type': 'ListItem', position: 3, name: 'Products', item: 'https://oatmealfarmnetwork.com/marketplace/products' },
+              ...(product.CategoryName ? [{ '@type': 'ListItem', position: 4, name: product.CategoryName, item: `https://oatmealfarmnetwork.com/marketplace/products` }, { '@type': 'ListItem', position: 5, name: productName, item: `https://oatmealfarmnetwork.com/marketplace/products/${id}` }] : [{ '@type': 'ListItem', position: 4, name: productName, item: `https://oatmealfarmnetwork.com/marketplace/products/${id}` }]),
+            ],
+          },
+        ]}
       />
       <Header />
 

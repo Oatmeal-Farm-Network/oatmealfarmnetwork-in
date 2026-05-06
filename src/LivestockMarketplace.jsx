@@ -322,13 +322,26 @@ export default function LivestockMarketplace() {
         description="Browse livestock for sale across 28 species including cattle, pigs, sheep, goats, chickens, alpacas, and more. Connect directly with farmers, ranchers, and breeders on Oatmeal Farm Network."
         keywords="livestock marketplace, farm animals for sale, cattle for sale, sheep for sale, alpacas for sale, buy livestock, sell livestock"
         canonical="https://oatmealfarmnetwork.com/marketplaces/livestock"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'CollectionPage',
-          name: 'Livestock Marketplace',
-          url: 'https://oatmealfarmnetwork.com/marketplaces/livestock',
-          description: 'Livestock of America marketplace — buy and sell farm animals directly from ranchers and breeders.'
-        }}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            name: 'Livestock Marketplace',
+            url: 'https://oatmealfarmnetwork.com/marketplaces/livestock',
+            description: 'Livestock of America marketplace — buy and sell farm animals directly from ranchers and breeders.',
+          },
+          listings.length > 0 ? {
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            url: 'https://oatmealfarmnetwork.com/marketplaces/livestock',
+            itemListElement: listings.slice(0, 12).map((a, i) => ({
+              '@type': 'ListItem',
+              position: i + 1,
+              url: `https://oatmealfarmnetwork.com/marketplaces/livestock/animal/${a.animal_id}`,
+              name: a.full_name,
+            })),
+          } : null,
+        ].filter(Boolean)}
       />
       <Header />
 

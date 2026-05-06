@@ -7,11 +7,13 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useIsLoggedIn } from './useIsLoggedIn';
 
 const ACCENT = '#A3301E';
 
 export default function AboutMarketplace() {
   const { t } = useTranslation();
+  const isLoggedIn = useIsLoggedIn();
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
@@ -25,6 +27,7 @@ export default function AboutMarketplace() {
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
+          { label: 'Our Services', to: '/platform' },
           { label: 'Marketplace' },
         ]} />
       </div>
@@ -58,9 +61,11 @@ export default function AboutMarketplace() {
               {t('mkt_about.hero_body')}
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/account" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
-                {t('mkt_about.hero_cta1')}
-              </Link>
+              {!isLoggedIn && (
+                <Link to="/signup" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
+                  {t('mkt_about.hero_cta1')}
+                </Link>
+              )}
               <Link to="/marketplaces/farm-to-table" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: '#ffffff', color: '#ffffff' }}>
                 {t('mkt_about.hero_cta2')}
               </Link>
@@ -119,11 +124,13 @@ export default function AboutMarketplace() {
           <p className="text-sm text-gray-600 mb-4">
             {t('mkt_about.cta_body')}
           </p>
-          <Link to="/account"
-            className="inline-block px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
-            style={{ backgroundColor: ACCENT }}>
-            {t('mkt_about.cta')}
-          </Link>
+          {!isLoggedIn && (
+            <Link to="/signup"
+              className="inline-block px-6 py-3 rounded-lg text-white font-bold shadow hover:shadow-md transition"
+              style={{ backgroundColor: ACCENT }}>
+              {t('mkt_about.cta')}
+            </Link>
+          )}
         </section>
       </div>
 

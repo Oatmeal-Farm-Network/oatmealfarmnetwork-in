@@ -7,11 +7,13 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useIsLoggedIn } from './useIsLoggedIn';
 
 const ACCENT = '#2f7d4a';
 
 export default function AboutPairsley() {
   const { t } = useTranslation();
+  const isLoggedIn = useIsLoggedIn();
 
   const S = (p) => (
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -29,7 +31,7 @@ export default function AboutPairsley() {
       icon: <S><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></S>,
       title: t('pairsley.cap2_title'),
       body:  t('pairsley.cap2_body'),
-      to:    '/chef/dashboard',
+      to:    '/chef',
     },
     {
       icon: <S><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></S>,
@@ -53,7 +55,7 @@ export default function AboutPairsley() {
       icon: <S><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M2 12h2M20 12h2"/></S>,
       title: t('pairsley.cap6_title'),
       body:  t('pairsley.cap6_body'),
-      to:    '/chef/dashboard',
+      to:    '/chef',
     },
   ];
 
@@ -124,6 +126,18 @@ export default function AboutPairsley() {
               { '@type': 'ListItem', 'position': 3, 'name': 'Pairsley', 'item': 'https://oatmealfarmnetwork.com/platform/pairsley' },
             ],
           },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: [
+              { '@type': 'Question', name: t('pairsley.cap1_title'), acceptedAnswer: { '@type': 'Answer', text: t('pairsley.cap1_body') } },
+              { '@type': 'Question', name: t('pairsley.cap2_title'), acceptedAnswer: { '@type': 'Answer', text: t('pairsley.cap2_body') } },
+              { '@type': 'Question', name: t('pairsley.cap3_title'), acceptedAnswer: { '@type': 'Answer', text: t('pairsley.cap3_body') } },
+              { '@type': 'Question', name: t('pairsley.cap4_title'), acceptedAnswer: { '@type': 'Answer', text: t('pairsley.cap4_body') } },
+              { '@type': 'Question', name: t('pairsley.cap5_title'), acceptedAnswer: { '@type': 'Answer', text: t('pairsley.cap5_body') } },
+              { '@type': 'Question', name: t('pairsley.cap6_title'), acceptedAnswer: { '@type': 'Answer', text: t('pairsley.cap6_body') } },
+            ],
+          },
         ]}
       />
       <Header />
@@ -132,7 +146,7 @@ export default function AboutPairsley() {
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: 'Services', to: '/platform' },
+          { label: 'Our Services', to: '/platform' },
           { label: 'Pairsley' },
         ]} />
       </div>
@@ -146,6 +160,9 @@ export default function AboutPairsley() {
             className="w-full object-cover"
             style={{ height: '260px', display: 'block' }}
             loading="eager"
+            fetchPriority="high"
+            width="1300"
+            height="260"
           />
           {/* Left-to-right gradient — green tint matches Pairsley accent */}
           <div
@@ -297,11 +314,13 @@ export default function AboutPairsley() {
           <p className="text-sm text-gray-600 mb-5 max-w-xl mx-auto">
             No setup required. Open your chef dashboard or any restaurant page and tap the green bubble in the corner to start a conversation.
           </p>
-          <Link to="/signup"
-            className="inline-block px-6 py-3 rounded-lg font-bold shadow hover:shadow-md transition"
-            style={{ backgroundColor: ACCENT, color: '#ffffff' }}>
-            Create an Account
-          </Link>
+          {!isLoggedIn && (
+            <Link to="/signup"
+              className="inline-block px-6 py-3 rounded-lg font-bold shadow hover:shadow-md transition"
+              style={{ backgroundColor: ACCENT, color: '#ffffff' }}>
+              Create an Account
+            </Link>
+          )}
         </section>
 
       </div>

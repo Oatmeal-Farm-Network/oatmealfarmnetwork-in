@@ -518,6 +518,8 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
           <button
             onClick={() => send()}
             disabled={!input.trim() || sending}
+            aria-label="Send message"
+            title="Send message"
             style={{
               padding: '8px 13px',
               background: SAIGE_GREEN,

@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import PageMeta from './PageMeta';
 import './NewsFeed.css';
 
 const CATEGORIES = ['All', 'Markets', 'Weather', 'Policy', 'AgTech', 'Livestock', 'General'];
@@ -183,6 +184,34 @@ const NewsFeed = () => {
 
   return (
     <div className="news-page">
+      <PageMeta
+        title="Agricultural News & Farm Market Updates"
+        description="Stay current with agricultural news covering markets, weather, policy, AgTech, and livestock. Curated daily for farmers, ranchers, and food producers."
+        keywords="farm news, agricultural news, commodity markets, farm policy, AgTech news, livestock news, weather alerts, crop markets"
+        canonical="https://oatmealfarmnetwork.com/app/news"
+        image="https://oatmealfarmnetwork.com/images/NewsroomBanner.webp"
+        imageAlt="Oatmeal Farm Network Newsroom"
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            name: 'Agricultural News & Farm Market Updates',
+            description: 'Curated agricultural news for farmers, ranchers, and food producers.',
+            url: 'https://oatmealfarmnetwork.com/app/news',
+          },
+          articles.length > 0 ? {
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            url: 'https://oatmealfarmnetwork.com/app/news',
+            itemListElement: articles.slice(0, 10).map((a, i) => ({
+              '@type': 'ListItem',
+              position: i + 1,
+              url: `https://oatmealfarmnetwork.com/app/news/${a.id}`,
+              name: a.title,
+            })),
+          } : null,
+        ].filter(Boolean)}
+      />
       {/* Hero — matches Saige/Thaiyme/Rosemarie pattern */}
       <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
         <div className="relative w-full overflow-hidden rounded-xl">
@@ -192,6 +221,9 @@ const NewsFeed = () => {
             className="w-full object-cover"
             style={{ height: '260px', display: 'block' }}
             loading="eager"
+            fetchPriority="high"
+            width="1300"
+            height="260"
             onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
           />
           <div

@@ -461,6 +461,8 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
           {/* Close */}
           <button
             onClick={() => { window.speechSynthesis?.cancel(); setOpen(false); setExpanded(false); }}
+            aria-label="Close"
+            title="Close"
             className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/20 transition-colors text-lg leading-none"
             style={{ border: 'none', cursor: 'pointer' }}
           >×</button>

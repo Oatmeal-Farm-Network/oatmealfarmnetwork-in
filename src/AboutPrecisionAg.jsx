@@ -5,6 +5,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useIsLoggedIn } from './useIsLoggedIn';
 
 const ACCENT = '#3D6B34';
 
@@ -13,6 +14,7 @@ const STATS_VALUES = ['6', '10+', '24h', '∞'];
 
 export default function AboutPrecisionAg() {
   const { t } = useTranslation();
+  const isLoggedIn = useIsLoggedIn();
 
   const features = [
     { img: '/images/PrecsisionAgSateliteCropMonitoring.webp',        title: t('precision.feat1_title'),  body: t('precision.feat1_body'),  link: '/oatsense' },
@@ -47,61 +49,51 @@ export default function AboutPrecisionAg() {
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: t('precision.hero_badge') },
+          { label: 'Our Services', to: '/platform' },
+          { label: 'Precision Ag' },
         ]} />
       </div>
 
-      {/* Hero — photo + gradient overlay matching /for-farms */}
+      {/* Hero — photo + dark gradient overlay */}
       <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
             src="/images/CoreFeaturesPrecisionAg.webp"
             alt={t('precision.hero_title')}
             className="w-full object-cover"
-            style={{ height: '250px', display: 'block' }}
+            style={{ height: '260px', display: 'block' }}
             loading="eager"
+            fetchPriority="high"
+            width="1300"
+            height="260"
             onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
           />
           <div
             className="absolute inset-0"
-            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.78) 45%, rgba(255,255,255,0) 80%)' }}
+            style={{ background: 'linear-gradient(to right, rgba(15,55,150,0.92) 0%, rgba(15,55,150,0.75) 45%, rgba(15,55,150,0) 78%)' }}
           />
-          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
-            <h1
-              style={{
-                color: '#000000',
-                fontFamily: "'Lora','Times New Roman',serif",
-                fontSize: '2rem',
-                fontWeight: 'bold',
-                margin: '0 0 4px',
-                lineHeight: 1.2,
-              }}
-            >
-              Oatsense
+          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '720px' }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/><path d="M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10"/></svg>
+              </div>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#ffffff' }}>Precision Agriculture</span>
+            </div>
+            <h1 style={{ color: '#ffffff', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 10px', lineHeight: 1.2 }}>
+              {t('precision.hero_title', 'Oatsense — Precision Agriculture')}
             </h1>
-            <h2
-              style={{
-                color: '#000000',
-                fontFamily: "'Lora','Times New Roman',serif",
-                fontSize: '1.25rem',
-                fontWeight: '600',
-                margin: '0 0 12px',
-                lineHeight: 1.2,
-              }}
-            >
-              Precision Agriculture
-            </h2>
-            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
+            <p style={{ color: '#ffffff', fontSize: '0.92rem', margin: '0 0 16px', lineHeight: 1.6 }}>
               {t('precision.hero_body')}
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link
-                to="/signup"
-                className="font-bold px-5 py-2 rounded-lg border-2 transition hover:bg-gray-50 text-sm"
-                style={{ color: ACCENT, borderColor: ACCENT }}
-              >
-                {t('precision.hero_cta2')}
+              <Link to="/precision-ag/fields" className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm" style={{ color: ACCENT }}>
+                {t('precision.hero_cta1', 'View My Fields')}
               </Link>
+              {!isLoggedIn && (
+                <Link to="/signup" className="border-2 font-bold px-5 py-2.5 rounded-lg transition text-sm hover:bg-white/10" style={{ borderColor: '#ffffff', color: '#ffffff' }}>
+                  {t('precision.hero_cta2', 'Open an Account')}
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -183,13 +175,15 @@ export default function AboutPrecisionAg() {
             >
               {t('precision.cta1')}
             </Link>
-            <Link
-              to="/signup"
-              className="px-5 py-2.5 rounded-lg font-bold border-2 text-sm transition hover:bg-gray-50"
-              style={{ color: ACCENT, borderColor: ACCENT }}
-            >
-              {t('precision.cta2')}
-            </Link>
+            {!isLoggedIn && (
+              <Link
+                to="/signup"
+                className="px-5 py-2.5 rounded-lg font-bold border-2 text-sm transition hover:bg-gray-50"
+                style={{ color: ACCENT, borderColor: ACCENT }}
+              >
+                {t('precision.cta2')}
+              </Link>
+            )}
           </div>
         </div>
 

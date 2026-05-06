@@ -228,6 +228,23 @@ export default function EquipmentListingDetail() {
             {listing.BusinessName && (
               <p className="text-sm text-gray-500">{eq('listed_by')} <span className="font-semibold text-gray-700">{listing.BusinessName}</span></p>
             )}
+            {(listing.ContactEmail || listing.ContactPhone) && (
+              <div className="bg-white border border-gray-200 rounded-xl px-5 py-4">
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">{eq('lbl_contact_info')}</p>
+                {listing.ContactEmail && (
+                  <p className="text-sm text-gray-800 mb-1">
+                    <span className="text-gray-500 mr-1">{eq('lbl_contact_email')}:</span>
+                    <a href={`mailto:${listing.ContactEmail}`} className="font-medium hover:underline" style={{ color: ACCENT }}>{listing.ContactEmail}</a>
+                  </p>
+                )}
+                {listing.ContactPhone && (
+                  <p className="text-sm text-gray-800">
+                    <span className="text-gray-500 mr-1">{eq('lbl_contact_phone')}:</span>
+                    <a href={`tel:${listing.ContactPhone}`} className="font-medium hover:underline" style={{ color: ACCENT }}>{listing.ContactPhone}</a>
+                  </p>
+                )}
+              </div>
+            )}
             <button onClick={openOtfDM} disabled={otfLoading}
               className="mt-1 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-60 transition"
               style={{ backgroundColor: '#516234', width: 'fit-content' }}>

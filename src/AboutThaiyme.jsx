@@ -6,12 +6,14 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import { useIsLoggedIn } from './useIsLoggedIn';
 
 const ACCENT = '#7A5A3D';
 const ACCENT_LIGHT = '#fdf6ee';
 const ACCENT_BORDER = '#e8d5bc';
 
 export default function AboutThaiyme() {
+  const isLoggedIn = useIsLoggedIn();
   const S = (p) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={ACCENT}
       strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} />
@@ -159,6 +161,15 @@ export default function AboutThaiyme() {
               { '@type': 'ListItem', 'position': 3, 'name': 'Thaiyme', 'item': 'https://oatmealfarmnetwork.com/platform/thaiyme' },
             ],
           },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: capabilities.map(c => ({
+              '@type': 'Question',
+              name: c.title,
+              acceptedAnswer: { '@type': 'Answer', text: c.body },
+            })),
+          },
         ]}
       />
       <Header />
@@ -166,7 +177,7 @@ export default function AboutThaiyme() {
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
-          { label: 'Services', to: '/platform' },
+          { label: 'Our Services', to: '/platform' },
           { label: 'Thaiyme' },
         ]} />
       </div>
@@ -189,11 +200,13 @@ export default function AboutThaiyme() {
               The AI agent that lives inside your accounting, event management, and field monitoring pages. Ask about revenue, dig into registrant data, check sponsorship sales, retrieve exhibitor leads, or review your fields — all without leaving the page you're on.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/signup"
-                className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm"
-                style={{ color: ACCENT }}>
-                Open My Account →
-              </Link>
+              {!isLoggedIn && (
+                <Link to="/signup"
+                  className="bg-white font-bold px-5 py-2.5 rounded-lg shadow hover:shadow-md transition text-sm"
+                  style={{ color: ACCENT }}>
+                  Open My Account →
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -321,11 +334,13 @@ export default function AboutThaiyme() {
           <p className="text-sm text-gray-600 mb-5 max-w-xl mx-auto">
             No installation. No configuration. Open your accounting dashboard or any event management page and tap the brown bubble in the corner.
           </p>
-          <Link to="/signup"
-            className="inline-block px-6 py-3 rounded-lg font-bold shadow hover:shadow-md transition text-white"
-            style={{ backgroundColor: ACCENT, color: '#ffffff' }}>
-            Create an Account
-          </Link>
+          {!isLoggedIn && (
+            <Link to="/signup"
+              className="inline-block px-6 py-3 rounded-lg font-bold shadow hover:shadow-md transition text-white"
+              style={{ backgroundColor: ACCENT, color: '#ffffff' }}>
+              Create an Account
+            </Link>
+          )}
         </section>
 
       </div>

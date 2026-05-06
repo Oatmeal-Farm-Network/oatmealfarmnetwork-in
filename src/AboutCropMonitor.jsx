@@ -36,6 +36,7 @@ export default function AboutCropMonitor() {
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
+          { label: 'Our Services', to: '/platform' },
           { label: t('crop_monitor.hero_title') },
         ]} />
       </div>

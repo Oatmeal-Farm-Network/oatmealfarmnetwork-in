@@ -247,42 +247,53 @@ export default function EventDetail() {
         image={ev.EventImage || undefined}
         canonical={evCanonical}
         ogType="event"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'Event',
-          name: ev.EventName,
-          description: evDesc,
-          ...(startIso ? { startDate: startIso } : {}),
-          ...(endIso ? { endDate: endIso } : {}),
-          ...(ev.EventImage ? { image: ev.EventImage } : {}),
-          eventStatus: 'https://schema.org/EventScheduled',
-          eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-          location: {
-            '@type': 'Place',
-            name: ev.EventLocationName || locationStr || 'TBD',
-            ...(ev.EventLocationStreet || ev.EventLocationCity ? {
-              address: {
-                '@type': 'PostalAddress',
-                ...(ev.EventLocationStreet ? { streetAddress: ev.EventLocationStreet } : {}),
-                ...(ev.EventLocationCity ? { addressLocality: ev.EventLocationCity } : {}),
-                ...(ev.EventLocationState ? { addressRegion: ev.EventLocationState } : {}),
-                ...(ev.EventLocationZip ? { postalCode: ev.EventLocationZip } : {}),
-              },
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Event',
+            name: ev.EventName,
+            description: evDesc,
+            ...(startIso ? { startDate: startIso } : {}),
+            ...(endIso ? { endDate: endIso } : {}),
+            ...(ev.EventImage ? { image: ev.EventImage } : {}),
+            eventStatus: 'https://schema.org/EventScheduled',
+            eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+            location: {
+              '@type': 'Place',
+              name: ev.EventLocationName || locationStr || 'TBD',
+              ...(ev.EventLocationStreet || ev.EventLocationCity ? {
+                address: {
+                  '@type': 'PostalAddress',
+                  ...(ev.EventLocationStreet ? { streetAddress: ev.EventLocationStreet } : {}),
+                  ...(ev.EventLocationCity ? { addressLocality: ev.EventLocationCity } : {}),
+                  ...(ev.EventLocationState ? { addressRegion: ev.EventLocationState } : {}),
+                  ...(ev.EventLocationZip ? { postalCode: ev.EventLocationZip } : {}),
+                },
+              } : {}),
+            },
+            ...(ev.BusinessName ? {
+              organizer: { '@type': 'Organization', name: ev.BusinessName },
+            } : {}),
+            ...(ev.IsFree ? {
+              offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'USD',
+                availability: 'https://schema.org/InStock',
+                url: evCanonical,
+              }
             } : {}),
           },
-          ...(ev.BusinessName ? {
-            organizer: { '@type': 'Organization', name: ev.BusinessName },
-          } : {}),
-          ...(ev.IsFree ? {
-            offers: {
-              '@type': 'Offer',
-              price: '0',
-              priceCurrency: 'USD',
-              availability: 'https://schema.org/InStock',
-              url: evCanonical,
-            }
-          } : {}),
-        }}
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://oatmealfarmnetwork.com' },
+              { '@type': 'ListItem', position: 2, name: 'Events', item: 'https://oatmealfarmnetwork.com/events' },
+              { '@type': 'ListItem', position: 3, name: ev.EventName, item: evCanonical },
+            ],
+          },
+        ]}
       />
       <Header />
 
