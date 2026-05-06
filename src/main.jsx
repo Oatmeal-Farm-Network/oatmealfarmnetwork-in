@@ -85,6 +85,8 @@ import CommodityPrices from './CommodityPrices';
 import EducationCenter from './EducationCenter';
 import { ForumCategories, ForumThreads, ForumThread } from './OTFForums';
 import CSAAdvanced from './CSAAdvanced';
+import ColdChain from './ColdChain';
+import FarmerSettlement from './FarmerSettlement';
 import ForgotPassword from './ForgotPassword';
 import ServicesDirectory from './ServicesDirectory';
 import ServiceDetail from './ServiceDetail';
@@ -674,6 +676,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           {/* Land Leasing */}
           <Route path="/land" element={<LandLeasing />} />
           <Route path="/land/my-listings" element={<RequireAuth><MyLandListings /></RequireAuth>} />
+
+          {/* Cold Chain & Logistics */}
+          <Route path="/cold-chain" element={<RequireAuth><ColdChain /></RequireAuth>} />
+
+          {/* Farmer Settlement */}
+          <Route path="/farmer-settlement" element={<RequireAuth><FarmerSettlement /></RequireAuth>} />
 
           {/* Certifications */}
           <Route path="/certifications" element={<RequireAuth><CertificationsTracker /></RequireAuth>} />

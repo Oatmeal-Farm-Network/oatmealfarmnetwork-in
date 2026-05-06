@@ -55,6 +55,8 @@ const ICONS = {
   forums:        <S><path d="M2 3h9a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5L2 12V4a1 1 0 0 1 1-1z"/><path d="M14 6h1a1 1 0 0 1 1 1v4l-2 2v-3h-2"/></S>,
   landLeasing:   <S><path d="M2 13h12"/><path d="M4 13V7l4-4 4 4v6"/><line x1="7" y1="13" x2="7" y2="10"/><line x1="9" y1="13" x2="9" y2="10"/></S>,
   csaAdvanced:   <S><circle cx="8" cy="8" r="5"/><line x1="8" y1="5" x2="8" y2="8"/><line x1="8" y1="8" x2="11" y2="8"/><circle cx="8" cy="8" r="1" fill="currentColor" stroke="none"/><line x1="5" y1="3" x2="5" y2="1.5"/><line x1="11" y1="3" x2="11" y2="1.5"/></S>,
+  coldChain:     <S><rect x="1" y="5" width="10" height="7" rx="1"/><path d="M11 7h2l2 2v3h-4V7z"/><circle cx="3.5" cy="13" r="1.2"/><circle cx="9" cy="13" r="1.2"/><circle cx="13.5" cy="13" r="1.2"/><line x1="5" y1="5" x2="5" y2="2"/><line x1="5" y1="2" x2="7" y2="2"/><line x1="6" y1="1" x2="6" y2="3.5"/></S>,
+  farmerPay:     <S><circle cx="8" cy="8" r="5.5"/><line x1="8" y1="4.5" x2="8" y2="11.5"/><path d="M6 6.5h2.5a1.5 1.5 0 0 1 0 3h-2.5"/><path d="M5.5 9.5h3"/></S>,
 };
 
 const CollapseIcon = () => (
@@ -433,6 +435,20 @@ export default function AccountSidebar() {
             isOpen={OpenSections['Forums'] || false} onToggle={() => toggleSection('Forums')}>
             <NavChild to="/forums" label="Browse Forums" />
             <NavChild to="/over-the-fence" label="Over the Fence DM" />
+          </NavSection>
+        )}
+
+        {on('cold_chain') && (
+          <NavSection icon={ICONS.coldChain} label="Cold Chain Tracking" expanded={Expanded}
+            isOpen={OpenSections['ColdChain'] || false} onToggle={() => toggleSection('ColdChain')}>
+            <NavChild to={`/cold-chain?BusinessID=${BusinessID}`} label="Vehicles & Tracking" />
+          </NavSection>
+        )}
+
+        {on('farmer_settlement') && (
+          <NavSection icon={ICONS.farmerPay} label="Farmer Settlement" expanded={Expanded}
+            isOpen={OpenSections['FarmerSettlement'] || false} onToggle={() => toggleSection('FarmerSettlement')}>
+            <NavChild to={`/farmer-settlement?BusinessID=${BusinessID}`} label="Settlements" />
           </NavSection>
         )}
 

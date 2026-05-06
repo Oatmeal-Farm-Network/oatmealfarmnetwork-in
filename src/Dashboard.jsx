@@ -31,7 +31,9 @@ function buildServiceLinks(businessId, features, t) {
   if (on('chef_dashboard'))links.push({ label: t('dashboard.svc_chef_dashboard'),   to: `/chef?BusinessID=${businessId}` });
   if (on('pairsley'))      links.push({ label: t('dashboard.svc_pairsley'),          to: `/platform/pairsley?BusinessID=${businessId}` });
   if (on('rosemarie'))     links.push({ label: t('dashboard.svc_rosemarie'),         to: `/platform/rosemarie?BusinessID=${businessId}` });
-  if (on('provenance'))    links.push({ label: t('dashboard.svc_provenance'),        to: `/provenance/${businessId}` });
+  if (on('provenance'))       links.push({ label: t('dashboard.svc_provenance'),        to: `/provenance/${businessId}` });
+  if (on('cold_chain'))       links.push({ label: 'Cold Chain Tracking',                to: `/cold-chain?BusinessID=${businessId}` });
+  if (on('farmer_settlement'))links.push({ label: 'Farmer Settlement',                  to: `/farmer-settlement?BusinessID=${businessId}` });
   return links;
 }
 
