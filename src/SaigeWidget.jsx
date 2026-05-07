@@ -559,8 +559,11 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────
-export default function SaigeWidget({ businessId, fieldId, pageContext }) {
-  const { Expanded: sidebarExpanded } = useAccount();
+export default function SaigeWidget({ businessId: propBusinessId, fieldId, pageContext }) {
+  const { Expanded: sidebarExpanded, BusinessID: contextBusinessId } = useAccount();
+  // Prefer the explicit prop (passed from the URL), fall back to the currently-selected
+  // business from AccountContext so Saige knows the business on pages without ?BusinessID=
+  const businessId = propBusinessId ?? contextBusinessId ?? null;
   const { language } = useLanguage();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
