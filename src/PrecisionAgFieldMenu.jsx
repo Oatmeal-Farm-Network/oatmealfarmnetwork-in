@@ -59,7 +59,6 @@ const SECTIONS = [
     tKey: 'sec_management',
     items: [
       { icon: ICONS.alerts,         tKey: 'item_alerts',              path: '/precision-ag/alerts' },
-      { icon: ICONS.agronomy,       tKey: 'item_agronomy_ai',         path: '/precision-ag/agronomy' },
       { icon: ICONS.cropStatus,     tKey: 'item_crop_status',         path: '/precision-ag/analysis/crop-status' },
       { icon: ICONS.visualizations, tKey: 'item_visualizations',      path: '/precision-ag/visualizations' },
       { icon: ICONS.cropDetection,  tKey: 'item_crop_detection',      path: '/precision-ag/crop-detection' },

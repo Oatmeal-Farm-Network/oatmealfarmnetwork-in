@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -30,12 +31,13 @@ function daysUntil(d) { if (!d) return null; return Math.ceil((new Date(d) - new
 
 export default function GrantTracker() {
   const { BusinessID } = useAccount();
+  const [searchParams] = useSearchParams();
   const [grants, setGrants] = useState([]);
   const [tracked, setTracked] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [programType, setProgramType] = useState('');
-  const [tab, setTab] = useState('browse');
+  const [tab, setTab] = useState(searchParams.get('tab') || 'browse');
   const [selected, setSelected] = useState(null);
   const [trackStatus, setTrackStatus] = useState('interested');
   const [trackNotes, setTrackNotes] = useState('');

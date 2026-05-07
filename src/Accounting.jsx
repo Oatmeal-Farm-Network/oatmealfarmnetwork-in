@@ -25,7 +25,7 @@ function fmtDate(d) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-const TABS = ['Dashboard', 'Invoices', 'Customers', 'Vendors', 'Bills', 'Expenses', 'Accounts', 'Reports', 'Payments'];
+const TABS = ['Dashboard', 'Invoices', 'Customers', 'Vendors', 'Bills', 'Expenses', 'Farmer Payouts', 'Accounts', 'Reports', 'Payments'];
 
 const statusColor = {
   Draft: 'bg-gray-100 text-gray-700',
@@ -245,6 +245,8 @@ export default function Accounting() {
   const [vendors, setVendors]       = useState([]);
   const [bills, setBills]           = useState([]);
   const [expenses, setExpenses]     = useState([]);
+  const [farmerPayouts, setFarmerPayouts] = useState([]);
+  const [fpFilter, setFpFilter]     = useState('all');
   const [accounts, setAccounts]     = useState([]);
 
   // report states
@@ -270,6 +272,7 @@ export default function Accounting() {
     Vendors: t('accounting.tab_vendors'),
     Bills: t('accounting.tab_bills'),
     Expenses: t('accounting.tab_expenses'),
+    'Farmer Payouts': 'Farmer Payouts',
     Accounts: t('accounting.tab_accounts'),
     Reports: t('accounting.tab_reports'),
     Payments: t('accounting.tab_payments'),
@@ -331,6 +334,9 @@ export default function Accounting() {
         } else if (tab === 'Expenses') {
           const d = await apiFetch('/expenses');
           setExpenses(d.expenses);
+        } else if (tab === 'Farmer Payouts') {
+          const d = await apiFetch('/farmer-payouts');
+          setFarmerPayouts(d.settlements);
         } else if (tab === 'Accounts') {
           const d = await apiFetch('/accounts');
           setAccounts(d.accounts);
@@ -445,6 +451,45 @@ export default function Accounting() {
                 </div>
               ))}
             </div>
+
+            {/* Farmer Payouts summary row */}
+            {dashboard.farmerPayouts && (dashboard.farmerPayouts.pendingCount > 0 || dashboard.farmerPayouts.paidCount > 0) && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <p className="text-xs text-amber-700 font-medium mb-1">Pending Farmer Payouts</p>
+                  <p className="text-2xl font-bold text-amber-700">{fmt(dashboard.farmerPayouts.pendingTotal)}</p>
+                  <p className="text-xs text-amber-600 mt-1">{dashboard.farmerPayouts.pendingCount} settlement{dashboard.farmerPayouts.pendingCount !== 1 ? 's' : ''} awaiting payment</p>
+                </div>
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                  <p className="text-xs text-green-700 font-medium mb-1">Farmer Payouts Paid</p>
+                  <p className="text-2xl font-bold text-green-700">{fmt(dashboard.farmerPayouts.paidTotal)}</p>
+                  <p className="text-xs text-green-600 mt-1">{dashboard.farmerPayouts.paidCount} settlement{dashboard.farmerPayouts.paidCount !== 1 ? 's' : ''} completed</p>
+                </div>
+                <div className="md:col-span-2 bg-white border border-gray-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-gray-800 text-sm">Recent Settlements</h3>
+                    <button onClick={() => setTab('Farmer Payouts')} className="text-xs text-green-700 hover:underline">View all →</button>
+                  </div>
+                  {dashboard.farmerPayouts.recent.length ? (
+                    <table className="w-full text-xs">
+                      <tbody>
+                        {dashboard.farmerPayouts.recent.slice(0, 4).map(s => (
+                          <tr key={s.SettlementID} className="border-b last:border-0">
+                            <td className="py-1 text-gray-700 font-medium">{s.FarmerName}</td>
+                            <td className="py-1 text-right font-semibold">{fmt(s.NetPayment)}</td>
+                            <td className="py-1 pl-2">
+                              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${s.Status === 'Paid' ? 'bg-green-100 text-green-700' : s.Status === 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
+                                {s.Status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : <p className="text-xs text-gray-400">No settlements yet.</p>}
+                </div>
+              </div>
+            )}
 
             <div className="grid md:grid-cols-2 gap-4">
               {/* Recent Payments */}
@@ -667,6 +712,95 @@ export default function Accounting() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* ── FARMER PAYOUTS ── */}
+        {tab === 'Farmer Payouts' && (
+          <div className="space-y-4">
+            {/* Filter bar */}
+            <div className="flex items-center gap-2">
+              {['all', 'Pending', 'Paid', 'Cancelled'].map(f => (
+                <button key={f}
+                  onClick={() => setFpFilter(f)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition border ${fpFilter === f ? 'bg-green-700 text-white border-green-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'}`}
+                >
+                  {f === 'all' ? 'All' : f}
+                </button>
+              ))}
+              <Link to={`/farmer-settlement?BusinessID=${businessId}`}
+                className="ml-auto text-xs text-green-700 hover:underline font-medium">
+                Open Farmer Settlement →
+              </Link>
+            </div>
+
+            {/* Summary cards */}
+            {(() => {
+              const visible = fpFilter === 'all' ? farmerPayouts : farmerPayouts.filter(s => s.Status === fpFilter);
+              const totalGross  = visible.reduce((a, s) => a + parseFloat(s.GrossSales  || 0), 0);
+              const totalNet    = visible.reduce((a, s) => a + parseFloat(s.NetPayment  || 0), 0);
+              const totalComm   = visible.reduce((a, s) => a + parseFloat(s.GrossSales  || 0) * parseFloat(s.CommissionPct || 0) / 100, 0);
+              const totalLogis  = visible.reduce((a, s) => a + parseFloat(s.LogisticsCost || 0), 0);
+              return (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { label: 'Gross Sales', value: fmt(totalGross), color: 'text-blue-600' },
+                      { label: 'Commission Earned', value: fmt(totalComm), color: 'text-green-700' },
+                      { label: 'Logistics Costs', value: fmt(totalLogis), color: 'text-orange-600' },
+                      { label: 'Net Owed to Farmers', value: fmt(totalNet), color: 'text-gray-900' },
+                    ].map(c => (
+                      <div key={c.label} className="bg-white rounded-xl border border-gray-200 p-4">
+                        <p className="text-xs text-gray-500 font-medium mb-1">{c.label}</p>
+                        <p className={`text-xl font-bold ${c.color}`}>{c.value}</p>
+                        <p className="text-xs text-gray-400 mt-1">{visible.length} settlement{visible.length !== 1 ? 's' : ''}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Table */}
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-xs text-gray-400 border-b bg-gray-50">
+                          {['Farmer', 'Date', 'Gross Sales', 'Commission', 'Logistics', 'Other Deductions', 'Net Payment', 'Status', 'Paid On'].map(h => (
+                            <th key={h} className="px-4 py-3 font-medium">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visible.length === 0 && (
+                          <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400">No settlements found.</td></tr>
+                        )}
+                        {visible.map(s => {
+                          const comm = parseFloat(s.GrossSales || 0) * parseFloat(s.CommissionPct || 0) / 100;
+                          return (
+                            <tr key={s.SettlementID} className="border-b hover:bg-gray-50">
+                              <td className="px-4 py-3 font-medium text-gray-900">{s.FarmerName}</td>
+                              <td className="px-4 py-3 text-gray-500">{fmtDate(s.CreatedAt)}</td>
+                              <td className="px-4 py-3 text-blue-700 font-medium">{fmt(s.GrossSales)}</td>
+                              <td className="px-4 py-3 text-green-700">{fmt(comm)} <span className="text-gray-400 text-xs">({s.CommissionPct}%)</span></td>
+                              <td className="px-4 py-3 text-orange-600">{fmt(s.LogisticsCost)}</td>
+                              <td className="px-4 py-3 text-gray-500">{fmt(s.OtherDeductions)}</td>
+                              <td className="px-4 py-3 font-bold text-gray-900">{fmt(s.NetPayment)}</td>
+                              <td className="px-4 py-3">
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  s.Status === 'Paid' ? 'bg-green-100 text-green-700' :
+                                  s.Status === 'Pending' ? 'bg-amber-100 text-amber-700' :
+                                  'bg-gray-100 text-gray-500'}`}>
+                                  {s.Status}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-gray-500">{fmtDate(s.PaidAt)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 

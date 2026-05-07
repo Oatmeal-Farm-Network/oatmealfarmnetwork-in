@@ -493,6 +493,85 @@ function SectionTitle({ children }) {
   return <h3 className="font-lora font-bold text-gray-900 text-lg mb-3 mt-6 first:mt-0">{children}</h3>;
 }
 
+// ─── IndexBar ─────────────────────────────────────────────────────────────────
+function IndexBar({ label, value, lo = 0, hi = 1, color = '#3D6B34' }) {
+  if (value == null) return null;
+  const pct = Math.max(0, Math.min(1, (value - lo) / (hi - lo))) * 100;
+  return (
+    <div>
+      <div className="flex justify-between text-xs text-gray-600 mb-1">
+        <span className="font-semibold font-mont">{label}</span>
+        <span className="font-mont">{typeof value === 'number' ? value.toFixed(2) : value}</span>
+      </div>
+      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+      </div>
+    </div>
+  );
+}
+
+// ─── NDVITrendChart ───────────────────────────────────────────────────────────
+const NDVI_TREND_COLORS = { rising: '#15803D', falling: '#B91C1C', flat: '#6B7280' };
+
+function NDVITrendChart({ series, summary, index = 'NDVI' }) {
+  if (!series || series.length < 2) {
+    return <div className="text-sm text-gray-500 italic">Not enough data yet — satellite passes accumulate over 180 days.</div>;
+  }
+
+  const W = 520, H = 160, padL = 32, padR = 8, padT = 10, padB = 22;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  const pts = series
+    .filter(p => p.mean != null && p.date)
+    .map(p => ({ ...p, t: new Date(p.date).getTime() }));
+  if (pts.length < 2) return null;
+
+  const t0 = pts[0].t, t1 = pts[pts.length - 1].t;
+  const tSpan = Math.max(1, t1 - t0);
+  const ys = pts.map(p => p.mean);
+  const yMinRaw = Math.min(...ys), yMaxRaw = Math.max(...ys);
+  const yPad = Math.max(0.05, (yMaxRaw - yMinRaw) * 0.15);
+  const yMin = Math.max(-0.2, yMinRaw - yPad);
+  const yMax = Math.min(1.0, yMaxRaw + yPad);
+
+  const xOf = t => padL + ((t - t0) / tSpan) * innerW;
+  const yOf = v => padT + (1 - (v - yMin) / (yMax - yMin)) * innerH;
+  const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${xOf(p.t).toFixed(1)},${yOf(p.mean).toFixed(1)}`).join(' ');
+  const trendColor = NDVI_TREND_COLORS[summary?.trend] || NDVI_TREND_COLORS.flat;
+  const yTicks = [yMin, (yMin + yMax) / 2, yMax];
+  const fmtDate = ms => new Date(ms).toISOString().slice(5, 10);
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" preserveAspectRatio="xMidYMid meet">
+        {yTicks.map((v, i) => (
+          <g key={i}>
+            <line x1={padL} x2={W - padR} y1={yOf(v)} y2={yOf(v)} stroke="#E5E7EB" strokeDasharray="2 3" />
+            <text x={padL - 4} y={yOf(v) + 3} textAnchor="end" fontSize="9" fill="#6B7280">{v.toFixed(2)}</text>
+          </g>
+        ))}
+        <text x={padL} y={H - 6} fontSize="9" fill="#6B7280">{fmtDate(t0)}</text>
+        <text x={W - padR} y={H - 6} textAnchor="end" fontSize="9" fill="#6B7280">{fmtDate(t1)}</text>
+        <path d={path} fill="none" stroke={trendColor} strokeWidth="1.6" strokeLinejoin="round" />
+        {pts.map((p, i) => (
+          <circle key={i} cx={xOf(p.t)} cy={yOf(p.mean)} r="2.2" fill={trendColor}>
+            <title>{`${p.date?.slice(0, 10)}  ${index} = ${p.mean.toFixed(3)}`}</title>
+          </circle>
+        ))}
+      </svg>
+      {summary && (
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 mt-1">
+          <span><span className="font-semibold">Trend:</span> <span style={{ color: trendColor }}>{summary.trend}</span></span>
+          <span><span className="font-semibold">Total change:</span> {summary.delta_total >= 0 ? '+' : ''}{summary.delta_total?.toFixed(3)}</span>
+          <span><span className="font-semibold">Per week:</span> {summary.slope_per_week >= 0 ? '+' : ''}{summary.slope_per_week?.toFixed(4)}</span>
+          <span><span className="font-semibold">Samples:</span> {summary.samples}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ════════════════════════════════════════════════════════════════════════════════
 // TAB: MAPS
 // ════════════════════════════════════════════════════════════════════════════════
@@ -1392,6 +1471,149 @@ function HistogramsTab({ analyses, fieldId }) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
+// TAB: AGRONOMY
+// ════════════════════════════════════════════════════════════════════════════════
+function AgronomyTab({ agronomy, ndviSeries, onEdit }) {
+  if (!agronomy) {
+    return (
+      <div className="text-center py-16 rounded-xl bg-gray-50 border border-gray-100">
+        <div className="font-lora text-xl text-gray-700 mb-1">No agronomy data</div>
+        <div className="font-mont text-sm text-gray-400">Click "Run Analysis" to generate agronomy data</div>
+      </div>
+    );
+  }
+
+  const indices = agronomy.indices || {};
+  const ndvi = typeof indices.NDVI === 'object' ? indices.NDVI?.mean : indices.NDVI;
+  const ndre = typeof indices.NDRE === 'object' ? indices.NDRE?.mean : indices.NDRE;
+  const ndmi = typeof indices.NDMI === 'object' ? indices.NDMI?.mean : indices.NDMI;
+  const evi  = typeof indices.EVI  === 'object' ? indices.EVI?.mean  : indices.EVI;
+
+  const hasSpray = agronomy.spray_by_product && Object.keys(agronomy.spray_by_product).some(k => k !== 'general');
+  const pestAlerts = Array.isArray(agronomy.pest_disease_alerts) ? agronomy.pest_disease_alerts : [];
+
+  return (
+    <div className="space-y-8">
+      {/* Planting date nudge */}
+      {!agronomy.gdd && !agronomy.growth_stage && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3 text-sm font-mont">
+          <span>📅</span>
+          <span className="text-amber-800">
+            GDD and growth stage require a planting date.{' '}
+            <button onClick={onEdit} className="font-semibold underline">Set crop &amp; planting date in field settings →</button>
+          </span>
+        </div>
+      )}
+
+      {/* Vegetation index bars + Signals — side by side */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <SectionTitle>Vegetation Indices</SectionTitle>
+          {[ndvi, ndre, ndmi, evi].every(v => v == null) ? (
+            <p className="text-sm text-gray-400 italic">No index data — run an analysis first</p>
+          ) : (
+            <div className="space-y-3">
+              <IndexBar label="NDVI" value={ndvi} color="#3D6B34" />
+              <IndexBar label="NDRE" value={ndre} color="#15803D" lo={0} hi={0.6} />
+              <IndexBar label="NDMI" value={ndmi} color="#0EA5E9" lo={-0.2} hi={0.6} />
+              <IndexBar label="EVI"  value={evi}  color="#84CC16" lo={0} hi={1} />
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <SectionTitle>Signals</SectionTitle>
+          <ul className="space-y-2 text-sm">
+            {agronomy.irrigation?.recommendation && (
+              <li><span className="font-semibold text-sky-700">💧 Irrigation:</span> {agronomy.irrigation.recommendation}</li>
+            )}
+            {agronomy.disease_risk?.level && (
+              <li><span className="font-semibold text-rose-700">🦠 Disease Risk:</span> {agronomy.disease_risk.level}</li>
+            )}
+            {!agronomy.irrigation?.recommendation && !agronomy.disease_risk?.level && (
+              <li className="text-gray-500 italic">No active signals</li>
+            )}
+          </ul>
+        </div>
+      </div>
+
+      {/* Spray by product */}
+      {hasSpray && (
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <SectionTitle>Spray Decision by Product</SectionTitle>
+          <div className="grid grid-cols-3 gap-3">
+            {['herbicide', 'fungicide', 'insecticide'].map(k => {
+              const v = agronomy.spray_by_product[k] || {};
+              const dec = v.decision || '—';
+              const color = dec === 'GO' ? '#15803D' : dec === 'MARGINAL' ? '#B45309' : '#B91C1C';
+              const bg    = dec === 'GO' ? '#F0FDF4' : dec === 'MARGINAL' ? '#FFFBEB' : '#FEF2F2';
+              const fails = (v.reasons || []).map(r => `${r.field} ${r.op} ${r.threshold}`).join(', ');
+              const warns = (v.warnings || []).map(r => `${r.field} ${r.op} ${r.threshold}`).join(', ');
+              return (
+                <div key={k} className="rounded-lg border p-3" style={{ borderColor: color, background: bg }}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-mont text-xs uppercase tracking-wide text-gray-600">{v.label || k}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: color }}>{dec}</span>
+                  </div>
+                  {fails && <div className="text-xs text-gray-700 mt-1"><strong>Fails:</strong> {fails}</div>}
+                  {!fails && warns && <div className="text-xs text-gray-600 mt-1"><strong>Watch:</strong> {warns}</div>}
+                  {!fails && !warns && <div className="text-xs text-gray-500 mt-1">All conditions met</div>}
+                </div>
+              );
+            })}
+          </div>
+          {agronomy.spray_by_product.herbicide?.notes && (
+            <p className="text-xs text-gray-500 mt-3 italic">{agronomy.spray_by_product.herbicide.notes}</p>
+          )}
+        </div>
+      )}
+
+      {/* Pest & disease alerts */}
+      {pestAlerts.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <SectionTitle>Pest &amp; Disease Alerts</SectionTitle>
+          <ul className="space-y-2.5">
+            {pestAlerts.map((a, i) => {
+              const sev = (a.severity || 'MEDIUM').toUpperCase();
+              const sevColor = sev === 'HIGH' ? '#B91C1C' : sev === 'MEDIUM' ? '#B45309' : '#65A30D';
+              const sevBg    = sev === 'HIGH' ? '#FEF2F2' : sev === 'MEDIUM' ? '#FFFBEB' : '#F7FEE7';
+              return (
+                <li key={i} className="rounded-lg border border-gray-200 p-3" style={{ background: sevBg }}>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <div className="font-mont text-sm font-bold text-gray-900">
+                      {a.type === 'pest' ? '🐛' : '🦠'} {a.name}
+                    </div>
+                    <span className="text-[10px] uppercase font-bold tracking-wide px-2 py-0.5 rounded-full text-white" style={{ background: sevColor }}>
+                      {sev}
+                    </span>
+                  </div>
+                  <div className="font-mont text-sm text-gray-700">{a.action}</div>
+                  {a.why && <div className="font-mont text-xs text-gray-500 mt-1">Why: {a.why}</div>}
+                  {a.source && <div className="font-mont text-[10px] text-gray-400 mt-1">Source: {a.source}</div>}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {/* NDVI 180-day trend */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <SectionTitle>NDVI Trend — 180 Days</SectionTitle>
+          {ndviSeries?.summary?.last_date && (
+            <span className="text-xs text-gray-500">
+              Last sample: {String(ndviSeries.summary.last_date).slice(0, 10)}
+            </span>
+          )}
+        </div>
+        <NDVITrendChart series={ndviSeries?.series} summary={ndviSeries?.summary} />
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
 // FieldDetail
 // ════════════════════════════════════════════════════════════════════════════════
 function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab }) {
@@ -1401,6 +1623,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
   const [recommendations, setRecommendations] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [agronomy, setAgronomy] = useState(null);
+  const [ndviSeries, setNdviSeries] = useState(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
 
@@ -1413,18 +1636,20 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
     const weatherUrl = (field.latitude && field.longitude)
       ? `${API_URL}/api/weather?lat=${field.latitude}&lon=${field.longitude}`
       : null;
-    const [analysesRes, weatherRes, recsRes, alertsRes, agronomyRes] = await Promise.all([
+    const [analysesRes, weatherRes, recsRes, alertsRes, agronomyRes, ndviSeriesRes] = await Promise.all([
       safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/analyses?limit=20`),
       weatherUrl ? safeFetch(weatherUrl) : Promise.resolve(null),
       safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/recommendations`),
       safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/alerts?status=open`),
       safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/agronomy`),
+      safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/indices/series?index=NDVI&days=180`),
     ]);
     setAnalyses(analysesRes?.analyses || []);
     setWeather(weatherRes || null);
     setRecommendations(recsRes?.recommendations || []);
     setAlerts(alertsRes?.alerts || []);
     setAgronomy(agronomyRes || null);
+    setNdviSeries(ndviSeriesRes || null);
     setLoading(false);
   }
 
@@ -1445,6 +1670,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
     { id: 'maps',        label: 'Satellite Maps' },
     { id: 'histograms',  label: 'Histograms' },
     { id: 'growth',      label: 'Crop Growth' },
+    { id: 'agronomy',    label: 'Agronomy' },
     { id: 'maturity',    label: 'Maturity' },
     { id: 'soil',        label: 'Soil & Nutrients' },
     { id: 'weather',     label: 'Weather' },
@@ -1604,6 +1830,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
           {tab === 'maps'       && <MapsTab latest={latest} analyses={analyses} fieldId={fieldId} />}
           {tab === 'histograms' && <HistogramsTab analyses={analyses} fieldId={fieldId} />}
           {tab === 'growth'     && <GrowthTab analyses={analyses} agronomy={agronomy} />}
+          {tab === 'agronomy'   && <AgronomyTab agronomy={agronomy} ndviSeries={ndviSeries} onEdit={onEdit} />}
           {tab === 'maturity'   && <MaturityPanel fieldId={fieldId} businessId={businessId} />}
           {tab === 'soil'       && <SoilTab agronomy={agronomy} />}
           {tab === 'weather'    && <WeatherTab weather={weather} field={field} />}

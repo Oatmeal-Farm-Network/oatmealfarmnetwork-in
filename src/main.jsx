@@ -282,7 +282,6 @@ const PrecisionAgCarbon = lazyWithReload(() => import('./PrecisionAgCarbon.jsx')
 const PrecisionAgBenchmark = lazyWithReload(() => import('./PrecisionAgBenchmark.jsx'))
 const CropRotation = lazyWithReload(() => import('./CropRotation.jsx'))
 const PrecisionAgWaterUse = lazyWithReload(() => import('./PrecisionAgWaterUse.jsx'))
-const PrecisionAgAgronomy = lazyWithReload(() => import('./PrecisionAgAgronomy.jsx'))
 const OatSenseNotes = lazyWithReload(() => import('./OatSenseNotes.jsx'))
 const WebsiteBuilder = lazyWithReload(() => import('./WebsiteBuilder.jsx'))
 const WebsitePublic = lazyWithReload(() => import('./WebsitePublic.jsx'))
@@ -541,7 +540,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/field-journal" element={<RequireAuth><OatSenseNotes /></RequireAuth>} />
           <Route path="/precision-ag/crop-rotation" element={<RequireAuth><CropRotation /></RequireAuth>} />
           <Route path="/precision-ag/water-use" element={<RequireAuth><PrecisionAgWaterUse /></RequireAuth>} />
-          <Route path="/precision-ag/agronomy" element={<RequireAuth><PrecisionAgAgronomy /></RequireAuth>} />
           <Route path="/chef" element={<ChefDashboard />} />
           <Route path="/precision-ag/fields" element={<RequireAuth><PrecisionAgFields /></RequireAuth>} />
           <Route path="/precision-ag/add" element={<RequireAuth><PrecisionAgAdd /></RequireAuth>} />

@@ -10,14 +10,14 @@ import Breadcrumbs from './Breadcrumbs';
 const GREEN = '#3D6B34';
 
 const STATIC_PRICES = [
-  { commodity: 'Corn', symbol: 'ZC', price: null, unit: 'bu', exchange: 'CBOT', note: 'Live quote via CME Group' },
-  { commodity: 'Soybeans', symbol: 'ZS', price: null, unit: 'bu', exchange: 'CBOT', note: 'Live quote via CME Group' },
-  { commodity: 'Wheat (SRW)', symbol: 'ZW', price: null, unit: 'bu', exchange: 'CBOT', note: 'Live quote via CME Group' },
-  { commodity: 'Live Cattle', symbol: 'LE', price: null, unit: 'cwt', exchange: 'CME', note: 'Live quote via CME Group' },
-  { commodity: 'Feeder Cattle', symbol: 'GF', price: null, unit: 'cwt', exchange: 'CME', note: 'Live quote via CME Group' },
-  { commodity: 'Lean Hogs', symbol: 'HE', price: null, unit: 'cwt', exchange: 'CME', note: 'Live quote via CME Group' },
-  { commodity: 'Class III Milk', symbol: 'DC', price: null, unit: 'cwt', exchange: 'CME', note: 'Live quote via CME Group' },
-  { commodity: 'Cotton', symbol: 'CT', price: null, unit: 'lb', exchange: 'ICE', note: 'Live quote via ICE' },
+  { commodity: 'Corn', symbol: 'ZC', price: null, unit: 'bu', exchange: 'CBOT', note: 'Live quote via CME Group', url: 'https://www.cmegroup.com/markets/agriculture/grains/corn.html' },
+  { commodity: 'Soybeans', symbol: 'ZS', price: null, unit: 'bu', exchange: 'CBOT', note: 'Live quote via CME Group', url: 'https://www.cmegroup.com/markets/agriculture/oilseeds/soybeans.html' },
+  { commodity: 'Wheat (SRW)', symbol: 'ZW', price: null, unit: 'bu', exchange: 'CBOT', note: 'Live quote via CME Group', url: 'https://www.cmegroup.com/markets/agriculture/grains/wheat.html' },
+  { commodity: 'Live Cattle', symbol: 'LE', price: null, unit: 'cwt', exchange: 'CME', note: 'Live quote via CME Group', url: 'https://www.cmegroup.com/markets/agriculture/livestock/live-cattle.html' },
+  { commodity: 'Feeder Cattle', symbol: 'GF', price: null, unit: 'cwt', exchange: 'CME', note: 'Live quote via CME Group', url: 'https://www.cmegroup.com/markets/agriculture/livestock/feeder-cattle.html' },
+  { commodity: 'Lean Hogs', symbol: 'HE', price: null, unit: 'cwt', exchange: 'CME', note: 'Live quote via CME Group', url: 'https://www.cmegroup.com/markets/agriculture/livestock/lean-hogs.html' },
+  { commodity: 'Class III Milk', symbol: 'DC', price: null, unit: 'cwt', exchange: 'CME', note: 'Live quote via CME Group', url: 'https://www.cmegroup.com/markets/agriculture/dairy/class-iii-milk.html' },
+  { commodity: 'Cotton', symbol: 'CT', price: null, unit: 'lb', exchange: 'ICE', note: 'Live quote via ICE', url: 'https://www.theice.com/products/254/Cotton-No-2-Futures' },
 ];
 
 // USDA AMS Retail Report — free, no key
@@ -35,11 +35,24 @@ function TrendArrow({ val }) {
 
 export default function CommodityPrices() {
   const [amsData, setAmsData] = useState([]);
+  const [quotes, setQuotes] = useState({});       // symbol -> {price, change, pct}
+  const [quotesAt, setQuotesAt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
 
   useEffect(() => {
-    // Attempt USDA AMS API
+    // Futures quotes via our backend proxy (Yahoo Finance, 5-min cache)
+    fetch('/api/commodity-prices/quotes')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d?.quotes) {
+          setQuotes(d.quotes);
+          setQuotesAt(d.fetched_at ? new Date(d.fetched_at + 'Z').toLocaleTimeString() : null);
+        }
+      })
+      .catch(() => {});
+
+    // USDA AMS retail reports
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
     Promise.allSettled(
@@ -70,24 +83,46 @@ export default function CommodityPrices() {
       </div>
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
 
-        {/* Futures — direct links to CME Group public quotes */}
+        {/* Futures — live quotes via backend proxy + links to CME/ICE */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>Futures Quotes</h2>
-            <span className="text-xs text-gray-400">Via CME Group / ICE (opens in new tab)</span>
+            <span className="text-xs text-gray-400">
+              {quotesAt ? `Updated ${quotesAt} · ` : ''}Delayed · CME Group / ICE
+            </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {STATIC_PRICES.map(c => (
-              <a key={c.symbol}
-                href={`https://www.cmegroup.com/markets/${c.commodity.toLowerCase().replace(/\s+/g, '-')}.html`}
-                target="_blank" rel="noopener noreferrer"
-                className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition block">
-                <div className="text-xs font-bold text-green-700 mb-0.5">{c.symbol}</div>
-                <div className="font-bold text-gray-900">{c.commodity}</div>
-                <div className="text-xs text-gray-400 mt-1">{c.unit} · {c.exchange}</div>
-                <div className="text-xs text-green-700 mt-2 hover:underline">View quote ↗</div>
-              </a>
-            ))}
+            {STATIC_PRICES.map(c => {
+              const q = quotes[`${c.symbol}=F`] || quotes[c.symbol] || null;
+              const up = q && q.change > 0;
+              const dn = q && q.change < 0;
+              return (
+                <a key={c.symbol}
+                  href={c.url}
+                  target="_blank" rel="noopener noreferrer"
+                  className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition block">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-xs font-bold text-green-700">{c.symbol}</span>
+                    <span className="text-xs text-gray-400">{c.exchange}</span>
+                  </div>
+                  <div className="font-bold text-gray-900 text-sm">{c.commodity}</div>
+                  {q ? (
+                    <>
+                      <div className="text-xl font-bold mt-1" style={{ color: up ? '#16a34a' : dn ? '#dc2626' : '#111827' }}>
+                        {q.price.toFixed(2)}
+                        <span className="text-xs font-normal text-gray-400 ml-1">/{c.unit}</span>
+                      </div>
+                      <div className={`text-xs font-semibold mt-0.5 ${up ? 'text-green-600' : dn ? 'text-red-500' : 'text-gray-400'}`}>
+                        {up ? '▲' : dn ? '▼' : '—'} {Math.abs(q.change).toFixed(2)} ({q.pct > 0 ? '+' : ''}{q.pct.toFixed(2)}%)
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-400 mt-1 italic">Loading…</div>
+                  )}
+                  <div className="text-xs text-gray-400 mt-2">View quote ↗</div>
+                </a>
+              );
+            })}
           </div>
         </div>
 
