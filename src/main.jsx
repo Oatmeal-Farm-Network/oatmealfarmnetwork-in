@@ -31,16 +31,85 @@ function ScoutingRedirect() {
 }
 
 // Persistent Saige widget — mounted once above <Routes> so open/closed state survives
-// navigation within the same section.
+// navigation. Returns null only for pages that already have an embedded AI agent,
+// print/portal pages, and public marketing pages.
 function SaigeWidgetGlobal() {
   const { pathname, search } = useLocation();
-  let pageContext = null;
-  if (pathname.startsWith('/precision-ag'))  pageContext = 'Precision Ag';
-  else if (pathname.startsWith('/oatsense'))   pageContext = 'OatSense';
-  else if (pathname.startsWith('/herd-health')) pageContext = null; // handled by HerdHealthLayout
-  else if (pathname.startsWith('/livestock'))  pageContext = 'Livestock';
-  else if (pathname.startsWith('/animals'))    pageContext = 'Livestock';
-  if (!pageContext) return null;
+
+  // Pages whose own layout/component already renders an AI agent
+  if (pathname.startsWith('/herd-health'))  return null; // HerdHealthLayout has its own Saige
+  if (pathname.startsWith('/accounting'))   return null; // Thaiyme handles accounting
+  if (pathname.startsWith('/saige'))        return null; // SaigePage embeds the widget directly
+  if (pathname === '/cassia')               return null;
+
+  // Auth, public landing, and marketing pages — no widget
+  const staticNoWidget = ['/', '/login', '/signup', '/forgot-password', '/about',
+    '/contact-us', '/news', '/website-builder', '/agriculture-support',
+    '/ai-agents', '/chef-pantry', '/event-registration'];
+  if (staticNoWidget.includes(pathname))   return null;
+  if (pathname.startsWith('/contact-us/')) return null;
+  if (pathname.startsWith('/platform/'))   return null;
+  if (pathname.startsWith('/for-'))        return null;
+  if (pathname.startsWith('/sites/'))      return null;
+
+  // Print and single-use portal pages
+  if (pathname.includes('/admin/print'))   return null;
+  if (pathname.endsWith('/certificate'))   return null;
+  if (pathname.startsWith('/provenance/')) return null;
+  if (pathname.startsWith('/judge/'))      return null;
+  if (pathname.startsWith('/speaker/'))    return null;
+
+  // Event attendee-registration pages that already embed Saige in their component
+  if (/^\/events\/[^/]+\/register(\/wizard)?$/.test(pathname)) return null;
+  if (/^\/events\/[^/]+\/(rsvp|conference|compete|dining|tour)$/.test(pathname)) return null;
+
+  // ── Assign a page context for Saige ──────────────────────────────────────
+  let pageContext;
+  if      (pathname.startsWith('/precision-ag'))          pageContext = 'Precision Ag';
+  else if (pathname.startsWith('/oatsense'))               pageContext = 'Precision Ag';
+  else if (pathname.startsWith('/livestock'))              pageContext = 'Livestock';
+  else if (pathname.startsWith('/animals'))                pageContext = 'Livestock';
+  else if (pathname.startsWith('/cold-chain'))             pageContext = 'Cold Chain & Logistics';
+  else if (pathname.startsWith('/farmer-settlement'))      pageContext = 'Farmer Settlement';
+  else if (pathname.startsWith('/certifications'))         pageContext = 'Certifications Tracker';
+  else if (pathname.startsWith('/grants'))                 pageContext = 'Grants & Programs';
+  else if (pathname.startsWith('/suppliers'))              pageContext = 'Supplier Directory';
+  else if (pathname.startsWith('/csa'))                    pageContext = 'CSA Management';
+  else if (pathname.startsWith('/aggregator'))             pageContext = 'Food Aggregator';
+  else if (pathname.startsWith('/seller'))                 pageContext = 'Seller Dashboard';
+  else if (pathname.startsWith('/marketplaces') ||
+           pathname.startsWith('/marketplace'))            pageContext = 'Marketplace';
+  else if (pathname.startsWith('/produce'))                pageContext = 'Produce Inventory';
+  else if (pathname.startsWith('/products'))               pageContext = 'Products';
+  else if (pathname.startsWith('/orders'))                 pageContext = 'Orders';
+  else if (pathname.startsWith('/events'))                 pageContext = 'Events';
+  else if (pathname.startsWith('/jobs'))                   pageContext = 'Job Board';
+  else if (pathname.startsWith('/land'))                   pageContext = 'Land Leasing';
+  else if (pathname.startsWith('/blog'))                   pageContext = 'Blog';
+  else if (pathname.startsWith('/properties'))             pageContext = 'Properties';
+  else if (pathname.startsWith('/restaurant') ||
+           pathname.startsWith('/farm/standing'))          pageContext = 'Restaurant Hub';
+  else if (pathname.startsWith('/recipes') ||
+           pathname.startsWith('/batches'))                pageContext = 'Recipe & Batch Management';
+  else if (pathname.startsWith('/commodity-prices'))       pageContext = 'Commodity Prices';
+  else if (pathname.startsWith('/education'))              pageContext = 'Education Center';
+  else if (pathname.startsWith('/forums'))                 pageContext = 'Community Forums';
+  else if (pathname.startsWith('/app/news') ||
+           pathname.startsWith('/over-the-fence'))         pageContext = 'Community';
+  else if (pathname.startsWith('/esg'))                    pageContext = 'ESG Dashboard';
+  else if (pathname.startsWith('/dashboard'))              pageContext = 'Dashboard';
+  else if (pathname.startsWith('/account'))                pageContext = 'Account';
+  else if (pathname.startsWith('/directory'))              pageContext = 'Farm Directory';
+  else if (pathname.startsWith('/profile'))                pageContext = 'Business Profile';
+  else if (pathname.startsWith('/services'))               pageContext = 'Services Directory';
+  else if (pathname.startsWith('/testimonials'))           pageContext = 'Testimonials';
+  else if (pathname.startsWith('/knowledgebases') ||
+           pathname.startsWith('/plant-knowledgebase') ||
+           pathname.startsWith('/ingredient-knowledgebase')) pageContext = 'Knowledge Base';
+  else if (pathname.startsWith('/chef'))                   pageContext = 'Chef Dashboard';
+  else if (pathname.startsWith('/website/'))               pageContext = 'Website Builder';
+  else                                                     pageContext = 'OatmealFarmNetwork';
+
   const businessId = new URLSearchParams(search).get('BusinessID');
   return <SaigeWidget businessId={businessId} pageContext={pageContext} />;
 }
