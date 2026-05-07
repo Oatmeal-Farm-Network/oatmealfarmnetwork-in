@@ -6,16 +6,19 @@ import Breadcrumbs from './Breadcrumbs';
 
 const API = import.meta.env.VITE_API_URL || '';
 const GREEN = '#3D6B34';
-const NAV_BG = '#516234';
-
-function authHeaders() {
-  const t = localStorage.getItem('access_token') || '';
-  const pid = localStorage.getItem('people_id') || '';
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}`, 'x-people-id': pid };
-}
 
 const DIFFICULTY_COLORS = { Beginner: 'bg-green-100 text-green-700', Intermediate: 'bg-yellow-100 text-yellow-700', Advanced: 'bg-red-100 text-red-700' };
 const TYPE_ICONS = { article: '📄', video: '▶', course: '🎓', webinar: '📡' };
+const TYPE_LABELS = { article: 'Article', video: 'Video', course: 'Course', webinar: 'Webinar' };
+
+function renderBody(text) {
+  return text.split(/\n\n+/).map((block, i) => {
+    if (block.startsWith('## ')) return <h2 key={i} className="text-lg font-bold text-gray-900 mt-6 mb-2">{block.slice(3)}</h2>;
+    const parts = block.split(/\*\*([^*]+)\*\*/g);
+    const rendered = parts.map((p, j) => j % 2 === 1 ? <strong key={j}>{p}</strong> : p);
+    return <p key={i} className="text-gray-700 leading-relaxed">{rendered}</p>;
+  });
+}
 
 export default function EducationCenter() {
   const [courses, setCourses] = useState([]);
@@ -24,9 +27,7 @@ export default function EducationCenter() {
   const [category, setCategory] = useState('');
   const [difficulty, setDifficulty] = useState('');
   const [q, setQ] = useState('');
-  const [selected, setSelected] = useState(null);
-  const [enrolledOk, setEnrolledOk] = useState(false);
-  const pid = parseInt(localStorage.getItem('people_id') || '0');
+  const [reading, setReading] = useState(null);
 
   useEffect(() => {
     fetch(`${API}/api/education/categories`).then(r => r.json()).then(setCategories);
@@ -38,24 +39,52 @@ export default function EducationCenter() {
     if (difficulty) p.set('difficulty', difficulty);
     if (q) p.set('q', q);
     setLoading(true);
-    fetch(`${API}/api/education?${p}`).then(r => r.json()).then(d => { setCourses(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
+    fetch(`${API}/api/education?${p}`)
+      .then(r => r.json())
+      .then(d => { setCourses(Array.isArray(d) ? d : []); setLoading(false); })
+      .catch(() => setLoading(false));
   };
 
   useEffect(load, [category, difficulty]);
 
   const openCourse = (c) => {
-    fetch(`${API}/api/education/${c.CourseID}`).then(r => r.json()).then(setSelected);
-  };
-
-  const enroll = async () => {
-    if (!pid) return;
-    await fetch(`${API}/api/education/${selected.CourseID}/enroll`, {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify({ people_id: pid }),
-    });
-    setEnrolledOk(true); setTimeout(() => setEnrolledOk(false), 2000);
+    if (c.ContentUrl) {
+      window.open(c.ContentUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    fetch(`${API}/api/education/${c.CourseID}`)
+      .then(r => r.json())
+      .then(full => setReading(full));
   };
 
   const DIFFS = ['Beginner', 'Intermediate', 'Advanced'];
+
+  if (reading) {
+    return (
+      <div style={{ backgroundColor: '#f7f2e8', minHeight: '100vh' }}>
+        <PageMeta title={`${reading.Title} — Oatmeal Farm Network`} description={reading.Description} />
+        <Header />
+        <div className="max-w-3xl mx-auto px-6 py-10">
+          <button onClick={() => setReading(null)} className="text-sm font-semibold mb-6 flex items-center gap-1" style={{ color: GREEN }}>
+            ← Back to Education Center
+          </button>
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <span className="text-sm">{TYPE_ICONS[reading.ContentType] || '📄'}</span>
+            <span className="text-xs font-semibold text-gray-500">{TYPE_LABELS[reading.ContentType] || 'Article'}</span>
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${DIFFICULTY_COLORS[reading.Difficulty] || 'bg-gray-100 text-gray-600'}`}>{reading.Difficulty}</span>
+            <span className="text-xs font-semibold text-green-700">{reading.Category}</span>
+            {reading.DurationMin && <span className="text-xs text-gray-400">{reading.DurationMin} min read</span>}
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>{reading.Title}</h1>
+          {reading.AuthorName && <p className="text-sm text-gray-500 mb-6">By {reading.AuthorName}</p>}
+          <div className="space-y-4">
+            {reading.BodyText ? renderBody(reading.BodyText) : <p className="text-gray-700">{reading.Description}</p>}
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div style={{ backgroundColor: '#f7f2e8', minHeight: '100vh' }}>
@@ -90,7 +119,10 @@ export default function EducationCenter() {
               <button key={c.CourseID} onClick={() => openCourse(c)}
                 className="text-left bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition flex flex-col">
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className="text-xl">{TYPE_ICONS[c.ContentType] || '📄'}</span>
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+                    <span>{TYPE_ICONS[c.ContentType] || '📄'}</span>
+                    <span>{TYPE_LABELS[c.ContentType] || 'Article'}</span>
+                  </span>
                   <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${DIFFICULTY_COLORS[c.Difficulty] || 'bg-gray-100 text-gray-600'}`}>{c.Difficulty}</span>
                 </div>
                 <div className="font-bold text-gray-900 text-sm leading-snug flex-1">{c.Title}</div>
@@ -98,51 +130,15 @@ export default function EducationCenter() {
                 {c.Description && <p className="text-xs text-gray-500 mt-2 line-clamp-2">{c.Description}</p>}
                 <div className="flex items-center justify-between mt-3 text-xs text-gray-400">
                   <span>{c.DurationMin ? `${c.DurationMin} min` : ''}</span>
-                  <span>{c.EnrollmentCount ?? 0} enrolled</span>
+                  {c.ContentUrl
+                    ? <span className="font-semibold" style={{ color: GREEN }}>Open ↗</span>
+                    : <span className="font-semibold" style={{ color: GREEN }}>Read →</span>}
                 </div>
               </button>
             ))}
           </div>
         )}
       </div>
-
-      {selected && (
-        <div className="fixed inset-0 z-40 flex justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} onClick={() => setSelected(null)}>
-          <div className="bg-white w-full max-w-lg h-full overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b" style={{ backgroundColor: NAV_BG }}>
-              <span className="text-white font-bold truncate">{selected.Title}</span>
-              <button onClick={() => setSelected(null)} className="text-white shrink-0">✕</button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${DIFFICULTY_COLORS[selected.Difficulty] || 'bg-gray-100 text-gray-600'}`}>{selected.Difficulty}</span>
-                <span className="text-xs font-semibold text-green-700">{selected.Category}</span>
-                {selected.DurationMin && <span className="text-xs text-gray-400">{selected.DurationMin} min</span>}
-                {selected.IsFree ? <span className="text-xs font-bold bg-green-50 text-green-700 px-1.5 py-0.5 rounded">Free</span> : null}
-              </div>
-              <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>{selected.Title}</h2>
-              {selected.AuthorName && <div className="text-xs text-gray-500">By {selected.AuthorName}</div>}
-              {selected.Description && <p className="text-sm text-gray-700 leading-relaxed">{selected.Description}</p>}
-              <div className="text-xs text-gray-400">{selected.ViewCount ?? 0} views · {selected.EnrollmentCount ?? 0} enrolled</div>
-              <div className="flex gap-3">
-                {selected.ContentUrl && (
-                  <a href={selected.ContentUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex-1 py-3 rounded-xl text-white font-bold text-center block"
-                    style={{ backgroundColor: GREEN }}>
-                    {TYPE_ICONS[selected.ContentType]} Open Content ↗
-                  </a>
-                )}
-                {pid ? (
-                  <button onClick={enroll} className="flex-1 py-3 rounded-xl font-bold text-sm border-2 transition"
-                    style={{ color: GREEN, borderColor: GREEN }}>
-                    {enrolledOk ? '✓ Saved!' : '+ Add to My List'}
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       <Footer />
     </div>
   );

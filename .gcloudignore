@@ -6,4 +6,5 @@ node_modules/
 dist/
 **/dist/
 .claude/
+**/.claude/
 *.log
