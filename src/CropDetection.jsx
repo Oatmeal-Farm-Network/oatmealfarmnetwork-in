@@ -538,6 +538,18 @@ export default function CropDetection() {
 
   useEffect(() => { if (BusinessID) LoadBusiness(BusinessID); }, [BusinessID]);
 
+  // Saige voice-command: listen for map navigation requests fired by the chat widget.
+  useEffect(() => {
+    const handleSaigeMapCmd = (e) => {
+      const { action, lat, lon, zoom } = e.detail || {};
+      if (action === 'flyTo' && map.current && lat && lon) {
+        map.current.flyTo({ center: [lon, lat], zoom: zoom || 12, duration: 1500 });
+      }
+    };
+    window.addEventListener('saige:map-command', handleSaigeMapCmd);
+    return () => window.removeEventListener('saige:map-command', handleSaigeMapCmd);
+  }, []);
+
   // When entering via "Add Field" mode, geocode business zip/city and flyTo once the map is ready.
   const pendingZoomRef = useRef(null); // stores [lon, lat] until the map can consume it
   const zoomedToBusinessRef = useRef(false);
@@ -744,6 +756,72 @@ export default function CropDetection() {
     popup.current = new maplibregl.Popup({ closeButton: true, maxWidth: '320px', className: 'custom-popup' })
       .setLngLat(e.lngLat).setDOMContent(el).addTo(map.current);
   }, [fetchAnalysis, updateDrawLayers, BusinessID, navigate]);
+
+  // ─── Saige location search ────────────────────────────────────────────────
+  const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
+
+  const sendLocationToSaige = async (query) => {
+    if (!query || !query.trim()) return;
+    setShowSuggestions(false);
+    setIsSearching(true);
+    const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
+    const pid = localStorage.getItem('people_id') || localStorage.getItem('PeopleID') || '';
+    const threadId = `map_search_${pid || 'anon'}`;
+    try {
+      const res = await fetch(`${SAIGE_API}/chat/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          user_input: `[Page: Precision Ag - Crop Detection] zoom to ${query.trim()}`,
+          thread_id: threadId,
+          business_id: BusinessID ? String(BusinessID) : null,
+        }),
+      });
+      if (!res.ok || !res.body) throw new Error(`Saige ${res.status}`);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let partial = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        partial += decoder.decode(value, { stream: true });
+        const lines = partial.split('\n');
+        partial = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          let evt;
+          try { evt = JSON.parse(line.slice(6)); } catch { continue; }
+          if (evt.type === 'done' && evt.diagnosis) {
+            const m = evt.diagnosis.match(/\[MAP_CMD:\s*([^\]]+)\]/);
+            if (m) {
+              const params = {};
+              m[1].trim().split(/\s+/).forEach(p => {
+                const eq = p.indexOf('=');
+                if (eq > -1) params[p.slice(0, eq)] = p.slice(eq + 1);
+              });
+              if (params.lat && params.lon) {
+                window.dispatchEvent(new CustomEvent('saige:map-command', {
+                  detail: {
+                    action: params.action || 'flyTo',
+                    lat: parseFloat(params.lat),
+                    lon: parseFloat(params.lon),
+                    zoom: parseFloat(params.zoom) || 12,
+                  },
+                }));
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[CropDetection] Saige location search failed:', e);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   // ─── Address search ───────────────────────────────────────────────────────
   // Looks like a street address if it starts with a house number.
@@ -1027,11 +1105,16 @@ export default function CropDetection() {
               </div>
               <div style={{ position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '2px solid #e2e8f0', borderRadius: 10, padding: '10px 12px', background: 'white' }}>
-                  <span style={{ color: '#64748b', display: 'inline-flex' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                  <span
+                    onClick={() => sendLocationToSaige(address)}
+                    title="Search via Saige"
+                    style={{ color: '#64748b', display: 'inline-flex', cursor: address ? 'pointer' : 'default' }}
+                  ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
                   <input
                     type="text" placeholder={t('crop_detection.search_placeholder')} value={address}
                     onChange={e => handleAddressChange(e.target.value)}
                     onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendLocationToSaige(address); } }}
                     style={{ border: 'none', background: 'transparent', flex: 1, outline: 'none', fontSize: 13, color: '#1e293b' }}
                   />
                   {isSearching && <span style={{ fontSize: 11, color: '#94a3b8', animation: 'cdspin 1s linear infinite', display: 'inline-block' }}>⟳</span>}

@@ -142,6 +142,27 @@ const hdrBtn = {
   fontFamily: FONT_BODY,
 };
 
+// ── Parse + fire MAP_CMD embedded in Saige's reply ────────────────────────────
+function extractMapCmd(text) {
+  const m = (text || '').match(/\[MAP_CMD:\s*([^\]]+)\]/);
+  if (!m) return text;
+  const params = {};
+  m[1].trim().split(/\s+/).forEach(part => {
+    const eq = part.indexOf('=');
+    if (eq > -1) {
+      const k = part.slice(0, eq);
+      const v = part.slice(eq + 1).replace(/^"|"$/g, '');
+      params[k] = isNaN(v) ? v : parseFloat(v);
+    }
+  });
+  if (params.lat && params.lon) {
+    window.dispatchEvent(new CustomEvent('saige:map-command', {
+      detail: { action: params.action || 'flyTo', lat: params.lat, lon: params.lon, zoom: params.zoom || 12 },
+    }));
+  }
+  return text.replace(/\[MAP_CMD:[^\]]+\]/g, '').trim();
+}
+
 // ── Chat panel ────────────────────────────────────────────────────────────────
 function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFullPage }) {
   const [messages, setMessages] = useState([]);
@@ -321,52 +342,121 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
     const val = (text || input).trim();
     if (!val || sending) return;
     setError('');
+    const fieldHint = fieldId ? `[Field #${fieldId}]` : '';
+    const pageHint  = pageContext ? `[Page: ${pageContext}]` : '';
+    const userInput = [fieldHint, pageHint, val].filter(Boolean).join(' ').trim();
+    const body = JSON.stringify({
+      user_input: userInput,
+      thread_id: threadId,
+      business_id: businessId ? String(businessId) : null,
+      field_id: fieldId ? String(fieldId) : null,
+      language: language || 'en',
+    });
+
     const nextMsgs = [...messages, { role: 'user', content: val }];
     setMessages(nextMsgs);
     setInput('');
     setSending(true);
+
+    // ── Try streaming endpoint first ─────────────────────────────────────────
+    let streamOk = false;
     try {
-      const fieldHint = fieldId ? `[Field #${fieldId}]` : '';
-      const pageHint  = pageContext ? `[Page: ${pageContext}]` : '';
-      const userInput = [fieldHint, pageHint, val].filter(Boolean).join(' ').trim();
-      const res = await fetch(`${SAIGE_API}/chat`, {
+      const res = await fetch(`${SAIGE_API}/chat/stream`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({
-          user_input: userInput,
-          thread_id: threadId,
-          business_id: businessId ? String(businessId) : null,
-          field_id: fieldId ? String(fieldId) : null,
-          language: language || 'en',
-        }),
+        body,
       });
-      if (!res.ok) throw new Error(`Server error (${res.status})`);
-      const data = await res.json();
-      let reply = '';
-      if (data.status === 'complete') {
-        reply = (data.diagnosis || '').replace(/\*\*/g, '').replace(/##\s+/g, '').replace(/\*/g, '').trim();
-        if (data.recommendations?.length > 0 && !data.recommendations.every(r => reply.includes(r.slice(0, 30)))) {
-          reply += '\n\n' + data.recommendations.map(r => `• ${r}`).join('\n');
+      if (res.ok && res.body) {
+        streamOk = true;
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let partial = '';
+        let streamedReply = '';
+        // Insert a placeholder assistant bubble; we'll update it token-by-token
+        setMessages([...nextMsgs, { role: 'assistant', content: '' }]);
+
+        outer: while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          partial += decoder.decode(value, { stream: true });
+          const lines = partial.split('\n');
+          partial = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            let evt;
+            try { evt = JSON.parse(line.slice(6)); } catch { continue; }
+            if (evt.type === 'token') {
+              streamedReply += evt.content;
+              setMessages(prev => {
+                const upd = [...prev];
+                upd[upd.length - 1] = { role: 'assistant', content: streamedReply };
+                return upd;
+              });
+            } else if (evt.type === 'done') {
+              // Fire map command from diagnosis (LLM text doesn't echo [MAP_CMD])
+              if (evt.diagnosis) extractMapCmd(evt.diagnosis);
+              const cleaned = extractMapCmd(
+                streamedReply.replace(/\*\*/g, '').replace(/##\s+/g, '').replace(/\*/g, '').trim()
+              );
+              // If no tokens were streamed (e.g. all iterations consumed by tool calls),
+              // fall back to the text portion of the server diagnosis (before any MAP_CMD).
+              const diagText = evt.diagnosis
+                ? extractMapCmd(evt.diagnosis.replace(/\*\*/g, '').replace(/\*/g, '').trim())
+                : '';
+              const finalReply = cleaned || diagText || 'No response received.';
+              setMessages(prev => {
+                const upd = [...prev];
+                upd[upd.length - 1] = { role: 'assistant', content: finalReply };
+                return upd;
+              });
+              if (autoSpeak && finalReply) playTTS(finalReply);
+              break outer;
+            }
+          }
         }
-      } else if (data.status === 'requires_input') {
-        const q = (data.ui?.question || '').trim();
-        const opts = Array.isArray(data.ui?.options) ? data.ui.options : [];
-        reply = q;
-        if (opts.length > 0) reply += '\n\n' + opts.map(o => `• ${o}`).join('\n');
-      } else if (data.status === 'error') {
-        reply = data.message || 'Something went wrong. Please try again.';
-      } else {
-        reply = data.diagnosis || data.response || 'No response received.';
       }
-      const finalReply = reply || 'No response received.';
-      setMessages([...nextMsgs, { role: 'assistant', content: finalReply }]);
-      if (autoSpeak) playTTS(finalReply);
-    } catch (e) {
-      setError(e.message);
-      setMessages([...nextMsgs, { role: 'assistant', content: `Error: ${e.message}` }]);
-    } finally {
-      setSending(false);
+    } catch (_streamErr) {
+      // Fall through to non-streaming fallback
+      streamOk = false;
     }
+
+    // ── Fallback: non-streaming /chat ────────────────────────────────────────
+    if (!streamOk) {
+      try {
+        const res = await fetch(`${SAIGE_API}/chat`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body,
+        });
+        if (!res.ok) throw new Error(`Server error (${res.status})`);
+        const data = await res.json();
+        let reply = '';
+        if (data.status === 'complete') {
+          reply = (data.diagnosis || '').replace(/\*\*/g, '').replace(/##\s+/g, '').replace(/\*/g, '').trim();
+          if (data.recommendations?.length > 0 && !data.recommendations.every(r => reply.includes(r.slice(0, 30)))) {
+            reply += '\n\n' + data.recommendations.map(r => `• ${r}`).join('\n');
+          }
+        } else if (data.status === 'requires_input') {
+          const q = (data.ui?.question || '').trim();
+          const opts = Array.isArray(data.ui?.options) ? data.ui.options : [];
+          reply = q;
+          if (opts.length > 0) reply += '\n\n' + opts.map(o => `• ${o}`).join('\n');
+        } else if (data.status === 'error') {
+          reply = data.message || 'Something went wrong. Please try again.';
+        } else {
+          reply = data.diagnosis || data.response || 'No response received.';
+        }
+        reply = extractMapCmd(reply);
+        const finalReply = reply || 'No response received.';
+        setMessages([...nextMsgs, { role: 'assistant', content: finalReply }]);
+        if (autoSpeak) playTTS(finalReply);
+      } catch (e) {
+        setError(e.message);
+        setMessages([...nextMsgs, { role: 'assistant', content: `Error: ${e.message}` }]);
+      }
+    }
+
+    setSending(false);
   }, [input, messages, sending, threadId, businessId, fieldId, pageContext, language, autoSpeak, playTTS]);
 
   sendRef.current = send;
