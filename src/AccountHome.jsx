@@ -48,7 +48,7 @@ const BIZ_PERSONA = {
 const PERSONAS = {
   farmer: {
     color: '#3D6B34', bg: '#f0f5e8', lightBg: '#e8f0e0',
-    emoji: '🌾',
+    icon: <I size={56}><path d="M3 20l5-8 4 6 3-4 7 6H3z"/><circle cx="18" cy="7" r="2"/><line x1="18" y1="2" x2="18" y2="5"/><line x1="15" y1="4" x2="21" y2="4"/></I>,
     headline: 'Farm & Ranch Hub',
     tagline: 'Monitor your fields, manage your herd, and sell your harvest.',
     statKeys: ['fields', 'animals', 'pending_orders', 'upcoming_events'],
@@ -56,7 +56,7 @@ const PERSONAS = {
   },
   producer: {
     color: '#A3301E', bg: '#fdf0ed', lightBg: '#fce5e0',
-    emoji: '🏭',
+    icon: <I size={56}><rect x="2" y="14" width="20" height="8" rx="1"/><path d="M2 14l5-6h10l5 6"/><line x1="8" y1="22" x2="8" y2="14"/><line x1="16" y1="22" x2="16" y2="14"/><path d="M10 8h4"/><path d="M10 5h4"/></I>,
     headline: 'Producer Hub',
     tagline: 'Craft, package, and sell your artisan products to the world.',
     statKeys: ['products', 'produce', 'pending_orders', 'upcoming_events'],
@@ -64,7 +64,7 @@ const PERSONAS = {
   },
   distributor: {
     color: '#2563EB', bg: '#eff6ff', lightBg: '#dbeafe',
-    emoji: '🚚',
+    icon: <I size={56}><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 4v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></I>,
     headline: 'Distribution Hub',
     tagline: 'Source, aggregate, and move food efficiently through your network.',
     statKeys: ['pending_orders', 'services', 'upcoming_events', 'blog_posts'],
@@ -72,7 +72,7 @@ const PERSONAS = {
   },
   restaurant: {
     color: '#7C3AED', bg: '#f5f3ff', lightBg: '#ede9fe',
-    emoji: '🍽️',
+    icon: <I size={56}><line x1="9" y1="2" x2="9" y2="22"/><path d="M7 2v6a2 2 0 004 0V2"/><line x1="15" y1="2" x2="15" y2="22"/><path d="M13 2h4a3 3 0 010 6H13"/></I>,
     headline: 'Restaurant Hub',
     tagline: 'Source local ingredients, manage your kitchen, and fill your seats.',
     statKeys: ['pending_orders', 'upcoming_events', 'blog_posts', 'services'],
@@ -80,7 +80,7 @@ const PERSONAS = {
   },
   community: {
     color: '#D97706', bg: '#fffbeb', lightBg: '#fef3c7',
-    emoji: '🤝',
+    icon: <I size={56}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></I>,
     headline: 'Community Hub',
     tagline: 'Bring people together, share knowledge, and grow your community.',
     statKeys: ['upcoming_events', 'blog_posts', 'services', 'products'],
@@ -88,7 +88,7 @@ const PERSONAS = {
   },
   services_biz: {
     color: '#0891B2', bg: '#ecfeff', lightBg: '#cffafe',
-    emoji: '🛠️',
+    icon: <I size={56}><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></I>,
     headline: 'Services Hub',
     tagline: 'Manage your service offerings, clients, and grow your business.',
     statKeys: ['services', 'upcoming_events', 'blog_posts', 'pending_orders'],
@@ -96,7 +96,7 @@ const PERSONAS = {
   },
   fiber: {
     color: '#7C5CBF', bg: '#f5f0ff', lightBg: '#ede5ff',
-    emoji: '🧶',
+    icon: <I size={56}><circle cx="12" cy="12" r="9"/><path d="M3.6 9a9 9 0 0115.7 6"/><path d="M6 19.7A9 9 0 0120.4 9"/></I>,
     headline: 'Fiber Arts Hub',
     tagline: 'Manage your animals, showcase your fiber, and run your events.',
     statKeys: ['animals', 'upcoming_events', 'products', 'blog_posts'],
@@ -104,7 +104,7 @@ const PERSONAS = {
   },
   default: {
     color: '#4B5563', bg: '#f9fafb', lightBg: '#f3f4f6',
-    emoji: '🏢',
+    icon: <I size={56}><rect x="2" y="7" width="20" height="15" rx="1"/><path d="M16 22v-5a2 2 0 00-2-2h-4a2 2 0 00-2 2v5"/><path d="M2 12h20"/><path d="M7 12V7"/><path d="M17 12V7"/><path d="M12 2v5"/></I>,
     headline: 'Business Hub',
     tagline: 'Everything you need to run and grow your business on OFN.',
     statKeys: ['upcoming_events', 'blog_posts', 'pending_orders', 'services'],
@@ -383,13 +383,13 @@ const FEATURE_META = {
 
 // Features shown in "Discover More" that don't have full FEATURE_META entries
 const DISCOVER_EXTRAS = [
-  { key: 'equipment',        label: 'Equipment Marketplace', emoji: '🚜', path: '/marketplaces/equipment' },
-  { key: 'food_wanted',      label: 'Food Wanted Board',      emoji: '📋', path: '/marketplaces/food-wanted' },
-  { key: 'job_board',        label: 'Job Board',              emoji: '💼', path: '/jobs' },
-  { key: 'land_leasing',     label: 'Land Leasing',           emoji: '🏞️', path: '/land' },
-  { key: 'csa_advanced',     label: 'CSA Advanced',           emoji: '📦', path: '/csa-advanced' },
-  { key: 'supplier_directory',label:'Supplier Directory',     emoji: '🤝', path: '/suppliers' },
-  { key: 'commodity_prices', label: 'Commodity Prices',       emoji: '📈', path: '/commodity-prices' },
+  { key: 'equipment',         label: 'Equipment Marketplace', icon: <I><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></I>, path: '/marketplaces/equipment' },
+  { key: 'food_wanted',       label: 'Food Wanted Board',     icon: <I><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></I>, path: '/marketplaces/food-wanted' },
+  { key: 'job_board',         label: 'Job Board',             icon: <I><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></I>, path: '/jobs' },
+  { key: 'land_leasing',      label: 'Land Leasing',          icon: <I><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></I>, path: '/land' },
+  { key: 'csa_advanced',      label: 'CSA Advanced',          icon: <I><polygon points="12 2 2 7 12 12 22 7"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></I>, path: '/csa-advanced' },
+  { key: 'supplier_directory',label: 'Supplier Directory',    icon: <I><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></I>, path: '/suppliers' },
+  { key: 'commodity_prices',  label: 'Commodity Prices',      icon: <I><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></I>, path: '/commodity-prices' },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -442,13 +442,13 @@ function FeatureCard({ fKey, businessId }) {
       {/* CTAs */}
       <div className="mt-auto flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100">
         <Link to={m.addCta.path(businessId)}
-          className="text-xs font-medium px-3 py-1.5 rounded-lg text-white transition-colors hover:opacity-80"
-          style={{ backgroundColor: m.color + 'bb' }}>
+          className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors hover:opacity-80"
+          style={{ backgroundColor: m.color + 'bb', color: '#ffffff' }}>
           + {m.addCta.label}
         </Link>
         <Link to={m.cta.path(businessId)}
-          className="text-xs font-semibold px-4 py-1.5 rounded-lg text-white transition-colors hover:opacity-90"
-          style={{ backgroundColor: m.color }}>
+          className="text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors hover:opacity-90"
+          style={{ backgroundColor: m.color, color: '#ffffff' }}>
           {m.cta.label} →
         </Link>
       </div>
@@ -460,10 +460,12 @@ function DiscoverCard({ item }) {
   return (
     <Link to={item.path}
       className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-200 hover:border-gray-400 hover:shadow-sm transition-all group">
-      <span className="text-xl">{item.emoji}</span>
+      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 group-hover:text-gray-700 shrink-0">
+        {item.icon}
+      </div>
       <div className="min-w-0">
         <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900 truncate">{item.label}</p>
-        <p className="text-[11px] text-gray-400">Browse &rarr;</p>
+        <p className="text-[11px] text-gray-400">Browse →</p>
       </div>
     </Link>
   );
@@ -524,7 +526,7 @@ export default function AccountHome() {
   const discoverItems = [
     ...Object.entries(FEATURE_META)
       .filter(([k]) => notEnabled.includes(k))
-      .map(([k, m]) => ({ key: k, label: m.label, emoji: '✦', path: m.platformPage || '/platform' })),
+      .map(([k, m]) => ({ key: k, label: m.label, icon: m.icon, path: m.platformPage || '/platform' })),
     ...DISCOVER_EXTRAS.filter(d => notEnabled.includes(d.key)),
   ].slice(0, 12);
 
@@ -550,7 +552,7 @@ export default function AccountHome() {
           style={{ background: `linear-gradient(135deg, ${persona.color} 0%, ${persona.color}cc 100%)` }}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-7">
             <div className="flex items-center gap-4">
-              <div className="text-5xl select-none">{persona.emoji}</div>
+              <div className="text-white opacity-90 shrink-0">{persona.icon}</div>
               <div>
                 <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-0.5">{persona.headline}</p>
                 <h1 className="text-white text-2xl font-bold leading-tight">{business.BusinessName}</h1>
@@ -566,11 +568,13 @@ export default function AccountHome() {
             </div>
             <div className="flex flex-wrap gap-2 sm:flex-col sm:items-end shrink-0">
               <Link to={`/account/profile?BusinessID=${businessId}`}
-                className="text-xs font-semibold px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white transition-colors">
+                className="text-xs font-semibold px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+                style={{ color: '#ffffff' }}>
                 Edit Profile
               </Link>
               <Link to={`/account/subscription?BusinessID=${businessId}`}
-                className="text-xs font-semibold px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors">
+                className="text-xs font-semibold px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                style={{ color: '#ffffff' }}>
                 Subscription
               </Link>
             </div>
@@ -593,8 +597,8 @@ export default function AccountHome() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-gray-800">Your Services</h2>
               <Link to={`/account/subscription?BusinessID=${businessId}`}
-                className="text-xs font-semibold px-3 py-1.5 rounded-lg text-white transition-colors hover:opacity-90"
-                style={{ backgroundColor: persona.color }}>
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors hover:opacity-90"
+                style={{ backgroundColor: persona.color, color: '#ffffff' }}>
                 + Add Services
               </Link>
             </div>
