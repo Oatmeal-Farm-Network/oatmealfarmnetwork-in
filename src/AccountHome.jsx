@@ -120,7 +120,7 @@ const STAT_META = {
   upcoming_events: { label: 'Events', icon: <I><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></I>, path: (b) => `/events/manage?BusinessID=${b}` },
   blog_posts:      { label: 'Blog Posts', icon: <I><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></I>, path: (b) => `/blog/manage?BusinessID=${b}` },
   products:        { label: 'Products', icon: <I><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></I>, path: (b) => `/products?BusinessID=${b}` },
-  services:        { label: 'Services', icon: <I><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06-.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.6.852.997 1.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></I>, path: (b) => `/services?BusinessID=${b}` },
+  services:        { label: 'Services', icon: <I><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></I>, path: (b) => `/services?BusinessID=${b}` },
   produce:         { label: 'Produce Listings', icon: <I><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 2C6 8 6 16 12 22"/><path d="M12 2c6 6 6 14 0 20"/><line x1="2" y1="12" x2="22" y2="12"/></I>, path: (b) => `/produce/inventory?BusinessID=${b}` },
 };
 
@@ -243,7 +243,7 @@ const FEATURE_META = {
   },
   restaurant_sourcing: {
     label: 'Restaurant Sourcing', color: '#7C3AED', bg: '#f5f3ff',
-    icon: <I><line x1="5" y1="2" x2="5" y2="22"/><path d="M3 2v6a2 2 0 004 0V2"/><line x1="11" y1="2" x2="11" y2="22"/><path d="M9 2h4a0 0 0 010 6v0"/></I>,
+    icon: <I><line x1="5" y1="2" x2="5" y2="22"/><path d="M3 2v6a2 2 0 004 0V2"/><line x1="11" y1="2" x2="11" y2="22"/><path d="M9 2h4a3 3 0 010 6H9"/></I>,
     desc: 'Browse local farms, place standing orders, and source seasonal ingredients.',
     cta: { label: 'Browse Farms', path: () => '/marketplaces/farm-to-table' },
     addCta: { label: 'Saved Farms', path: () => '/restaurant/farms' },
@@ -309,7 +309,7 @@ const FEATURE_META = {
   },
   pairsley: {
     label: 'Pairsley AI', color: '#2F7D4A', bg: '#f0fdf4',
-    icon: <I><line x1="5" y1="2" x2="5" y2="22"/><path d="M3 2v6a2 2 0 004 0V2"/><line x1="11" y1="2" x2="11" y2="22"/><path d="M9 2h4a0 0 0 010 6v0"/></I>,
+    icon: <I><line x1="5" y1="2" x2="5" y2="22"/><path d="M3 2v6a2 2 0 004 0V2"/><line x1="11" y1="2" x2="11" y2="22"/><path d="M9 2h4a3 3 0 010 6H9"/></I>,
     desc: 'AI assistant for restaurants — menus, sourcing, vendor relationships.',
     cta: { label: 'Open Pairsley', path: () => '/platform/pairsley' },
     addCta: { label: 'Learn More', path: () => '/platform/pairsley' },
@@ -363,7 +363,7 @@ const FEATURE_META = {
   },
   csa_management: {
     label: 'CSA Management', color: '#065F46', bg: '#ecfdf5',
-    icon: <I><path d="M12 2L14 7H19L15 10.5L16.5 15.5L12 12.5L7.5 15.5L9 10.5L5 7H10Z"/></I>,
+    icon: <I><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></I>,
     desc: 'Manage Community Supported Agriculture subscriptions and member pickups.',
     cta: { label: 'Manage CSA', path: (b) => `/csa/manage?BusinessID=${b}` },
     addCta: { label: 'Browse Plans', path: () => '/csa' },
@@ -442,8 +442,8 @@ function FeatureCard({ fKey, businessId }) {
       {/* CTAs */}
       <div className="mt-auto flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100">
         <Link to={m.addCta.path(businessId)}
-          className="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors hover:opacity-80"
-          style={{ borderColor: m.color + '55', color: m.color }}>
+          className="text-xs font-medium px-3 py-1.5 rounded-lg text-white transition-colors hover:opacity-80"
+          style={{ backgroundColor: m.color + 'bb' }}>
           + {m.addCta.label}
         </Link>
         <Link to={m.cta.path(businessId)}
