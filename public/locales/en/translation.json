@@ -2882,7 +2882,8 @@
     "item_activity_log": "Activity Log",
     "item_histograms": "Histograms",
     "item_multi_layer": "Multi-layer",
-    "item_maps": "Maps"
+    "item_maps": "Maps",
+    "item_statistics": "Statistics"
   },
   "precision_ag_water": {
     "page_title": "Water Use",

@@ -42,6 +42,7 @@ const ICONS = {
   waterUse:       <S><path d="M1 7c1.5 0 1.5-2 3-2s1.5 2 3 2 1.5-2 3-2 1.5 2 3 2"/><path d="M1 11c1.5 0 1.5-2 3-2s1.5 2 3 2 1.5-2 3-2 1.5 2 3 2"/></S>,
   activityLog:    <S><line x1="5" y1="4" x2="13" y2="4"/><line x1="5" y1="8" x2="13" y2="8"/><line x1="5" y1="12" x2="13" y2="12"/><circle cx="2.5" cy="4" r="0.8" fill="currentColor" stroke="none"/><circle cx="2.5" cy="8" r="0.8" fill="currentColor" stroke="none"/><circle cx="2.5" cy="12" r="0.8" fill="currentColor" stroke="none"/></S>,
   allFields:      <S><line x1="14" y1="8" x2="2" y2="8"/><polyline points="6,4 2,8 6,12"/></S>,
+  statistics:     <S><line x1="2" y1="14" x2="2" y2="2"/><line x1="2" y1="14" x2="14" y2="14"/><circle cx="5" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="7" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="9" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="5" r="1" fill="currentColor" stroke="none"/><line x1="3" y1="12" x2="13" y2="4"/></S>,
 };
 
 const SECTIONS = [
@@ -82,6 +83,7 @@ const SECTIONS = [
       { icon: ICONS.histograms,   tKey: 'item_histograms',        path: '/precision-ag/analyses', tab: 'histograms' },
       { icon: ICONS.multiLayer,   tKey: 'item_multi_layer',       path: '/precision-ag/analysis/multi-layer' },
       { icon: ICONS.maps,         tKey: 'item_maps',              path: '/precision-ag/analysis/maps' },
+      { icon: ICONS.statistics,   tKey: 'item_statistics',        path: '/precision-ag/statistics' },
     ],
   },
 ];

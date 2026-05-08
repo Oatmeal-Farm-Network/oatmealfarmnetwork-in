@@ -282,6 +282,7 @@ const PrecisionAgCarbon = lazyWithReload(() => import('./PrecisionAgCarbon.jsx')
 const PrecisionAgBenchmark = lazyWithReload(() => import('./PrecisionAgBenchmark.jsx'))
 const CropRotation = lazyWithReload(() => import('./CropRotation.jsx'))
 const PrecisionAgWaterUse = lazyWithReload(() => import('./PrecisionAgWaterUse.jsx'))
+const PrecisionAgStatistics = lazyWithReload(() => import('./PrecisionAgStatistics.jsx'))
 const OatSenseNotes = lazyWithReload(() => import('./OatSenseNotes.jsx'))
 const WebsiteBuilder = lazyWithReload(() => import('./WebsiteBuilder.jsx'))
 const WebsitePublic = lazyWithReload(() => import('./WebsitePublic.jsx'))
@@ -564,6 +565,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/crop-detection" element={<RequireAuth><CropDetection /></RequireAuth>} />
           <Route path="/precision-ag/visualizations" element={<RequireAuth><VisualizationsDashboard /></RequireAuth>} />
           <Route path="/precision-ag/visualizations/crop-analysis-summary" element={<RequireAuth><CropAnalysisSummary /></RequireAuth>} />
+          <Route path="/precision-ag/statistics" element={<RequireAuth><PrecisionAgStatistics /></RequireAuth>} />
           <Route path="/website/builder" element={<RequireAuth><WebsiteBuilder /></RequireAuth>} />
           <Route path="/account/audio-settings" element={<AudioSettings />} />
           <Route path="/account/settings" element={<RequireAuth><AccountSettings /></RequireAuth>} />
