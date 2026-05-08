@@ -60,7 +60,7 @@ export default function AppShell({ children }) {
   const fieldId = params.get('FieldID');
   const showFieldMenu = !!fieldId && isFieldMenuPath(location.pathname);
 
-  const accountWidth = Expanded ? 208 : 64;
+  const accountWidth = Expanded ? 211 : 67;
   const fieldWidth = fieldMenuExpanded ? FIELD_MENU_WIDTH_EXPANDED : FIELD_MENU_WIDTH_COLLAPSED;
   const padPx = accountWidth + (showFieldMenu ? fieldWidth : 0);
   const pad = `${padPx / 16}rem`;

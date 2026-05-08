@@ -13,9 +13,8 @@ const API          = import.meta.env.VITE_API_URL || '';
 const AGENT_NAME   = 'Thaiyme';
 const ACCENT_COLOR = '#7A5A3D';
 const ICON_SRC     = '/images/ThaiymeIcon.png';
-// Sidebar widths match AccountSidebar: w-52 (208px) expanded, w-16 (64px) collapsed
-const SIDEBAR_EXPANDED_W  = 208;
-const SIDEBAR_COLLAPSED_W = 64;
+const SIDEBAR_EXPANDED_W  = 211;
+const SIDEBAR_COLLAPSED_W = 67;
 const SESSIONS_KEY = 'thaiyme:sessions';
 
 // ── Auth ──────────────────────────────────────────────────────────────────────

@@ -623,6 +623,7 @@ function FieldList({ businessId, onCreateNew }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [openBiomass, setOpenBiomass] = useState(() => new Set());
+  const [showMoon, setShowMoon] = useState(false);
   const navigate = useNavigate();
 
   const toggleBiomass = (id) => {
@@ -694,17 +695,28 @@ function FieldList({ businessId, onCreateNew }) {
 
       <div className="flex items-center justify-between mb-6 pb-3 border-b-2 border-gray-200">
         <h2 className="text-2xl font-bold text-gray-800">Ag Dashboard</h2>
-        <button
-          onClick={() => navigate(`/precision-ag/crop-detection?BusinessID=${businessId}&mode=add-field`)}
-          className="text-sm font-semibold text-[#3D6B34] hover:underline bg-transparent border-0 p-0 cursor-pointer"
-        >
-          + Add Field
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowMoon(v => !v)}
+            title={showMoon ? 'Hide moon phases' : 'Show moon phases'}
+            className="text-2xl leading-none hover:opacity-70 transition-opacity"
+          >
+            {showMoon ? '🌑' : '🌕'}
+          </button>
+          <button
+            onClick={() => navigate(`/precision-ag/crop-detection?BusinessID=${businessId}&mode=add-field`)}
+            className="text-sm font-semibold text-[#3D6B34] hover:underline bg-transparent border-0 p-0 cursor-pointer"
+          >
+            + Add Field
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
-        <MoonPhase />
-      </div>
+      {showMoon && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+          <MoonPhase />
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">

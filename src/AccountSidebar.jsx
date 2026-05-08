@@ -182,8 +182,8 @@ export default function AccountSidebar() {
 
   return (
     <div
-      className={`fixed top-18 left-0 bottom-0 z-60 flex flex-col transition-all duration-300 ${Expanded ? 'w-52' : 'w-16'}`}
-      style={{ backgroundColor: '#faf6ef' }}
+      className="fixed top-18 left-0 bottom-0 z-60 flex flex-col transition-all duration-300"
+      style={{ backgroundColor: '#faf6ef', width: Expanded ? '211px' : '67px' }}
     >
       <button
         onClick={() => setExpanded(!Expanded)}
