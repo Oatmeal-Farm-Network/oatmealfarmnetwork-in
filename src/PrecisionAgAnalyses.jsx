@@ -687,7 +687,9 @@ function GrowthTab({ analyses, agronomy }) {
             Seasonal NDVI/NDRE/EVI trajectory from Sentinel-2 analysis history. Compares current vs prior observations.
           </p>
           <div className="bg-white rounded-xl border border-gray-100 p-4">
-            <LineChart series={vegSeries} xLabels={dates} height={220} yMin={0} yMax={1} />
+            <div style={{ height: 220 }}>
+              <LineChart series={vegSeries} xLabels={dates} height={220} yMin={0} yMax={1} stretch={true} />
+            </div>
           </div>
         </div>
       ) : (
@@ -701,7 +703,9 @@ function GrowthTab({ analyses, agronomy }) {
         <div>
           <SectionTitle>Field Health Score Over Time</SectionTitle>
           <div className="bg-white rounded-xl border border-gray-100 p-4">
-            <LineChart series={healthSeries} xLabels={dates} height={180} yMin={0} yMax={100} />
+            <div style={{ height: 180 }}>
+              <LineChart series={healthSeries} xLabels={dates} height={180} yMin={0} yMax={100} stretch={true} />
+            </div>
           </div>
         </div>
       )}
@@ -1633,24 +1637,29 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
 
   async function loadAll() {
     setLoading(true);
+    // Phase 1: fast DB-only queries — show existing data immediately
+    const [analysesRes, ndviSeriesRes] = await Promise.all([
+      safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/analyses?limit=20`),
+      safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/indices/series?index=NDVI&days=180`),
+    ]);
+    setAnalyses(analysesRes?.analyses || []);
+    setNdviSeries(ndviSeriesRes || null);
+    setLoading(false);
+
+    // Phase 2: slower external-API calls load in the background after the page renders
     const weatherUrl = (field.latitude && field.longitude)
       ? `${API_URL}/api/weather?lat=${field.latitude}&lon=${field.longitude}`
       : null;
-    const [analysesRes, weatherRes, recsRes, alertsRes, agronomyRes, ndviSeriesRes] = await Promise.all([
-      safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/analyses?limit=20`),
+    const [weatherRes, recsRes, alertsRes, agronomyRes] = await Promise.all([
       weatherUrl ? safeFetch(weatherUrl) : Promise.resolve(null),
       safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/recommendations`),
       safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/alerts?status=open`),
       safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/agronomy`),
-      safeFetch(`${CROP_API_URL}/api/fields/${fieldId}/indices/series?index=NDVI&days=180`),
     ]);
-    setAnalyses(analysesRes?.analyses || []);
     setWeather(weatherRes || null);
     setRecommendations(recsRes?.recommendations || []);
     setAlerts(alertsRes?.alerts || []);
     setAgronomy(agronomyRes || null);
-    setNdviSeries(ndviSeriesRes || null);
-    setLoading(false);
   }
 
   async function triggerAnalysis() {
