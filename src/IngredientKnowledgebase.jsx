@@ -54,12 +54,51 @@ function getDesc(name) {
   return DESCRIPTIONS[name.toLowerCase()] || null;
 }
 
+const CATEGORY_IMAGES = {
+  'algae':                      '/images/algaeIngredientHeader.webp',
+  'beans':                      '/images/beansIngredientHeader.webp',
+  'berries':                    '/images/berriesIngredientHeader.webp',
+  'breads':                     '/images/breadsIngredientHeader.webp',
+  'candy':                      '/images/candyIngredientHeader.webp',
+  'cheeses':                    '/images/CheesesIngredientHeader.webp',
+  'chemicals':                  '/images/ChemicalsIngredientHeader.webp',
+  'edible-flowers':             '/images/EdibleflowersIngredientHeader.webp',
+  'fish':                       '/images/FishIngredientHeader.webp',
+  'flours':                     '/images/FloursIngredientHeader.webp',
+  'fruit':                      '/images/FruitsIngredientHeader.webp',
+  'fungi':                      '/images/FungisIngredientHeader.webp',
+  'gourd':                      '/images/GourdsIngredientHeader.webp',
+  'grain':                      '/images/Grains.webp',
+  'herbs':                      '/images/herbsIngredientHeader.webp',
+  'juice':                      '/images/JuicesIngredientHeader.webp',
+  'legumes':                    '/images/LegumesIngredientHeader.webp',
+  'meats':                      '/images/MeatsIngredientHeader.webp',
+  'melon':                      '/images/MelonsIngredientHeader.webp',
+  'milks':                      '/images/MilksIngredientHeader.webp',
+  'mollusks-and-crustaceans':   '/images/mollusksandcrustaceansIngredientHeader.webp',
+  'nuts':                       '/images/nutsIngredientHeader.webp',
+  'oil':                        '/images/OilsIngredientHeader.webp',
+  'pasta':                      '/images/PastasIngredientHeader.webp',
+  'peppers':                    '/images/peppersIngredientHeader.webp',
+  'powders':                    '/images/PowdersIngredientHeader.webp',
+  'rices':                      '/images/RicesIngredientHeader.webp',
+  'roots':                      '/images/RootsIngredientHeader.webp',
+  'salts':                      '/images/SaltsIngredientHeader.webp',
+  'sauces':                     '/images/SpicesIngredientHeader.webp',
+  'seeds':                      '/images/SeedsIngredientHeader.webp',
+  'spices':                     '/images/Spices.webp',
+  'sugars':                     '/images/SugarsIngredientHeader.webp',
+  'teas':                       '/images/TeasIngredientHeader.webp',
+  'tubers':                     '/images/TubersIngredientHeader.webp',
+  'vegetables':                 '/images/VegetablesIngredientHeader.webp',
+};
+
 function imgSrc(cat) {
   if (cat.image) {
     if (cat.image.startsWith('/') || cat.image.startsWith('http')) return cat.image;
     return '/images/' + cat.image;
   }
-  return '/images/' + cat.name.replace(/ /g, '') + '.webp';
+  return CATEGORY_IMAGES[cat.slug] || '/images/GrainsIngredientHeader.webp';
 }
 
 export default function IngredientKnowledgebase() {
