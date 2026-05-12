@@ -52,8 +52,16 @@ function cleanForSpeech(text) {
 }
 
 // ── Message bubble ────────────────────────────────────────────────────────────
-function Bubble({ role, content, ttsSupported, onSpeak }) {
+function Bubble({ role, content, ttsSupported, onSpeak, threadId, onFeedback }) {
   const isUser = role === 'user';
+  const [voted, setVoted] = React.useState(null); // null | 'up' | 'down'
+
+  function handleFeedback(rating) {
+    if (voted) return;
+    setVoted(rating > 0 ? 'up' : 'down');
+    onFeedback && onFeedback(rating);
+  }
+
   return (
     <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
       {!isUser && (
@@ -92,6 +100,28 @@ function Bubble({ role, content, ttsSupported, onSpeak }) {
               padding: '2px 3px', lineHeight: 1,
             }}
           >🔊</button>
+        )}
+        {!isUser && (
+          <div style={{ display: 'flex', gap: 4, marginTop: 3, justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => handleFeedback(1)}
+              title="Helpful"
+              style={{
+                background: 'none', border: 'none', cursor: voted ? 'default' : 'pointer',
+                fontSize: 13, lineHeight: 1, padding: '1px 3px', opacity: voted === 'down' ? 0.3 : 1,
+                color: voted === 'up' ? SAIGE_GREEN : '#9ca3af',
+              }}
+            >👍</button>
+            <button
+              onClick={() => handleFeedback(-1)}
+              title="Not helpful"
+              style={{
+                background: 'none', border: 'none', cursor: voted ? 'default' : 'pointer',
+                fontSize: 13, lineHeight: 1, padding: '1px 3px', opacity: voted === 'up' ? 0.3 : 1,
+                color: voted === 'down' ? '#dc2626' : '#9ca3af',
+              }}
+            >👎</button>
+          </div>
         )}
       </div>
     </div>
@@ -222,6 +252,14 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
     setImageData(null);
     setImagePreview(null);
   }, []);
+
+  const sendFeedback = useCallback((rating) => {
+    fetch(`${SAIGE_API}/chat/feedback`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ thread_id: threadId, rating }),
+    }).catch(() => {}); // fire-and-forget; silently ignore errors
+  }, [threadId]);
 
   const stopTTS = useCallback(() => {
     if (audioRef.current) {
@@ -572,7 +610,7 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
           </div>
         )}
         {messages.map((m, i) => (
-          <Bubble key={i} role={m.role} content={m.content} ttsSupported={ttsSupported} onSpeak={playTTS} />
+          <Bubble key={i} role={m.role} content={m.content} ttsSupported={ttsSupported} onSpeak={playTTS} onFeedback={m.role === 'assistant' ? sendFeedback : undefined} />
         ))}
         {sending && (
           <div style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic', fontFamily: FONT_BODY, padding: '4px 0' }}>
