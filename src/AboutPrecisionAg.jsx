@@ -58,7 +58,7 @@ export default function AboutPrecisionAg() {
       <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
-            src="/images/CoreFeaturesPrecisionAg.webp"
+            src="/images/PrecisionAgBanner.webp"
             alt={t('precision.hero_title')}
             className="w-full object-cover"
             style={{ height: '260px', display: 'block' }}

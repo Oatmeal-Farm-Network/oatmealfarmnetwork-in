@@ -47,7 +47,7 @@ export default function AboutDirectory() {
       <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
         <div className="relative w-full overflow-hidden rounded-xl">
           <img
-            src="/images/1wmain.webp"
+            src="/images/DirectoryBanner.webp"
             alt="Farm Network Directory"
             className="w-full object-cover"
             style={{ height: '260px', display: 'block' }}

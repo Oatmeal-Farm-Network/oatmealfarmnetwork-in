@@ -42,7 +42,7 @@ export default function AboutBlog() {
 
       <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
         <div className="relative w-full overflow-hidden rounded-xl">
-          <img src="/images/1wmain.webp" alt="Farm Blog Platform" className="w-full object-cover" style={{ height: '260px', display: 'block' }} loading="eager" fetchPriority="high" width="1300" height="260" onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }} />
+          <img src="/images/BlogBanner.webp" alt="Farm Blog Platform" className="w-full object-cover" style={{ height: '260px', display: 'block' }} loading="eager" fetchPriority="high" width="1300" height="260" onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(20,25,100,0.92) 0%, rgba(20,25,100,0.75) 45%, rgba(20,25,100,0) 78%)' }} />
           <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '720px' }}>
             <div className="flex items-center gap-3 mb-3">
