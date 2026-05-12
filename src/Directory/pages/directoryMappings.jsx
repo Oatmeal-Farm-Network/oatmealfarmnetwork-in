@@ -81,7 +81,7 @@ export const DIRECTORY_TYPE_TO_IMAGE = {
     'restaurants': restaurantsImg,
     'retailers': retailersImg,
     'service-providers': serviceProvidersImg,
-    'transporters': '/images/207851Transporter.webp',
+    'transporters': '/images/Transportation.webp',
     'universities': universitiesImg,
     'veterinarians': vetImg,
     'vineyards': vineyardsImg,
