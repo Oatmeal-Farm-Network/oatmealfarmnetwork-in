@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Bogga Hore",
     "dashboard": "Dashboard-ka",
@@ -3461,9 +3461,9 @@
     "label_phone": "Telefoon",
     "permission_text": "Haa, waxaad haysataa ogolaansho aad ku wadaagi karto liisaskayga emayllada ballaaran iyo baraha bulshada.",
     "livestock_disclaimer_title": "Afeef Sharci oo ku saabsan Xoolaha:",
-    "livestock_disclaimer_body": "Waan qirayaa oo waan ogolahay inaan mas'uul ka ahay gorgortanka dhammaan iibka xoolaha. Global Grange Inc. mas'uuliyad sharci ah kama saarna dhinac kasta oo iibkaas ah iyo sidoo kale cawaaqib kasta oo ka dhasha macaamilladaas.",
+    "livestock_disclaimer_body": "Waan qirayaa oo waan ogolahay inaan mas'uul ka ahay gorgortanka dhammaan iibka xoolaha. Oatmeal Farm Network mas'uuliyad sharci ah kama saarna dhinac kasta oo iibkaas ah iyo sidoo kale cawaaqib kasta oo ka dhasha macaamilladaas.",
     "sales_disclaimer_title": "Afeef Sharciyeed oo Iib ah:",
-    "sales_disclaimer_body": "Waxaan qirayaa oo aan ku raacsanahay in Global Grange Inc. aysan mas'uul ka ahayn dhinac kasta oo iibka ah, oo ay ku jiraan laakiin aan ku xaddidnayn iibinta xoolaha, ukunta, faybarka/dhogorta, alaabada, iyo adeegyada, iyo sidoo kale cawaaqib kasta oo ka dhasha macaamilladaas.",
+    "sales_disclaimer_body": "Waxaan qirayaa oo aan ku raacsanahay in Oatmeal Farm Network aysan mas'uul ka ahayn dhinac kasta oo iibka ah, oo ay ku jiraan laakiin aan ku xaddidnayn iibinta xoolaha, ukunta, faybarka/dhogorta, alaabada, iyo adeegyada, iyo sidoo kale cawaaqib kasta oo ka dhasha macaamilladaas.",
     "btn_creating": "Abuurista…",
     "btn_continue": "Sii wad →",
     "btn_create": "Samee Akoon →",

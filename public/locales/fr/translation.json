@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Maison",
     "dashboard": "Tableau de bord",
@@ -3461,9 +3461,9 @@
     "label_phone": "Téléphone",
     "permission_text": "Oui, vous avez ma permission de partager mes annonces par e-mail et sur les réseaux sociaux.",
     "livestock_disclaimer_title": "Avertissement légal concernant l'élevage :",
-    "livestock_disclaimer_body": "Je reconnais et j'accepte être seul responsable de la négociation de toutes les ventes de bétail. Global Grange Inc. décline toute responsabilité légale quant à tout aspect de ces ventes et aux conséquences qui pourraient en découler.",
+    "livestock_disclaimer_body": "Je reconnais et j'accepte être seul responsable de la négociation de toutes les ventes de bétail. Oatmeal Farm Network décline toute responsabilité légale quant à tout aspect de ces ventes et aux conséquences qui pourraient en découler.",
     "sales_disclaimer_title": "Avertissement légal relatif aux ventes :",
-    "sales_disclaimer_body": "Je reconnais et j'accepte que Global Grange Inc. n'assume aucune responsabilité légale pour quelque aspect que ce soit des ventes, y compris, mais sans s'y limiter, la vente de bétail, d'œufs, de fibres/laine, de produits et de services, ainsi que pour toutes les conséquences qui pourraient en découler.",
+    "sales_disclaimer_body": "Je reconnais et j'accepte que Oatmeal Farm Network n'assume aucune responsabilité légale pour quelque aspect que ce soit des ventes, y compris, mais sans s'y limiter, la vente de bétail, d'œufs, de fibres/laine, de produits et de services, ainsi que pour toutes les conséquences qui pourraient en découler.",
     "btn_creating": "Création…",
     "btn_continue": "Continuer →",
     "btn_create": "Créer un compte →",

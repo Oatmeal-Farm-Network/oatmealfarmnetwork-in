@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Ev",
     "dashboard": "Kontrol Paneli",
@@ -3461,9 +3461,9 @@
     "label_phone": "Telefon",
     "permission_text": "Evet, ilanlarımı toplu e-postalarda ve sosyal medyada paylaşmanıza izin veriyorum.",
     "livestock_disclaimer_title": "Hayvancılıkla İlgili Yasal Uyarı:",
-    "livestock_disclaimer_body": "Hayvan satışlarının tümünün müzakeresinden tamamen ben sorumlu olduğumu kabul ve beyan ederim. Global Grange Inc., bu satışların herhangi bir yönünden ve söz konusu işlemlerden kaynaklanan sonuçlardan hiçbir şekilde yasal olarak sorumlu değildir.",
+    "livestock_disclaimer_body": "Hayvan satışlarının tümünün müzakeresinden tamamen ben sorumlu olduğumu kabul ve beyan ederim. Oatmeal Farm Network, bu satışların herhangi bir yönünden ve söz konusu işlemlerden kaynaklanan sonuçlardan hiçbir şekilde yasal olarak sorumlu değildir.",
     "sales_disclaimer_title": "Satışla İlgili Yasal Uyarı:",
-    "sales_disclaimer_body": "Global Grange Inc.'in, canlı hayvan, yumurta, elyaf/yün, ürün ve hizmet satışları da dahil olmak üzere ancak bunlarla sınırlı kalmamak kaydıyla, satışların herhangi bir yönünden ve bu işlemlerden kaynaklanan her türlü sonuçtan yasal olarak sorumlu olmadığını kabul ve onaylıyorum.",
+    "sales_disclaimer_body": "Oatmeal Farm Network'in, canlı hayvan, yumurta, elyaf/yün, ürün ve hizmet satışları da dahil olmak üzere ancak bunlarla sınırlı kalmamak kaydıyla, satışların herhangi bir yönünden ve bu işlemlerden kaynaklanan her türlü sonuçtan yasal olarak sorumlu olmadığını kabul ve onaylıyorum.",
     "btn_creating": "Oluşturma…",
     "btn_continue": "Devam →",
     "btn_create": "Hesap Oluştur →",

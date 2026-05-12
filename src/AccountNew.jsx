@@ -408,7 +408,6 @@ export default function AccountNew() {
     const e = {};
     if (!form.BusinessTypeID) e.BusinessTypeID = t('account_new.err_type');
     if (!form.StateIndex)     e.StateIndex     = t('account_new.err_state');
-    if (!form.PeoplePhone)    e.PeoplePhone    = t('account_new.err_phone');
     if (String(form.BusinessTypeID) === '8') {
       if (!form.LivestockLegalDisclaimer) e.LivestockLegalDisclaimer = t('account_new.err_livestock_disclaimer');
       if (!form.SalesLegalDisclaimer)     e.SalesLegalDisclaimer     = t('account_new.err_sales_disclaimer');
@@ -571,7 +570,7 @@ export default function AccountNew() {
               </div>
 
               <div>
-                <label className={labelClass}>{t('account_new.label_phone')}</label>
+                <label className={labelClass}>{t('account_new.label_phone')} <span className="text-gray-400 font-normal">(optional)</span></label>
                 <input type="text" value={form.PeoplePhone}
                   onChange={e => update('PeoplePhone', e.target.value.replace(/[^0-9()-.\s]/g, ''))}
                   className={inputClass} placeholder="(555) 555-5555" />

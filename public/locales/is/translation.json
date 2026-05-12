@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Heim",
     "dashboard": "Mælaborð",
@@ -3461,9 +3461,9 @@
     "label_phone": "Sími",
     "permission_text": "Já, þú hefur leyfi mitt til að deila auglýsingum mínum í fjöldapósti og á samfélagsmiðlum.",
     "livestock_disclaimer_title": "Lögleg fyrirvari varðandi búfénað:",
-    "livestock_disclaimer_body": "Ég viðurkenni og samþykki að ég ber eingöngu ábyrgð á samningum um allar sölur á búfénaði. Global Grange Inc. ber enga lagalega ábyrgð á neinum þáttum slíkrar sölu né neinum afleiðingum sem kunna að leiða af slíkum viðskiptum.",
+    "livestock_disclaimer_body": "Ég viðurkenni og samþykki að ég ber eingöngu ábyrgð á samningum um allar sölur á búfénaði. Oatmeal Farm Network ber enga lagalega ábyrgð á neinum þáttum slíkrar sölu né neinum afleiðingum sem kunna að leiða af slíkum viðskiptum.",
     "sales_disclaimer_title": "Lögleg fyrirvari um sölu:",
-    "sales_disclaimer_body": "Ég viðurkenni og samþykki að Global Grange Inc. ber enga lagalega ábyrgð á neinum þáttum sölu, þar með talið en ekki takmarkað við sölu á búfé, eggjum, trefjum/ull, vörum og þjónustu, sem og öllum afleiðingum sem kunna að leiða af þessum viðskiptum.",
+    "sales_disclaimer_body": "Ég viðurkenni og samþykki að Oatmeal Farm Network ber enga lagalega ábyrgð á neinum þáttum sölu, þar með talið en ekki takmarkað við sölu á búfé, eggjum, trefjum/ull, vörum og þjónustu, sem og öllum afleiðingum sem kunna að leiða af þessum viðskiptum.",
     "btn_creating": "Að búa til…",
     "btn_continue": "Halda áfram →",
     "btn_create": "Stofna aðgang →",

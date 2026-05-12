@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Hjem",
     "dashboard": "Dashboard",
@@ -3461,9 +3461,9 @@
     "label_phone": "Telefon",
     "permission_text": "Ja, du har min tilladelse til at dele mine annoncer i massemails og på sociale medier.",
     "livestock_disclaimer_title": "Juridisk ansvarsfraskrivelse vedrørende husdyr:",
-    "livestock_disclaimer_body": "Jeg anerkender og accepterer, at jeg alene er ansvarlig for at forhandle alle salg af husdyr. Global Grange Inc. bærer intet juridisk ansvar for nogen aspekter af sådanne salg eller eventuelle deraf følgende konsekvenser, der måtte opstå som følge af nævnte transaktioner.",
+    "livestock_disclaimer_body": "Jeg anerkender og accepterer, at jeg alene er ansvarlig for at forhandle alle salg af husdyr. Oatmeal Farm Network bærer intet juridisk ansvar for nogen aspekter af sådanne salg eller eventuelle deraf følgende konsekvenser, der måtte opstå som følge af nævnte transaktioner.",
     "sales_disclaimer_title": "Juridisk ansvarsfraskrivelse for salg:",
-    "sales_disclaimer_body": "Jeg anerkender og accepterer, at Global Grange Inc. ikke bærer noget juridisk ansvar for nogen aspekter af salg, herunder, men ikke begrænset til, salg af husdyr, æg, fibre/uld, produkter og tjenester, samt eventuelle deraf følgende konsekvenser som følge af nævnte transaktioner.",
+    "sales_disclaimer_body": "Jeg anerkender og accepterer, at Oatmeal Farm Network ikke bærer noget juridisk ansvar for nogen aspekter af salg, herunder, men ikke begrænset til, salg af husdyr, æg, fibre/uld, produkter og tjenester, samt eventuelle deraf følgende konsekvenser som følge af nævnte transaktioner.",
     "btn_creating": "Opretter…",
     "btn_continue": "Fortsæt →",
     "btn_create": "Opret konto →",

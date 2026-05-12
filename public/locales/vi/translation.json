@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Trang chủ",
     "dashboard": "Bảng điều khiển",
@@ -3461,9 +3461,9 @@
     "label_phone": "Điện thoại",
     "permission_text": "Vâng, bạn được phép chia sẻ các tin đăng của tôi qua email hàng loạt và trên mạng xã hội.",
     "livestock_disclaimer_title": "Tuyên bố miễn trừ trách nhiệm pháp lý liên quan đến chăn nuôi:",
-    "livestock_disclaimer_body": "Tôi xác nhận và đồng ý rằng tôi hoàn toàn chịu trách nhiệm về việc đàm phán tất cả các giao dịch mua bán gia súc. Global Grange Inc. không chịu bất kỳ trách nhiệm pháp lý nào đối với bất kỳ khía cạnh nào của các giao dịch mua bán đó cũng như bất kỳ hậu quả nào phát sinh từ các giao dịch nói trên.",
+    "livestock_disclaimer_body": "Tôi xác nhận và đồng ý rằng tôi hoàn toàn chịu trách nhiệm về việc đàm phán tất cả các giao dịch mua bán gia súc. Oatmeal Farm Network không chịu bất kỳ trách nhiệm pháp lý nào đối với bất kỳ khía cạnh nào của các giao dịch mua bán đó cũng như bất kỳ hậu quả nào phát sinh từ các giao dịch nói trên.",
     "sales_disclaimer_title": "Tuyên bố miễn trừ trách nhiệm pháp lý về bán hàng:",
-    "sales_disclaimer_body": "Tôi xác nhận và đồng ý rằng Global Grange Inc. không chịu trách nhiệm pháp lý đối với bất kỳ khía cạnh nào của việc bán hàng, bao gồm nhưng không giới hạn ở việc bán gia súc, trứng, sợi/len, sản phẩm và dịch vụ, cũng như bất kỳ hậu quả nào phát sinh từ các giao dịch nói trên.",
+    "sales_disclaimer_body": "Tôi xác nhận và đồng ý rằng Oatmeal Farm Network không chịu trách nhiệm pháp lý đối với bất kỳ khía cạnh nào của việc bán hàng, bao gồm nhưng không giới hạn ở việc bán gia súc, trứng, sợi/len, sản phẩm và dịch vụ, cũng như bất kỳ hậu quả nào phát sinh từ các giao dịch nói trên.",
     "btn_creating": "Đang tạo…",
     "btn_continue": "Tiếp tục →",
     "btn_create": "Tạo tài khoản →",

@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Otthon",
     "dashboard": "Műszerfal",
@@ -3461,9 +3461,9 @@
     "label_phone": "Telefon",
     "permission_text": "Igen, engedélyezem, hogy tömegesen osszátok meg a hirdetéseimet e-mailekben és a közösségi médiában.",
     "livestock_disclaimer_title": "Jogi nyilatkozat az állatállományról:",
-    "livestock_disclaimer_body": "Tudomásul veszem és elfogadom, hogy kizárólag én vagyok felelős az összes élőállat-értékesítés tárgyalásáért. A Global Grange Inc. semmilyen jogi felelősséget nem vállal az ilyen értékesítések semmilyen aspektusáért, valamint az említett tranzakciókból eredő következményekért.",
+    "livestock_disclaimer_body": "Tudomásul veszem és elfogadom, hogy kizárólag én vagyok felelős az összes élőállat-értékesítés tárgyalásáért. A Oatmeal Farm Network semmilyen jogi felelősséget nem vállal az ilyen értékesítések semmilyen aspektusáért, valamint az említett tranzakciókból eredő következményekért.",
     "sales_disclaimer_title": "Értékesítési jogi nyilatkozat:",
-    "sales_disclaimer_body": "Tudomásul veszem és elfogadom, hogy a Global Grange Inc. semmilyen jogi felelősséget nem vállal az értékesítés semmilyen aspektusáért, beleértve, de nem kizárólagosan az élőállatok, tojások, rostok/gyapjú, termékek és szolgáltatások értékesítését, valamint az említett tranzakciókból eredő következményeket.",
+    "sales_disclaimer_body": "Tudomásul veszem és elfogadom, hogy a Oatmeal Farm Network semmilyen jogi felelősséget nem vállal az értékesítés semmilyen aspektusáért, beleértve, de nem kizárólagosan az élőállatok, tojások, rostok/gyapjú, termékek és szolgáltatások értékesítését, valamint az említett tranzakciókból eredő következményeket.",
     "btn_creating": "Létrehozás…",
     "btn_continue": "Folytatás →",
     "btn_create": "Fiók létrehozása →",

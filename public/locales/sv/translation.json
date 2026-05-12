@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Hem",
     "dashboard": "Instrumentpanel",
@@ -3461,9 +3461,9 @@
     "label_phone": "Telefon",
     "permission_text": "Ja, du har mitt tillstånd att dela mina annonser i massutskick och på sociala medier.",
     "livestock_disclaimer_title": "Juridisk ansvarsfriskrivning för boskap:",
-    "livestock_disclaimer_body": "Jag bekräftar och samtycker till att jag ensamt är ansvarig för att förhandla om all boskapsförsäljning. Global Grange Inc. bär inget juridiskt ansvar för någon aspekt av sådan försäljning eller eventuella följder som uppstår till följd av nämnda transaktioner.",
+    "livestock_disclaimer_body": "Jag bekräftar och samtycker till att jag ensamt är ansvarig för att förhandla om all boskapsförsäljning. Oatmeal Farm Network bär inget juridiskt ansvar för någon aspekt av sådan försäljning eller eventuella följder som uppstår till följd av nämnda transaktioner.",
     "sales_disclaimer_title": "Juridisk ansvarsfriskrivning för försäljning:",
-    "sales_disclaimer_body": "Jag bekräftar och samtycker till att Global Grange Inc. inte bär något juridiskt ansvar för någon aspekt av försäljningen, inklusive men inte begränsat till försäljning av boskap, ägg, fiber/ull, produkter och tjänster, såväl som eventuella följder som uppstår till följd av nämnda transaktioner.",
+    "sales_disclaimer_body": "Jag bekräftar och samtycker till att Oatmeal Farm Network inte bär något juridiskt ansvar för någon aspekt av försäljningen, inklusive men inte begränsat till försäljning av boskap, ägg, fiber/ull, produkter och tjänster, såväl som eventuella följder som uppstår till följd av nämnda transaktioner.",
     "btn_creating": "Skapande…",
     "btn_continue": "Fortsätt →",
     "btn_create": "Skapa konto →",

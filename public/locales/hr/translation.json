@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Dom",
     "dashboard": "Nadzorna ploča",
@@ -3461,9 +3461,9 @@
     "label_phone": "Telefon",
     "permission_text": "Da, imate moje dopuštenje da dijelite moje oglase putem masovnih e-poruka i na društvenim mrežama.",
     "livestock_disclaimer_title": "Pravna odricanja od odgovornosti za stoku:",
-    "livestock_disclaimer_body": "Potvrđujem i slažem se da sam isključivo odgovoran za pregovaranje o prodaji sve stoke. Global Grange Inc. ne snosi nikakvu pravnu odgovornost za bilo koji aspekt takve prodaje, kao ni za bilo kakve posljedice koje proizlaze iz navedenih transakcija.",
+    "livestock_disclaimer_body": "Potvrđujem i slažem se da sam isključivo odgovoran za pregovaranje o prodaji sve stoke. Oatmeal Farm Network ne snosi nikakvu pravnu odgovornost za bilo koji aspekt takve prodaje, kao ni za bilo kakve posljedice koje proizlaze iz navedenih transakcija.",
     "sales_disclaimer_title": "Pravna izjava o odricanju odgovornosti za prodaju:",
-    "sales_disclaimer_body": "Potvrđujem i slažem se da Global Grange Inc. ne snosi nikakvu pravnu odgovornost za bilo koji aspekt prodaje, uključujući, ali ne ograničavajući se na prodaju stoke, jaja, vlakana/vune, proizvoda i usluga, kao ni za sve posljedice koje proizlaze iz navedenih transakcija.",
+    "sales_disclaimer_body": "Potvrđujem i slažem se da Oatmeal Farm Network ne snosi nikakvu pravnu odgovornost za bilo koji aspekt prodaje, uključujući, ali ne ograničavajući se na prodaju stoke, jaja, vlakana/vune, proizvoda i usluga, kao ni za sve posljedice koje proizlaze iz navedenih transakcija.",
     "btn_creating": "Izrada…",
     "btn_continue": "Nastavi →",
     "btn_create": "Izradi račun →",

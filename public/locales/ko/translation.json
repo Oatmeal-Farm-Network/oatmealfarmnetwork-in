@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "집",
     "dashboard": "계기반",
@@ -3461,9 +3461,9 @@
     "label_phone": "핸드폰",
     "permission_text": "네, 제 상품 목록을 대량 이메일과 소셜 미디어에 공유하셔도 좋습니다.",
     "livestock_disclaimer_title": "가축 관련 법적 고지사항:",
-    "livestock_disclaimer_body": "본인은 모든 가축 매매 협상에 대한 전적인 책임을 진다는 점을 인정하고 동의합니다. 글로벌 그레인지(Global Grange Inc.)는 이러한 매매의 어떠한 측면이나 그로 인해 발생하는 모든 결과에 대해 법적 책임을 지지 않습니다.",
+    "livestock_disclaimer_body": "본인은 모든 가축 매매 협상에 대한 전적인 책임을 진다는 점을 인정하고 동의합니다. 글로벌 그레인지(Oatmeal Farm Network)는 이러한 매매의 어떠한 측면이나 그로 인해 발생하는 모든 결과에 대해 법적 책임을 지지 않습니다.",
     "sales_disclaimer_title": "판매 관련 법적 고지:",
-    "sales_disclaimer_body": "본인은 글로벌 그레인지(Global Grange Inc.)가 가축, 계란, 섬유/양모, 제품 및 서비스 판매를 포함하되 이에 국한되지 않는 모든 판매 활동 및 그로 인해 발생하는 모든 결과에 대해 법적 책임을 지지 않는다는 점을 인정하고 동의합니다.",
+    "sales_disclaimer_body": "본인은 글로벌 그레인지(Oatmeal Farm Network)가 가축, 계란, 섬유/양모, 제품 및 서비스 판매를 포함하되 이에 국한되지 않는 모든 판매 활동 및 그로 인해 발생하는 모든 결과에 대해 법적 책임을 지지 않는다는 점을 인정하고 동의합니다.",
     "btn_creating": "생성 중…",
     "btn_continue": "계속 →",
     "btn_create": "계정 생성 →",

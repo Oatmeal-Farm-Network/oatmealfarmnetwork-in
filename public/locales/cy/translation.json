@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Cartref",
     "dashboard": "Dangosfwrdd",
@@ -3461,9 +3461,9 @@
     "label_phone": "Ffôn",
     "permission_text": "Oes, mae gennych fy nghaniatâd i rannu fy rhestrau mewn e-byst torfol ac ar gyfryngau cymdeithasol.",
     "livestock_disclaimer_title": "Ymwadiad Cyfreithiol Da Byw:",
-    "livestock_disclaimer_body": "Rwy'n cydnabod ac yn cytuno mai fi sy'n gyfrifol yn unig am drafod pob gwerthiant da byw. Nid oes gan Global Grange Inc. unrhyw gyfrifoldeb cyfreithiol am unrhyw agwedd ar werthiannau o'r fath yn ogystal ag unrhyw ganlyniadau sy'n deillio o'r trafodion hynny.",
+    "livestock_disclaimer_body": "Rwy'n cydnabod ac yn cytuno mai fi sy'n gyfrifol yn unig am drafod pob gwerthiant da byw. Nid oes gan Oatmeal Farm Network unrhyw gyfrifoldeb cyfreithiol am unrhyw agwedd ar werthiannau o'r fath yn ogystal ag unrhyw ganlyniadau sy'n deillio o'r trafodion hynny.",
     "sales_disclaimer_title": "Ymwadiad Cyfreithiol Gwerthu:",
-    "sales_disclaimer_body": "Rwy'n cydnabod ac yn cytuno nad oes gan Global Grange Inc. unrhyw gyfrifoldeb cyfreithiol am unrhyw agwedd ar werthiannau, gan gynnwys ond heb fod yn gyfyngedig i werthu da byw, wyau, ffibr/gwlân, cynhyrchion a gwasanaethau, yn ogystal ag unrhyw ganlyniadau sy'n deillio o'r trafodion hynny.",
+    "sales_disclaimer_body": "Rwy'n cydnabod ac yn cytuno nad oes gan Oatmeal Farm Network unrhyw gyfrifoldeb cyfreithiol am unrhyw agwedd ar werthiannau, gan gynnwys ond heb fod yn gyfyngedig i werthu da byw, wyau, ffibr/gwlân, cynhyrchion a gwasanaethau, yn ogystal ag unrhyw ganlyniadau sy'n deillio o'r trafodion hynny.",
     "btn_creating": "Wrthi'n creu…",
     "btn_continue": "Parhau →",
     "btn_create": "Creu Cyfrif →",

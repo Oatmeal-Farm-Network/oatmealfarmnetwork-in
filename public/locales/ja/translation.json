@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "家",
     "dashboard": "ダッシュボード",
@@ -3461,9 +3461,9 @@
     "label_phone": "電話",
     "permission_text": "はい、私の出品情報をメールやソーシャルメディアで一斉送信していただいて構いません。",
     "livestock_disclaimer_title": "家畜に関する法的免責事項：",
-    "livestock_disclaimer_body": "私は、家畜の売買交渉に関する一切の責任が私にあることを認め、同意します。Global Grange Inc.は、かかる売買のいかなる側面、および当該取引から生じるいかなる結果についても、法的責任を負いません。",
+    "livestock_disclaimer_body": "私は、家畜の売買交渉に関する一切の責任が私にあることを認め、同意します。Oatmeal Farm Networkは、かかる売買のいかなる側面、および当該取引から生じるいかなる結果についても、法的責任を負いません。",
     "sales_disclaimer_title": "販売に関する法的免責事項：",
-    "sales_disclaimer_body": "私は、Global Grange Inc.が、家畜、卵、繊維／羊毛、製品、サービスなどの販売を含むがこれらに限定されない、販売のあらゆる側面、および当該取引から生じるあらゆる結果について、法的責任を一切負わないことを認め、同意します。",
+    "sales_disclaimer_body": "私は、Oatmeal Farm Networkが、家畜、卵、繊維／羊毛、製品、サービスなどの販売を含むがこれらに限定されない、販売のあらゆる側面、および当該取引から生じるあらゆる結果について、法的責任を一切負わないことを認め、同意します。",
     "btn_creating": "作成…",
     "btn_continue": "続ける →",
     "btn_create": "アカウント作成 →",

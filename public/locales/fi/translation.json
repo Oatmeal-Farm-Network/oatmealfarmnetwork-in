@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Kotiin",
     "dashboard": "Kojelauta",
@@ -3461,9 +3461,9 @@
     "label_phone": "Puhelin",
     "permission_text": "Kyllä, minulla on lupa jakaa ilmoituksiani massasähköposteissa ja sosiaalisessa mediassa.",
     "livestock_disclaimer_title": "Karjan oikeudellinen vastuuvapauslauseke:",
-    "livestock_disclaimer_body": "Ymmärrän ja hyväksyn, että olen yksin vastuussa kaikkien karjakauppojen neuvottelemisesta. Global Grange Inc. ei ole oikeudellisesti vastuussa mistään tällaisten myyntien osa-alueesta eikä niistä johtuvista seurauksista.",
+    "livestock_disclaimer_body": "Ymmärrän ja hyväksyn, että olen yksin vastuussa kaikkien karjakauppojen neuvottelemisesta. Oatmeal Farm Network ei ole oikeudellisesti vastuussa mistään tällaisten myyntien osa-alueesta eikä niistä johtuvista seurauksista.",
     "sales_disclaimer_title": "Myynnin oikeudellinen vastuuvapauslauseke:",
-    "sales_disclaimer_body": "Ymmärrän ja hyväksyn, että Global Grange Inc. ei ole oikeudellisesti vastuussa mistään myynnin osasta, mukaan lukien, mutta ei rajoittuen, karjan, munien, kuidun/villan, tuotteiden ja palveluiden myynti, eikä myöskään mistään näistä liiketoimista johtuvista seurauksista.",
+    "sales_disclaimer_body": "Ymmärrän ja hyväksyn, että Oatmeal Farm Network ei ole oikeudellisesti vastuussa mistään myynnin osasta, mukaan lukien, mutta ei rajoittuen, karjan, munien, kuidun/villan, tuotteiden ja palveluiden myynti, eikä myöskään mistään näistä liiketoimista johtuvista seurauksista.",
     "btn_creating": "Luodaan…",
     "btn_continue": "Jatka →",
     "btn_create": "Luo tili →",

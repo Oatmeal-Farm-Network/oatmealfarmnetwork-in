@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Nyumbani",
     "dashboard": "Dashibodi",
@@ -3461,9 +3461,9 @@
     "label_phone": "Simu",
     "permission_text": "Ndiyo, una ruhusa yangu ya kushiriki matangazo yangu katika barua pepe za watu wengi na kwenye mitandao ya kijamii.",
     "livestock_disclaimer_title": "Kanusho la Kisheria la Mifugo:",
-    "livestock_disclaimer_body": "Ninakubali na kukubali kwamba mimi pekee ndiye ninayewajibika kujadili mauzo yote ya mifugo. Global Grange Inc. haina jukumu la kisheria kwa upande wowote wa mauzo hayo pamoja na matokeo yoyote yanayotokana na miamala hiyo.",
+    "livestock_disclaimer_body": "Ninakubali na kukubali kwamba mimi pekee ndiye ninayewajibika kujadili mauzo yote ya mifugo. Oatmeal Farm Network haina jukumu la kisheria kwa upande wowote wa mauzo hayo pamoja na matokeo yoyote yanayotokana na miamala hiyo.",
     "sales_disclaimer_title": "Kanusho la Kisheria la Mauzo:",
-    "sales_disclaimer_body": "Ninakubali na kukubali kwamba Global Grange Inc. haina jukumu la kisheria kwa upande wowote wa mauzo, ikiwa ni pamoja na lakini sio tu uuzaji wa mifugo, mayai, nyuzinyuzi/sufu, bidhaa, na huduma, pamoja na matokeo yoyote yanayofuata yanayotokana na miamala hiyo.",
+    "sales_disclaimer_body": "Ninakubali na kukubali kwamba Oatmeal Farm Network haina jukumu la kisheria kwa upande wowote wa mauzo, ikiwa ni pamoja na lakini sio tu uuzaji wa mifugo, mayai, nyuzinyuzi/sufu, bidhaa, na huduma, pamoja na matokeo yoyote yanayofuata yanayotokana na miamala hiyo.",
     "btn_creating": "Inaunda…",
     "btn_continue": "Endelea →",
     "btn_create": "Fungua Akaunti →",

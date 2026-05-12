@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Avaleht",
     "dashboard": "Armatuurlaud",
@@ -3461,9 +3461,9 @@
     "label_phone": "Telefon",
     "permission_text": "Jah, teil on minu luba jagada oma kuulutusi massmeilides ja sotsiaalmeedias.",
     "livestock_disclaimer_title": "Kariloomadega seotud õiguslik lahtiütlus:",
-    "livestock_disclaimer_body": "Ma tunnistan ja nõustun, et vastutan ainuisikuliselt kõigi kariloomade müügi läbirääkimiste eest. Global Grange Inc. ei kanna mingit juriidilist vastutust selliste müükide ühegi aspekti ega nimetatud tehingutest tulenevate tagajärgede eest.",
+    "livestock_disclaimer_body": "Ma tunnistan ja nõustun, et vastutan ainuisikuliselt kõigi kariloomade müügi läbirääkimiste eest. Oatmeal Farm Network ei kanna mingit juriidilist vastutust selliste müükide ühegi aspekti ega nimetatud tehingutest tulenevate tagajärgede eest.",
     "sales_disclaimer_title": "Müügi õiguslik lahtiütlus:",
-    "sales_disclaimer_body": "Ma tunnistan ja nõustun, et Global Grange Inc. ei kanna mingit juriidilist vastutust müügi ühegi aspekti eest, sealhulgas, kuid mitte ainult, kariloomade, munade, kiu/villa, toodete ja teenuste müügi eest, samuti nimetatud tehingutest tulenevate tagajärgede eest.",
+    "sales_disclaimer_body": "Ma tunnistan ja nõustun, et Oatmeal Farm Network ei kanna mingit juriidilist vastutust müügi ühegi aspekti eest, sealhulgas, kuid mitte ainult, kariloomade, munade, kiu/villa, toodete ja teenuste müügi eest, samuti nimetatud tehingutest tulenevate tagajärgede eest.",
     "btn_creating": "Loomine…",
     "btn_continue": "Jätka →",
     "btn_create": "Loo konto →",

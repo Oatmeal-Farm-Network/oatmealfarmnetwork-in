@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Baile",
     "dashboard": "Painéal Rialaithe",
@@ -3461,9 +3461,9 @@
     "label_phone": "Fón",
     "permission_text": "Tá, tá cead agat mo liostaí a roinnt i ríomhphoist mais agus ar na meáin shóisialta.",
     "livestock_disclaimer_title": "Séanadh Dlíthiúil Beostoic:",
-    "livestock_disclaimer_body": "Aithním agus aontaím gurb mise amháin atá freagrach as gach díol beostoic a chaibidliú. Níl aon fhreagracht dhlíthiúil ar Global Grange Inc. as aon ghné de na díolacháin sin ná as aon iarmhairtí a eascraíonn as na hidirbhearta sin.",
+    "livestock_disclaimer_body": "Aithním agus aontaím gurb mise amháin atá freagrach as gach díol beostoic a chaibidliú. Níl aon fhreagracht dhlíthiúil ar Oatmeal Farm Network as aon ghné de na díolacháin sin ná as aon iarmhairtí a eascraíonn as na hidirbhearta sin.",
     "sales_disclaimer_title": "Séanadh Dlíthiúil Díolacháin:",
-    "sales_disclaimer_body": "Aithním agus aontaím nach bhfuil aon fhreagracht dhlíthiúil ar Global Grange Inc. as aon ghné de dhíolacháin, lena n-áirítear, ach gan a bheith teoranta dóibh, díol beostoic, uibheacha, snáithín/olann, táirgí agus seirbhísí, chomh maith le haon iarmhairtí a eascraíonn as na hidirbhearta sin.",
+    "sales_disclaimer_body": "Aithním agus aontaím nach bhfuil aon fhreagracht dhlíthiúil ar Oatmeal Farm Network as aon ghné de dhíolacháin, lena n-áirítear, ach gan a bheith teoranta dóibh, díol beostoic, uibheacha, snáithín/olann, táirgí agus seirbhísí, chomh maith le haon iarmhairtí a eascraíonn as na hidirbhearta sin.",
     "btn_creating": "Ag cruthú…",
     "btn_continue": "Lean ar aghaidh →",
     "btn_create": "Cruthaigh Cuntas →",

@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Pradžia",
     "dashboard": "Prietaisų skydelis",
@@ -3461,9 +3461,9 @@
     "label_phone": "Telefonas",
     "permission_text": "Taip, turiu jūsų leidimą dalytis mano skelbimais masiniuose el. laiškuose ir socialiniuose tinkluose.",
     "livestock_disclaimer_title": "Gyvulininkystės teisinis atsakomybės apribojimas:",
-    "livestock_disclaimer_body": "Patvirtinu ir sutinku, kad esu vienintelis atsakingas už visų gyvulių pardavimo derybas. „Global Grange Inc.“ neprisiima jokios teisinės atsakomybės už jokius tokių pardavimų aspektus, taip pat už jokias iš minėtų sandorių kylančias pasekmes.",
+    "livestock_disclaimer_body": "Patvirtinu ir sutinku, kad esu vienintelis atsakingas už visų gyvulių pardavimo derybas. „Oatmeal Farm Network“ neprisiima jokios teisinės atsakomybės už jokius tokių pardavimų aspektus, taip pat už jokias iš minėtų sandorių kylančias pasekmes.",
     "sales_disclaimer_title": "Pardavimų teisinis atsakomybės apribojimas:",
-    "sales_disclaimer_body": "Aš patvirtinu ir sutinku, kad „Global Grange Inc.“ neprisiima jokios teisinės atsakomybės už jokį pardavimo aspektą, įskaitant, bet neapsiribojant, gyvulių, kiaušinių, pluošto / vilnos, produktų ir paslaugų pardavimą, taip pat už bet kokias iš minėtų sandorių kylančias pasekmes.",
+    "sales_disclaimer_body": "Aš patvirtinu ir sutinku, kad „Oatmeal Farm Network“ neprisiima jokios teisinės atsakomybės už jokį pardavimo aspektą, įskaitant, bet neapsiribojant, gyvulių, kiaušinių, pluošto / vilnos, produktų ir paslaugų pardavimą, taip pat už bet kokias iš minėtų sandorių kylančias pasekmes.",
     "btn_creating": "Kuriama…",
     "btn_continue": "Tęsti →",
     "btn_create": "Sukurti paskyrą →",

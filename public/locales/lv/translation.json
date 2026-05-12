@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Sākums",
     "dashboard": "Informācijas panelis",
@@ -3461,9 +3461,9 @@
     "label_phone": "Tālrunis",
     "permission_text": "Jā, jums ir mana atļauja kopīgot manus sludinājumus masveida e-pastos un sociālajos tīklos.",
     "livestock_disclaimer_title": "Lopkopības juridiskā atruna:",
-    "livestock_disclaimer_body": "Es apliecinu un piekrītu, ka esmu pilnībā atbildīgs par visu mājlopu pārdošanas darījumu slēgšanu. Global Grange Inc. neuzņemas nekādu juridisko atbildību par nevienu šādas pārdošanas aspektu, kā arī par jebkādām sekām, kas izriet no minētajiem darījumiem.",
+    "livestock_disclaimer_body": "Es apliecinu un piekrītu, ka esmu pilnībā atbildīgs par visu mājlopu pārdošanas darījumu slēgšanu. Oatmeal Farm Network neuzņemas nekādu juridisko atbildību par nevienu šādas pārdošanas aspektu, kā arī par jebkādām sekām, kas izriet no minētajiem darījumiem.",
     "sales_disclaimer_title": "Pārdošanas juridiskā atruna:",
-    "sales_disclaimer_body": "Es atzīstu un piekrītu, ka Global Grange Inc. neuzņemas nekādu juridisko atbildību par nevienu pārdošanas aspektu, tostarp, bet ne tikai, mājlopu, olu, šķiedras/vilnas, produktu un pakalpojumu pārdošanu, kā arī par jebkādām sekām, kas izriet no minētajiem darījumiem.",
+    "sales_disclaimer_body": "Es atzīstu un piekrītu, ka Oatmeal Farm Network neuzņemas nekādu juridisko atbildību par nevienu pārdošanas aspektu, tostarp, bet ne tikai, mājlopu, olu, šķiedras/vilnas, produktu un pakalpojumu pārdošanu, kā arī par jebkādām sekām, kas izriet no minētajiem darījumiem.",
     "btn_creating": "Veidošana…",
     "btn_continue": "Turpināt →",
     "btn_create": "Izveidot kontu →",

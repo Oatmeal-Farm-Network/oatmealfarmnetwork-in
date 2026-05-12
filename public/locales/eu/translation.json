@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Etxea",
     "dashboard": "Aginte-panela",
@@ -3461,9 +3461,9 @@
     "label_phone": "Telefonoa",
     "permission_text": "Bai, baimena duzu nire zerrendak mezu elektroniko masiboetan eta sare sozialetan partekatzeko.",
     "livestock_disclaimer_title": "Abeltzaintzako Lege Oharra:",
-    "livestock_disclaimer_body": "Aitortzen eta onartzen dut abere salmenta guztiak negoziatzeaz arduratzen naizela soilik. Global Grange Inc.-ek ez du inolako erantzukizunik salmenta horien alderdiengatik, ezta transakzio horietatik eratorritako ondorioengatik ere.",
+    "livestock_disclaimer_body": "Aitortzen eta onartzen dut abere salmenta guztiak negoziatzeaz arduratzen naizela soilik. Oatmeal Farm Network-ek ez du inolako erantzukizunik salmenta horien alderdiengatik, ezta transakzio horietatik eratorritako ondorioengatik ere.",
     "sales_disclaimer_title": "Salmenta Lege Oharra:",
-    "sales_disclaimer_body": "Aitortzen eta onartzen dut Global Grange Inc.-ek ez duela inolako erantzukizunik salmenten alderdiengatik, besteak beste, abereen, arrautzen, zuntz/artilearen, produktuen eta zerbitzuen salmenta, baita transakzio horietatik eratorritako ondorioen salmenta ere.",
+    "sales_disclaimer_body": "Aitortzen eta onartzen dut Oatmeal Farm Network-ek ez duela inolako erantzukizunik salmenten alderdiengatik, besteak beste, abereen, arrautzen, zuntz/artilearen, produktuen eta zerbitzuen salmenta, baita transakzio horietatik eratorritako ondorioen salmenta ere.",
     "btn_creating": "Sortzen…",
     "btn_continue": "Jarraitu →",
     "btn_create": "Kontua sortu →",

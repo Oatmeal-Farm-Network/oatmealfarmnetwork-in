@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "家",
     "dashboard": "仪表板",
@@ -3461,9 +3461,9 @@
     "label_phone": "电话",
     "permission_text": "是的，我允许你将我的房源信息通过群发邮件和社交媒体分享。",
     "livestock_disclaimer_title": "畜牧业法律免责声明：",
-    "livestock_disclaimer_body": "我承认并同意，本人全权负责所有牲畜买卖的谈判。Global Grange Inc. 对此类买卖的任何方面以及由此产生的任何后果均不承担任何法律责任。",
+    "livestock_disclaimer_body": "我承认并同意，本人全权负责所有牲畜买卖的谈判。Oatmeal Farm Network 对此类买卖的任何方面以及由此产生的任何后果均不承担任何法律责任。",
     "sales_disclaimer_title": "销售法律免责声明：",
-    "sales_disclaimer_body": "我承认并同意，Global Grange Inc. 对销售的任何方面，包括但不限于牲畜、鸡蛋、纤维/羊毛、产品和服务的销售，以及由此产生的任何后果，均不承担任何法律责任。",
+    "sales_disclaimer_body": "我承认并同意，Oatmeal Farm Network 对销售的任何方面，包括但不限于牲畜、鸡蛋、纤维/羊毛、产品和服务的销售，以及由此产生的任何后果，均不承担任何法律责任。",
     "btn_creating": "正在创建…",
     "btn_continue": "继续 →",
     "btn_create": "创建账户 →",

@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Inici",
     "dashboard": "Tauler de control",
@@ -3461,9 +3461,9 @@
     "label_phone": "Telèfon",
     "permission_text": "Sí, tens el meu permís per compartir els meus anuncis en correus electrònics massius i a les xarxes socials.",
     "livestock_disclaimer_title": "Avís legal sobre bestiar:",
-    "livestock_disclaimer_body": "Reconeixo i accepto que sóc l'únic responsable de negociar totes les vendes de bestiar. Global Grange Inc. no té cap responsabilitat legal per cap aspecte d'aquestes vendes, ni per les conseqüències derivades d'aquestes transaccions.",
+    "livestock_disclaimer_body": "Reconeixo i accepto que sóc l'únic responsable de negociar totes les vendes de bestiar. Oatmeal Farm Network no té cap responsabilitat legal per cap aspecte d'aquestes vendes, ni per les conseqüències derivades d'aquestes transaccions.",
     "sales_disclaimer_title": "Avís legal de vendes:",
-    "sales_disclaimer_body": "Reconeixo i accepto que Global Grange Inc. no té cap responsabilitat legal per cap aspecte de les vendes, incloent-hi, entre d'altres, la venda de bestiar, ous, fibra/llana, productes i serveis, així com qualsevol conseqüència derivada d'aquestes transaccions.",
+    "sales_disclaimer_body": "Reconeixo i accepto que Oatmeal Farm Network no té cap responsabilitat legal per cap aspecte de les vendes, incloent-hi, entre d'altres, la venda de bestiar, ous, fibra/llana, productes i serveis, així com qualsevol conseqüència derivada d'aquestes transaccions.",
     "btn_creating": "Creant…",
     "btn_continue": "Continua →",
     "btn_create": "Crea un compte →",
