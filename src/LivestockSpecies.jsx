@@ -35,9 +35,9 @@ const FALLBACK_IMAGES = {
   'pigs':         '/images/PigHeader.webp',
   'pigeons':      '/images/PigeonHeader.webp',
   'quails':       '/images/QualsHeader.jpg',
-  'rabbits':      '/images/Rabitts.webp',
-  'sheep':        '/images/Sheepbreeds.webp',
-  'snails':       '/images/Snail.webp',
+  'rabbits':      '/images/RabbitHeader.webp',
+  'sheep':        '/images/SheepHeader.webp',
+  'snails':       '/images/SnailsHeader.webp',
   'turkeys':      '/images/TurkeyHeader.webp',
   'yaks':         '/images/YakHeader.webp',
 };
