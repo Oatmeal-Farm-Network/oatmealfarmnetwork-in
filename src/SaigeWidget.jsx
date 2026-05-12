@@ -169,6 +169,9 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
   const [input, setInput]       = useState('');
   const [sending, setSending]   = useState(false);
   const [error, setError]       = useState('');
+  const [imageData, setImageData]       = useState(null);   // base64 payload (no prefix)
+  const [imagePreview, setImagePreview] = useState(null);   // data URL for thumbnail
+  const imgInputRef = useRef(null);
   const [threadId]              = useState(() => {
     const pid = getPeopleId();
     const k = `saige_widget_thread_${pid}_${businessId || 0}`;
@@ -199,6 +202,26 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
   const audioRef      = useRef(null);
 
   const showVoiceErr = (msg) => { setVoiceErr(msg); setTimeout(() => setVoiceErr(null), 4000); };
+
+  const onImageSelect = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result;
+      setImagePreview(dataUrl);
+      // Strip the "data:<mime>;base64," prefix to get only the base64 payload
+      setImageData(dataUrl.split(',')[1] || null);
+    };
+    reader.readAsDataURL(file);
+    // Reset input so the same file can be re-selected if cleared
+    e.target.value = '';
+  }, []);
+
+  const clearImage = useCallback(() => {
+    setImageData(null);
+    setImagePreview(null);
+  }, []);
 
   const stopTTS = useCallback(() => {
     if (audioRef.current) {
@@ -345,13 +368,16 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
     const fieldHint = fieldId ? `[Field #${fieldId}]` : '';
     const pageHint  = pageContext ? `[Page: ${pageContext}]` : '';
     const userInput = [fieldHint, pageHint, val].filter(Boolean).join(' ').trim();
+    const capturedImage = imageData;  // capture before clearing
     const body = JSON.stringify({
       user_input: userInput,
       thread_id: threadId,
       business_id: businessId ? String(businessId) : null,
       field_id: fieldId ? String(fieldId) : null,
       language: language || 'en',
+      ...(capturedImage ? { image_data: capturedImage } : {}),
     });
+    clearImage();
 
     const nextMsgs = [...messages, { role: 'user', content: val }];
     setMessages(nextMsgs);
@@ -457,7 +483,7 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
     }
 
     setSending(false);
-  }, [input, messages, sending, threadId, businessId, fieldId, pageContext, language, autoSpeak, playTTS]);
+  }, [input, imageData, clearImage, messages, sending, threadId, businessId, fieldId, pageContext, language, autoSpeak, playTTS]);
 
   sendRef.current = send;
 
@@ -542,7 +568,7 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
       <div ref={scrollRef} style={{ flex: 1, padding: '12px 12px 8px', overflowY: 'auto', background: '#fafdf9' }}>
         {messages.length === 0 && (
           <div style={{ fontSize: 13, color: '#4b5563', padding: '8px 4px', lineHeight: 1.65, fontFamily: FONT_BODY }}>
-            Hi! I'm Saige. Ask me about your livestock health, treatments, vaccinations, breeding records — or anything about your farm.
+            Hey there! I'm Saige. Whether y'all need help with crop decisions, livestock health, soil, weather, or sourcing local ingredients — I'm here for it. What's going on with your farm today?
           </div>
         )}
         {messages.map((m, i) => (
@@ -567,6 +593,30 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
 
       {/* Composer */}
       <div style={{ padding: '8px 10px 10px', borderTop: '1px solid #e5e7eb', background: '#fff', flexShrink: 0 }}>
+        {/* Image preview strip */}
+        {imagePreview && (
+          <div style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <img
+              src={imagePreview}
+              alt="attached"
+              style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 6, border: `1px solid ${SAIGE_BORDER}` }}
+            />
+            <span style={{ fontSize: 11, color: '#6b7280', fontFamily: FONT_BODY, flex: 1 }}>Image attached</span>
+            <button
+              onClick={clearImage}
+              title="Remove image"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: 15, lineHeight: 1 }}
+            >×</button>
+          </div>
+        )}
+        {/* Hidden file input */}
+        <input
+          ref={imgInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={onImageSelect}
+        />
         <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
           {sttSupported && (
             <button
@@ -586,6 +636,26 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
               {recording ? '■' : '🎤'}
             </button>
           )}
+          {/* Image attach button */}
+          <button
+            onClick={() => imgInputRef.current?.click()}
+            title="Attach a photo"
+            style={{
+              width: 36, height: 36, flexShrink: 0,
+              borderRadius: '50%', border: 'none', cursor: 'pointer',
+              background: imagePreview ? SAIGE_GREEN : SAIGE_LIGHT,
+              color: imagePreview ? '#fff' : SAIGE_DARK,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16, transition: 'all 0.15s',
+              boxShadow: `inset 0 0 0 1px ${SAIGE_BORDER}`,
+            }}
+          >
+            {/* Camera icon */}
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </button>
           <textarea
             rows={1}
             value={input}
