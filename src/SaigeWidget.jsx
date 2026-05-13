@@ -89,7 +89,7 @@ function Bubble({ role, content, ttsSupported, onSpeak, threadId, onFeedback }) 
         }}>
           {content}
         </div>
-        {!isUser && ttsSupported && (
+        {!isUser && content && ttsSupported && (
           <button
             onClick={() => onSpeak(content)}
             title="Read aloud"
@@ -101,7 +101,7 @@ function Bubble({ role, content, ttsSupported, onSpeak, threadId, onFeedback }) 
             }}
           >🔊</button>
         )}
-        {!isUser && (
+        {!isUser && content && (
           <div style={{ display: 'flex', gap: 4, marginTop: 3, justifyContent: 'flex-end' }}>
             <button
               onClick={() => handleFeedback(1)}
@@ -194,8 +194,7 @@ function extractMapCmd(text) {
 }
 
 // ── Chat panel ────────────────────────────────────────────────────────────────
-function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFullPage }) {
-  const [messages, setMessages] = useState([]);
+function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFullPage, messages, setMessages, ttsBackendOkRef }) {
   const [input, setInput]       = useState('');
   const [sending, setSending]   = useState(false);
   const [error, setError]       = useState('');
@@ -218,7 +217,7 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
     Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 
   const [autoSpeak, setAutoSpeak] = useState(() => {
-    try { const s = localStorage.getItem(AUTOSPEAK_KEY); return s === 'true'; } catch { return false; }
+    try { const s = localStorage.getItem(AUTOSPEAK_KEY); return s === null ? true : s === 'true'; } catch { return true; }
   });
   const [speaking,  setSpeaking]  = useState(false);
   const [recording, setRecording] = useState(false);
@@ -261,13 +260,7 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
     }).catch(() => {}); // fire-and-forget; silently ignore errors
   }, [threadId]);
 
-  const stopTTS = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      if (audioRef.current._objectUrl) URL.revokeObjectURL(audioRef.current._objectUrl);
-      audioRef.current = null;
-    }
-    setSpeaking(false);
+  const _resumeMicAfterTts = useCallback(() => {
     if (pausedTtsRef.current && recRef.current && isRecRef.current) {
       pausedTtsRef.current = false;
       setTimeout(() => { try { recRef.current?.start(); } catch {} }, 350);
@@ -275,6 +268,59 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
       pausedTtsRef.current = false;
     }
   }, []);
+
+  const stopTTS = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      if (audioRef.current._objectUrl) URL.revokeObjectURL(audioRef.current._objectUrl);
+      audioRef.current = null;
+    }
+    try { window.speechSynthesis?.cancel(); } catch {}
+    setSpeaking(false);
+    _resumeMicAfterTts();
+  }, [_resumeMicAfterTts]);
+
+  const _playViaSpeechSynthesis = useCallback((cleaned) => {
+    if (!window.speechSynthesis) { setSpeaking(false); pausedTtsRef.current = false; return; }
+
+    const _speak = (voices) => {
+      const utt = new SpeechSynthesisUtterance(cleaned);
+      const savedVoice = localStorage.getItem('lavendir_tts_voice');
+      let voice = savedVoice ? (voices.find(v => v.name === savedVoice) || null) : null;
+      if (!voice) {
+        voice =
+          voices.find(v => v.name === 'Google US English') ||
+          voices.find(v => /google/i.test(v.name) && /female/i.test(v.name) && v.lang.startsWith('en')) ||
+          voices.find(v => /google/i.test(v.name) && v.lang === 'en-US') ||
+          voices.find(v => /google/i.test(v.name) && v.lang.startsWith('en')) ||
+          voices.find(v => v.lang.startsWith('en') && /female/i.test(v.name)) ||
+          null;
+      }
+      if (voice) utt.voice = voice;
+      utt.lang = 'en-US';
+      utt.rate = 1.0;
+      utt.onend  = () => { setSpeaking(false); _resumeMicAfterTts(); };
+      utt.onerror = () => { setSpeaking(false); pausedTtsRef.current = false; };
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utt);
+    };
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      _speak(voices);
+    } else {
+      // Chrome loads voices asynchronously — wait for them, fall back after 1 s
+      let done = false;
+      const onLoaded = () => {
+        if (done) return;
+        done = true;
+        window.speechSynthesis.onvoiceschanged = null;
+        _speak(window.speechSynthesis.getVoices());
+      };
+      window.speechSynthesis.onvoiceschanged = onLoaded;
+      setTimeout(() => { if (!done) { done = true; window.speechSynthesis.onvoiceschanged = null; _speak([]); } }, 1000);
+    }
+  }, [_resumeMicAfterTts]);
 
   const playTTS = useCallback(async (text) => {
     if (!ttsSupported) return;
@@ -289,43 +335,56 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
       if (audioRef.current._objectUrl) URL.revokeObjectURL(audioRef.current._objectUrl);
       audioRef.current = null;
     }
+    try { window.speechSynthesis?.cancel(); } catch {}
     setSpeaking(true);
-    try {
-      const res = await fetch(`${SAIGE_API}/tts`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ text: cleaned }),
-      });
-      if (!res.ok) throw new Error(`TTS ${res.status}`);
-      const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const audio = new Audio(objectUrl);
-      audio._objectUrl = objectUrl;
-      audioRef.current = audio;
-      audio.onended = () => {
-        URL.revokeObjectURL(objectUrl);
-        audioRef.current = null;
-        setSpeaking(false);
-        if (pausedTtsRef.current && recRef.current && isRecRef.current) {
-          pausedTtsRef.current = false;
-          setTimeout(() => { try { recRef.current?.start(); } catch {} }, 350);
-        } else {
-          pausedTtsRef.current = false;
+
+    // ── Backend TTS (skip if already known to be unavailable this session) ───
+    if (ttsBackendOkRef && ttsBackendOkRef.current !== false) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000); // 4 s hard limit
+      try {
+        const res = await fetch(`${SAIGE_API}/tts`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ text: cleaned }),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error(`TTS ${res.status}`);
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const audio = new Audio(objectUrl);
+        const savedSpk = localStorage.getItem('lavendir_spk_device_id');
+        if (savedSpk && typeof audio.setSinkId === 'function') {
+          try { await audio.setSinkId(savedSpk); } catch {}
         }
-      };
-      audio.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        audioRef.current = null;
-        setSpeaking(false);
-        pausedTtsRef.current = false;
-      };
-      await audio.play();
-    } catch (e) {
-      setSpeaking(false);
-      pausedTtsRef.current = false;
-      console.warn('[TTS]', e);
+        audio._objectUrl = objectUrl;
+        audioRef.current = audio;
+        audio.onended = () => {
+          URL.revokeObjectURL(objectUrl);
+          audioRef.current = null;
+          setSpeaking(false);
+          _resumeMicAfterTts();
+        };
+        audio.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          audioRef.current = null;
+          if (ttsBackendOkRef) ttsBackendOkRef.current = false;
+          _playViaSpeechSynthesis(cleaned);
+        };
+        await audio.play();
+        if (ttsBackendOkRef) ttsBackendOkRef.current = true;
+        return;
+      } catch (e) {
+        clearTimeout(timer);
+        if (ttsBackendOkRef) ttsBackendOkRef.current = false;
+        console.warn('[TTS] Backend unavailable — switching to speechSynthesis for this session:', e.message);
+      }
     }
-  }, [ttsSupported]);
+
+    // ── Instant fallback: browser speechSynthesis ─────────────────────────────
+    _playViaSpeechSynthesis(cleaned);
+  }, [ttsSupported, ttsBackendOkRef, _resumeMicAfterTts, _playViaSpeechSynthesis]);
 
   const saveAutoSpeak = (v) => {
     setAutoSpeak(v);
@@ -765,6 +824,19 @@ export default function SaigeWidget({ businessId: propBusinessId, fieldId, pageC
   const { language } = useLanguage();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const ttsBackendOkRef = useRef(null); // null=untested, true=working, false=unavailable this session
+
+  // ── Persist messages across close/reopen and page navigation ─────────────
+  const msgsKey = `saige_widget_msgs_${getPeopleId()}_${businessId ?? 0}`;
+  const [messages, setMessages] = useState(() => {
+    try {
+      const s = sessionStorage.getItem(msgsKey);
+      return s ? JSON.parse(s) : [];
+    } catch { return []; }
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem(msgsKey, JSON.stringify(messages)); } catch {}
+  }, [messages, msgsKey]);
 
   // Close on Escape
   useEffect(() => {
@@ -815,7 +887,7 @@ export default function SaigeWidget({ businessId: propBusinessId, fieldId, pageC
         document.body,
       )}
 
-      {/* Chat panel */}
+      {/* Chat panel — always mounted after first open so messages survive toggle */}
       {open && createPortal(
         <ChatPanel
           businessId={businessId}
@@ -824,6 +896,9 @@ export default function SaigeWidget({ businessId: propBusinessId, fieldId, pageC
           language={language}
           onClose={() => setOpen(false)}
           onFullPage={goFullPage}
+          messages={messages}
+          setMessages={setMessages}
+          ttsBackendOkRef={ttsBackendOkRef}
         />,
         document.body,
       )}

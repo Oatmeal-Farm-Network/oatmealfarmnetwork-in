@@ -52,6 +52,9 @@ function SaigeWidgetGlobal() {
   if (pathname.startsWith('/for-'))        return null;
   if (pathname.startsWith('/sites/'))      return null;
 
+  // Account/profile management — user handles their own account, no farm advisory needed
+  if (pathname.startsWith('/account'))     return null;
+
   // Print and single-use portal pages
   if (pathname.includes('/admin/print'))   return null;
   if (pathname.endsWith('/certificate'))   return null;
@@ -98,7 +101,6 @@ function SaigeWidgetGlobal() {
            pathname.startsWith('/over-the-fence'))         pageContext = 'Community';
   else if (pathname.startsWith('/esg'))                    pageContext = 'ESG Dashboard';
   else if (pathname.startsWith('/dashboard'))              pageContext = 'Dashboard';
-  else if (pathname.startsWith('/account'))                pageContext = 'Account';
   else if (pathname.startsWith('/directory'))              pageContext = 'Farm Directory';
   else if (pathname.startsWith('/profile'))                pageContext = 'Business Profile';
   else if (pathname.startsWith('/services'))               pageContext = 'Services Directory';
