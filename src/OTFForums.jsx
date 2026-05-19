@@ -76,7 +76,7 @@ function CategoryList() {
       <Header />
       <div style={{ background: 'linear-gradient(90deg,rgba(255,255,255,0.93) 0%,rgba(255,255,255,0) 100%)', borderBottom: '1px solid #e5e7eb' }}>
         <div className="max-w-5xl mx-auto px-6 py-10">
-          <Breadcrumbs items={[{ label: 'Community Forums' }]} />
+          <Breadcrumbs items={[{ label: 'Over The Fence', to: '/over-the-fence' }, { label: 'Community Forums' }]} />
           <h1 className="text-3xl font-bold text-gray-900 mt-2" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>Community Forums</h1>
           <p className="text-gray-600 mt-1">Ask questions, share knowledge, and connect with farmers across the network.</p>
         </div>
@@ -85,7 +85,7 @@ function CategoryList() {
         {loading ? <p className="text-gray-400">Loading…</p> : (
           <div className="space-y-3">
             {cats.map(cat => (
-              <Link key={cat.CategoryID} to={`/forums/${cat.CategoryID}`}
+              <Link key={cat.CategoryID} to={`/over-the-fence/forums/${cat.CategoryID}`}
                 className="flex items-center gap-4 bg-white rounded-xl border border-gray-200 px-5 py-4 hover:shadow-md transition group">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
                   style={{ backgroundColor: '#f0f7ed', color: GREEN }}>
@@ -154,7 +154,10 @@ function ThreadList() {
     if (r.ok) {
       const d = await r.json();
       setShowNew(false); setNewTitle(''); setNewBody('');
-      navigate(`/forums/thread/${d.threadId}`);
+      navigate(`/over-the-fence/forums/thread/${d.threadId}`);
+    } else {
+      const err = await r.json().catch(() => ({}));
+      alert(err.detail || 'Could not post thread. Please review your content and try again.');
     }
   };
 
@@ -164,7 +167,7 @@ function ThreadList() {
       <div style={{ background: 'linear-gradient(90deg,rgba(255,255,255,0.93) 0%,rgba(255,255,255,0) 100%)', borderBottom: '1px solid #e5e7eb' }}>
         <div className="max-w-5xl mx-auto px-6 py-8 flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <Breadcrumbs items={[{ label: 'Community Forums', to: '/forums' }, { label: cat?.Name || '…' }]} />
+            <Breadcrumbs items={[{ label: 'Over The Fence', to: '/over-the-fence' }, { label: 'Community Forums', to: '/over-the-fence/forums' }, { label: cat?.Name || '…' }]} />
             <h1 className="text-2xl font-bold text-gray-900 mt-1" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>{cat?.Name}</h1>
             <p className="text-gray-500 text-sm mt-0.5">{cat?.Description}</p>
           </div>
@@ -186,7 +189,7 @@ function ThreadList() {
         ) : (
           <div className="space-y-2">
             {threads.map(t => (
-              <Link key={t.ThreadID} to={`/forums/thread/${t.ThreadID}`}
+              <Link key={t.ThreadID} to={`/over-the-fence/forums/thread/${t.ThreadID}`}
                 className="flex items-center gap-4 bg-white rounded-xl border border-gray-200 px-5 py-3.5 hover:shadow-sm transition group">
                 {t.IsPinned && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded shrink-0">PINNED</span>}
                 {t.IsLocked && <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded shrink-0">LOCKED</span>}
@@ -247,13 +250,18 @@ function ThreadDetail() {
   const submitReply = async () => {
     if (!reply.trim()) return;
     setSaving(true);
-    await fetch(`${MILL}/forums/threads/${threadId}/posts`, {
+    const r = await fetch(`${MILL}/forums/threads/${threadId}/posts`, {
       method: 'POST', headers: authHeaders(),
       body: JSON.stringify({ body: reply.trim() }),
     });
     setSaving(false);
-    setReply('');
-    load();
+    if (r.ok) {
+      setReply('');
+      load();
+    } else {
+      const err = await r.json().catch(() => ({}));
+      alert(err.detail || 'Could not post reply. Please review your content and try again.');
+    }
   };
 
   if (!data) return <div style={{ backgroundColor: '#f7f2e8', minHeight: '100vh' }}><Header /><div className="p-8 text-gray-400">Loading…</div></div>;
@@ -265,8 +273,9 @@ function ThreadDetail() {
       <div style={{ background: 'linear-gradient(90deg,rgba(255,255,255,0.93) 0%,rgba(255,255,255,0) 100%)', borderBottom: '1px solid #e5e7eb' }}>
         <div className="max-w-4xl mx-auto px-6 py-8">
           <Breadcrumbs items={[
-            { label: 'Community Forums', to: '/forums' },
-            { label: '…', to: `/forums/${thread.CategoryID}` },
+            { label: 'Over The Fence', to: '/over-the-fence' },
+            { label: 'Community Forums', to: '/over-the-fence/forums' },
+            { label: '…', to: `/over-the-fence/forums/${thread.CategoryID}` },
             { label: thread.Title },
           ]} />
           <h1 className="text-2xl font-bold text-gray-900 mt-1" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>{thread.Title}</h1>

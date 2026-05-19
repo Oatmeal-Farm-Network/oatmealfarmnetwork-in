@@ -445,6 +445,20 @@ function DMApp() {
                 </button>
               </div>
 
+              {/* Forums link */}
+              <div className="border-t border-gray-100 px-3 py-2.5">
+                <Link to="/over-the-fence/forums"
+                  className="flex items-center gap-2 text-xs font-semibold hover:text-gray-900 transition"
+                  style={{ color: NAV_BG }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                    <line x1="9" y1="10" x2="15" y2="10"/>
+                    <line x1="9" y1="14" x2="13" y2="14"/>
+                  </svg>
+                  Community Forums
+                </Link>
+              </div>
+
             </div>
           </div>
 

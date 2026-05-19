@@ -96,7 +96,7 @@ function SaigeWidgetGlobal() {
            pathname.startsWith('/batches'))                pageContext = 'Recipe & Batch Management';
   else if (pathname.startsWith('/commodity-prices'))       pageContext = 'Commodity Prices';
   else if (pathname.startsWith('/education'))              pageContext = 'Education Center';
-  else if (pathname.startsWith('/forums'))                 pageContext = 'Community Forums';
+  else if (pathname.startsWith('/over-the-fence/forums'))  pageContext = 'Community Forums';
   else if (pathname.startsWith('/app/news') ||
            pathname.startsWith('/over-the-fence'))         pageContext = 'Community';
   else if (pathname.startsWith('/esg'))                    pageContext = 'ESG Dashboard';
@@ -771,10 +771,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           {/* Education Center */}
           <Route path="/education" element={<EducationCenter />} />
 
-          {/* Discussion Forums */}
-          <Route path="/forums" element={<ForumCategories />} />
-          <Route path="/forums/:categoryId" element={<ForumThreads />} />
-          <Route path="/forums/thread/:threadId" element={<ForumThread />} />
+          {/* Discussion Forums — live inside Over The Fence */}
+          <Route path="/over-the-fence/forums" element={<ForumCategories />} />
+          <Route path="/over-the-fence/forums/:categoryId" element={<ForumThreads />} />
+          <Route path="/over-the-fence/forums/thread/:threadId" element={<ForumThread />} />
           <Route path="/marketplaces/farm-to-table" element={<FarmToTableMarketplace />} />
           <Route path="/marketplaces/livestock/animal/:id/progeny" element={<LivestockAnimalProgeny />} />
           <Route path="/marketplaces/livestock/animal/:id" element={<LivestockAnimalDetail />} />
