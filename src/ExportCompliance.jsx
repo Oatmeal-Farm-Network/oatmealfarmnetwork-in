@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
+import ThaiymeChat from './ThaiymeChat';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 
@@ -597,6 +598,7 @@ export default function ExportCompliance() {
           </div>
         )}
       </div>
+          <ThaiymeChat businessId={businessId} page="export-compliance" />
     </AccountLayout>
   );
 }

@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
+import ThaiymeChat from './ThaiymeChat';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 
@@ -439,6 +440,7 @@ export default function FarmKPIDashboard() {
           </div>
         </div>
       )}
+          <ThaiymeChat businessId={bid} page="farm-kpi" />
     </AccountLayout>
   );
 }

@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+﻿import React, { useEffect, useState, useCallback, useRef } from 'react';
+import ThaiymeChat from './ThaiymeChat';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 
@@ -682,6 +683,7 @@ export default function FarmInputInventory() {
           </div>
         </div>
       )}
+          <ThaiymeChat businessId={bid} page="farm-inputs" />
     </AccountLayout>
   );
 }

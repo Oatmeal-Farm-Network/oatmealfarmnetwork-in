@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
+import ThaiymeChat from './ThaiymeChat';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 
@@ -445,6 +446,7 @@ export default function PackhouseQC() {
           </div>
         )}
       </div>
+          <ThaiymeChat businessId={businessId} page="packhouse-qc" />
     </AccountLayout>
   );
 }

@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
+import ThaiymeChat from './ThaiymeChat';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
@@ -313,6 +314,7 @@ export default function Nursery() {
           </div>
         )}
       </div>
+          <ThaiymeChat businessId={BusinessID} page="nursery" />
     </AccountLayout>
   );
 }

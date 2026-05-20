@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
+import ThaiymeChat from './ThaiymeChat';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 
@@ -375,6 +376,7 @@ export default function HarvestLots() {
           </div>
         </div>
       )}
+          <ThaiymeChat businessId={bid} page="harvest-lots" />
     </AccountLayout>
   );
 }

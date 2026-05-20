@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
+import ThaiymeChat from './ThaiymeChat';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 
@@ -830,6 +831,7 @@ export default function HRDashboard() {
           </div>
         </div>
       )}
+          <ThaiymeChat businessId={businessId} page="hr" />
     </AccountLayout>
   );
 }
