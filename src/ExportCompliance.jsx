@@ -190,9 +190,18 @@ export default function ExportCompliance() {
   return (
     <AccountLayout pageTitle="Export Compliance">
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Export Compliance & Traceability</h1>
-          <p className="text-sm text-gray-500">Customs paperwork, phytosanitary certs, compliance docs, recall management, and crop margins</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Export Compliance & Traceability</h1>
+            <p className="text-sm text-gray-500">Customs paperwork, phytosanitary certs, compliance docs, recall management, and crop margins</p>
+          </div>
+          <a
+            href={`${API}/api/export-compliance/export?business_id=${businessId}`}
+            download
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            ↓ Export Shipments CSV
+          </a>
         </div>
 
         {/* KPI strip */}

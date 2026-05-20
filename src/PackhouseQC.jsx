@@ -166,6 +166,13 @@ export default function PackhouseQC() {
             <h1 className="text-2xl font-bold text-gray-900">Packhouse & QC Inspection</h1>
             <p className="text-sm text-gray-500">Sorting, grading, packaging workflows and quality control</p>
           </div>
+          <a
+            href={`${API}/api/packhouse-qc/export?business_id=${businessId}`}
+            download
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            ↓ Export CSV
+          </a>
         </div>
 
         {/* KPI strip */}

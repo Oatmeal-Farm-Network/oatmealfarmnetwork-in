@@ -385,9 +385,18 @@ export default function HRDashboard() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Pay Periods</h2>
-              <button onClick={() => openModal('payperiod')} style={btnStyle('#16a34a')}>
-                <IcoPlus /> New Pay Period
-              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <a
+                  href={`${API}/api/hr/payroll/export?business_id=${bid}${selPeriod ? `&pay_period_id=${selPeriod}` : ''}`}
+                  download
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 14px', fontSize: 13, fontWeight: 500, color: '#374151', background: '#fff', border: '1px solid #d1d5db', borderRadius: 8, textDecoration: 'none' }}
+                >
+                  ↓ Export CSV
+                </a>
+                <button onClick={() => openModal('payperiod')} style={btnStyle('#16a34a')}>
+                  <IcoPlus /> New Pay Period
+                </button>
+              </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 20 }}>
               {/* Pay period list */}
