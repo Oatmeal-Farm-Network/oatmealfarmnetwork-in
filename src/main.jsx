@@ -39,6 +39,7 @@ function SaigeWidgetGlobal() {
   // Pages whose own layout/component already renders an AI agent
   if (pathname.startsWith('/herd-health'))  return null; // HerdHealthLayout has its own Saige
   if (pathname.startsWith('/accounting'))   return null; // Thaiyme handles accounting
+  if (pathname.startsWith('/supply-chain')) return null; // TarrigonChat handles supply chain
   if (pathname.startsWith('/saige'))        return null; // SaigePage embeds the widget directly
   if (pathname === '/cassia')               return null;
 
@@ -72,8 +73,23 @@ function SaigeWidgetGlobal() {
   else if (pathname.startsWith('/oatsense'))               pageContext = 'Precision Ag';
   else if (pathname.startsWith('/livestock'))              pageContext = 'Livestock';
   else if (pathname.startsWith('/animals'))                pageContext = 'Livestock';
+  else if (pathname.startsWith('/supply-chain'))           pageContext = 'Enterprise Supply Chain';
   else if (pathname.startsWith('/cold-chain'))             pageContext = 'Cold Chain & Logistics';
   else if (pathname.startsWith('/farmer-settlement'))      pageContext = 'Farmer Settlement';
+  else if (pathname.startsWith('/hr'))                     pageContext = 'HR & Workforce';
+  else if (pathname.startsWith('/farm-inputs'))            pageContext = 'Farm Inputs';
+  else if (pathname.startsWith('/crop-budget'))            pageContext = 'Crop Budgeting';
+  else if (pathname.startsWith('/harvest-lots'))           pageContext = 'Harvest Lot Traceability';
+  else if (pathname.startsWith('/farm-infrastructure'))    pageContext = 'Farm Infrastructure';
+  else if (pathname.startsWith('/farm-kpi'))               pageContext = 'Farm KPI Dashboard';
+  else if (pathname.startsWith('/nursery'))               pageContext = 'Nursery Management';
+  else if (pathname.startsWith('/outgrower'))             pageContext = 'Contract Farming & Outgrower';
+  else if (pathname.startsWith('/procurement'))           pageContext = 'Purchase & Procurement';
+  else if (pathname.startsWith('/work-orders'))           pageContext = 'Work Orders & Field Crews';
+  else if (pathname.startsWith('/packhouse'))             pageContext = 'Packhouse & QC Inspection';
+  else if (pathname.startsWith('/plant-tags'))            pageContext = 'Plant Tagging & Asset Geo';
+  else if (pathname.startsWith('/export-compliance'))     pageContext = 'Export Compliance & Traceability';
+  else if (pathname.startsWith('/permissions'))           pageContext = 'Roles & Permissions';
   else if (pathname.startsWith('/certifications'))         pageContext = 'Certifications Tracker';
   else if (pathname.startsWith('/grants'))                 pageContext = 'Grants & Programs';
   else if (pathname.startsWith('/suppliers'))              pageContext = 'Supplier Directory';
@@ -206,6 +222,7 @@ const AggregatorProduce   = lazy(() => import('./AggregatorProduce.jsx'));
 const AggregatorLogistics = lazy(() => import('./AggregatorLogistics.jsx'));
 const AggregatorSales     = lazy(() => import('./AggregatorSales.jsx'));
 const AggregatorESG       = lazy(() => import('./AggregatorESG.jsx'));
+
 import DiningAdmin from './DiningAdmin';
 import DiningRegister from './DiningRegister';
 import FarmTourAdmin from './FarmTourAdmin';
@@ -255,6 +272,32 @@ const lazyWithReload = (importFn) => lazy(async () => {
     throw err;
   }
 });
+
+const SupplyChainHub            = lazyWithReload(() => import('./SupplyChainHub.jsx'));
+const SupplyChainVisibility     = lazyWithReload(() => import('./SupplyChainVisibility.jsx'));
+const SupplyChainQuality        = lazyWithReload(() => import('./SupplyChainQuality.jsx'));
+const SupplyChainMargin         = lazyWithReload(() => import('./SupplyChainMargin.jsx'));
+const SupplyChainForecasting    = lazyWithReload(() => import('./SupplyChainForecasting.jsx'));
+const SupplyChainExceptions     = lazyWithReload(() => import('./SupplyChainExceptions.jsx'));
+const SupplyChainSettings       = lazyWithReload(() => import('./SupplyChainSettings.jsx'));
+const SupplyChainScorecard      = lazyWithReload(() => import('./SupplyChainScorecard.jsx'));
+const SupplyChainControlTower   = lazyWithReload(() => import('./SupplyChainControlTower.jsx'));
+const SupplyChainSupplierPortal = lazyWithReload(() => import('./SupplyChainSupplierPortal.jsx'));
+
+const HRDashboard          = lazyWithReload(() => import('./HRDashboard.jsx'));
+const FarmInputInventory   = lazyWithReload(() => import('./FarmInputInventory.jsx'));
+const CropBudget           = lazyWithReload(() => import('./CropBudget.jsx'));
+const HarvestLots          = lazyWithReload(() => import('./HarvestLots.jsx'));
+const FarmInfrastructure   = lazyWithReload(() => import('./FarmInfrastructure.jsx'));
+const FarmKPIDashboard     = lazyWithReload(() => import('./FarmKPIDashboard.jsx'));
+const Nursery              = lazyWithReload(() => import('./Nursery.jsx'));
+const Outgrower            = lazyWithReload(() => import('./Outgrower.jsx'));
+const Procurement          = lazyWithReload(() => import('./Procurement.jsx'));
+const WorkOrders           = lazyWithReload(() => import('./WorkOrders.jsx'));
+const PackhouseQC          = lazyWithReload(() => import('./PackhouseQC.jsx'));
+const PlantTagging         = lazyWithReload(() => import('./PlantTagging.jsx'));
+const ExportCompliance     = lazyWithReload(() => import('./ExportCompliance.jsx'));
+const Permissions          = lazyWithReload(() => import('./Permissions.jsx'));;
 
 const App = lazyWithReload(() => import('./App.jsx'))
 const About = lazyWithReload(() => import('./About.jsx'))
@@ -755,6 +798,60 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
           {/* Farmer Settlement */}
           <Route path="/farmer-settlement" element={<RequireAuth><FarmerSettlement /></RequireAuth>} />
+
+          {/* HR & Workforce Management */}
+          <Route path="/hr" element={<RequireAuth><HRDashboard /></RequireAuth>} />
+
+          {/* Farm Inputs & Chemical Inventory */}
+          <Route path="/farm-inputs" element={<RequireAuth><FarmInputInventory /></RequireAuth>} />
+
+          {/* Crop Budgeting & Actuals */}
+          <Route path="/crop-budget" element={<RequireAuth><CropBudget /></RequireAuth>} />
+
+          {/* Harvest Lot Traceability */}
+          <Route path="/harvest-lots" element={<RequireAuth><HarvestLots /></RequireAuth>} />
+
+          {/* Farm Infrastructure & Maintenance */}
+          <Route path="/farm-infrastructure" element={<RequireAuth><FarmInfrastructure /></RequireAuth>} />
+
+          {/* Farm KPI Dashboard & Alerts */}
+          <Route path="/farm-kpi" element={<RequireAuth><FarmKPIDashboard /></RequireAuth>} />
+
+          {/* Nursery & Early Growth */}
+          <Route path="/nursery" element={<RequireAuth><Nursery /></RequireAuth>} />
+
+          {/* Contract Farming / Outgrower Management */}
+          <Route path="/outgrower" element={<RequireAuth><Outgrower /></RequireAuth>} />
+
+          {/* Purchase & Procurement */}
+          <Route path="/procurement" element={<RequireAuth><Procurement /></RequireAuth>} />
+
+          {/* Work Orders & Field Crews */}
+          <Route path="/work-orders" element={<RequireAuth><WorkOrders /></RequireAuth>} />
+
+          {/* Packhouse & QC Inspection */}
+          <Route path="/packhouse" element={<RequireAuth><PackhouseQC /></RequireAuth>} />
+
+          {/* Plant Tagging & Asset Geo */}
+          <Route path="/plant-tags" element={<RequireAuth><PlantTagging /></RequireAuth>} />
+
+          {/* Export Compliance & Traceability */}
+          <Route path="/export-compliance" element={<RequireAuth><ExportCompliance /></RequireAuth>} />
+
+          {/* Roles & Permissions */}
+          <Route path="/permissions" element={<RequireAuth><Permissions /></RequireAuth>} />
+
+          {/* Enterprise Supply Chain Intelligence (ESCI) */}
+          <Route path="/supply-chain" element={<RequireAuth><SupplyChainHub /></RequireAuth>} />
+          <Route path="/supply-chain/visibility" element={<RequireAuth><SupplyChainVisibility /></RequireAuth>} />
+          <Route path="/supply-chain/quality" element={<RequireAuth><SupplyChainQuality /></RequireAuth>} />
+          <Route path="/supply-chain/margin" element={<RequireAuth><SupplyChainMargin /></RequireAuth>} />
+          <Route path="/supply-chain/forecasting" element={<RequireAuth><SupplyChainForecasting /></RequireAuth>} />
+          <Route path="/supply-chain/exceptions" element={<RequireAuth><SupplyChainExceptions /></RequireAuth>} />
+          <Route path="/supply-chain/settings" element={<RequireAuth><SupplyChainSettings /></RequireAuth>} />
+          <Route path="/supply-chain/scorecard" element={<RequireAuth><SupplyChainScorecard /></RequireAuth>} />
+          <Route path="/supply-chain/control-tower" element={<RequireAuth><SupplyChainControlTower /></RequireAuth>} />
+          <Route path="/supply-chain/portal/:token" element={<SupplyChainSupplierPortal />} />
 
           {/* Certifications */}
           <Route path="/certifications" element={<RequireAuth><CertificationsTracker /></RequireAuth>} />

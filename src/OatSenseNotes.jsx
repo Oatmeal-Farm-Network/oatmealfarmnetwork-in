@@ -66,9 +66,216 @@ function groupByDate(notes) {
   return Object.entries(groups).sort(([a], [b]) => b.localeCompare(a));
 }
 
+// ─── Journal Templates ────────────────────────────────────────────────────────
+const JOURNAL_TEMPLATES = [
+  {
+    id: 'scouting',
+    label: 'Weekly Scouting',
+    category: 'Scouting',
+    title: 'Weekly Crop Scouting — {date}',
+    content: `Crop Stage: [e.g., V6 / Tillering / Heading]
+Overall Canopy Health: [Good / Fair / Poor]
+
+PEST PRESSURE
+• Insects observed: [species, count/100 plants or per trap]
+• Threshold reached: [Yes / No]
+• Action required: [None / Monitor / Treat]
+
+DISEASE
+• Signs/symptoms: [describe or None]
+• Severity: [0–10% / 10–25% / >25%]
+
+WEED PRESSURE
+• Dominant species: [describe]
+• Coverage: [light / moderate / heavy]
+
+CROP STRESS INDICATORS
+• Nutrient deficiency signs: [None / Nitrogen / Phosphorus / describe]
+• Moisture stress: [None / Mild / Severe]
+
+RECOMMENDED ACTIONS
+1.
+2.
+
+NEXT SCOUTING DATE: `,
+  },
+  {
+    id: 'spray',
+    label: 'Spray Application',
+    category: 'Spray Application',
+    title: 'Spray Application — {date}',
+    content: `PRODUCT & RATE
+• Product name:
+• EPA Reg #:
+• Rate: [oz/ac or L/ha]
+• Carrier volume: [GPA or L/ha]
+• Tank mix: [additional products or None]
+
+APPLICATION
+• Operator:
+• Equipment:
+• Nozzle type & pressure:
+• Start time:          End time:
+• Field area treated: [ha]
+
+WEATHER CONDITIONS
+• Temperature: [°F / °C]
+• Wind speed & direction:
+• Relative humidity:
+• Inversion present: [Yes / No]
+
+TARGET
+• Pest / Disease / Weed:
+• Crop stage at application:
+
+RESTRICTIONS
+• Re-entry interval (REI): [hrs]
+• Pre-harvest interval (PHI): [days]
+
+NOTES: `,
+  },
+  {
+    id: 'planting',
+    label: 'Planting Record',
+    category: 'Planting',
+    title: 'Planting Record — {date}',
+    content: `SEED
+• Variety / Hybrid:
+• Seed lot #:
+• Germination rate: [%]
+• Seed treatment: [Fungicide / Insecticide / None]
+
+PLANTING PARAMETERS
+• Seeding rate: [seeds/ac or kg/ha]
+• Row spacing: [inches / cm]
+• Seeding depth: [inches / cm]
+• Equipment:
+
+FIELD CONDITIONS AT PLANTING
+• Soil temperature (2"): [°F / °C]
+• Soil moisture: [Dry / Adequate / Wet]
+• Seedbed tilth: [Excellent / Good / Fair]
+• Previous crop:
+
+FERTILIZER AT PLANTING
+• Starter fertilizer: [product, rate, or None]
+• In-furrow: [product or None]
+
+TARGET POPULATION: [plants/ac or /ha]
+ACTUAL POPULATION CHECK: [to be filled after emergence]
+
+NOTES: `,
+  },
+  {
+    id: 'irrigation',
+    label: 'Irrigation Event',
+    category: 'Irrigation',
+    title: 'Irrigation Event — {date}',
+    content: `SYSTEM & SCHEDULE
+• Irrigation system type: [Drip / Pivot / Furrow / Flood / Sprinkler]
+• Zone / Set #:
+• Start time:          End time:
+• Duration: [hrs]
+
+APPLICATION
+• Water applied: [inches / mm]
+• Flow rate: [GPM or m³/hr]
+• System pressure: [PSI or bar]
+
+SOIL MOISTURE (before)
+• Sensor readings or feel method: [Dry / Adequate / Field Capacity]
+• Deficit before irrigation: [inches / mm]
+
+WATER SOURCE
+• Source: [Well / Canal / Pond / Municipal]
+• EC (if known): [dS/m]
+
+POST-IRRIGATION NOTES
+• Runoff observed: [Yes / No]
+• Ponding: [Yes / No]
+• Uniformity: [Excellent / Good / Poor]
+
+NEXT IRRIGATION SCHEDULED:
+NOTES: `,
+  },
+  {
+    id: 'harvest',
+    label: 'Harvest Record',
+    category: 'Harvest',
+    title: 'Harvest Record — {date}',
+    content: `CROP & VARIETY
+• Crop:
+• Variety / Hybrid:
+• Planting date:
+
+YIELD
+• Estimated yield: [bu/ac, lb/ac, or t/ha]
+• Actual yield (weigh ticket):
+• Moisture at harvest: [%]
+• Test weight / Quality grade:
+
+HARVEST OPERATION
+• Equipment:
+• Operator(s):
+• Start time:          End time:
+• Acres harvested today:
+
+CONDITIONS
+• Weather:
+• Field conditions: [Dry / Muddy / Average]
+• Header height:
+• Cylinder/rotor speed:
+• Harvest loss estimate: [bu/ac]
+
+STORAGE / MARKETING
+• Storage location:
+• Drying required: [Yes / No] — Target moisture: [%]
+• Delivered to:
+
+NOTES: `,
+  },
+  {
+    id: 'soil',
+    label: 'Soil Observation',
+    category: 'Observation',
+    title: 'Soil Observation — {date}',
+    content: `VISUAL ASSESSMENT
+• Soil color: [dark brown / light tan / reddish / describe]
+• Texture feel: [Sandy / Loamy / Clayey]
+• Structure: [Granular / Blocky / Platy / Massive]
+• Tilth: [Excellent / Good / Fair / Poor]
+
+COMPACTION
+• Surface crusting: [None / Mild / Severe]
+• Hard-pan depth (if probed): [inches / cm or N/A]
+• Penetration resistance: [easy / moderate / hard with probe]
+
+BIOLOGICAL ACTIVITY
+• Earthworms per sq ft (12" deep):
+• Fungal hyphae visible: [Yes / No]
+• Crop residue decomposition: [Good / Slow]
+
+CHEMISTRY (if tested)
+• pH:
+• EC: [dS/m]
+• Nitrate-N: [ppm]
+• Organic matter: [%]
+
+MOISTURE PROFILE
+• 0–6": [Dry / Moist / Wet]
+• 6–12":
+• 12–24":
+
+RECOMMENDATIONS:
+
+NOTES: `,
+  },
+];
+
 // ─── NoteForm ─────────────────────────────────────────────────────────────────
-function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSave, onCancel }) {
+function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSave, onCancel, templateInit }) {
   const { t } = useTranslation();
+  const today = new Date().toISOString().slice(0, 10);
   const [form, setForm] = useState(
     editNote
       ? {
@@ -80,6 +287,13 @@ function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSa
           latitude:  editNote.latitude  ?? '',
           longitude: editNote.longitude ?? '',
           image_url: editNote.image_url ?? '',
+        }
+      : templateInit
+      ? {
+          ...EMPTY_FORM,
+          category: templateInit.category,
+          title:    templateInit.title.replace('{date}', today),
+          content:  templateInit.content,
         }
       : EMPTY_FORM
   );
@@ -325,14 +539,16 @@ export default function OatSenseNotes() {
   const PeopleID    = localStorage.getItem('PeopleID') || localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();
 
-  const [fields,       setFields]       = useState([]);
-  const [notes,        setNotes]        = useState([]);
-  const [activeField,  setActiveField]  = useState(initFieldId || 'all');
-  const [catFilter,    setCatFilter]    = useState('all');
-  const [showForm,     setShowForm]     = useState(false);
-  const [editNote,     setEditNote]     = useState(null);
-  const [loadingNotes, setLoadingNotes] = useState(false);
-  const [error,        setError]        = useState('');
+  const [fields,           setFields]           = useState([]);
+  const [notes,            setNotes]            = useState([]);
+  const [activeField,      setActiveField]      = useState(initFieldId || 'all');
+  const [catFilter,        setCatFilter]        = useState('all');
+  const [showForm,         setShowForm]         = useState(false);
+  const [editNote,         setEditNote]         = useState(null);
+  const [activeTemplate,   setActiveTemplate]   = useState(null);
+  const [showTemplatePick, setShowTemplatePick] = useState(false);
+  const [loadingNotes,     setLoadingNotes]     = useState(false);
+  const [error,            setError]            = useState('');
 
   useEffect(() => { if (businessId) LoadBusiness(businessId); }, [businessId]);
 
@@ -388,12 +604,16 @@ export default function OatSenseNotes() {
 
   const handleEdit = note => {
     setEditNote(note);
+    setActiveTemplate(null);
+    setShowTemplatePick(false);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const openNew  = () => { setEditNote(null); setShowForm(true); };
-  const closeForm = () => { setShowForm(false); setEditNote(null); };
+  const openNew  = () => { setEditNote(null); setActiveTemplate(null); setShowTemplatePick(true); setShowForm(false); };
+  const closeForm = () => { setShowForm(false); setShowTemplatePick(false); setEditNote(null); setActiveTemplate(null); };
+  const startBlank = () => { setActiveTemplate(null); setShowTemplatePick(false); setShowForm(true); };
+  const startTemplate = (tpl) => { setActiveTemplate(tpl); setShowTemplatePick(false); setShowForm(true); };
 
   const grouped = groupByDate(notes);
   const activeFieldObj = activeField !== 'all'
@@ -421,18 +641,62 @@ export default function OatSenseNotes() {
           </button>
         </div>
 
+        {/* Template picker */}
+        {showTemplatePick && (
+          <div className="bg-white rounded-xl border-2 border-[#6D8E22] shadow-lg p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-lora font-bold text-gray-900 text-lg">Choose a Template</h2>
+              <button onClick={closeForm} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+            </div>
+            <p className="text-sm text-gray-500 font-mont mb-5">Start from a structured template or open a blank entry.</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <button
+                onClick={startBlank}
+                className="flex flex-col items-start p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#6D8E22] hover:bg-[#f8faf2] transition text-left"
+              >
+                <span className="text-2xl mb-2">📝</span>
+                <span className="font-semibold text-sm text-gray-800">Blank Entry</span>
+                <span className="text-xs text-gray-400 mt-0.5">Free-form note</span>
+              </button>
+              {JOURNAL_TEMPLATES.map(tpl => {
+                const cat = getCat(tpl.category);
+                return (
+                  <button
+                    key={tpl.id}
+                    onClick={() => startTemplate(tpl)}
+                    className="flex flex-col items-start p-4 rounded-xl border-2 border-gray-100 hover:border-[#6D8E22] hover:bg-[#f8faf2] transition text-left"
+                    style={{ borderColor: cat.color + '40' }}
+                  >
+                    <span className="text-xl mb-2" style={{ color: cat.color }}>{cat.icon}</span>
+                    <span className="font-semibold text-sm text-gray-800">{tpl.label}</span>
+                    <span className="text-xs mt-0.5" style={{ color: cat.color }}>{tpl.category}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Slide-down form */}
         {showForm && (
           <div className="bg-white rounded-xl border-2 border-[#6D8E22] shadow-lg p-6 mb-8">
-            <h2 className="font-lora font-bold text-gray-900 text-lg mb-4">
-              {editNote ? t('oatsense_notes.editing_title', { title: editNote.title }) : t('oatsense_notes.new_entry_heading')}
-            </h2>
+            <div className="flex items-center gap-3 mb-4">
+              <h2 className="font-lora font-bold text-gray-900 text-lg flex-1">
+                {editNote ? t('oatsense_notes.editing_title', { title: editNote.title }) : activeTemplate ? activeTemplate.label : t('oatsense_notes.new_entry_heading')}
+              </h2>
+              {!editNote && (
+                <button onClick={() => { setShowForm(false); setShowTemplatePick(true); }} className="text-xs text-[#6D8E22] hover:underline font-mont">
+                  ← Change template
+                </button>
+              )}
+            </div>
             <NoteForm
               fields={fields}
               initialFieldId={activeField !== 'all' ? activeField : initFieldId || ''}
               businessId={businessId}
               peopleId={PeopleID}
               editNote={editNote}
+              templateInit={activeTemplate}
               onSave={handleSave}
               onCancel={closeForm}
             />

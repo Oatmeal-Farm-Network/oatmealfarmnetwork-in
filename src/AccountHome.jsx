@@ -29,7 +29,7 @@ const BIZ_PERSONA = {
   24: 'distributor',  // Retailer
   26: 'distributor',  // Grocery Store
   29: 'distributor',  // Farmers Market
-  36: 'distributor',  // Food Aggregator
+  36: 'food_aggregator', // Food Aggregator
   9:  'restaurant',   // Restaurant
   1:  'community',    // Agricultural Association
   15: 'community',    // Crafters Organization
@@ -60,7 +60,7 @@ const PERSONAS = {
     headline: 'Producer Hub',
     tagline: 'Craft, package, and sell your artisan products to the world.',
     statKeys: ['products', 'produce', 'pending_orders', 'upcoming_events'],
-    priorityFeatures: ['products', 'farm_2_table', 'accounting', 'blog', 'events', 'rosemarie', 'my_website', 'certifications'],
+    priorityFeatures: ['products', 'farm_2_table', 'enterprise_supply_chain', 'accounting', 'blog', 'events', 'rosemarie', 'my_website', 'certifications'],
   },
   distributor: {
     color: '#2563EB', bg: '#eff6ff', lightBg: '#dbeafe',
@@ -68,7 +68,15 @@ const PERSONAS = {
     headline: 'Distribution Hub',
     tagline: 'Source, aggregate, and move food efficiently through your network.',
     statKeys: ['pending_orders', 'services', 'upcoming_events', 'blog_posts'],
-    priorityFeatures: ['food_aggregation', 'farm_2_table', 'cold_chain', 'farmer_settlement', 'accounting', 'events', 'blog', 'my_website'],
+    priorityFeatures: ['food_aggregation', 'enterprise_supply_chain', 'farm_2_table', 'cold_chain', 'farmer_settlement', 'accounting', 'events', 'blog', 'my_website'],
+  },
+  food_aggregator: {
+    color: '#1D4ED8', bg: '#eff6ff', lightBg: '#dbeafe',
+    icon: <I size={56}><circle cx="12" cy="12" r="2.5"/><circle cx="3.5" cy="6" r="1.5"/><circle cx="20.5" cy="6" r="1.5"/><circle cx="3.5" cy="18" r="1.5"/><circle cx="20.5" cy="18" r="1.5"/><line x1="5" y1="6.8" x2="9.5" y2="10"/><line x1="19" y1="6.8" x2="14.5" y2="10"/><line x1="5" y1="17.2" x2="9.5" y2="14"/><line x1="19" y1="17.2" x2="14.5" y2="14"/></I>,
+    headline: 'Food Aggregation Hub',
+    tagline: 'Source from your farm network, move product through B2B and D2C channels.',
+    statKeys: ['aggregator_b2b_open', 'aggregator_farms', 'upcoming_events', 'blog_posts'],
+    priorityFeatures: ['food_aggregation', 'enterprise_supply_chain', 'farm_2_table', 'cold_chain', 'farmer_settlement', 'accounting', 'events', 'blog', 'my_website'],
   },
   restaurant: {
     color: '#7C3AED', bg: '#f5f3ff', lightBg: '#ede9fe',
@@ -121,7 +129,9 @@ const STAT_META = {
   blog_posts:      { label: 'Blog Posts', icon: <I><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></I>, path: (b) => `/blog/manage?BusinessID=${b}` },
   products:        { label: 'Products', icon: <I><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></I>, path: (b) => `/products?BusinessID=${b}` },
   services:        { label: 'Services', icon: <I><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></I>, path: (b) => `/services?BusinessID=${b}` },
-  produce:         { label: 'Produce Listings', icon: <I><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 2C6 8 6 16 12 22"/><path d="M12 2c6 6 6 14 0 20"/><line x1="2" y1="12" x2="22" y2="12"/></I>, path: (b) => `/produce/inventory?BusinessID=${b}` },
+  produce:             { label: 'Produce Listings', icon: <I><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 2C6 8 6 16 12 22"/><path d="M12 2c6 6 6 14 0 20"/><line x1="2" y1="12" x2="22" y2="12"/></I>, path: (b) => `/produce/inventory?BusinessID=${b}` },
+  aggregator_b2b_open: { label: 'Open B2B Orders', icon: <I><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></I>, path: (b) => `/aggregator/sales?BusinessID=${b}` },
+  aggregator_farms:    { label: 'Farm Partners', icon: <I><circle cx="12" cy="12" r="2.5"/><circle cx="3.5" cy="6" r="1.5"/><circle cx="20.5" cy="6" r="1.5"/><circle cx="3.5" cy="18" r="1.5"/><circle cx="20.5" cy="18" r="1.5"/><line x1="5" y1="6.8" x2="9.5" y2="10"/><line x1="19" y1="6.8" x2="14.5" y2="10"/><line x1="5" y1="17.2" x2="9.5" y2="14"/><line x1="19" y1="17.2" x2="14.5" y2="14"/></I>, path: (b) => `/aggregator/farms?BusinessID=${b}` },
 };
 
 // ─── Feature card metadata ────────────────────────────────────────────────────
@@ -284,6 +294,20 @@ const FEATURE_META = {
     links: () => [],
     platformPage: null,
   },
+  enterprise_supply_chain: {
+    label: 'Supply Chain Intelligence', color: '#1e6b5a', bg: '#e8f5f1',
+    icon: <I><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></I>,
+    desc: 'End-to-end supply chain visibility: shipments, quality, margins, exceptions, and Tarrigon AI.',
+    cta: { label: 'Open Dashboard', path: (b) => `/supply-chain?BusinessID=${b}` },
+    addCta: { label: 'Control Tower', path: (b) => `/supply-chain/control-tower?BusinessID=${b}` },
+    links: (b) => [
+      { label: 'Exceptions', to: `/supply-chain/exceptions?BusinessID=${b}` },
+      { label: 'Quality & Yield', to: `/supply-chain/quality?BusinessID=${b}` },
+      { label: 'Margin Optimization', to: `/supply-chain/margin?BusinessID=${b}` },
+      { label: 'Supplier Scorecards', to: `/supply-chain/scorecard?BusinessID=${b}` },
+    ],
+    platformPage: null,
+  },
   chef_dashboard: {
     label: 'Chef Dashboard', color: '#7C3AED', bg: '#f5f3ff',
     icon: <I><path d="M4 13h8v7H4z"/><path d="M4 13a4 4 0 01-1-2.7A4 4 0 016.5 6a4 4 0 016 0A4 4 0 0116 13"/></I>,
@@ -393,21 +417,20 @@ const DISCOVER_EXTRAS = [
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function StatCard({ statKey, value, businessId, persona }) {
+function StatCard({ statKey, businessId, persona }) {
   const meta = STAT_META[statKey];
   if (!meta) return null;
   return (
     <Link
       to={meta.path(businessId)}
-      className="group flex flex-col items-center justify-center gap-2 rounded-2xl p-5 text-center transition-all hover:shadow-md hover:-translate-y-0.5"
+      className="group flex items-center gap-3 rounded-xl px-4 py-3 transition-all hover:shadow-sm hover:-translate-y-0.5"
       style={{ backgroundColor: persona.lightBg, border: `1.5px solid ${persona.color}22` }}
     >
-      <div className="w-10 h-10 rounded-full flex items-center justify-center"
+      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
         style={{ backgroundColor: persona.color + '18', color: persona.color }}>
         {meta.icon}
       </div>
-      <div className="text-3xl font-bold" style={{ color: persona.color }}>{value}</div>
-      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">{meta.label}</div>
+      <div className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{meta.label}</div>
     </Link>
   );
 }
@@ -489,14 +512,13 @@ export default function AccountHome() {
     Promise.all([
       fetch(`${API_URL}/auth/account-home?BusinessID=${businessId}`).then(r => r.json()),
       fetch(`${API_URL}/api/company/features?business_id=${businessId}`).then(r => r.ok ? r.json() : []),
-      fetch(`${API_URL}/api/dashboard/summary?business_id=${businessId}`).then(r => r.ok ? r.json() : {}),
     ])
-      .then(([biz, feats, s]) => {
+      .then(([biz, feats]) => {
         setBusiness(biz);
         const map = {};
         feats.forEach(f => { map[f.feature_key] = f; });
         setFeatures(map);
-        setStats(s);
+        setStats(biz.stats || {});
       })
       .catch(() => setError(true));
   }, [businessId]);
@@ -585,9 +607,9 @@ export default function AccountHome() {
         </div>
 
         {/* ── Stat bar ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {statKeys.map(k => (
-            <StatCard key={k} statKey={k} value={stats[k] ?? 0} businessId={businessId} persona={persona} />
+            <StatCard key={k} statKey={k} businessId={businessId} persona={persona} />
           ))}
         </div>
 
@@ -620,14 +642,14 @@ export default function AccountHome() {
               <p className="text-xs text-gray-400">Update your public listing</p>
             </div>
           </Link>
-          <Link to={`/account/team?BusinessID=${businessId}`}
+          <Link to={`/permissions?BusinessID=${businessId}`}
             className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:shadow-sm transition-shadow group">
             <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 group-hover:text-gray-700">
-              <I size={18}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></I>
+              <I size={18}><circle cx="9" cy="7" r="3"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 11l2 2 4-4"/></I>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800">Team Members</p>
-              <p className="text-xs text-gray-400">Add staff and collaborators</p>
+              <p className="text-sm font-semibold text-gray-800">Roles & Permissions</p>
+              <p className="text-xs text-gray-400">Manage team access &amp; audit log</p>
             </div>
           </Link>
           <Link to={`/account/change-type?BusinessID=${businessId}`}

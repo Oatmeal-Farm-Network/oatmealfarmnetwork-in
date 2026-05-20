@@ -22,6 +22,9 @@ export default function ProduceInventory() {
   const [inventory, setInventory] = useState([]);
   const [loadingInventory, setLoadingInventory] = useState(true);
 
+  // Alerts
+  const [alerts, setAlerts] = useState([]);
+
   // Add form
   const [addForm, setAddForm] = useState({
     IngredientCategoryID: '',
@@ -31,6 +34,9 @@ export default function ProduceInventory() {
     WholesalePrice: '',
     RetailPrice: '',
     AvailableDate: '',
+    HarvestDate: '',
+    ExpirationDate: '',
+    LowStockThreshold: '',
   });
   const [adding, setAdding] = useState(false);
   const [addSuccess, setAddSuccess] = useState(false);
@@ -44,7 +50,15 @@ export default function ProduceInventory() {
     LoadBusiness(BusinessID);
     loadLookups();
     loadInventory();
+    loadAlerts();
   }, [BusinessID]);
+
+  async function loadAlerts() {
+    if (!BusinessID) return;
+    const data = await fetch(`${API_URL}/api/produce/alerts?BusinessID=${BusinessID}`)
+      .then(r => r.json()).catch(() => []);
+    setAlerts(Array.isArray(data) ? data : []);
+  }
 
   async function loadLookups() {
     const [catRes, measRes] = await Promise.all([
@@ -61,6 +75,7 @@ export default function ProduceInventory() {
       .then(r => r.json()).catch(() => []);
     setInventory(Array.isArray(data) ? data : []);
     setLoadingInventory(false);
+    loadAlerts();
   }
 
   async function handleCategoryChange(catId) {
@@ -82,7 +97,7 @@ export default function ProduceInventory() {
     });
     if (res.ok) {
       setAddSuccess(true);
-      setAddForm({ IngredientCategoryID: '', IngredientID: '', Quantity: '', MeasurementID: '', WholesalePrice: '', RetailPrice: '', AvailableDate: '' });
+      setAddForm({ IngredientCategoryID: '', IngredientID: '', Quantity: '', MeasurementID: '', WholesalePrice: '', RetailPrice: '', AvailableDate: '', HarvestDate: '', ExpirationDate: '', LowStockThreshold: '' });
       setIngredients([]);
       await loadInventory();
     }
@@ -98,6 +113,9 @@ export default function ProduceInventory() {
         WholesalePrice: item.WholesalePrice ?? '',
         RetailPrice: item.RetailPrice ?? '',
         AvailableDate: item.AvailableDate ? item.AvailableDate.split('T')[0] : '',
+        HarvestDate: item.HarvestDate ? item.HarvestDate.split('T')[0] : '',
+        ExpirationDate: item.ExpirationDate ? item.ExpirationDate.split('T')[0] : '',
+        LowStockThreshold: item.LowStockThreshold ?? '',
         ShowProduce: item.ShowProduce ?? 0,
         IngredientID: item.IngredientID ?? '',
       },
@@ -140,6 +158,30 @@ export default function ProduceInventory() {
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle={t('produce_inv.page_title')} breadcrumbs={[{ label: t('nav.dashboard'), to: '/dashboard' }, { label: t('produce_inv.breadcrumb_inventory') }, { label: t('produce_inv.breadcrumb_produce') }]}>
       <div className="max-w-full mx-auto space-y-6">
+
+        {/* ── ALERTS BANNER ── */}
+        {alerts.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span className="font-semibold text-amber-800 text-sm">{alerts.length} inventory alert{alerts.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="space-y-1.5">
+              {alerts.map((a, idx) => {
+                const isExpired  = a.alert_type === 'expired';
+                const isExpiring = a.alert_type === 'expiring_soon';
+                return (
+                  <div key={`${a.ProduceID}-${a.alert_type}-${idx}`} className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg ${isExpired ? 'bg-red-100 text-red-800' : isExpiring ? 'bg-amber-100 text-amber-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    <span className="font-medium">{a.IngredientName}</span>
+                    {isExpired   && <span>— expired {Math.abs(a.DaysUntilExpiry)} day{Math.abs(a.DaysUntilExpiry) !== 1 ? 's' : ''} ago</span>}
+                    {isExpiring  && <span>— expires in {a.DaysUntilExpiry} day{a.DaysUntilExpiry !== 1 ? 's' : ''}</span>}
+                    {!isExpired && !isExpiring && <span>— low stock: {a.Quantity} {a.Unit} (threshold: {a.LowStockThreshold})</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── ADD PRODUCE FORM ── */}
         <div className="bg-white rounded-2xl shadow border border-gray-200 p-6">
@@ -231,6 +273,22 @@ export default function ProduceInventory() {
 
             </div>
 
+            {/* Second row: FIFO/FEFO tracking */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+              <div>
+                <label className={labelCls}>Harvest Date <span className="text-gray-400 font-normal">({t('produce_inv.optional')})</span></label>
+                <input type="date" value={addForm.HarvestDate} onChange={e => setAddForm(f => ({ ...f, HarvestDate: e.target.value }))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Expiration Date <span className="text-gray-400 font-normal">({t('produce_inv.optional')})</span></label>
+                <input type="date" value={addForm.ExpirationDate} onChange={e => setAddForm(f => ({ ...f, ExpirationDate: e.target.value }))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Low Stock Alert <span className="text-gray-400 font-normal">({t('produce_inv.optional')})</span></label>
+                <input type="number" value={addForm.LowStockThreshold} onChange={e => setAddForm(f => ({ ...f, LowStockThreshold: e.target.value }))} className={inputCls} min="0" placeholder="Qty threshold" />
+              </div>
+            </div>
+
             <div className="flex justify-end mt-4">
               <button type="submit" disabled={adding} className="regsubmit2" style={{ minWidth: '160px' }}>
                 {adding ? t('produce_inv.btn_adding') : t('produce_inv.btn_add')}
@@ -240,7 +298,7 @@ export default function ProduceInventory() {
         </div>
 
         {/* ── INVENTORY TABLE ── */}
-        <div className="bg-white rounded-2xl shadow border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow border border-gray-200 overflow-x-auto">
           <div className="px-6 py-4 border-b border-gray-100">
             <h2 className="text-lg font-bold text-gray-800">{t('produce_inv.inventory_heading')}</h2>
           </div>
@@ -253,7 +311,7 @@ export default function ProduceInventory() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ backgroundColor: '#F3F4F6' }}>
-                  {[t('produce_inv.th_ingredient'), t('produce_inv.th_wholesale'), t('produce_inv.th_retail'), t('produce_inv.th_qty'), t('produce_inv.th_unit'), t('produce_inv.th_available'), t('produce_inv.th_show'), t('produce_inv.th_actions')].map(h => (
+                  {[t('produce_inv.th_ingredient'), t('produce_inv.th_wholesale'), t('produce_inv.th_retail'), t('produce_inv.th_qty'), t('produce_inv.th_unit'), t('produce_inv.th_available'), 'Harvest', 'Expiry', 'Threshold', t('produce_inv.th_show'), t('produce_inv.th_actions')].map(h => (
                     <th key={h} style={{ padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #E5E7EB' }}>{h}</th>
                   ))}
                 </tr>
@@ -262,8 +320,15 @@ export default function ProduceInventory() {
                 {inventory.map((item, i) => {
                   const isEditing = !!editRows[item.ProduceID];
                   const row = editRows[item.ProduceID] || {};
+                  const _today = new Date(); _today.setHours(0, 0, 0, 0);
+                  const _expiry = item.ExpirationDate ? new Date(item.ExpirationDate.split('T')[0]) : null;
+                  const daysUntilExpiry = _expiry ? Math.round((_expiry - _today) / 86400000) : null;
+                  const isExpired = daysUntilExpiry !== null && daysUntilExpiry < 0;
+                  const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry >= 0 && daysUntilExpiry <= 14;
+                  const isLowStock = item.LowStockThreshold != null && item.Quantity != null && item.Quantity <= item.LowStockThreshold;
+                  const rowBg = isExpired ? '#FEF2F2' : (isExpiringSoon || isLowStock) ? '#FFFBEB' : (i % 2 === 0 ? '#fff' : '#fafafa');
                   return (
-                    <tr key={item.ProduceID} style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #F3F4F6' }}>
+                    <tr key={item.ProduceID} style={{ backgroundColor: rowBg, borderBottom: '1px solid #F3F4F6' }}>
 
                       {/* Ingredient name (not editable) */}
                       <td style={{ padding: '0.6rem 0.75rem', fontSize: '0.85rem', fontWeight: 600, color: '#374151' }}>
@@ -322,6 +387,41 @@ export default function ProduceInventory() {
                           <input type="date" value={row.AvailableDate} onChange={e => updateEditRow(item.ProduceID, 'AvailableDate', e.target.value)} className="border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none" />
                         ) : (
                           <span className="text-sm text-gray-700">{item.AvailableDate ? item.AvailableDate.split('T')[0] : '—'}</span>
+                        )}
+                      </td>
+
+                      {/* Harvest Date */}
+                      <td style={{ padding: '0.5rem 0.75rem' }}>
+                        {isEditing ? (
+                          <input type="date" value={row.HarvestDate || ''} onChange={e => updateEditRow(item.ProduceID, 'HarvestDate', e.target.value)} className="border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none" />
+                        ) : (
+                          <span className="text-sm text-gray-700">{item.HarvestDate ? item.HarvestDate.split('T')[0] : '—'}</span>
+                        )}
+                      </td>
+
+                      {/* Expiration Date */}
+                      <td style={{ padding: '0.5rem 0.75rem' }}>
+                        {isEditing ? (
+                          <input type="date" value={row.ExpirationDate || ''} onChange={e => updateEditRow(item.ProduceID, 'ExpirationDate', e.target.value)} className="border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none" />
+                        ) : item.ExpirationDate ? (
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isExpired ? 'bg-red-100 text-red-700' : isExpiringSoon ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
+                            {item.ExpirationDate.split('T')[0]}{isExpired ? ` (${Math.abs(daysUntilExpiry)}d ago)` : isExpiringSoon ? ` (${daysUntilExpiry}d)` : ''}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400">—</span>
+                        )}
+                      </td>
+
+                      {/* Low Stock Threshold */}
+                      <td style={{ padding: '0.5rem 0.75rem' }}>
+                        {isEditing ? (
+                          <input type="number" value={row.LowStockThreshold ?? ''} onChange={e => updateEditRow(item.ProduceID, 'LowStockThreshold', e.target.value)} className="border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none" style={{ width: '70px' }} min="0" />
+                        ) : item.LowStockThreshold != null ? (
+                          <span className={`text-sm ${isLowStock ? 'font-semibold text-amber-700' : 'text-gray-600'}`}>
+                            {item.LowStockThreshold}{isLowStock ? ' ⚠' : ''}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400">—</span>
                         )}
                       </td>
 

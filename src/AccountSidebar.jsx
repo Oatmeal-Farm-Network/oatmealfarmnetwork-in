@@ -57,6 +57,21 @@ const ICONS = {
   csaAdvanced:   <S><circle cx="8" cy="8" r="5"/><line x1="8" y1="5" x2="8" y2="8"/><line x1="8" y1="8" x2="11" y2="8"/><circle cx="8" cy="8" r="1" fill="currentColor" stroke="none"/><line x1="5" y1="3" x2="5" y2="1.5"/><line x1="11" y1="3" x2="11" y2="1.5"/></S>,
   coldChain:     <S><rect x="1" y="5" width="10" height="7" rx="1"/><path d="M11 7h2l2 2v3h-4V7z"/><circle cx="3.5" cy="13" r="1.2"/><circle cx="9" cy="13" r="1.2"/><circle cx="13.5" cy="13" r="1.2"/><line x1="5" y1="5" x2="5" y2="2"/><line x1="5" y1="2" x2="7" y2="2"/><line x1="6" y1="1" x2="6" y2="3.5"/></S>,
   farmerPay:     <S><circle cx="8" cy="8" r="5.5"/><line x1="8" y1="4.5" x2="8" y2="11.5"/><path d="M6 6.5h2.5a1.5 1.5 0 0 1 0 3h-2.5"/><path d="M5.5 9.5h3"/></S>,
+  supplyChain:   <S><rect x="1" y="6" width="5" height="5" rx="1"/><rect x="10" y="6" width="5" height="5" rx="1"/><line x1="6" y1="8.5" x2="10" y2="8.5"/><circle cx="3.5" cy="3" r="1.5"/><path d="M3.5 4.5v1.5"/><circle cx="12.5" cy="3" r="1.5"/><path d="M12.5 4.5v1.5"/></S>,
+  hrManagement:      <S><circle cx="5.5" cy="5" r="2"/><circle cx="10.5" cy="5" r="2"/><path d="M1 14c0-2.2 2-3.5 4.5-3.5h5c2.5 0 4.5 1.3 4.5 3.5"/></S>,
+  farmInputs:        <S><path d="M6 2h4l1 3H5z"/><rect x="4" y="5" width="8" height="9" rx="1"/><line x1="8" y1="8" x2="8" y2="11"/><line x1="6.5" y1="9.5" x2="9.5" y2="9.5"/></S>,
+  cropBudget:        <S><rect x="2" y="3" width="12" height="10" rx="1"/><polyline points="5,11 7,8 9,10 13,5"/><line x1="2" y1="7" x2="5" y2="7"/></S>,
+  traceability:      <S><rect x="2" y="2" width="5" height="5" rx="0.5"/><rect x="9" y="2" width="5" height="5" rx="0.5"/><rect x="2" y="9" width="5" height="5" rx="0.5"/><path d="M11.5 9v2.5h2.5"/><line x1="9" y1="11.5" x2="11.5" y2="11.5"/></S>,
+  farmInfrastructure:<S><path d="M2 14h12"/><path d="M4 14V8l4-5 4 5v6"/><line x1="7" y1="14" x2="7" y2="11"/><line x1="9" y1="14" x2="9" y2="11"/><line x1="5" y1="10" x2="11" y2="10"/></S>,
+  farmKpi:           <S><path d="M3 13c1-4 2.5-6 5-6s4 2 5 6"/><path d="M8 7V3"/><circle cx="8" cy="13" r="1" fill="currentColor" stroke="none"/><line x1="5" y1="4.5" x2="6.5" y2="6"/><line x1="11" y1="4.5" x2="9.5" y2="6"/></S>,
+  nursery:           <S><path d="M8 13V7"/><path d="M5 7c0-2 1.5-5 3-5s3 3 3 5"/><path d="M4 10c-1-1-1.5-3 0-4"/><path d="M12 10c1-1 1.5-3 0-4"/><line x1="3" y1="14" x2="13" y2="14"/></S>,
+  outgrower:         <S><circle cx="4" cy="5" r="1.5"/><circle cx="12" cy="5" r="1.5"/><path d="M4 6.5v3l4 2 4-2v-3"/><path d="M8 8.5V14"/><line x1="5" y1="14" x2="11" y2="14"/></S>,
+  procurement:       <S><rect x="3" y="5" width="10" height="9" rx="1"/><path d="M6 5V4a2 2 0 0 1 4 0v1"/><line x1="6" y1="9" x2="10" y2="9"/><line x1="8" y1="7" x2="8" y2="11"/></S>,
+  workOrders:        <S><rect x="2" y="3" width="9" height="12" rx="1"/><line x1="5" y1="7" x2="8" y2="7"/><line x1="5" y1="9.5" x2="8" y2="9.5"/><line x1="5" y1="12" x2="7" y2="12"/><circle cx="12" cy="11" r="3"/><line x1="14.1" y1="13.1" x2="15.5" y2="14.5"/></S>,
+  packhouseQC:       <S><rect x="2" y="6" width="12" height="8" rx="1"/><path d="M5 6V4h6v2"/><polyline points="5,10 7,12 11,8"/></S>,
+  plantTagging:      <S><circle cx="8" cy="6" r="3"/><path d="M8 9v6"/><path d="M5.5 13h5"/><line x1="8" y1="3" x2="8" y2="1"/><line x1="11" y1="4" x2="12.5" y2="2.5"/><line x1="5" y1="4" x2="3.5" y2="2.5"/></S>,
+  exportCompliance:  <S><rect x="2" y="3" width="10" height="12" rx="1"/><line x1="5" y1="7" x2="9" y2="7"/><line x1="5" y1="9.5" x2="9" y2="9.5"/><line x1="5" y1="12" x2="7.5" y2="12"/><path d="M13 8l2 2-2 2"/><line x1="10" y1="10" x2="15" y2="10"/></S>,
+  permissions:       <S><circle cx="8" cy="5.5" r="2"/><path d="M4 14v-1.5a4 4 0 0 1 8 0V14"/><line x1="10.5" y1="9" x2="14" y2="5.5"/><circle cx="14" cy="4.5" r="1.2"/></S>,
 };
 
 const CollapseIcon = () => (
@@ -248,7 +263,7 @@ export default function AccountSidebar() {
             <div className="mb-1">
               <div className={`flex items-center rounded-lg hover:bg-white/50 transition-all ${!Expanded ? 'justify-center' : ''}`}>
                 <Link
-                  to="/dashboard"
+                  to={`/account?PeopleID=${peopleId}&BusinessID=${BusinessID}`}
                   title={!Expanded ? t('account_sidebar.sec_dashboard') : undefined}
                   className={`flex items-center py-2 text-gray-700 text-sm flex-1 min-w-0 ${Expanded ? 'gap-3 px-3' : 'justify-center'}`}
                 >
@@ -453,6 +468,138 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
+        {on('enterprise_supply_chain') && (
+          <NavSection icon={ICONS.supplyChain} label="Supply Chain" expanded={Expanded}
+            isOpen={OpenSections['SupplyChain'] || false} onToggle={() => toggleSection('SupplyChain')}>
+            <NavChild to={`/supply-chain?BusinessID=${BusinessID}`} label="Dashboard" />
+            <NavChild to={`/supply-chain/control-tower?BusinessID=${BusinessID}`} label="Control Tower" />
+            <NavChild to={`/supply-chain/visibility?BusinessID=${BusinessID}`} label="Shipment Visibility" />
+            <NavChild to={`/supply-chain/quality?BusinessID=${BusinessID}`} label="Quality & Yield" />
+            <NavChild to={`/supply-chain/margin?BusinessID=${BusinessID}`} label="Margin Optimization" />
+            <NavChild to={`/supply-chain/forecasting?BusinessID=${BusinessID}`} label="Forecasting" />
+            <NavChild to={`/supply-chain/exceptions?BusinessID=${BusinessID}`} label="Exceptions" />
+            <NavChild to={`/supply-chain/scorecard?BusinessID=${BusinessID}`} label="Scorecards" />
+            <NavChild to={`/supply-chain/settings?BusinessID=${BusinessID}`} label="Settings" />
+          </NavSection>
+        )}
+
+        {on('hr_management') && (
+          <NavSection icon={ICONS.hrManagement} label="HR & Workforce" expanded={Expanded}
+            isOpen={OpenSections['HR'] || false} onToggle={() => toggleSection('HR')}>
+            <NavChild to={`/hr?BusinessID=${BusinessID}`} label="Overview" />
+            <NavChild to={`/hr?BusinessID=${BusinessID}&tab=workers`} label="Workers" />
+            <NavChild to={`/hr?BusinessID=${BusinessID}&tab=attendance`} label="Attendance" />
+            <NavChild to={`/hr?BusinessID=${BusinessID}&tab=payroll`} label="Payroll" />
+            <NavChild to={`/hr?BusinessID=${BusinessID}&tab=tasks`} label="Tasks" />
+            <NavChild to={`/hr?BusinessID=${BusinessID}&tab=leave`} label="Leave Requests" />
+          </NavSection>
+        )}
+
+        {on('farm_inputs') && (
+          <NavSection icon={ICONS.farmInputs} label="Farm Inputs" expanded={Expanded}
+            isOpen={OpenSections['Farm Inputs'] || false} onToggle={() => toggleSection('Farm Inputs')}>
+            <NavChild to={`/farm-inputs?BusinessID=${BusinessID}`} label="Inventory" />
+            <NavChild to={`/farm-inputs?BusinessID=${BusinessID}&tab=transactions`} label="Transactions" />
+            <NavChild to={`/farm-inputs?BusinessID=${BusinessID}&tab=alerts`} label="Alerts" />
+          </NavSection>
+        )}
+
+        {on('crop_budgeting') && (
+          <NavSection icon={ICONS.cropBudget} label="Crop Budgets" expanded={Expanded}
+            isOpen={OpenSections['Crop Budgets'] || false} onToggle={() => toggleSection('Crop Budgets')}>
+            <NavChild to={`/crop-budget?BusinessID=${BusinessID}`} label="Budgets" />
+          </NavSection>
+        )}
+
+        {on('traceability') && (
+          <NavSection icon={ICONS.traceability} label="Harvest Lots" expanded={Expanded}
+            isOpen={OpenSections['Harvest Lots'] || false} onToggle={() => toggleSection('Harvest Lots')}>
+            <NavChild to={`/harvest-lots?BusinessID=${BusinessID}`} label="Lots" />
+          </NavSection>
+        )}
+
+        {on('farm_infrastructure') && (
+          <NavSection icon={ICONS.farmInfrastructure} label="Infrastructure" expanded={Expanded}
+            isOpen={OpenSections['Infrastructure'] || false} onToggle={() => toggleSection('Infrastructure')}>
+            <NavChild to={`/farm-infrastructure?BusinessID=${BusinessID}`} label="Assets & Equipment" />
+            <NavChild to={`/farm-infrastructure?BusinessID=${BusinessID}&tab=maintenance`} label="Maintenance Log" />
+            <NavChild to={`/farm-infrastructure?BusinessID=${BusinessID}&tab=schedules`} label="Schedules" />
+            <NavChild to={`/farm-infrastructure?BusinessID=${BusinessID}&tab=structures`} label="Structures" />
+          </NavSection>
+        )}
+
+        {on('farm_kpi') && (
+          <NavSection icon={ICONS.farmKpi} label="Farm KPIs" expanded={Expanded}
+            isOpen={OpenSections['Farm KPIs'] || false} onToggle={() => toggleSection('Farm KPIs')}>
+            <NavChild to={`/farm-kpi?BusinessID=${BusinessID}`} label="Dashboard" />
+            <NavChild to={`/farm-kpi?BusinessID=${BusinessID}&tab=kpis`} label="KPI Management" />
+            <NavChild to={`/farm-kpi?BusinessID=${BusinessID}&tab=alerts`} label="Alerts" />
+            <NavChild to={`/farm-kpi?BusinessID=${BusinessID}&tab=pest-log`} label="Pest Log" />
+          </NavSection>
+        )}
+
+        {on('nursery_management') && (
+          <NavSection icon={ICONS.nursery} label="Nursery" expanded={Expanded}
+            isOpen={OpenSections['Nursery'] || false} onToggle={() => toggleSection('Nursery')}>
+            <NavChild to={`/nursery?BusinessID=${BusinessID}`} label="Batches" />
+            <NavChild to={`/nursery?BusinessID=${BusinessID}&tab=batches`} label="Growth Logs" />
+            <NavChild to={`/nursery?BusinessID=${BusinessID}&tab=qc`} label="QC Checks" />
+          </NavSection>
+        )}
+
+        {on('outgrower_management') && (
+          <NavSection icon={ICONS.outgrower} label="Outgrower / Contract Farming" expanded={Expanded}
+            isOpen={OpenSections['Outgrower'] || false} onToggle={() => toggleSection('Outgrower')}>
+            <NavChild to={`/outgrower?BusinessID=${BusinessID}`} label="Overview" />
+            <NavChild to={`/outgrower?BusinessID=${BusinessID}&tab=farmers`} label="Farmers" />
+            <NavChild to={`/outgrower?BusinessID=${BusinessID}&tab=contracts`} label="Contracts" />
+            <NavChild to={`/outgrower?BusinessID=${BusinessID}&tab=distributions`} label="Input Distributions" />
+            <NavChild to={`/outgrower?BusinessID=${BusinessID}&tab=deliveries`} label="Deliveries & Pay" />
+          </NavSection>
+        )}
+
+        {on('procurement') && (
+          <NavSection icon={ICONS.procurement} label="Procurement" expanded={Expanded}
+            isOpen={OpenSections['Procurement'] || false} onToggle={() => toggleSection('Procurement')}>
+            <NavChild to={`/procurement?BusinessID=${BusinessID}`} label="Purchase Orders" />
+            <NavChild to={`/procurement?BusinessID=${BusinessID}&filter=pending_approval`} label="Pending Approval" />
+          </NavSection>
+        )}
+
+        {on('work_orders') && (
+          <NavSection icon={ICONS.workOrders} label="Work Orders" expanded={Expanded}
+            isOpen={OpenSections['Work Orders'] || false} onToggle={() => toggleSection('Work Orders')}>
+            <NavChild to={`/work-orders?BusinessID=${BusinessID}`} label="All Work Orders" />
+            <NavChild to={`/work-orders?BusinessID=${BusinessID}&tab=greenhouse`} label="Greenhouse Controls" />
+          </NavSection>
+        )}
+
+        {on('packhouse_qc') && (
+          <NavSection icon={ICONS.packhouseQC} label="Packhouse & QC" expanded={Expanded}
+            isOpen={OpenSections['Packhouse'] || false} onToggle={() => toggleSection('Packhouse')}>
+            <NavChild to={`/packhouse?BusinessID=${BusinessID}`} label="Batches" />
+            <NavChild to={`/packhouse?BusinessID=${BusinessID}&tab=templates`} label="QC Templates" />
+          </NavSection>
+        )}
+
+        {on('plant_tagging') && (
+          <NavSection icon={ICONS.plantTagging} label="Plant Tags & Assets" expanded={Expanded}
+            isOpen={OpenSections['Plant Tags'] || false} onToggle={() => toggleSection('Plant Tags')}>
+            <NavChild to={`/plant-tags?BusinessID=${BusinessID}`} label="Plant Tags" />
+            <NavChild to={`/plant-tags?BusinessID=${BusinessID}&tab=assets`} label="Infrastructure Assets" />
+          </NavSection>
+        )}
+
+        {on('export_compliance') && (
+          <NavSection icon={ICONS.exportCompliance} label="Export Compliance" expanded={Expanded}
+            isOpen={OpenSections['Export Compliance'] || false} onToggle={() => toggleSection('Export Compliance')}>
+            <NavChild to={`/export-compliance?BusinessID=${BusinessID}`} label="Shipments" />
+            <NavChild to={`/export-compliance?BusinessID=${BusinessID}&tab=certifications`} label="Certifications" />
+            <NavChild to={`/export-compliance?BusinessID=${BusinessID}&tab=recalls`} label="Recalls" />
+            <NavChild to={`/export-compliance?BusinessID=${BusinessID}&tab=margins`} label="Crop Margins" />
+          </NavSection>
+        )}
+
         {on('livestock') && (
           <NavSection icon={ICONS.livestock} label={t('account_sidebar.sec_livestock')} expanded={Expanded}
             isOpen={OpenSections.Livestock || false} onToggle={() => toggleSection('Livestock')}>
@@ -568,6 +715,13 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
+
+        <NavSection icon={ICONS.permissions} label="Roles & Permissions" expanded={Expanded}
+          isOpen={OpenSections['Permissions'] || false} onToggle={() => toggleSection('Permissions')}>
+          <NavChild to={`/permissions?BusinessID=${BusinessID}`} label="Roles" />
+          <NavChild to={`/permissions?BusinessID=${BusinessID}&tab=members`} label="Team Members" />
+          <NavChild to={`/permissions?BusinessID=${BusinessID}&tab=audit`} label="Audit Log" />
+        </NavSection>
 
         <NavSection icon={ICONS.settings} label={t('account_sidebar.sec_settings')} expanded={Expanded}
           isOpen={OpenSections['Account Settings'] || false} onToggle={() => toggleSection('Account Settings')}>

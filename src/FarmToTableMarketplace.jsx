@@ -150,6 +150,8 @@ export default function FarmToTableMarketplace() {
   const [savedFarmIds, setSavedFarmIds] = useState(() => new Set());
   // Standing-order setup modal — null when closed; otherwise the listing being added.
   const [standingTarget, setStandingTarget] = useState(null);
+  // Allow partial fulfillment at checkout
+  const [partialOk, setPartialOk] = useState(false);
 
   useEffect(() => {
     if (!restaurantBusinessId) { setSavedFarmIds(new Set()); return; }
@@ -272,6 +274,9 @@ export default function FarmToTableMarketplace() {
   };
 
   const addToCart = useCallback((listing) => {
+    const basePrice = isRestaurant && listing.WholesalePrice
+      ? parseFloat(listing.WholesalePrice)
+      : parseFloat(listing.UnitPrice) || 0;
     setCart(prev => {
       const existing = prev.find(i => i.ListingID === listing.ListingID);
       let next;
@@ -285,20 +290,21 @@ export default function FarmToTableMarketplace() {
         next = [...prev, {
           ListingID:         listing.ListingID,
           title:             listing.Title,
-          price:             listing.UnitPrice,
+          price:             basePrice,
           unitLabel:         listing.UnitLabel || 'each',
           sellerName:        listing.SellerName,
           productType:       listing.ProductType,
           imageURL:          listing.ImageURL || null,
           quantityAvailable: listing.QuantityAvailable,
           quantity:          1,
+          priceTiers:        listing.PriceTiers || [],
         }];
       }
       saveCart(next);
       return next;
     });
     showToast(t('farm_mkt.toast_added', { title: listing.Title }));
-  }, []);
+  }, [isRestaurant]);
 
   const removeFromCart = useCallback((listingId) => {
     setCart(prev => {
@@ -343,6 +349,7 @@ export default function FarmToTableMarketplace() {
         body: JSON.stringify({
           BuyerPeopleID: parseInt(currentPeopleId),
           DeliveryMethod: 'pickup',
+          PartialFulfillmentOk: partialOk,
         }),
       });
       if (!res.ok) {
@@ -655,6 +662,13 @@ export default function FarmToTableMarketplace() {
                   ${(parseFloat(item.price) * item.quantity).toFixed(2)}
                   <span className="text-gray-400 font-normal"> (${parseFloat(item.price).toFixed(2)} / {item.unitLabel})</span>
                 </p>
+                {item.priceTiers?.length > 0 && (() => {
+                  const applied = [...item.priceTiers].sort((a, b) => b.MinQty - a.MinQty).find(t => item.quantity >= t.MinQty);
+                  const nextTier = [...item.priceTiers].sort((a, b) => a.MinQty - b.MinQty).find(t => item.quantity < t.MinQty);
+                  if (applied) return <p className="text-xs text-emerald-600 mt-0.5">Vol. price: ${parseFloat(applied.TierPrice).toFixed(2)}/{item.unitLabel} applied at checkout</p>;
+                  if (nextTier) return <p className="text-xs text-blue-500 mt-0.5">Add {Math.ceil(nextTier.MinQty - item.quantity)} more → ${parseFloat(nextTier.TierPrice).toFixed(2)}/{item.unitLabel}</p>;
+                  return null;
+                })()}
                 <div className="flex items-center gap-2 mt-2">
                   <button onClick={() => updateQty(item.ListingID, -1, item.quantityAvailable)}
                     className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 text-sm font-bold flex items-center justify-center">−</button>
@@ -679,10 +693,23 @@ export default function FarmToTableMarketplace() {
               <span>{t('farm_mkt.service_fee')}</span>
               <span>${(cartTotal * 0.025).toFixed(2)}</span>
             </div>
-            <div className="flex justify-between font-bold text-lg mb-4">
+            <div className="flex justify-between font-bold text-lg mb-3">
               <span>{t('farm_mkt.cart_total')}</span>
               <span className="text-[#819360]">${(cartTotal * 1.025).toFixed(2)}</span>
             </div>
+
+            {/* Partial fulfillment option */}
+            <label className="flex items-start gap-2 mb-4 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={partialOk}
+                onChange={e => setPartialOk(e.target.checked)}
+                className="mt-0.5 accent-[#3D6B34] flex-shrink-0"
+              />
+              <span className="text-xs text-gray-600 leading-snug">
+                Allow partial fulfillment — if a seller can only ship part of my order, fill with available stock
+              </span>
+            </label>
 
             {/* Inline sign-in form — expands when not logged in */}
             {!isLoggedIn && showSignIn && (
@@ -918,7 +945,7 @@ function ProductCard({ listing: l, inCart, onAdd, onView, isRestaurant = false, 
         </div>
 
         <div className="mt-auto">
-          <div className="flex items-baseline gap-1.5 mb-3 flex-wrap">
+          <div className="flex items-baseline gap-1.5 mb-2 flex-wrap">
             {showWholesaleHeadline ? (
               <>
                 <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ backgroundColor: '#fff4d6', color: '#8a6a0a' }}>WS</span>
@@ -936,6 +963,19 @@ function ProductCard({ listing: l, inCart, onAdd, onView, isRestaurant = false, 
               </>
             )}
           </div>
+
+          {l.PriceTiers?.length > 0 && (
+            <div className="mb-2 pt-1.5 border-t border-gray-100">
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Volume Pricing</p>
+              <div className="flex flex-wrap gap-1">
+                {l.PriceTiers.map(t => (
+                  <span key={t.MinQty} className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{ backgroundColor: '#e8f0dc', color: '#3D6B34' }}>
+                    {t.MinQty}+ → ${parseFloat(t.TierPrice).toFixed(2)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {l.QuantityAvailable > 0 ? (
             <button

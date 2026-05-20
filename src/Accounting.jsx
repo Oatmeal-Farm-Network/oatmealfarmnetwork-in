@@ -25,7 +25,7 @@ function fmtDate(d) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-const TABS = ['Dashboard', 'Invoices', 'Customers', 'Vendors', 'Bills', 'Expenses', 'Farmer Payouts', 'Accounts', 'Reports', 'Payments'];
+const TABS = ['Dashboard', 'Invoices', 'Customers', 'Vendors', 'Bills', 'Expenses', 'Farmer Payouts', 'Job Costing', 'Accounts', 'Reports', 'Payments'];
 
 const statusColor = {
   Draft: 'bg-gray-100 text-gray-700',
@@ -69,6 +69,247 @@ const btnWhite  = `${btn} border border-gray-300 text-gray-700 hover:bg-gray-50`
 
 const PAYMENT_TERMS = ['Due on Receipt', 'Net15', 'Net30', 'Net45', 'Net60'];
 const PAYMENT_METHODS = ['Credit Card', 'Debit Card', 'Cash', 'Check', 'ACH', 'Wire Transfer'];
+
+// ─── JOB COSTING ────────────────────────────────────────────────
+
+const JOB_TYPES = ['field', 'crop', 'season', 'project', 'other'];
+const COST_CATS = ['Seed & Planting', 'Fertilizer', 'Crop Protection', 'Irrigation', 'Labor', 'Machinery', 'Harvest & Packaging', 'Transport', 'Storage', 'Certification', 'Overhead', 'Other'];
+
+function JobCostingTab({ apiFetch, businessId }) {
+  const [jobs, setJobs] = useState([]);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [allocations, setAllocations] = useState([]);
+  const [report, setReport] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ JobName: '', JobType: 'field', FieldRef: '', CropName: '', Season: '', StartDate: '', EndDate: '', BudgetAmount: '', Notes: '' });
+  const [allocForm, setAllocForm] = useState({ CostCategory: 'Seed & Planting', Description: '', Amount: '', CostDate: new Date().toISOString().split('T')[0] });
+  const [seeding, setSeeding] = useState(false);
+  const [seedMsg, setSeedMsg] = useState('');
+
+  const loadJobs = useCallback(async () => {
+    const d = await apiFetch('/jobs');
+    setJobs(d || []);
+  }, [apiFetch]);
+
+  useEffect(() => { loadJobs(); }, [loadJobs]);
+
+  const loadDetail = async (job) => {
+    setSelectedJob(job);
+    const [a, r] = await Promise.all([
+      apiFetch(`/jobs/${job.JobID}/allocations`),
+      apiFetch(`/jobs/${job.JobID}/report`),
+    ]);
+    setAllocations(a || []);
+    setReport(r || null);
+  };
+
+  const createJob = async (e) => {
+    e.preventDefault();
+    await apiFetch('/jobs', { method: 'POST', body: JSON.stringify({ ...form, BudgetAmount: parseFloat(form.BudgetAmount) || null }) });
+    setForm({ JobName: '', JobType: 'field', FieldRef: '', CropName: '', Season: '', StartDate: '', EndDate: '', BudgetAmount: '', Notes: '' });
+    setShowForm(false);
+    loadJobs();
+  };
+
+  const deleteJob = async (id) => {
+    if (!window.confirm('Delete this cost job and all its allocations?')) return;
+    await apiFetch(`/jobs/${id}`, { method: 'DELETE' });
+    if (selectedJob?.JobID === id) { setSelectedJob(null); setAllocations([]); setReport(null); }
+    loadJobs();
+  };
+
+  const addAllocation = async (e) => {
+    e.preventDefault();
+    await apiFetch(`/jobs/${selectedJob.JobID}/allocations`, {
+      method: 'POST', body: JSON.stringify({ ...allocForm, Amount: parseFloat(allocForm.Amount) }),
+    });
+    setAllocForm({ CostCategory: 'Seed & Planting', Description: '', Amount: '', CostDate: new Date().toISOString().split('T')[0] });
+    loadDetail(selectedJob);
+  };
+
+  const deleteAlloc = async (id) => {
+    await apiFetch(`/jobs/${selectedJob.JobID}/allocations/${id}`, { method: 'DELETE' });
+    loadDetail(selectedJob);
+  };
+
+  const seedAgAccounts = async () => {
+    setSeeding(true); setSeedMsg('');
+    const r = await apiFetch('/seed-ag-accounts', { method: 'POST' });
+    setSeedMsg(r?.inserted > 0 ? `Added ${r.inserted} agriculture accounts.` : `All ${r?.skipped || 0} ag accounts already present.`);
+    setSeeding(false);
+  };
+
+  const pct = (a, b) => b > 0 ? Math.round(a / b * 100) : 0;
+
+  return (
+    <div className="space-y-6">
+      {/* Ag COA seeder banner */}
+      <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-4 flex items-center justify-between gap-4">
+        <div>
+          <p className="font-semibold text-green-800 text-sm">Agriculture Chart of Accounts</p>
+          <p className="text-xs text-green-700">Add 29 pre-built ag-specific accounts (Crop Revenue, Seed Costs, Equipment Depreciation, etc.) to your COA.</p>
+          {seedMsg && <p className="text-xs text-green-600 mt-1 font-medium">{seedMsg}</p>}
+        </div>
+        <button onClick={seedAgAccounts} disabled={seeding} className={`${btnGreen} shrink-0 text-xs`}>
+          {seeding ? 'Adding…' : 'Add Ag Accounts'}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Job list */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-gray-800">Cost Jobs / Projects</h2>
+            <button onClick={() => setShowForm(v => !v)} className={btnGreen}>+ New Job</button>
+          </div>
+
+          {showForm && (
+            <form onSubmit={createJob} className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2"><label className="text-xs text-gray-500 mb-1 block">Job Name *</label>
+                  <input required className={input} value={form.JobName} onChange={e => setForm(f => ({ ...f, JobName: e.target.value }))} /></div>
+                <div><label className="text-xs text-gray-500 mb-1 block">Type</label>
+                  <select className={input} value={form.JobType} onChange={e => setForm(f => ({ ...f, JobType: e.target.value }))}>
+                    {JOB_TYPES.map(t => <option key={t}>{t}</option>)}
+                  </select></div>
+                <div><label className="text-xs text-gray-500 mb-1 block">Budget ($)</label>
+                  <input type="number" step="0.01" className={input} value={form.BudgetAmount} onChange={e => setForm(f => ({ ...f, BudgetAmount: e.target.value }))} /></div>
+                <div><label className="text-xs text-gray-500 mb-1 block">Crop</label>
+                  <input className={input} value={form.CropName} onChange={e => setForm(f => ({ ...f, CropName: e.target.value }))} /></div>
+                <div><label className="text-xs text-gray-500 mb-1 block">Season</label>
+                  <input className={input} placeholder="e.g. 2025 Long Rains" value={form.Season} onChange={e => setForm(f => ({ ...f, Season: e.target.value }))} /></div>
+                <div><label className="text-xs text-gray-500 mb-1 block">Field / Block Ref</label>
+                  <input className={input} value={form.FieldRef} onChange={e => setForm(f => ({ ...f, FieldRef: e.target.value }))} /></div>
+                <div><label className="text-xs text-gray-500 mb-1 block">Start Date</label>
+                  <input type="date" className={input} value={form.StartDate} onChange={e => setForm(f => ({ ...f, StartDate: e.target.value }))} /></div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setShowForm(false)} className={btnWhite}>Cancel</button>
+                <button type="submit" className={btnGreen}>Create</button>
+              </div>
+            </form>
+          )}
+
+          <div className="space-y-2">
+            {jobs.length === 0 && <p className="text-sm text-gray-400 text-center py-6">No cost jobs yet.</p>}
+            {jobs.map(j => {
+              const budgetPct = j.BudgetAmount ? pct(j.ActualCost, j.BudgetAmount) : null;
+              const over = budgetPct != null && budgetPct > 100;
+              return (
+                <div key={j.JobID}
+                  onClick={() => loadDetail(j)}
+                  className={`bg-white border rounded-xl p-4 cursor-pointer hover:border-green-400 transition-colors ${selectedJob?.JobID === j.JobID ? 'border-green-500 ring-1 ring-green-300' : 'border-gray-200'}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-800 truncate">{j.JobName}</p>
+                      <p className="text-xs text-gray-500">{j.JobType} {j.CropName ? `· ${j.CropName}` : ''} {j.Season ? `· ${j.Season}` : ''}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className={`font-bold text-sm ${over ? 'text-red-600' : 'text-gray-800'}`}>{fmt(j.ActualCost)}</p>
+                      {j.BudgetAmount && <p className="text-xs text-gray-400">of {fmt(j.BudgetAmount)} budget</p>}
+                    </div>
+                  </div>
+                  {budgetPct != null && (
+                    <div className="mt-2">
+                      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                        <div className={`h-full rounded-full ${over ? 'bg-red-500' : budgetPct > 80 ? 'bg-amber-400' : 'bg-green-500'}`}
+                          style={{ width: `${Math.min(budgetPct, 100)}%` }} />
+                      </div>
+                      <p className={`text-xs mt-0.5 font-medium ${over ? 'text-red-600' : 'text-gray-400'}`}>{budgetPct}% of budget {over ? '(OVER)' : 'used'}</p>
+                    </div>
+                  )}
+                  <div className="flex justify-end mt-2">
+                    <button onClick={e => { e.stopPropagation(); deleteJob(j.JobID); }} className="text-red-400 hover:text-red-600 text-xs">Delete</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Job detail */}
+        <div className="space-y-4">
+          {!selectedJob ? (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-12 text-center text-gray-400 text-sm">Select a job to view costs</div>
+          ) : (
+            <>
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <h3 className="font-bold text-gray-800 mb-1">{selectedJob.JobName}</h3>
+                {report && (
+                  <div className="grid grid-cols-3 gap-3 mt-3">
+                    {[
+                      { l: 'Budget', v: fmt(report.budget), c: 'text-gray-700' },
+                      { l: 'Actual', v: fmt(report.total_actual), c: report.total_actual > report.budget ? 'text-red-600' : 'text-green-700' },
+                      { l: 'Variance', v: fmt(report.variance), c: report.variance >= 0 ? 'text-green-700' : 'text-red-600' },
+                    ].map(k => (
+                      <div key={k.l} className="bg-gray-50 rounded-lg p-3 text-center">
+                        <p className="text-xs text-gray-400 mb-0.5">{k.l}</p>
+                        <p className={`font-bold text-sm ${k.c}`}>{k.v}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {report?.by_category?.length > 0 && (
+                  <div className="mt-4 space-y-1.5">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">By Category</p>
+                    {report.by_category.map(bc => (
+                      <div key={bc.category} className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">{bc.category}</span>
+                        <span className="font-semibold text-gray-800">{fmt(bc.total)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Add cost allocation */}
+              <form onSubmit={addAllocation} className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+                <h4 className="font-semibold text-gray-700 text-sm">Allocate Cost</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="text-xs text-gray-500 mb-1 block">Category *</label>
+                    <select required className={input} value={allocForm.CostCategory} onChange={e => setAllocForm(f => ({ ...f, CostCategory: e.target.value }))}>
+                      {COST_CATS.map(c => <option key={c}>{c}</option>)}
+                    </select></div>
+                  <div><label className="text-xs text-gray-500 mb-1 block">Amount ($) *</label>
+                    <input required type="number" step="0.01" className={input} value={allocForm.Amount} onChange={e => setAllocForm(f => ({ ...f, Amount: e.target.value }))} /></div>
+                  <div><label className="text-xs text-gray-500 mb-1 block">Date *</label>
+                    <input required type="date" className={input} value={allocForm.CostDate} onChange={e => setAllocForm(f => ({ ...f, CostDate: e.target.value }))} /></div>
+                  <div><label className="text-xs text-gray-500 mb-1 block">Description</label>
+                    <input className={input} value={allocForm.Description} onChange={e => setAllocForm(f => ({ ...f, Description: e.target.value }))} /></div>
+                </div>
+                <div className="flex justify-end"><button type="submit" className={btnGreen}>Add Cost</button></div>
+              </form>
+
+              {/* Allocation list */}
+              {allocations.length > 0 && (
+                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-xs text-gray-500 border-b">
+                      <tr><th className="text-left px-4 py-2">Category</th><th className="text-left px-4 py-2">Description</th><th className="text-left px-4 py-2">Date</th><th className="text-right px-4 py-2">Amount</th><th className="px-4 py-2"></th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {allocations.map(a => (
+                        <tr key={a.AllocationID}>
+                          <td className="px-4 py-2.5 font-medium">{a.CostCategory}</td>
+                          <td className="px-4 py-2.5 text-gray-500">{a.Description || '—'}</td>
+                          <td className="px-4 py-2.5 text-gray-500">{a.CostDate?.split('T')[0]}</td>
+                          <td className="px-4 py-2.5 text-right font-semibold">{fmt(a.Amount)}</td>
+                          <td className="px-4 py-2.5 text-center">
+                            <button onClick={() => deleteAlloc(a.AllocationID)} className="text-red-400 hover:text-red-600 text-xs">×</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── PAYMENTS (Stripe + refund model) ──────────────────────────
 
@@ -218,6 +459,94 @@ function PaymentsTab() {
           <button onClick={save} disabled={saving} className={btnGreen}>{saving ? t('accounting.btn_saving') : t('accounting.btn_save_payments')}</button>
         </div>
       )}
+    </div>
+  );
+}
+
+
+// ─── Currency Manager ─────────────────────────────────────────────────────────
+
+function CurrencyManager({ apiFetch }) {
+  const [currencies, setCurrencies] = useState([]);
+  const [editing, setEditing] = useState(null); // { CurrencyCode, RateToUSD, CurrencyName }
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  const load = useCallback(async () => {
+    try { setCurrencies(await apiFetch('/currencies')); setLoaded(true); } catch (_) {}
+  }, [apiFetch]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function saveRate() {
+    if (!editing) return;
+    setSaving(true);
+    await apiFetch(`/currencies/${editing.CurrencyCode}`, {
+      method: 'PUT',
+      body: JSON.stringify({ rate_to_usd: parseFloat(editing.RateToUSD), currency_name: editing.CurrencyName }),
+    });
+    setSaving(false);
+    setEditing(null);
+    load();
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200">
+      <div className="flex items-center justify-between p-4 border-b">
+        <div>
+          <h2 className="font-semibold text-gray-900">Exchange Rates</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Rates relative to USD. Used for multi-currency invoices and crop margins.</p>
+        </div>
+        {!loaded && <span className="text-xs text-gray-400">Loading…</span>}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-gray-500 border-b bg-gray-50">
+              <th className="px-4 py-2.5 font-semibold">Code</th>
+              <th className="px-4 py-2.5 font-semibold">Currency</th>
+              <th className="px-4 py-2.5 font-semibold">Rate (to USD)</th>
+              <th className="px-4 py-2.5 font-semibold">Updated</th>
+              <th className="px-4 py-2.5"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {currencies.map(c => (
+              <tr key={c.CurrencyCode} className="hover:bg-gray-50">
+                <td className="px-4 py-2.5 font-mono font-bold text-blue-700">{c.CurrencyCode}</td>
+                <td className="px-4 py-2.5 text-gray-700">{c.CurrencyName}</td>
+                <td className="px-4 py-2.5">
+                  {editing?.CurrencyCode === c.CurrencyCode ? (
+                    <input type="number" step="0.0001" className="border rounded px-2 py-1 text-sm w-28"
+                      value={editing.RateToUSD}
+                      onChange={e => setEditing(ed => ({ ...ed, RateToUSD: e.target.value }))} />
+                  ) : (
+                    <span className="font-mono">{Number(c.RateToUSD).toFixed(4)}</span>
+                  )}
+                </td>
+                <td className="px-4 py-2.5 text-gray-400 text-xs">
+                  {c.UpdatedAt ? new Date(c.UpdatedAt).toLocaleDateString() : '—'}
+                </td>
+                <td className="px-4 py-2.5 text-right">
+                  {editing?.CurrencyCode === c.CurrencyCode ? (
+                    <div className="flex gap-2 justify-end">
+                      <button onClick={() => setEditing(null)}
+                        className="text-xs px-2 py-1 border rounded text-gray-600 hover:bg-gray-50">Cancel</button>
+                      <button onClick={saveRate} disabled={saving}
+                        className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50">
+                        {saving ? '…' : 'Save'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setEditing({ CurrencyCode: c.CurrencyCode, RateToUSD: c.RateToUSD, CurrencyName: c.CurrencyName })}
+                      className="text-xs text-blue-600 hover:text-blue-800">Edit</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -806,30 +1135,35 @@ export default function Accounting() {
 
         {/* ── CHART OF ACCOUNTS ── */}
         {tab === 'Accounts' && (
-          <div className="bg-white rounded-xl border border-gray-200">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="font-semibold text-gray-900">{t('accounting.accounts_heading')}</h2>
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl border border-gray-200">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h2 className="font-semibold text-gray-900">{t('accounting.accounts_heading')}</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="text-left text-xs text-gray-500 border-b bg-gray-50">
+                    {[t('accounting.th_acct_num'), t('accounting.th_acct_name'), t('accounting.th_acct_type'), t('accounting.th_statement'), t('accounting.th_active')].map(h => (
+                      <th key={h} className="px-4 py-3 font-semibold">{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody>
+                    {accounts.map(a => (
+                      <tr key={a.AccountID} className="border-b hover:bg-gray-50">
+                        <td className="px-4 py-3 font-mono text-gray-500">{a.AccountNumber}</td>
+                        <td className="px-4 py-3 font-medium">{a.AccountName}</td>
+                        <td className="px-4 py-3 text-gray-500">{a.AccountTypeName}</td>
+                        <td className="px-4 py-3 text-gray-400">{a.FinancialStatement}</td>
+                        <td className="px-4 py-3">{a.IsActive ? '✓' : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead><tr className="text-left text-xs text-gray-500 border-b bg-gray-50">
-                  {[t('accounting.th_acct_num'), t('accounting.th_acct_name'), t('accounting.th_acct_type'), t('accounting.th_statement'), t('accounting.th_active')].map(h => (
-                    <th key={h} className="px-4 py-3 font-semibold">{h}</th>
-                  ))}
-                </tr></thead>
-                <tbody>
-                  {accounts.map(a => (
-                    <tr key={a.AccountID} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3 font-mono text-gray-500">{a.AccountNumber}</td>
-                      <td className="px-4 py-3 font-medium">{a.AccountName}</td>
-                      <td className="px-4 py-3 text-gray-500">{a.AccountTypeName}</td>
-                      <td className="px-4 py-3 text-gray-400">{a.FinancialStatement}</td>
-                      <td className="px-4 py-3">{a.IsActive ? '✓' : '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+
+            {/* Currency exchange rates */}
+            <CurrencyManager apiFetch={apiFetch} />
           </div>
         )}
 
@@ -1056,6 +1390,11 @@ export default function Accounting() {
               </div>
             )}
           </div>
+        )}
+
+        {/* ── JOB COSTING ── */}
+        {tab === 'Job Costing' && (
+          <JobCostingTab apiFetch={apiFetch} businessId={BusinessID} />
         )}
 
         {/* ── PAYMENTS / STRIPE SETTINGS ── */}

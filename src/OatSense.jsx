@@ -16,7 +16,7 @@ class ApiClient {
     if (!response.ok) { const error = await response.json().catch(() => ({ detail: 'Request failed' })); throw new Error(error.detail || 'Request failed'); }
     return response.json();
   }
-  getDashboardSummary(businessId) { return this.request(`/api/dashboard/summary?business_id=${businessId}`); }
+  getDashboardSummary(businessId) { return this.request(`/api/precision-ag/dashboard/summary?business_id=${businessId}`); }
   getFields(businessId) { return this.request(`/api/fields?business_id=${businessId}`); }
 }
 

@@ -18,8 +18,18 @@ export default function SellerOrders() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
   const [processingId, setProcessingId] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
+  const [showDash, setShowDash] = useState(true);
 
   useEffect(() => { if (BusinessID) LoadBusiness(BusinessID); }, [BusinessID]);
+
+  useEffect(() => {
+    if (!BusinessID) return;
+    fetch(`${API}/api/marketplace/seller/analytics?business_id=${BusinessID}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setAnalytics(d))
+      .catch(() => {});
+  }, [BusinessID]);
 
   const load = async () => {
     setLoading(true);
@@ -99,6 +109,12 @@ export default function SellerOrders() {
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">{t('seller_orders.heading')}</h1>
           <div className="flex gap-2">
+            <button
+              onClick={() => setShowDash(v => !v)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${showDash ? 'bg-[#3D6B34] text-white border-[#3D6B34]' : 'bg-white text-[#3D6B34] border-[#3D6B34] hover:bg-[#e8f0dc]'}`}
+            >
+              Dashboard
+            </button>
             {FILTERS.map(f => (
               <button key={f} onClick={() => setFilter(f)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${filter === f ? 'bg-[#819360] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
@@ -107,6 +123,84 @@ export default function SellerOrders() {
             ))}
           </div>
         </div>
+
+        {/* ── Revenue Dashboard ── */}
+        {showDash && analytics && (
+          <div className="bg-white rounded-2xl border border-gray-200 shadow p-6 space-y-5">
+            <h2 className="text-base font-bold text-gray-800">Performance Summary</h2>
+
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Total Revenue', value: `$${analytics.overall.TotalRevenue.toFixed(2)}`, color: '#3D6B34' },
+                { label: 'This Month', value: `$${analytics.overall.RevenueThisMonth.toFixed(2)}`, color: '#3D6B34' },
+                { label: 'Total Orders', value: analytics.overall.TotalOrders, color: '#1d4ed8' },
+                { label: 'Repeat Rate', value: `${analytics.repeatRate}%`, color: analytics.repeatRate >= 30 ? '#3D6B34' : '#92400e' },
+              ].map(kpi => (
+                <div key={kpi.label} className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">{kpi.label}</p>
+                  <p className="text-2xl font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Monthly Revenue Bar Chart */}
+            {analytics.monthly.length > 0 && (() => {
+              const maxRev = Math.max(...analytics.monthly.map(m => m.Revenue), 1);
+              const BAR_H = 80;
+              const BAR_W = 28;
+              const GAP = 8;
+              const months = analytics.monthly;
+              const svgW = months.length * (BAR_W + GAP) + 24;
+              const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+              return (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Monthly Revenue</p>
+                  <div className="overflow-x-auto">
+                    <svg width={svgW} height={BAR_H + 36} style={{ display: 'block' }}>
+                      {months.map((m, i) => {
+                        const barH = Math.max(2, Math.round((m.Revenue / maxRev) * BAR_H));
+                        const x = 12 + i * (BAR_W + GAP);
+                        const y = BAR_H - barH;
+                        return (
+                          <g key={`${m.yr}-${m.mo}`}>
+                            <rect x={x} y={y} width={BAR_W} height={barH} rx="3" fill="#3D6B34" opacity="0.85" />
+                            {m.Revenue > 0 && (
+                              <text x={x + BAR_W / 2} y={y - 3} textAnchor="middle" fontSize="8" fill="#374151">${m.Revenue >= 1000 ? `${(m.Revenue/1000).toFixed(1)}k` : m.Revenue.toFixed(0)}</text>
+                            )}
+                            <text x={x + BAR_W / 2} y={BAR_H + 14} textAnchor="middle" fontSize="9" fill="#9CA3AF">{MONTH_NAMES[m.mo - 1]}</text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Top Buyers */}
+            {analytics.topBuyers.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Top Buyers</p>
+                <div className="space-y-2">
+                  {analytics.topBuyers.map((b, i) => (
+                    <div key={b.email} className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5">
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-[#e8f0dc] text-[#3D6B34] text-xs font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-800">{b.name}</p>
+                          <p className="text-xs text-gray-400">{b.orders} order{b.orders !== 1 ? 's' : ''}</p>
+                        </div>
+                      </div>
+                      <span className="font-bold text-[#3D6B34]">${b.spend.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
 
         {loading ? <div className="text-center py-12 text-gray-400">{t('seller_orders.loading')}</div> :
           orders.length === 0 ? <div className="text-center py-12 text-gray-400">{t('seller_orders.empty', { filter: filter || '' })}</div> :

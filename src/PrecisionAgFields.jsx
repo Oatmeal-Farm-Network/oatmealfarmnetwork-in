@@ -399,6 +399,10 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
   );
 }
 
+const SOIL_TYPES = ['Sandy Loam', 'Silt Loam', 'Clay Loam', 'Clay', 'Sandy', 'Silty Clay', 'Loam', 'Peat', 'Chalk', 'Other'];
+const DRAINAGE_CLASSES = ['Excessively Drained', 'Well Drained', 'Moderately Well Drained', 'Somewhat Poorly Drained', 'Poorly Drained', 'Very Poorly Drained'];
+const TOPOGRAPHY_OPTS = ['Flat', 'Gently Rolling', 'Rolling', 'Hilly', 'Steep'];
+
 // ─── EditFieldView ────────────────────────────────────────────────────────────
 
 function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
@@ -407,15 +411,20 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [profile, setProfile] = useState({ soil_type: '', drainage_class: '', slope_percent: '', topography: '', organic_matter_pct: '', ph_level: '', field_notes: '', photo_urls: '' });
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
 
   const mapRef = useRef(null);
   const drawnItemsRef = useRef(null);
   const mapContainerRef = useRef(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/fields?business_id=${businessId}`)
-      .then(r => r.json())
-      .then(fields => {
+    Promise.all([
+      fetch(`${API_URL}/api/fields?business_id=${businessId}`).then(r => r.json()),
+      fetch(`${API_URL}/api/fields/${fieldId}/profile`).then(r => r.ok ? r.json() : {}),
+    ])
+      .then(([fields, prof]) => {
         const field = fields.find(f => (f.fieldid || f.id) === parseInt(fieldId));
         if (!field) throw new Error('Field not found');
         setFormData({
@@ -430,6 +439,16 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
           monitoring_interval_days: field.monitoring_interval_days ?? 5,
           alert_threshold_health: field.alert_threshold_health ?? 50,
         });
+        setProfile({
+          soil_type:          prof.soil_type || '',
+          drainage_class:     prof.drainage_class || '',
+          slope_percent:      prof.slope_percent ?? '',
+          topography:         prof.topography || '',
+          organic_matter_pct: prof.organic_matter_pct ?? '',
+          ph_level:           prof.ph_level ?? '',
+          field_notes:        prof.field_notes || '',
+          photo_urls:         prof.photo_urls || '',
+        });
       })
       .catch(err => setError(err.message || 'Could not load field.'))
       .finally(() => setFetching(false));
@@ -438,6 +457,28 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfile(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleProfileSave = async (e) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/api/fields/${fieldId}/profile?business_id=${businessId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      });
+      if (!res.ok) throw new Error('Failed to save profile');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setProfileSaving(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -608,6 +649,85 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
             </button>
           </div>
         </form>
+
+        {/* Soil Profile section */}
+        <div className="mt-6 border-t border-gray-100 pt-6">
+          <button
+            type="button"
+            onClick={() => setProfileOpen(v => !v)}
+            className="w-full flex items-center justify-between text-left text-gray-800 font-semibold text-sm mb-2 hover:text-[#3D6B34] transition-colors"
+          >
+            <span>Soil Profile & Field Conditions</span>
+            <span className="text-gray-400 text-xs">{profileOpen ? '▲ Hide' : '▼ Show'}</span>
+          </button>
+
+          {profileOpen && (
+            <form onSubmit={handleProfileSave} className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Soil Type</label>
+                  <select name="soil_type" value={profile.soil_type} onChange={handleProfileChange} className={inputClass}>
+                    <option value="">— Select —</option>
+                    {SOIL_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Drainage Class</label>
+                  <select name="drainage_class" value={profile.drainage_class} onChange={handleProfileChange} className={inputClass}>
+                    <option value="">— Select —</option>
+                    {DRAINAGE_CLASSES.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className={labelClass}>Slope (%)</label>
+                  <input type="number" step="0.1" min="0" max="100" name="slope_percent" value={profile.slope_percent} onChange={handleProfileChange} placeholder="e.g. 3.5" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Topography</label>
+                  <select name="topography" value={profile.topography} onChange={handleProfileChange} className={inputClass}>
+                    <option value="">— Select —</option>
+                    {TOPOGRAPHY_OPTS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>pH Level</label>
+                  <input type="number" step="0.1" min="0" max="14" name="ph_level" value={profile.ph_level} onChange={handleProfileChange} placeholder="e.g. 6.5" className={inputClass} />
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>Organic Matter (%)</label>
+                <input type="number" step="0.1" min="0" max="100" name="organic_matter_pct" value={profile.organic_matter_pct} onChange={handleProfileChange} placeholder="e.g. 2.8" className={inputClass} />
+              </div>
+
+              <div>
+                <label className={labelClass}>Field Notes / Photo Documentation</label>
+                <textarea name="field_notes" value={profile.field_notes} onChange={handleProfileChange} rows={3} placeholder="Observations, soil test notes, photo descriptions…" className={inputClass} style={{ resize: 'vertical' }} />
+              </div>
+
+              <div>
+                <label className={labelClass}>Photo URLs (comma-separated)</label>
+                <input type="text" name="photo_urls" value={profile.photo_urls} onChange={handleProfileChange} placeholder="https://…, https://…" className={inputClass} />
+                {profile.photo_urls && (
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {profile.photo_urls.split(',').map(u => u.trim()).filter(Boolean).map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#3D6B34] hover:underline border border-gray-200 rounded px-2 py-0.5">Photo {i + 1}</a>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end">
+                <button type="submit" disabled={profileSaving} className="px-6 py-2 bg-[#6D8E22] hover:bg-[#3D6B35] disabled:opacity-60 text-white rounded-lg font-medium text-sm transition-colors">
+                  {profileSaving ? 'Saving…' : 'Save Soil Profile'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -618,6 +738,7 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
 function FieldList({ businessId, onCreateNew }) {
   const { t: pa } = useTranslation();
   const [fields, setFields] = useState([]);
+  const [profiles, setProfiles] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -637,7 +758,22 @@ function FieldList({ businessId, onCreateNew }) {
   useEffect(() => {
     if (!businessId) return;
     getFields(businessId)
-      .then(setFields)
+      .then(data => {
+        setFields(data);
+        // Fetch profiles for all fields in parallel (best-effort)
+        Promise.allSettled(
+          data.map(f => {
+            const id = f.fieldid || f.id;
+            return fetch(`${API_URL}/api/fields/${id}/profile`)
+              .then(r => r.ok ? r.json() : {})
+              .then(prof => [id, prof]);
+          })
+        ).then(results => {
+          const map = {};
+          results.forEach(r => { if (r.status === 'fulfilled' && r.value) map[r.value[0]] = r.value[1]; });
+          setProfiles(map);
+        });
+      })
       .catch((err) => setError(err.message || 'Could not load fields.'))
       .finally(() => setLoading(false));
   }, [businessId]);
@@ -758,7 +894,10 @@ function FieldList({ businessId, onCreateNew }) {
                       </Link>
                     </td>
                     <td style={tdStyle} className="text-gray-600 text-sm">
-                      {field.crop_type || <span className="text-gray-400">—</span>}
+                      <div>{field.crop_type || <span className="text-gray-400">—</span>}</div>
+                      {profiles[fieldId]?.soil_type && (
+                        <div style={{ fontSize: '0.7rem', color: '#6D8E22', marginTop: 2 }}>{profiles[fieldId].soil_type}</div>
+                      )}
                     </td>
                     <td style={tdStyle} className="text-gray-600 text-sm">
                       {field.field_size_hectares ? `${field.field_size_hectares} ha` : <span className="text-gray-400">—</span>}
