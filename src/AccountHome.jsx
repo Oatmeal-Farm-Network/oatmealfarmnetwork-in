@@ -506,6 +506,7 @@ export default function AccountHome() {
   const [features, setFeatures]   = useState(null);
   const [stats, setStats]         = useState(null);
   const [error, setError]         = useState(false);
+  const [agriOps, setAgriOps]     = useState(null);
 
   useEffect(() => {
     if (!businessId) return;
@@ -521,6 +522,27 @@ export default function AccountHome() {
         setStats(biz.stats || {});
       })
       .catch(() => setError(true));
+  }, [businessId]);
+
+  useEffect(() => {
+    if (!businessId) return;
+    const h = { Authorization: `Bearer ${localStorage.getItem('access_token')}` };
+    Promise.all([
+      fetch(`${API_URL}/api/work-orders/summary/dashboard?business_id=${businessId}`, { headers: h }).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${API_URL}/api/farm-kpi/summary?business_id=${businessId}`, { headers: h }).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([wo, kpi]) => {
+      const ops = {
+        open_wo:        wo?.Open          || 0,
+        overdue_wo:     wo?.Overdue       || 0,
+        in_progress_wo: wo?.InProgress    || 0,
+        active_pests:   kpi?.operations?.active_pests       || 0,
+        low_stock:      kpi?.operations?.low_stock_inputs   || 0,
+        overdue_maint:  kpi?.operations?.overdue_maintenance || 0,
+        critical_alerts: kpi?.alerts?.critical || 0,
+      };
+      const hasAny = Object.values(ops).some(v => v > 0);
+      if (hasAny) setAgriOps(ops);
+    }).catch(() => {});
   }, [businessId]);
 
   if (error)    return <div className="p-8 text-red-600">Error loading account.</div>;
@@ -612,6 +634,51 @@ export default function AccountHome() {
             <StatCard key={k} statKey={k} businessId={businessId} persona={persona} />
           ))}
         </div>
+
+        {/* ── AgriERP farm ops quick-stats ── */}
+        {agriOps && (
+          <section className="rounded-2xl border border-green-200 bg-green-50 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <I size={16}><path d="M3 20l5-8 4 6 3-4 7 6H3z"/><circle cx="18" cy="7" r="2"/></I>
+                <h2 className="text-sm font-bold text-green-900 uppercase tracking-wide">Farm Operations</h2>
+              </div>
+              <Link to={`/work-orders?BusinessID=${businessId}`}
+                className="text-xs font-medium text-green-700 hover:underline">View all →</Link>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {[
+                { label: 'Open WOs',   value: agriOps.open_wo,       color: 'text-blue-700',  bg: 'bg-blue-50 border-blue-200',  path: `/work-orders?BusinessID=${businessId}` },
+                { label: 'Overdue WOs',value: agriOps.overdue_wo,    color: 'text-red-700',   bg: 'bg-red-50 border-red-200',    path: `/work-orders?BusinessID=${businessId}` },
+                { label: 'In Progress',value: agriOps.in_progress_wo, color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200',path: `/work-orders?BusinessID=${businessId}` },
+                { label: 'Low Stock',  value: agriOps.low_stock,     color: 'text-orange-700',bg: 'bg-orange-50 border-orange-200',path: `/farm-inputs?BusinessID=${businessId}` },
+                { label: 'Active Pests',value: agriOps.active_pests, color: 'text-red-700',   bg: 'bg-red-50 border-red-200',    path: `/farm-kpi?BusinessID=${businessId}` },
+                { label: 'Maint. Due', value: agriOps.overdue_maint, color: 'text-yellow-700',bg: 'bg-yellow-50 border-yellow-200',path: `/farm-infrastructure?BusinessID=${businessId}` },
+              ].map(({ label, value, color, bg, path }) => (
+                <Link key={label} to={path}
+                  className={`flex flex-col items-center justify-center rounded-xl border p-3 gap-0.5 hover:shadow-sm transition-shadow ${bg}`}>
+                  <span className={`text-xl font-bold ${value > 0 ? color : 'text-gray-300'}`}>{value}</span>
+                  <span className="text-[10px] text-gray-500 text-center leading-tight">{label}</span>
+                </Link>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-green-200">
+              {[
+                { label: '+ Work Order', to: `/work-orders?BusinessID=${businessId}` },
+                { label: 'Farm Inputs',  to: `/farm-inputs?BusinessID=${businessId}` },
+                { label: 'KPI Dashboard', to: `/farm-kpi?BusinessID=${businessId}` },
+                { label: 'Packhouse QC', to: `/packhouse-qc?BusinessID=${businessId}` },
+                { label: 'HR',           to: `/hr?BusinessID=${businessId}` },
+                { label: 'Export Docs',  to: `/export-compliance?BusinessID=${businessId}` },
+              ].map(({ label, to }) => (
+                <Link key={to} to={to}
+                  className="text-xs font-medium text-green-800 bg-white border border-green-300 px-3 py-1 rounded-full hover:bg-green-100 transition-colors">
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ── Active services ── */}
         {featureKeys.length > 0 && (
