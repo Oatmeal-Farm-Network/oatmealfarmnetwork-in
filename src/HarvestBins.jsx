@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import ThaiymeChat from "./ThaiymeChat";
+import { useSearchParams } from "react-router-dom";
+import SaigeWidget from "./SaigeWidget";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -34,6 +35,8 @@ function StageBadge({ stage }) {
 }
 
 export default function HarvestBins() {
+  const [params] = useSearchParams();
+  const bid = params.get("BusinessID");
   const [tab, setTab] = useState("Dashboard");
   const [bins, setBins] = useState([]);
   const [dashboard, setDashboard] = useState(null);
@@ -205,7 +208,7 @@ export default function HarvestBins() {
             <div className="overflow-x-auto">
               <div className="flex gap-3 pb-4" style={{ minWidth: `${STAGES.length * 140}px` }}>
                 {dashboard.by_stage?.map(s => (
-                  <div key={s.CurrentStage} className="flex-shrink-0 w-32 bg-white rounded-xl border border-orange-100 shadow-sm p-3 text-center">
+                  <div key={s.CurrentStage} className="shrink-0 w-32 bg-white rounded-xl border border-orange-100 shadow-sm p-3 text-center">
                     <StageBadge stage={s.CurrentStage} />
                     <div className="text-2xl font-bold text-orange-800 mt-2">{s.BinCount}</div>
                     <div className="text-xs text-gray-500">bins</div>
@@ -465,7 +468,7 @@ export default function HarvestBins() {
         </div>
       )}
 
-      <ThaiymeChat pageContext="harvest_bins" />
+      <SaigeWidget businessId={bid} pageContext="Bin-Level Harvest Traceability" />
     </div>
   );
 }

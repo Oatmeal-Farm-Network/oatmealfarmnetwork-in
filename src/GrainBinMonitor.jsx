@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import ThaiymeChat from "./ThaiymeChat";
+import { useSearchParams } from "react-router-dom";
+import SaigeWidget from "./SaigeWidget";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -29,6 +30,8 @@ function StatCard({ label, value, unit, color = "text-amber-700" }) {
 }
 
 export default function GrainBinMonitor() {
+  const [params] = useSearchParams();
+  const bid = params.get("BusinessID");
   const [tab, setTab] = useState("Dashboard");
   const [bins, setBins] = useState([]);
   const [alerts, setAlerts] = useState([]);
@@ -428,7 +431,7 @@ export default function GrainBinMonitor() {
         </div>
       )}
 
-      <ThaiymeChat pageContext="grain_bin_monitoring" />
+      <SaigeWidget businessId={bid} pageContext="Grain Bin & Silo Monitoring" />
     </div>
   );
 }

@@ -67,6 +67,13 @@ function SaigeWidgetGlobal() {
   if (/^\/events\/[^/]+\/register(\/wizard)?$/.test(pathname)) return null;
   if (/^\/events\/[^/]+\/(rsvp|conference|compete|dining|tour)$/.test(pathname)) return null;
 
+  // Specialty-crop pages that embed SaigeWidget directly (avoid duplicate bubbles)
+  if (pathname.startsWith('/chilling-hours'))  return null;
+  if (pathname.startsWith('/grain-bin'))        return null;
+  if (pathname.startsWith('/harvest-bins'))     return null;
+  if (pathname.startsWith('/iot-greenhouse'))   return null;
+  if (pathname.startsWith('/ca-storage'))       return null;
+
   // ── Assign a page context for Saige ──────────────────────────────────────
   let pageContext;
   if      (pathname.startsWith('/precision-ag'))          pageContext = 'Precision Ag';

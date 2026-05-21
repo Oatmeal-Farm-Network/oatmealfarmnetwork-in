@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import ThaiymeChat from "./ThaiymeChat";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import SaigeWidget from "./SaigeWidget";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -39,6 +39,8 @@ function SensorCard({ sensor }) {
 }
 
 export default function IoTGreenhouse() {
+  const [params] = useSearchParams();
+  const bid = params.get("BusinessID");
   const [tab, setTab] = useState("Dashboard");
   const [dashboard, setDashboard] = useState(null);
   const [trends, setTrends] = useState([]);
@@ -388,7 +390,7 @@ export default function IoTGreenhouse() {
         </div>
       )}
 
-      <ThaiymeChat pageContext="iot_greenhouse" />
+      <SaigeWidget businessId={bid} pageContext="IoT Greenhouse Monitoring" />
     </div>
   );
 }

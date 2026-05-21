@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import ThaiymeChat from "./ThaiymeChat";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import SaigeWidget from "./SaigeWidget";
 
 const API = import.meta.env.VITE_API_URL || "";
 const tok = () => localStorage.getItem("access_token");
@@ -12,6 +12,8 @@ const MODEL_DESC = { simple: "Simple: hours 32–45°F", utah: "Utah: weighted u
 const CONFIDENCE_COLORS = { high: "bg-green-100 text-green-800", medium: "bg-yellow-100 text-yellow-800", low: "bg-orange-100 text-orange-800", insufficient_data: "bg-gray-100 text-gray-500" };
 
 export default function ChillingHours() {
+  const [params] = useSearchParams();
+  const bid = params.get("BusinessID");
   const [tab, setTab] = useState("Dashboard");
   const [dashboard, setDashboard] = useState(null);
   const [accumulation, setAccumulation] = useState(null);
@@ -25,6 +27,10 @@ export default function ChillingHours() {
   const [season, setSeason] = useState(new Date().getFullYear().toString());
   const [fieldId, setFieldId] = useState("");
   const navigate = useNavigate();
+
+  const [showWeatherImport, setShowWeatherImport] = useState(false);
+  const [weatherForm, setWeatherForm] = useState({ lat: "", lon: "", days: 14, model: "simple" });
+  const [weatherImporting, setWeatherImporting] = useState(false);
 
   const [cultivarForm, setCultivarForm] = useState({ crop_type: "", cultivar_name: "", required_chill_hours: "", base_chill_temp_f: 32, max_chill_temp_f: 45, bloom_gdd_after_dormancy: "", model: "simple", notes: "" });
   const [ingestForm, setIngestForm] = useState({ reading_date: new Date().toISOString().split("T")[0], min_temp_f: "", max_temp_f: "", model: "simple" });
@@ -55,6 +61,18 @@ export default function ChillingHours() {
     api("/api/chill/readings", { method: "POST", body: JSON.stringify(body) }).then(() => { setShowIngest(false); if (tab === "Accumulation") loadAccumulation(); else loadDashboard(); }).catch(e => alert(e.detail || "Error"));
   };
 
+  const submitWeatherImport = e => {
+    e.preventDefault();
+    const p = new URLSearchParams({ lat: weatherForm.lat, lon: weatherForm.lon, days: weatherForm.days, model: weatherForm.model });
+    if (fieldId) p.set("field_id", fieldId);
+    if (season) p.set("season", season);
+    setWeatherImporting(true);
+    api(`/api/chill/import-from-weather?${p}`, { method: "POST" })
+      .then(r => { setShowWeatherImport(false); alert(`Imported ${r.imported} days of chill data from weather history.`); if (tab === "Accumulation") loadAccumulation(); else loadDashboard(); })
+      .catch(e => alert(e.detail || "Import failed"))
+      .finally(() => setWeatherImporting(false));
+  };
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
@@ -73,7 +91,8 @@ export default function ChillingHours() {
           {MODELS.map(m => <option key={m} value={m}>{MODEL_DESC[m]}</option>)}
         </select>
         <input className="border rounded px-2 py-1.5 text-sm" placeholder="Field ID (optional)" value={fieldId} onChange={e => setFieldId(e.target.value)} />
-        <button onClick={() => setShowIngest(true)} className="ml-auto bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">+ Add Daily Reading</button>
+        <button onClick={() => setShowWeatherImport(true)} className="ml-auto bg-sky-600 text-white px-3 py-1.5 rounded text-sm hover:bg-sky-700">⛅ Fetch from Weather</button>
+        <button onClick={() => setShowIngest(true)} className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">+ Add Daily Reading</button>
       </div>
 
       <div className="flex gap-2 mb-6 border-b">
@@ -224,6 +243,37 @@ export default function ChillingHours() {
         </div>
       )}
 
+      {showWeatherImport && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+            <h2 className="text-lg font-semibold mb-1">Import from Weather History</h2>
+            <p className="text-xs text-gray-500 mb-4">Pulls daily high/low temperatures from Open-Meteo for your coordinates and computes chill units automatically.</p>
+            <form onSubmit={submitWeatherImport} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="block text-xs font-medium text-gray-600 mb-1">Latitude *</label><input required type="number" step="any" className="w-full border rounded px-2 py-1.5 text-sm" placeholder="e.g. 38.52" value={weatherForm.lat} onChange={e => setWeatherForm({ ...weatherForm, lat: e.target.value })} /></div>
+                <div><label className="block text-xs font-medium text-gray-600 mb-1">Longitude *</label><input required type="number" step="any" className="w-full border rounded px-2 py-1.5 text-sm" placeholder="e.g. -121.74" value={weatherForm.lon} onChange={e => setWeatherForm({ ...weatherForm, lon: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="block text-xs font-medium text-gray-600 mb-1">Days of history</label>
+                  <select className="w-full border rounded px-2 py-1.5 text-sm" value={weatherForm.days} onChange={e => setWeatherForm({ ...weatherForm, days: Number(e.target.value) })}>
+                    {[7, 14, 30, 60, 90].map(d => <option key={d} value={d}>{d} days</option>)}
+                  </select>
+                </div>
+                <div><label className="block text-xs font-medium text-gray-600 mb-1">Model</label>
+                  <select className="w-full border rounded px-2 py-1.5 text-sm" value={weatherForm.model} onChange={e => setWeatherForm({ ...weatherForm, model: e.target.value })}>
+                    {MODELS.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowWeatherImport(false)} className="px-4 py-2 text-sm text-gray-600 border rounded">Cancel</button>
+                <button type="submit" disabled={weatherImporting} className="px-4 py-2 text-sm bg-sky-600 text-white rounded hover:bg-sky-700 disabled:opacity-50">{weatherImporting ? "Importing…" : "Import"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {showIngest && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
@@ -266,7 +316,7 @@ export default function ChillingHours() {
           </div>
         </div>
       )}
-      <ThaiymeChat pageContext="chilling_hours" />
+      <SaigeWidget businessId={bid} pageContext="Chilling Hour & Bloom Forecast" />
     </div>
   );
 }

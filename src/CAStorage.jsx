@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import ThaiymeChat from "./ThaiymeChat";
+import SaigeWidget from "./SaigeWidget";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -38,6 +40,8 @@ function StatusIndicator({ value, target, tol, unit, label }) {
 }
 
 export default function CAStorage() {
+  const [params] = useSearchParams();
+  const bid = params.get("BusinessID");
   const [tab, setTab] = useState("Dashboard");
   const [rooms, setRooms] = useState([]);
   const [alerts, setAlerts] = useState([]);
@@ -479,6 +483,7 @@ export default function CAStorage() {
       )}
 
       <ThaiymeChat pageContext="ca_storage" />
+      <SaigeWidget businessId={bid} pageContext="CA Cold Storage Management" />
     </div>
   );
 }

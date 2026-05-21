@@ -85,6 +85,20 @@ export default function ScaleTickets() {
   useEffect(() => { loadTickets(); loadContracts(); loadSummary(); }, [loadTickets, loadContracts, loadSummary]);
   useEffect(() => { if (tab === "Margin Analysis") loadMargins(); }, [tab, loadMargins]);
 
+  async function postToAccounting(ticketId) {
+    if (!window.confirm("Post this ticket to accounting as a grain sale revenue entry?")) return;
+    const r = await apiFetch(`/api/scale-tickets/tickets/${ticketId}/post-to-accounting`, { method: "POST" });
+    const data = await r.json();
+    if (r.ok) {
+      alert(`Posted! Reference: ${data.reference_number}\nNet Revenue: $${data.net_revenue?.toLocaleString()}`);
+      loadTickets();
+    } else if (r.status === 409) {
+      alert("This ticket has already been posted to accounting.");
+    } else {
+      alert(data.detail || "Post failed");
+    }
+  }
+
   async function createTicket() {
     const body = {
       ticket_number: ticketForm.ticket_number || null,
@@ -183,7 +197,7 @@ export default function ScaleTickets() {
             <div className="bg-white rounded-xl border border-green-100 shadow-sm overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-green-50 text-green-800 text-xs uppercase">
-                  <tr>{["Ticket #", "Date", "Commodity", "Gross kg", "Tare kg", "Net t", "Moisture %", "Dockage %", "Grade", "Destination"].map(h => <th key={h} className="px-3 py-3 text-left whitespace-nowrap">{h}</th>)}</tr>
+                  <tr>{["Ticket #", "Date", "Commodity", "Gross kg", "Tare kg", "Net t", "Moisture %", "Dockage %", "Grade", "Destination", ""].map(h => <th key={h} className="px-3 py-3 text-left whitespace-nowrap">{h}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y divide-green-50">
                   {tickets.map(t => (
@@ -198,6 +212,10 @@ export default function ScaleTickets() {
                       <td className="px-3 py-2">{t.DockagePct ?? "—"}</td>
                       <td className="px-3 py-2">{t.Grade ?? "—"}</td>
                       <td className="px-3 py-2 text-gray-500">{t.DestinationFacility ?? "—"}</td>
+                      <td className="px-3 py-2" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => postToAccounting(t.TicketID)} title="Post to Accounting"
+                          className="text-xs px-2 py-1 rounded bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 whitespace-nowrap">Post $</button>
+                      </td>
                     </tr>
                   ))}
                   {tickets.length === 0 && !loading && <tr><td colSpan={10} className="text-center py-10 text-gray-400">No tickets yet — click "+ Scale Ticket" to add one</td></tr>}
