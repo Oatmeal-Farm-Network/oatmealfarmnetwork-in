@@ -92,6 +92,9 @@ function SaigeWidgetGlobal() {
   else if (pathname.startsWith('/supplier-scorecard'))   pageContext = 'Supplier Scorecard & Performance';
   else if (pathname.startsWith('/agri-erp/mobile'))      pageContext = 'AgriERP Mobile Field Shell';
   else if (pathname.startsWith('/permissions'))           pageContext = 'Roles & Permissions';
+  else if (pathname.startsWith('/picker-performance'))   pageContext = 'Picker Performance Tracking';
+  else if (pathname.startsWith('/iot-greenhouse'))       pageContext = 'IoT Greenhouse Monitoring';
+  else if (pathname.startsWith('/perishable-trace'))     pageContext = 'Perishable Traceability';
   else if (pathname.startsWith('/certifications'))         pageContext = 'Certifications Tracker';
   else if (pathname.startsWith('/grants'))                 pageContext = 'Grants & Programs';
   else if (pathname.startsWith('/suppliers'))              pageContext = 'Supplier Directory';
@@ -302,6 +305,9 @@ const ExportCompliance     = lazyWithReload(() => import('./ExportCompliance.jsx
 const SupplierScorecard    = lazyWithReload(() => import('./SupplierScorecard.jsx'));
 const AgriERPMobile        = lazyWithReload(() => import('./AgriERPMobile.jsx'));
 const Permissions          = lazyWithReload(() => import('./Permissions.jsx'));;
+const PickerPerformance    = lazyWithReload(() => import('./PickerPerformance.jsx'));
+const IoTGreenhouse        = lazyWithReload(() => import('./IoTGreenhouse.jsx'));
+const PerishableTrace      = lazyWithReload(() => import('./PerishableTrace.jsx'));
 
 const App = lazyWithReload(() => import('./App.jsx'))
 const About = lazyWithReload(() => import('./About.jsx'))
@@ -850,6 +856,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
           {/* Roles & Permissions */}
           <Route path="/permissions" element={<RequireAuth><Permissions /></RequireAuth>} />
+
+          {/* Picker Performance Tracking */}
+          <Route path="/picker-performance" element={<RequireAuth><PickerPerformance /></RequireAuth>} />
+
+          {/* IoT Greenhouse Monitoring */}
+          <Route path="/iot-greenhouse" element={<RequireAuth><IoTGreenhouse /></RequireAuth>} />
+
+          {/* Perishable Traceability */}
+          <Route path="/perishable-trace" element={<RequireAuth><PerishableTrace /></RequireAuth>} />
 
           {/* Enterprise Supply Chain Intelligence (ESCI) */}
           <Route path="/supply-chain" element={<RequireAuth><SupplyChainHub /></RequireAuth>} />

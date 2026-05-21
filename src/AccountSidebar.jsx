@@ -492,6 +492,9 @@ export default function AccountSidebar() {
             <NavChild to={`/hr?BusinessID=${BusinessID}&tab=payroll`} label="Payroll" />
             <NavChild to={`/hr?BusinessID=${BusinessID}&tab=tasks`} label="Tasks" />
             <NavChild to={`/hr?BusinessID=${BusinessID}&tab=leave`} label="Leave Requests" />
+            {on('picker_performance') && (
+              <NavChild to={`/picker-performance?BusinessID=${BusinessID}`} label="Picker Performance" />
+            )}
           </NavSection>
         )}
 
@@ -515,6 +518,9 @@ export default function AccountSidebar() {
           <NavSection icon={ICONS.traceability} label="Harvest Lots" expanded={Expanded}
             isOpen={OpenSections['Harvest Lots'] || false} onToggle={() => toggleSection('Harvest Lots')}>
             <NavChild to={`/harvest-lots?BusinessID=${BusinessID}`} label="Lots" />
+            {on('perishable_traceability') && (
+              <NavChild to={`/perishable-trace?BusinessID=${BusinessID}`} label="Perishable Trace" />
+            )}
           </NavSection>
         )}
 
@@ -573,6 +579,9 @@ export default function AccountSidebar() {
             isOpen={OpenSections['Work Orders'] || false} onToggle={() => toggleSection('Work Orders')}>
             <NavChild to={`/work-orders?BusinessID=${BusinessID}`} label="All Work Orders" />
             <NavChild to={`/work-orders?BusinessID=${BusinessID}&tab=greenhouse`} label="Greenhouse Controls" />
+            {on('iot_greenhouse') && (
+              <NavChild to={`/iot-greenhouse?BusinessID=${BusinessID}`} label="IoT Sensors" />
+            )}
             <NavChild to={`/agri-erp/mobile?BusinessID=${BusinessID}`} label="📱 Mobile Field Shell" />
           </NavSection>
         )}
