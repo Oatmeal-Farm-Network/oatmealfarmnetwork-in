@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState, useCallback } from 'react';
 import ThaiymeChat from './ThaiymeChat';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
@@ -115,6 +115,18 @@ export default function Outgrower() {
       pageTitle="Contract Farming / Outgrower"
       breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Outgrower' }]}>
       <div className="max-w-5xl mx-auto space-y-5">
+
+        {/* Cross-link to Scale Tickets */}
+        <div className="flex justify-end">
+          <Link to={`/scale-tickets?BusinessID=${BusinessID}`}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border"
+            style={{ background: '#f0fdf4', borderColor: '#86efac', color: '#166534', textDecoration: 'none' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="6" width="12" height="9" rx="1"/><path d="M5 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+            </svg>
+            Scale Tickets
+          </Link>
+        </div>
 
         {/* Summary KPIs */}
         {summary && (

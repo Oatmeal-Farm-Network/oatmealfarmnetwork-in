@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { useFields, API_URL } from './precisionAgUtils';
@@ -114,9 +114,20 @@ export default function PrecisionAgGDD() {
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
       pageTitle={pa('gdd_title')} breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:pa('gdd_title') }]}>
       <div className="max-w-full mx-auto space-y-5">
-        <div>
-          <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">{pa('gdd_title')}</h1>
-          <p className="font-mont text-sm text-gray-500">{pa('gdd_desc')}</p>
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">{pa('gdd_title')}</h1>
+            <p className="font-mont text-sm text-gray-500">{pa('gdd_desc')}</p>
+          </div>
+          <Link to={`/chilling-hours?BusinessID=${BusinessID}`}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border"
+            style={{ background: '#eff6ff', borderColor: '#93c5fd', color: '#1d4ed8', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>
+              <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+            </svg>
+            Chilling Hours & Bloom
+          </Link>
         </div>
 
         {/* Controls */}

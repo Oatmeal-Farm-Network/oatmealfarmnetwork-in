@@ -134,6 +134,13 @@ export default function HarvestLots() {
               </svg>
               Perishable Trace
             </Link>
+            <Link to={`/harvest-bins?BusinessID=${bid}`}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7ed', border: '1.5px solid #fed7aa', borderRadius: 8, padding: '7px 14px', textDecoration: 'none', color: '#9a3412', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="8" width="12" height="8" rx="1"/><path d="M5 8V5l3-3 3 3v3"/>
+              </svg>
+              Bin Traceability
+            </Link>
           </div>
         </div>
 

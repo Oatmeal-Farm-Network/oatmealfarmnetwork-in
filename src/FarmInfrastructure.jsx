@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState, useCallback } from 'react';
 import ThaiymeChat from './ThaiymeChat';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -116,9 +116,18 @@ export default function FarmInfrastructure() {
   return (
     <AccountLayout>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
-        <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', margin: 0 }}>Farm Infrastructure & Equipment</h1>
-          <p style={{ color: '#6b7280', fontSize: 14, marginTop: 4 }}>Asset registry, maintenance logs, scheduled maintenance, and structure inventory.</p>
+        <div style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', margin: 0 }}>Farm Infrastructure & Equipment</h1>
+            <p style={{ color: '#6b7280', fontSize: 14, marginTop: 4 }}>Asset registry, maintenance logs, scheduled maintenance, and structure inventory.</p>
+          </div>
+          <Link to={`/grain-bin?BusinessID=${bid}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fffbeb', border: '1.5px solid #fcd34d', borderRadius: 8, padding: '7px 14px', textDecoration: 'none', color: '#92400e', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <ellipse cx="8" cy="4" rx="6" ry="2"/><path d="M2 4v12c0 1.1 2.7 2 6 2s6-.9 6-2V4"/>
+            </svg>
+            Grain Bin Monitor
+          </Link>
         </div>
 
         {summary && (

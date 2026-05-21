@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
@@ -559,10 +559,19 @@ export default function ColdChain() {
             <h2 className="text-2xl font-bold text-gray-800">Cold Chain & Smart Logistics</h2>
             <p className="text-sm text-gray-500 mt-0.5">Multi-sensor monitoring · Shelf-life SLA · Shock logging · Chain of custody · Geofencing</p>
           </div>
-          <button onClick={() => { setVehicleForm(BLANK_VEHICLE); setEditingVehicleId(null); setShowVehicleForm(true); }}
-            className="regsubmit2" style={{ fontSize: '0.85rem', padding: '0.4rem 1rem' }}>
-            + Add Vehicle
-          </button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Link to={`/ca-storage?BusinessID=${businessId}`}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#f0f9ff', border: '1.5px solid #7dd3fc', borderRadius: 8, padding: '7px 14px', textDecoration: 'none', color: '#0369a1', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="5" width="12" height="10" rx="1"/><line x1="2" y1="9" x2="14" y2="9"/>
+              </svg>
+              CA Storage Rooms
+            </Link>
+            <button onClick={() => { setVehicleForm(BLANK_VEHICLE); setEditingVehicleId(null); setShowVehicleForm(true); }}
+              className="regsubmit2" style={{ fontSize: '0.85rem', padding: '0.4rem 1rem' }}>
+              + Add Vehicle
+            </button>
+          </div>
         </div>
 
         {error && (
