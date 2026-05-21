@@ -510,6 +510,9 @@ export default function AccountSidebar() {
             <NavChild to={`/farm-inputs?BusinessID=${BusinessID}`} label="Inventory" />
             <NavChild to={`/farm-inputs?BusinessID=${BusinessID}&tab=transactions`} label="Transactions" />
             <NavChild to={`/farm-inputs?BusinessID=${BusinessID}&tab=alerts`} label="Alerts" />
+            {on('spray_applications') && (
+              <NavChild to={`/spray-applications?BusinessID=${BusinessID}`} label="Spray Log" />
+            )}
           </NavSection>
         )}
 

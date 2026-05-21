@@ -390,6 +390,19 @@ const FEATURE_META = {
     ],
     platformPage: null,
   },
+  spray_applications: {
+    label: 'Spray & Chemical Log', color: '#15803d', bg: '#f0fdf4',
+    icon: <I><path d="M3 20h18"/><path d="M8 20V9a4 4 0 018 0v11"/><circle cx="12" cy="6" r="2"/><line x1="12" y1="8" x2="12" y2="9"/></I>,
+    desc: 'Record spray events, manage your chemical product library, and track PHI/REI compliance with a PHI harvest calendar.',
+    cta: { label: 'View Applications', path: (b) => `/spray-applications?BusinessID=${b}` },
+    addCta: { label: 'Log Spray', path: (b) => `/spray-applications?BusinessID=${b}` },
+    links: (b) => [
+      { label: 'Product Library', to: `/spray-applications?BusinessID=${b}&tab=Products` },
+      { label: 'PHI Calendar', to: `/spray-applications?BusinessID=${b}&tab=PHI Calendar` },
+      { label: 'Season Summary', to: `/spray-applications?BusinessID=${b}&tab=Summary` },
+    ],
+    platformPage: null,
+  },
   enterprise_supply_chain: {
     label: 'Supply Chain Intelligence', color: '#1e6b5a', bg: '#e8f5f1',
     icon: <I><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></I>,

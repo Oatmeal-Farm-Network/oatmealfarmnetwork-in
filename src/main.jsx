@@ -68,11 +68,12 @@ function SaigeWidgetGlobal() {
   if (/^\/events\/[^/]+\/(rsvp|conference|compete|dining|tour)$/.test(pathname)) return null;
 
   // Specialty-crop pages that embed SaigeWidget directly (avoid duplicate bubbles)
-  if (pathname.startsWith('/chilling-hours'))  return null;
-  if (pathname.startsWith('/grain-bin'))        return null;
-  if (pathname.startsWith('/harvest-bins'))     return null;
-  if (pathname.startsWith('/iot-greenhouse'))   return null;
-  if (pathname.startsWith('/ca-storage'))       return null;
+  if (pathname.startsWith('/chilling-hours'))      return null;
+  if (pathname.startsWith('/grain-bin'))            return null;
+  if (pathname.startsWith('/harvest-bins'))         return null;
+  if (pathname.startsWith('/iot-greenhouse'))       return null;
+  if (pathname.startsWith('/ca-storage'))           return null;
+  if (pathname.startsWith('/spray-applications'))   return null;
 
   // ── Assign a page context for Saige ──────────────────────────────────────
   let pageContext;
@@ -325,6 +326,7 @@ const GrainBinMonitor      = lazyWithReload(() => import('./GrainBinMonitor.jsx'
 const ScaleTickets         = lazyWithReload(() => import('./ScaleTickets.jsx'));
 const HarvestBins          = lazyWithReload(() => import('./HarvestBins.jsx'));
 const CAStorage            = lazyWithReload(() => import('./CAStorage.jsx'));
+const SprayApplicationLog  = lazyWithReload(() => import('./SprayApplicationLog.jsx'));
 
 const App = lazyWithReload(() => import('./App.jsx'))
 const About = lazyWithReload(() => import('./About.jsx'))
@@ -897,6 +899,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
           {/* CA Cold Storage Management */}
           <Route path="/ca-storage" element={<RequireAuth><CAStorage /></RequireAuth>} />
+
+          {/* Spray & Chemical Application Log */}
+          <Route path="/spray-applications" element={<RequireAuth><SprayApplicationLog /></RequireAuth>} />
 
           {/* Enterprise Supply Chain Intelligence (ESCI) */}
           <Route path="/supply-chain" element={<RequireAuth><SupplyChainHub /></RequireAuth>} />

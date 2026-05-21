@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState, useCallback, useRef } from 'react';
 import ThaiymeChat from './ThaiymeChat';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -193,8 +193,16 @@ export default function FarmInputInventory() {
     <AccountLayout>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
         <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', margin: 0 }}>Farm Inputs & Chemical Inventory</h1>
-          <p style={{ color: '#6b7280', fontSize: 14, marginTop: 4 }}>Track seeds, fertilizers, pesticides, and all farm inputs with FEFO lot management.</p>
+          <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', margin: 0 }}>Farm Inputs & Chemical Inventory</h1>
+              <p style={{ color: '#6b7280', fontSize: 14, marginTop: 4 }}>Track seeds, fertilizers, pesticides, and all farm inputs with FEFO lot management.</p>
+            </div>
+            <Link to={`/spray-applications?BusinessID=${searchParams.get('BusinessID')}`}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8, background: '#f0fdf4', border: '1px solid #86efac', color: '#15803d', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              🌿 Spray Log
+            </Link>
+          </div>
         </div>
 
         {/* Summary cards */}
