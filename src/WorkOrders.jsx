@@ -3,6 +3,7 @@ import ThaiymeChat from './ThaiymeChat';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
+import { queuedFetch } from './offlineQueue';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -102,22 +103,26 @@ export default function WorkOrders() {
     setTab('list');
   };
 
+  const authHeaders = { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}` };
+
   const addLabor = async () => {
-    await fetch(`${API}/api/work-orders/${detail.work_order.WOID}/labor`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(laborForm),
+    await queuedFetch(`${API}/api/work-orders/${detail.work_order.WOID}/labor`, {
+      method: 'POST', headers: authHeaders,
+      body: JSON.stringify({ ...laborForm, BusinessID: parseInt(BusinessID) }),
+      queueWhenOffline: true,
     });
-    const r = await fetch(`${API}/api/work-orders/${detail.work_order.WOID}?business_id=${BusinessID}`);
+    const r = await fetch(`${API}/api/work-orders/${detail.work_order.WOID}?business_id=${BusinessID}`, { headers: authHeaders });
     if (r.ok) setDetail(await r.json());
     setLaborForm({ WorkerName: '', WorkDate: new Date().toISOString().split('T')[0], HoursWorked: '', HourlyRate: '' });
   };
 
   const addMaterial = async () => {
-    await fetch(`${API}/api/work-orders/${detail.work_order.WOID}/materials`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(materialForm),
+    await queuedFetch(`${API}/api/work-orders/${detail.work_order.WOID}/materials`, {
+      method: 'POST', headers: authHeaders,
+      body: JSON.stringify({ ...materialForm, BusinessID: parseInt(BusinessID) }),
+      queueWhenOffline: true,
     });
-    const r = await fetch(`${API}/api/work-orders/${detail.work_order.WOID}?business_id=${BusinessID}`);
+    const r = await fetch(`${API}/api/work-orders/${detail.work_order.WOID}?business_id=${BusinessID}`, { headers: authHeaders });
     if (r.ok) setDetail(await r.json());
     setMaterialForm({ MaterialName: '', Category: '', Quantity: '', Unit: '', UnitCost: '' });
   };
@@ -410,9 +415,10 @@ export default function WorkOrders() {
               {/* Change status */}
               <div className="flex gap-2 flex-wrap">
                 {Object.keys(STATUS_COLORS).map(s => (
-                  <button key={s} onClick={() => fetch(`${API}/api/work-orders/${detail.work_order.WOID}`, {
-                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                  <button key={s} onClick={() => queuedFetch(`${API}/api/work-orders/${detail.work_order.WOID}`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}` },
                     body: JSON.stringify({ ...detail.work_order, Status: s, BusinessID: parseInt(BusinessID) }),
+                    queueWhenOffline: true,
                   }).then(() => loadDetail(detail.work_order))}
                     className={`text-xs px-3 py-1 rounded-full font-semibold ${detail.work_order.Status === s ? 'ring-2 ring-offset-1 ring-[#3D6B34]' : ''}`}
                     style={{ backgroundColor: STATUS_COLORS[s].bg, color: STATUS_COLORS[s].color }}>

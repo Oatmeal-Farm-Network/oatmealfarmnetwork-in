@@ -3,6 +3,7 @@ import ThaiymeChat from './ThaiymeChat';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -25,12 +26,13 @@ export default function Outgrower() {
   const [params] = useSearchParams();
   const BusinessID = params.get('BusinessID');
   const { Business, LoadBusiness } = useAccount();
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState(params.get('tab') || 'overview');
   const [summary, setSummary] = useState(null);
   const [farmers, setFarmers] = useState([]);
   const [contracts, setContracts] = useState([]);
   const [distributions, setDistributions] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
+  const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showFarmerForm, setShowFarmerForm] = useState(false);
   const [showContractForm, setShowContractForm] = useState(false);
@@ -45,18 +47,20 @@ export default function Outgrower() {
     if (!BusinessID) return;
     setLoading(true);
     try {
-      const [sRes, fRes, cRes, dRes, dlRes] = await Promise.all([
+      const [sRes, fRes, cRes, dRes, dlRes, dbRes] = await Promise.all([
         fetch(`${API}/api/outgrower/summary?business_id=${BusinessID}`),
         fetch(`${API}/api/outgrower/farmers?business_id=${BusinessID}`),
         fetch(`${API}/api/outgrower/contracts?business_id=${BusinessID}`),
         fetch(`${API}/api/outgrower/distributions?business_id=${BusinessID}`),
         fetch(`${API}/api/outgrower/deliveries?business_id=${BusinessID}`),
+        fetch(`${API}/api/outgrower/contract-dashboard?business_id=${BusinessID}`),
       ]);
       setSummary(sRes.ok ? await sRes.json() : null);
       setFarmers(fRes.ok ? await fRes.json() : []);
       setContracts(cRes.ok ? await cRes.json() : []);
       setDistributions(dRes.ok ? await dRes.json() : []);
       setDeliveries(dlRes.ok ? await dlRes.json() : []);
+      setDashboard(dbRes.ok ? await dbRes.json() : null);
     } catch {} finally { setLoading(false); }
   }, [BusinessID]);
 
@@ -104,7 +108,7 @@ export default function Outgrower() {
 
   const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#3D6B34]';
   const labelCls = 'text-xs font-semibold text-gray-500 mb-1 block';
-  const TABS = ['overview', 'farmers', 'contracts', 'distributions', 'deliveries'];
+  const TABS = ['overview', 'dashboard', 'farmers', 'contracts', 'distributions', 'deliveries'];
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID}
@@ -135,6 +139,99 @@ export default function Outgrower() {
         </div>
 
         {loading && <div className="text-center py-12 text-gray-400">Loading…</div>}
+
+        {!loading && tab === 'dashboard' && (
+          <div className="space-y-5">
+            {!dashboard && <p className="text-center py-12 text-gray-400">No contract data found.</p>}
+            {dashboard && (
+              <>
+                {/* Totals strip */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <KPI label="Contracts" value={dashboard.totals.total_contracts} />
+                  <KPI label="Target (kg)" value={dashboard.totals.total_target_kg?.toLocaleString()} />
+                  <KPI label="Delivered (kg)" value={dashboard.totals.total_delivered_kg?.toLocaleString()} color="#065f46" />
+                  <KPI label="Overall Utilization" value={`${dashboard.totals.overall_utilization_pct}%`}
+                    color={dashboard.totals.overall_utilization_pct >= 80 ? '#16a34a' : dashboard.totals.overall_utilization_pct >= 50 ? '#d97706' : '#dc2626'} />
+                </div>
+
+                {/* Bar chart */}
+                {dashboard.contracts.length > 0 && (
+                  <div className="bg-white border border-gray-200 rounded-2xl p-5">
+                    <p className="font-bold text-gray-800 mb-4 text-sm">Contract Utilization — Target vs Delivered (kg)</p>
+                    <ResponsiveContainer width="100%" height={240}>
+                      <BarChart data={dashboard.contracts.slice(0, 15).map(c => ({
+                        name: `${c.farmer_name.split(' ')[0]} · ${c.crop_name}`,
+                        Target: c.target_kg,
+                        Delivered: c.delivered_kg,
+                      }))} margin={{ top: 0, right: 10, left: 0, bottom: 40 }}>
+                        <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-35} textAnchor="end" interval={0} />
+                        <YAxis tick={{ fontSize: 11 }} />
+                        <Tooltip />
+                        <Legend verticalAlign="top" />
+                        <Bar dataKey="Target" fill="#d1d5db" radius={[3,3,0,0]} />
+                        <Bar dataKey="Delivered" radius={[3,3,0,0]}>
+                          {dashboard.contracts.slice(0,15).map((c, i) => (
+                            <Cell key={i} fill={c.utilization_pct >= 80 ? '#16a34a' : c.utilization_pct >= 50 ? '#d97706' : '#ef4444'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* Contracts table */}
+                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                  <div className="px-5 py-3 border-b border-gray-100 flex justify-between items-center">
+                    <p className="font-semibold text-gray-800 text-sm">All Contracts</p>
+                    {dashboard.totals.total_pending_payment > 0 && (
+                      <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full">
+                        ${dashboard.totals.total_pending_payment.toLocaleString()} pending payment
+                      </span>
+                    )}
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                      <tr>
+                        {['Farmer', 'Crop', 'Season', 'Target kg', 'Delivered kg', 'Utilization', 'Status', 'Pending $'].map(h => (
+                          <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {dashboard.contracts.map(c => {
+                        const uColor = c.utilization_pct >= 80 ? 'text-green-600' : c.utilization_pct >= 50 ? 'text-amber-600' : 'text-red-600';
+                        const sStyle = CONTRACT_STATUS[c.contract_status] || { bg: '#f3f4f6', color: '#374151' };
+                        return (
+                          <tr key={c.contract_id} className="hover:bg-gray-50">
+                            <td className="px-3 py-2.5 font-medium text-gray-800">{c.farmer_name}</td>
+                            <td className="px-3 py-2.5 text-gray-600">{c.crop_name}</td>
+                            <td className="px-3 py-2.5 text-gray-500 text-xs">{c.season || '—'}</td>
+                            <td className="px-3 py-2.5 text-gray-700">{c.target_kg.toLocaleString()}</td>
+                            <td className="px-3 py-2.5 font-semibold text-gray-800">{c.delivered_kg.toLocaleString()}</td>
+                            <td className={`px-3 py-2.5 font-bold ${uColor}`}>{c.utilization_pct}%</td>
+                            <td className="px-3 py-2.5">
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ backgroundColor: sStyle.bg, color: sStyle.color }}>
+                                {c.contract_status}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2.5">
+                              {c.pending_payment_amt > 0
+                                ? <span className="text-amber-600 font-semibold">${c.pending_payment_amt.toLocaleString()}</span>
+                                : <span className="text-gray-300">—</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {dashboard.contracts.length === 0 && (
+                        <tr><td colSpan={8} className="text-center py-8 text-gray-400 text-sm">No contracts found.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         {!loading && tab === 'overview' && (
           <div className="grid grid-cols-2 gap-4">

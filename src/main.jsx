@@ -89,6 +89,8 @@ function SaigeWidgetGlobal() {
   else if (pathname.startsWith('/packhouse'))             pageContext = 'Packhouse & QC Inspection';
   else if (pathname.startsWith('/plant-tags'))            pageContext = 'Plant Tagging & Asset Geo';
   else if (pathname.startsWith('/export-compliance'))     pageContext = 'Export Compliance & Traceability';
+  else if (pathname.startsWith('/supplier-scorecard'))   pageContext = 'Supplier Scorecard & Performance';
+  else if (pathname.startsWith('/agri-erp/mobile'))      pageContext = 'AgriERP Mobile Field Shell';
   else if (pathname.startsWith('/permissions'))           pageContext = 'Roles & Permissions';
   else if (pathname.startsWith('/certifications'))         pageContext = 'Certifications Tracker';
   else if (pathname.startsWith('/grants'))                 pageContext = 'Grants & Programs';
@@ -297,6 +299,8 @@ const WorkOrders           = lazyWithReload(() => import('./WorkOrders.jsx'));
 const PackhouseQC          = lazyWithReload(() => import('./PackhouseQC.jsx'));
 const PlantTagging         = lazyWithReload(() => import('./PlantTagging.jsx'));
 const ExportCompliance     = lazyWithReload(() => import('./ExportCompliance.jsx'));
+const SupplierScorecard    = lazyWithReload(() => import('./SupplierScorecard.jsx'));
+const AgriERPMobile        = lazyWithReload(() => import('./AgriERPMobile.jsx'));
 const Permissions          = lazyWithReload(() => import('./Permissions.jsx'));;
 
 const App = lazyWithReload(() => import('./App.jsx'))
@@ -837,6 +841,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
           {/* Export Compliance & Traceability */}
           <Route path="/export-compliance" element={<RequireAuth><ExportCompliance /></RequireAuth>} />
+
+          {/* Supplier Scorecard */}
+          <Route path="/supplier-scorecard" element={<RequireAuth><SupplierScorecard /></RequireAuth>} />
+
+          {/* AgriERP Mobile Field Shell */}
+          <Route path="/agri-erp/mobile" element={<RequireAuth><AgriERPMobile /></RequireAuth>} />
 
           {/* Roles & Permissions */}
           <Route path="/permissions" element={<RequireAuth><Permissions /></RequireAuth>} />

@@ -2,6 +2,10 @@
 import ThaiymeChat from './ThaiymeChat';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
+import { queuedFetch } from './offlineQueue';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts';
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const hdrs = () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}` });
@@ -28,7 +32,7 @@ const STATUS_CONFIG = {
   no_data:  { bg: '#f3f4f6', color: '#6b7280', label: 'No Data' },
 };
 
-const TABS = ['Dashboard','KPIs','Alerts','Weather Alerts','Pest Log'];
+const TABS = ['Dashboard','KPIs','Alerts','Weather Alerts','Pest Log','P&L Report','Yield vs Budget'];
 
 export default function FarmKPIDashboard() {
   const [params] = useSearchParams();
@@ -39,6 +43,8 @@ export default function FarmKPIDashboard() {
   const [alerts, setAlerts]   = useState([]);
   const [weatherAlerts, setWeatherAlerts] = useState([]);
   const [pests, setPests]     = useState([]);
+  const [pnl, setPnl]         = useState(null);
+  const [pnlYear, setPnlYear] = useState(new Date().getFullYear());
   const [modal, setModal]     = useState(null);
   const [form, setForm]       = useState({});
 
@@ -63,9 +69,12 @@ export default function FarmKPIDashboard() {
       } else if (t === 'Pest Log') {
         const d = await apiFetch(`/api/farm-kpi/pest-observations?business_id=${bid}`);
         setPests(d);
+      } else if (t === 'P&L Report' || t === 'Yield vs Budget') {
+        const d = await apiFetch(`/api/farm-kpi/pnl?business_id=${bid}&crop_year=${pnlYear}`);
+        setPnl(d);
       }
     } catch (e) { console.error(e); }
-  }, [bid]);
+  }, [bid, pnlYear]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadTab(tab); }, [tab, loadTab]);
@@ -96,8 +105,15 @@ export default function FarmKPIDashboard() {
 
   const savePest = async () => {
     try {
-      await apiFetch('/api/farm-kpi/pest-observations', { method: 'POST', body: JSON.stringify({ ...form, business_id: bid }) });
-      loadTab('Pest Log');
+      const r = await queuedFetch(`${API}/api/farm-kpi/pest-observations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+        body: JSON.stringify({ ...form, business_id: bid }),
+        queueWhenOffline: true,
+      });
+      const data = await r.json().catch(() => ({}));
+      if (data.queued) alert('You are offline. Pest observation will sync when connectivity returns.');
+      else loadTab('Pest Log');
       closeModal();
     } catch (e) { alert('Failed'); }
   };
@@ -321,6 +337,149 @@ export default function FarmKPIDashboard() {
               ))}
               {weatherAlerts.length === 0 && <div style={{ color: '#6b7280', textAlign: 'center', padding: 32 }}>No weather alerts.</div>}
             </div>
+          </div>
+        )}
+
+        {/* ── P&L REPORT ── */}
+        {(tab === 'P&L Report' || tab === 'Yield vs Budget') && (
+          <div>
+            {/* Year picker + CSV export */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Crop Year:</label>
+              <select
+                style={{ border: '1px solid #d1d5db', borderRadius: 8, padding: '6px 10px', fontSize: 14 }}
+                value={pnlYear}
+                onChange={e => { setPnlYear(Number(e.target.value)); setPnl(null); }}
+              >
+                {[0,1,2,3].map(i => {
+                  const y = new Date().getFullYear() - i;
+                  return <option key={y} value={y}>{y}</option>;
+                })}
+              </select>
+              <button
+                style={{ ...btn('#16a34a'), marginLeft: 'auto' }}
+                onClick={() => window.open(`${API}/api/farm-kpi/pnl?business_id=${bid}&crop_year=${pnlYear}&format=csv`, '_blank')}
+              >
+                Export CSV
+              </button>
+            </div>
+
+            {!pnl && (
+              <div style={{ textAlign: 'center', color: '#6b7280', padding: 40 }}>Loading P&L data…</div>
+            )}
+
+            {pnl && tab === 'P&L Report' && (
+              <div>
+                {/* Totals banner */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 12, marginBottom: 24 }}>
+                  {[
+                    { label: 'Budgeted Revenue', val: pnl.totals.budgeted_revenue, color: '#2563eb' },
+                    { label: 'Actual Revenue', val: pnl.totals.actual_revenue, color: '#16a34a' },
+                    { label: 'Budgeted Cost', val: pnl.totals.budgeted_cost, color: '#d97706' },
+                    { label: 'Actual Cost', val: pnl.totals.total_actual_cost, color: '#dc2626' },
+                    { label: 'Budgeted Profit', val: pnl.totals.budgeted_profit, color: '#7c3aed' },
+                    { label: 'Actual Profit', val: pnl.totals.actual_profit, color: pnl.totals.actual_profit >= 0 ? '#16a34a' : '#dc2626' },
+                  ].map(({ label, val, color }) => (
+                    <div key={label} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 16px' }}>
+                      <div style={{ fontSize: 11, color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color }}>${Number(val).toLocaleString(undefined, { minimumFractionDigits: 0 })}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Per-crop table */}
+                <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                        {['Crop','Field','Acres','Bud. Revenue','Act. Revenue','Bud. Cost','Act. Cost','Bud. Profit','Act. Profit','Variance'].map(h => (
+                          <th key={h} style={{ textAlign: 'right', padding: '9px 12px', color: '#6b7280', fontWeight: 600, fontSize: 11, ':first-child': { textAlign: 'left' } }}
+                            {...(h === 'Crop' || h === 'Field' ? { style: { textAlign: 'left', padding: '9px 12px', color: '#6b7280', fontWeight: 600, fontSize: 11 } } : {})}
+                          >{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pnl.rows.map((r, i) => (
+                        <tr key={r.budget_id} style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                          <td style={{ padding: '9px 12px', fontWeight: 600 }}>{r.crop_name}</td>
+                          <td style={{ padding: '9px 12px', color: '#374151' }}>{r.field_name || '—'}</td>
+                          <td style={{ padding: '9px 12px', textAlign: 'right' }}>{r.planted_acres ? Number(r.planted_acres).toFixed(1) : '—'}</td>
+                          {[r.budgeted_revenue, r.actual_revenue, r.budgeted_cost, r.total_actual_cost, r.budgeted_profit].map((v, j) => (
+                            <td key={j} style={{ padding: '9px 12px', textAlign: 'right' }}>${Number(v).toLocaleString(undefined, { minimumFractionDigits: 0 })}</td>
+                          ))}
+                          <td style={{ padding: '9px 12px', textAlign: 'right', fontWeight: 700, color: r.actual_profit >= 0 ? '#16a34a' : '#dc2626' }}>
+                            ${Number(r.actual_profit).toLocaleString(undefined, { minimumFractionDigits: 0 })}
+                          </td>
+                          <td style={{ padding: '9px 12px', textAlign: 'right', fontWeight: 700, color: r.profit_variance >= 0 ? '#16a34a' : '#dc2626' }}>
+                            {r.profit_variance >= 0 ? '+' : ''}{Number(r.profit_variance).toLocaleString(undefined, { minimumFractionDigits: 0 })}
+                          </td>
+                        </tr>
+                      ))}
+                      {pnl.rows.length === 0 && (
+                        <tr><td colSpan={10} style={{ padding: 32, textAlign: 'center', color: '#6b7280' }}>No crop budget data for {pnlYear}.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {pnl && tab === 'Yield vs Budget' && (
+              <div>
+                {/* Yield chart */}
+                <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '20px 16px', marginBottom: 20 }}>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 16px' }}>Yield: Actual vs Expected ({pnlYear})</h3>
+                  {pnl.rows.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={pnl.rows.map(r => ({
+                        name: r.field_name ? `${r.crop_name} / ${r.field_name}` : r.crop_name,
+                        'Expected Yield': Number(r.expected_yield) || 0,
+                        'Actual Yield':   Number(r.actual_yield)   || 0,
+                      }))} margin={{ top: 4, right: 20, left: 0, bottom: 60 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" interval={0} />
+                        <YAxis tick={{ fontSize: 12 }} />
+                        <Tooltip formatter={v => Number(v).toLocaleString()} />
+                        <Legend verticalAlign="top" />
+                        <Bar dataKey="Expected Yield" fill="#93c5fd" radius={[4,4,0,0]} />
+                        <Bar dataKey="Actual Yield"   fill="#16a34a" radius={[4,4,0,0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div style={{ textAlign: 'center', color: '#6b7280', padding: 40 }}>No yield data for {pnlYear}.</div>
+                  )}
+                </div>
+
+                {/* Revenue & Profit chart */}
+                <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '20px 16px' }}>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 16px' }}>Revenue & Profit: Budgeted vs Actual ({pnlYear})</h3>
+                  {pnl.rows.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={pnl.rows.map(r => ({
+                        name: r.field_name ? `${r.crop_name} / ${r.field_name}` : r.crop_name,
+                        'Bud. Revenue': Number(r.budgeted_revenue) || 0,
+                        'Act. Revenue': Number(r.actual_revenue)   || 0,
+                        'Bud. Profit':  Number(r.budgeted_profit)  || 0,
+                        'Act. Profit':  Number(r.actual_profit)    || 0,
+                      }))} margin={{ top: 4, right: 20, left: 10, bottom: 60 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" interval={0} />
+                        <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
+                        <Tooltip formatter={v => `$${Number(v).toLocaleString()}`} />
+                        <Legend verticalAlign="top" />
+                        <Bar dataKey="Bud. Revenue" fill="#bfdbfe" radius={[4,4,0,0]} />
+                        <Bar dataKey="Act. Revenue" fill="#2563eb" radius={[4,4,0,0]} />
+                        <Bar dataKey="Bud. Profit"  fill="#d9f99d" radius={[4,4,0,0]} />
+                        <Bar dataKey="Act. Profit"  fill="#16a34a" radius={[4,4,0,0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div style={{ textAlign: 'center', color: '#6b7280', padding: 40 }}>No financial data for {pnlYear}.</div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

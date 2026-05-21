@@ -45,6 +45,7 @@ export default function ExportCompliance() {
   const [filterStatus, setFilterStatus] = useState('');
 
   const [showShipForm, setShowShipForm] = useState(false);
+  const [deliverModal, setDeliverModal] = useState(null);
   const [shipForm, setShipForm] = useState({ commodity: '', destination_country: '', buyer_name: '', vessel_ref: '', estimated_departure: '', quantity_kg: '', unit_price_usd: '', currency: 'USD', notes: '' });
   const [phytoForm, setPhytoForm] = useState({ cert_number: '', issuing_authority: '', issue_date: '', expiry_date: '', commodity: '', notes: '' });
   const [customsForm, setCustomsForm] = useState({ doc_type: 'bill_of_lading', doc_number: '', issuing_country: '', issue_date: '', notes: '' });
@@ -105,12 +106,22 @@ export default function ExportCompliance() {
     load();
   };
 
-  const updateStatus = async (id, status) => {
+  const updateStatus = async (id, status, extra = {}) => {
     await fetch(`${API}/api/export-compliance/shipments/${id}/status?business_id=${businessId}`, {
-      method: 'PUT', headers: { ...authHdr, 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
+      method: 'PUT', headers: { ...authHdr, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, ...extra }),
     });
     load();
     if (selectedShip?.shipment_id === id) setSelectedShip(s => ({ ...s, status }));
+  };
+
+  const confirmDeliver = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    await updateStatus(deliverModal.shipment_id, 'delivered', {
+      actual_arrival_date: fd.get('actual_arrival_date') || null,
+    });
+    setDeliverModal(null);
   };
 
   const addPhyto = async (e) => {
@@ -305,6 +316,7 @@ export default function ExportCompliance() {
                         {s.status === 'pending_docs' && <button onClick={() => updateStatus(s.shipment_id, 'inspected')} className="text-blue-600 hover:underline text-xs">→ Inspected</button>}
                         {s.status === 'inspected' && <button onClick={() => updateStatus(s.shipment_id, 'cleared')} className="text-green-600 hover:underline text-xs">→ Clear</button>}
                         {s.status === 'cleared' && <button onClick={() => updateStatus(s.shipment_id, 'shipped')} className="text-purple-600 hover:underline text-xs">→ Ship</button>}
+                        {s.status === 'shipped' && <button onClick={() => setDeliverModal(s)} className="text-teal-600 hover:underline text-xs font-semibold">→ Deliver</button>}
                       </td>
                     </tr>
                   ))}
@@ -607,6 +619,33 @@ export default function ExportCompliance() {
           </div>
         )}
       </div>
+
+      {/* ── Delivery confirmation modal ── */}
+      {deliverModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm space-y-4">
+            <h3 className="font-semibold text-gray-900 text-lg">Confirm Delivery</h3>
+            <p className="text-sm text-gray-600">
+              <span className="font-mono text-blue-600">{deliverModal.shipment_ref}</span> — {deliverModal.commodity}
+            </p>
+            <p className="text-xs text-gray-500">A revenue invoice will be created in Accounting for <strong>${(deliverModal.total_value_usd || 0).toLocaleString()}</strong>.</p>
+            <form onSubmit={confirmDeliver} className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Actual Arrival Date</label>
+                <input type="date" name="actual_arrival_date" className={inputCls}
+                  defaultValue={new Date().toISOString().slice(0, 10)} />
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                <button type="button" onClick={() => setDeliverModal(null)}
+                  className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button type="submit"
+                  className="px-4 py-2 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700">Confirm Delivery</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
           <ThaiymeChat businessId={businessId} page="export-compliance" />
     </AccountLayout>
   );

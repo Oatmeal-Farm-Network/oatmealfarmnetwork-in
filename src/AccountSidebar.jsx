@@ -551,6 +551,7 @@ export default function AccountSidebar() {
           <NavSection icon={ICONS.outgrower} label="Outgrower / Contract Farming" expanded={Expanded}
             isOpen={OpenSections['Outgrower'] || false} onToggle={() => toggleSection('Outgrower')}>
             <NavChild to={`/outgrower?BusinessID=${BusinessID}`} label="Overview" />
+            <NavChild to={`/outgrower?BusinessID=${BusinessID}&tab=dashboard`} label="Contract Dashboard" />
             <NavChild to={`/outgrower?BusinessID=${BusinessID}&tab=farmers`} label="Farmers" />
             <NavChild to={`/outgrower?BusinessID=${BusinessID}&tab=contracts`} label="Contracts" />
             <NavChild to={`/outgrower?BusinessID=${BusinessID}&tab=distributions`} label="Input Distributions" />
@@ -563,6 +564,7 @@ export default function AccountSidebar() {
             isOpen={OpenSections['Procurement'] || false} onToggle={() => toggleSection('Procurement')}>
             <NavChild to={`/procurement?BusinessID=${BusinessID}`} label="Purchase Orders" />
             <NavChild to={`/procurement?BusinessID=${BusinessID}&filter=pending_approval`} label="Pending Approval" />
+            <NavChild to={`/supplier-scorecard?BusinessID=${BusinessID}`} label="Supplier Scorecard" />
           </NavSection>
         )}
 
@@ -571,6 +573,7 @@ export default function AccountSidebar() {
             isOpen={OpenSections['Work Orders'] || false} onToggle={() => toggleSection('Work Orders')}>
             <NavChild to={`/work-orders?BusinessID=${BusinessID}`} label="All Work Orders" />
             <NavChild to={`/work-orders?BusinessID=${BusinessID}&tab=greenhouse`} label="Greenhouse Controls" />
+            <NavChild to={`/agri-erp/mobile?BusinessID=${BusinessID}`} label="📱 Mobile Field Shell" />
           </NavSection>
         )}
 

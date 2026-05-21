@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL   = import.meta.env.VITE_API_URL;
+const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
 
 // ─── Crop colour palette ──────────────────────────────────────────────────────
 const CROP_STYLES = [
@@ -409,6 +410,8 @@ export default function CropRotation() {
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState('');
   const autoOpenedRef = useRef(false);
+  const [saigeAdvice, setSaigeAdvice] = useState('');
+  const [saigeLoading, setSaigeLoading] = useState(false);
 
   useEffect(() => { if (businessId) LoadBusiness(businessId); }, [businessId]);
 
@@ -467,6 +470,28 @@ export default function CropRotation() {
   };
 
   const handleEdit = entry => { setEditEntry(entry); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+  const askSaige = async () => {
+    if (!entries.length) return;
+    setSaigeLoading(true);
+    setSaigeAdvice('');
+    const sorted = [...entries].sort((a, b) => a.season_year - b.season_year);
+    const history = sorted.map(e => `${e.season_year}: ${e.crop_name}${e.yield_amount ? ` (${e.yield_amount} ${e.yield_unit})` : ''}`).join(', ');
+    const prompt = `I'm reviewing my crop rotation history for one field. Here is the crop sequence: ${history}. Based on this rotation history, what are the soil health implications, disease or pest risks, and what crop should I plant next? Keep it practical and concise.`;
+    try {
+      const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
+      const r = await fetch(`${SAIGE_API}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ user_input: prompt, business_id: businessId ? Number(businessId) : undefined }),
+      });
+      const data = await r.json();
+      setSaigeAdvice(data.response || data.message || 'No response from Saige.');
+    } catch {
+      setSaigeAdvice('Could not reach Saige. Please try again.');
+    }
+    setSaigeLoading(false);
+  };
   const openNew    = ()    => { setEditEntry(null);  setShowForm(true); };
   const closeForm  = ()    => { setShowForm(false);  setEditEntry(null); };
 
@@ -627,6 +652,37 @@ export default function CropRotation() {
                             {getCropStyle(analysis.recommendation.crop).icon} {analysis.recommendation.crop}
                           </div>
                           <p className="text-xs font-mont text-gray-600">{analysis.recommendation.reason}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Saige rotation advisor */}
+                  {entries.length >= 1 && (
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-lora font-bold text-gray-900 text-base">Ask Saige</h3>
+                          <p className="text-xs font-mont text-gray-500 mt-0.5">AI rotation advisor — soil health, disease risk, next crop</p>
+                        </div>
+                        <button
+                          onClick={askSaige}
+                          disabled={saigeLoading}
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                          style={{ background: saigeLoading ? '#9ca3af' : '#6D8E22', transition: 'background 0.2s' }}>
+                          {saigeLoading ? (
+                            <>
+                              <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="60 40" />
+                              </svg>
+                              Asking…
+                            </>
+                          ) : '🌱 Get Advice'}
+                        </button>
+                      </div>
+                      {saigeAdvice && (
+                        <div className="rounded-lg bg-[#f0f5e8] border border-[#c3d9a2] p-4 text-sm font-mont text-gray-800 whitespace-pre-wrap leading-relaxed">
+                          {saigeAdvice}
                         </div>
                       )}
                     </div>
