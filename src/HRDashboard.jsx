@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState, useCallback } from 'react';
 import ThaiymeChat from './ThaiymeChat';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -258,6 +258,13 @@ export default function HRDashboard() {
                 </div>
               ))}
             </div>
+            <Link to={`/picker-performance?BusinessID=${bid}`}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 10, padding: '14px 18px', textDecoration: 'none', color: '#15803d', fontWeight: 600, fontSize: 14, marginBottom: 16 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><polyline points="9 11 11 13 15 9"/>
+              </svg>
+              Picker Performance → Track picking sessions, piece-rate wages &amp; payroll
+            </Link>
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: 20 }}>
               <h3 style={{ fontWeight: 600, marginBottom: 12, color: '#111827' }}>Recent Workers</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>

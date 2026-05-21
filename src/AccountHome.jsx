@@ -52,7 +52,7 @@ const PERSONAS = {
     headline: 'Farm & Ranch Hub',
     tagline: 'Monitor your fields, manage your herd, and sell your harvest.',
     statKeys: ['fields', 'animals', 'pending_orders', 'upcoming_events'],
-    priorityFeatures: ['precision_ag', 'livestock', 'farm_2_table', 'accounting', 'events', 'blog', 'my_website', 'certifications'],
+    priorityFeatures: ['precision_ag', 'livestock', 'farm_2_table', 'hr_management', 'traceability', 'picker_performance', 'iot_greenhouse', 'perishable_traceability', 'accounting', 'events', 'blog', 'my_website', 'certifications'],
   },
   producer: {
     color: '#A3301E', bg: '#fdf0ed', lightBg: '#fce5e0',
@@ -292,6 +292,42 @@ const FEATURE_META = {
     cta: { label: 'Settlements', path: (b) => `/farmer-settlement?BusinessID=${b}` },
     addCta: { label: 'New Settlement', path: (b) => `/farmer-settlement?BusinessID=${b}` },
     links: () => [],
+    platformPage: null,
+  },
+  picker_performance: {
+    label: 'Picker Performance', color: '#15803d', bg: '#f0fdf4',
+    icon: <I><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><polyline points="9 11 11 13 15 9"/></I>,
+    desc: 'Track per-picker sessions, drop-off scans, piece-rate wages, and payroll summaries.',
+    cta: { label: 'View Sessions', path: (b) => `/picker-performance?BusinessID=${b}` },
+    addCta: { label: 'Set Piece Rates', path: (b) => `/picker-performance?BusinessID=${b}&tab=Piece+Rates` },
+    links: (b) => [
+      { label: 'Leaderboard', to: `/picker-performance?BusinessID=${b}&tab=Analytics` },
+      { label: 'Payroll Summary', to: `/picker-performance?BusinessID=${b}&tab=Payroll` },
+    ],
+    platformPage: null,
+  },
+  iot_greenhouse: {
+    label: 'IoT Greenhouse', color: '#0e7490', bg: '#ecfeff',
+    icon: <I><rect x="3" y="11" width="18" height="11" rx="1"/><path d="M3 11V7a5 5 0 0110 0v4"/><circle cx="17" cy="16" r="2"/><line x1="19" y1="11" x2="19" y2="14"/></I>,
+    desc: 'Real-time greenhouse sensor monitoring, micro-climate alerts, and variety-specific thresholds.',
+    cta: { label: 'Sensor Dashboard', path: (b) => `/iot-greenhouse?BusinessID=${b}` },
+    addCta: { label: 'View Alerts', path: (b) => `/iot-greenhouse?BusinessID=${b}&tab=Alerts` },
+    links: (b) => [
+      { label: 'Trends', to: `/iot-greenhouse?BusinessID=${b}&tab=Trends` },
+      { label: 'Sensor Settings', to: `/iot-greenhouse?BusinessID=${b}&tab=Settings` },
+    ],
+    platformPage: null,
+  },
+  perishable_traceability: {
+    label: 'Perishable Traceability', color: '#7c3aed', bg: '#f5f3ff',
+    icon: <I><rect x="2" y="3" width="5" height="5" rx="0.5"/><rect x="9" y="3" width="5" height="5" rx="0.5"/><rect x="2" y="10" width="5" height="5" rx="0.5"/><path d="M11.5 10v2.5h2.5"/><line x1="9" y1="12.5" x2="11.5" y2="12.5"/></I>,
+    desc: 'Field-to-dispatch stage checkpoints, compliance records, withholding checks, and audit reports.',
+    cta: { label: 'Lot Timeline', path: (b) => `/perishable-trace?BusinessID=${b}` },
+    addCta: { label: 'Add Checkpoint', path: (b) => `/perishable-trace?BusinessID=${b}&tab=Lots` },
+    links: (b) => [
+      { label: 'Compliance Records', to: `/perishable-trace?BusinessID=${b}&tab=Compliance` },
+      { label: 'Generate Report', to: `/perishable-trace?BusinessID=${b}&tab=Reports` },
+    ],
     platformPage: null,
   },
   enterprise_supply_chain: {

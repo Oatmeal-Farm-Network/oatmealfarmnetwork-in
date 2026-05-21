@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState, useCallback } from 'react';
 import ThaiymeChat from './ThaiymeChat';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { queuedFetch } from './offlineQueue';
@@ -173,6 +173,13 @@ export default function WorkOrders() {
               );
             })}
           </div>
+          <Link to={`/iot-greenhouse?BusinessID=${BusinessID}`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 ml-auto">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 12h4M18 12h4M12 2v4M12 18v4"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/>
+            </svg>
+            IoT Sensors
+          </Link>
           {tab === 'list' && (
             <div className="flex gap-2">
               <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}

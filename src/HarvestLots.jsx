@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState, useCallback } from 'react';
 import ThaiymeChat from './ThaiymeChat';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -119,10 +119,22 @@ export default function HarvestLots() {
           {view !== 'list' && (
             <button onClick={() => { setView('list'); setDetail(null); setTrace(null); }} style={{ ...btn('#6b7280'), marginBottom: 8, fontSize: 12 }}>← Back</button>
           )}
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', margin: 0 }}>
-            {view === 'list' ? 'Harvest Lot Traceability' : view === 'trace' ? `Trace: ${trace?.lot?.lot_number}` : `Lot: ${detail?.lot_number}`}
-          </h1>
-          <p style={{ color: '#6b7280', fontSize: 14, marginTop: 4 }}>Track harvest lots from field to shipment with full input & QC traceability.</p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <div>
+              <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', margin: 0 }}>
+                {view === 'list' ? 'Harvest Lot Traceability' : view === 'trace' ? `Trace: ${trace?.lot?.lot_number}` : `Lot: ${detail?.lot_number}`}
+              </h1>
+              <p style={{ color: '#6b7280', fontSize: 14, marginTop: 4 }}>Track harvest lots from field to shipment with full input & QC traceability.</p>
+            </div>
+            <Link to={`/perishable-trace?BusinessID=${bid}`}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#f5f3ff', border: '1.5px solid #c4b5fd', borderRadius: 8, padding: '7px 14px', textDecoration: 'none', color: '#7c3aed', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="0.5"/><rect x="14" y="3" width="7" height="7" rx="0.5"/><rect x="3" y="14" width="7" height="7" rx="0.5"/>
+                <path d="M17 14v3.5h3.5"/><line x1="14" y1="17.5" x2="17" y2="17.5"/>
+              </svg>
+              Perishable Trace
+            </Link>
+          </div>
         </div>
 
         {/* Summary */}
