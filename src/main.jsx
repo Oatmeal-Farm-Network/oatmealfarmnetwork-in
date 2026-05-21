@@ -95,6 +95,11 @@ function SaigeWidgetGlobal() {
   else if (pathname.startsWith('/picker-performance'))   pageContext = 'Picker Performance Tracking';
   else if (pathname.startsWith('/iot-greenhouse'))       pageContext = 'IoT Greenhouse Monitoring';
   else if (pathname.startsWith('/perishable-trace'))     pageContext = 'Perishable Traceability';
+  else if (pathname.startsWith('/chilling-hours'))       pageContext = 'Chilling Hour & Bloom Forecast';
+  else if (pathname.startsWith('/grain-bin'))            pageContext = 'Grain Bin & Silo Monitoring';
+  else if (pathname.startsWith('/scale-tickets'))        pageContext = 'Scale Tickets & Contract Reconciliation';
+  else if (pathname.startsWith('/harvest-bins'))         pageContext = 'Bin-Level Harvest Traceability';
+  else if (pathname.startsWith('/ca-storage'))           pageContext = 'CA Cold Storage Management';
   else if (pathname.startsWith('/certifications'))         pageContext = 'Certifications Tracker';
   else if (pathname.startsWith('/grants'))                 pageContext = 'Grants & Programs';
   else if (pathname.startsWith('/suppliers'))              pageContext = 'Supplier Directory';
@@ -308,6 +313,11 @@ const Permissions          = lazyWithReload(() => import('./Permissions.jsx'));;
 const PickerPerformance    = lazyWithReload(() => import('./PickerPerformance.jsx'));
 const IoTGreenhouse        = lazyWithReload(() => import('./IoTGreenhouse.jsx'));
 const PerishableTrace      = lazyWithReload(() => import('./PerishableTrace.jsx'));
+const ChillingHours        = lazyWithReload(() => import('./ChillingHours.jsx'));
+const GrainBinMonitor      = lazyWithReload(() => import('./GrainBinMonitor.jsx'));
+const ScaleTickets         = lazyWithReload(() => import('./ScaleTickets.jsx'));
+const HarvestBins          = lazyWithReload(() => import('./HarvestBins.jsx'));
+const CAStorage            = lazyWithReload(() => import('./CAStorage.jsx'));
 
 const App = lazyWithReload(() => import('./App.jsx'))
 const About = lazyWithReload(() => import('./About.jsx'))
@@ -865,6 +875,21 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
           {/* Perishable Traceability */}
           <Route path="/perishable-trace" element={<RequireAuth><PerishableTrace /></RequireAuth>} />
+
+          {/* Chilling Hour & Bloom Forecast */}
+          <Route path="/chilling-hours" element={<RequireAuth><ChillingHours /></RequireAuth>} />
+
+          {/* Grain Bin & Silo Monitoring */}
+          <Route path="/grain-bin" element={<RequireAuth><GrainBinMonitor /></RequireAuth>} />
+
+          {/* Scale Tickets & Contract Reconciliation */}
+          <Route path="/scale-tickets" element={<RequireAuth><ScaleTickets /></RequireAuth>} />
+
+          {/* Bin-Level Harvest Traceability */}
+          <Route path="/harvest-bins" element={<RequireAuth><HarvestBins /></RequireAuth>} />
+
+          {/* CA Cold Storage Management */}
+          <Route path="/ca-storage" element={<RequireAuth><CAStorage /></RequireAuth>} />
 
           {/* Enterprise Supply Chain Intelligence (ESCI) */}
           <Route path="/supply-chain" element={<RequireAuth><SupplyChainHub /></RequireAuth>} />

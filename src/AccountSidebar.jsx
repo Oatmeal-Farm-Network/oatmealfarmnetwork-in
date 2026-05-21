@@ -307,6 +307,9 @@ export default function AccountSidebar() {
             <NavChild to={`/precision-ag/fields?BusinessID=${BusinessID}`} label={t('account_sidebar.ag_dashboard')} />
             <NavChild to={`/precision-ag/crop-detection?BusinessID=${BusinessID}`} label={t('account_sidebar.crop_detection')} />
             <NavChild to="/esg-dashboard" label="ESG Dashboard" />
+            {on('chilling_hours') && (
+              <NavChild to={`/chilling-hours?BusinessID=${BusinessID}`} label="Chilling Hours & Bloom" />
+            )}
             {fields.length > 0 && (
               <div className="mt-1 pt-1 border-t border-gray-300/40">
                 {fields.map(f => {
@@ -458,6 +461,9 @@ export default function AccountSidebar() {
           <NavSection icon={ICONS.coldChain} label="Cold Chain Tracking" expanded={Expanded}
             isOpen={OpenSections['ColdChain'] || false} onToggle={() => toggleSection('ColdChain')}>
             <NavChild to={`/cold-chain?BusinessID=${BusinessID}`} label="Vehicles & Tracking" />
+            {on('ca_storage') && (
+              <NavChild to={`/ca-storage?BusinessID=${BusinessID}`} label="CA Storage Rooms" />
+            )}
           </NavSection>
         )}
 
@@ -521,6 +527,9 @@ export default function AccountSidebar() {
             {on('perishable_traceability') && (
               <NavChild to={`/perishable-trace?BusinessID=${BusinessID}`} label="Perishable Trace" />
             )}
+            {on('harvest_bins') && (
+              <NavChild to={`/harvest-bins?BusinessID=${BusinessID}`} label="Bin-Level Traceability" />
+            )}
           </NavSection>
         )}
 
@@ -531,6 +540,9 @@ export default function AccountSidebar() {
             <NavChild to={`/farm-infrastructure?BusinessID=${BusinessID}&tab=maintenance`} label="Maintenance Log" />
             <NavChild to={`/farm-infrastructure?BusinessID=${BusinessID}&tab=schedules`} label="Schedules" />
             <NavChild to={`/farm-infrastructure?BusinessID=${BusinessID}&tab=structures`} label="Structures" />
+            {on('grain_bin_monitoring') && (
+              <NavChild to={`/grain-bin?BusinessID=${BusinessID}`} label="Grain Bin Monitor" />
+            )}
           </NavSection>
         )}
 
@@ -562,6 +574,9 @@ export default function AccountSidebar() {
             <NavChild to={`/outgrower?BusinessID=${BusinessID}&tab=contracts`} label="Contracts" />
             <NavChild to={`/outgrower?BusinessID=${BusinessID}&tab=distributions`} label="Input Distributions" />
             <NavChild to={`/outgrower?BusinessID=${BusinessID}&tab=deliveries`} label="Deliveries & Pay" />
+            {on('scale_tickets') && (
+              <NavChild to={`/scale-tickets?BusinessID=${BusinessID}`} label="Scale Tickets" />
+            )}
           </NavSection>
         )}
 
