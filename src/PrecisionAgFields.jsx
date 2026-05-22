@@ -733,6 +733,244 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
   );
 }
 
+// ─── Data Confidence Meter ────────────────────────────────────────────────────
+const CONFIDENCE_DIMENSIONS = [
+  {
+    key: 'fields',
+    label: 'Fields added',
+    icon: '🗺️',
+    score: (fields) => fields.length === 0 ? 0 : fields.length < 3 ? 50 : 100,
+    hint: (fields) => fields.length === 0
+      ? 'Add your first field to get started.'
+      : fields.length < 3
+      ? `${fields.length} field${fields.length > 1 ? 's' : ''} — add a few more for better benchmarking.`
+      : `${fields.length} fields — great coverage.`,
+    unlocks: ['Maps', 'Zoning', 'Crop Status', 'Climate Forecast'],
+  },
+  {
+    key: 'crop',
+    label: 'Crop types set',
+    icon: '🌾',
+    score: (fields) => {
+      if (fields.length === 0) return 0;
+      const set = fields.filter(f => f.crop_type).length;
+      return Math.round((set / fields.length) * 100);
+    },
+    hint: (fields) => {
+      const unset = fields.filter(f => !f.crop_type).length;
+      return unset === 0
+        ? 'All fields have a crop type set.'
+        : `${unset} field${unset > 1 ? 's' : ''} missing crop type — edit them to unlock yield + benchmark features.`;
+    },
+    unlocks: ['Benchmarks', 'Yield Forecast', 'GDD', 'Spray Decisions'],
+  },
+  {
+    key: 'boundaries',
+    label: 'Boundaries drawn',
+    icon: '📐',
+    score: (fields) => {
+      if (fields.length === 0) return 0;
+      const drawn = fields.filter(f => f.boundary_geojson).length;
+      return Math.round((drawn / fields.length) * 100);
+    },
+    hint: (fields) => {
+      const missing = fields.filter(f => !f.boundary_geojson).length;
+      return missing === 0
+        ? 'All fields have boundaries drawn.'
+        : `${missing} field${missing > 1 ? 's' : ''} without a boundary — draw them for accurate acreage and zone maps.`;
+    },
+    unlocks: ['Zoning', 'Area calculations', 'Prescription export'],
+  },
+  {
+    key: 'size',
+    label: 'Field sizes known',
+    icon: '📏',
+    score: (fields) => {
+      if (fields.length === 0) return 0;
+      const known = fields.filter(f => f.field_size_hectares || f.boundary_geojson).length;
+      return Math.round((known / fields.length) * 100);
+    },
+    hint: (fields) => {
+      const unknown = fields.filter(f => !f.field_size_hectares && !f.boundary_geojson).length;
+      return unknown === 0
+        ? 'Field sizes are all known.'
+        : `${unknown} field${unknown > 1 ? 's' : ''} with unknown size — add boundaries or enter size manually.`;
+    },
+    unlocks: ['Histograms (acreage)', 'Carbon credits', 'Irrigation advice'],
+  },
+];
+
+function DataConfidenceMeter({ fields, profiles }) {
+  const [open, setOpen] = useState(false);
+
+  const profileArr = Object.values(profiles || {});
+  const hasSoilData = profileArr.some(p => p?.soil_type || p?.ph_level || p?.organic_matter_pct);
+
+  const allDimensions = [
+    ...CONFIDENCE_DIMENSIONS,
+    {
+      key: 'soil',
+      label: 'Soil data entered',
+      icon: '🪱',
+      score: () => {
+        if (fields.length === 0) return 0;
+        const withSoil = Object.entries(profiles || {}).filter(([, p]) => p?.soil_type || p?.ph_level).length;
+        return Math.round((withSoil / fields.length) * 100);
+      },
+      hint: () => hasSoilData
+        ? 'Soil data found on some fields.'
+        : 'No soil profiles yet — add pH, soil type, and OM % to unlock Carbon and Nutrient features.',
+      unlocks: ['Carbon Credits', 'Soil Health Score', 'Nutrient advice'],
+    },
+  ];
+
+  const scores = allDimensions.map(d => d.score(fields));
+  const overall = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+  const overallColor = overall >= 80 ? '#16A34A' : overall >= 50 ? '#D97706' : '#DC2626';
+  const overallLabel = overall >= 80 ? 'Strong' : overall >= 50 ? 'Developing' : 'Getting started';
+
+  if (fields.length === 0) {
+    return (
+      <div className="mb-6 bg-white rounded-xl border border-dashed border-gray-300 p-6 text-center">
+        <div className="text-3xl mb-2">🌱</div>
+        <div className="font-lora text-lg text-gray-700 mb-1">Welcome to Precision Ag</div>
+        <div className="font-mont text-sm text-gray-500 mb-4">
+          Add your first field to unlock satellite maps, zone analysis, yield forecasting, and more.
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-lg mx-auto text-left mt-4">
+          {['Add a field', 'Set crop type', 'Draw boundary', 'Run analysis'].map((step, i) => (
+            <div key={i} className="flex items-center gap-2 font-mont text-xs text-gray-500">
+              <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[10px] font-bold shrink-0">{i+1}</span>
+              {step}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-5 bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full px-5 py-3 flex items-center gap-4 hover:bg-gray-50 transition-colors text-left">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="relative w-10 h-10 shrink-0">
+            <svg viewBox="0 0 36 36" className="w-10 h-10 -rotate-90">
+              <circle cx="18" cy="18" r="15" fill="none" stroke="#E5E7EB" strokeWidth="3" />
+              <circle cx="18" cy="18" r="15" fill="none"
+                stroke={overallColor} strokeWidth="3"
+                strokeDasharray={`${(overall / 100) * 94.2} 94.2`}
+                strokeLinecap="round" />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center font-mono text-[11px] font-bold" style={{ color: overallColor }}>
+              {overall}
+            </span>
+          </div>
+          <div>
+            <div className="font-mont text-sm font-bold text-gray-800">
+              Data Confidence: <span style={{ color: overallColor }}>{overallLabel}</span>
+            </div>
+            <div className="font-mont text-xs text-gray-400 mt-0.5">
+              {overall < 80 ? 'Add more data to unlock all Precision Ag features' : 'Your field data is well-configured'}
+            </div>
+          </div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round"
+          className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div className="border-t border-gray-100 px-5 py-4 space-y-3">
+          {allDimensions.map((d, i) => {
+            const score = scores[i];
+            const barColor = score >= 80 ? '#22C55E' : score >= 50 ? '#F59E0B' : '#EF4444';
+            return (
+              <div key={d.key}>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">{d.icon}</span>
+                    <span className="font-mont text-sm font-semibold text-gray-700">{d.label}</span>
+                  </div>
+                  <span className="font-mono text-sm font-bold" style={{ color: barColor }}>{score}%</span>
+                </div>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-1">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${score}%`, background: barColor }} />
+                </div>
+                <div className="font-mont text-xs text-gray-500">{d.hint(fields)}</div>
+                {score < 100 && (
+                  <div className="font-mont text-[10px] text-gray-400 mt-0.5">
+                    Unlocks: {d.unlocks.join(' · ')}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── NL query parser ─────────────────────────────────────────────────────────
+const CROP_KW = ['wheat','corn','maize','soybean','soy','oat','oats','barley','rice','canola','rapeseed','cotton','sorghum','sunflower','potato','tomato','alfalfa','hay'];
+
+function parseNlQuery(q, fields, profiles) {
+  const lower = q.toLowerCase().trim();
+  if (!lower) return { fields, intents: [] };
+  const intents = [];
+  let filtered = [...fields];
+
+  // Size: "under 5 ha", "over 10 acres", "< 2 hectares", "large", "small"
+  const under = lower.match(/(under|less than|below|<)\s*(\d+\.?\d*)\s*(ha|hectare|hectares|acre|acres)?/);
+  const over  = lower.match(/(over|more than|above|>|greater than)\s*(\d+\.?\d*)\s*(ha|hectare|hectares|acre|acres)?/);
+  const haOnly = lower.match(/^(\d+\.?\d*)\s*(ha|hectare|hectares)$/);
+  const isSmall = /\bsmall\b/.test(lower) && !under && !over;
+  const isLarge = /\blarge\b/.test(lower) && !under && !over;
+
+  const toHa = (n, unit) => unit && /acre/.test(unit) ? n * 0.404686 : n;
+
+  if (under) {
+    const thr = toHa(parseFloat(under[2]), under[3]);
+    filtered = filtered.filter(f => { const ha = parseFloat(f.field_size_hectares); return isFinite(ha) && ha < thr; });
+    intents.push(`< ${under[2]}${under[3] ? ' ' + under[3] : ' ha'}`);
+  }
+  if (over) {
+    const thr = toHa(parseFloat(over[2]), over[3]);
+    filtered = filtered.filter(f => { const ha = parseFloat(f.field_size_hectares); return isFinite(ha) && ha > thr; });
+    intents.push(`> ${over[2]}${over[3] ? ' ' + over[3] : ' ha'}`);
+  }
+  if (isSmall) { filtered = filtered.filter(f => parseFloat(f.field_size_hectares) < 5); intents.push('< 5 ha (small)'); }
+  if (isLarge) { filtered = filtered.filter(f => parseFloat(f.field_size_hectares) > 20); intents.push('> 20 ha (large)'); }
+
+  // Crop type
+  const crop = CROP_KW.find(c => lower.includes(c));
+  if (crop) {
+    filtered = filtered.filter(f => (f.crop_type || '').toLowerCase().includes(crop));
+    intents.push(`crop: ${crop}`);
+  }
+
+  // No soil profile
+  if (/no (soil|profile)|missing (data|profile)|unset/.test(lower)) {
+    filtered = filtered.filter(f => { const p = profiles[f.fieldid || f.id]; return !p || (!p.soil_type && !p.ph_level); });
+    intents.push('no soil data');
+  }
+
+  // Fallback: name / crop / address text match
+  if (intents.length === 0) {
+    filtered = filtered.filter(f =>
+      (f.name || '').toLowerCase().includes(lower) ||
+      (f.crop_type || '').toLowerCase().includes(lower) ||
+      (f.address || '').toLowerCase().includes(lower)
+    );
+    intents.push(`matching "${q}"`);
+  }
+
+  return { fields: filtered, intents };
+}
+
 // ─── FieldList ────────────────────────────────────────────────────────────────
 
 function FieldList({ businessId, onCreateNew }) {
@@ -745,6 +983,7 @@ function FieldList({ businessId, onCreateNew }) {
   const [deleting, setDeleting] = useState(false);
   const [openBiomass, setOpenBiomass] = useState(() => new Set());
   const [showMoon, setShowMoon] = useState(false);
+  const [nlQuery, setNlQuery] = useState('');
   const navigate = useNavigate();
 
   const toggleBiomass = (id) => {
@@ -792,6 +1031,8 @@ function FieldList({ businessId, onCreateNew }) {
     }
   };
 
+  const { fields: filteredFields, intents: nlIntents } = parseNlQuery(nlQuery, fields, profiles);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
@@ -829,7 +1070,7 @@ function FieldList({ businessId, onCreateNew }) {
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-6 pb-3 border-b-2 border-gray-200">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-200">
         <h2 className="text-2xl font-bold text-gray-800">Ag Dashboard</h2>
         <div className="flex items-center gap-3">
           <button
@@ -848,6 +1089,42 @@ function FieldList({ businessId, onCreateNew }) {
         </div>
       </div>
 
+      {/* Field intelligence search — only shown when fields exist */}
+      {fields.length > 0 && <div className="mb-5">
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input
+            type="text"
+            value={nlQuery}
+            onChange={e => setNlQuery(e.target.value)}
+            placeholder='Search fields — try "wheat", "large", "over 10 ha", "no soil data"…'
+            className="w-full pl-9 pr-9 py-2.5 border border-gray-300 rounded-xl text-sm font-mont focus:outline-none focus:border-[#3D6B34] transition-colors"
+          />
+          {nlQuery && (
+            <button onClick={() => setNlQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg leading-none">
+              ×
+            </button>
+          )}
+        </div>
+        {nlQuery && (
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            {nlIntents.map((intent, i) => (
+              <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#f0f5e8] border border-[#6D8E22]/30 text-xs font-mont font-semibold text-[#3D6B34]">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                {intent}
+              </span>
+            ))}
+            <span className="text-xs font-mont text-gray-400">
+              {filteredFields.length} of {fields.length} field{fields.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+        )}
+      </div>}
+
+      {/* Data Confidence Meter */}
+      <DataConfidenceMeter fields={fields} profiles={profiles} />
+
       {showMoon && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
           <MoonPhase />
@@ -860,10 +1137,10 @@ function FieldList({ businessId, onCreateNew }) {
         </div>
       )}
 
-      {fields.length === 0 ? (
-        <div className="text-center py-24 text-gray-400">
-          <p className="text-lg mb-2">No fields yet</p>
-          <p className="text-sm">Click "Add Field" to get started.</p>
+      {fields.length === 0 ? null : filteredFields.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <p className="text-lg mb-2">No fields match your search</p>
+          <button onClick={() => setNlQuery('')} className="text-sm text-[#3D6B34] hover:underline">Clear search</button>
         </div>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -877,7 +1154,7 @@ function FieldList({ businessId, onCreateNew }) {
             </tr>
           </thead>
           <tbody>
-            {fields.map((field, i) => {
+            {filteredFields.map((field, i) => {
               const fieldId = field.fieldid || field.id;
               const rowBg = i % 2 === 0 ? '#fff' : '#fafafa';
               const serviceLinks = buildFieldServiceLinks(businessId, fieldId);

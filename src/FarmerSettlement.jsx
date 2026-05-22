@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import ThaiymeChat from './ThaiymeChat';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -431,6 +432,7 @@ export default function FarmerSettlement() {
       )}
 
       <Footer />
+      <ThaiymeChat pageContext="Farmer Settlement & Pay" />
     </div>
   );
 }

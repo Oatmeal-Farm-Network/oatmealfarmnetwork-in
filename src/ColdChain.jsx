@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import ThaiymeChat from './ThaiymeChat';
 
 const API = import.meta.env.VITE_API_URL || '';
 const GREEN = '#3D6B34';
@@ -1389,6 +1390,7 @@ export default function ColdChain() {
       )}
 
       <Footer />
+      <ThaiymeChat pageContext="Cold Chain & Logistics" />
     </div>
   );
 }

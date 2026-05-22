@@ -300,7 +300,10 @@ function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSa
   const [fieldId, setFieldId] = useState(initialFieldId || (fields[0] ? String(fields[0].fieldid ?? fields[0].id) : ''));
   const [saving, setSaving]   = useState(false);
   const [error, setError]     = useState('');
-  const textareaRef = useRef(null);
+  const textareaRef  = useRef(null);
+  const fileInputRef = useRef(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsError,   setGpsError]   = useState('');
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -310,6 +313,31 @@ function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSa
   }, [form.content]);
 
   const handleChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+
+  const handlePhotoChange = e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setForm(p => ({ ...p, image_url: ev.target.result }));
+    reader.readAsDataURL(file);
+  };
+
+  const handleGpsDetect = () => {
+    if (!navigator.geolocation) { setGpsError('Geolocation not supported by your browser'); return; }
+    setGpsLoading(true); setGpsError('');
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setForm(p => ({
+          ...p,
+          latitude:  pos.coords.latitude.toFixed(6),
+          longitude: pos.coords.longitude.toFixed(6),
+        }));
+        setGpsLoading(false);
+      },
+      () => { setGpsError('Could not get location — check browser permissions.'); setGpsLoading(false); },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -396,22 +424,43 @@ function NoteForm({ fields, initialFieldId, businessId, peopleId, editNote, onSa
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">{t('oatsense_notes.form_label_photo_url')}</label>
-              <input type="url" name="image_url" value={form.image_url} onChange={handleChange}
-                placeholder="https://…"
-                className={inputCls} />
+              <label className="block text-xs font-medium text-gray-600 mb-1">Photo</label>
+              <input type="file" accept="image/*" capture="environment" ref={fileInputRef} onChange={handlePhotoChange} className="hidden" />
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-600 hover:bg-gray-50 transition">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="14" height="10" rx="1.5"/><circle cx="8" cy="9" r="2.5"/><path d="M5 4l1-2h4l1 2"/></svg>
+                  Choose Photo
+                </button>
+                {form.image_url && (
+                  <div className="relative">
+                    <img src={form.image_url} className="w-10 h-10 object-cover rounded-lg border border-gray-200"
+                      onError={e => e.currentTarget.style.display = 'none'} alt="" />
+                    <button type="button" onClick={() => setForm(p => ({ ...p, image_url: '' }))}
+                      className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-xs flex items-center justify-center leading-none">×</button>
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">{t('oatsense_notes.form_label_latitude')}</label>
-              <input type="number" step="any" name="latitude" value={form.latitude} onChange={handleChange}
-                placeholder="e.g. 42.34521"
-                className={inputCls} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">{t('oatsense_notes.form_label_longitude')}</label>
-              <input type="number" step="any" name="longitude" value={form.longitude} onChange={handleChange}
-                placeholder="e.g. -85.12734"
-                className={inputCls} />
+            <div className="col-span-2">
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{t('oatsense_notes.form_label_latitude')}</label>
+                  <input type="number" step="any" name="latitude" value={form.latitude} onChange={handleChange}
+                    placeholder="e.g. 42.34521" className={inputCls} />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{t('oatsense_notes.form_label_longitude')}</label>
+                  <input type="number" step="any" name="longitude" value={form.longitude} onChange={handleChange}
+                    placeholder="e.g. -85.12734" className={inputCls} />
+                </div>
+                <button type="button" onClick={handleGpsDetect} disabled={gpsLoading}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-50 shrink-0">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/><circle cx="8" cy="8" r="5.5" strokeDasharray="2 2"/></svg>
+                  {gpsLoading ? 'Detecting…' : 'Auto GPS'}
+                </button>
+              </div>
+              {gpsError && <p className="text-xs text-red-500 mt-1">{gpsError}</p>}
             </div>
           </div>
         </div>

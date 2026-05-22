@@ -84,6 +84,45 @@ function SaigeWidgetGlobal() {
   if (pathname.startsWith('/nutrients'))             return null;
   if (pathname.startsWith('/farm-pl'))               return null;
   if (pathname.startsWith('/documents'))             return null;
+  if (pathname.startsWith('/weather'))               return null;
+  if (pathname.startsWith('/crop-planning'))         return null;
+  if (pathname.startsWith('/seeds'))                 return null;
+  if (pathname.startsWith('/farm-safety'))           return null;
+
+  // Business-ops pages that embed ThaiymeChat — no global Saige bubble
+  if (pathname.startsWith('/cash-flow'))             return null;
+  if (pathname.startsWith('/reports'))               return null;
+  if (pathname.startsWith('/crop-budget'))           return null;
+  if (pathname.startsWith('/farm-inputs'))           return null;
+  if (pathname.startsWith('/farm-infrastructure'))   return null;
+  if (pathname.startsWith('/farm-kpi'))              return null;
+  if (pathname.startsWith('/harvest-lots'))          return null;
+  if (pathname.startsWith('/export-compliance'))     return null;
+  if (pathname.startsWith('/packhouse'))             return null;
+  if (pathname.startsWith('/plant-tags'))            return null;
+  if (pathname.startsWith('/work-orders'))           return null;
+  if (pathname.startsWith('/procurement'))           return null;
+  if (pathname.startsWith('/cold-chain'))            return null;
+  if (pathname.startsWith('/farmer-settlement'))     return null;
+  if (pathname.startsWith('/hr'))                    return null;
+  if (pathname.startsWith('/nursery'))               return null;
+  if (pathname.startsWith('/outgrower'))             return null;
+  if (pathname.startsWith('/picker-performance'))    return null;
+  if (pathname.startsWith('/perishable-trace'))      return null;
+  if (pathname.startsWith('/scale-tickets'))         return null;
+  if (pathname.startsWith('/supplier-scorecard'))    return null;
+
+  // New batch — BuyerCRM + ComplianceAudit use Thaiyme; HarvestSchedule + PriceList use embedded widgets
+  if (pathname.startsWith('/buyer-crm'))             return null;
+  if (pathname.startsWith('/compliance'))            return null;
+  if (pathname.startsWith('/harvest-schedule'))      return null;
+  if (pathname.startsWith('/price-list'))            return null;
+
+  // Farm ops pages that embed ThaiymeChat or SaigeWidget directly
+  if (pathname.startsWith('/farm-stand'))            return null;
+  if (pathname.startsWith('/delivery-routes'))       return null;
+  if (pathname.startsWith('/meetings'))              return null;
+  if (pathname.startsWith('/agro-consult'))          return null;
 
   // ── Assign a page context for Saige ──────────────────────────────────────
   let pageContext;
@@ -352,6 +391,18 @@ const FieldHealthDashboard  = lazyWithReload(() => import('./FieldHealthDashboar
 const NutrientManagement    = lazyWithReload(() => import('./NutrientManagement.jsx'));
 const FarmPL                = lazyWithReload(() => import('./FarmPL.jsx'));
 const DocumentVault         = lazyWithReload(() => import('./DocumentVault.jsx'));
+const WeatherDashboard      = lazyWithReload(() => import('./WeatherDashboard.jsx'));
+const CropPlanner           = lazyWithReload(() => import('./CropPlanner.jsx'));
+const SeedVarieties         = lazyWithReload(() => import('./SeedVarieties.jsx'));
+const FarmSafety            = lazyWithReload(() => import('./FarmSafety.jsx'));
+const BuyerCRM              = lazyWithReload(() => import('./BuyerCRM.jsx'));
+const ComplianceAudit       = lazyWithReload(() => import('./ComplianceAudit.jsx'));
+const HarvestSchedule       = lazyWithReload(() => import('./HarvestSchedule.jsx'));
+const PriceList             = lazyWithReload(() => import('./PriceList.jsx'));
+const FarmStand             = lazyWithReload(() => import('./FarmStand.jsx'));
+const DeliveryRoutes        = lazyWithReload(() => import('./DeliveryRoutes.jsx'));
+const Meetings              = lazyWithReload(() => import('./Meetings.jsx'));
+const AgroConsultations     = lazyWithReload(() => import('./AgroConsultations.jsx'));
 
 const App = lazyWithReload(() => import('./App.jsx'))
 const About = lazyWithReload(() => import('./About.jsx'))
@@ -366,6 +417,7 @@ const PrecisionAgAnalyses = lazyWithReload(() => import('./PrecisionAgAnalyses.j
 const PrecisionAgHistograms = lazyWithReload(() => import('./PrecisionAgHistograms.jsx'))
 const PrecisionAgZoning = lazyWithReload(() => import('./PrecisionAgZoning.jsx'))
 const PrecisionAgMaps = lazyWithReload(() => import('./PrecisionAgMaps.jsx'))
+const PrecisionAgGeospatialCenter = lazyWithReload(() => import('./PrecisionAgGeospatialCenter.jsx'))
 const PrecisionAgCropStatus = lazyWithReload(() => import('./PrecisionAgCropStatus.jsx'))
 const PrecisionAgMultiLayer = lazyWithReload(() => import('./PrecisionAgMultiLayer.jsx'))
 const PrecisionAgPrescriptions = lazyWithReload(() => import('./PrecisionAgPrescriptions.jsx'))
@@ -648,6 +700,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/analysis/histograms" element={<RequireAuth><PrecisionAgHistograms /></RequireAuth>} />
           <Route path="/precision-ag/analysis/zoning" element={<RequireAuth><PrecisionAgZoning /></RequireAuth>} />
           <Route path="/precision-ag/analysis/maps" element={<RequireAuth><PrecisionAgMaps /></RequireAuth>} />
+          <Route path="/precision-ag/geospatial" element={<RequireAuth><PrecisionAgGeospatialCenter /></RequireAuth>} />
           <Route path="/precision-ag/analysis/crop-status" element={<RequireAuth><PrecisionAgCropStatus /></RequireAuth>} />
           <Route path="/precision-ag/analysis/multi-layer" element={<RequireAuth><PrecisionAgMultiLayer /></RequireAuth>} />
           <Route path="/precision-ag/scouting" element={<RequireAuth><ScoutingRedirect /></RequireAuth>} />
@@ -964,6 +1017,42 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
           {/* Document Vault */}
           <Route path="/documents" element={<RequireAuth><DocumentVault /></RequireAuth>} />
+
+          {/* Weather & Climate Dashboard */}
+          <Route path="/weather" element={<RequireAuth><WeatherDashboard /></RequireAuth>} />
+
+          {/* Crop Planning Calendar */}
+          <Route path="/crop-planning" element={<RequireAuth><CropPlanner /></RequireAuth>} />
+
+          {/* Seed & Variety Management */}
+          <Route path="/seeds" element={<RequireAuth><SeedVarieties /></RequireAuth>} />
+
+          {/* Farm Safety & Incident Log */}
+          <Route path="/farm-safety" element={<RequireAuth><FarmSafety /></RequireAuth>} />
+
+          {/* Buyer & Customer CRM */}
+          <Route path="/buyer-crm" element={<RequireAuth><BuyerCRM /></RequireAuth>} />
+
+          {/* Compliance & Audit Manager */}
+          <Route path="/compliance" element={<RequireAuth><ComplianceAudit /></RequireAuth>} />
+
+          {/* Harvest Scheduling & Labor Planner */}
+          <Route path="/harvest-schedule" element={<RequireAuth><HarvestSchedule /></RequireAuth>} />
+
+          {/* Price List & Quote Builder */}
+          <Route path="/price-list" element={<RequireAuth><PriceList /></RequireAuth>} />
+
+          {/* Farm Stand & Market POS */}
+          <Route path="/farm-stand" element={<RequireAuth><FarmStand /></RequireAuth>} />
+
+          {/* Delivery Route Planner */}
+          <Route path="/delivery-routes" element={<RequireAuth><DeliveryRoutes /></RequireAuth>} />
+
+          {/* Meetings & Cooperative Tools */}
+          <Route path="/meetings" element={<RequireAuth><Meetings /></RequireAuth>} />
+
+          {/* Agronomist Consultation Log */}
+          <Route path="/agro-consult" element={<RequireAuth><AgroConsultations /></RequireAuth>} />
 
           {/* Enterprise Supply Chain Intelligence (ESCI) */}
           <Route path="/supply-chain" element={<RequireAuth><SupplyChainHub /></RequireAuth>} />

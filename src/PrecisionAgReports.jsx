@@ -28,6 +28,75 @@ function HealthBadge({ score }) {
   );
 }
 
+const LAYER_OPTIONS = [
+  { key: 'NDVI',         label: 'NDVI',          getValue: a => getIndex(a, 'NDVI')?.mean },
+  { key: 'NDRE',         label: 'NDRE',          getValue: a => getIndex(a, 'NDRE')?.mean },
+  { key: 'EVI',          label: 'EVI',            getValue: a => getIndex(a, 'EVI')?.mean },
+  { key: 'GNDVI',        label: 'GNDVI',          getValue: a => getIndex(a, 'GNDVI')?.mean },
+  { key: 'NDWI',         label: 'NDWI',           getValue: a => getIndex(a, 'NDWI')?.mean },
+  { key: 'health_score', label: 'Health Score',   getValue: a => a.health_score },
+  { key: 'cloud_percent',label: 'Cloud Cover %',  getValue: a => a.cloud_percent },
+];
+
+function pearsonR(xs, ys) {
+  const n = xs.length;
+  if (n < 2) return null;
+  const mx = xs.reduce((a, b) => a + b, 0) / n;
+  const my = ys.reduce((a, b) => a + b, 0) / n;
+  const num = xs.reduce((s, x, i) => s + (x - mx) * (ys[i] - my), 0);
+  const dx = Math.sqrt(xs.reduce((s, x) => s + (x - mx) ** 2, 0));
+  const dy = Math.sqrt(ys.reduce((s, y) => s + (y - my) ** 2, 0));
+  return dx * dy > 0 ? num / (dx * dy) : 0;
+}
+
+function CorrelationPlot({ points, labelA, labelB }) {
+  if (points.length < 2) return null;
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  const W = 520, H = 200, PL = 44, PR = 16, PT = 14, PB = 34;
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const spanX = maxX - minX || 1, spanY = maxY - minY || 1;
+  const px = x => PL + ((x - minX) / spanX) * (W - PL - PR);
+  const py = y => PT + (1 - (y - minY) / spanY) * (H - PT - PB);
+  const n = xs.length;
+  const mx = xs.reduce((a, b) => a + b, 0) / n;
+  const my = ys.reduce((a, b) => a + b, 0) / n;
+  const slope = xs.reduce((s, x, i) => s + (x - mx) * (ys[i] - my), 0)
+              / xs.reduce((s, x) => s + (x - mx) ** 2, 0.001);
+  const intercept = my - slope * mx;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 220 }}>
+      {[0, 0.25, 0.5, 0.75, 1].map(t => {
+        const v = minY + t * spanY;
+        return (
+          <g key={t}>
+            <line x1={PL} y1={py(v)} x2={W - PR} y2={py(v)} stroke="#F3F4F6" strokeWidth="1" />
+            <text x={PL - 4} y={py(v) + 3} textAnchor="end" fontSize="8" fill="#9CA3AF">{v.toFixed(2)}</text>
+          </g>
+        );
+      })}
+      {[0, 0.5, 1].map(t => (
+        <text key={t} x={px(minX + t * spanX)} y={H - 6} textAnchor="middle" fontSize="8" fill="#9CA3AF">
+          {(minX + t * spanX).toFixed(2)}
+        </text>
+      ))}
+      <text x={W / 2} y={H} textAnchor="middle" fontSize="9" fill="#6B7280">{labelA}</text>
+      <text x={8} y={H / 2} textAnchor="middle" fontSize="9" fill="#6B7280" transform={`rotate(-90,8,${H / 2})`}>{labelB}</text>
+      <line
+        x1={px(minX)} y1={py(intercept + slope * minX)}
+        x2={px(maxX)} y2={py(intercept + slope * maxX)}
+        stroke="#6D8E22" strokeWidth="1.5" strokeDasharray="4,2" opacity="0.6"
+      />
+      {points.map((p, i) => (
+        <circle key={i} cx={px(p.x)} cy={py(p.y)} r="5" fill="#6D8E22" fillOpacity="0.75" stroke="white" strokeWidth="1.5">
+          <title>{new Date(p.date).toLocaleDateString()} — {labelA}: {p.x.toFixed(3)}, {labelB}: {p.y.toFixed(3)}</title>
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
 export default function PrecisionAgReports() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -41,6 +110,8 @@ export default function PrecisionAgReports() {
   const [downloading, setDownloading] = useState(false);
   const [emailing, setEmailing] = useState(false);
   const [sections, setSections] = useState({ satellite: true, soil: true, scouting: true });
+  const [reportLayerA, setReportLayerA] = useState('NDVI');
+  const [reportLayerB, setReportLayerB] = useState('NDRE');
 
   useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
   useEffect(() => {
@@ -300,6 +371,68 @@ export default function PrecisionAgReports() {
                 </div>
               </div>
             )}
+
+            {/* Custom Correlation Report Builder */}
+            {analyses.length >= 2 && (() => {
+              const cfgA = LAYER_OPTIONS.find(l => l.key === reportLayerA);
+              const cfgB = LAYER_OPTIONS.find(l => l.key === reportLayerB);
+              const points = analyses
+                .map(a => ({ x: cfgA?.getValue(a), y: cfgB?.getValue(a), date: a.analysis_date }))
+                .filter(p => p.x != null && p.y != null);
+              const r = points.length >= 2 ? pearsonR(points.map(p => p.x), points.map(p => p.y)) : null;
+              const rLabel = r == null ? '—'
+                : Math.abs(r) >= 0.7 ? `${r.toFixed(2)} (strong)`
+                : Math.abs(r) >= 0.4 ? `${r.toFixed(2)} (moderate)`
+                : `${r.toFixed(2)} (weak)`;
+              const rColor = r == null ? '#9CA3AF' : Math.abs(r) >= 0.7 ? '#16A34A' : Math.abs(r) >= 0.4 ? '#D97706' : '#9CA3AF';
+              return (
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-3 flex-wrap">
+                    <span className="font-mont text-sm font-semibold text-gray-600">Custom Correlation Report</span>
+                    <span className="font-mont text-xs text-gray-400">{analyses.length} analyses</span>
+                  </div>
+                  <div className="px-5 pt-4 pb-3 flex items-center gap-3 flex-wrap">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-mont font-semibold text-gray-500">Layer A (X axis)</label>
+                      <select value={reportLayerA} onChange={e => setReportLayerA(e.target.value)}
+                        className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-1.5">
+                        {LAYER_OPTIONS.filter(l => l.key !== reportLayerB).map(l => (
+                          <option key={l.key} value={l.key}>{l.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-mont font-semibold text-gray-500">Layer B (Y axis)</label>
+                      <select value={reportLayerB} onChange={e => setReportLayerB(e.target.value)}
+                        className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-1.5">
+                        {LAYER_OPTIONS.filter(l => l.key !== reportLayerA).map(l => (
+                          <option key={l.key} value={l.key}>{l.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {r != null && (
+                      <div className="ml-auto flex flex-col items-end">
+                        <span className="font-mont text-xs text-gray-400">Pearson r</span>
+                        <span className="font-mont text-xl font-bold" style={{ color: rColor }}>{rLabel}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-5 pb-5">
+                    {points.length < 2 ? (
+                      <div className="text-center py-8 font-mont text-sm text-gray-400">Not enough data points for these layers</div>
+                    ) : (
+                      <>
+                        <CorrelationPlot points={points} labelA={cfgA?.label} labelB={cfgB?.label} />
+                        <p className="font-mont text-xs text-gray-400 mt-2">
+                          Each point is one satellite analysis pass. Dashed line shows the linear trend.
+                          {r != null && Math.abs(r) >= 0.7 && ` Strong correlation — ${cfgA?.label} is a reliable proxy for ${cfgB?.label} on this field.`}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Empty state */}
             {analyses.length === 0 && soilSamples.length === 0 && scouts.length === 0 && (

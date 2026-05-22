@@ -154,7 +154,10 @@
       "PowerShell(Get-ChildItem \"f:\\\\Oatmeal AI\\\\OatmealFarmNetwork Repo\\\\Backend\\\\oatmealfarmnetworkbackend\\\\routers\\\\\" | Where-Object { $_.Name -match \"field|yield|report|cash|scouting|irrigat|equip|soil\" } | Select-Object Name)",
       "Bash(crop_plan)",
       "Bash(seed)",
-      "Bash(farm_safety\")"
+      "Bash(farm_safety\")",
+      "Bash(Get-Content \"f:\\\\Oatmeal AI\\\\OatmealFarmNetwork Repo\\\\OatmealFarmNetwork\\\\src\\\\FarmerSettlement.jsx\")",
+      "Bash(Select-Object -Last 8)",
+      "Bash(Test-Path \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend/routers/meetings.py\")"
     ]
   }
 }

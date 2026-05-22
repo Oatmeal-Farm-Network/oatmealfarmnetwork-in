@@ -8,7 +8,7 @@
  *   - Background-sync queue for offline POSTs (lead scans, scouting notes)
  */
 
-const VERSION         = 'ofn-sw-v7';
+const VERSION         = 'ofn-sw-v10';
 const SHELL_CACHE     = `${VERSION}-shell`;
 const STATIC_CACHE    = `${VERSION}-static`;
 const RUNTIME_CACHE   = `${VERSION}-runtime`;
@@ -50,6 +50,42 @@ const API_CACHE_PREFIXES = [
   '/api/farm-pl/by-field',
   '/api/farm-pl/seasons',
   '/api/documents/list',
+  '/api/weather',
+  '/api/weather/location',
+  '/api/crop-planning/plans',
+  '/api/crop-planning/seasons',
+  '/api/crop-planning/field-history',
+  '/api/seeds/lots',
+  '/api/seeds/trials',
+  '/api/seeds/performance',
+  '/api/seeds/crops',
+  '/api/farm-safety/incidents',
+  '/api/farm-safety/checklists',
+  '/api/farm-safety/sds',
+  '/api/farm-safety/summary',
+  '/api/buyer-crm/contacts',
+  '/api/buyer-crm/interactions',
+  '/api/buyer-crm/pricing',
+  '/api/buyer-crm/summary',
+  '/api/compliance/audits',
+  '/api/compliance/checklists',
+  '/api/compliance/corrective-actions',
+  '/api/compliance/summary',
+  '/api/harvest-schedule/schedules',
+  '/api/harvest-schedule/summary',
+  '/api/price-list/lists',
+  '/api/price-list/quotes',
+  '/api/price-list/summary',
+  '/api/farm-stand/products',
+  '/api/farm-stand/sessions',
+  '/api/farm-stand/summary',
+  '/api/delivery/routes',
+  '/api/delivery/summary',
+  '/api/meetings',
+  '/api/meetings/projects',
+  '/api/agro-consult/consultations',
+  '/api/agro-consult/recommendations',
+  '/api/agro-consult/summary',
 ];
 
 /** API path-substring fragments to NEVER cache (real-time only). */

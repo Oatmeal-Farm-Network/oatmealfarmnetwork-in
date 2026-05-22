@@ -6,7 +6,7 @@ import { useFields, useAnalyses, getIndex, useRaster } from './precisionAgUtils'
 import { useTranslation } from 'react-i18next';
 
 // ─── Real-raster histogram (one card per index) ─────────────────────────────
-function IndexHistogramCard({ fieldId, indexKey, color = '#6D8E22', height = 130 }) {
+function IndexHistogramCard({ fieldId, indexKey, color = '#6D8E22', height = 130, fieldSizeHectares }) {
   const { t } = useTranslation();
   const pa = k => t(`precision_ag.${k}`);
   const { data, loading, error } = useRaster(fieldId, indexKey, 48);
@@ -35,6 +35,10 @@ function IndexHistogramCard({ fieldId, indexKey, color = '#6D8E22', height = 130
   const std = data.raster?.std;
   const range = (max - min) || 0.01;
 
+  // Acreage conversion: each pixel represents a proportional slice of the field
+  const totalAcres = fieldSizeHectares ? fieldSizeHectares * 2.471 : null;
+  const acresPerPixel = totalAcres ? totalAcres / values.length : null;
+
   const BINS = 24;
   const step = range / BINS;
   const bins = Array(BINS).fill(0);
@@ -42,6 +46,8 @@ function IndexHistogramCard({ fieldId, indexKey, color = '#6D8E22', height = 130
     const idx = Math.min(BINS - 1, Math.max(0, Math.floor((v - min) / step)));
     bins[idx]++;
   });
+  const belowMeanPx = bins.slice(0, Math.floor(BINS / 2)).reduce((a, b) => a + b, 0);
+  const aboveMeanPx = values.length - belowMeanPx;
 
   const maxBin = Math.max(...bins, 1);
   const W = 400, H = height;
@@ -49,6 +55,8 @@ function IndexHistogramCard({ fieldId, indexKey, color = '#6D8E22', height = 130
   const cW = W - PL - PR, cH = H - PT - PB;
   const binW = cW / BINS;
   const meanX = PL + ((mean - min) / range) * cW;
+
+  const fmtAc = px => acresPerPixel ? `${(px * acresPerPixel).toFixed(1)} ac` : `${px} px`;
 
   return (
     <div>
@@ -59,7 +67,7 @@ function IndexHistogramCard({ fieldId, indexKey, color = '#6D8E22', height = 130
           const bH = Math.max(1, (count / maxBin) * cH);
           return (
             <rect key={i} x={PL + i * binW + 0.5} y={PT + cH - bH} width={Math.max(1, binW - 1)} height={bH} fill={c} rx="1">
-              <title>{`${binCenter.toFixed(3)}: ${count} px`}</title>
+              <title>{`${binCenter.toFixed(3)}: ${fmtAc(count)}`}</title>
             </rect>
           );
         })}
@@ -73,7 +81,14 @@ function IndexHistogramCard({ fieldId, indexKey, color = '#6D8E22', height = 130
         <span>{pa('stat_mean')} <strong style={{ color }}>{mean.toFixed(3)}</strong></span>
         <span>{pa('stat_max')} <strong>{max.toFixed(3)}</strong></span>
         {std != null && <span>{pa('stat_std')} <strong>{std.toFixed(3)}</strong></span>}
-        <span className="ml-auto text-gray-400">{values.length} px</span>
+        {acresPerPixel ? (
+          <span className="ml-auto text-gray-400 flex gap-3">
+            <span><span className="inline-block w-2 h-2 rounded-sm mr-1" style={{ background: '#F97316', verticalAlign: 'middle' }} />{fmtAc(belowMeanPx)} below mean</span>
+            <span><span className="inline-block w-2 h-2 rounded-sm mr-1" style={{ background: color, verticalAlign: 'middle' }} />{fmtAc(aboveMeanPx)} above mean</span>
+          </span>
+        ) : (
+          <span className="ml-auto text-gray-400">{values.length} px</span>
+        )}
       </div>
     </div>
   );
@@ -210,6 +225,7 @@ export default function PrecisionAgHistograms() {
                       indexKey={cfg.key}
                       color={cfg.color}
                       height={130}
+                      fieldSizeHectares={selectedField?.field_size_hectares}
                     />
                     {idxData && <GradientBar min={idxData.min} max={idxData.max} />}
                   </div>

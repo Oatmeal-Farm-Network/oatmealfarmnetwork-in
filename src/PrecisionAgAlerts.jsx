@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
-import { useFields, API_URL } from './precisionAgUtils';
+import { useFields, useAnalyses, getIndex, API_URL } from './precisionAgUtils';
 
 const SEV_COLOR = {
   Critical: { bg: '#F9E8EE', text: '#6B1229', dot: '#9B1B4B' },
@@ -116,6 +116,240 @@ function AlertCard({ alert, onDismiss }) {
   );
 }
 
+// ─── Change Detection ─────────────────────────────────────────────────────────
+const CD_INDICES = ['NDVI', 'NDRE', 'EVI', 'NDWI'];
+const CD_THRESHOLD = 0.06; // significant single-index change
+
+const COMPOUND_RULES = [
+  { keys: ['NDVI', 'NDRE'], label: 'N-deficiency / Disease onset',    icon: '🍃', severity: 'High'   },
+  { keys: ['NDVI', 'NDWI'], label: 'Drought stress',                  icon: '🌵', severity: 'High'   },
+  { keys: ['NDVI', 'EVI'],  label: 'General canopy decline',           icon: '📉', severity: 'Medium' },
+  { keys: ['NDRE', 'NDWI'], label: 'Nutrient & water co-stress',      icon: '⚠️', severity: 'High'   },
+];
+
+function detectAnomalies(newer, older) {
+  if (!newer || !older) return [];
+  const deltas = CD_INDICES.map(idx => {
+    const v1 = getIndex(newer, idx)?.mean;
+    const v2 = getIndex(older, idx)?.mean;
+    if (v1 == null || v2 == null) return null;
+    return { idx, delta: v1 - v2, v1, v2 };
+  }).filter(Boolean);
+
+  const declining = deltas.filter(d => d.delta < -CD_THRESHOLD);
+  const rising    = deltas.filter(d => d.delta >  CD_THRESHOLD);
+
+  const anomalies = [];
+  for (const rule of COMPOUND_RULES) {
+    const matched = rule.keys.every(k => declining.some(d => d.idx === k));
+    if (matched) {
+      const deltas_ = rule.keys.map(k => deltas.find(d => d.idx === k));
+      anomalies.push({ ...rule, deltas: deltas_, type: 'compound' });
+    }
+  }
+  // Single-index severe drop (> 2× threshold) not already covered
+  const coveredKeys = new Set(anomalies.flatMap(a => a.keys));
+  for (const d of declining) {
+    if (!coveredKeys.has(d.idx) && Math.abs(d.delta) > CD_THRESHOLD * 2) {
+      anomalies.push({
+        keys: [d.idx], label: `${d.idx} significant decline`, icon: '📊',
+        severity: Math.abs(d.delta) > 0.15 ? 'High' : 'Medium',
+        deltas: [d], type: 'single',
+      });
+    }
+  }
+  // Notable recovery
+  for (const d of rising) {
+    if (d.delta > CD_THRESHOLD * 1.5) {
+      anomalies.push({
+        keys: [d.idx], label: `${d.idx} recovery / improvement`, icon: '✅',
+        severity: 'Low', deltas: [d], type: 'recovery',
+      });
+    }
+  }
+  return anomalies;
+}
+
+function DeltaBar({ delta, maxAbs = 0.3 }) {
+  const pct = Math.min(Math.abs(delta) / maxAbs, 1) * 100;
+  const color = delta < 0 ? '#EF4444' : '#22C55E';
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden relative">
+        <div
+          className="absolute top-0 h-full rounded-full transition-all"
+          style={{
+            width: `${pct}%`,
+            background: color,
+            left: delta < 0 ? 'auto' : '50%',
+            right: delta < 0 ? `${50 - pct / 2}%` : 'auto',
+          }}
+        />
+        <div className="absolute left-1/2 top-0 w-px h-full bg-gray-300" />
+      </div>
+      <span className="font-mono text-xs font-bold w-14 text-right" style={{ color }}>
+        {delta > 0 ? '+' : ''}{delta.toFixed(3)}
+      </span>
+    </div>
+  );
+}
+
+function ChangeDetectionPanel({ fieldId, onGenerateAlert }) {
+  const { analyses } = useAnalyses(fieldId);
+  const [generating, setGenerating] = useState(false);
+  const [generated, setGenerated]   = useState(false);
+
+  const newer = analyses[0] || null;
+  const older = analyses[1] || null;
+  const anomalies = detectAnomalies(newer, older);
+
+  const allDeltas = CD_INDICES.map(idx => {
+    const v1 = newer ? getIndex(newer, idx)?.mean : null;
+    const v2 = older ? getIndex(older, idx)?.mean : null;
+    return { idx, delta: v1 != null && v2 != null ? v1 - v2 : null, v1, v2 };
+  });
+
+  const handleGenerate = async (anomaly) => {
+    setGenerating(true);
+    try {
+      await fetch(`${API_URL}/api/fields/${fieldId}/alerts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+        body: JSON.stringify({
+          type: 'NDVI Decline',
+          severity: anomaly.severity,
+          message: `Change detection: ${anomaly.label}. Indices: ${anomaly.deltas.map(d => `${d.idx} ${d.delta > 0 ? '+' : ''}${d.delta.toFixed(3)}`).join(', ')}`,
+          source: 'change_detection',
+        }),
+      });
+      setGenerated(true);
+      onGenerateAlert?.();
+      setTimeout(() => setGenerated(false), 3000);
+    } catch { /* ignore */ }
+    setGenerating(false);
+  };
+
+  if (!newer || !older) return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 className="font-mont text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Change Detection</h3>
+      <p className="font-mont text-sm text-gray-400">Needs at least 2 analyses for this field.</p>
+    </div>
+  );
+
+  const d1 = new Date(newer.analysis_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const d2 = new Date(older.analysis_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h3 className="font-mont text-sm font-bold text-gray-700 uppercase tracking-wide">Change Detection</h3>
+          <p className="font-mont text-xs text-gray-400 mt-0.5">
+            Multi-index delta: <span className="font-semibold text-gray-600">{d2}</span> → <span className="font-semibold text-[#3D6B34]">{d1}</span>
+          </p>
+        </div>
+        {anomalies.length > 0 && (
+          <span className="px-2 py-1 rounded-full text-xs font-mont font-bold bg-red-100 text-red-700 border border-red-200">
+            {anomalies.filter(a => a.type !== 'recovery').length} anomal{anomalies.filter(a => a.type !== 'recovery').length === 1 ? 'y' : 'ies'} detected
+          </span>
+        )}
+      </div>
+
+      {/* Delta bars */}
+      <div className="space-y-2">
+        {allDeltas.map(({ idx, delta, v1 }) => (
+          <div key={idx} className="flex items-center gap-3">
+            <span className="font-mono text-xs font-bold text-gray-500 w-14 shrink-0">{idx}</span>
+            {delta != null ? (
+              <div className="flex-1"><DeltaBar delta={delta} /></div>
+            ) : (
+              <span className="font-mont text-xs text-gray-300 italic">no data</span>
+            )}
+            {v1 != null && (
+              <span className="font-mono text-xs text-gray-400 w-14 text-right shrink-0">{v1.toFixed(3)}</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Anomaly cards */}
+      {anomalies.length > 0 && (
+        <div className="space-y-2 pt-1 border-t border-gray-100">
+          <div className="font-mont text-xs font-semibold text-gray-500 uppercase tracking-wide">Detected anomalies</div>
+          {anomalies.map((a, i) => {
+            const sevColor = SEV_COLOR[a.severity] || SEV_COLOR.Low;
+            return (
+              <div key={i} className="rounded-lg border p-3 flex items-start justify-between gap-3"
+                style={{ background: sevColor.bg, borderColor: sevColor.dot + '50' }}>
+                <div className="flex items-start gap-2">
+                  <span className="text-base">{a.icon}</span>
+                  <div>
+                    <div className="font-mont text-sm font-bold" style={{ color: sevColor.text }}>{a.label}</div>
+                    <div className="font-mono text-xs mt-0.5" style={{ color: sevColor.text, opacity: 0.75 }}>
+                      {a.deltas.map(d => `${d.idx}: ${d.delta > 0 ? '+' : ''}${d.delta.toFixed(3)}`).join('  ·  ')}
+                    </div>
+                  </div>
+                </div>
+                {a.type !== 'recovery' && (
+                  <button
+                    onClick={() => handleGenerate(a)}
+                    disabled={generating}
+                    className="shrink-0 px-3 py-1.5 rounded-lg font-mont font-semibold text-xs border transition-all disabled:opacity-50"
+                    style={{ background: 'white', color: sevColor.text, borderColor: sevColor.dot + '80' }}>
+                    {generated ? '✓ Created' : generating ? '…' : 'Create alert'}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {anomalies.length === 0 && (
+        <div className="flex items-center gap-2 text-sm font-mont text-green-700 bg-green-50 rounded-lg px-4 py-3 border border-green-200">
+          <span>✅</span>
+          <span>No multi-layer anomalies between these two dates.</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PushSubscriptionButton() {
+  const [status, setStatus] = useState('idle'); // idle | requesting | granted | denied | unsupported
+
+  useEffect(() => {
+    if (!('Notification' in window)) { setStatus('unsupported'); return; }
+    if (Notification.permission === 'granted')  setStatus('granted');
+    if (Notification.permission === 'denied')   setStatus('denied');
+  }, []);
+
+  const subscribe = async () => {
+    if (!('Notification' in window)) return;
+    setStatus('requesting');
+    const permission = await Notification.requestPermission();
+    setStatus(permission === 'granted' ? 'granted' : 'denied');
+  };
+
+  if (status === 'unsupported') return null;
+  if (status === 'granted') return (
+    <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg border border-green-200 font-mont text-sm text-green-700">
+      <span>🔔</span> Push alerts active
+    </div>
+  );
+  if (status === 'denied') return (
+    <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200 font-mont text-xs text-gray-500">
+      Notifications blocked — enable in browser settings
+    </div>
+  );
+  return (
+    <button onClick={subscribe}
+      className="flex items-center gap-2 px-4 py-2 rounded-lg font-mont font-semibold text-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-all">
+      <span>🔔</span> {status === 'requesting' ? 'Requesting…' : 'Enable push alerts'}
+    </button>
+  );
+}
+
 export default function PrecisionAgAlerts() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -174,9 +408,12 @@ export default function PrecisionAgAlerts() {
             <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">{t('precision_ag_alerts.heading')}</h1>
             <p className="font-mont text-sm text-gray-500">{t('precision_ag_alerts.subheading')}</p>
           </div>
-          <button onClick={load} className="px-4 py-2 text-sm font-mont font-semibold bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700">
-            {t('precision_ag_alerts.btn_refresh')}
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <PushSubscriptionButton />
+            <button onClick={load} className="px-4 py-2 text-sm font-mont font-semibold bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700">
+              {t('precision_ag_alerts.btn_refresh')}
+            </button>
+          </div>
         </div>
 
         {/* Field selector */}
@@ -188,6 +425,11 @@ export default function PrecisionAgAlerts() {
             {fields.map(f => <option key={f.fieldid||f.id} value={String(f.fieldid||f.id)}>{f.name}</option>)}
           </select>
         </div>
+
+        {/* Change detection */}
+        {selectedFieldId && (
+          <ChangeDetectionPanel fieldId={selectedFieldId} onGenerateAlert={load} />
+        )}
 
         {/* Summary pills */}
         {!loading && visible.length > 0 && (

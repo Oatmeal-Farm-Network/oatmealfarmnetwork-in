@@ -11,6 +11,31 @@ const CONF_STYLE = {
   low:    { color: '#9CA3AF', labelKey: 'conf_low' },
 };
 
+// Default commodity prices (USD per metric tonne) for harvest valuation
+const COMMODITY_DEFAULTS = {
+  Alfalfa: 220, Corn: 185, Soybeans: 420, Wheat: 230,
+  Cotton: 1600, Rice: 310, Sorghum: 175, Barley: 190,
+  Vegetables: 800, Potatoes: 270, Sunflower: 500, Other: 250,
+};
+
+// Infer crop from field name (case-insensitive keyword match)
+function inferCropFromName(fieldName) {
+  if (!fieldName) return null;
+  const n = fieldName.toLowerCase();
+  if (n.includes('alfalfa') || n.includes('lucerne')) return 'Alfalfa';
+  if (n.includes('corn') || n.includes('maize'))      return 'Corn';
+  if (n.includes('soy') || n.includes('soya'))        return 'Soybeans';
+  if (n.includes('wheat'))                            return 'Wheat';
+  if (n.includes('cotton'))                           return 'Cotton';
+  if (n.includes('rice'))                             return 'Rice';
+  if (n.includes('barley'))                           return 'Barley';
+  if (n.includes('sorghum'))                          return 'Sorghum';
+  if (n.includes('veg') || n.includes('lettuce') || n.includes('tomato')) return 'Vegetables';
+  if (n.includes('potato'))                           return 'Potatoes';
+  if (n.includes('sunflower'))                        return 'Sunflower';
+  return null;
+}
+
 function ForecastChart({ history, baseline }) {
   if (!history || history.length === 0) return null;
   const rev = [...history].reverse();
@@ -62,12 +87,24 @@ export default function PrecisionAgYieldForecast() {
   const [selectedFieldId, setSelectedFieldId] = useState('');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [cropOverride, setCropOverride] = useState('');
+  const [commodityPrice, setCommodityPrice] = useState('');
+  const [whatIfWater, setWhatIfWater] = useState(0);
+  const [whatIfN, setWhatIfN] = useState(0);
 
   useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
   useEffect(() => {
     if (fields.length > 0 && !selectedFieldId)
       setSelectedFieldId(String(fields[0].fieldid || fields[0].id));
   }, [fields]);
+
+  const selectedField = fields.find(f => String(f.fieldid || f.id) === selectedFieldId);
+
+  // Auto-sync crop from field name when field changes
+  useEffect(() => {
+    const inferred = inferCropFromName(selectedField?.name);
+    setCropOverride(inferred || '');
+  }, [selectedField?.name]);
 
   const load = useCallback(async () => {
     if (!selectedFieldId) return;
@@ -86,6 +123,20 @@ export default function PrecisionAgYieldForecast() {
     ? ((data.forecast_kgha - data.baseline_kgha) / data.baseline_kgha * 100).toFixed(1)
     : null;
 
+  const resolvedCrop = cropOverride || data?.crop_type || 'Unknown';
+  const defaultPrice = COMMODITY_DEFAULTS[resolvedCrop] ?? COMMODITY_DEFAULTS.Other;
+  const pricePerTonne = parseFloat(commodityPrice) || defaultPrice;
+
+  // What-If adjusted yield: water adds 4% per inch, nitrogen adds 2% per 10 lb
+  const whatIfMultiplier = 1 + (whatIfWater * 0.04) + (whatIfN * 0.002);
+  const adjustedForecast = data?.forecast_kgha ? Math.round(data.forecast_kgha * whatIfMultiplier) : null;
+
+  // Harvest valuation
+  const fieldHa = selectedField?.field_size_hectares;
+  const harvestValue = adjustedForecast && fieldHa
+    ? ((adjustedForecast / 1000) * fieldHa * pricePerTonne)
+    : null;
+
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
       pageTitle={pa('yield_title')} breadcrumbs={[{ label:'Dashboard', to:'/dashboard' }, { label:'Precision Ag' }, { label:pa('yield_title') }]}>
@@ -95,7 +146,7 @@ export default function PrecisionAgYieldForecast() {
           <p className="font-mont text-sm text-gray-500">{pa('yield_desc')}</p>
         </div>
 
-        {/* Field selector */}
+        {/* Field selector + crop type */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 flex-wrap items-end">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold font-mont text-gray-500">{pa('f_field')}</label>
@@ -104,9 +155,33 @@ export default function PrecisionAgYieldForecast() {
               {fields.map(f => <option key={f.fieldid||f.id} value={String(f.fieldid||f.id)}>{f.name}</option>)}
             </select>
           </div>
-          {data && (
-            <div className="font-mont text-xs text-gray-400 self-end pb-2">
-              Crop: {data.crop_type || 'Unknown'} — Baseline: {data.baseline_kgha?.toLocaleString()} kg/ha
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold font-mont text-gray-500">Crop Type</label>
+            <select value={cropOverride} onChange={e => setCropOverride(e.target.value)}
+              className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 min-w-36">
+              <option value="">Auto-detect</option>
+              {Object.keys(COMMODITY_DEFAULTS).map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold font-mont text-gray-500">Commodity Price ($/t)</label>
+            <input type="number" min={0} step={1}
+              placeholder={`Default: $${defaultPrice}`}
+              value={commodityPrice}
+              onChange={e => setCommodityPrice(e.target.value)}
+              className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 w-40" />
+          </div>
+          {resolvedCrop !== 'Unknown' && (
+            <div className="self-end pb-2 flex items-center gap-2">
+              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-mont font-semibold bg-green-100 text-green-700">
+                {resolvedCrop}
+                {!cropOverride && ' (auto)'}
+              </span>
+              {data?.baseline_kgha && (
+                <span className="font-mont text-xs text-gray-400">
+                  Baseline: {data.baseline_kgha?.toLocaleString()} kg/ha
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -159,6 +234,80 @@ export default function PrecisionAgYieldForecast() {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Harvest valuation */}
+            {harvestValue != null && (
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 p-5">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div>
+                    <div className="font-mont text-xs text-green-700 font-semibold uppercase tracking-wide mb-1">Projected Harvest Value</div>
+                    <div className="font-lora text-4xl font-bold text-green-800">
+                      ${harvestValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </div>
+                    <div className="font-mont text-xs text-green-600 mt-1">
+                      {resolvedCrop} · {fieldHa?.toFixed(1)} ha · ${pricePerTonne}/t · {(adjustedForecast / 1000).toFixed(2)} t/ha
+                    </div>
+                  </div>
+                  {(whatIfWater !== 0 || whatIfN !== 0) && (
+                    <div className="text-right">
+                      <div className="font-mont text-xs text-gray-500 mb-1">Base forecast value</div>
+                      <div className="font-mont text-lg font-semibold text-gray-600">
+                        ${((data.forecast_kgha / 1000) * fieldHa * pricePerTonne).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </div>
+                      <div className="font-mont text-xs mt-1" style={{ color: harvestValue > (data.forecast_kgha / 1000) * fieldHa * pricePerTonne ? '#16A34A' : '#DC2626' }}>
+                        {((whatIfMultiplier - 1) * 100).toFixed(1)}% adjustment applied
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* What-If modelling */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="font-mont text-sm font-semibold text-gray-700 mb-1">What-If Impact Modelling</div>
+              <div className="font-mont text-xs text-gray-400 mb-4">Adjust inputs to model how additional resources could change your projected yield.</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <div className="flex justify-between font-mont text-xs text-gray-600 mb-1">
+                    <span>Additional Irrigation</span>
+                    <span className="font-semibold">{whatIfWater > 0 ? `+${whatIfWater}" (+${(whatIfWater * 4).toFixed(0)}%)` : 'None'}</span>
+                  </div>
+                  <input type="range" min={0} max={10} step={0.5} value={whatIfWater}
+                    onChange={e => setWhatIfWater(parseFloat(e.target.value))}
+                    className="w-full accent-[#6D8E22]" />
+                  <div className="flex justify-between font-mont text-xs text-gray-300 mt-0.5">
+                    <span>0"</span><span>5"</span><span>10"</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between font-mont text-xs text-gray-600 mb-1">
+                    <span>Additional Nitrogen</span>
+                    <span className="font-semibold">{whatIfN > 0 ? `+${whatIfN} lb/ac (+${(whatIfN * 0.2).toFixed(0)}%)` : 'None'}</span>
+                  </div>
+                  <input type="range" min={0} max={100} step={5} value={whatIfN}
+                    onChange={e => setWhatIfN(parseFloat(e.target.value))}
+                    className="w-full accent-[#6D8E22]" />
+                  <div className="flex justify-between font-mont text-xs text-gray-300 mt-0.5">
+                    <span>0 lb</span><span>50 lb</span><span>100 lb</span>
+                  </div>
+                </div>
+              </div>
+              {(whatIfWater > 0 || whatIfN > 0) && adjustedForecast && (
+                <div className="mt-4 flex items-center gap-3 bg-green-50 rounded-lg px-4 py-2.5 border border-green-200">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                  <span className="font-mont text-sm text-green-800">
+                    Adjusted forecast: <strong>{adjustedForecast.toLocaleString()} kg/ha</strong>
+                    <span className="text-green-600 ml-2">(+{(adjustedForecast - data.forecast_kgha).toLocaleString()} kg/ha)</span>
+                  </span>
+                  {harvestValue != null && (
+                    <span className="font-mont text-sm text-green-700 ml-auto font-semibold">
+                      = ${harvestValue.toLocaleString(undefined, { maximumFractionDigits: 0 })} total
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Summary cards */}

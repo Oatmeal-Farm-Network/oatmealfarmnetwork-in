@@ -119,6 +119,133 @@ function StressEventCard({ ev }) {
   );
 }
 
+// ─── Spray-window thresholds by product type ─────────────────────────────────
+const SPRAY_PROFILES = {
+  herbicide:   { label: 'Herbicide',   windMax: 10, windMin: 3,  tempMin: 50, tempMax: 90, rhMin: 40, rhMax: 90  },
+  fungicide:   { label: 'Fungicide',   windMax: 12, windMin: 0,  tempMin: 55, tempMax: 85, rhMin: 50, rhMax: 95  },
+  insecticide: { label: 'Insecticide', windMax: 8,  windMin: 0,  tempMin: 60, tempMax: 90, rhMin: 40, rhMax: 80  },
+};
+
+function sprayRating(row, profile) {
+  if (!row) return 'unknown';
+  const { wind_mph, temp_f, rh_pct, precip_in } = row;
+  const issues = [];
+  if (precip_in != null && precip_in > 0.02) issues.push('rain');
+  if (wind_mph  != null && (wind_mph > profile.windMax || wind_mph < profile.windMin)) issues.push('wind');
+  if (temp_f    != null && (temp_f   < profile.tempMin || temp_f   > profile.tempMax)) issues.push('temp');
+  if (rh_pct    != null && (rh_pct   < profile.rhMin   || rh_pct   > profile.rhMax))   issues.push('RH');
+  if (issues.length === 0) return 'go';
+  // borderline: one marginal condition (within 15% of threshold)
+  const marginalWind = wind_mph != null && wind_mph > profile.windMax * 0.85 && wind_mph <= profile.windMax;
+  const marginalRH   = rh_pct  != null && (rh_pct < profile.rhMin * 1.1 || rh_pct > profile.rhMax * 0.95);
+  if (issues.length === 1 && (marginalWind || marginalRH) && !issues.includes('rain') && !issues.includes('temp')) return 'marginal';
+  return 'hold';
+}
+
+const RATING_STYLE = {
+  go:      { bg: '#DCFCE7', text: '#15803D', label: 'GO',       dot: '#22C55E' },
+  marginal:{ bg: '#FEF9C3', text: '#92400E', label: 'MARGINAL', dot: '#EAB308' },
+  hold:    { bg: '#FEE2E2', text: '#991B1B', label: 'HOLD',     dot: '#EF4444' },
+  unknown: { bg: '#F3F4F6', text: '#6B7280', label: '—',        dot: '#9CA3AF' },
+};
+
+function SprayWindowsPanel({ hourly }) {
+  const [product, setProduct] = useState('herbicide');
+  const profile = SPRAY_PROFILES[product];
+  const next72  = (hourly || []).filter(r => r.hours_out != null && r.hours_out < 72);
+
+  const rated = next72.map(r => ({ ...r, rating: sprayRating(r, profile) }));
+
+  // Find next GO window start
+  const nextGo = rated.find(r => r.rating === 'go');
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-5">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div>
+          <h4 className="font-mont text-sm font-bold text-gray-700 uppercase tracking-wide">Spray Windows</h4>
+          <p className="text-xs text-gray-400 mt-0.5">Optimized application timing based on forecast conditions</p>
+        </div>
+        <div className="flex gap-1">
+          {Object.entries(SPRAY_PROFILES).map(([key, p]) => (
+            <button key={key} onClick={() => setProduct(key)}
+              className="px-3 py-1.5 rounded-lg font-mont font-semibold text-xs border transition-all"
+              style={{
+                background:  product === key ? '#3D6B34' : 'white',
+                color:       product === key ? 'white'   : '#374151',
+                borderColor: product === key ? '#3D6B34' : '#D1D5DB',
+              }}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Thresholds reference */}
+      <div className="flex gap-4 flex-wrap mb-4 text-xs font-mont text-gray-500 bg-gray-50 rounded-lg px-4 py-2.5">
+        <span>Wind {profile.windMin > 0 ? `${profile.windMin}–` : '< '}{profile.windMax} mph</span>
+        <span>Temp {profile.tempMin}–{profile.tempMax}°F</span>
+        <span>RH {profile.rhMin}–{profile.rhMax}%</span>
+        <span>No rain (&gt;0.02″/hr)</span>
+      </div>
+
+      {/* Next GO window callout */}
+      <div className="mb-4 rounded-lg px-4 py-3 flex items-center gap-3"
+        style={{ background: nextGo ? '#F0FDF4' : '#FEF2F2', border: `1px solid ${nextGo ? '#86EFAC' : '#FECACA'}` }}>
+        <span className="text-lg">{nextGo ? '✅' : '🚫'}</span>
+        <div>
+          <div className="font-mont font-bold text-sm" style={{ color: nextGo ? '#15803D' : '#991B1B' }}>
+            {nextGo ? `Next GO window: ${fmtClock(nextGo.time)}` : 'No GO windows in next 72 hours'}
+          </div>
+          {nextGo && (
+            <div className="text-xs mt-0.5" style={{ color: '#166534' }}>
+              {nextGo.wind_mph?.toFixed(0)} mph wind · {nextGo.temp_f?.toFixed(0)}°F · {nextGo.rh_pct?.toFixed(0)}% RH
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Hourly timeline — 6-column blocks */}
+      {rated.length > 0 && (
+        <div className="overflow-x-auto">
+          <div className="flex gap-1 min-w-max pb-1">
+            {rated.filter((_, i) => i % 2 === 0).map((r, i) => {
+              const s = RATING_STYLE[r.rating];
+              return (
+                <div key={i} className="flex flex-col items-center gap-1" style={{ minWidth: 40 }}>
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center font-mont font-bold text-[9px] uppercase text-center"
+                    style={{ background: s.bg, color: s.text, border: `1.5px solid ${s.dot}` }}
+                    title={`${fmtClock(r.time)}: ${s.label}\n${r.wind_mph?.toFixed(0) ?? '?'} mph wind, ${r.temp_f?.toFixed(0) ?? '?'}°F, ${r.rh_pct?.toFixed(0) ?? '?'}% RH`}
+                  >
+                    {s.label === 'MARGINAL' ? '~' : s.label === 'GO' ? '✓' : s.label === 'HOLD' ? '✗' : '—'}
+                  </div>
+                  <span className="text-[9px] font-mont text-gray-400 leading-none text-center whitespace-nowrap">
+                    {r.time ? new Date(r.time).toLocaleTimeString([], { hour: 'numeric', hour12: true }).toLowerCase() : ''}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Legend */}
+      <div className="flex gap-4 mt-3 flex-wrap">
+        {['go', 'marginal', 'hold'].map(k => {
+          const s = RATING_STYLE[k];
+          return (
+            <div key={k} className="flex items-center gap-1.5 text-xs font-mont" style={{ color: s.text }}>
+              <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: s.dot }} />
+              {s.label}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function ClimateForecastPanel({ fieldId }) {
   const { t } = useTranslation();
   const [data, setData]     = useState(null);
@@ -230,6 +357,9 @@ export default function ClimateForecastPanel({ fieldId }) {
           </div>
         )}
       </div>
+
+      {/* Spray windows */}
+      <SprayWindowsPanel hourly={hourly} />
 
       {/* Hourly strip — first 72 hours, condensed */}
       {next72.length > 0 && (

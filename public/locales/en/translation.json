@@ -2881,6 +2881,7 @@
     "item_field_journal": "Field Journal",
     "item_activity_log": "Activity Log",
     "item_histograms": "Histograms",
+    "item_geospatial_center": "Geospatial Center",
     "item_multi_layer": "Multi-layer",
     "item_maps": "Maps",
     "item_statistics": "Statistics"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
@@ -18,7 +18,9 @@ function paletteColor(palette, zoneIdx, numZones) {
 }
 
 // ─── Zoning map (real k-means raster from /api/fields/{id}/zones) ─────────────
-function ZoneMap({ zoneData, palette, status }) {
+function ZoneMap({ zoneData, palette, status, editMode = false, paintZone = 0, overrides = {}, onCellPaint }) {
+  const isPainting = useRef(false);
+
   if (status === 'loading') {
     return (
       <div className="flex items-center justify-center text-gray-400 font-mont text-sm rounded-xl bg-gray-50 border border-dashed border-gray-200"
@@ -39,11 +41,37 @@ function ZoneMap({ zoneData, palette, status }) {
   const { grid, num_zones } = zoneData;
   const cells = grid.labels.flat();
   return (
-    <div className="rounded-xl overflow-hidden border border-gray-200"
-      style={{ display: 'grid', gridTemplateColumns: `repeat(${grid.cols}, 1fr)`, height: 260 }}>
+    <div
+      className="rounded-xl overflow-hidden border border-gray-200 select-none"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${grid.cols}, 1fr)`,
+        height: 260,
+        cursor: editMode ? 'crosshair' : 'default',
+      }}
+      onMouseLeave={() => { isPainting.current = false; }}
+    >
       {cells.map((label, i) => {
-        if (label < 0) return <div key={i} style={{ background: '#F3F4F6' }} />;
-        return <div key={i} style={{ background: paletteColor(palette, label, num_zones) }} />;
+        const effectiveLabel = overrides[i] ?? label;
+        const bg = effectiveLabel < 0 ? '#F3F4F6' : paletteColor(palette, effectiveLabel, num_zones);
+        const isOverridden = overrides[i] != null;
+        return (
+          <div
+            key={i}
+            style={{ background: bg, outline: isOverridden && editMode ? '1px solid rgba(255,255,255,0.5)' : 'none' }}
+            onMouseDown={e => {
+              if (!editMode || effectiveLabel < 0) return;
+              e.preventDefault();
+              isPainting.current = true;
+              onCellPaint?.(i);
+            }}
+            onMouseUp={() => { isPainting.current = false; }}
+            onMouseEnter={() => {
+              if (!editMode || !isPainting.current || effectiveLabel < 0) return;
+              onCellPaint?.(i);
+            }}
+          />
+        );
       })}
     </div>
   );
@@ -100,11 +128,19 @@ export default function PrecisionAgZoning() {
   const [zonesStatus, setZonesStatus] = useState('idle');  // idle | loading | error
   const [zonesError, setZonesError] = useState(null);
 
+  // Manual brush editing
+  const [editMode,   setEditMode]   = useState(false);
+  const [paintZone,  setPaintZone]  = useState(0);
+  const [overrides,  setOverrides]  = useState({});
+
   useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
   useEffect(() => {
     if (fields.length > 0 && !selectedFieldId)
       setSelectedFieldId(String(fields[0].fieldid || fields[0].id));
   }, [fields]);
+
+  // Clear manual overrides when field / index changes
+  useEffect(() => { setOverrides({}); setEditMode(false); }, [selectedFieldId, selectedIdx, numZones]);
 
   // Fetch real zones whenever inputs change. Sentinel-Hub path can take a few
   // seconds, so debounce briefly on numZones spam.
@@ -332,16 +368,84 @@ export default function PrecisionAgZoning() {
               ) : (
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                   <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                    <span className="font-mont text-sm font-semibold text-gray-600">
-                      {fields.find(f => String(f.fieldid||f.id) === selectedFieldId)?.name} · {selectedIdx} · {zoneMethod} · {numZones} zones
-                    </span>
-                    {analysis && (
-                      <span className="font-mont text-xs text-gray-400">
-                        {new Date(analysis.analysis_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mont text-sm font-semibold text-gray-600">
+                        {fields.find(f => String(f.fieldid||f.id) === selectedFieldId)?.name} · {selectedIdx} · {zoneMethod} · {numZones} zones
                       </span>
-                    )}
+                      {Object.keys(overrides).length > 0 && (
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mont font-bold bg-amber-100 text-amber-700">
+                          {Object.keys(overrides).length} edited
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {analysis && (
+                        <span className="font-mont text-xs text-gray-400">
+                          {new Date(analysis.analysis_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+                        </span>
+                      )}
+                      {zoneData && (
+                        <button
+                          onClick={() => setEditMode(m => !m)}
+                          className="px-3 py-1.5 rounded-lg font-mont font-semibold text-xs border transition-all"
+                          style={{
+                            background:  editMode ? '#1D4ED8' : 'white',
+                            color:       editMode ? 'white'   : '#374151',
+                            borderColor: editMode ? '#1D4ED8' : '#D1D5DB',
+                          }}>
+                          {editMode ? '✏ Editing' : '✏ Edit Zones'}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <ZoneMap zoneData={zoneData} palette={palette} status={zonesStatus} />
+
+                  {/* Edit toolbar — shown when editMode is active */}
+                  {editMode && zoneData && (
+                    <div className="flex items-center gap-3 mb-3 p-2.5 bg-blue-50 rounded-lg border border-blue-200 flex-wrap">
+                      <span className="font-mont text-xs font-semibold text-blue-700 flex-shrink-0">Paint zone:</span>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {Array.from({ length: zoneData.num_zones }, (_, i) => {
+                          const c = paletteColor(palette, i, zoneData.num_zones);
+                          const active = paintZone === i;
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => setPaintZone(i)}
+                              className="w-8 h-8 rounded-lg font-mont font-bold text-xs transition-all"
+                              style={{
+                                background: c,
+                                color: '#fff',
+                                outline: active ? '3px solid #1D4ED8' : '2px solid transparent',
+                                outlineOffset: '2px',
+                                filter: active ? 'none' : 'opacity(0.7)',
+                              }}>
+                              {i + 1}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {Object.keys(overrides).length > 0 && (
+                        <button
+                          onClick={() => setOverrides({})}
+                          className="ml-auto px-3 py-1.5 rounded-lg font-mont font-semibold text-xs border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 transition-all">
+                          Reset
+                        </button>
+                      )}
+                      <span className="font-mont text-[10px] text-blue-500 w-full -mt-1">
+                        Click or drag to paint cells with the selected zone.
+                      </span>
+                    </div>
+                  )}
+
+                  <ZoneMap
+                    zoneData={zoneData}
+                    palette={palette}
+                    status={zonesStatus}
+                    editMode={editMode}
+                    paintZone={paintZone}
+                    overrides={overrides}
+                    onCellPaint={i => setOverrides(prev => ({ ...prev, [i]: paintZone }))}
+                  />
 
                   {zonesStatus === 'error' && (
                     <div className="mt-3 text-xs text-red-600 font-mont">

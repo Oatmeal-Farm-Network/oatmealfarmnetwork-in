@@ -74,6 +74,13 @@ export default function PrecisionAgCarbon() {
   const [selectedFieldId, setSelectedFieldId] = useState('');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [practices, setPractices] = useState({
+    noTill:         false,
+    coverCrop:      false,
+    compost:        false,
+    reducedTillage: false,
+  });
+  const togglePractice = k => setPractices(p => ({ ...p, [k]: !p[k] }));
 
   useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
   useEffect(() => {
@@ -226,13 +233,44 @@ export default function PrecisionAgCarbon() {
             {/* Carbon credit estimator */}
             {selectedField?.field_size_hectares && data.latest_soc_MgCha != null && (() => {
               const fieldHa = selectedField.field_size_hectares;
-              const seqRate = data.om_trend_pct > 0 ? 0.3 : data.om_trend_pct < 0 ? 0.05 : 0.15;
+              const baseRate = data.om_trend_pct > 0 ? 0.30 : data.om_trend_pct < 0 ? 0.05 : 0.15;
+              const practiceBonus = (practices.noTill         ? 0.12 : 0)
+                                  + (practices.coverCrop      ? 0.10 : 0)
+                                  + (practices.compost        ? 0.06 : 0)
+                                  + (practices.reducedTillage ? 0.05 : 0);
+              const seqRate = Math.min(baseRate + practiceBonus, 1.0);
               const annualCO2e = seqRate * fieldHa * 3.67;
               const lo = (annualCO2e * 15).toFixed(0);
               const hi = (annualCO2e * 50).toFixed(0);
+              const PRACTICE_OPTIONS = [
+                { key: 'noTill',         label: 'No-till',         bonus: '+0.12 tC/ha/yr' },
+                { key: 'coverCrop',      label: 'Cover crops',     bonus: '+0.10 tC/ha/yr' },
+                { key: 'compost',        label: 'Compost applied', bonus: '+0.06 tC/ha/yr' },
+                { key: 'reducedTillage', label: 'Reduced tillage', bonus: '+0.05 tC/ha/yr' },
+              ];
               return (
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                   <div className="font-mont text-sm font-semibold text-gray-600 mb-3">{pa('carbon_estimator_title')}</div>
+                  {/* Practice toggles */}
+                  <div className="mb-4">
+                    <div className="font-mont text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Practice Adjustments</div>
+                    <div className="flex flex-wrap gap-2">
+                      {PRACTICE_OPTIONS.map(({ key, label, bonus }) => (
+                        <button key={key}
+                          onClick={() => togglePractice(key)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mont font-semibold border transition-all ${practices[key] ? 'bg-[#16A34A] border-[#16A34A] text-white' : 'border-gray-200 text-gray-600 hover:border-green-300'}`}>
+                          <span>{practices[key] ? '✓' : '+'}</span>
+                          {label}
+                          <span className={`font-normal ${practices[key] ? 'text-green-100' : 'text-gray-400'}`}>{bonus}</span>
+                        </button>
+                      ))}
+                    </div>
+                    {practiceBonus > 0 && (
+                      <div className="mt-2 text-xs font-mont text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 inline-block">
+                        Practice boost: +{practiceBonus.toFixed(2)} tC/ha/yr → total rate {seqRate.toFixed(2)} tC/ha/yr
+                      </div>
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                     <div className="bg-gray-50 rounded-xl border border-gray-100 px-3 py-2.5">
                       <div className="font-mont text-xs text-gray-400">{pa('lbl_field_area')}</div>
@@ -240,7 +278,7 @@ export default function PrecisionAgCarbon() {
                     </div>
                     <div className="bg-gray-50 rounded-xl border border-gray-100 px-3 py-2.5">
                       <div className="font-mont text-xs text-gray-400">{pa('lbl_seq_rate')}</div>
-                      <div className="font-mont text-xl font-bold text-gray-800">{seqRate} tC/ha/yr</div>
+                      <div className="font-mont text-xl font-bold text-gray-800">{seqRate.toFixed(2)} tC/ha/yr</div>
                     </div>
                     <div className="bg-gray-50 rounded-xl border border-gray-100 px-3 py-2.5">
                       <div className="font-mont text-xs text-gray-400">{pa('lbl_annual_co2e')}</div>
@@ -252,7 +290,8 @@ export default function PrecisionAgCarbon() {
                     </div>
                   </div>
                   <p className="font-mont text-xs text-gray-400">
-                    Estimate based on OM trend ({data.om_trend_pct > 0 ? 'improving' : data.om_trend_pct < 0 ? 'declining' : 'stable'}) at $15–$50/tCO₂e market range.
+                    Base rate from OM trend ({data.om_trend_pct > 0 ? 'improving' : data.om_trend_pct < 0 ? 'declining' : 'stable'}).
+                    Practice bonuses based on IPCC Tier 1 factors. Market range $15–$50/tCO₂e.
                     For verified credits, consult a certified carbon registry program.
                   </p>
                 </div>

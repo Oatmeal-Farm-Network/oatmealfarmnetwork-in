@@ -1630,6 +1630,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
   const [ndviSeries, setNdviSeries] = useState(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [dismissedSatBanner, setDismissedSatBanner] = useState(false);
 
   const fieldId = field.fieldid || field.id;
 
@@ -1673,6 +1674,9 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
 
   const latest = analyses[0];
   const getIndex = (a, name) => a?.vegetation_indices?.find(i => i.index_type === name);
+  const daysOld = latest ? Math.floor((Date.now() - new Date(latest.analysis_date)) / 86400000) : null;
+  const SATELLITE_TABS = new Set(['overview', 'maps', 'histograms', 'growth', 'analytics']);
+  const satStale = !latest || daysOld > 14;
 
   const TABS = [
     { id: 'overview',    label: 'Overview' },
@@ -1728,9 +1732,36 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
       )}
 
       {/* Tab bar — scrollable on mobile */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         {TABS.map(t => <TabBtn key={t.id} label={t.label} active={tab === t.id} onClick={() => setTab(t.id)} />)}
       </div>
+
+      {/* Satellite freshness banner — dismissible on satellite tabs, tiny chip elsewhere */}
+      {satStale && !loading && (
+        dismissedSatBanner ? (
+          <div className="inline-flex items-center gap-1.5 text-xs font-mont text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1 mb-4">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/></svg>
+            {!latest ? 'No satellite data' : `Satellite data ${daysOld}d old`}
+          </div>
+        ) : SATELLITE_TABS.has(tab) ? (
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5" style={{ color: '#B45309' }}><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/><path d="M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10"/></svg>
+            <div className="flex-1 font-mont text-sm text-amber-800">
+              {!latest
+                ? <>No satellite analysis yet — <button onClick={triggerAnalysis} className="font-semibold underline">Run Analysis →</button></>
+                : <><strong>Satellite data is {daysOld} days old.</strong> Results may not reflect current conditions. <button onClick={triggerAnalysis} className="font-semibold underline">Run a new analysis →</button></>
+              }
+            </div>
+            <button onClick={() => setDismissedSatBanner(true)}
+              className="shrink-0 text-amber-500 hover:text-amber-700 text-xl leading-none font-light" title="Dismiss">×</button>
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-1.5 text-xs font-mont text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1 mb-4">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/></svg>
+            {!latest ? 'No satellite data' : `Satellite ${daysOld}d old`}
+          </div>
+        )
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm">Loading field data…</div>

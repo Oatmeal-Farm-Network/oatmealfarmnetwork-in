@@ -162,6 +162,7 @@ export default function PrecisionAgSoilSamples() {
   const [samples, setSamples] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [mapLayer, setMapLayer] = useState(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const fileRef = useRef();
@@ -259,27 +260,51 @@ export default function PrecisionAgSoilSamples() {
           />
         )}
 
-        {/* Sample location map */}
+        {/* Sample location map with toggleable heatmap layers */}
         {samples.some(s => s.latitude && s.longitude) && (() => {
           const geo = samples.filter(s => s.latitude && s.longitude);
           const lats = geo.map(s => s.latitude);
           const lons = geo.map(s => s.longitude);
           const minLat = Math.min(...lats), maxLat = Math.max(...lats);
           const minLon = Math.min(...lons), maxLon = Math.max(...lons);
-          const pad = 0.1;
           const W = 500, H = 200, PL = 20, PR = 20, PT = 16, PB = 16;
           const nx = lon => PL + ((lon - minLon) / Math.max(maxLon - minLon, 0.0001)) * (W - PL - PR);
           const ny = lat => H - PB - ((lat - minLat) / Math.max(maxLat - minLat, 0.0001)) * (H - PT - PB);
+          const dotColor = s => {
+            if (mapLayer === 'ph'       && s.ph       != null) return statusColor(s.ph,       [6.0, 7.0]);
+            if (mapLayer === 'nitrogen' && s.nitrogen != null) return statusColor(s.nitrogen, [80, 200]);
+            return '#6D8E22';
+          };
+          const layers = [
+            { key: null,       label: 'Points' },
+            { key: 'ph',       label: 'pH' },
+            { key: 'nitrogen', label: 'N' },
+          ];
           return (
             <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <div className="font-mont text-sm font-semibold text-gray-600 mb-3">{t('soil_samples.map_title', { count: geo.length })}</div>
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <div className="font-mont text-sm font-semibold text-gray-600">
+                  {t('soil_samples.map_title', { count: geo.length })}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-mont text-gray-400 mr-1">Layer:</span>
+                  {layers.map(({ key, label }) => (
+                    <button key={String(key)} onClick={() => setMapLayer(key)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-mont font-semibold border transition-all ${mapLayer === key ? 'bg-[#6D8E22] border-[#6D8E22] text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 220, background: '#F9FAFB', borderRadius: 8 }}>
                 <rect width={W} height={H} fill="#F9FAFB" rx="6" />
                 {geo.map((s, i) => (
                   <g key={s.sample_id}>
-                    <circle cx={nx(s.longitude)} cy={ny(s.latitude)} r="6" fill="#6D8E22" fillOpacity="0.7" stroke="white" strokeWidth="1.5" />
-                    <text x={nx(s.longitude) + 9} y={ny(s.latitude) + 4} fontSize="9" fill="#374151" fontWeight="600">
+                    <circle cx={nx(s.longitude)} cy={ny(s.latitude)} r="8" fill={dotColor(s)} fillOpacity="0.8" stroke="white" strokeWidth="1.5" />
+                    <text x={nx(s.longitude) + 11} y={ny(s.latitude) + 4} fontSize="9" fill="#374151" fontWeight="600">
                       {s.sample_label || `#${i + 1}`}
+                      {mapLayer === 'ph'       && s.ph       != null ? ` ${s.ph.toFixed(1)}`       : ''}
+                      {mapLayer === 'nitrogen' && s.nitrogen != null ? ` ${s.nitrogen.toFixed(0)}`  : ''}
                     </text>
                   </g>
                 ))}
@@ -288,6 +313,13 @@ export default function PrecisionAgSoilSamples() {
                 <text x={PL} y={PT - 2} fontSize="8" fill="#9CA3AF">N</text>
                 <text x={PL} y={H - PT + 4} fontSize="8" fill="#9CA3AF">S</text>
               </svg>
+              {mapLayer && (
+                <div className="mt-2 flex items-center gap-3 text-xs font-mont text-gray-400">
+                  <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-full bg-orange-400" />Low</span>
+                  <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-full bg-green-400" />Optimal</span>
+                  <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-400" />High</span>
+                </div>
+              )}
             </div>
           );
         })()}

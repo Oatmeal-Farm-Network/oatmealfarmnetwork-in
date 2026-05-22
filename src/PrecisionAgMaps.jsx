@@ -7,12 +7,72 @@ import SaigeWidget from './SaigeWidget';
 import { useTranslation } from 'react-i18next';
 
 const INDEX_CONFIGS = [
-  { key: 'NDVI',  label: 'NDVI',  desc: 'Vegetation density & biomass' },
-  { key: 'NDRE',  label: 'NDRE',  desc: 'Nitrogen stress / red edge' },
-  { key: 'EVI',   label: 'EVI',   desc: 'Enhanced veg, low soil noise' },
-  { key: 'GNDVI', label: 'GNDVI', desc: 'Chlorophyll concentration' },
-  { key: 'MSAVI2',label: 'MSAVI2',desc: 'Soil-adjusted vegetation' },
-  { key: 'NDWI',  label: 'NDWI',  desc: 'Canopy water content' },
+  {
+    key: 'NDVI', label: 'NDVI', desc: 'Vegetation density & biomass',
+    range: '-1 to +1 (crops typically 0.2–0.9)',
+    guide: [
+      { range: '< 0.2',   meaning: 'Bare soil, water, or severe stress' },
+      { range: '0.2–0.4', meaning: 'Sparse or early-season crop' },
+      { range: '0.4–0.6', meaning: 'Moderate canopy cover' },
+      { range: '0.6–0.9', meaning: 'Dense, vigorous canopy' },
+    ],
+    tip: 'Best for: general crop health screening, stand establishment, end-of-season biomass. Not ideal for dense canopies (saturates above ~0.8) — use EVI instead.',
+  },
+  {
+    key: 'NDRE', label: 'NDRE', desc: 'Nitrogen stress / red edge',
+    range: '-1 to +1 (crops typically 0.1–0.5)',
+    guide: [
+      { range: '< 0.15',  meaning: 'Likely nitrogen-deficient or stressed' },
+      { range: '0.15–0.25', meaning: 'Moderate N status' },
+      { range: '0.25–0.45', meaning: 'Good chlorophyll content' },
+      { range: '> 0.45',  meaning: 'Very high chlorophyll / vigorous growth' },
+    ],
+    tip: 'Best for: detecting nitrogen deficiency before visible symptoms appear. Uses the red-edge band (705–745 nm) — more sensitive to chlorophyll than NDVI in dense canopies.',
+  },
+  {
+    key: 'EVI', label: 'EVI', desc: 'Enhanced veg, low soil noise',
+    range: '-1 to +1 (crops typically 0.2–0.8)',
+    guide: [
+      { range: '< 0.2',   meaning: 'Bare ground or stressed vegetation' },
+      { range: '0.2–0.4', meaning: 'Emerging / sparse canopy' },
+      { range: '0.4–0.7', meaning: 'Healthy, established canopy' },
+      { range: '> 0.7',   meaning: 'Dense, high-biomass crop' },
+    ],
+    tip: 'Best for: high-biomass crops (corn, sorghum) where NDVI saturates. EVI uses a blue-band correction to reduce soil and atmospheric noise.',
+  },
+  {
+    key: 'GNDVI', label: 'GNDVI', desc: 'Chlorophyll concentration',
+    range: '-1 to +1 (crops typically 0.2–0.7)',
+    guide: [
+      { range: '< 0.2',   meaning: 'Very low chlorophyll / stressed' },
+      { range: '0.2–0.35', meaning: 'Sub-optimal chlorophyll' },
+      { range: '0.35–0.55', meaning: 'Adequate chlorophyll' },
+      { range: '> 0.55',  meaning: 'High chlorophyll, healthy canopy' },
+    ],
+    tip: 'Best for: estimating total chlorophyll and monitoring canopy aging. The green band is less affected by LAI saturation than the red band.',
+  },
+  {
+    key: 'MSAVI2', label: 'MSAVI2', desc: 'Soil-adjusted vegetation',
+    range: '-1 to +1 (crops typically 0.1–0.7)',
+    guide: [
+      { range: '< 0.1',  meaning: 'Bare soil or dead material' },
+      { range: '0.1–0.3', meaning: 'Low crop cover, early season' },
+      { range: '0.3–0.5', meaning: 'Developing canopy' },
+      { range: '> 0.5',  meaning: 'Good vegetative cover' },
+    ],
+    tip: 'Best for: early-season monitoring when soil is still visible. MSAVI2 uses a self-adjusting soil factor so values are more reliable at low canopy fractions.',
+  },
+  {
+    key: 'NDWI', label: 'NDWI', desc: 'Canopy water content',
+    range: '-1 to +1 (crops typically -0.1 to +0.4)',
+    guide: [
+      { range: '< -0.1',  meaning: 'Dry canopy, possible drought stress' },
+      { range: '-0.1–0.1', meaning: 'Moderate canopy moisture' },
+      { range: '0.1–0.3', meaning: 'Well-hydrated canopy' },
+      { range: '> 0.3',   meaning: 'Very high water content or open water' },
+    ],
+    tip: 'Best for: detecting irrigation deficits and drought stress before wilting is visible. High NDWI values over fields may also indicate waterlogging.',
+  },
 ];
 
 const COLS = 48, ROWS = 32;
@@ -34,10 +94,14 @@ function indexColor(v, min, max, indexKey) {
   return ndviColor(t);
 }
 
-function FieldMap({ fieldId, indexKey, analysisId = null, height = 420 }) {
+function FieldMap({ fieldId, indexKey, analysisId = null, height = 420, onRasterLoad }) {
   const { t } = useTranslation();
   const pa = k => t(`precision_ag.${k}`);
   const { data, loading, error } = useRaster(fieldId, indexKey, COLS, analysisId);
+
+  useEffect(() => {
+    if (data?.raster) onRasterLoad?.({ min: data.raster.min ?? 0, max: data.raster.max ?? 1 });
+  }, [data]);
 
   if (loading) return (
     <div className="flex items-center justify-center text-gray-400 font-mont text-sm animate-pulse" style={{ height }}>
@@ -135,19 +199,40 @@ function DateThumbnail({ fieldId, indexKey, analysisId, satelliteAcquiredAt, ind
   );
 }
 
-function ColorScaleLegend({ indexData, indexKey }) {
-  if (!indexData) return null;
-  const { min, max } = indexData;
-  const stops = [0, 0.25, 0.5, 0.75, 1].map(t => {
+function ColorScaleLegend({ indexData, indexKey, rasterRange }) {
+  const range = rasterRange || (indexData ? { min: indexData.min, max: indexData.max } : null);
+  if (!range) return null;
+  const { min, max } = range;
+  const ticks = [0, 0.25, 0.5, 0.75, 1];
+  const stops = ticks.map(t => {
     const v = min + t * (max - min);
     return { t, v, color: indexColor(v, min, max, indexKey) };
   });
   const gradient = `linear-gradient(to right, ${stops.map(s => s.color).join(', ')})`;
+  const isDynamic = !!rasterRange;
   return (
-    <div className="flex items-center gap-3 mt-3">
-      <span className="font-mont text-xs text-gray-400">{min.toFixed(2)}</span>
-      <div className="flex-1 h-3 rounded" style={{ background: gradient }} />
-      <span className="font-mont text-xs text-gray-400">{max.toFixed(2)}</span>
+    <div className="mt-3 select-none">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="font-mont text-[10px] text-gray-400 uppercase tracking-wide shrink-0">
+          {indexKey} scale
+        </span>
+        {isDynamic && (
+          <span className="font-mont text-[9px] text-green-600 font-semibold px-1.5 py-0.5 bg-green-50 rounded-full border border-green-200">
+            live range
+          </span>
+        )}
+      </div>
+      <div className="relative">
+        <div className="h-4 rounded" style={{ background: gradient }} />
+        {/* Tick marks */}
+        <div className="flex justify-between mt-1">
+          {stops.map((s, i) => (
+            <span key={i} className="font-mono text-[10px] text-gray-500" style={{ minWidth: 0 }}>
+              {s.v.toFixed(2)}
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -172,18 +257,22 @@ export default function PrecisionAgMaps() {
   const { analyses, loading } = useAnalyses(selectedFieldId);
   const [selectedAnalysisIdx, setSelectedAnalysisIdx] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState('NDVI');
+  const [showIndexTip,  setShowIndexTip]  = useState(false);
+  const [rasterRange,   setRasterRange]   = useState(null);
 
   useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
   useEffect(() => {
     if (fields.length > 0 && !selectedFieldId)
       setSelectedFieldId(String(fields[0].fieldid || fields[0].id));
   }, [fields]);
-  useEffect(() => { setSelectedAnalysisIdx(0); }, [selectedFieldId]);
+  useEffect(() => { setSelectedAnalysisIdx(0); setRasterRange(null); }, [selectedFieldId]);
+  useEffect(() => { setRasterRange(null); }, [selectedIndex, selectedAnalysisIdx]);
 
   const analysis = analyses[selectedAnalysisIdx] || null;
   const fieldIdNum = parseInt(selectedFieldId) || 1;
   const indexData = getIndex(analysis, selectedIndex);
   const selectedField = fields.find(f => String(f.fieldid || f.id) === selectedFieldId);
+  const activeCfg = INDEX_CONFIGS.find(c => c.key === selectedIndex);
 
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={localStorage.getItem('people_id')}
@@ -228,24 +317,53 @@ export default function PrecisionAgMaps() {
           )}
         </div>
 
-        {/* Index selector pills */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-semibold font-mont text-gray-500 mr-1">{pa('f_layer')}</span>
-          {INDEX_CONFIGS.map(cfg => {
-            const active = selectedIndex === cfg.key;
-            return (
-              <button key={cfg.key} onClick={() => setSelectedIndex(cfg.key)}
-                title={cfg.desc}
-                className="px-3 py-1.5 rounded-full text-xs font-mont font-semibold border transition-all"
-                style={{
-                  background: active ? '#6D8E22' : 'white',
-                  borderColor: active ? '#6D8E22' : '#E5E7EB',
-                  color: active ? 'white' : '#9CA3AF',
-                }}>
-                {cfg.label}
-              </button>
-            );
-          })}
+        {/* Index selector pills + interpretation guide */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="p-4 flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold font-mont text-gray-500 mr-1">{pa('f_layer')}</span>
+            {INDEX_CONFIGS.map(cfg => {
+              const active = selectedIndex === cfg.key;
+              return (
+                <button key={cfg.key} onClick={() => setSelectedIndex(cfg.key)}
+                  title={cfg.desc}
+                  className="px-3 py-1.5 rounded-full text-xs font-mont font-semibold border transition-all"
+                  style={{
+                    background: active ? '#6D8E22' : 'white',
+                    borderColor: active ? '#6D8E22' : '#E5E7EB',
+                    color: active ? 'white' : '#9CA3AF',
+                  }}>
+                  {cfg.label}
+                </button>
+              );
+            })}
+            <button onClick={() => setShowIndexTip(p => !p)}
+              className={`ml-auto flex items-center gap-1 text-xs font-mont font-semibold px-2.5 py-1 rounded-full border transition-all ${showIndexTip ? 'bg-[#f0f5e8] border-[#6D8E22] text-[#6D8E22]' : 'border-gray-200 text-gray-400 hover:text-gray-600'}`}
+              title="Show index interpretation guide">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="7"/><path d="M8 7.5v4"/><circle cx="8" cy="5" r="0.7" fill="currentColor" stroke="none"/></svg>
+              Guide
+            </button>
+          </div>
+          {showIndexTip && activeCfg && (
+            <div className="border-t border-gray-100 px-5 py-4 bg-[#fafafa]">
+              <div className="mb-2">
+                <span className="font-mont text-sm font-bold text-gray-800">{activeCfg.label}</span>
+                <span className="font-mont text-sm text-gray-500 ml-2">— {activeCfg.desc}</span>
+                <span className="font-mont text-xs text-gray-400 ml-3">({activeCfg.range})</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                {activeCfg.guide.map((g, i) => (
+                  <div key={i} className="bg-white rounded-lg border border-gray-100 px-3 py-2">
+                    <div className="font-mono text-xs font-bold text-[#6D8E22] mb-0.5">{g.range}</div>
+                    <div className="font-mont text-xs text-gray-600">{g.meaning}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-start gap-2 text-xs font-mont text-gray-500 bg-white rounded-lg border border-gray-100 px-3 py-2">
+                <svg width="13" height="13" className="mt-0.5 shrink-0" style={{ color: '#6D8E22' }} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 1v6l3 3"/><circle cx="8" cy="8" r="7"/></svg>
+                {activeCfg.tip}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Map area */}
@@ -284,8 +402,9 @@ export default function PrecisionAgMaps() {
                 indexKey={selectedIndex}
                 analysisId={analysis?.analysis_id || null}
                 height={440}
+                onRasterLoad={setRasterRange}
               />
-              <ColorScaleLegend indexData={indexData} indexKey={selectedIndex} />
+              <ColorScaleLegend indexData={indexData} indexKey={selectedIndex} rasterRange={rasterRange} />
             </div>
 
             {/* Stats row */}

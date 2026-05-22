@@ -84,6 +84,18 @@ const ICONS = {
   nutrientMgmt:      <S><path d="M8 14V8"/><path d="M5 8c0-2 1.3-4 3-5 1.7 1 3 3 3 5"/><line x1="2" y1="14" x2="14" y2="14"/><line x1="11" y1="6" x2="13" y2="4"/><line x1="5" y1="6" x2="3" y2="4"/></S>,
   farmPL:            <S><polyline points="2,12 5,8 8,10 11,5 14,9"/><line x1="1" y1="12" x2="15" y2="12"/><line x1="5" y1="13" x2="5" y2="15"/><line x1="11" y1="13" x2="11" y2="15"/></S>,
   documentVault:     <S><path d="M10 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5z"/><polyline points="10 2 10 5 13 5"/><line x1="5" y1="7" x2="9" y2="7"/><line x1="5" y1="9.5" x2="9" y2="9.5"/></S>,
+  weather:           <S><circle cx="8" cy="9" r="3"/><path d="M3 14h10a3 3 0 0 0 0-6H12a5 5 0 1 0-9 3"/><line x1="5" y1="14" x2="5" y2="15.5"/><line x1="8" y1="14" x2="8" y2="16"/><line x1="11" y1="14" x2="11" y2="15.5"/></S>,
+  cropPlanning:      <S><rect x="2" y="3" width="12" height="11" rx="1"/><line x1="2" y1="7" x2="14" y2="7"/><line x1="5" y1="3" x2="5" y2="14"/><line x1="9" y1="3" x2="9" y2="14"/><path d="M15 9h-1"/><rect x="14" y="9" width="2" height="5" rx="0.5"/></S>,
+  seedVarieties:     <S><circle cx="8" cy="10" r="3"/><path d="M8 7V3"/><path d="M5.5 8.5L3 6"/><path d="M10.5 8.5L13 6"/><line x1="4" y1="14" x2="12" y2="14"/><path d="M6 14v1.5a2 2 0 0 0 4 0V14"/></S>,
+  farmSafety:        <S><path d="M8 2L3 5v5c0 3.3 2.1 6.4 5 7.4 2.9-1 5-4.1 5-7.4V5z"/><polyline points="5.5,8 7,9.5 10.5,6"/></S>,
+  buyerCRM:          <S><circle cx="5.5" cy="5" r="2"/><path d="M1 13c0-2 2-3.5 4.5-3.5h1"/><rect x="8" y="8" width="7" height="5" rx="1"/><line x1="10" y1="10.5" x2="13" y2="10.5"/></S>,
+  complianceAudit:   <S><path d="M3 3h10a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><polyline points="5,8 6.5,9.5 10,6"/><line x1="5" y1="11" x2="9" y2="11"/></S>,
+  harvestSchedule:   <S><rect x="2" y="3" width="12" height="11" rx="1"/><line x1="2" y1="7" x2="14" y2="7"/><line x1="5" y1="1" x2="5" y2="5"/><line x1="11" y1="1" x2="11" y2="5"/><path d="M5 10h6"/><path d="M5 13h4"/></S>,
+  priceList:         <S><rect x="2" y="3" width="9" height="11" rx="1"/><line x1="4" y1="7" x2="9" y2="7"/><line x1="4" y1="9.5" x2="9" y2="9.5"/><line x1="4" y1="12" x2="7" y2="12"/><path d="M12 9l2 2-2 2"/><line x1="11" y1="11" x2="14" y2="11"/></S>,
+  farmStand:         <S><path d="M2 7h12l-1 7H3z"/><path d="M1 4h14"/><path d="M5 4V2h6v2"/><path d="M6 11v2"/><path d="M10 11v2"/></S>,
+  deliveryRoutes:    <S><rect x="1" y="6" width="10" height="7" rx="1"/><path d="M11 9h2l2 3v2h-4"/><circle cx="4" cy="15" r="1.5"/><circle cx="12" cy="15" r="1.5"/></S>,
+  meetings:          <S><rect x="2" y="3" width="12" height="10" rx="1"/><line x1="2" y1="7" x2="14" y2="7"/><line x1="5" y1="1" x2="5" y2="5"/><line x1="11" y1="1" x2="11" y2="5"/><path d="M5 10h6"/></S>,
+  agroConsult:       <S><circle cx="6" cy="5" r="2.5"/><path d="M4 9a4 4 0 0 0-3 4"/><path d="M10 13s1-1.5 3-1.5 3 1.5 3 1.5"/><path d="M13 8.5c0 2.5-3 4-3 4s-3-1.5-3-4a3 3 0 0 1 6 0z"/></S>,
 };
 
 const CollapseIcon = () => (
@@ -336,6 +348,12 @@ export default function AccountSidebar() {
             )}
             {on('nutrient_mgmt') && (
               <NavChild to={`/nutrients?BusinessID=${BusinessID}`} label="Nutrient Management" />
+            )}
+            {on('crop_planning') && (
+              <NavChild to={`/crop-planning?BusinessID=${BusinessID}`} label="Crop Planning Calendar" />
+            )}
+            {on('seed_varieties') && (
+              <NavChild to={`/seeds?BusinessID=${BusinessID}`} label="Seed & Variety Management" />
             )}
             {fields.length > 0 && (
               <div className="mt-1 pt-1 border-t border-gray-300/40">
@@ -807,6 +825,90 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
+
+        {on('weather_dashboard') && (
+          <NavSection icon={ICONS.weather} label="Weather & Climate" expanded={Expanded}
+            isOpen={OpenSections['Weather'] || false} onToggle={() => toggleSection('Weather')}>
+            <NavChild to={`/weather?BusinessID=${BusinessID}`} label="Current Forecast" />
+            <NavChild to={`/weather?BusinessID=${BusinessID}`} label="Change Location" />
+          </NavSection>
+        )}
+
+        {on('farm_safety') && (
+          <NavSection icon={ICONS.farmSafety} label="Farm Safety" expanded={Expanded}
+            isOpen={OpenSections['Farm Safety'] || false} onToggle={() => toggleSection('Farm Safety')}>
+            <NavChild to={`/farm-safety?BusinessID=${BusinessID}`} label="Incidents" />
+            <NavChild to={`/farm-safety?BusinessID=${BusinessID}&tab=checklists`} label="Checklists" />
+            <NavChild to={`/farm-safety?BusinessID=${BusinessID}&tab=sds`} label="Chemical SDS" />
+          </NavSection>
+        )}
+
+        {on('buyer_crm') && (
+          <NavSection icon={ICONS.buyerCRM} label="Buyer CRM" expanded={Expanded}
+            isOpen={OpenSections['BuyerCRM'] || false} onToggle={() => toggleSection('BuyerCRM')}>
+            <NavChild to={`/buyer-crm?BusinessID=${BusinessID}`} label="Contacts" />
+            <NavChild to={`/buyer-crm?BusinessID=${BusinessID}&tab=interactions`} label="Interaction Log" />
+            <NavChild to={`/buyer-crm?BusinessID=${BusinessID}&tab=pricing`} label="Pricing Agreements" />
+          </NavSection>
+        )}
+
+        {on('compliance_audit') && (
+          <NavSection icon={ICONS.complianceAudit} label="Compliance & Audit" expanded={Expanded}
+            isOpen={OpenSections['ComplianceAudit'] || false} onToggle={() => toggleSection('ComplianceAudit')}>
+            <NavChild to={`/compliance?BusinessID=${BusinessID}`} label="Audits" />
+            <NavChild to={`/compliance?BusinessID=${BusinessID}&tab=checklists`} label="Checklists" />
+            <NavChild to={`/compliance?BusinessID=${BusinessID}&tab=cars`} label="Corrective Actions" />
+          </NavSection>
+        )}
+
+        {on('harvest_scheduling') && (
+          <NavSection icon={ICONS.harvestSchedule} label="Harvest Scheduling" expanded={Expanded}
+            isOpen={OpenSections['HarvestSchedule'] || false} onToggle={() => toggleSection('HarvestSchedule')}>
+            <NavChild to={`/harvest-schedule?BusinessID=${BusinessID}`} label="Calendar" />
+            <NavChild to={`/harvest-schedule?BusinessID=${BusinessID}&view=list`} label="Schedule List" />
+          </NavSection>
+        )}
+
+        {on('price_list') && (
+          <NavSection icon={ICONS.priceList} label="Price Lists & Quotes" expanded={Expanded}
+            isOpen={OpenSections['PriceList'] || false} onToggle={() => toggleSection('PriceList')}>
+            <NavChild to={`/price-list?BusinessID=${BusinessID}`} label="Price Lists" />
+            <NavChild to={`/price-list?BusinessID=${BusinessID}&tab=quotes`} label="Quotes" />
+          </NavSection>
+        )}
+
+        {on('farm_stand') && (
+          <NavSection icon={ICONS.farmStand} label="Farm Stand POS" expanded={Expanded}
+            isOpen={OpenSections['FarmStand'] || false} onToggle={() => toggleSection('FarmStand')}>
+            <NavChild to={`/farm-stand?BusinessID=${BusinessID}`} label="Sessions" />
+            <NavChild to={`/farm-stand?BusinessID=${BusinessID}&tab=products`} label="Products" />
+          </NavSection>
+        )}
+
+        {on('delivery_routes') && (
+          <NavSection icon={ICONS.deliveryRoutes} label="Delivery Routes" expanded={Expanded}
+            isOpen={OpenSections['DeliveryRoutes'] || false} onToggle={() => toggleSection('DeliveryRoutes')}>
+            <NavChild to={`/delivery-routes?BusinessID=${BusinessID}`} label="Routes" />
+            <NavChild to={`/delivery-routes?BusinessID=${BusinessID}&filter=In Progress`} label="Active Routes" />
+          </NavSection>
+        )}
+
+        {on('meetings') && (
+          <NavSection icon={ICONS.meetings} label="Meetings" expanded={Expanded}
+            isOpen={OpenSections['Meetings'] || false} onToggle={() => toggleSection('Meetings')}>
+            <NavChild to={`/meetings?BusinessID=${BusinessID}`} label="All Meetings" />
+            <NavChild to={`/meetings?BusinessID=${BusinessID}&status=draft`} label="Drafts" />
+            <NavChild to={`/meetings?BusinessID=${BusinessID}&status=minutes`} label="Minutes" />
+          </NavSection>
+        )}
+
+        {on('agro_consultations') && (
+          <NavSection icon={ICONS.agroConsult} label="Agro Consultations" expanded={Expanded}
+            isOpen={OpenSections['AgroConsult'] || false} onToggle={() => toggleSection('AgroConsult')}>
+            <NavChild to={`/agro-consult?BusinessID=${BusinessID}`} label="Consultations" />
+            <NavChild to={`/agro-consult?BusinessID=${BusinessID}&tab=recommendations`} label="Recommendations" />
+          </NavSection>
+        )}
 
         <NavSection icon={ICONS.permissions} label="Roles & Permissions" expanded={Expanded}
           isOpen={OpenSections['Permissions'] || false} onToggle={() => toggleSection('Permissions')}>

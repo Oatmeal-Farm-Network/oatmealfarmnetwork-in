@@ -555,10 +555,10 @@ export default function CropDetection() {
   const zoomedToBusinessRef = useRef(false);
   const tryApplyPendingZoom = useCallback(() => {
     if (!map.current || !pendingZoomRef.current) return;
-    const [lon, lat] = pendingZoomRef.current;
+    const [lon, lat, zoom = 13] = pendingZoomRef.current;
     pendingZoomRef.current = null;
     didFitBounds.current = true; // suppress the PMTiles-bounds fit
-    map.current.flyTo({ center: [lon, lat], zoom: 13, duration: 1500 });
+    map.current.flyTo({ center: [lon, lat], zoom, duration: 1500 });
   }, []);
   useEffect(() => {
     if (!addFieldMode || zoomedToBusinessRef.current || !Business) return;
@@ -582,6 +582,21 @@ export default function CropDetection() {
       } catch { /* silent */ }
     })();
   }, [addFieldMode, Business, tryApplyPendingZoom]);
+
+  // Auto-focus on field boundary when lat/lon are in URL params (e.g. from field detail page)
+  const paramLat = parseFloat(searchParams.get('lat'));
+  const paramLon = parseFloat(searchParams.get('lon'));
+  useEffect(() => {
+    if (addFieldMode) return; // Add Field mode handles its own zoom via business geocoding
+    if (!Number.isFinite(paramLat) || !Number.isFinite(paramLon)) return;
+    pendingZoomRef.current = [paramLon, paramLat, 15];
+    if (map.current && map.current.loaded()) {
+      tryApplyPendingZoom();
+    } else if (map.current) {
+      map.current.once('load', tryApplyPendingZoom);
+    }
+    // If map not yet initialized, the load handler in the init effect will call tryApplyPendingZoom
+  }, [paramLat, paramLon, addFieldMode, tryApplyPendingZoom]);
 
   // ─── Sync drawMode to ref ─────────────────────────────────────────────────
   useEffect(() => {
