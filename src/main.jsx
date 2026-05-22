@@ -74,6 +74,16 @@ function SaigeWidgetGlobal() {
   if (pathname.startsWith('/iot-greenhouse'))       return null;
   if (pathname.startsWith('/ca-storage'))           return null;
   if (pathname.startsWith('/spray-applications'))   return null;
+  if (pathname.startsWith('/scouting'))             return null;
+  if (pathname.startsWith('/irrigation'))           return null;
+  if (pathname.startsWith('/equipment-maint'))      return null;
+  if (pathname.startsWith('/soil-tests'))           return null;
+  if (pathname.startsWith('/field-activity'))        return null;
+  if (pathname.startsWith('/yield-records'))         return null;
+  if (pathname.startsWith('/field-health'))          return null;
+  if (pathname.startsWith('/nutrients'))             return null;
+  if (pathname.startsWith('/farm-pl'))               return null;
+  if (pathname.startsWith('/documents'))             return null;
 
   // ── Assign a page context for Saige ──────────────────────────────────────
   let pageContext;
@@ -108,6 +118,8 @@ function SaigeWidgetGlobal() {
   else if (pathname.startsWith('/scale-tickets'))        pageContext = 'Scale Tickets & Contract Reconciliation';
   else if (pathname.startsWith('/harvest-bins'))         pageContext = 'Bin-Level Harvest Traceability';
   else if (pathname.startsWith('/ca-storage'))           pageContext = 'CA Cold Storage Management';
+  else if (pathname.startsWith('/cash-flow'))            pageContext = 'Cash Flow Forecasting';
+  else if (pathname.startsWith('/reports'))              pageContext = 'Report & Export Center';
   else if (pathname.startsWith('/certifications'))         pageContext = 'Certifications Tracker';
   else if (pathname.startsWith('/grants'))                 pageContext = 'Grants & Programs';
   else if (pathname.startsWith('/suppliers'))              pageContext = 'Supplier Directory';
@@ -149,6 +161,7 @@ function SaigeWidgetGlobal() {
   const businessId = new URLSearchParams(search).get('BusinessID');
   return <SaigeWidget businessId={businessId} pageContext={pageContext} />;
 }
+import OfflineIndicator from './OfflineIndicator';
 import './i18n.js';
 import { useTranslation } from 'react-i18next';
 import './index.css'
@@ -327,6 +340,18 @@ const ScaleTickets         = lazyWithReload(() => import('./ScaleTickets.jsx'));
 const HarvestBins          = lazyWithReload(() => import('./HarvestBins.jsx'));
 const CAStorage            = lazyWithReload(() => import('./CAStorage.jsx'));
 const SprayApplicationLog  = lazyWithReload(() => import('./SprayApplicationLog.jsx'));
+const ScoutingLog          = lazyWithReload(() => import('./ScoutingLog.jsx'));
+const IrrigationManager    = lazyWithReload(() => import('./IrrigationManager.jsx'));
+const EquipmentMaintenance = lazyWithReload(() => import('./EquipmentMaintenance.jsx'));
+const SoilTestRecords      = lazyWithReload(() => import('./SoilTestRecords.jsx'));
+const CashFlowForecast     = lazyWithReload(() => import('./CashFlowForecast.jsx'));
+const FieldActivityJournal  = lazyWithReload(() => import('./FieldActivityJournal.jsx'));
+const YieldRecords          = lazyWithReload(() => import('./YieldRecords.jsx'));
+const ReportCenter          = lazyWithReload(() => import('./ReportCenter.jsx'));
+const FieldHealthDashboard  = lazyWithReload(() => import('./FieldHealthDashboard.jsx'));
+const NutrientManagement    = lazyWithReload(() => import('./NutrientManagement.jsx'));
+const FarmPL                = lazyWithReload(() => import('./FarmPL.jsx'));
+const DocumentVault         = lazyWithReload(() => import('./DocumentVault.jsx'));
 
 const App = lazyWithReload(() => import('./App.jsx'))
 const About = lazyWithReload(() => import('./About.jsx'))
@@ -562,6 +587,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           </Routes>
         ) : (
         <AppShell>
+        <OfflineIndicator />
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/about" element={<About />} />
@@ -902,6 +928,42 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
           {/* Spray & Chemical Application Log */}
           <Route path="/spray-applications" element={<RequireAuth><SprayApplicationLog /></RequireAuth>} />
+
+          {/* Pest & Disease Scouting Log */}
+          <Route path="/scouting" element={<RequireAuth><ScoutingLog /></RequireAuth>} />
+
+          {/* Irrigation & Water Management */}
+          <Route path="/irrigation" element={<RequireAuth><IrrigationManager /></RequireAuth>} />
+
+          {/* Equipment Maintenance Tracker */}
+          <Route path="/equipment-maint" element={<RequireAuth><EquipmentMaintenance /></RequireAuth>} />
+
+          {/* Soil Test Records */}
+          <Route path="/soil-tests" element={<RequireAuth><SoilTestRecords /></RequireAuth>} />
+
+          {/* Cash Flow Forecasting */}
+          <Route path="/cash-flow" element={<RequireAuth><CashFlowForecast /></RequireAuth>} />
+
+          {/* Field Activity Journal */}
+          <Route path="/field-activity" element={<RequireAuth><FieldActivityJournal /></RequireAuth>} />
+
+          {/* Yield & Production Records */}
+          <Route path="/yield-records" element={<RequireAuth><YieldRecords /></RequireAuth>} />
+
+          {/* Report & Export Center */}
+          <Route path="/reports" element={<RequireAuth><ReportCenter /></RequireAuth>} />
+
+          {/* Field Health Dashboard */}
+          <Route path="/field-health" element={<RequireAuth><FieldHealthDashboard /></RequireAuth>} />
+
+          {/* Nutrient Management */}
+          <Route path="/nutrients" element={<RequireAuth><NutrientManagement /></RequireAuth>} />
+
+          {/* Farm P&L Dashboard */}
+          <Route path="/farm-pl" element={<RequireAuth><FarmPL /></RequireAuth>} />
+
+          {/* Document Vault */}
+          <Route path="/documents" element={<RequireAuth><DocumentVault /></RequireAuth>} />
 
           {/* Enterprise Supply Chain Intelligence (ESCI) */}
           <Route path="/supply-chain" element={<RequireAuth><SupplyChainHub /></RequireAuth>} />

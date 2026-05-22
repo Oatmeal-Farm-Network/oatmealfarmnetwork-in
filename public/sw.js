@@ -8,7 +8,7 @@
  *   - Background-sync queue for offline POSTs (lead scans, scouting notes)
  */
 
-const VERSION         = 'ofn-sw-v4';
+const VERSION         = 'ofn-sw-v7';
 const SHELL_CACHE     = `${VERSION}-shell`;
 const STATIC_CACHE    = `${VERSION}-static`;
 const RUNTIME_CACHE   = `${VERSION}-runtime`;
@@ -24,9 +24,32 @@ const SHELL_URLS = [
 
 /** API GET prefixes we're willing to cache for read-only offline reads. */
 const API_CACHE_PREFIXES = [
-  '/api/events/',          // event detail + sponsors + floor plan booths
-  '/api/fields',           // field list
-  '/api/notifications',    // bell inbox
+  '/api/events/',                    // event detail + sponsors + floor plan booths
+  '/api/fields',                     // field list
+  '/api/notifications',              // bell inbox
+  '/api/scouting/records',           // scouting list (offline read)
+  '/api/scouting/active-threats',
+  '/api/irrigation/zones',           // zone list + moisture
+  '/api/equipment-maintenance/fleet',// fleet list
+  '/api/equipment-maintenance/due-alerts',
+  '/api/soil-tests/tests',
+  '/api/soil-tests/by-field',
+  '/api/field-activity/activities',
+  '/api/field-activity/by-field',
+  '/api/yield-records/records',
+  '/api/spray/applications',         // spray application list
+  '/api/cash-flow/forecast',
+  '/api/field-health/fields-overview',
+  '/api/field-health/timeline',
+  '/api/field-health/summary',
+  '/api/nutrients/plans',
+  '/api/nutrients/applications',
+  '/api/nutrients/budget',
+  '/api/farm-pl/summary',
+  '/api/farm-pl/by-crop',
+  '/api/farm-pl/by-field',
+  '/api/farm-pl/seasons',
+  '/api/documents/list',
 ];
 
 /** API path-substring fragments to NEVER cache (real-time only). */

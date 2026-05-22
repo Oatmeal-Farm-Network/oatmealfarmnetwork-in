@@ -72,6 +72,18 @@ const ICONS = {
   plantTagging:      <S><circle cx="8" cy="6" r="3"/><path d="M8 9v6"/><path d="M5.5 13h5"/><line x1="8" y1="3" x2="8" y2="1"/><line x1="11" y1="4" x2="12.5" y2="2.5"/><line x1="5" y1="4" x2="3.5" y2="2.5"/></S>,
   exportCompliance:  <S><rect x="2" y="3" width="10" height="12" rx="1"/><line x1="5" y1="7" x2="9" y2="7"/><line x1="5" y1="9.5" x2="9" y2="9.5"/><line x1="5" y1="12" x2="7.5" y2="12"/><path d="M13 8l2 2-2 2"/><line x1="10" y1="10" x2="15" y2="10"/></S>,
   permissions:       <S><circle cx="8" cy="5.5" r="2"/><path d="M4 14v-1.5a4 4 0 0 1 8 0V14"/><line x1="10.5" y1="9" x2="14" y2="5.5"/><circle cx="14" cy="4.5" r="1.2"/></S>,
+  scouting:          <S><circle cx="8" cy="8" r="2"/><path d="M8 2v1.5M8 12.5V14M2 8h1.5M12.5 8H14"/><path d="M4.2 4.2l1 1M10.8 10.8l1 1M11.8 4.2l-1 1M5.2 10.8l-1 1"/></S>,
+  irrigation:        <S><path d="M8 2v6"/><path d="M5 5l3 3 3-3"/><path d="M3 12c0 2.8 2 4 5 4s5-1.2 5-4"/><path d="M3 12c0-1.5 1-2.5 2.5-2.5S8 10.5 8 12"/><path d="M13 12c0-1.5-1-2.5-2.5-2.5"/></S>,
+  equipmentMaint:    <S><path d="M13.5 2.5l-9 9"/><circle cx="3.5" cy="12.5" r="1.5"/><path d="M14 3l-1-1-2 2 1 1z"/><path d="M7 9l-3.5 3.5"/><circle cx="12.5" cy="3.5" r="1.2"/></S>,
+  soilTests:         <S><path d="M8 14V6"/><path d="M4 10h8"/><path d="M5 7c0-2 1.3-4 3-5 1.7 1 3 3 3 5"/><circle cx="8" cy="14" r="1" fill="currentColor" stroke="none"/><line x1="3" y1="14" x2="13" y2="14"/></S>,
+  cashFlow:          <S><polyline points="2,12 6,7 9,10 13,5"/><line x1="13" y1="5" x2="14" y2="5"/><line x1="13" y1="5" x2="13" y2="6"/><line x1="6" y1="13" x2="6" y2="15"/><line x1="10" y1="13" x2="10" y2="15"/></S>,
+  fieldActivity:     <S><rect x="3" y="2" width="10" height="13" rx="1"/><line x1="5" y1="5" x2="10" y2="5"/><line x1="5" y1="7.5" x2="10" y2="7.5"/><line x1="5" y1="10" x2="8" y2="10"/><path d="M12 10v5h3"/></S>,
+  yieldRecords:      <S><path d="M2 12l3-4 3 3 3-5 4 5"/><line x1="1" y1="12" x2="15" y2="12"/><path d="M7 13v2"/><line x1="5" y1="15" x2="9" y2="15"/></S>,
+  reports:           <S><rect x="3" y="2" width="10" height="12" rx="1"/><line x1="5" y1="5" x2="10" y2="5"/><line x1="5" y1="7.5" x2="10" y2="7.5"/><line x1="5" y1="10" x2="8" y2="10"/><path d="M8 14v2l-2 1h4z"/></S>,
+  fieldHealth:       <S><path d="M2 10l4-5 3 3 3-4 4 6H2z"/><line x1="2" y1="14" x2="14" y2="14"/><line x1="8" y1="10" x2="8" y2="14"/></S>,
+  nutrientMgmt:      <S><path d="M8 14V8"/><path d="M5 8c0-2 1.3-4 3-5 1.7 1 3 3 3 5"/><line x1="2" y1="14" x2="14" y2="14"/><line x1="11" y1="6" x2="13" y2="4"/><line x1="5" y1="6" x2="3" y2="4"/></S>,
+  farmPL:            <S><polyline points="2,12 5,8 8,10 11,5 14,9"/><line x1="1" y1="12" x2="15" y2="12"/><line x1="5" y1="13" x2="5" y2="15"/><line x1="11" y1="13" x2="11" y2="15"/></S>,
+  documentVault:     <S><path d="M10 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5z"/><polyline points="10 2 10 5 13 5"/><line x1="5" y1="7" x2="9" y2="7"/><line x1="5" y1="9.5" x2="9" y2="9.5"/></S>,
 };
 
 const CollapseIcon = () => (
@@ -310,6 +322,21 @@ export default function AccountSidebar() {
             {on('chilling_hours') && (
               <NavChild to={`/chilling-hours?BusinessID=${BusinessID}`} label="Chilling Hours & Bloom" />
             )}
+            {on('soil_tests') && (
+              <NavChild to={`/soil-tests?BusinessID=${BusinessID}`} label="Soil Test Records" />
+            )}
+            {on('field_activity_journal') && (
+              <NavChild to={`/field-activity?BusinessID=${BusinessID}`} label="Field Activity Journal" />
+            )}
+            {on('yield_records') && (
+              <NavChild to={`/yield-records?BusinessID=${BusinessID}`} label="Yield Records" />
+            )}
+            {on('field_health_dashboard') && (
+              <NavChild to={`/field-health?BusinessID=${BusinessID}`} label="Field Health Dashboard" />
+            )}
+            {on('nutrient_mgmt') && (
+              <NavChild to={`/nutrients?BusinessID=${BusinessID}`} label="Nutrient Management" />
+            )}
             {fields.length > 0 && (
               <div className="mt-1 pt-1 border-t border-gray-300/40">
                 {fields.map(f => {
@@ -513,6 +540,19 @@ export default function AccountSidebar() {
             {on('spray_applications') && (
               <NavChild to={`/spray-applications?BusinessID=${BusinessID}`} label="Spray Log" />
             )}
+            {on('pest_scouting') && (
+              <NavChild to={`/scouting?BusinessID=${BusinessID}`} label="Pest & Disease Scouting" />
+            )}
+          </NavSection>
+        )}
+
+        {on('irrigation_mgmt') && (
+          <NavSection icon={ICONS.irrigation} label="Irrigation" expanded={Expanded}
+            isOpen={OpenSections['Irrigation'] || false} onToggle={() => toggleSection('Irrigation')}>
+            <NavChild to={`/irrigation?BusinessID=${BusinessID}`} label="Dashboard" />
+            <NavChild to={`/irrigation?BusinessID=${BusinessID}&tab=zones`} label="Zones" />
+            <NavChild to={`/irrigation?BusinessID=${BusinessID}&tab=events`} label="Log Event" />
+            <NavChild to={`/irrigation?BusinessID=${BusinessID}&tab=water-budget`} label="Water Budget" />
           </NavSection>
         )}
 
@@ -545,6 +585,9 @@ export default function AccountSidebar() {
             <NavChild to={`/farm-infrastructure?BusinessID=${BusinessID}&tab=structures`} label="Structures" />
             {on('grain_bin_monitoring') && (
               <NavChild to={`/grain-bin?BusinessID=${BusinessID}`} label="Grain Bin Monitor" />
+            )}
+            {on('equipment_maint') && (
+              <NavChild to={`/equipment-maint?BusinessID=${BusinessID}`} label="Equipment Maintenance" />
             )}
           </NavSection>
         )}
@@ -742,6 +785,25 @@ export default function AccountSidebar() {
             <NavChild to={`/accounting?BusinessID=${BusinessID}#customers`} label={t('account_sidebar.customers')} />
             <NavChild to={`/accounting?BusinessID=${BusinessID}#vendors`} label={t('account_sidebar.vendors')} />
             <NavChild to={`/accounting?BusinessID=${BusinessID}#reports`} label={t('account_sidebar.reports')} />
+            {on('cash_flow_forecast') && (
+              <NavChild to={`/cash-flow?BusinessID=${BusinessID}`} label="Cash Flow Forecast" />
+            )}
+            {on('report_center') && (
+              <NavChild to={`/reports?BusinessID=${BusinessID}`} label="Reports & Export" />
+            )}
+            {on('farm_pl') && (
+              <NavChild to={`/farm-pl?BusinessID=${BusinessID}`} label="Farm P&L Dashboard" />
+            )}
+          </NavSection>
+        )}
+
+        {on('document_vault') && (
+          <NavSection icon={ICONS.documentVault} label="Document Vault" expanded={Expanded}
+            isOpen={OpenSections['Document Vault'] || false} onToggle={() => toggleSection('Document Vault')}>
+            <NavChild to={`/documents?BusinessID=${BusinessID}`} label="All Documents" />
+            <NavChild to={`/documents?BusinessID=${BusinessID}&category=Certifications`} label="Certifications" />
+            <NavChild to={`/documents?BusinessID=${BusinessID}&category=Contracts`} label="Contracts" />
+            <NavChild to={`/documents?BusinessID=${BusinessID}&category=Compliance`} label="Compliance" />
           </NavSection>
         )}
 

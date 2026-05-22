@@ -141,7 +141,20 @@
       "Bash(iconv -f UTF-16LE -t UTF-8 \"f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/src/Visualizations/Report/Layout\")",
       "Bash(python -c \"import json; d=json.load\\(open\\('/tmp/layout.json', encoding='utf-8'\\)\\); print\\('keys:', list\\(d.keys\\(\\)\\)\\); print\\('sections:', len\\(d.get\\('sections',[]\\)\\)\\)\")",
       "Bash(python)",
-      "Bash(taskkill //PID 28512 //F)"
+      "Bash(taskkill //PID 28512 //F)",
+      "Bash(.venvScriptspython.exe -c ' *)",
+      "PowerShell(cd \"f:\\\\Oatmeal AI\\\\OatmealFarmNetwork Repo\\\\Backend\"; $py = \".\\\\venv\\\\Scripts\\\\python.exe\"; $files = @\\('oatmealfarmnetworkbackend/routers/scouting.py','oatmealfarmnetworkbackend/routers/irrigation.py','oatmealfarmnetworkbackend/routers/equipment_maintenance.py','oatmealfarmnetworkbackend/routers/soil_tests.py','oatmealfarmnetworkbackend/routers/cash_flow.py','oatmealfarmnetworkbackend/main.py','oatmealfarmnetworkbackend/routers/company_features.py'\\); foreach \\($f in $files\\) { $result = & $py -c \"import ast; ast.parse\\(open\\('$f'\\).read\\(\\)\\); print\\('OK  $f'\\)\" 2>&1; Write-Output $result })",
+      "Bash(yield)",
+      "Bash(report)",
+      "Bash(cash)",
+      "Bash(scouting)",
+      "Bash(irrigat)",
+      "Bash(equip)",
+      "Bash(soil\" -SimpleMatch)",
+      "PowerShell(Get-ChildItem \"f:\\\\Oatmeal AI\\\\OatmealFarmNetwork Repo\\\\Backend\\\\oatmealfarmnetworkbackend\\\\routers\\\\\" | Where-Object { $_.Name -match \"field|yield|report|cash|scouting|irrigat|equip|soil\" } | Select-Object Name)",
+      "Bash(crop_plan)",
+      "Bash(seed)",
+      "Bash(farm_safety\")"
     ]
   }
 }
