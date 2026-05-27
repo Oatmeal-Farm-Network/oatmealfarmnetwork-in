@@ -315,24 +315,67 @@ function ChangeDetectionPanel({ fieldId, onGenerateAlert }) {
   );
 }
 
+const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || '/saige';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
 function PushSubscriptionButton() {
-  const [status, setStatus] = useState('idle'); // idle | requesting | granted | denied | unsupported
+  const [status, setStatus] = useState('idle'); // idle|requesting|subscribing|active|denied|unsupported|error
 
   useEffect(() => {
-    if (!('Notification' in window)) { setStatus('unsupported'); return; }
-    if (Notification.permission === 'granted')  setStatus('granted');
-    if (Notification.permission === 'denied')   setStatus('denied');
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+      setStatus('unsupported'); return;
+    }
+    if (Notification.permission === 'denied') { setStatus('denied'); return; }
+    if (Notification.permission === 'granted') {
+      navigator.serviceWorker.ready
+        .then(reg => reg.pushManager.getSubscription())
+        .then(sub => { if (sub) setStatus('active'); })
+        .catch(() => {});
+    }
   }, []);
 
   const subscribe = async () => {
-    if (!('Notification' in window)) return;
     setStatus('requesting');
-    const permission = await Notification.requestPermission();
-    setStatus(permission === 'granted' ? 'granted' : 'denied');
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') { setStatus('denied'); return; }
+      setStatus('subscribing');
+      const keyRes = await fetch(`${SAIGE_API}/push/public-key`);
+      const { public_key } = await keyRes.json();
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(public_key),
+      });
+      const peopleId = localStorage.getItem('people_id') || localStorage.getItem('PeopleID') || '';
+      const token = localStorage.getItem('access_token');
+      await fetch(`${SAIGE_API}/push/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          user_id: peopleId,
+          subscription: sub.toJSON(),
+          tags: ['precision_ag_alerts'],
+        }),
+      });
+      setStatus('active');
+    } catch (err) {
+      console.warn('[push] subscribe failed:', err);
+      setStatus(Notification.permission === 'denied' ? 'denied' : 'error');
+    }
   };
 
   if (status === 'unsupported') return null;
-  if (status === 'granted') return (
+  if (status === 'active') return (
     <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg border border-green-200 font-mont text-sm text-green-700">
       <span>🔔</span> Push alerts active
     </div>
@@ -342,10 +385,15 @@ function PushSubscriptionButton() {
       Notifications blocked — enable in browser settings
     </div>
   );
+  if (status === 'error') return (
+    <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-lg border border-red-200 font-mont text-xs text-red-600">
+      Push setup failed — try again
+    </div>
+  );
   return (
-    <button onClick={subscribe}
-      className="flex items-center gap-2 px-4 py-2 rounded-lg font-mont font-semibold text-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-all">
-      <span>🔔</span> {status === 'requesting' ? 'Requesting…' : 'Enable push alerts'}
+    <button onClick={subscribe} disabled={status === 'requesting' || status === 'subscribing'}
+      className="flex items-center gap-2 px-4 py-2 rounded-lg font-mont font-semibold text-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-60">
+      <span>🔔</span> {status === 'requesting' ? 'Requesting…' : status === 'subscribing' ? 'Subscribing…' : 'Enable push alerts'}
     </button>
   );
 }

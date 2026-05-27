@@ -1025,14 +1025,16 @@ function FeatureCard({ fKey, businessId }) {
       </div>
 
       {/* CTAs */}
-      <div className="mt-auto flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-100">
-        <Link to={m.addCta.path(businessId)}
-          className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors hover:opacity-80"
-          style={{ backgroundColor: m.color + 'bb', color: '#ffffff' }}>
-          + {m.addCta.label}
-        </Link>
+      <div className="mt-auto flex items-center gap-2 px-5 py-3 border-t border-gray-100">
+        {m.addCta && (
+          <Link to={m.addCta.path(businessId)}
+            className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors hover:opacity-80"
+            style={{ backgroundColor: m.color + 'bb', color: '#ffffff' }}>
+            + {m.addCta.label}
+          </Link>
+        )}
         <Link to={m.cta.path(businessId)}
-          className="text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors hover:opacity-90"
+          className="ml-auto text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors hover:opacity-90"
           style={{ backgroundColor: m.color, color: '#ffffff' }}>
           {m.cta.label} →
         </Link>
