@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import SaigeWidget from './SaigeWidget';
-import { useAuth } from './AuthContext';
+import { useSearchParams } from 'react-router-dom';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 
@@ -308,8 +308,8 @@ function ScheduleRow({ s, bid, onEdit, onDelete, onReload }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function HarvestSchedule() {
-  const { user } = useAuth();
-  const bid = user?.business_id;
+  const [searchParams] = useSearchParams();
+  const bid = searchParams.get('BusinessID') || '';
   const [view, setView] = useState('calendar');
   const [weekStart, setWeekStart] = useState(mondayOf(todayStr()));
   const [schedules, setSchedules] = useState([]);

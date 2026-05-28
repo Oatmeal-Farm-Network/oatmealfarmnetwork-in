@@ -484,7 +484,6 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
               className="w-full text-left px-3 py-3 border-b border-gray-100 transition-colors"
               style={{
                 background: !viewingKey ? '#fdf6ee' : 'transparent',
-                borderLeft: !viewingKey ? `3px solid ${ACCENT_COLOR}` : '3px solid transparent',
                 border: 'none',
                 borderBottom: '1px solid #f3f4f6',
                 borderLeft: !viewingKey ? `3px solid ${ACCENT_COLOR}` : '3px solid transparent',
@@ -503,7 +502,6 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
                 className="w-full text-left px-3 py-3 transition-colors"
                 style={{
                   background: viewingKey === s.key ? '#fdf6ee' : 'transparent',
-                  borderLeft: viewingKey === s.key ? `3px solid ${ACCENT_COLOR}` : '3px solid transparent',
                   border: 'none',
                   borderBottom: '1px solid #f3f4f6',
                   borderLeft: viewingKey === s.key ? `3px solid ${ACCENT_COLOR}` : '3px solid transparent',

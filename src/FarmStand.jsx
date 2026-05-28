@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import ThaiymeChat from './ThaiymeChat';
-import { useAuth } from './AuthContext';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 
@@ -338,8 +338,8 @@ function SessionDetail({ session, bid, products, onBack, onSessionUpdate }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function FarmStand() {
-  const { user } = useAuth();
-  const bid = user?.business_id;
+  const [searchParams] = useSearchParams();
+  const bid = searchParams.get('BusinessID') || '';
   const [tab, setTab] = useState('sessions');
   const [sessions, setSessions] = useState([]);
   const [products, setProducts] = useState([]);
