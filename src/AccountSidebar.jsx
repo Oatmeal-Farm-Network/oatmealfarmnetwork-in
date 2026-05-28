@@ -784,7 +784,7 @@ export default function AccountSidebar() {
                 <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=settings`} label={t('account_sidebar.website_settings')} />
                 <NavChild to={`/website/builder?BusinessID=${BusinessID}&view=delete`} label={t('account_sidebar.delete_website')} />
                 <a
-                  href={`https://www.OatmealFarmNetwork.com/sites/${websiteSlug}`}
+                  href={`/sites/${websiteSlug}`}
                   target="_blank" rel="noopener noreferrer"
                   className="flex items-center px-3 py-1.5 ml-4 rounded-lg hover:bg-white/50 text-gray-600 text-xs transition-all"
                 >

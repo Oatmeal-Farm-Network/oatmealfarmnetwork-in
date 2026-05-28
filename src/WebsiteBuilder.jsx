@@ -7047,7 +7047,7 @@ export default function WebsiteBuilder() {
               {wb('topbar_preview')}
             </button>
             {site.is_published && (
-              <a href={`${SITE_BASE_URL}/sites/${site.slug}`} target="_blank" rel="noreferrer"
+              <a href={`/sites/${site.slug}`} target="_blank" rel="noreferrer"
                 style={{ padding: '5px 14px', fontSize: 13, fontWeight: 500, color: '#3D6B34', background: '#fff', border: '1px solid #3D6B34', borderRadius: 8, cursor: 'pointer', textDecoration: 'none' }}>
                 {wb('topbar_view_live')}
               </a>
@@ -7385,7 +7385,7 @@ export default function WebsiteBuilder() {
             {wb('topbar_preview')}
           </button>
           {site.is_published && (
-            <a href={`${SITE_BASE_URL}/sites/${site.slug}`} target="_blank" rel="noreferrer"
+            <a href={`/sites/${site.slug}`} target="_blank" rel="noreferrer"
               className="text-sm font-medium text-[#3D6B34] border border-[#3D6B34]/30 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors">
               {wb('topbar_view_live')}
             </a>
