@@ -8,7 +8,7 @@
  *   - Background-sync queue for offline POSTs (lead scans, scouting notes)
  */
 
-const VERSION         = 'ofn-sw-v10';
+const VERSION         = 'ofn-sw-v11';
 const SHELL_CACHE     = `${VERSION}-shell`;
 const STATIC_CACHE    = `${VERSION}-static`;
 const RUNTIME_CACHE   = `${VERSION}-runtime`;
@@ -248,11 +248,14 @@ async function networkFirstWithCacheFallback(req, cacheName, timeoutMs = 5000) {
 async function staleWhileRevalidate(req, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(req);
-  const networkPromise = fetch(req).then(resp => {
+  const networkFetch = fetch(req).then(resp => {
     if (resp && resp.ok) cache.put(req, resp.clone()).catch(() => {});
     return resp;
   }).catch(() => null);
-  return cached || networkPromise || new Response('Offline', { status: 503 });
+  // Return cached immediately (stale-while-revalidate); fall back to network.
+  // Never resolve to null — respondWith(null) causes ERR_FAILED in the browser.
+  if (cached) return cached;
+  return (await networkFetch) || new Response('', { status: 503 });
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
