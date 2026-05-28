@@ -158,7 +158,11 @@
       "Bash(Get-Content \"f:\\\\Oatmeal AI\\\\OatmealFarmNetwork Repo\\\\OatmealFarmNetwork\\\\src\\\\FarmerSettlement.jsx\")",
       "Bash(Select-Object -Last 8)",
       "Bash(Test-Path \"f:/Oatmeal AI/OatmealFarmNetwork Repo/Backend/oatmealfarmnetworkbackend/routers/meetings.py\")",
-      "Bash(../venv/Scripts/python.exe -c ' *)"
+      "Bash(../venv/Scripts/python.exe -c ' *)",
+      "Bash(grep -r \"max-w-350\" tailwind.config.*)",
+      "Bash(grep \"350\" tailwind.config.js)",
+      "Bash(grep \"350\" tailwind.config.ts)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
