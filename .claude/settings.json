@@ -162,7 +162,11 @@
       "Bash(grep -r \"max-w-350\" tailwind.config.*)",
       "Bash(grep \"350\" tailwind.config.js)",
       "Bash(grep \"350\" tailwind.config.ts)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(Resolve-DnsName www.guidedwatersflyfishing.com -Type CNAME)",
+      "Bash(Resolve-DnsName www.guidedwatersflyfishing.com -Type A)",
+      "PowerShell(Resolve-DnsName www.guidedwatersflyfishing.com -Type CNAME -ErrorAction SilentlyContinue)",
+      "PowerShell(Resolve-DnsName guidedwatersflyfishing.com -Type A -ErrorAction SilentlyContinue)"
     ]
   }
 }
