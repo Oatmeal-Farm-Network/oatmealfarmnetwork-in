@@ -294,14 +294,14 @@ export default function PairsleyChat({ businessId }) {
     localStorage.getItem('people_id') || localStorage.getItem('PeopleID') || 'anon'
   ), []);
 
-  if (!isNavActive('widget_pairsley')) return null;
-
   useEffect(() => {
     if (!fullscreen) return;
     const onEsc = (e) => { if (e.key === 'Escape') setFullscreen(false); };
     window.addEventListener('keydown', onEsc);
     return () => window.removeEventListener('keydown', onEsc);
   }, [fullscreen]);
+
+  if (!isNavActive('widget_pairsley')) return null;
 
   return (
     <>

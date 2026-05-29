@@ -287,8 +287,6 @@ export default function RosemarieChat({ businessId }) {
   ), []);
 
   const isLoggedIn = !!(localStorage.getItem('access_token') || localStorage.getItem('AccessToken'));
-  if (!isLoggedIn) return null;
-  if (!isNavActive('widget_rosemarie')) return null;
 
   useEffect(() => {
     if (!fullscreen) return;
@@ -296,6 +294,9 @@ export default function RosemarieChat({ businessId }) {
     window.addEventListener('keydown', onEsc);
     return () => window.removeEventListener('keydown', onEsc);
   }, [fullscreen]);
+
+  if (!isLoggedIn) return null;
+  if (!isNavActive('widget_rosemarie')) return null;
 
   return (
     <>
