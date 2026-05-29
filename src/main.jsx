@@ -598,8 +598,20 @@ const isCustomDomain = !OFN_HOSTS.some(
 // the new SW first.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' })
-      .then(reg => console.log('[OFN] SW registered:', reg.scope))
+    // ?v=12 busts the old Cache-Control:immutable cached sw.js — browsers treat
+    // the versioned URL as a new registration and fetch it fresh from the server.
+    navigator.serviceWorker.register('/sw.js?v=12', { scope: '/' })
+      .then(reg => {
+        console.log('[OFN] SW registered:', reg.scope);
+        // Clean up any stale registration at the old unversioned URL.
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(r => {
+            if (r !== reg && r.active?.scriptURL.includes('/sw.js') && !r.active.scriptURL.includes('?v=')) {
+              r.unregister();
+            }
+          });
+        });
+      })
       .catch(err => console.warn('[OFN] SW registration failed:', err));
   });
 }
