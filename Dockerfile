@@ -12,5 +12,7 @@ RUN npm run build
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+# nginx:alpine omits application/manifest+json; patch it into the system mime.types
+RUN sed -i '/text\/html/i\    application\/manifest+json    webmanifest;' /etc/nginx/mime.types
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
