@@ -649,7 +649,7 @@ const InstallPrompt = React.lazy(() => import('./InstallPrompt.jsx'));
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <ScrollToTop />
-    <Suspense fallback={null}><InstallPrompt /></Suspense>
+    {/* <Suspense fallback={null}><InstallPrompt /></Suspense> */}
     <LanguageProvider>
     <AccountProvider>
       <Suspense fallback={<LoadingScreen />}>
