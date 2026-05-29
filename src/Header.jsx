@@ -6,8 +6,15 @@ import NotificationBell from './NotificationBell';
 import CartBell from './CartBell';
 import LanguageSelector from './LanguageSelector';
 
+const OTF_API = import.meta.env.VITE_OTF_API_URL || '';
+
 const Header = () => {
   const { t } = useTranslation();
+  const [activeNavKeys, setActiveNavKeys] = useState(new Set());
+  const [navLoaded, setNavLoaded] = useState(false);
+
+  // Returns true if item should be shown (defaults true until config loads)
+  const nav = (key) => !navLoaded || activeNavKeys.has(key);
   const { businesses, clearBusiness } = useAccount();
   const [isOpen, setIsOpen] = useState(false);
   const [kbOpen, setKbOpen] = useState(false);
@@ -31,6 +38,17 @@ const Header = () => {
   const svcRef = useRef(null);
   const aiRef = useRef(null);
   const psRef = useRef(null);
+
+  // Fetch active nav keys from OAT backend (fails silently — all items show if unavailable)
+  useEffect(() => {
+    fetch(`${OTF_API}/api/admin/ofn-nav/public`)
+      .then(r => r.ok ? r.json() : [])
+      .then(items => {
+        setActiveNavKeys(new Set(items.map(i => i.NavKey)));
+        setNavLoaded(true);
+      })
+      .catch(() => setNavLoaded(false));
+  }, []);
 
   useEffect(() => {
     const refreshAuth = () => {
@@ -87,9 +105,9 @@ const Header = () => {
   const KbDropdown = () => (
     <div className="absolute top-full left-0 pt-2 w-48 z-10000">
       <div className="bg-white rounded shadow-lg overflow-hidden">
-        <Link to="/plant-knowledgebase" onClick={() => setKbOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.plants')}</Link>
-        <Link to="/livestock" onClick={() => setKbOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.livestock_breeds')}</Link>
-        <Link to="/ingredient-knowledgebase" onClick={() => setKbOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.ingredients')}</Link>
+        {nav('kb_plants')      && <Link to="/plant-knowledgebase"       onClick={() => setKbOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.plants')}</Link>}
+        {nav('kb_livestock')   && <Link to="/livestock"                 onClick={() => setKbOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.livestock_breeds')}</Link>}
+        {nav('kb_ingredients') && <Link to="/ingredient-knowledgebase"  onClick={() => setKbOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.ingredients')}</Link>}
       </div>
     </div>
   );
@@ -97,8 +115,8 @@ const Header = () => {
   const NrDropdown = () => (
     <div className="absolute top-full left-0 pt-2 w-44 z-10000">
       <div className="bg-white rounded shadow-lg overflow-hidden">
-        <Link to="/app/news" onClick={() => setNrOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.newsfeed')}</Link>
-        <Link to="/blog" onClick={() => setNrOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.blogs')}</Link>
+        {nav('nr_newsfeed') && <Link to="/app/news" onClick={() => setNrOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.newsfeed')}</Link>}
+        {nav('nr_blogs')    && <Link to="/blog"     onClick={() => setNrOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.blogs')}</Link>}
       </div>
     </div>
   );
@@ -116,11 +134,14 @@ const Header = () => {
     { ServiceID: 'p5', Slug: 'directory',       Title: 'Directory',       IconEmoji: '📖', RoutePath: '/platform/directory',       IsAgent: false },
   ];
 
+  const SVC_AGENT_KEYS   = { f1: 'svc_saige', f2: 'svc_rosemarie', f3: 'svc_pairsley' };
+  const SVC_PLATFORM_KEYS = { p1: 'svc_website', p2: 'svc_marketplace', p3: 'svc_events', p4: 'svc_crop_monitor', p5: 'svc_directory' };
+
   const SvcDropdown = () => (
     <div className="absolute top-full left-0 pt-2 w-56 z-10000">
       <div className="bg-white rounded shadow-lg overflow-hidden py-1">
         <p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">{t('nav.ai_agents')}</p>
-        {FALLBACK_AGENTS.map(s => (
+        {FALLBACK_AGENTS.filter(s => nav(SVC_AGENT_KEYS[s.ServiceID])).map(s => (
           <Link key={s.ServiceID} to={s.RoutePath}
             onClick={() => setSvcOpen(false)}
             className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
@@ -129,7 +150,7 @@ const Header = () => {
         ))}
         <hr className="my-1 border-gray-100" />
         <p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">{t('nav.platform_services')}</p>
-        {FALLBACK_PLATFORM.map(s => (
+        {FALLBACK_PLATFORM.filter(s => nav(SVC_PLATFORM_KEYS[s.ServiceID])).map(s => (
           <Link key={s.ServiceID} to={s.RoutePath}
             onClick={() => setSvcOpen(false)}
             className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
@@ -142,19 +163,11 @@ const Header = () => {
 
   const SvcMobileLinks = () => (
     <ul className="mt-2 space-y-2 text-sm">
-      {FALLBACK_AGENTS.map(s => (
-        <li key={s.ServiceID}>
-          <Link to={s.RoutePath} onClick={() => setIsOpen(false)} className="!text-white/80 block">
-            {s.Title}
-          </Link>
-        </li>
+      {FALLBACK_AGENTS.filter(s => nav(SVC_AGENT_KEYS[s.ServiceID])).map(s => (
+        <li key={s.ServiceID}><Link to={s.RoutePath} onClick={() => setIsOpen(false)} className="!text-white/80 block">{s.Title}</Link></li>
       ))}
-      {FALLBACK_PLATFORM.map(s => (
-        <li key={s.ServiceID}>
-          <Link to={s.RoutePath} onClick={() => setIsOpen(false)} className="!text-white/80 block">
-            {s.Title}
-          </Link>
-        </li>
+      {FALLBACK_PLATFORM.filter(s => nav(SVC_PLATFORM_KEYS[s.ServiceID])).map(s => (
+        <li key={s.ServiceID}><Link to={s.RoutePath} onClick={() => setIsOpen(false)} className="!text-white/80 block">{s.Title}</Link></li>
       ))}
     </ul>
   );
@@ -162,98 +175,54 @@ const Header = () => {
   const MktDropdown = () => (
     <div className="absolute top-full left-0 pt-2 w-56 z-10000">
       <div className="bg-white rounded shadow-lg overflow-hidden">
-        <Link to="/marketplaces/farm-to-table" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-          {t('nav.farm2table')}
-        </Link>
-        <Link to="/marketplace/products" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-          {t('nav.products_marketplace')}
-        </Link>
-        <Link to="/marketplaces/livestock" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-          {t('nav.livestock_marketplace')}
-        </Link>
-        <Link to="/marketplaces/equipment" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-          Equipment Marketplace
-        </Link>
-        <Link to="/marketplaces/real-estate" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-          Real Estate For Sale
-        </Link>
-        <hr className="my-1 border-gray-100" />
-        <Link to="/services/directory" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-          {t('nav.services_directory')}
-        </Link>
-        <hr className="my-1 border-gray-100" />
-        <Link to="/events" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-          {t('nav.events')}
-        </Link>
+        {nav('mkt_farm2table')   && <Link to="/marketplaces/farm-to-table" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.farm2table')}</Link>}
+        {nav('mkt_products')     && <Link to="/marketplace/products"       onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.products_marketplace')}</Link>}
+        {nav('mkt_livestock')    && <Link to="/marketplaces/livestock"      onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.livestock_marketplace')}</Link>}
+        {nav('mkt_equipment')    && <Link to="/marketplaces/equipment"      onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Equipment Marketplace</Link>}
+        {nav('mkt_realestate')   && <Link to="/marketplaces/real-estate"    onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Real Estate For Sale</Link>}
+        {nav('mkt_services_dir') && <><hr className="my-1 border-gray-100" /><Link to="/services/directory" onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.services_directory')}</Link></>}
+        {nav('mkt_events')       && <><hr className="my-1 border-gray-100" /><Link to="/events"             onClick={() => setMktOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">{t('nav.events')}</Link></>}
       </div>
     </div>
   );
 
   const KbMobileLinks = () => (
     <ul className="mt-2 space-y-2 text-sm">
-      <li><Link to="/plant-knowledgebase" onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.plants')}</Link></li>
-      <li><Link to="/livestock" onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.livestock_breeds')}</Link></li>
-      <li><Link to="/ingredient-knowledgebase" onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.ingredients')}</Link></li>
+      {nav('kb_plants')      && <li><Link to="/plant-knowledgebase"      onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.plants')}</Link></li>}
+      {nav('kb_livestock')   && <li><Link to="/livestock"                onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.livestock_breeds')}</Link></li>}
+      {nav('kb_ingredients') && <li><Link to="/ingredient-knowledgebase" onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.ingredients')}</Link></li>}
     </ul>
   );
 
   const MktMobileLinks = () => (
     <ul className="mt-2 space-y-2 text-sm">
-      <li>
-        <Link to="/marketplaces/farm-to-table" onClick={() => setIsOpen(false)} className="!text-white/80 block">
-          {t('nav.farm2table')}
-        </Link>
-      </li>
-      <li>
-        <Link to="/marketplace/products" onClick={() => setIsOpen(false)} className="!text-white/80 block">
-          {t('nav.products_marketplace')}
-        </Link>
-      </li>
-      <li>
-        <Link to="/marketplaces/livestock" onClick={() => setIsOpen(false)} className="!text-white/80 block">
-          {t('nav.livestock_marketplace')}
-        </Link>
-      </li>
-      <li>
-        <Link to="/marketplaces/equipment" onClick={() => setIsOpen(false)} className="!text-white/80 block">
-          Equipment Marketplace
-        </Link>
-      </li>
-      <li>
-        <Link to="/marketplaces/real-estate" onClick={() => setIsOpen(false)} className="!text-white/80 block">
-          Real Estate For Sale
-        </Link>
-      </li>
-      <li>
-        <Link to="/services/directory" onClick={() => setIsOpen(false)} className="!text-white/80 block">
-          {t('nav.services_directory')}
-        </Link>
-      </li>
-      <li>
-        <Link to="/events" onClick={() => setIsOpen(false)} className="!text-white/80 block">
-          {t('nav.events')}
-        </Link>
-      </li>
+      {nav('mkt_farm2table')   && <li><Link to="/marketplaces/farm-to-table" onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.farm2table')}</Link></li>}
+      {nav('mkt_products')     && <li><Link to="/marketplace/products"       onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.products_marketplace')}</Link></li>}
+      {nav('mkt_livestock')    && <li><Link to="/marketplaces/livestock"      onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.livestock_marketplace')}</Link></li>}
+      {nav('mkt_equipment')    && <li><Link to="/marketplaces/equipment"      onClick={() => setIsOpen(false)} className="!text-white/80 block">Equipment Marketplace</Link></li>}
+      {nav('mkt_realestate')   && <li><Link to="/marketplaces/real-estate"    onClick={() => setIsOpen(false)} className="!text-white/80 block">Real Estate For Sale</Link></li>}
+      {nav('mkt_services_dir') && <li><Link to="/services/directory"          onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.services_directory')}</Link></li>}
+      {nav('mkt_events')       && <li><Link to="/events"                      onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.events')}</Link></li>}
     </ul>
   );
 
   const AiDropdown = () => (
     <div className="absolute top-full left-0 pt-2 w-44 z-10000">
       <div className="bg-white rounded shadow-lg overflow-hidden">
-        <Link to="/platform/saige"     onClick={() => setAiOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Saige</Link>
-        <Link to="/platform/pairsley"  onClick={() => setAiOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Pairsley</Link>
-        <Link to="/platform/rosemarie" onClick={() => setAiOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Rosemarie</Link>
-        <Link to="/platform/thaiyme"   onClick={() => setAiOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Thaiyme</Link>
+        {nav('ai_saige')    && <Link to="/platform/saige"     onClick={() => setAiOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Saige</Link>}
+        {nav('ai_pairsley') && <Link to="/platform/pairsley"  onClick={() => setAiOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Pairsley</Link>}
+        {nav('ai_rosemarie')&& <Link to="/platform/rosemarie" onClick={() => setAiOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Rosemarie</Link>}
+        {nav('ai_thaiyme')  && <Link to="/platform/thaiyme"   onClick={() => setAiOpen(false)} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">Thaiyme</Link>}
       </div>
     </div>
   );
 
   const AiMobileLinks = () => (
     <ul className="mt-2 space-y-2 text-sm">
-      <li><Link to="/platform/saige"     onClick={() => setIsOpen(false)} className="!text-white/80 block">Saige</Link></li>
-      <li><Link to="/platform/pairsley"  onClick={() => setIsOpen(false)} className="!text-white/80 block">Pairsley</Link></li>
-      <li><Link to="/platform/rosemarie" onClick={() => setIsOpen(false)} className="!text-white/80 block">Rosemarie</Link></li>
-      <li><Link to="/platform/thaiyme"   onClick={() => setIsOpen(false)} className="!text-white/80 block">Thaiyme</Link></li>
+      {nav('ai_saige')     && <li><Link to="/platform/saige"     onClick={() => setIsOpen(false)} className="!text-white/80 block">Saige</Link></li>}
+      {nav('ai_pairsley')  && <li><Link to="/platform/pairsley"  onClick={() => setIsOpen(false)} className="!text-white/80 block">Pairsley</Link></li>}
+      {nav('ai_rosemarie') && <li><Link to="/platform/rosemarie" onClick={() => setIsOpen(false)} className="!text-white/80 block">Rosemarie</Link></li>}
+      {nav('ai_thaiyme')   && <li><Link to="/platform/thaiyme"   onClick={() => setIsOpen(false)} className="!text-white/80 block">Thaiyme</Link></li>}
     </ul>
   );
 
@@ -301,59 +270,69 @@ const Header = () => {
 
             {isLoggedIn ? (
               <>
-                <li><Link to="/dashboard" className="nav-link">{t('nav.dashboard')}</Link></li>
-                <li><Link to="/directory" className="nav-link">{t('nav.directory')}</Link></li>
+                {nav('dashboard') && <li><Link to="/dashboard" className="nav-link">{t('nav.dashboard')}</Link></li>}
+                {nav('directory') && <li><Link to="/directory" className="nav-link">{t('nav.directory')}</Link></li>}
               </>
             ) : (
               <>
-                <li><Link to="/" className="nav-link">{t('nav.home')}</Link></li>
-                <li><Link to="/directory" className="nav-link">{t('nav.directory')}</Link></li>
+                {nav('home')      && <li><Link to="/" className="nav-link">{t('nav.home')}</Link></li>}
+                {nav('directory') && <li><Link to="/directory" className="nav-link">{t('nav.directory')}</Link></li>}
               </>
             )}
 
             {/* Marketplaces dropdown */}
-            <li className="relative" ref={mktRef} onMouseEnter={() => setMktOpen(true)} onMouseLeave={() => setMktOpen(false)}>
-              <button onClick={() => setMktOpen(!mktOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
-                {t('nav.marketplaces')} <ChevronIcon open={mktOpen} />
-              </button>
-              {mktOpen && <MktDropdown />}
-            </li>
+            {nav('marketplaces') && (
+              <li className="relative" ref={mktRef} onMouseEnter={() => setMktOpen(true)} onMouseLeave={() => setMktOpen(false)}>
+                <button onClick={() => setMktOpen(!mktOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
+                  {t('nav.marketplaces')} <ChevronIcon open={mktOpen} />
+                </button>
+                {mktOpen && <MktDropdown />}
+              </li>
+            )}
 
             {/* Services dropdown */}
-            <li className="relative" ref={svcRef} onMouseEnter={() => setSvcOpen(true)} onMouseLeave={() => setSvcOpen(false)}>
-              <button onClick={() => setSvcOpen(!svcOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
-                {t('nav.services')} <ChevronIcon open={svcOpen} />
-              </button>
-              {svcOpen && <SvcDropdown />}
-            </li>
+            {nav('services') && (
+              <li className="relative" ref={svcRef} onMouseEnter={() => setSvcOpen(true)} onMouseLeave={() => setSvcOpen(false)}>
+                <button onClick={() => setSvcOpen(!svcOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
+                  {t('nav.services')} <ChevronIcon open={svcOpen} />
+                </button>
+                {svcOpen && <SvcDropdown />}
+              </li>
+            )}
 
             {/* AI Advisors dropdown */}
-            <li className="relative" ref={aiRef} onMouseEnter={() => setAiOpen(true)} onMouseLeave={() => setAiOpen(false)}>
-              <button onClick={() => setAiOpen(!aiOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
-                {t('nav.ai_advisors', 'AI Advisors')} <ChevronIcon open={aiOpen} />
-              </button>
-              {aiOpen && <AiDropdown />}
-            </li>
+            {nav('ai_advisors') && (
+              <li className="relative" ref={aiRef} onMouseEnter={() => setAiOpen(true)} onMouseLeave={() => setAiOpen(false)}>
+                <button onClick={() => setAiOpen(!aiOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
+                  {t('nav.ai_advisors', 'AI Advisors')} <ChevronIcon open={aiOpen} />
+                </button>
+                {aiOpen && <AiDropdown />}
+              </li>
+            )}
 
             {/* Newsroom dropdown */}
-            <li className="relative" ref={nrRef} onMouseEnter={() => setNrOpen(true)} onMouseLeave={() => setNrOpen(false)}>
-              <button onClick={() => setNrOpen(!nrOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
-                {t('nav.newsroom')} <ChevronIcon open={nrOpen} />
-              </button>
-              {nrOpen && <NrDropdown />}
-            </li>
+            {nav('newsroom') && (
+              <li className="relative" ref={nrRef} onMouseEnter={() => setNrOpen(true)} onMouseLeave={() => setNrOpen(false)}>
+                <button onClick={() => setNrOpen(!nrOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
+                  {t('nav.newsroom')} <ChevronIcon open={nrOpen} />
+                </button>
+                {nrOpen && <NrDropdown />}
+              </li>
+            )}
 
             {/* Knowledgebases dropdown */}
-            <li className="relative" ref={kbRef} onMouseEnter={() => setKbOpen(true)} onMouseLeave={() => setKbOpen(false)}>
-              <button onClick={() => setKbOpen(!kbOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
-                {t('nav.knowledgebases')} <ChevronIcon open={kbOpen} />
-              </button>
-              {kbOpen && <KbDropdown />}
-            </li>
+            {nav('knowledgebases') && (
+              <li className="relative" ref={kbRef} onMouseEnter={() => setKbOpen(true)} onMouseLeave={() => setKbOpen(false)}>
+                <button onClick={() => setKbOpen(!kbOpen)} className="nav-link flex items-center gap-1 focus:outline-none">
+                  {t('nav.knowledgebases')} <ChevronIcon open={kbOpen} />
+                </button>
+                {kbOpen && <KbDropdown />}
+              </li>
+            )}
 
             {isLoggedIn ? (
               <>
-                <li><Link to="/contact-us" className="nav-link">{t('nav.contact')}</Link></li>
+                {nav('contact') && <li><Link to="/contact-us" className="nav-link">{t('nav.contact')}</Link></li>}
                 <li className="flex items-center gap-3">
                   <CartBell />
                   <NotificationBell />
@@ -394,9 +373,9 @@ const Header = () => {
               </>
             ) : (
               <>
-                <li><Link to="/about" className="nav-link">{t('nav.about')}</Link></li>
-                <li><Link to="/contact-us" className="nav-link">{t('nav.contact')}</Link></li>
-                <li><Link to="/signup" className="nav-link">{t('nav.signup')}</Link></li>
+                {nav('about')   && <li><Link to="/about"      className="nav-link">{t('nav.about')}</Link></li>}
+                {nav('contact') && <li><Link to="/contact-us" className="nav-link">{t('nav.contact')}</Link></li>}
+                {nav('signup')  && <li><Link to="/signup"     className="nav-link">{t('nav.signup')}</Link></li>}
                 <li className="flex items-center gap-3">
                   <LanguageSelector />
                   <Link
@@ -428,64 +407,74 @@ const Header = () => {
 
             {isLoggedIn ? (
               <>
-                <li><Link to="/dashboard" onClick={() => setIsOpen(false)} className="nav-link block">{t('nav.dashboard')}</Link></li>
-                <li><Link to="/directory" onClick={() => setIsOpen(false)} className="nav-link block">{t('nav.directory')}</Link></li>
+                {nav('dashboard') && <li><Link to="/dashboard" onClick={() => setIsOpen(false)} className="nav-link block">{t('nav.dashboard')}</Link></li>}
+                {nav('directory') && <li><Link to="/directory" onClick={() => setIsOpen(false)} className="nav-link block">{t('nav.directory')}</Link></li>}
               </>
             ) : (
               <>
-                <li><Link to="/" onClick={() => setIsOpen(false)} className="!text-white block">{t('nav.home')}</Link></li>
-                <li><Link to="/directory" onClick={() => setIsOpen(false)} className="!text-white block">{t('nav.directory')}</Link></li>
+                {nav('home')      && <li><Link to="/" onClick={() => setIsOpen(false)} className="!text-white block">{t('nav.home')}</Link></li>}
+                {nav('directory') && <li><Link to="/directory" onClick={() => setIsOpen(false)} className="!text-white block">{t('nav.directory')}</Link></li>}
               </>
             )}
 
             {/* Marketplaces mobile */}
-            <li>
-              <button onClick={() => setMktMobileOpen(!mktMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
-                {t('nav.marketplaces')} <ChevronIcon open={mktMobileOpen} />
-              </button>
-              {mktMobileOpen && <MktMobileLinks />}
-            </li>
+            {nav('marketplaces') && (
+              <li>
+                <button onClick={() => setMktMobileOpen(!mktMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
+                  {t('nav.marketplaces')} <ChevronIcon open={mktMobileOpen} />
+                </button>
+                {mktMobileOpen && <MktMobileLinks />}
+              </li>
+            )}
 
             {/* Services mobile */}
-            <li>
-              <button onClick={() => setSvcMobileOpen(!svcMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
-                {t('nav.services')} <ChevronIcon open={svcMobileOpen} />
-              </button>
-              {svcMobileOpen && <SvcMobileLinks />}
-            </li>
+            {nav('services') && (
+              <li>
+                <button onClick={() => setSvcMobileOpen(!svcMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
+                  {t('nav.services')} <ChevronIcon open={svcMobileOpen} />
+                </button>
+                {svcMobileOpen && <SvcMobileLinks />}
+              </li>
+            )}
 
             {/* AI Advisors mobile */}
-            <li>
-              <button onClick={() => setAiMobileOpen(!aiMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
-                {t('nav.ai_advisors', 'AI Advisors')} <ChevronIcon open={aiMobileOpen} />
-              </button>
-              {aiMobileOpen && <AiMobileLinks />}
-            </li>
+            {nav('ai_advisors') && (
+              <li>
+                <button onClick={() => setAiMobileOpen(!aiMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
+                  {t('nav.ai_advisors', 'AI Advisors')} <ChevronIcon open={aiMobileOpen} />
+                </button>
+                {aiMobileOpen && <AiMobileLinks />}
+              </li>
+            )}
 
             {/* Newsroom mobile */}
-            <li>
-              <button onClick={() => setNrMobileOpen(!nrMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
-                {t('nav.newsroom')} <ChevronIcon open={nrMobileOpen} />
-              </button>
-              {nrMobileOpen && (
-                <ul className="mt-2 space-y-2 text-sm">
-                  <li><Link to="/app/news" onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.newsfeed')}</Link></li>
-                  <li><Link to="/blog" onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.blogs')}</Link></li>
-                </ul>
-              )}
-            </li>
+            {nav('newsroom') && (
+              <li>
+                <button onClick={() => setNrMobileOpen(!nrMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
+                  {t('nav.newsroom')} <ChevronIcon open={nrMobileOpen} />
+                </button>
+                {nrMobileOpen && (
+                  <ul className="mt-2 space-y-2 text-sm">
+                    {nav('nr_newsfeed') && <li><Link to="/app/news" onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.newsfeed')}</Link></li>}
+                    {nav('nr_blogs')    && <li><Link to="/blog"     onClick={() => setIsOpen(false)} className="!text-white/80 block">{t('nav.blogs')}</Link></li>}
+                  </ul>
+                )}
+              </li>
+            )}
 
             {/* Knowledgebases mobile */}
-            <li>
-              <button onClick={() => setKbMobileOpen(!kbMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
-                {t('nav.knowledgebases')} <ChevronIcon open={kbMobileOpen} />
-              </button>
-              {kbMobileOpen && <KbMobileLinks />}
-            </li>
+            {nav('knowledgebases') && (
+              <li>
+                <button onClick={() => setKbMobileOpen(!kbMobileOpen)} className="!text-white flex items-center justify-center gap-1 w-full">
+                  {t('nav.knowledgebases')} <ChevronIcon open={kbMobileOpen} />
+                </button>
+                {kbMobileOpen && <KbMobileLinks />}
+              </li>
+            )}
 
             {isLoggedIn ? (
               <>
-                <li><Link to="/contact-us" onClick={() => setIsOpen(false)} className="nav-link block">{t('nav.contact')}</Link></li>
+                {nav('contact') && <li><Link to="/contact-us" onClick={() => setIsOpen(false)} className="nav-link block">{t('nav.contact')}</Link></li>}
                 <li className="flex items-center justify-center gap-5 pt-1">
                   <CartBell />
                   <NotificationBell />
@@ -497,9 +486,9 @@ const Header = () => {
               </>
             ) : (
               <>
-                <li><Link to="/about" onClick={() => setIsOpen(false)} className="!text-white block">{t('nav.about')}</Link></li>
-                <li><Link to="/contact-us" onClick={() => setIsOpen(false)} className="!text-white block">{t('nav.contact')}</Link></li>
-                <li><Link to="/signup" onClick={() => setIsOpen(false)} className="!text-white block">{t('nav.signup')}</Link></li>
+                {nav('about')   && <li><Link to="/about"      onClick={() => setIsOpen(false)} className="!text-white block">{t('nav.about')}</Link></li>}
+                {nav('contact') && <li><Link to="/contact-us" onClick={() => setIsOpen(false)} className="!text-white block">{t('nav.contact')}</Link></li>}
+                {nav('signup')  && <li><Link to="/signup"     onClick={() => setIsOpen(false)} className="!text-white block">{t('nav.signup')}</Link></li>}
                 <li className="flex items-center justify-center gap-5 pt-1">
                   <LanguageSelector />
                   <Link to="/login" onClick={() => setIsOpen(false)} title={t('nav.login')} className="flex items-center transition-colors" style={{ color: 'rgba(255,255,255,0.8)' }}>
