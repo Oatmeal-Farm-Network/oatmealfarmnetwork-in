@@ -8,19 +8,11 @@
  *   - Background-sync queue for offline POSTs (lead scans, scouting notes)
  */
 
-const VERSION         = 'ofn-sw-v11';
-const SHELL_CACHE     = `${VERSION}-shell`;
+const VERSION         = 'ofn-sw-v12';
+const NAVIGATE_CACHE  = `${VERSION}-navigate`;
 const STATIC_CACHE    = `${VERSION}-static`;
 const RUNTIME_CACHE   = `${VERSION}-runtime`;
 const API_CACHE       = `${VERSION}-api`;
-
-/** Files that constitute the minimum offline-bootable shell. */
-const SHELL_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.webmanifest',
-  '/images/OFNFavico.png',
-];
 
 /** API GET prefixes we're willing to cache for read-only offline reads. */
 const API_CACHE_PREFIXES = [
@@ -155,18 +147,15 @@ async function queueDelete(id) {
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(SHELL_CACHE).then(cache =>
-      cache.addAll(SHELL_URLS.map(u => new Request(u, { cache: 'reload' })))
-        .catch(() => {/* shell precache best-effort */})
-    )
-  );
+  // No static precache — navigate responses are cached lazily on first online load.
+  // This avoids the stale-index.html/chunk-hash mismatch that occurs when
+  // a new Vite build is deployed while the SW still holds an old index.html.
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     // Drop old version caches
-    const keep = new Set([SHELL_CACHE, STATIC_CACHE, RUNTIME_CACHE, API_CACHE]);
+    const keep = new Set([NAVIGATE_CACHE, STATIC_CACHE, RUNTIME_CACHE, API_CACHE]);
     const names = await caches.keys();
     await Promise.all(names.filter(n => !keep.has(n)).map(n => caches.delete(n)));
     await self.clients.claim();
@@ -215,13 +204,18 @@ self.addEventListener('fetch', (event) => {
 });
 
 async function networkFirstWithShellFallback(req) {
+  const cache = await caches.open(NAVIGATE_CACHE);
   try {
     const fresh = await fetch(req);
+    if (fresh && fresh.ok) {
+      // Cache this response keyed to '/' so every navigation gets the same
+      // up-to-date index.html (Vite rewrites the hash on every deploy).
+      cache.put(new Request('/'), fresh.clone()).catch(() => {});
+    }
     return fresh;
   } catch {
-    const shell = await caches.match('/index.html')
-                || await caches.match('/');
-    return shell || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+    const cached = await cache.match('/');
+    return cached || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
   }
 }
 
