@@ -13,6 +13,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageContext';
+import { useNavConfig } from './useNavConfig';
 
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
 const ROSEMARIE_PURPLE = '#8B5CF6';
@@ -278,6 +279,7 @@ const hdrBtn = {
 
 export default function RosemarieChat({ businessId }) {
   const { t } = useTranslation();
+  const { isNavActive } = useNavConfig();
   const [open, setOpen]           = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const peopleId = useMemo(() => (
@@ -286,6 +288,7 @@ export default function RosemarieChat({ businessId }) {
 
   const isLoggedIn = !!(localStorage.getItem('access_token') || localStorage.getItem('AccessToken'));
   if (!isLoggedIn) return null;
+  if (!isNavActive('widget_rosemarie')) return null;
 
   useEffect(() => {
     if (!fullscreen) return;

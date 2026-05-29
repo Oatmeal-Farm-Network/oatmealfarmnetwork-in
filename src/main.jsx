@@ -35,6 +35,14 @@ function ScoutingRedirect() {
 // print/portal pages, and public marketing pages.
 function SaigeWidgetGlobal() {
   const { pathname, search } = useLocation();
+  const { isNavActive } = useNavConfig();
+
+  // Never show to unauthenticated users
+  const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
+  if (!token) return null;
+
+  // Respect admin toggle for the Saige widget
+  if (!isNavActive('widget_saige')) return null;
 
   // Pages whose own layout/component already renders an AI agent
   if (pathname.startsWith('/herd-health'))  return null; // HerdHealthLayout has its own Saige
@@ -207,6 +215,7 @@ import './index.css'
 import { AccountProvider } from './AccountContext';
 import { LanguageProvider } from './LanguageContext';
 import SaigeWidget from './SaigeWidget';
+import { useNavConfig } from './useNavConfig';
 import "./AnimalAddWizard.css";
 import AnimalEdit from "./AnimalEdit";
 import MeatInventory from './MeatInventory';

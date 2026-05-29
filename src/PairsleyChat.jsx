@@ -13,6 +13,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageContext';
+import { useNavConfig } from './useNavConfig';
 
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
 const PAIRSLEY_GREEN = '#2f7d4a';
@@ -286,11 +287,14 @@ const hdrBtn = {
 
 export default function PairsleyChat({ businessId }) {
   const { t } = useTranslation();
+  const { isNavActive } = useNavConfig();
   const [open, setOpen]           = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const peopleId = useMemo(() => (
     localStorage.getItem('people_id') || localStorage.getItem('PeopleID') || 'anon'
   ), []);
+
+  if (!isNavActive('widget_pairsley')) return null;
 
   useEffect(() => {
     if (!fullscreen) return;

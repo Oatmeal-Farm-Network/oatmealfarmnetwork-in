@@ -92,6 +92,18 @@ export default function AboutRosemarie() {
         ]} />
       </div>
 
+      {/* Coming Soon banner */}
+      <div style={{
+        background: '#8B5CF6', color: '#fff',
+        textAlign: 'center', padding: '1.25rem 1rem',
+        fontFamily: "'Lora','Times New Roman',serif",
+      }}>
+        <span style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '0.04em' }}>Coming Soon!</span>
+        <p style={{ margin: '0.25rem 0 0', fontSize: '1rem', opacity: 0.9 }}>
+          Rosemarie is currently in development. Check back soon!
+        </p>
+      </div>
+
       {/* Hero — photo + gradient overlay */}
       <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
         <div className="relative w-full overflow-hidden rounded-xl">
