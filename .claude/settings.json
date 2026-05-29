@@ -170,7 +170,8 @@
       "PowerShell(Resolve-DnsName www.alpacasontheweb.com -Type CNAME -ErrorAction SilentlyContinue)",
       "PowerShell(Resolve-DnsName alpacasontheweb.com -Type A -ErrorAction SilentlyContinue)",
       "Bash(python -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(d.get\\('httpRequest',{}\\)\\) for d in data]\")",
-      "Bash(nslookup oatmealfarmnetwork.com 8.8.8.8)"
+      "Bash(nslookup oatmealfarmnetwork.com 8.8.8.8)",
+      "Bash(nslookup oatmealfarmnetwork.com)"
     ]
   }
 }
