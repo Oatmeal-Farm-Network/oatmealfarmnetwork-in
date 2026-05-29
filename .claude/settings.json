@@ -166,7 +166,9 @@
       "Bash(Resolve-DnsName www.guidedwatersflyfishing.com -Type CNAME)",
       "Bash(Resolve-DnsName www.guidedwatersflyfishing.com -Type A)",
       "PowerShell(Resolve-DnsName www.guidedwatersflyfishing.com -Type CNAME -ErrorAction SilentlyContinue)",
-      "PowerShell(Resolve-DnsName guidedwatersflyfishing.com -Type A -ErrorAction SilentlyContinue)"
+      "PowerShell(Resolve-DnsName guidedwatersflyfishing.com -Type A -ErrorAction SilentlyContinue)",
+      "PowerShell(Resolve-DnsName www.alpacasontheweb.com -Type CNAME -ErrorAction SilentlyContinue)",
+      "PowerShell(Resolve-DnsName alpacasontheweb.com -Type A -ErrorAction SilentlyContinue)"
     ]
   }
 }
