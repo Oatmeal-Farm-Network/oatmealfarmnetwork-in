@@ -52,7 +52,7 @@ export default function AccountTeamMembers() {
   const [addBusy, setAddBusy] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ AccessLevelID: 1, Role: '' });
+  const [editForm, setEditForm] = useState({ AccessLevelID: 1, Role: '', PeopleFirstName: '', PeopleLastName: '', PeopleEmail: '' });
   const [editBusy, setEditBusy] = useState(false);
 
   useEffect(() => {
@@ -115,7 +115,13 @@ export default function AccountTeamMembers() {
 
   const startEdit = (m) => {
     setEditingId(m.BusinessAccessID);
-    setEditForm({ AccessLevelID: m.AccessLevelID || 1, Role: m.Role || '' });
+    setEditForm({
+      AccessLevelID: m.AccessLevelID || 1,
+      Role: m.Role || '',
+      PeopleFirstName: m.PeopleFirstName || '',
+      PeopleLastName: m.PeopleLastName || '',
+      PeopleEmail: m.PeopleEmail || '',
+    });
   };
 
   const handleSaveEdit = async (id) => {
@@ -336,10 +342,43 @@ export default function AccountTeamMembers() {
                   return (
                     <tr key={m.BusinessAccessID} className="border-b border-gray-100">
                       <td className="py-2 pr-3 text-gray-800">
-                        {fullName}
-                        {isSelf && <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400">{t('team_members.you')}</span>}
+                        {isEditing ? (
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={editForm.PeopleFirstName}
+                              onChange={e => setEditForm(f => ({ ...f, PeopleFirstName: e.target.value }))}
+                              placeholder={t('team_members.label_first_name')}
+                              className="border border-gray-300 rounded px-2 py-1 text-xs w-24"
+                            />
+                            <input
+                              type="text"
+                              value={editForm.PeopleLastName}
+                              onChange={e => setEditForm(f => ({ ...f, PeopleLastName: e.target.value }))}
+                              placeholder={t('team_members.label_last_name')}
+                              className="border border-gray-300 rounded px-2 py-1 text-xs w-24"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            {fullName}
+                            {isSelf && <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400">{t('team_members.you')}</span>}
+                          </>
+                        )}
                       </td>
-                      <td className="py-2 pr-3 text-gray-600">{m.PeopleEmail || '—'}</td>
+                      <td className="py-2 pr-3 text-gray-600">
+                        {isEditing ? (
+                          <input
+                            type="email"
+                            value={editForm.PeopleEmail}
+                            onChange={e => setEditForm(f => ({ ...f, PeopleEmail: e.target.value }))}
+                            placeholder={t('team_members.label_email')}
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-48"
+                          />
+                        ) : (
+                          m.PeopleEmail || '—'
+                        )}
+                      </td>
                       <td className="py-2 pr-3">
                         {isEditing ? (
                           <select
