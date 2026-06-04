@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+﻿import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
@@ -180,7 +180,7 @@ function ChatBubble({ message, voiceSupported, onSpeak }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           overflow: 'hidden',
         }}>
-          <img src="/images/SaigeIcon.png" alt="Saige" style={{ width: 32, height: 32, objectFit: 'cover' }} />
+          <img src="/images/SaigeAIIcon.webp" alt="Saige" style={{ width: 32, height: 32, objectFit: 'cover' }} />
         </div>
       )}
       <div className={isUser ? undefined : 'saige-msg'} style={{
@@ -394,7 +394,7 @@ function AboutSaige() {
           <div className="flex-1 max-w-sm w-full">
             <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/20" style={{ background: 'rgba(15,23,42,0.92)', backdropFilter: 'blur(8px)' }}>
               <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10" style={{ background: 'rgba(30,41,59,0.95)' }}>
-                <img src="/images/AI-agent-logo-saige.svg" alt="Saige" className="w-6 h-6 flex-shrink-0" />
+                <img src="/images/SaigeAIIcon.webp" alt="Saige" className="w-6 h-6 flex-shrink-0" />
                 <div>
                   <div className="text-white font-bold text-sm" style={{ fontFamily: 'Georgia, serif' }}>Saige</div>
                   <div className="text-gray-400 text-xs">AI Agricultural Assistant</div>
@@ -402,7 +402,7 @@ function AboutSaige() {
               </div>
               <div className="p-4 space-y-3">
                 <div className="flex gap-2 items-start">
-                  <div className="w-7 h-7 rounded-full bg-green-700 flex items-center justify-center flex-shrink-0"><img src="/images/AI-agent-logo-saige.svg" alt="Saige" className="w-5 h-5" /></div>
+                  <div className="w-7 h-7 rounded-full bg-green-700 flex items-center justify-center flex-shrink-0"><img src="/images/SaigeAIIcon.webp" alt="Saige" className="w-5 h-5" /></div>
                   <div className="rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-gray-200 max-w-xs" style={{ background: '#1e293b', border: '1px solid #334155' }}>
                     Hello! I'm Saige. Ask me about crops, livestock, soil health, or weather impacts.
                   </div>
@@ -413,7 +413,7 @@ function AboutSaige() {
                   </div>
                 </div>
                 <div className="flex gap-2 items-start">
-                  <div className="w-7 h-7 rounded-full bg-green-700 flex items-center justify-center flex-shrink-0"><img src="/images/AI-agent-logo-saige.svg" alt="Saige" className="w-5 h-5" /></div>
+                  <div className="w-7 h-7 rounded-full bg-green-700 flex items-center justify-center flex-shrink-0"><img src="/images/SaigeAIIcon.webp" alt="Saige" className="w-5 h-5" /></div>
                   <div className="rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-gray-200 max-w-xs" style={{ background: '#1e293b', border: '1px solid #334155' }}>
                     For clay soil, crimson clover and winter rye are excellent choices — they improve drainage and add nitrogen...
                   </div>
@@ -928,7 +928,7 @@ export default function SaigePage() {
             }}
             title={sidebarCollapsed ? t('saige_page.toggle_sidebar_show') : t('saige_page.toggle_sidebar_hide')}
           >☰</button>
-          <img src="/images/SaigeIcon.png" alt="Saige" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid rgba(255,255,255,0.4)' }} />
+          <img src="/images/SaigeAIIcon.webp" alt="Saige" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid rgba(255,255,255,0.4)' }} />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontFamily: SAIGE_FONT_HEAD, fontWeight: 700, fontSize: 17, lineHeight: 1.1, color: '#fff' }}>Saige</div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontFamily: SAIGE_FONT_BODY }}>

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SaigeWidget — floating Saige chat bubble with voice (STT + TTS).
  *
  * Mount on any page:
@@ -70,7 +70,7 @@ function Bubble({ role, content, ttsSupported, onSpeak, threadId, onFeedback }) 
           marginRight: 6, marginTop: 2, background: SAIGE_GREEN,
           overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <img src="/images/SaigeIcon.png" alt="" style={{ width: 26, height: 26, objectFit: 'cover' }} />
+          <img src="/images/SaigeAIIcon.webp" alt="" style={{ width: 26, height: 26, objectFit: 'cover' }} />
         </div>
       )}
       <div style={{ position: 'relative', maxWidth: '82%' }}>
@@ -616,7 +616,7 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
         gap: 9,
         flexShrink: 0,
       }}>
-        <img src="/images/SaigeIcon.png" alt="Saige" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.4)' }} />
+        <img src="/images/SaigeAIIcon.webp" alt="Saige" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.4)' }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 15, fontFamily: 'Lora, serif' }}>Saige</div>
           <div style={{ fontSize: 10, opacity: 0.85, fontFamily: FONT_BODY }}>AI Livestock & Farm Assistant</div>
@@ -879,7 +879,7 @@ export default function SaigeWidget({ businessId: propBusinessId, fieldId, pageC
           onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
         >
           <img
-            src="/images/SaigeIcon.png"
+            src="/images/SaigeAIIcon.webp"
             alt="Saige"
             style={{ width: 62, height: 62, borderRadius: '50%', objectFit: 'cover', display: 'block' }}
           />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -54,7 +54,7 @@ export default function Subsidies() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-        <img src="/images/AI-agent-logo-saige.svg" alt="" style={{ width: 36, height: 36 }} />
+        <img src="/images/SaigeAIIcon.webp" alt="" style={{ width: 36, height: 36 }} />
         <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#14532d' }}>{t('subsidies.heading')}</h1>
       </div>
       <p style={{ color: '#4b5563', marginTop: 4, marginBottom: 18 }}>
