@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PairsleyChat — the floating food-service AI assistant.
  *
  * Mount on any restaurant-related page:
@@ -18,6 +18,7 @@ import { useNavConfig } from './useNavConfig';
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
 const PAIRSLEY_GREEN = '#2f7d4a';
 const PAIRSLEY_LEAF  = '#6db77d';
+const ICON_SRC = '/images/PairsleyAIIcon.webp';
 
 function authHeaders() {
   const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
@@ -211,7 +212,7 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
           background: PAIRSLEY_GREEN, color: '#fff', padding: '10px 14px',
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <LeafMark size={22} />
+          <img src={ICON_SRC} alt="Pairsley" width={22} height={22} style={{ display:"block", borderRadius:"50%", objectFit:"cover", flexShrink:0 }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: 15 }}>Pairsley</div>
             <div style={{ fontSize: 11, opacity: 0.9 }}>{t('pairsley_chat.tagline')}</div>
@@ -319,7 +320,7 @@ export default function PairsleyChat({ businessId }) {
         }}
         title={t('pairsley_chat.launcher_title')}
       >
-        <LeafMark size={30} />
+        <img src={ICON_SRC} alt="Pairsley" width={30} height={30} style={{ display:"block", borderRadius:"50%", objectFit:"cover" }} />
       </button>
 
       {open && (

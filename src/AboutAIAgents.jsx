@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from './Header';
@@ -67,7 +67,7 @@ const AGENT_DATA = [
     key: 'thaiyme',
     color: '#7A5A3D',
     icon: (
-      <img src="/images/ThaiymeIcon.png" alt="Thaiyme"
+      <img src="/images/ThaiymeAIIcon.webp" alt="Thaiyme"
         style={{ width: 36, height: 36, display: 'block', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
     ),
     ctaTo: '/signup',
@@ -78,7 +78,7 @@ const AGENT_DATA = [
     key: 'lavendir',
     color: '#7C5CBF',
     icon: (
-      <img src="/images/LavendirIcon.png" alt="Lavendir"
+      <img src="/images/LavendirAIIcon.webp" alt="Lavendir"
         style={{ width: 36, height: 36, display: 'block', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
     ),
     ctaTo: '/website-builder',

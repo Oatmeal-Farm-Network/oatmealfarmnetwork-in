@@ -1,4 +1,4 @@
-// src/ThaiymeChat.jsx
+﻿// src/ThaiymeChat.jsx
 // Thaiyme — Business Operations AI agent.
 // Features: voice input (Web Speech API), TTS (male Google voice),
 //           fullscreen sidebar-aware layout, previous-sessions blade.
@@ -12,7 +12,7 @@ import { useAccount } from './AccountContext';
 const API          = import.meta.env.VITE_API_URL || '';
 const AGENT_NAME   = 'Thaiyme';
 const ACCENT_COLOR = '#7A5A3D';
-const ICON_SRC     = '/images/ThaiymeIcon.png';
+const ICON_SRC     = '/images/ThaiymeAIIcon.webp';
 const SIDEBAR_EXPANDED_W  = 211;
 const SIDEBAR_COLLAPSED_W = 67;
 const SESSIONS_KEY = 'thaiyme:sessions';

@@ -1,4 +1,4 @@
-// src/AboutWebsiteBuilder.jsx
+﻿// src/AboutWebsiteBuilder.jsx
 // Route: /platform/website-builder
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -120,7 +120,7 @@ export default function AboutWebsiteBuilder() {
           <Feature icon={FEAT_ICONS.widgets} title={t('web_build.feat1_title')} body={t('web_build.feat1_body')} />
           <Feature icon={FEAT_ICONS.source}  title={t('web_build.feat2_title')} body={t('web_build.feat2_body')} />
           <Feature icon={FEAT_ICONS.domain}  title={t('web_build.feat3_title')} body={t('web_build.feat3_body')} />
-          <Feature icon={<img src="/images/LavendirIcon.png" alt="Lavendir" className="w-5 h-5" />} title={t('web_build.feat4_title')} body={t('web_build.feat4_body')} />
+          <Feature icon={<img src="/images/LavendirAIIcon.webp" alt="Lavendir" className="w-5 h-5" />} title={t('web_build.feat4_title')} body={t('web_build.feat4_body')} />
           <Feature icon={FEAT_ICONS.mobile}  title={t('web_build.feat5_title')} body={t('web_build.feat5_body')} />
           <Feature icon={FEAT_ICONS.blog}    title={t('web_build.feat6_title')} body={t('web_build.feat6_body')} />
         </div>

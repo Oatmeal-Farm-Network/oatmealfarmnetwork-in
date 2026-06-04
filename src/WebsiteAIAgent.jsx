@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +14,7 @@ const HEADER_H = 72; // px — matches AccountLayout header height
 function LavenderBranchIcon({ size = 24 }) {
   return (
     <img
-      src="/images/LavendirIcon.png"
+      src="/images/LavendirAIIcon.webp"
       alt="Lavendir"
       width={size}
       height={size}

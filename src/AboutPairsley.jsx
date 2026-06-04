@@ -190,15 +190,10 @@ export default function AboutPairsley() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden"
                 style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white"
-                  strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
-                  <path d="M7 2v20"/>
-                  <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
-                </svg>
+                <img src="/images/PairsleyAIIcon.webp" alt="Pairsley" width="28" height="28" style={{ display: 'block', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
               </div>
               <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.88)' }}>
                 {t('pairsley.hero_badge')}

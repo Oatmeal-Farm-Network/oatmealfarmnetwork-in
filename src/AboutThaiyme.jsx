@@ -1,4 +1,4 @@
-// src/AboutThaiyme.jsx
+﻿// src/AboutThaiyme.jsx
 // Route: /platform/thaiyme
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -189,7 +189,7 @@ export default function AboutThaiyme() {
           <div className="absolute inset-0 flex flex-col justify-center px-8 py-8" style={{ maxWidth: '720px' }}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}>
-                <img src="/images/ThaiymeIcon.png" alt="Thaiyme" width="28" height="28" style={{ display: 'block', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
+                <img src="/images/ThaiymeAIIcon.webp" alt="Thaiyme" width="28" height="28" style={{ display: 'block', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
               </div>
               <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.85)' }}>Business Operations AI</span>
             </div>

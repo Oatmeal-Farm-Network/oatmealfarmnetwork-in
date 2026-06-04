@@ -1,4 +1,4 @@
-/**
+﻿/**
  * RosemarieChat — the floating artisan-producer AI assistant.
  *
  * Mount on any producer-related page (bakery dashboard, mill inventory,
@@ -18,6 +18,7 @@ import { useNavConfig } from './useNavConfig';
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
 const ROSEMARIE_PURPLE = '#8B5CF6';
 const ROSEMARIE_DEEP   = '#6D3DCB';
+const ICON_SRC = '/images/RosemariAIIcon.webp';
 
 function authHeaders() {
   const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
@@ -203,7 +204,7 @@ function ChatPanel({ businessId, peopleId, onClose, onToggleFullscreen, fullscre
           background: ROSEMARIE_PURPLE, color: '#fff', padding: '10px 14px',
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <SprigMark size={22} />
+          <img src={ICON_SRC} alt="Rosemarie" width={22} height={22} style={{ display:"block", borderRadius:"50%", objectFit:"cover", flexShrink:0 }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: 15 }}>Rosemarie</div>
             <div style={{ fontSize: 11, opacity: 0.9 }}>{t('rosemarie_chat.subtitle')}</div>
@@ -313,7 +314,7 @@ export default function RosemarieChat({ businessId }) {
         }}
         title={t('rosemarie_chat.launcher_title')}
       >
-        <SprigMark size={30} />
+        <img src={ICON_SRC} alt="Rosemarie" width={30} height={30} style={{ display:"block", borderRadius:"50%", objectFit:"cover" }} />
       </button>
 
       {open && (
