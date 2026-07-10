@@ -12,7 +12,7 @@ import MarketIntelligenceWidget from './MarketIntelligenceWidget';
 import FieldHealthWidget from './FieldHealthWidget';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
+const SAIGE_API = (import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000').replace(/\/saige\/?$/, '');
 
 // ─── PALETTE (matches floating SaigeWidget) ──────────────────────────────────
 const SAIGE_GREEN      = '#3D6B34';
@@ -480,6 +480,31 @@ function getAuthHeaders() {
   };
 }
 
+async function getResponseErrorMessage(res) {
+  let details = '';
+  try {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const payload = await res.json();
+      details =
+        payload?.message ||
+        payload?.detail ||
+        payload?.error ||
+        '';
+      if (!details && payload && typeof payload === 'object') {
+        details = JSON.stringify(payload);
+      }
+    } else {
+      details = (await res.text()).trim();
+    }
+  } catch {
+    details = '';
+  }
+
+  if (!details) return `HTTP ${res.status}`;
+  return `HTTP ${res.status}: ${details}`;
+}
+
 const _msgCache = new Map();
 
 // ─── VOICE HELPERS ───────────────────────────────────────────────────────────
@@ -841,7 +866,15 @@ export default function SaigePage() {
         }),
       });
 
-      if (!res.ok) throw new Error(`Server error (${res.status})`);
+      if (!res.ok) {
+        const errorMessage = await getResponseErrorMessage(res);
+        setActiveChat(prev => [
+          ...prev,
+          { role: 'assistant', content: t('saige_page.err_server', { message: errorMessage }) },
+        ]);
+        return;
+      }
+
       const data = await res.json();
 
       if (data.processing_stage && data.processing_stage !== 'default') {
@@ -886,7 +919,8 @@ export default function SaigePage() {
         setActiveChat(prev => [...prev, { role: 'assistant', content: t('saige_page.thanks') }]);
       }
     } catch (error) {
-      setActiveChat(prev => [...prev, { role: 'assistant', content: t('saige_page.err_connect') }]);
+      const message = error?.message ? `${t('saige_page.err_connect')} (${error.message})` : t('saige_page.err_connect');
+      setActiveChat(prev => [...prev, { role: 'assistant', content: message }]);
     } finally {
       setIsThinking(false);
       setTimeout(() => inputRef.current?.focus(), 100);
