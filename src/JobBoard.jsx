@@ -38,6 +38,13 @@ function typeBadge(jt) {
 }
 
 // ── Browse ────────────────────────────────────────────────────────────────────
+// Defined at module scope: if this lived inside MyJobListings it would be a new
+// component type on every render, remounting its inputs and dropping focus after
+// each keystroke.
+const F = ({ label, children }) => (
+  <div><label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>{children}</div>
+);
+
 export default function JobBoard() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -153,6 +160,7 @@ export default function JobBoard() {
                 <div><span className="font-semibold text-gray-600">Housing:</span> {selected.HousingProvided ? 'Yes' : 'No'}</div>
                 <div><span className="font-semibold text-gray-600">Meals:</span> {selected.MealsProvided ? 'Yes' : 'No'}</div>
                 {selected.ApplyDeadline && <div className="col-span-2"><span className="font-semibold text-gray-600">Apply by:</span> {fmtDate(selected.ApplyDeadline)}</div>}
+                {selected.ContactEmail && <div className="col-span-2"><span className="font-semibold text-gray-600">Contact:</span> <a href={`mailto:${selected.ContactEmail}`} className="text-green-700 underline">{selected.ContactEmail}</a></div>}
               </div>
               {selected.Description && <p className="text-sm text-gray-700 whitespace-pre-wrap">{selected.Description}</p>}
               {!applyOpen ? (
@@ -244,9 +252,6 @@ export function MyJobListings() {
       state_province: job.StateProvince || '', contact_email: job.ContactEmail || '' });
   };
 
-  const F = ({ label, children }) => (
-    <div><label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>{children}</div>
-  );
   const inp = (key, props = {}) => (
     <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
       value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} {...props} />
