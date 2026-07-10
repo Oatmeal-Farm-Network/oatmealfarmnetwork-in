@@ -141,7 +141,25 @@ function RosemariePanel({ businessId, context }) {
 
 function RecipeForm({ initial, businessId, onSaved, onCancel }) {
   const blank = { recipe_name: '', category: '', description: '', yield_qty: '', yield_unit: '', batch_size_note: '', ingredients: [], steps: [] };
-  const [form, setForm] = useState(initial || blank);
+  // Map the API's PascalCase recipe onto the snake_case form shape. Without this,
+  // Edit left every field undefined (fields didn't populate) and form.recipe_name.trim()
+  // crashed on save.
+  const toForm = (r) => (r && r.RecipeID) ? {
+    recipe_name:     r.RecipeName     || '',
+    category:        r.Category        || '',
+    description:     r.Description      || '',
+    yield_qty:       r.YieldQty != null ? String(r.YieldQty) : '',
+    yield_unit:      r.YieldUnit        || '',
+    batch_size_note: r.BatchSizeNote    || '',
+    ingredients: (r.ingredients || []).map(x => ({
+      ingredient_name: x.IngredientName || '',
+      quantity:        x.Quantity != null ? String(x.Quantity) : '',
+      unit:            x.Unit || '',
+      notes:           x.Notes || '',
+    })),
+    steps: (r.steps || []).map(s => ({ step_number: s.StepNumber, step_text: s.StepText || '' })),
+  } : blank;
+  const [form, setForm] = useState(toForm(initial));
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
 
