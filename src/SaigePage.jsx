@@ -12,7 +12,8 @@ import MarketIntelligenceWidget from './MarketIntelligenceWidget';
 import FieldHealthWidget from './FieldHealthWidget';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
+const SAIGE_API = (import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000').replace(/\/saige\/?$/, '');
+const CHAT_REQUEST_TIMEOUT_MS = 75000;
 
 // ─── PALETTE (matches floating SaigeWidget) ──────────────────────────────────
 const SAIGE_GREEN      = '#3D6B34';
@@ -480,6 +481,31 @@ function getAuthHeaders() {
   };
 }
 
+async function getResponseErrorMessage(res) {
+  let details = '';
+  try {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const payload = await res.json();
+      details =
+        payload?.message ||
+        payload?.detail ||
+        payload?.error ||
+        '';
+      if (!details && payload && typeof payload === 'object') {
+        details = JSON.stringify(payload);
+      }
+    } else {
+      details = (await res.text()).trim();
+    }
+  } catch {
+    details = '';
+  }
+
+  if (!details) return `HTTP ${res.status}`;
+  return `HTTP ${res.status}: ${details}`;
+}
+
 const _msgCache = new Map();
 
 // ─── VOICE HELPERS ───────────────────────────────────────────────────────────
@@ -532,6 +558,7 @@ export default function SaigePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [userId, setUserId] = useState(null);
+  const prevBusinessRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
@@ -542,6 +569,28 @@ export default function SaigePage() {
   }, []);
 
   useEffect(() => { if (BusinessID) LoadBusiness(BusinessID); }, [BusinessID]);
+
+  useEffect(() => {
+    if (!authChecked) return;
+    const nextBiz = BusinessID || null;
+    if (prevBusinessRef.current === null) {
+      prevBusinessRef.current = nextBiz;
+      return;
+    }
+    if (prevBusinessRef.current !== nextBiz) {
+      // Switching businesses should start a fresh Saige thread to avoid
+      // stale graph state carrying old business context.
+      setActiveThreadId(generateThreadId());
+      setActiveChat([WELCOME_MESSAGE]);
+      setQuiz(null);
+      setSelectedOption('');
+      setCustomAnswer('');
+      setInput('');
+      advisoryTypeRef.current = null;
+      setProcessingStage('default');
+    }
+    prevBusinessRef.current = nextBiz;
+  }, [BusinessID, authChecked]);
 
   const welcomeMsg = { role: 'assistant', content: t('saige_page.welcome') };
 
@@ -830,9 +879,12 @@ export default function SaigePage() {
     setQuiz(null);
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), CHAT_REQUEST_TIMEOUT_MS);
       const res = await fetch(`${SAIGE_API}/chat`, {
         method: 'POST',
         headers: getAuthHeaders(),
+        signal: controller.signal,
         body: JSON.stringify({
           user_input: val,
           thread_id: activeThreadId,
@@ -840,8 +892,17 @@ export default function SaigePage() {
           business_id: BusinessID || null,
         }),
       });
+      clearTimeout(timeoutId);
 
-      if (!res.ok) throw new Error(`Server error (${res.status})`);
+      if (!res.ok) {
+        const errorMessage = await getResponseErrorMessage(res);
+        setActiveChat(prev => [
+          ...prev,
+          { role: 'assistant', content: t('saige_page.err_server', { message: errorMessage }) },
+        ]);
+        return;
+      }
+
       const data = await res.json();
 
       if (data.processing_stage && data.processing_stage !== 'default') {
@@ -886,7 +947,11 @@ export default function SaigePage() {
         setActiveChat(prev => [...prev, { role: 'assistant', content: t('saige_page.thanks') }]);
       }
     } catch (error) {
-      setActiveChat(prev => [...prev, { role: 'assistant', content: t('saige_page.err_connect') }]);
+      const isAbort = error?.name === 'AbortError';
+      const message = isAbort
+        ? 'Request timed out. Saige is busy right now, please retry.'
+        : (error?.message ? `${t('saige_page.err_connect')} (${error.message})` : t('saige_page.err_connect'));
+      setActiveChat(prev => [...prev, { role: 'assistant', content: message }]);
     } finally {
       setIsThinking(false);
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -988,7 +1053,12 @@ export default function SaigePage() {
                 </div>
               )}
               {activeChat.map((msg, i) => (
-                <ChatBubble key={i} message={msg} voiceSupported={ttsSupported} onSpeak={playTTS} />
+                <ChatBubble
+                  key={i}
+                  message={msg}
+                  voiceSupported={ttsSupported}
+                  onSpeak={playTTS}
+                />
               ))}
               {isThinking && <ThinkingDots stage={processingStage} />}
               {quiz && !isThinking && (
