@@ -180,7 +180,7 @@ export default function FoodWantedBoard() {
             <p style={{ color: '#111', fontSize: '0.9rem', margin: '0 0 14px', lineHeight: 1.6 }}>
               {fw('board_hero_body')}
             </p>
-            <Link to="/food-wanted/my-ads"
+            <Link to="/food-wanted/my-ads?new=1"
               className="inline-flex items-center gap-2 font-bold px-4 py-2 rounded-lg border-2 text-sm w-fit transition hover:bg-gray-50"
               style={{ color: ACCENT, borderColor: ACCENT }}>
               {fw('btn_post_wanted_ad')}
