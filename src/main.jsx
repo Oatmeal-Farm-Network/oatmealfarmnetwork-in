@@ -774,7 +774,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/services/directory" element={<ServicesDirectory />} />
           {/* Platform services — OFN's own AI agents and offerings */}
           <Route path="/platform" element={<ServicesHome />} />
-          <Route path="/platform/saige" element={<SaigePage />} />
+          <Route path="/platform/saige" element={<AboutSaige />} />
           <Route path="/platform/rosemarie" element={<AboutRosemarie />} />
           <Route path="/platform/pairsley" element={<AboutPairsley />} />
           <Route path="/platform/thaiyme" element={<AboutThaiyme />} />
