@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { useAccount } from './AccountContext';
 
 const API = import.meta.env.VITE_API_URL || '';
+const SAIGE_API = (import.meta.env.VITE_SAIGE_API_URL || import.meta.env.VITE_API_URL || '').replace(/\/saige\/?$/, '');
 const GREEN = '#3D6B34';
 const GREEN_DARK = '#2c4f25';
 const GREEN_LIGHT = '#f0f7ee';
@@ -116,16 +117,14 @@ export default function MarketIntelligenceWidget() {
     const timeout = setTimeout(() => controller.abort(), 8000);
     Promise.allSettled(
       AMS_COMMODITIES.map(c =>
-        fetch(
-          `https://mpr.datamart.ams.usda.gov/services/public/LMR/Report?Report_ID=${c.report}&key=&q=`,
-          { signal: controller.signal }
-        )
+        fetch(`${SAIGE_API}/market/usda/ams/${c.report}`, { signal: controller.signal })
           .then(r => r.ok ? r.json() : null)
           .then(data => {
-            if (!data?.results?.length) return { key: c.key, price: null };
-            const row = data.results.find(r =>
+            const results = Array.isArray(data?.results) ? data.results : [];
+            if (!results.length) return { key: c.key, price: null };
+            const row = results.find(r =>
               r.label?.toLowerCase().includes(c.itemMatch.toLowerCase())
-            ) || data.results[0];
+            ) || results[0];
             const price = parseFloat(row?.price ?? row?.avg_price ?? null);
             return { key: c.key, price: isNaN(price) ? null : price };
           })
