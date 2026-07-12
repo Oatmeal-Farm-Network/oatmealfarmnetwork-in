@@ -16,7 +16,13 @@ import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import { useLanguage } from './LanguageContext';
 
-const SAIGE_API   = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
+function normalizeSaigeApiBase(rawValue) {
+  const value = (rawValue || 'http://localhost:8000/saige').trim();
+  if (!value) return 'http://localhost:8000/saige';
+  return value.replace(/\/+$/, '').replace(/\/saige\/?$/, '');
+}
+
+const SAIGE_API   = normalizeSaigeApiBase(import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige');
 const SAIGE_GREEN = '#3D6B34';
 const SAIGE_DARK  = '#2c4f25';
 const SAIGE_LIGHT = '#f0f7ee';
@@ -552,7 +558,14 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
           body,
         });
         if (!res.ok) throw new Error(`Server error (${res.status})`);
-        const data = await res.json();
+        let parsedBody = null;
+        try {
+          const bodyText = await res.text();
+          parsedBody = bodyText ? JSON.parse(bodyText) : null;
+        } catch {
+          parsedBody = null;
+        }
+        const data = parsedBody && typeof parsedBody === 'object' ? parsedBody : {};
         let reply = '';
         if (data.status === 'complete') {
           reply = (data.diagnosis || '').replace(/\*\*/g, '').replace(/##\s+/g, '').replace(/\*/g, '').trim();

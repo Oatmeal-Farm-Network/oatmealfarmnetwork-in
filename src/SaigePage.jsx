@@ -12,7 +12,13 @@ import MarketIntelligenceWidget from './MarketIntelligenceWidget';
 import FieldHealthWidget from './FieldHealthWidget';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const SAIGE_API = (import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000').replace(/\/saige\/?$/, '');
+function normalizeSaigeApiBase(rawValue) {
+  const value = (rawValue || 'http://localhost:8000').trim();
+  if (!value) return 'http://localhost:8000';
+  return value.replace(/\/+$/, '').replace(/\/saige\/?$/, '');
+}
+
+const SAIGE_API = normalizeSaigeApiBase(import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000');
 const CHAT_REQUEST_TIMEOUT_MS = 75000;
 
 // ─── PALETTE (matches floating SaigeWidget) ──────────────────────────────────
@@ -903,46 +909,53 @@ export default function SaigePage() {
         return;
       }
 
-      const data = await res.json();
+      let parsedBody = null;
+      try {
+        const text = await res.text();
+        parsedBody = text ? JSON.parse(text) : null;
+      } catch {
+        parsedBody = null;
+      }
+      const payload = parsedBody && typeof parsedBody === 'object' ? parsedBody : {};
 
-      if (data.processing_stage && data.processing_stage !== 'default') {
-        setProcessingStage(data.processing_stage);
+      if (payload.processing_stage && payload.processing_stage !== 'default') {
+        setProcessingStage(payload.processing_stage);
       }
 
       setSelectedOption('');
       setCustomAnswer('');
 
-      if (data.status === 'requires_input') {
-        setQuiz(data.ui);
-      } else if (data.status === 'complete') {
+      if (payload.status === 'requires_input') {
+        setQuiz(payload.ui);
+      } else if (payload.status === 'complete') {
         let content = '';
-        if (data.diagnosis?.trim()) {
-          content = data.diagnosis.replace(/\*\*/g, '').replace(/##\s+/g, '').replace(/\*/g, '').trim();
+        if (payload.diagnosis?.trim()) {
+          content = payload.diagnosis.replace(/\*\*/g, '').replace(/##\s+/g, '').replace(/\*/g, '').trim();
         }
-        if (data.recommendations?.length > 0) {
-          const embedded = data.recommendations.some(r =>
+        if (payload.recommendations?.length > 0) {
+          const embedded = payload.recommendations.some(r =>
             content.toLowerCase().includes(r.toLowerCase().substring(0, 30))
           );
           if (!embedded) {
             content += '\n\nQuick Tips:\n';
-            data.recommendations.slice(0, 3).forEach(r => {
+            payload.recommendations.slice(0, 3).forEach(r => {
               content += `\n${r.replace(/\*\*/g, '').replace(/\*/g, '').trim()}`;
             });
           }
         }
         if (!content?.trim()) {
-          content = data.diagnosis || t('saige_page.err_generic');
+          content = payload.diagnosis || t('saige_page.err_generic');
         }
-        advisoryTypeRef.current = data.advisory_type || null;
+        advisoryTypeRef.current = payload.advisory_type || null;
         setActiveChat(prev => {
           const updated = [...prev, { role: 'assistant', content }];
-          saveThread(userId, activeThreadId, updated, 'complete', data.advisory_type || null);
+          saveThread(userId, activeThreadId, updated, 'complete', payload.advisory_type || null);
           return updated;
         });
         fetchThreads();
         if (autoSpeak && content) playTTS(content);
-      } else if (data.status === 'error') {
-        setActiveChat(prev => [...prev, { role: 'assistant', content: t('saige_page.err_server', { message: data.message || 'Please try again.' }) }]);
+      } else if (payload.status === 'error') {
+        setActiveChat(prev => [...prev, { role: 'assistant', content: t('saige_page.err_server', { message: payload.message || 'Please try again.' }) }]);
       } else {
         setActiveChat(prev => [...prev, { role: 'assistant', content: t('saige_page.thanks') }]);
       }
