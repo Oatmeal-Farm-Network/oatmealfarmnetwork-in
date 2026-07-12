@@ -409,7 +409,16 @@
       "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/public/locales/de/translation.json','utf8'\\)\\); console.log\\('has website_public:', !!j.website_public\\); console.log\\('keys:', j.website_public ? Object.keys\\(j.website_public\\).length : 0\\);\")",
       "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/public/locales/fr/translation.json','utf8'\\)\\); console.log\\('website_public keys in fr:', j.website_public ? Object.keys\\(j.website_public\\).length : 'MISSING'\\);\")",
       "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('f:/Oatmeal AI/OatmealFarmNetwork Repo/OatmealFarmNetwork/public/locales/ja/translation.json','utf8'\\)\\); console.log\\('website_public keys in ja:', j.website_public ? Object.keys\\(j.website_public\\).length : 'MISSING'\\);\")",
-      "Bash(node \"f:/tmp/add_website_builder_keys.js\")"
+      "Bash(node \"f:/tmp/add_website_builder_keys.js\")",
+      "Bash(gcloud builds *)",
+      "Bash(curl -s -o /dev/null -w 'HTTP %{http_code}\\\\n' -X POST -H 'Content-Type: application/json' -d '{\"Code\":\"__DEPLOYCHK__\",\"DiscountType\":\"percent\",\"DiscountValue\":5,\"MinCartTotal\":\"\",\"MaxUses\":\"\"}' __TRACKED_VAR__/api/events/1/promo-codes)",
+      "Bash(./venv/Scripts/python.exe -c ' *)",
+      "Bash(./venv/Scripts/python.exe \"C:/Users/Owner/AppData/Local/Temp/claude/f--Oatmeal-AI-OatmealFarmNetwork-Repo-OatmealFarmNetwork/c7479c39-51b0-4405-ab63-a3d2e08d9180/scratchpad/apply_coerce.py\")",
+      "Bash(grep -nB1 -A1 \"= blank_to_none\" routers/event_conference.py)",
+      "Bash(grep -nB1 -A1 \"= blank_to_none\" routers/supply_chain.py)",
+      "Bash(git commit *)",
+      "Bash(./../venv/Scripts/python.exe -c ' *)",
+      "Bash(curl -s https://oatmealfarmnewtorkbackend-802455386518.us-central1.run.app/api/businesses/states?country=United%20States)"
     ],
     "additionalDirectories": [
       "\\tmp"
