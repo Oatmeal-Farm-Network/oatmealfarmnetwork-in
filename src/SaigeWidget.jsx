@@ -10,6 +10,7 @@
  *        auto-speak toggle in the header.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import AgentBadge from './AgentBadge';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -869,15 +870,12 @@ export default function SaigeWidget({ businessId: propBusinessId, fieldId, pageC
     <>
       {/* FAB launcher */}
       {createPortal(
+        <AgentBadge bottom={20} baseRight={20} zIndex={9998}>
         <button
           onClick={() => setOpen(v => !v)}
           aria-label="Open Saige AI assistant"
           title="Ask Saige"
           style={{
-            position: 'fixed',
-            bottom: 20,
-            right: 20,
-            zIndex: 9998,
             width: 62,
             height: 62,
             borderRadius: '50%',
@@ -896,7 +894,8 @@ export default function SaigeWidget({ businessId: propBusinessId, fieldId, pageC
             alt="Saige"
             style={{ width: 62, height: 62, borderRadius: '50%', objectFit: 'cover', display: 'block' }}
           />
-        </button>,
+        </button>
+        </AgentBadge>,
         document.body,
       )}
 

@@ -4,6 +4,7 @@
 //           fullscreen sidebar-aware layout, previous-sessions blade.
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import AgentBadge from './AgentBadge';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageContext';
@@ -329,14 +330,16 @@ export default function ThaiymeChat({ businessId, eventId, page }) {
   // ── Floating button ───────────────────────────────────────────────────────
   if (!open) {
     return createPortal(
+      <AgentBadge bottom={24} baseRight={24} zIndex={50}>
       <button
         onClick={() => setOpen(true)}
         title={t('thaiyme_chat.launcher_title')}
-        className="fixed bottom-6 right-6 z-50 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+        className="flex items-center justify-center transition-all hover:scale-110 active:scale-95"
         style={{ background: 'transparent', border: 'none', padding: 0 }}
       >
         <ThaiymeIcon size={64} />
-      </button>,
+      </button>
+      </AgentBadge>,
       document.body,
     );
   }
