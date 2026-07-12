@@ -11,6 +11,7 @@
  * the backend.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import AgentBadge from './AgentBadge';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageContext';
 import { useNavConfig } from './useNavConfig';
@@ -307,11 +308,11 @@ export default function PairsleyChat({ businessId }) {
   return (
     <>
       {/* Launcher */}
+      <AgentBadge bottom={20} baseRight={20} zIndex={9999}>
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label={t('pairsley_chat.launcher_aria')}
         style={{
-          position: 'fixed', bottom: 20, right: 20, zIndex: 9999,
           width: 58, height: 58, borderRadius: '50%',
           background: PAIRSLEY_GREEN, color: '#fff', border: 'none',
           boxShadow: '0 6px 18px -4px rgba(0,0,0,0.35)',
@@ -322,6 +323,7 @@ export default function PairsleyChat({ businessId }) {
       >
         <img src={ICON_SRC} alt="Pairsley" width={30} height={30} style={{ display:"block", borderRadius:"50%", objectFit:"cover" }} />
       </button>
+      </AgentBadge>
 
       {open && (
         <ChatPanel

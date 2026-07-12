@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import AgentBadge from './AgentBadge';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
@@ -553,14 +554,16 @@ export default function WebsiteAIAgent({ websiteId, businessId, currentView, aut
   // (min-height: 100vh, display: flex) doesn't inflate this button.
   if (!open) {
     return createPortal(
+      <AgentBadge bottom={24} baseRight={24} zIndex={50}>
       <button
         onClick={() => setOpen(true)}
         title={t('website_ai_agent.title_chat', { name: AGENT_NAME })}
-        className="fixed bottom-6 right-6 z-50 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+        className="flex items-center justify-center transition-all hover:scale-110 active:scale-95"
         style={{ background: 'transparent', border: 'none', padding: 0 }}
       >
         <LavenderBranchIcon size={64} />
-      </button>,
+      </button>
+      </AgentBadge>,
       document.body,
     );
   }
