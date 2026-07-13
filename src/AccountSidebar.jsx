@@ -900,7 +900,7 @@ export default function AccountSidebar() {
         )}
 
         {anyOn('accounting','cash_flow_forecast','document_vault','farm_pl','meetings','my_website','report_center') && (
-        <NavGroup icon={ICONS.navGroup} label="Business Management" expanded={Expanded} isOpen={OpenSections['g_business'] || false} onToggle={() => toggleSection('g_business')}>
+        <NavGroup icon={ICONS.navGroup} label="Business Mgmt" expanded={Expanded} isOpen={OpenSections['g_business'] || false} onToggle={() => toggleSection('g_business')}>
         {on('my_website') && (
           <NavSection icon={ICONS.website} label={t('account_sidebar.sec_website')} expanded={Expanded}
             isOpen={OpenSections['My Website'] || false} onToggle={() => toggleSection('My Website')}>
