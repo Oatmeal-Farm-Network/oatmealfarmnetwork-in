@@ -169,8 +169,8 @@ function NavGroup({ icon, label, expanded, isOpen, onToggle, children }) {
       <button
         onClick={onToggle}
         title={!expanded ? label : undefined}
-        className={`w-full flex items-center py-2.5 rounded-lg bg-white hover:bg-gray-50 shadow-sm border border-gray-200 text-gray-900 text-sm font-semibold transition-all ${
-          expanded ? 'gap-3 px-3' : 'justify-center'
+        className={`w-full flex items-center py-2.5 rounded-lg bg-white hover:bg-gray-50 shadow-sm border border-gray-200 text-gray-900 text-[13px] font-semibold transition-all ${
+          expanded ? 'gap-2 px-3' : 'justify-center'
         }`}
       >
         <span className="w-4 h-4 shrink-0 flex items-center justify-center text-gray-700">{icon}</span>
