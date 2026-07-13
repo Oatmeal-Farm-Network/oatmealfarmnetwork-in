@@ -75,6 +75,14 @@ function SaigeWidgetGlobal() {
   if (/^\/events\/[^/]+\/register(\/wizard)?$/.test(pathname)) return null;
   if (/^\/events\/[^/]+\/(rsvp|conference|compete|dining|tour)$/.test(pathname)) return null;
 
+  // Precision Ag pages that embed SaigeWidget directly with field-specific
+  // context (avoid a second, generic bubble stacking on top of it)
+  if (pathname.startsWith('/precision-ag/analyses'))       return null;
+  if (pathname.startsWith('/precision-ag/geospatial'))     return null;
+  if (pathname.startsWith('/precision-ag/statistics'))     return null;
+  if (pathname.startsWith('/precision-ag/analysis/zoning')) return null;
+  if (pathname.startsWith('/precision-ag/analysis/maps'))   return null;
+
   // Specialty-crop pages that embed SaigeWidget directly (avoid duplicate bubbles)
   if (pathname.startsWith('/chilling-hours'))      return null;
   if (pathname.startsWith('/grain-bin'))            return null;
