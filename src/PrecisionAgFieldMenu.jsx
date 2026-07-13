@@ -66,8 +66,6 @@ const SECTIONS = [
       { icon: ICONS.climate,        tKey: 'item_climate_forecast',    path: '/precision-ag/analyses', tab: 'climate' },
       { icon: ICONS.yieldForecast,  tKey: 'item_yield_forecast',      path: '/precision-ag/yield-forecast' },
       { icon: ICONS.gdd,            tKey: 'item_growing_degree_days', path: '/precision-ag/gdd' },
-      { icon: ICONS.irrigation,     tKey: 'item_irrigation',          path: '/precision-ag/irrigation' },
-      { icon: ICONS.waterUse,       tKey: 'item_water_use',           path: '/precision-ag/water-use' },
     ],
   },
   {
