@@ -289,8 +289,10 @@ function DMApp() {
   useEffect(() => {
     if (!active) { setMessages([]); return; }
     setLoadingMsg(true);
-    loadMessages(active.ChannelID).finally(() => setLoadingMsg(false));
-  }, [active, loadMessages]);
+    // GET messages marks the channel read server-side; refresh the channel list so the
+    // unread badge clears immediately instead of persisting until the next poll (#54).
+    loadMessages(active.ChannelID).finally(() => { setLoadingMsg(false); loadChannels(); });
+  }, [active, loadMessages, loadChannels]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 

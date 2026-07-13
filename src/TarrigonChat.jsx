@@ -3,6 +3,7 @@
 // Floating chat widget: expandable panel, suggestion chips, history, clear.
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import AgentBadge from './AgentBadge';
 import { createPortal } from 'react-dom';
 import { useAccount } from './AccountContext';
 
@@ -149,14 +150,16 @@ export default function TarrigonChat({ businessId, page }) {
   // ── Floating button ───────────────────────────────────────────────────────
   if (!open) {
     return createPortal(
+      <AgentBadge bottom={24} baseRight={24} zIndex={50}>
       <button
         onClick={() => setOpen(true)}
         title={`Chat with ${AGENT_NAME}`}
-        className="fixed bottom-6 right-6 z-50 flex items-center justify-center transition-all hover:scale-110 active:scale-95 rounded-full shadow-lg"
+        className="flex items-center justify-center transition-all hover:scale-110 active:scale-95 rounded-full shadow-lg"
         style={{ background: 'transparent', border: 'none', padding: 0 }}
       >
         <TarrigonIcon size={60} />
-      </button>,
+      </button>
+      </AgentBadge>,
       document.body,
     );
   }

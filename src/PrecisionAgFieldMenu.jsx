@@ -62,7 +62,6 @@ const SECTIONS = [
   {
     tKey: 'sec_management',
     items: [
-      { icon: ICONS.alerts,         tKey: 'item_alerts',              path: '/precision-ag/alerts' },
       { icon: ICONS.cropStatus,     tKey: 'item_crop_status',         path: '/precision-ag/analysis/crop-status' },
       { icon: ICONS.visualizations, tKey: 'item_visualizations',      path: '/precision-ag/visualizations' },
       { icon: ICONS.cropDetection,  tKey: 'item_crop_detection',      path: '/precision-ag/crop-detection' },
@@ -70,8 +69,6 @@ const SECTIONS = [
       { icon: ICONS.climate,        tKey: 'item_climate_forecast',    path: '/precision-ag/analyses', tab: 'climate' },
       { icon: ICONS.yieldForecast,  tKey: 'item_yield_forecast',      path: '/precision-ag/yield-forecast' },
       { icon: ICONS.gdd,            tKey: 'item_growing_degree_days', path: '/precision-ag/gdd' },
-      { icon: ICONS.irrigation,     tKey: 'item_irrigation',          path: '/precision-ag/irrigation' },
-      { icon: ICONS.waterUse,       tKey: 'item_water_use',           path: '/precision-ag/water-use' },
     ],
   },
   {

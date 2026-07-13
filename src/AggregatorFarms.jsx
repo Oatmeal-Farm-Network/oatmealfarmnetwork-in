@@ -230,7 +230,7 @@ function AddFarmModal({ businessId, onDone, onCancel }) {
                 <select className={inp} value={inviteForm.Country}
                   onChange={e => setInviteForm(f => ({ ...f, Country: e.target.value, Region: '' }))}>
                   <option value="">{t('agg_farms.select_country')}</option>
-                  {countries.map(c => <option key={c.country_id} value={c.name}>{c.name}</option>)}
+                  {countries.map(c => { const n = typeof c === 'string' ? c : (c.name || c.Country); return <option key={n} value={n}>{n}</option>; })}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -245,7 +245,7 @@ function AddFarmModal({ businessId, onDone, onCancel }) {
                     <select className={inp} value={inviteForm.Region}
                       onChange={e => setInviteForm(f => ({ ...f, Region: e.target.value }))}>
                       <option value="">{t('agg_farms.select_state')}</option>
-                      {states.map(s => <option key={s.StateIndex} value={s.name}>{s.name}</option>)}
+                      {states.map(s => { const n = typeof s === 'string' ? s : (s.name || s.State); return <option key={n} value={n}>{n}</option>; })}
                     </select>
                   ) : (
                     <input className={inp}

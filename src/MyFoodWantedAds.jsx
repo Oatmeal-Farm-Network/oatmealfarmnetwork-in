@@ -1,7 +1,7 @@
 // src/MyFoodWantedAds.jsx
 // Route: /food-wanted/my-ads  (requires auth)
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import Breadcrumbs from './Breadcrumbs';
@@ -67,6 +67,11 @@ export default function MyFoodWantedAds() {
     setSaveError('');
     setShowForm(true);
   }
+
+  // Open the creation form directly when arriving via "Post a Wanted Ad" (?new=1),
+  // instead of landing on the ad list (#56).
+  const [searchParams] = useSearchParams();
+  useEffect(() => { if (searchParams.get('new')) openCreate(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function openEdit(ad) {
     setEditing(ad.AdID);

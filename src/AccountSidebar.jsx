@@ -16,6 +16,7 @@ const S = ({ children }) => (
 );
 
 const ICONS = {
+  navGroup:      <S><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></S>,
   accounts:        <S><circle cx="8" cy="5" r="2.5"/><path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5"/></S>,
   personalSettings:(
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"
@@ -161,6 +162,36 @@ function NavSection({ icon, label, expanded, isOpen, onToggle, children, iconOnl
   );
 }
 
+// ── Collapsible top-level GROUP (contains NavSections) ────────────────────────
+function NavGroup({ icon, label, expanded, isOpen, onToggle, children }) {
+  return (
+    <div className="mb-2">
+      <button
+        onClick={onToggle}
+        title={!expanded ? label : undefined}
+        className={`w-full flex items-center py-2.5 rounded-lg bg-white hover:bg-gray-50 shadow-sm border border-gray-200 text-gray-900 text-[13px] font-semibold transition-all ${
+          expanded ? 'gap-2 px-3' : 'justify-center'
+        }`}
+      >
+        <span className="w-4 h-4 shrink-0 flex items-center justify-center text-gray-700">{icon}</span>
+        {expanded && (
+          <>
+            <span className="grow text-left whitespace-nowrap">{label}</span>
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 shrink-0">
+              {isOpen ? <path d="M3 10l5-5 5 5" /> : <path d="M3 6l5 5 5-5" />}
+            </svg>
+          </>
+        )}
+      </button>
+      {isOpen && expanded && (
+        <div className="flex flex-col gap-0.5 mt-1 mb-2 pl-1">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AccountSidebar() {
   const { t } = useTranslation();
   const { Business, BusinessID, Expanded, setExpanded, OpenSections, setOpenSections, businesses, websiteSlug, setWebsiteSlug } = useAccount();
@@ -206,6 +237,7 @@ export default function AccountSidebar() {
     if (features === null) return !BusinessID;
     return features[key] === true;
   };
+  const anyOn = (...keys) => keys.some(k => on(k));
 
   useEffect(() => {
     if (location.pathname.startsWith('/website/')) {
@@ -315,16 +347,9 @@ export default function AccountSidebar() {
               )}
             </div>
 
-        {on('blog') && (
-          <NavSection icon={ICONS.blog} label={t('account_sidebar.sec_blog')} expanded={Expanded}
-            isOpen={OpenSections['Blog'] || false} onToggle={() => toggleSection('Blog')}>
-            <NavChild to={`/blog/manage?BusinessID=${BusinessID}`} label={t('account_sidebar.manage_blog')} />
-            <NavChild to={`/blog/manage?BusinessID=${BusinessID}&view=new`} label={t('account_sidebar.add_post')} />
-            <NavChild to={`/blog/manage?BusinessID=${BusinessID}&tab=categories`} label={t('account_sidebar.blog_categories')} />
-            <NavChild to={`/blog/authors/manage?BusinessID=${BusinessID}`} label={t('account_sidebar.authors')} />
-          </NavSection>
-        )}
-
+        {/* ── Grouped feature navigation ── */}
+        {anyOn('agro_consultations','ca_storage','chilling_hours','cold_chain','compliance_audit','crop_budgeting','crop_planning','csa_advanced','csa_management','delivery_routes','enterprise_supply_chain','equipment_maint','export_compliance','farm_infrastructure','farm_inputs','farm_kpi','farm_safety','farmer_settlement','field_activity_journal','field_health_dashboard','food_aggregation','grain_bin_monitoring','harvest_bins','harvest_scheduling','hr_management','iot_greenhouse','irrigation_mgmt','livestock','nursery_management','nutrient_mgmt','outgrower_management','packhouse_qc','perishable_traceability','pest_scouting','picker_performance','plant_tagging','precision_ag','procurement','rosemarie','scale_tickets','seed_varieties','soil_tests','spray_applications','traceability','weather_dashboard','work_orders','yield_records') && (
+        <NavGroup icon={ICONS.navGroup} label="Farm Operations" expanded={Expanded} isOpen={OpenSections['g_farmops'] || false} onToggle={() => toggleSection('g_farmops')}>
         {on('precision_ag') && (
           <NavSection icon={ICONS.precisionAg} label={t('account_sidebar.sec_precision_ag')} expanded={Expanded}
             isOpen={OpenSections['Precision Ag'] || false} onToggle={() => toggleSection('Precision Ag')}>
@@ -371,15 +396,16 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        {on('farm_2_table') && (
-          <NavSection icon={ICONS.farm2table} label={t('account_sidebar.sec_farm_2_table')} expanded={Expanded}
-            isOpen={OpenSections['Farm 2 Table'] || false} onToggle={() => toggleSection('Farm 2 Table')}>
-            <NavChild to={`/seller/orders?BusinessID=${BusinessID}`} label={t('account_sidebar.incoming_orders')} />
-            <NavChild to="/farm/standing-orders" label={t('account_sidebar.standing_orders')} />
-            <NavChild to={`/account/stripe-connect?BusinessID=${BusinessID}`} label={t('account_sidebar.stripe_payouts')} />
-            <NavChild to={`/produce/inventory?BusinessID=${BusinessID}`} label={t('account_sidebar.produce')} />
-            <NavChild to={`/produce/processed-food?BusinessID=${BusinessID}`} label={t('account_sidebar.processed_foods')} />
-            <NavChild to={`/produce/meat?BusinessID=${BusinessID}`} label={t('account_sidebar.meat')} />
+        {on('livestock') && (
+          <NavSection icon={ICONS.livestock} label={t('account_sidebar.sec_livestock')} expanded={Expanded}
+            isOpen={OpenSections.Livestock || false} onToggle={() => toggleSection('Livestock')}>
+            <NavChild to={`/animals?BusinessID=${BusinessID}`} label={t('account_sidebar.animals_list')} />
+            <NavChild to={`/animals/add?BusinessID=${BusinessID}`} label={t('account_sidebar.add')} />
+            <NavChild to={`/animals/delete?BusinessID=${BusinessID}`} label={t('account_sidebar.delete')} />
+            <NavChild to={`/animals/transfer?BusinessID=${BusinessID}`} label={t('account_sidebar.transfer')} />
+            <NavChild to={`/animals/packages?BusinessID=${BusinessID}`} label={t('account_sidebar.packages')} />
+            <NavChild to={`/animals/stats?BusinessID=${BusinessID}`} label={t('account_sidebar.statistics')} />
+            <NavChild to={`/herd-health?BusinessID=${BusinessID}`} label="Herd Health" />
           </NavSection>
         )}
 
@@ -389,40 +415,6 @@ export default function AccountSidebar() {
             <NavChild to={`/recipes?BusinessID=${BusinessID}`} label="Recipe Manager" />
             <NavChild to={`/batches?BusinessID=${BusinessID}`} label="Batch Tracker" />
             <NavChild to={`/platform/rosemarie?BusinessID=${BusinessID}`} label="About Rosemarie" />
-          </NavSection>
-        )}
-
-        {on('restaurant_sourcing') && (
-          <NavSection icon={ICONS.restaurant} label={t('account_sidebar.sec_restaurant')} expanded={Expanded}
-            isOpen={OpenSections['Restaurant Sourcing'] || false} onToggle={() => toggleSection('Restaurant Sourcing')}>
-            <NavChild to="/marketplaces/farm-to-table" label={t('account_sidebar.browse_marketplace')} />
-            <NavChild to="/restaurant/standing-orders" label={t('account_sidebar.standing_orders')} />
-            <NavChild to="/restaurant/farms"           label={t('account_sidebar.saved_farms')} />
-            <NavChild to="/restaurant/digest"          label={t('account_sidebar.weekly_digest')} />
-          </NavSection>
-        )}
-
-        {on('equipment') && (
-          <NavSection icon={ICONS.equipment} label="Equipment" expanded={Expanded}
-            isOpen={OpenSections['Equipment'] || false} onToggle={() => toggleSection('Equipment')}>
-            <NavChild to="/marketplaces/equipment" label="Browse Equipment" />
-            <NavChild to={`/equipment/my-listings?BusinessID=${BusinessID}`} label="My Listings" />
-          </NavSection>
-        )}
-
-        {on('food_wanted') && (
-          <NavSection icon={ICONS.foodWanted} label="Food Wanted" expanded={Expanded}
-            isOpen={OpenSections['Food Wanted'] || false} onToggle={() => toggleSection('Food Wanted')}>
-            <NavChild to="/marketplaces/food-wanted" label="Browse Wanted Ads" />
-            <NavChild to={`/food-wanted/my-ads?BusinessID=${BusinessID}`} label="My Ads" />
-          </NavSection>
-        )}
-
-        {on('job_board') && (
-          <NavSection icon={ICONS.jobBoard} label="Job Board" expanded={Expanded}
-            isOpen={OpenSections['Job Board'] || false} onToggle={() => toggleSection('Job Board')}>
-            <NavChild to="/jobs" label="Browse Jobs" />
-            <NavChild to={`/jobs/my-listings?BusinessID=${BusinessID}`} label="My Job Listings" />
           </NavSection>
         )}
 
@@ -450,55 +442,15 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        {on('land_leasing') && (
-          <NavSection icon={ICONS.landLeasing} label="Land Leasing" expanded={Expanded}
-            isOpen={OpenSections['Land Leasing'] || false} onToggle={() => toggleSection('Land Leasing')}>
-            <NavChild to="/land" label="Browse Listings" />
-            <NavChild to={`/land/my-listings?BusinessID=${BusinessID}`} label="My Listings" />
-          </NavSection>
-        )}
-
-        {on('certifications') && (
-          <NavSection icon={ICONS.certifications} label="Certifications" expanded={Expanded}
-            isOpen={OpenSections['Certifications'] || false} onToggle={() => toggleSection('Certifications')}>
-            <NavChild to={`/certifications?BusinessID=${BusinessID}`} label="My Certifications" />
-          </NavSection>
-        )}
-
-        {on('supplier_directory') && (
-          <NavSection icon={ICONS.suppliers} label="Supplier Directory" expanded={Expanded}
-            isOpen={OpenSections['Supplier Directory'] || false} onToggle={() => toggleSection('Supplier Directory')}>
-            <NavChild to="/suppliers" label="Browse Suppliers" />
-          </NavSection>
-        )}
-
-        {on('grants_programs') && (
-          <NavSection icon={ICONS.grants} label="Grants & Programs" expanded={Expanded}
-            isOpen={OpenSections['Grants & Programs'] || false} onToggle={() => toggleSection('Grants & Programs')}>
-            <NavChild to="/grants" label="Browse Programs" />
-            <NavChild to={`/grants?tab=my-tracking&BusinessID=${BusinessID}`} label="My Tracker" />
-          </NavSection>
-        )}
-
-        {on('education_center') && (
-          <NavSection icon={ICONS.education} label="Education Center" expanded={Expanded}
-            isOpen={OpenSections['Education Center'] || false} onToggle={() => toggleSection('Education Center')}>
-            <NavChild to="/education" label="Courses & Articles" />
-          </NavSection>
-        )}
-
-        {on('commodity_prices') && (
-          <NavSection icon={ICONS.commodityPrices} label="Commodity Prices" expanded={Expanded}
-            isOpen={OpenSections['Commodity Prices'] || false} onToggle={() => toggleSection('Commodity Prices')}>
-            <NavChild to="/commodity-prices" label="Market Prices" />
-          </NavSection>
-        )}
-
-        {on('forums') && (
-          <NavSection icon={ICONS.forums} label="Forums" expanded={Expanded}
-            isOpen={OpenSections['Forums'] || false} onToggle={() => toggleSection('Forums')}>
-            <NavChild to="/forums" label="Browse Forums" />
-            <NavChild to="/over-the-fence" label="Over the Fence DM" />
+        {on('food_aggregation') && (
+          <NavSection icon={ICONS.foodAgg} label={t('account_sidebar.sec_food_agg')} expanded={Expanded}
+            isOpen={OpenSections['Food Aggregation'] || false} onToggle={() => toggleSection('Food Aggregation')}>
+            <NavChild to={`/aggregator?BusinessID=${BusinessID}`}           label={t('account_sidebar.hub_dashboard')} />
+            <NavChild to={`/aggregator/farms?BusinessID=${BusinessID}`}     label={t('account_sidebar.farm_network')} />
+            <NavChild to={`/aggregator/produce?BusinessID=${BusinessID}`}   label={t('account_sidebar.procurement')} />
+            <NavChild to={`/aggregator/logistics?BusinessID=${BusinessID}`} label={t('account_sidebar.logistics')} />
+            <NavChild to={`/aggregator/sales?BusinessID=${BusinessID}`}     label={t('account_sidebar.b2b_sales')} />
+            <NavChild to={`/aggregator/esg?BusinessID=${BusinessID}`}       label={t('account_sidebar.esg_reports')} />
           </NavSection>
         )}
 
@@ -691,16 +643,119 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        {on('livestock') && (
-          <NavSection icon={ICONS.livestock} label={t('account_sidebar.sec_livestock')} expanded={Expanded}
-            isOpen={OpenSections.Livestock || false} onToggle={() => toggleSection('Livestock')}>
-            <NavChild to={`/animals?BusinessID=${BusinessID}`} label={t('account_sidebar.animals_list')} />
-            <NavChild to={`/animals/add?BusinessID=${BusinessID}`} label={t('account_sidebar.add')} />
-            <NavChild to={`/animals/delete?BusinessID=${BusinessID}`} label={t('account_sidebar.delete')} />
-            <NavChild to={`/animals/transfer?BusinessID=${BusinessID}`} label={t('account_sidebar.transfer')} />
-            <NavChild to={`/animals/packages?BusinessID=${BusinessID}`} label={t('account_sidebar.packages')} />
-            <NavChild to={`/animals/stats?BusinessID=${BusinessID}`} label={t('account_sidebar.statistics')} />
-            <NavChild to={`/herd-health?BusinessID=${BusinessID}`} label="Herd Health" />
+        {on('weather_dashboard') && (
+          <NavSection icon={ICONS.weather} label="Weather & Climate" expanded={Expanded}
+            isOpen={OpenSections['Weather'] || false} onToggle={() => toggleSection('Weather')}>
+            <NavChild to={`/weather?BusinessID=${BusinessID}`} label="Current Forecast" />
+            <NavChild to={`/weather?BusinessID=${BusinessID}`} label="Change Location" />
+          </NavSection>
+        )}
+
+        {on('farm_safety') && (
+          <NavSection icon={ICONS.farmSafety} label="Farm Safety" expanded={Expanded}
+            isOpen={OpenSections['Farm Safety'] || false} onToggle={() => toggleSection('Farm Safety')}>
+            <NavChild to={`/farm-safety?BusinessID=${BusinessID}`} label="Incidents" />
+            <NavChild to={`/farm-safety?BusinessID=${BusinessID}&tab=checklists`} label="Checklists" />
+            <NavChild to={`/farm-safety?BusinessID=${BusinessID}&tab=sds`} label="Chemical SDS" />
+          </NavSection>
+        )}
+
+        {on('compliance_audit') && (
+          <NavSection icon={ICONS.complianceAudit} label="Compliance & Audit" expanded={Expanded}
+            isOpen={OpenSections['ComplianceAudit'] || false} onToggle={() => toggleSection('ComplianceAudit')}>
+            <NavChild to={`/compliance?BusinessID=${BusinessID}`} label="Audits" />
+            <NavChild to={`/compliance?BusinessID=${BusinessID}&tab=checklists`} label="Checklists" />
+            <NavChild to={`/compliance?BusinessID=${BusinessID}&tab=cars`} label="Corrective Actions" />
+          </NavSection>
+        )}
+
+        {on('harvest_scheduling') && (
+          <NavSection icon={ICONS.harvestSchedule} label="Harvest Scheduling" expanded={Expanded}
+            isOpen={OpenSections['HarvestSchedule'] || false} onToggle={() => toggleSection('HarvestSchedule')}>
+            <NavChild to={`/harvest-schedule?BusinessID=${BusinessID}`} label="Calendar" />
+            <NavChild to={`/harvest-schedule?BusinessID=${BusinessID}&view=list`} label="Schedule List" />
+          </NavSection>
+        )}
+
+        {on('delivery_routes') && (
+          <NavSection icon={ICONS.deliveryRoutes} label="Delivery Routes" expanded={Expanded}
+            isOpen={OpenSections['DeliveryRoutes'] || false} onToggle={() => toggleSection('DeliveryRoutes')}>
+            <NavChild to={`/delivery-routes?BusinessID=${BusinessID}`} label="Routes" />
+            <NavChild to={`/delivery-routes?BusinessID=${BusinessID}&filter=In Progress`} label="Active Routes" />
+          </NavSection>
+        )}
+
+        {on('agro_consultations') && (
+          <NavSection icon={ICONS.agroConsult} label="Agro Consultations" expanded={Expanded}
+            isOpen={OpenSections['AgroConsult'] || false} onToggle={() => toggleSection('AgroConsult')}>
+            <NavChild to={`/agro-consult?BusinessID=${BusinessID}`} label="Consultations" />
+            <NavChild to={`/agro-consult?BusinessID=${BusinessID}&tab=recommendations`} label="Recommendations" />
+          </NavSection>
+        )}
+
+        </NavGroup>
+        )}
+
+        {anyOn('buyer_crm','equipment','farm_2_table','farm_stand','food_wanted','job_board','land_leasing','price_list','products','restaurant_sourcing','services','supplier_directory') && (
+        <NavGroup icon={ICONS.navGroup} label="Marketplace" expanded={Expanded} isOpen={OpenSections['g_market'] || false} onToggle={() => toggleSection('g_market')}>
+        {on('farm_2_table') && (
+          <NavSection icon={ICONS.farm2table} label={t('account_sidebar.sec_farm_2_table')} expanded={Expanded}
+            isOpen={OpenSections['Farm 2 Table'] || false} onToggle={() => toggleSection('Farm 2 Table')}>
+            <NavChild to={`/seller/orders?BusinessID=${BusinessID}`} label={t('account_sidebar.incoming_orders')} />
+            <NavChild to="/farm/standing-orders" label={t('account_sidebar.standing_orders')} />
+            <NavChild to={`/account/stripe-connect?BusinessID=${BusinessID}`} label={t('account_sidebar.stripe_payouts')} />
+            <NavChild to={`/produce/inventory?BusinessID=${BusinessID}`} label={t('account_sidebar.produce')} />
+            <NavChild to={`/produce/processed-food?BusinessID=${BusinessID}`} label={t('account_sidebar.processed_foods')} />
+            <NavChild to={`/produce/meat?BusinessID=${BusinessID}`} label={t('account_sidebar.meat')} />
+          </NavSection>
+        )}
+
+        {on('restaurant_sourcing') && (
+          <NavSection icon={ICONS.restaurant} label={t('account_sidebar.sec_restaurant')} expanded={Expanded}
+            isOpen={OpenSections['Restaurant Sourcing'] || false} onToggle={() => toggleSection('Restaurant Sourcing')}>
+            <NavChild to="/marketplaces/farm-to-table" label={t('account_sidebar.browse_marketplace')} />
+            <NavChild to="/restaurant/standing-orders" label={t('account_sidebar.standing_orders')} />
+            <NavChild to="/restaurant/farms"           label={t('account_sidebar.saved_farms')} />
+            <NavChild to="/restaurant/digest"          label={t('account_sidebar.weekly_digest')} />
+          </NavSection>
+        )}
+
+        {on('equipment') && (
+          <NavSection icon={ICONS.equipment} label="Equipment" expanded={Expanded}
+            isOpen={OpenSections['Equipment'] || false} onToggle={() => toggleSection('Equipment')}>
+            <NavChild to="/marketplaces/equipment" label="Browse Equipment" />
+            <NavChild to={`/equipment/my-listings?BusinessID=${BusinessID}`} label="My Listings" />
+          </NavSection>
+        )}
+
+        {on('food_wanted') && (
+          <NavSection icon={ICONS.foodWanted} label="Food Wanted" expanded={Expanded}
+            isOpen={OpenSections['Food Wanted'] || false} onToggle={() => toggleSection('Food Wanted')}>
+            <NavChild to="/marketplaces/food-wanted" label="Browse Wanted Ads" />
+            <NavChild to={`/food-wanted/my-ads?BusinessID=${BusinessID}`} label="My Ads" />
+          </NavSection>
+        )}
+
+        {on('job_board') && (
+          <NavSection icon={ICONS.jobBoard} label="Job Board" expanded={Expanded}
+            isOpen={OpenSections['Job Board'] || false} onToggle={() => toggleSection('Job Board')}>
+            <NavChild to="/jobs" label="Browse Jobs" />
+            <NavChild to={`/jobs/my-listings?BusinessID=${BusinessID}`} label="My Job Listings" />
+          </NavSection>
+        )}
+
+        {on('land_leasing') && (
+          <NavSection icon={ICONS.landLeasing} label="Land Leasing" expanded={Expanded}
+            isOpen={OpenSections['Land Leasing'] || false} onToggle={() => toggleSection('Land Leasing')}>
+            <NavChild to="/land" label="Browse Listings" />
+            <NavChild to={`/land/my-listings?BusinessID=${BusinessID}`} label="My Listings" />
+          </NavSection>
+        )}
+
+        {on('supplier_directory') && (
+          <NavSection icon={ICONS.suppliers} label="Supplier Directory" expanded={Expanded}
+            isOpen={OpenSections['Supplier Directory'] || false} onToggle={() => toggleSection('Supplier Directory')}>
+            <NavChild to="/suppliers" label="Browse Suppliers" />
           </NavSection>
         )}
 
@@ -724,6 +779,54 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
+        {on('price_list') && (
+          <NavSection icon={ICONS.priceList} label="Price Lists & Quotes" expanded={Expanded}
+            isOpen={OpenSections['PriceList'] || false} onToggle={() => toggleSection('PriceList')}>
+            <NavChild to={`/price-list?BusinessID=${BusinessID}`} label="Price Lists" />
+            <NavChild to={`/price-list?BusinessID=${BusinessID}&tab=quotes`} label="Quotes" />
+          </NavSection>
+        )}
+
+        {on('farm_stand') && (
+          <NavSection icon={ICONS.farmStand} label="Farm Stand POS" expanded={Expanded}
+            isOpen={OpenSections['FarmStand'] || false} onToggle={() => toggleSection('FarmStand')}>
+            <NavChild to={`/farm-stand?BusinessID=${BusinessID}`} label="Sessions" />
+            <NavChild to={`/farm-stand?BusinessID=${BusinessID}&tab=products`} label="Products" />
+          </NavSection>
+        )}
+
+        {on('buyer_crm') && (
+          <NavSection icon={ICONS.buyerCRM} label="Buyer CRM" expanded={Expanded}
+            isOpen={OpenSections['BuyerCRM'] || false} onToggle={() => toggleSection('BuyerCRM')}>
+            <NavChild to={`/buyer-crm?BusinessID=${BusinessID}`} label="Contacts" />
+            <NavChild to={`/buyer-crm?BusinessID=${BusinessID}&tab=interactions`} label="Interaction Log" />
+            <NavChild to={`/buyer-crm?BusinessID=${BusinessID}&tab=pricing`} label="Pricing Agreements" />
+          </NavSection>
+        )}
+
+        </NavGroup>
+        )}
+
+        {anyOn('blog','chef_dashboard','events','forums','pairsley','properties','provenance','testimonials') && (
+        <NavGroup icon={ICONS.navGroup} label="Community" expanded={Expanded} isOpen={OpenSections['g_community'] || false} onToggle={() => toggleSection('g_community')}>
+        {on('blog') && (
+          <NavSection icon={ICONS.blog} label={t('account_sidebar.sec_blog')} expanded={Expanded}
+            isOpen={OpenSections['Blog'] || false} onToggle={() => toggleSection('Blog')}>
+            <NavChild to={`/blog/manage?BusinessID=${BusinessID}`} label={t('account_sidebar.manage_blog')} />
+            <NavChild to={`/blog/manage?BusinessID=${BusinessID}&view=new`} label={t('account_sidebar.add_post')} />
+            <NavChild to={`/blog/manage?BusinessID=${BusinessID}&tab=categories`} label={t('account_sidebar.blog_categories')} />
+            <NavChild to={`/blog/authors/manage?BusinessID=${BusinessID}`} label={t('account_sidebar.authors')} />
+          </NavSection>
+        )}
+
+        {on('forums') && (
+          <NavSection icon={ICONS.forums} label="Forums" expanded={Expanded}
+            isOpen={OpenSections['Forums'] || false} onToggle={() => toggleSection('Forums')}>
+            <NavChild to="/forums" label="Browse Forums" />
+            <NavChild to="/over-the-fence" label="Over the Fence DM" />
+          </NavSection>
+        )}
+
         {on('events') && (
           <NavSection icon={ICONS.events} label={t('account_sidebar.sec_events')} expanded={Expanded}
             isOpen={OpenSections.Events || false} onToggle={() => toggleSection('Events')}>
@@ -731,18 +834,6 @@ export default function AccountSidebar() {
             <NavChild to={`/events/manage?BusinessID=${BusinessID}`} label={t('account_sidebar.my_events')} />
             <NavChild to={`/events/add?BusinessID=${BusinessID}`} label={t('account_sidebar.add_event')} />
             <NavChild to="/my-registrations" label={t('account_sidebar.my_registrations')} />
-          </NavSection>
-        )}
-
-        {on('food_aggregation') && (
-          <NavSection icon={ICONS.foodAgg} label={t('account_sidebar.sec_food_agg')} expanded={Expanded}
-            isOpen={OpenSections['Food Aggregation'] || false} onToggle={() => toggleSection('Food Aggregation')}>
-            <NavChild to={`/aggregator?BusinessID=${BusinessID}`}           label={t('account_sidebar.hub_dashboard')} />
-            <NavChild to={`/aggregator/farms?BusinessID=${BusinessID}`}     label={t('account_sidebar.farm_network')} />
-            <NavChild to={`/aggregator/produce?BusinessID=${BusinessID}`}   label={t('account_sidebar.procurement')} />
-            <NavChild to={`/aggregator/logistics?BusinessID=${BusinessID}`} label={t('account_sidebar.logistics')} />
-            <NavChild to={`/aggregator/sales?BusinessID=${BusinessID}`}     label={t('account_sidebar.b2b_sales')} />
-            <NavChild to={`/aggregator/esg?BusinessID=${BusinessID}`}       label={t('account_sidebar.esg_reports')} />
           </NavSection>
         )}
 
@@ -771,6 +862,45 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
+        </NavGroup>
+        )}
+
+        {anyOn('certifications','commodity_prices','education_center','grants_programs') && (
+        <NavGroup icon={ICONS.navGroup} label="Programs" expanded={Expanded} isOpen={OpenSections['g_programs'] || false} onToggle={() => toggleSection('g_programs')}>
+        {on('certifications') && (
+          <NavSection icon={ICONS.certifications} label="Certifications" expanded={Expanded}
+            isOpen={OpenSections['Certifications'] || false} onToggle={() => toggleSection('Certifications')}>
+            <NavChild to={`/certifications?BusinessID=${BusinessID}`} label="My Certifications" />
+          </NavSection>
+        )}
+
+        {on('grants_programs') && (
+          <NavSection icon={ICONS.grants} label="Grants & Programs" expanded={Expanded}
+            isOpen={OpenSections['Grants & Programs'] || false} onToggle={() => toggleSection('Grants & Programs')}>
+            <NavChild to="/grants" label="Browse Programs" />
+            <NavChild to={`/grants?tab=my-tracking&BusinessID=${BusinessID}`} label="My Tracker" />
+          </NavSection>
+        )}
+
+        {on('education_center') && (
+          <NavSection icon={ICONS.education} label="Education Center" expanded={Expanded}
+            isOpen={OpenSections['Education Center'] || false} onToggle={() => toggleSection('Education Center')}>
+            <NavChild to="/education" label="Courses & Articles" />
+          </NavSection>
+        )}
+
+        {on('commodity_prices') && (
+          <NavSection icon={ICONS.commodityPrices} label="Commodity Prices" expanded={Expanded}
+            isOpen={OpenSections['Commodity Prices'] || false} onToggle={() => toggleSection('Commodity Prices')}>
+            <NavChild to="/commodity-prices" label="Market Prices" />
+          </NavSection>
+        )}
+
+        </NavGroup>
+        )}
+
+        {anyOn('accounting','cash_flow_forecast','document_vault','farm_pl','meetings','my_website','report_center') && (
+        <NavGroup icon={ICONS.navGroup} label="Business Mgmt" expanded={Expanded} isOpen={OpenSections['g_business'] || false} onToggle={() => toggleSection('g_business')}>
         {on('my_website') && (
           <NavSection icon={ICONS.website} label={t('account_sidebar.sec_website')} expanded={Expanded}
             isOpen={OpenSections['My Website'] || false} onToggle={() => toggleSection('My Website')}>
@@ -826,73 +956,6 @@ export default function AccountSidebar() {
         )}
 
 
-        {on('weather_dashboard') && (
-          <NavSection icon={ICONS.weather} label="Weather & Climate" expanded={Expanded}
-            isOpen={OpenSections['Weather'] || false} onToggle={() => toggleSection('Weather')}>
-            <NavChild to={`/weather?BusinessID=${BusinessID}`} label="Current Forecast" />
-            <NavChild to={`/weather?BusinessID=${BusinessID}`} label="Change Location" />
-          </NavSection>
-        )}
-
-        {on('farm_safety') && (
-          <NavSection icon={ICONS.farmSafety} label="Farm Safety" expanded={Expanded}
-            isOpen={OpenSections['Farm Safety'] || false} onToggle={() => toggleSection('Farm Safety')}>
-            <NavChild to={`/farm-safety?BusinessID=${BusinessID}`} label="Incidents" />
-            <NavChild to={`/farm-safety?BusinessID=${BusinessID}&tab=checklists`} label="Checklists" />
-            <NavChild to={`/farm-safety?BusinessID=${BusinessID}&tab=sds`} label="Chemical SDS" />
-          </NavSection>
-        )}
-
-        {on('buyer_crm') && (
-          <NavSection icon={ICONS.buyerCRM} label="Buyer CRM" expanded={Expanded}
-            isOpen={OpenSections['BuyerCRM'] || false} onToggle={() => toggleSection('BuyerCRM')}>
-            <NavChild to={`/buyer-crm?BusinessID=${BusinessID}`} label="Contacts" />
-            <NavChild to={`/buyer-crm?BusinessID=${BusinessID}&tab=interactions`} label="Interaction Log" />
-            <NavChild to={`/buyer-crm?BusinessID=${BusinessID}&tab=pricing`} label="Pricing Agreements" />
-          </NavSection>
-        )}
-
-        {on('compliance_audit') && (
-          <NavSection icon={ICONS.complianceAudit} label="Compliance & Audit" expanded={Expanded}
-            isOpen={OpenSections['ComplianceAudit'] || false} onToggle={() => toggleSection('ComplianceAudit')}>
-            <NavChild to={`/compliance?BusinessID=${BusinessID}`} label="Audits" />
-            <NavChild to={`/compliance?BusinessID=${BusinessID}&tab=checklists`} label="Checklists" />
-            <NavChild to={`/compliance?BusinessID=${BusinessID}&tab=cars`} label="Corrective Actions" />
-          </NavSection>
-        )}
-
-        {on('harvest_scheduling') && (
-          <NavSection icon={ICONS.harvestSchedule} label="Harvest Scheduling" expanded={Expanded}
-            isOpen={OpenSections['HarvestSchedule'] || false} onToggle={() => toggleSection('HarvestSchedule')}>
-            <NavChild to={`/harvest-schedule?BusinessID=${BusinessID}`} label="Calendar" />
-            <NavChild to={`/harvest-schedule?BusinessID=${BusinessID}&view=list`} label="Schedule List" />
-          </NavSection>
-        )}
-
-        {on('price_list') && (
-          <NavSection icon={ICONS.priceList} label="Price Lists & Quotes" expanded={Expanded}
-            isOpen={OpenSections['PriceList'] || false} onToggle={() => toggleSection('PriceList')}>
-            <NavChild to={`/price-list?BusinessID=${BusinessID}`} label="Price Lists" />
-            <NavChild to={`/price-list?BusinessID=${BusinessID}&tab=quotes`} label="Quotes" />
-          </NavSection>
-        )}
-
-        {on('farm_stand') && (
-          <NavSection icon={ICONS.farmStand} label="Farm Stand POS" expanded={Expanded}
-            isOpen={OpenSections['FarmStand'] || false} onToggle={() => toggleSection('FarmStand')}>
-            <NavChild to={`/farm-stand?BusinessID=${BusinessID}`} label="Sessions" />
-            <NavChild to={`/farm-stand?BusinessID=${BusinessID}&tab=products`} label="Products" />
-          </NavSection>
-        )}
-
-        {on('delivery_routes') && (
-          <NavSection icon={ICONS.deliveryRoutes} label="Delivery Routes" expanded={Expanded}
-            isOpen={OpenSections['DeliveryRoutes'] || false} onToggle={() => toggleSection('DeliveryRoutes')}>
-            <NavChild to={`/delivery-routes?BusinessID=${BusinessID}`} label="Routes" />
-            <NavChild to={`/delivery-routes?BusinessID=${BusinessID}&filter=In Progress`} label="Active Routes" />
-          </NavSection>
-        )}
-
         {on('meetings') && (
           <NavSection icon={ICONS.meetings} label="Meetings" expanded={Expanded}
             isOpen={OpenSections['Meetings'] || false} onToggle={() => toggleSection('Meetings')}>
@@ -902,14 +965,10 @@ export default function AccountSidebar() {
           </NavSection>
         )}
 
-        {on('agro_consultations') && (
-          <NavSection icon={ICONS.agroConsult} label="Agro Consultations" expanded={Expanded}
-            isOpen={OpenSections['AgroConsult'] || false} onToggle={() => toggleSection('AgroConsult')}>
-            <NavChild to={`/agro-consult?BusinessID=${BusinessID}`} label="Consultations" />
-            <NavChild to={`/agro-consult?BusinessID=${BusinessID}&tab=recommendations`} label="Recommendations" />
-          </NavSection>
+        </NavGroup>
         )}
 
+        <NavGroup icon={ICONS.navGroup} label="Administration" expanded={Expanded} isOpen={OpenSections['g_admin'] || false} onToggle={() => toggleSection('g_admin')}>
         <NavSection icon={ICONS.permissions} label="Roles & Permissions" expanded={Expanded}
           isOpen={OpenSections['Permissions'] || false} onToggle={() => toggleSection('Permissions')}>
           <NavChild to={`/permissions?BusinessID=${BusinessID}`} label="Roles" />
@@ -924,6 +983,8 @@ export default function AccountSidebar() {
           <NavChild to={`/account/subscription?BusinessID=${BusinessID}`} label={t('account_sidebar.subscription')} />
           <NavChild to={`/account/delete?BusinessID=${BusinessID}`} label={t('account_sidebar.delete_account')} />
         </NavSection>
+
+        </NavGroup>
 
           </nav>
         </>

@@ -10,13 +10,20 @@
  *        auto-speak toggle in the header.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import AgentBadge from './AgentBadge';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
 import { useLanguage } from './LanguageContext';
 
-const SAIGE_API   = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
+function normalizeSaigeApiBase(rawValue) {
+  const value = (rawValue || 'http://localhost:8000/saige').trim();
+  if (!value) return 'http://localhost:8000/saige';
+  return value.replace(/\/+$/, '').replace(/\/saige\/?$/, '');
+}
+
+const SAIGE_API   = normalizeSaigeApiBase(import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige');
 const SAIGE_GREEN = '#3D6B34';
 const SAIGE_DARK  = '#2c4f25';
 const SAIGE_LIGHT = '#f0f7ee';
@@ -552,7 +559,14 @@ function ChatPanel({ businessId, fieldId, pageContext, language, onClose, onFull
           body,
         });
         if (!res.ok) throw new Error(`Server error (${res.status})`);
-        const data = await res.json();
+        let parsedBody = null;
+        try {
+          const bodyText = await res.text();
+          parsedBody = bodyText ? JSON.parse(bodyText) : null;
+        } catch {
+          parsedBody = null;
+        }
+        const data = parsedBody && typeof parsedBody === 'object' ? parsedBody : {};
         let reply = '';
         if (data.status === 'complete') {
           reply = (data.diagnosis || '').replace(/\*\*/g, '').replace(/##\s+/g, '').replace(/\*/g, '').trim();
@@ -856,15 +870,12 @@ export default function SaigeWidget({ businessId: propBusinessId, fieldId, pageC
     <>
       {/* FAB launcher */}
       {createPortal(
+        <AgentBadge bottom={20} baseRight={20} zIndex={9998}>
         <button
           onClick={() => setOpen(v => !v)}
           aria-label="Open Saige AI assistant"
           title="Ask Saige"
           style={{
-            position: 'fixed',
-            bottom: 20,
-            right: 20,
-            zIndex: 9998,
             width: 62,
             height: 62,
             borderRadius: '50%',
@@ -883,7 +894,8 @@ export default function SaigeWidget({ businessId: propBusinessId, fieldId, pageC
             alt="Saige"
             style={{ width: 62, height: 62, borderRadius: '50%', objectFit: 'cover', display: 'block' }}
           />
-        </button>,
+        </button>
+        </AgentBadge>,
         document.body,
       )}
 
