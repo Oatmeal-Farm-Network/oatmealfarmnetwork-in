@@ -10,7 +10,7 @@ const ALL_INDICES = [
   { key: 'NDRE',  label: 'NDRE',   desc: 'Nitrogen stress / red edge' },
   { key: 'EVI',   label: 'EVI',    desc: 'Enhanced vegetation' },
   { key: 'GNDVI', label: 'GNDVI',  desc: 'Chlorophyll concentration' },
-  { key: 'MSAVI2',label: 'MSAVI2', desc: 'Soil-adjusted vegetation' },
+  { key: 'MSAVI', label: 'MSAVI2', desc: 'Soil-adjusted vegetation' },
   { key: 'NDWI',  label: 'NDWI',   desc: 'Canopy water content' },
 ];
 
@@ -97,6 +97,8 @@ function PanelIndexSelector({ value, onChange, label }) {
 }
 
 function MapPanel({ panelIdx, indexKey, onIndexChange, analysis, fieldId, analysisDate }) {
+  const { t } = useTranslation();
+  const pa = k => t(`precision_ag.${k}`);
   const indexData = getIndex(analysis, indexKey);
   const cfg = ALL_INDICES.find(c => c.key === indexKey);
 

@@ -44,6 +44,7 @@ const ICONS = {
   activityLog:    <S><line x1="5" y1="4" x2="13" y2="4"/><line x1="5" y1="8" x2="13" y2="8"/><line x1="5" y1="12" x2="13" y2="12"/><circle cx="2.5" cy="4" r="0.8" fill="currentColor" stroke="none"/><circle cx="2.5" cy="8" r="0.8" fill="currentColor" stroke="none"/><circle cx="2.5" cy="12" r="0.8" fill="currentColor" stroke="none"/></S>,
   allFields:      <S><line x1="14" y1="8" x2="2" y2="8"/><polyline points="6,4 2,8 6,12"/></S>,
   statistics:     <S><line x1="2" y1="14" x2="2" y2="2"/><line x1="2" y1="14" x2="14" y2="14"/><circle cx="5" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="7" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="9" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="5" r="1" fill="currentColor" stroke="none"/><line x1="3" y1="12" x2="13" y2="4"/></S>,
+  scouting:       <S><circle cx="6.5" cy="6.5" r="4.5"/><line x1="9.9" y1="9.9" x2="14" y2="14"/></S>,
 };
 
 const SECTIONS = [
@@ -55,6 +56,7 @@ const SECTIONS = [
       { icon: ICONS.soilSamples,   tKey: 'item_soil_samples',  path: '/precision-ag/soil-samples' },
       { icon: ICONS.zoning,        tKey: 'item_zoning',        path: '/precision-ag/analysis/zoning' },
       { icon: ICONS.prescriptions, tKey: 'item_prescriptions', path: '/precision-ag/prescriptions' },
+      { icon: ICONS.scouting,      tKey: 'item_field_scouting', path: '/precision-ag/field-scouting' },
     ],
   },
   {

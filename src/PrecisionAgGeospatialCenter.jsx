@@ -22,7 +22,7 @@ const ALL_INDICES = [
   { key: 'NDRE',   label: 'NDRE',   desc: 'Nitrogen stress / red edge' },
   { key: 'EVI',    label: 'EVI',    desc: 'Enhanced vegetation' },
   { key: 'GNDVI',  label: 'GNDVI',  desc: 'Chlorophyll concentration' },
-  { key: 'MSAVI2', label: 'MSAVI2', desc: 'Soil-adjusted vegetation' },
+  { key: 'MSAVI', label: 'MSAVI2', desc: 'Soil-adjusted vegetation' },
   { key: 'NDWI',   label: 'NDWI',   desc: 'Canopy water content' },
 ];
 

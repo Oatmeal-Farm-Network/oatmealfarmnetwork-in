@@ -52,7 +52,7 @@ const INDEX_CONFIGS = [
     tip: 'Best for: estimating total chlorophyll and monitoring canopy aging. The green band is less affected by LAI saturation than the red band.',
   },
   {
-    key: 'MSAVI2', label: 'MSAVI2', desc: 'Soil-adjusted vegetation',
+    key: 'MSAVI', label: 'MSAVI2', desc: 'Soil-adjusted vegetation',
     range: '-1 to +1 (crops typically 0.1–0.7)',
     guide: [
       { range: '< 0.1',  meaning: 'Bare soil or dead material' },
@@ -157,6 +157,7 @@ function FieldMap({ fieldId, indexKey, analysisId = null, height = 420, onRaster
 // be making N redundant requests for the same scene. In that case we just
 // show the index mean as a colored chip.
 function DateThumbnail({ fieldId, indexKey, analysisId, satelliteAcquiredAt, indexData, date, cloudPercent, active, onClick }) {
+  const { t } = useTranslation();
   const canFetchScene = !!satelliteAcquiredAt;
   const { data, loading } = useRaster(fieldId, indexKey, 16, canFetchScene ? analysisId : null);
   const meanFallback = indexData ? indexColor(indexData.mean, indexData.min, indexData.max, indexKey) : '#E5E7EB';

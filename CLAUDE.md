@@ -8,10 +8,10 @@ React 18 + Vite + React Router + Tailwind. PWA (manifest + service worker `publi
 Production deploy: Cloud Run via `cloudbuild.yaml` (project `animated-flare-421518`, region `us-central1`).
 
 ## Related Repos
-- **Backend/oatmealfarmnetworkbackend** (`Backend/oatmealfarmnetworkbackend/`): main API — auth, marketplace, events, notifications, accounting, sponsorship, leads, COI, floor plan, booth services
-- **CropMonitoringBackend** (sibling of `Backend/`): satellite agronomy — fields, analyses, raster, zones, NDVI series. Mounted at `/cm` in the local unified backend
-- **Backend/oatmealfarmnetworkbackend/saige/**: Saige LangGraph agent + push API. Mounted at `/saige` in the local unified backend
-- **Backend/saige/**: legacy location — actually only holds `.env` files now (the code lives in `Backend/oatmealfarmnetworkbackend/saige/`)
+- **oatmealfarmnetworkbackend** (`../oatmealfarmnetworkbackend/`): main API — auth, marketplace, events, notifications, accounting, sponsorship, leads, COI, floor plan, booth services
+- **CropMonitoringBackend** (sibling of `../oatmealfarmnetworkbackend/`): satellite agronomy — fields, analyses, raster, zones, NDVI series. Mounted at `/cm` in the local unified backend
+- **oatmealfarmnetworkbackend/saige/**: Saige LangGraph agent + push API. Mounted at `/saige` in the local unified backend
+- **Backend/saige/**: legacy location — actually only holds `.env` files now (the code lives in `../oatmealfarmnetworkbackend/saige/`)
 
 ## API Contracts
 - **Local dev (one process):** `server_all.py` mounts everything at `http://localhost:8000` — main at root, `/saige/*`, `/cm/*`. See [memory/project_unified_local_backend.md].
@@ -33,11 +33,11 @@ npm install            # first time only
 npm run dev            # vite on http://localhost:5173
 
 # In a separate shell, run the unified backend (one process for everything):
-cd ../Backend/oatmealfarmnetworkbackend
+cd ../oatmealfarmnetworkbackend
 ../venv/Scripts/python.exe -m uvicorn server_all:app --reload --port 8000
 ```
 Vite proxies all API calls to `http://localhost:8000` (see `VITE_API_URL` in `.env.development`).
 
 ## Do Not Touch
 - `EventRegistration/` — legacy ASP scripts kept for reference; do not modify or import
-- The split `Backend/saige/.env` location (legacy); env vars belong here, not next to `Backend/oatmealfarmnetworkbackend/saige/.env`
+- The split `Backend/saige/.env` location (legacy); env vars belong here, not next to `../oatmealfarmnetworkbackend/saige/.env`

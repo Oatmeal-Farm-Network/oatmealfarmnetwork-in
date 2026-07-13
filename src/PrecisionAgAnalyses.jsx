@@ -1204,9 +1204,13 @@ function AnalyticsTab({ analyses, recommendations }) {
                         {new Date(a.analysis_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </td>
                       <td className="px-3 py-3 text-center">
-                        <span className={`font-bold ${a.health_score >= 70 ? 'text-green-600' : a.health_score >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
-                          {a.health_score}%
-                        </span>
+                        {a.health_score != null ? (
+                          <span className={`font-bold ${a.health_score >= 70 ? 'text-green-600' : a.health_score >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+                            {a.health_score}%
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
                       </td>
                       <td className="px-3 py-3 text-center text-gray-700">{ndvi?.toFixed(3) ?? '—'} <span className={`text-xs ${trendColor}`}>{trend}</span></td>
                       <td className="px-3 py-3 text-center text-gray-700">{ndre?.toFixed(3) ?? '—'}</td>
@@ -1772,7 +1776,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
             <div className="space-y-6">
               {latest ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <StatCard label="Health Score" value={`${latest.health_score}%`} sub={latest.status} bg="#f0f5e8" />
+                  <StatCard label="Health Score" value={latest.health_score != null ? `${latest.health_score}%` : 'N/A'} sub={latest.status} bg="#f0f5e8" />
                   <StatCard label="NDVI" value={getIndex(latest, 'NDVI')?.mean?.toFixed(2) ?? 'N/A'} sub={`Range ${getIndex(latest, 'NDVI')?.min?.toFixed(2) ?? '?'} – ${getIndex(latest, 'NDVI')?.max?.toFixed(2) ?? '?'}`} />
                   <StatCard label="Last Analysis" value={new Date(latest.analysis_date).toLocaleDateString()} sub={`Cloud ${latest.cloud_percent?.toFixed(1) ?? '?'}%`} />
                   <StatCard label="Analyses Run" value={analyses.length} sub="total records" />

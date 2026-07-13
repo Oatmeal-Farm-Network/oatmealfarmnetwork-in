@@ -435,7 +435,7 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
           field_size_hectares: field.field_size_hectares ?? '',
           crop_type: field.crop_type || '',
           planting_date: field.planting_date || '',
-          boundary_geojson: '',
+          boundary_geojson: field.boundary_geojson || '',
           monitoring_interval_days: field.monitoring_interval_days ?? 5,
           alert_threshold_health: field.alert_threshold_health ?? 50,
         });
@@ -511,6 +511,21 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
     drawnItemsRef.current = drawnItems;
+
+    // Render the field's previously-saved boundary (if any) so editing a
+    // field doesn't require redrawing it from scratch, and so re-submitting
+    // the form without touching the map keeps the existing polygon instead
+    // of wiping it out.
+    if (formData.boundary_geojson) {
+      try {
+        const existingLayer = L.geoJSON(JSON.parse(formData.boundary_geojson));
+        existingLayer.eachLayer(layer => drawnItems.addLayer(layer));
+        const bounds = drawnItems.getBounds();
+        if (bounds.isValid()) map.fitBounds(bounds, { padding: [20, 20] });
+      } catch {
+        // Malformed saved geometry — fall through and let the user redraw.
+      }
+    }
 
     const drawControl = new L.Control.Draw({
       draw: {
@@ -645,7 +660,7 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
               disabled={loading}
               className="px-8 py-2.5 bg-[#819360] hover:bg-[#3D6B35] disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors text-sm"
             >
-              {loading ? pa('btn_saving') : pa('btn_save_changes')}
+              {loading ? pa('btn_saving') : 'Save Field'}
             </button>
           </div>
         </form>
