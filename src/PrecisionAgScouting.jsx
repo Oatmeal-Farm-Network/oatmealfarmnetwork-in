@@ -189,9 +189,17 @@ export default function PrecisionAgScouting() {
 
   useEffect(() => { loadScouts(); }, [loadScouts]);
 
+  const [deleteError, setDeleteError] = useState('');
+
   const handleDelete = async (id) => {
-    await fetch(`${API_URL}/api/fields/${selectedFieldId}/scouts/${id}`, { method: 'DELETE' });
-    setScouts(s => s.filter(x => x.scout_id !== id));
+    setDeleteError('');
+    try {
+      const r = await fetch(`${API_URL}/api/fields/${selectedFieldId}/scouts/${id}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      setScouts(s => s.filter(x => x.scout_id !== id));
+    } catch {
+      setDeleteError(t('scouting.error_delete_failed', { defaultValue: 'Could not delete this observation. Please try again.' }));
+    }
   };
 
   const filtered = filterCat === 'All' ? scouts : scouts.filter(s => s.category === filterCat);
@@ -262,6 +270,9 @@ export default function PrecisionAgScouting() {
         )}
 
         {/* Observations */}
+        {deleteError && (
+          <div className="text-xs text-red-600 bg-red-50 rounded px-3 py-2 font-mont">{deleteError}</div>
+        )}
         {loading ? (
           <div className="flex items-center justify-center py-24 text-gray-400 font-mont text-sm animate-pulse">{t('scouting.loading')}</div>
         ) : filtered.length === 0 ? (

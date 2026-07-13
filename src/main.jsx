@@ -436,6 +436,7 @@ const FieldAssessmentReport = lazyWithReload(() => import('./FieldAssessmentRepo
 const PrecisionAgAlerts = lazyWithReload(() => import('./PrecisionAgAlerts.jsx'))
 const PrecisionAgGDD = lazyWithReload(() => import('./PrecisionAgGDD.jsx'))
 const PrecisionAgActivityLog = lazyWithReload(() => import('./PrecisionAgActivityLog.jsx'))
+const PrecisionAgScouting = lazyWithReload(() => import('./PrecisionAgScouting.jsx'))
 const PrecisionAgIrrigation = lazyWithReload(() => import('./PrecisionAgIrrigation.jsx'))
 const PrecisionAgYieldForecast = lazyWithReload(() => import('./PrecisionAgYieldForecast.jsx'))
 const PrecisionAgCarbon = lazyWithReload(() => import('./PrecisionAgCarbon.jsx'))
@@ -732,6 +733,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/precision-ag/alerts" element={<RequireAuth><PrecisionAgAlerts /></RequireAuth>} />
           <Route path="/precision-ag/gdd" element={<RequireAuth><PrecisionAgGDD /></RequireAuth>} />
           <Route path="/precision-ag/activity-log" element={<RequireAuth><PrecisionAgActivityLog /></RequireAuth>} />
+          <Route path="/precision-ag/field-scouting" element={<RequireAuth><PrecisionAgScouting /></RequireAuth>} />
           <Route path="/precision-ag/irrigation" element={<RequireAuth><PrecisionAgIrrigation /></RequireAuth>} />
           <Route path="/precision-ag/yield-forecast" element={<RequireAuth><PrecisionAgYieldForecast /></RequireAuth>} />
           <Route path="/precision-ag/carbon" element={<RequireAuth><PrecisionAgCarbon /></RequireAuth>} />

@@ -209,23 +209,29 @@ function ChangeDetectionPanel({ fieldId, onGenerateAlert }) {
     return { idx, delta: v1 != null && v2 != null ? v1 - v2 : null, v1, v2 };
   });
 
+  const [generateError, setGenerateError] = useState('');
+
   const handleGenerate = async (anomaly) => {
     setGenerating(true);
+    setGenerateError('');
     try {
-      await fetch(`${API_URL}/api/fields/${fieldId}/alerts`, {
+      const res = await fetch(`${API_URL}/api/fields/${fieldId}/alerts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')}` },
         body: JSON.stringify({
-          type: 'NDVI Decline',
+          type: anomaly.label,
           severity: anomaly.severity,
           message: `Change detection: ${anomaly.label}. Indices: ${anomaly.deltas.map(d => `${d.idx} ${d.delta > 0 ? '+' : ''}${d.delta.toFixed(3)}`).join(', ')}`,
           source: 'change_detection',
         }),
       });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
       setGenerated(true);
       onGenerateAlert?.();
       setTimeout(() => setGenerated(false), 3000);
-    } catch { /* ignore */ }
+    } catch (err) {
+      setGenerateError('Could not create alert. Please try again.');
+    }
     setGenerating(false);
   };
 
@@ -276,6 +282,9 @@ function ChangeDetectionPanel({ fieldId, onGenerateAlert }) {
       {anomalies.length > 0 && (
         <div className="space-y-2 pt-1 border-t border-gray-100">
           <div className="font-mont text-xs font-semibold text-gray-500 uppercase tracking-wide">Detected anomalies</div>
+          {generateError && (
+            <div className="text-xs font-mont text-red-600 bg-red-50 rounded px-3 py-2">{generateError}</div>
+          )}
           {anomalies.map((a, i) => {
             const sevColor = SEV_COLOR[a.severity] || SEV_COLOR.Low;
             return (

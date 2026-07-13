@@ -11,7 +11,7 @@ The app talks to the Python FastAPI backend via `VITE_API_URL`. In development, 
 ## Prerequisites
 
 - Node.js 18+
-- A running backend on port 8000 (see [backend README](https://github.com/Oatmeal-Farm-Network/oatmealfarmnetworkbackend/blob/main/README.md))
+- A running backend in the sibling repo `../oatmealfarmnetworkbackend` on port 8000 (see [backend README](https://github.com/Oatmeal-Farm-Network/oatmealfarmnetworkbackend/blob/main/README.md))
 
 ## Setup
 
