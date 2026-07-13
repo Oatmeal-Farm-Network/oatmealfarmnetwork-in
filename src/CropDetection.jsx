@@ -528,6 +528,13 @@ export default function CropDetection() {
   const [drawnPolygon, setDrawnPolygon] = useState([]);      // array of [lng, lat]
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [savedFieldId, setSavedFieldId] = useState(null);
+  const [saveToast, setSaveToast] = useState(null);
+
+  useEffect(() => {
+    if (!saveToast) return;
+    const timer = setTimeout(() => setSaveToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [saveToast]);
 
   const mapContainer = useRef(null);
   const map = useRef(null);
@@ -1314,14 +1321,37 @@ export default function CropDetection() {
       <SaveFieldModal
         open={showSaveModal}
         onClose={() => setShowSaveModal(false)}
-        onSave={(id) => { setSavedFieldId(id); alert(`✓ ${t('crop_detection.alert_saved', { id })}`); }}
+        onSave={(id) => { setSavedFieldId(id); setSaveToast(t('crop_detection.alert_saved', { id })); }}
         fieldData={fieldData}
         drawnPolygon={drawnPolygon}
         businessId={BusinessID}
         peopleId={PeopleID}
       />
 
-      <style>{`@keyframes cdspin { 100% { transform: rotate(360deg); } }`}</style>
+      {/* Save-success toast — replaces the old native alert() popup */}
+      {saveToast && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 10000, display: 'flex', alignItems: 'center', gap: 10,
+          background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 10,
+          padding: '12px 18px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+          color: '#166534', fontSize: 13.5, fontWeight: 600,
+          animation: 'cdtoastin 0.2s ease-out',
+        }}>
+          <span>✓</span>
+          <span>{saveToast}</span>
+          <button
+            onClick={() => setSaveToast(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#166534', fontSize: 15, marginLeft: 4, lineHeight: 1 }}
+            aria-label="Dismiss"
+          >✕</button>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes cdspin { 100% { transform: rotate(360deg); } }
+        @keyframes cdtoastin { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+      `}</style>
     </AccountLayout>
   );
 }
