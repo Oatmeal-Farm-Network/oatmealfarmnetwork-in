@@ -54,13 +54,11 @@ const SECTIONS = [
       { icon: ICONS.cropRotation,  tKey: 'item_crop_rotation', path: '/precision-ag/crop-rotation' },
       { icon: ICONS.soilSamples,   tKey: 'item_soil_samples',  path: '/precision-ag/soil-samples' },
       { icon: ICONS.zoning,        tKey: 'item_zoning',        path: '/precision-ag/analysis/zoning' },
-      { icon: ICONS.prescriptions, tKey: 'item_prescriptions', path: '/precision-ag/prescriptions' },
     ],
   },
   {
     tKey: 'sec_management',
     items: [
-      { icon: ICONS.alerts,         tKey: 'item_alerts',              path: '/precision-ag/alerts' },
       { icon: ICONS.cropStatus,     tKey: 'item_crop_status',         path: '/precision-ag/analysis/crop-status' },
       { icon: ICONS.visualizations, tKey: 'item_visualizations',      path: '/precision-ag/visualizations' },
       { icon: ICONS.cropDetection,  tKey: 'item_crop_detection',      path: '/precision-ag/crop-detection' },
