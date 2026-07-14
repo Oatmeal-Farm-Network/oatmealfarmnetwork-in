@@ -178,12 +178,14 @@ export default function ProcessedFoodInventory() {
         WholesalePrice: editing.WholesalePrice ? parseFloat(editing.WholesalePrice) : null,
         Quantity:      parseFloat(editing.Quantity),
       };
-      const url    = isNew
-        ? `${API_URL}/api/marketplace/processed-food`
-        : `${API_URL}/api/marketplace/processed-food/${editing.ProcessedFoodID}`;
+      // Matches routers/processed_food.py (same pattern as produce/meat inventory)
+      const url = isNew
+        ? `${API_URL}/api/processed-food/add`
+        : `${API_URL}/api/processed-food/update/${editing.ProcessedFoodID}?BusinessID=${businessId}`;
       const method = isNew ? 'POST' : 'PUT';
-      const res    = await fetch(url, { method, headers, body: JSON.stringify(payload) });
-      const data   = await res.json();
+      const res  = await fetch(url, { method, headers, body: JSON.stringify(payload) });
+      let data = {};
+      try { data = await res.json(); } catch { /* non-JSON error body */ }
       if (!res.ok) throw new Error(formatApiDetail(data?.detail, t('processed_food_inv.err_save')));
       closeModal();
       fetchItems();
@@ -198,11 +200,21 @@ export default function ProcessedFoodInventory() {
 
   async function toggleVisibility(item) {
     try {
-      await fetch(`${API_URL}/api/marketplace/processed-food/${item.SourceID}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({ ShowProcessedFood: !item.IsActive }),
-      });
+      const res = await fetch(
+        `${API_URL}/api/processed-food/update/${item.SourceID}?BusinessID=${businessId}`,
+        {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({
+            Quantity:         item.QuantityAvailable,
+            RetailPrice:      item.UnitPrice,
+            WholesalePrice:   item.WholesalePrice,
+            AvailableDate:    item.AvailableDate || null,
+            ShowProcessedFood: !item.IsActive,
+          }),
+        },
+      );
+      if (!res.ok) return;
       fetchItems();
     } catch { /* silent */ }
   }
