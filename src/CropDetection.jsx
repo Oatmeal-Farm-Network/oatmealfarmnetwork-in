@@ -167,16 +167,37 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
   const { t } = useTranslation();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [fieldSizeHa, setFieldSizeHa] = useState('');
+  const [cropType, setCropType] = useState('');
+  const [plantingDate, setPlantingDate] = useState('');
+  const [monitoringDays, setMonitoringDays] = useState(5);
+  const [alertThreshold, setAlertThreshold] = useState(50);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (open) {
-      setName(fieldData?.cropName ? `${fieldData.cropName} Field` : '');
-      setDescription('');
-      setError('');
+    if (!open) return;
+    const acres = drawnPolygon?.length > 2 ? parseFloat(calcPolygonAcres(drawnPolygon)) : NaN;
+    const hectares = Number.isFinite(acres) ? (acres * 0.404686) : NaN;
+    setName(fieldData?.cropName ? `${fieldData.cropName} Field` : '');
+    setDescription('');
+    setFieldSizeHa(Number.isFinite(hectares) ? hectares.toFixed(2) : '');
+    setCropType(fieldData?.cropName || '');
+    setPlantingDate(new Date().toISOString().slice(0, 10));
+    setMonitoringDays(5);
+    setAlertThreshold(50);
+    setError('');
+  }, [open, fieldData, drawnPolygon]);
+
+  const formatDetail = (detail, fallback) => {
+    if (detail == null || detail === '') return fallback;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) {
+      return detail.map(d => (typeof d === 'string' ? d : d?.msg || JSON.stringify(d))).join('; ') || fallback;
     }
-  }, [open, fieldData]);
+    if (typeof detail === 'object') return detail.msg || detail.message || JSON.stringify(detail);
+    return String(detail);
+  };
 
   const handleSave = async () => {
     if (!name.trim()) { setError(t('crop_detection.error_name_required')); return; }
@@ -188,7 +209,9 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
     const centroidLat = coords.reduce((s, c) => s + c[1], 0) / coords.length;
     const centroidLon = coords.reduce((s, c) => s + c[0], 0) / coords.length;
     const acres = parseFloat(calcPolygonAcres(coords));
-    const hectares = acres * 0.404686;
+    const hectaresFromBoundary = acres * 0.404686;
+    const hectares = parseFloat(fieldSizeHa);
+    const sizeHa = Number.isFinite(hectares) && hectares > 0 ? hectares : hectaresFromBoundary;
 
     // Close the polygon (GeoJSON requires first === last)
     const ring = [...coords];
@@ -201,13 +224,13 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
       field_description: description.trim() || null,
       latitude: centroidLat,
       longitude: centroidLon,
-      field_size_hectares: hectares,
-      crop_type: fieldData?.cropName || 'Unknown',
+      field_size_hectares: sizeHa,
+      crop_type: cropType.trim() || fieldData?.cropName || 'Unknown',
       address: fieldData?.county ? `${fieldData.county} County` : name.trim(),
       business_id: businessId ? parseInt(businessId, 10) : 1,
-      monitoring_interval_days: 5,
-      alert_threshold_health: 50,
-      planting_date: '2024-01-01',
+      monitoring_interval_days: parseInt(monitoringDays, 10) || 5,
+      alert_threshold_health: parseInt(alertThreshold, 10) || 50,
+      planting_date: plantingDate || null,
       area: `${acres} ac`,
       boundary_geojson: JSON.stringify({
         type: 'Feature',
@@ -224,7 +247,7 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || res.statusText);
+        throw new Error(formatDetail(err.detail, res.statusText || t('crop_detection.error_save_failed')));
       }
       const data = await res.json();
       onSave(data.id);
@@ -237,6 +260,10 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
   };
 
   if (!open) return null;
+
+  const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 };
+  const inputStyle = { width: '100%', padding: '10px 12px', border: '2px solid #e5e7eb', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' };
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
@@ -244,7 +271,8 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
       background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
     }}>
       <div style={{
-        background: 'white', borderRadius: 16, padding: 32, width: 420, maxWidth: '90vw',
+        background: 'white', borderRadius: 16, padding: 32, width: 520, maxWidth: '92vw',
+        maxHeight: '90vh', overflowY: 'auto',
         boxShadow: '0 24px 60px rgba(0,0,0,0.2)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -259,22 +287,87 @@ function SaveFieldModal({ open, onClose, onSave, fieldData, drawnPolygon, busine
         )}
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{t('crop_detection.save_label_name')}</label>
+          <label style={labelStyle}>{t('crop_detection.save_label_name')}</label>
           <input
             value={name} onChange={e => setName(e.target.value)}
             placeholder="e.g. North Corn Field"
-            style={{ width: '100%', padding: '10px 12px', border: '2px solid #e5e7eb', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+            style={inputStyle}
           />
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{t('crop_detection.save_label_description')} <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>{t('crop_detection.save_optional')}</span></label>
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>{t('crop_detection.save_label_description')} <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>{t('crop_detection.save_optional')}</span></label>
           <textarea
             value={description} onChange={e => setDescription(e.target.value)}
             placeholder="Notes about this field…"
-            rows={3}
-            style={{ width: '100%', padding: '10px 12px', border: '2px solid #e5e7eb', borderRadius: 8, fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+            rows={2}
+            style={{ ...inputStyle, resize: 'vertical' }}
           />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+          <div>
+            <label style={labelStyle}>Field Size (hectares)</label>
+            <input
+              type="number" step="0.01" min="0"
+              value={fieldSizeHa}
+              onChange={e => setFieldSizeHa(e.target.value)}
+              placeholder="e.g. 12.5"
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Crop Type</label>
+            <input
+              type="text"
+              value={cropType}
+              onChange={e => setCropType(e.target.value)}
+              placeholder="e.g. Oats, Wheat, Corn"
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>Planting Date</label>
+          <input
+            type="date"
+            value={plantingDate}
+            onChange={e => setPlantingDate(e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>
+            Monitoring Interval —{' '}
+            <span style={{ color: '#6D8E22', fontWeight: 700 }}>every {monitoringDays} days</span>
+          </label>
+          <input
+            type="range" min="1" max="30"
+            value={monitoringDays}
+            onChange={e => setMonitoringDays(Number(e.target.value))}
+            style={{ width: '100%', accentColor: '#6D8E22' }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af' }}>
+            <span>1 day</span><span>30 days</span>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>
+            Alert Threshold —{' '}
+            <span style={{ color: '#6D8E22', fontWeight: 700 }}>health below {alertThreshold}%</span>
+          </label>
+          <input
+            type="range" min="0" max="100"
+            value={alertThreshold}
+            onChange={e => setAlertThreshold(Number(e.target.value))}
+            style={{ width: '100%', accentColor: '#6D8E22' }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af' }}>
+            <span>0%</span><span>100%</span>
+          </div>
         </div>
 
         {error && (

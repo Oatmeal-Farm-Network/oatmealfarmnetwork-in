@@ -425,19 +425,19 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
       fetch(`${API_URL}/api/fields/${fieldId}/profile`).then(r => r.ok ? r.json() : {}),
     ])
       .then(([fields, prof]) => {
-        const field = fields.find(f => (f.fieldid || f.id) === parseInt(fieldId));
+        const field = fields.find(f => String(f.fieldid ?? f.FieldID ?? f.id) === String(fieldId));
         if (!field) throw new Error('Field not found');
         setFormData({
-          name: field.name || '',
-          address: field.address || '',
-          latitude: field.latitude ?? '',
-          longitude: field.longitude ?? '',
-          field_size_hectares: field.field_size_hectares ?? '',
-          crop_type: field.crop_type || '',
-          planting_date: field.planting_date || '',
-          boundary_geojson: field.boundary_geojson || '',
-          monitoring_interval_days: field.monitoring_interval_days ?? 5,
-          alert_threshold_health: field.alert_threshold_health ?? 50,
+          name: field.name || field.Name || '',
+          address: field.address || field.Address || '',
+          latitude: field.latitude ?? field.Latitude ?? '',
+          longitude: field.longitude ?? field.Longitude ?? '',
+          field_size_hectares: field.field_size_hectares ?? field.FieldSizeHectares ?? '',
+          crop_type: field.crop_type || field.CropType || '',
+          planting_date: (field.planting_date || field.PlantingDate || '').toString().slice(0, 10),
+          boundary_geojson: field.boundary_geojson || field.BoundaryGeoJSON || '',
+          monitoring_interval_days: field.monitoring_interval_days ?? field.MonitoringIntervalDays ?? 5,
+          alert_threshold_health: field.alert_threshold_health ?? field.AlertThresholdHealth ?? 50,
         });
         setProfile({
           soil_type:          prof.soil_type || '',
@@ -1268,21 +1268,30 @@ function FieldList({ businessId, onCreateNew }) {
 
 function PrecisionAgFields({ businessId: propBusinessId }) {
   const { t: pa } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const businessId = propBusinessId || searchParams.get('BusinessID');
   const PeopleID = localStorage.getItem('PeopleID') || localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();
-  const initialView = searchParams.get('view') === 'create-field'
-    ? 'create'
-    : searchParams.get('view') === 'edit-field'
-    ? 'edit'
+
+  // Derive view from the URL so Edit / Create links work while already on this page
+  // (useState(initialView) alone would stick on "list" after a same-route navigation).
+  const viewParam = searchParams.get('view');
+  const editFieldId = searchParams.get('FieldID');
+  const view =
+    viewParam === 'create-field' ? 'create'
+    : (viewParam === 'edit-field' && editFieldId) ? 'edit'
     : 'list';
-  const [view, setView] = useState(initialView);
+
   const initialLat = searchParams.get('lat');
   const initialLon = searchParams.get('lon');
-  const editFieldId = searchParams.get('FieldID');
   const [loadError, setLoadError] = useState(false);
   const loadTimeoutRef = useRef(null);
+
+  const goList = () => {
+    const next = new URLSearchParams();
+    if (businessId) next.set('BusinessID', businessId);
+    setSearchParams(next, { replace: true });
+  };
 
   useEffect(() => {
     if (!businessId) { setLoadError(true); return; }
@@ -1311,14 +1320,19 @@ function PrecisionAgFields({ businessId: propBusinessId }) {
         {view === 'list' && (
           <FieldList
             businessId={businessId}
-            onCreateNew={() => setView('create')}
+            onCreateNew={() => {
+              const next = new URLSearchParams(searchParams);
+              next.set('view', 'create-field');
+              next.delete('FieldID');
+              setSearchParams(next);
+            }}
           />
         )}
         {view === 'create' && (
           <CreateFieldView
             businessId={businessId}
-            onBack={() => setView('list')}
-            onCreated={() => setView('list')}
+            onBack={goList}
+            onCreated={goList}
             initialLat={initialLat}
             initialLon={initialLon}
           />
@@ -1327,8 +1341,8 @@ function PrecisionAgFields({ businessId: propBusinessId }) {
           <EditFieldView
             businessId={businessId}
             fieldId={editFieldId}
-            onBack={() => setView('list')}
-            onSaved={() => setView('list')}
+            onBack={goList}
+            onSaved={goList}
           />
         )}
       </div>
