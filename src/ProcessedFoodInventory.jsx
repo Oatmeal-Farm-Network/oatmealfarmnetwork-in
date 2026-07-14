@@ -1,9 +1,38 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import PageMeta from './PageMeta';
+import AccountLayout from './AccountLayout';
+import { useAccount } from './AccountContext';
 import RosemarieChat from './RosemarieChat';
 
 const API_URL = import.meta.env.VITE_API_URL;
+
+/** Reject "null"/"undefined"/NaN so we never call the API with business_id=null. */
+function toValidBusinessID(v) {
+  if (v === null || v === undefined) return null;
+  const s = String(v).trim();
+  if (!s || s === 'null' || s === 'undefined') return null;
+  const n = parseInt(s, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** FastAPI often returns detail as a string, object, or validation-error array. */
+function formatApiDetail(detail, fallback) {
+  if (detail == null || detail === '') return fallback;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const parts = detail.map((d) => {
+      if (typeof d === 'string') return d;
+      if (d && typeof d === 'object') return d.msg || d.message || JSON.stringify(d);
+      return String(d);
+    }).filter(Boolean);
+    return parts.length ? parts.join('; ') : fallback;
+  }
+  if (typeof detail === 'object') {
+    return detail.msg || detail.message || detail.detail || JSON.stringify(detail);
+  }
+  return String(detail);
+}
 
 const STATUS_COLORS = {
   active:   { bg: 'bg-[#e8f0e0]', text: 'text-[#4a6741]', dot: 'bg-[#819360]' },
@@ -12,8 +41,10 @@ const STATUS_COLORS = {
 };
 
 function getStockStatus(item) {
-  if (!item.ShowProcessedFood) return 'inactive';
-  if (item.Quantity <= 5)       return 'low';
+  const visible = item.IsActive ?? item.ShowProcessedFood;
+  if (!visible) return 'inactive';
+  const qty = item.QuantityAvailable ?? item.Quantity ?? 0;
+  if (qty <= 5) return 'low';
   return 'active';
 }
 
@@ -31,6 +62,15 @@ function StatusBadge({ item }) {
 
 export default function ProcessedFoodInventory() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const { Business, BusinessID: contextBusinessID, LoadBusiness } = useAccount();
+  const BusinessID = (
+    toValidBusinessID(searchParams.get('BusinessID'))
+    || toValidBusinessID(contextBusinessID)
+    || toValidBusinessID(localStorage.getItem('selected_business_id'))
+    || toValidBusinessID(localStorage.getItem('business_id'))
+  );
+  const PeopleID = localStorage.getItem('people_id') || localStorage.getItem('PeopleID');
   const [items, setItems]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState('');
@@ -41,8 +81,8 @@ export default function ProcessedFoodInventory() {
   const [saving, setSaving]     = useState(false);
   const [formError, setFormError] = useState('');
 
-  const businessId = localStorage.getItem('business_id');
-  const token      = localStorage.getItem('access_token');
+  const businessId = BusinessID;
+  const token      = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
 
   const headers = {
     'Content-Type': 'application/json',
@@ -50,21 +90,46 @@ export default function ProcessedFoodInventory() {
   };
 
   async function fetchItems() {
+    if (!businessId) {
+      setItems([]);
+      setLoading(false);
+      setError('');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
       const res  = await fetch(`${API_URL}/api/marketplace/seller/listings?business_id=${businessId}`, { headers });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || t('processed_food_inv.err_load'));
-      setItems(data.filter(i => i.ProductType === 'processed_food'));
+      let data = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+      if (!res.ok) {
+        throw new Error(formatApiDetail(data?.detail, t('processed_food_inv.err_load')));
+      }
+      const list = Array.isArray(data) ? data : [];
+      setItems(list.filter(i => i.ProductType === 'processed_food'));
     } catch (e) {
-      setError(e.message);
+      setError(typeof e?.message === 'string' && e.message && e.message !== '[object Object]'
+        ? e.message
+        : t('processed_food_inv.err_load'));
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => {
+    if (!BusinessID) {
+      setLoading(!!(localStorage.getItem('access_token') || localStorage.getItem('AccessToken')));
+      setItems([]);
+      setError('');
+      return;
+    }
+    LoadBusiness(BusinessID);
+    fetchItems();
+  }, [BusinessID]);
 
   const filtered = items
     .filter(i => !search || i.Title?.toLowerCase().includes(search.toLowerCase()) ||
@@ -119,11 +184,13 @@ export default function ProcessedFoodInventory() {
       const method = isNew ? 'POST' : 'PUT';
       const res    = await fetch(url, { method, headers, body: JSON.stringify(payload) });
       const data   = await res.json();
-      if (!res.ok) throw new Error(data.detail || t('processed_food_inv.err_save'));
+      if (!res.ok) throw new Error(formatApiDetail(data?.detail, t('processed_food_inv.err_save')));
       closeModal();
       fetchItems();
     } catch (e) {
-      setFormError(e.message);
+      setFormError(typeof e?.message === 'string' && e.message && e.message !== '[object Object]'
+        ? e.message
+        : t('processed_food_inv.err_save'));
     } finally {
       setSaving(false);
     }
@@ -146,30 +213,30 @@ export default function ProcessedFoodInventory() {
   const totalValue    = items.reduce((s, i) => s + (i.UnitPrice * i.QuantityAvailable), 0);
 
   return (
-    <div className="min-h-screen bg-[#f7f5f0] font-sans">
-      <PageMeta
-        title={t('processed_food_inv.meta_title')}
-        description={t('processed_food_inv.meta_desc')}
-        noIndex
-      />
-
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <AccountLayout
+      Business={Business}
+      BusinessID={BusinessID}
+      PeopleID={PeopleID}
+      pageTitle={t('processed_food_inv.page_title')}
+      breadcrumbs={[
+        { label: t('nav.dashboard'), to: '/dashboard' },
+        { label: t('account_sidebar.sec_farm_2_table') },
+        { label: t('account_sidebar.processed_foods') },
+      ]}
+    >
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 font-lora">{t('processed_food_inv.page_title')}</h1>
             <p className="text-sm text-gray-500 mt-0.5">{t('processed_food_inv.subheading')}</p>
           </div>
           <button
             onClick={openAdd}
-            className="bg-[#819360] hover:bg-[#3D6B35] text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2"
+            className="bg-[#819360] hover:bg-[#3D6B35] text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 shrink-0"
           >
             <span className="text-lg leading-none">+</span> {t('processed_food_inv.btn_add_item')}
           </button>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-8">
 
         {/* Stats row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -296,7 +363,6 @@ export default function ProcessedFoodInventory() {
             </table>
           </div>
         )}
-      </div>
 
       {/* Add/Edit Modal */}
       {showModal && editing && (
@@ -430,6 +496,7 @@ export default function ProcessedFoodInventory() {
         </div>
       )}
       <RosemarieChat businessId={businessId} />
-    </div>
+      </div>
+    </AccountLayout>
   );
 }
