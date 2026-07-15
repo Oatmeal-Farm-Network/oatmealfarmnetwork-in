@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { useAccount } from './AccountContext';
 
 const API = import.meta.env.VITE_API_URL || '';
-const SAIGE_API = (import.meta.env.VITE_SAIGE_API_URL || import.meta.env.VITE_API_URL || '').replace(/\/saige\/?$/, '');
+const SAIGE_API = (import.meta.env.VITE_SAIGE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:8000/saige').replace(/\/+$/, '');
 const GREEN = '#3D6B34';
 const GREEN_DARK = '#2c4f25';
 const GREEN_LIGHT = '#f0f7ee';

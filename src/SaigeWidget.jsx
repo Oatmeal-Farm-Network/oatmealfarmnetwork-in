@@ -18,9 +18,12 @@ import { useAccount } from './AccountContext';
 import { useLanguage } from './LanguageContext';
 
 function normalizeSaigeApiBase(rawValue) {
+  // Base URL already includes the /saige prefix (unified local backend mounts
+  // Saige at /saige; prod points at the standalone saige-backend root). Only
+  // trim trailing slashes — do NOT strip /saige, or the unified backend 404/405s.
   const value = (rawValue || 'http://localhost:8000/saige').trim();
   if (!value) return 'http://localhost:8000/saige';
-  return value.replace(/\/+$/, '').replace(/\/saige\/?$/, '');
+  return value.replace(/\/+$/, '');
 }
 
 const SAIGE_API   = normalizeSaigeApiBase(import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige');
