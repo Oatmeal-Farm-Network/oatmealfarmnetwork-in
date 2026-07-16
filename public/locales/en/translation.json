@@ -8402,7 +8402,7 @@
   "accounting": {
     "page_title": "Accounting",
     "loading": "Loading accounting...",
-    "error_access": "Make sure you have AccessLevelID ≥ 3 for this business.",
+    "error_access": "You need access to this business to view its accounting. Ask a business admin to add you.",
     "setup_title": "Set up Accounting",
     "setup_desc": "Initialize the chart of accounts and fiscal periods for {{name}}. This creates your default account structure and current fiscal year.",
     "btn_init": "Initialize Accounting",
