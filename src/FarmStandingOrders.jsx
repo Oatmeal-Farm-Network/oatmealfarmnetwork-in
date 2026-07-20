@@ -23,16 +23,25 @@ export default function FarmStandingOrders() {
     monthly: t('farm_standing_orders.freq_monthly'),
   };
 
+  // Business types that can receive standing orders from restaurants. This was
+  // locked to 8 (Farm / Ranch), which hid Food Aggregators, Food Hubs and
+  // Artisan Food Producers — all of which legitimately supply recurring orders.
+  const SUPPLIER_TYPES = [8, 10, 11, 36];
+
   const farmBusinesses = useMemo(() =>
     (Array.isArray(businesses) ? businesses : [])
-      .filter(b => b.BusinessTypeID === 8),
+      .filter(b => SUPPLIER_TYPES.includes(Number(b.BusinessTypeID))),
     [businesses]
   );
 
   const [selectedFarmId, setSelectedFarmId] = useState(null);
   useEffect(() => {
-    if (!selectedFarmId && farmBusinesses[0]) setSelectedFarmId(farmBusinesses[0].BusinessID);
-  }, [farmBusinesses, selectedFarmId]);
+    if (selectedFarmId) return;
+    // Prefer the business the user is currently working in, then fall back.
+    const active = farmBusinesses.find(b => Number(b.BusinessID) === Number(BusinessID));
+    if (active) setSelectedFarmId(active.BusinessID);
+    else if (farmBusinesses[0]) setSelectedFarmId(farmBusinesses[0].BusinessID);
+  }, [farmBusinesses, selectedFarmId, BusinessID]);
 
   const [orders,  setOrders]  = useState([]);
   const [loading, setLoading] = useState(true);
