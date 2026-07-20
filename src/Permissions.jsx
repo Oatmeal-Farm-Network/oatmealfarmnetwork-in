@@ -36,8 +36,22 @@ function apiFetch(path, options = {}) {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
-  }).then(r => r.json());
+  }).then(async r => {
+    // Throw on error responses. Previously this returned the error body
+    // ({detail: "..."}) straight into list state, so a later .map() threw and
+    // took the whole page down to a blank screen.
+    let data = null;
+    try { data = await r.json(); } catch { data = null; }
+    if (!r.ok) {
+      const msg = (data && (data.detail || data.message)) || `Request failed (${r.status})`;
+      throw new Error(typeof msg === 'string' ? msg : `Request failed (${r.status})`);
+    }
+    return data;
+  });
 }
+
+// Never let a non-array response reach .map()
+const asArray = (v) => (Array.isArray(v) ? v : []);
 
 // ─── Roles Tab ────────────────────────────────────────────────────────────────
 
@@ -50,8 +64,12 @@ function RolesTab({ businessId }) {
   const [saving, setSaving] = useState(false);
   const [seeded, setSeeded] = useState(false);
 
+  const [loadError, setLoadError] = useState('');
   const loadRoles = useCallback(() =>
-    apiFetch(`/api/rbac/roles?business_id=${businessId}`).then(setRoles), [businessId]);
+    apiFetch(`/api/rbac/roles?business_id=${businessId}`)
+      .then(d => { setRoles(asArray(d)); setLoadError(''); })
+      .catch(e => { setRoles([]); setLoadError(e.message || 'Could not load roles.'); }),
+    [businessId]);
 
   useEffect(() => { loadRoles(); }, [loadRoles]);
 
@@ -113,6 +131,11 @@ function RolesTab({ businessId }) {
     <div className="flex gap-6">
       {/* Role list */}
       <div className="w-64 shrink-0">
+        {loadError && (
+          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+            {loadError}
+          </div>
+        )}
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-semibold text-gray-700">Roles ({roles.length})</span>
           <div className="flex gap-2">
@@ -234,10 +257,14 @@ function MembersTab({ businessId }) {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [searching, setSearching] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   const load = useCallback(() => Promise.all([
-    apiFetch(`/api/rbac/members?business_id=${businessId}`).then(setMembers),
-    apiFetch(`/api/rbac/roles?business_id=${businessId}`).then(setRoles),
+    apiFetch(`/api/rbac/members?business_id=${businessId}`)
+      .then(d => { setMembers(asArray(d)); setLoadError(''); })
+      .catch(e => { setMembers([]); setLoadError(e.message || 'Could not load members.'); }),
+    apiFetch(`/api/rbac/roles?business_id=${businessId}`)
+      .then(d => setRoles(asArray(d))).catch(() => setRoles([])),
   ]), [businessId]);
 
   useEffect(() => { load(); }, [load]);
@@ -285,6 +312,11 @@ function MembersTab({ businessId }) {
 
   return (
     <div>
+      {loadError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+          Couldn’t load team members: {loadError}
+        </div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <span className="text-sm font-semibold text-gray-700">Team Members ({members.length})</span>
         <button onClick={() => { setShowAssign(s => !s); setSelectedPerson(null); setSearchQ(''); setSearchResults([]); }}
