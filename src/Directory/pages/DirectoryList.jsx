@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '../../Header';
 import Footer from '../../Footer';
 import PageMeta from '../../PageMeta';
 import Breadcrumbs from '../../Breadcrumbs';
+import KnowledgebaseLandingHero from '../../KnowledgebaseLandingHero';
 
 // Directory category images — served from /public/images (WebP)
 const agriAssociaImg      = '/images/AgriculturalAssociations.webp';
@@ -77,10 +78,28 @@ const EAGER_COUNT = 4;
 
 export default function DirectoryList() {
   const { t } = useTranslation();
-  const CATEGORIES = CATEGORIES_BASE.map(c => {
-    const k = c.slug.replace(/-/g, '_');
-    return { ...c, title: t(`directory_list.cat_${k}_title`), desc: t(`directory_list.cat_${k}_desc`) };
-  });
+  const [filter, setFilter] = useState('');
+
+  const CATEGORIES = useMemo(
+    () =>
+      CATEGORIES_BASE.map((c) => {
+        const k = c.slug.replace(/-/g, '_');
+        return { ...c, title: t(`directory_list.cat_${k}_title`), desc: t(`directory_list.cat_${k}_desc`) };
+      }),
+    [t]
+  );
+
+  const filtered = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return CATEGORIES;
+    return CATEGORIES.filter(
+      (cat) =>
+        cat.title?.toLowerCase().includes(q) ||
+        cat.desc?.toLowerCase().includes(q) ||
+        cat.slug.includes(q)
+    );
+  }, [CATEGORIES, filter]);
+
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
       <PageMeta
@@ -98,67 +117,42 @@ export default function DirectoryList() {
       />
       <Header />
 
-      <div className="mx-auto px-4 pt-4" style={{ maxWidth: '1300px' }}>
+      <div className="mx-auto px-4 pt-2 md:pt-6" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: t('directory_list.breadcrumb_home'), to: '/' },
           { label: t('directory_list.breadcrumb_directory') },
         ]} />
-      </div>
 
-      {/* ── Hero ── */}
-      <div className="mx-auto px-4 pt-2" style={{ maxWidth: '1300px' }}>
-        <div className="relative w-full overflow-hidden rounded-xl">
-          <img
-            src="/images/DirectoryHeaderImage.webp"
-            alt="Food System & Beyond Directory"
-            className="w-full object-cover"
-            style={{ height: '250px', display: 'block' }}
-            loading="eager"
-          />
-          {/* Gradient overlay */}
-          <div
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }}
-          />
-          {/* Text */}
-          <div className="absolute inset-0 flex flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
-            <h1
-              style={{
-                color: '#000000',
-                fontFamily: "'Lora','Times New Roman',serif",
-                fontSize: '2rem',
-                fontWeight: 'bold',
-                margin: '0 0 12px',
-                lineHeight: 1.2,
-              }}
-            >
-              {t('directory_list.hero_heading')}
-            </h1>
-            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 8px', lineHeight: 1.6 }}
-              dangerouslySetInnerHTML={{ __html: t('directory_list.hero_body1') }}
-            />
-            <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
-              {t('directory_list.hero_body2')}{' '}
-              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>{t('directory_list.hero_contact_us')}</Link>
-              {' '}{t('directory_list.hero_body3')}
-            </p>
-          </div>
-        </div>
+        <KnowledgebaseLandingHero
+          image="/images/KBHeroDirectory.png"
+          alt="The Food System Directory"
+          title="The Food System Directory"
+          description="Find what you're looking for across 29 categories — from farms and food hubs to restaurants, fiber mills, and more. Search and connect with local farms, food businesses, and organizations in your area."
+          stats={[
+            { value: '4,085', label: 'Documented Varieties' },
+            { value: String(CATEGORIES_BASE.length), label: 'Core Classifications' },
+            { value: '24', label: 'New Entries This Month' },
+          ]}
+          searchPlaceholder="Search producers, mills, or markets..."
+          searchValue={filter}
+          onSearchChange={setFilter}
+        />
       </div>
 
       <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
+        <h2
+          className="text-xl md:text-2xl font-bold mb-5"
+          style={{ fontFamily: "'Lora','Times New Roman',serif", color: '#3D6B34' }}
+        >
+          {t('directory_list.section_heading')}
+        </h2>
 
-        {/* ── Section heading ── */}
-        <h2 className="text-lg font-bold text-gray-900 mb-5">{t('directory_list.section_heading')}</h2>
-
-        {/* ── 2-column grid of horizontal cards ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {CATEGORIES.map((cat, index) => (
+          {filtered.map((cat, index) => (
             <div
               key={cat.slug}
               className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200"
             >
-              {/* Left: square image */}
               <Link to={`/directory/${cat.slug}`} className="shrink-0 overflow-hidden" style={{ width: '155px', height: '155px' }}>
                 <img
                   src={cat.img}
@@ -168,11 +162,10 @@ export default function DirectoryList() {
                   loading={index < EAGER_COUNT ? 'eager' : 'lazy'}
                   decoding={index < EAGER_COUNT ? 'sync' : 'async'}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                  onError={e => { e.target.src = '/images/DirectoryHome.webp'; }}
+                  onError={(e) => { e.target.src = '/images/DirectoryHome.webp'; }}
                 />
               </Link>
 
-              {/* Right: text content */}
               <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
                 <div>
                   <Link
@@ -198,6 +191,11 @@ export default function DirectoryList() {
           ))}
         </div>
 
+        {filtered.length === 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
+            No directory categories match your search.
+          </div>
+        )}
       </div>
 
       <Footer />

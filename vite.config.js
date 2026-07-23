@@ -26,6 +26,17 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // Yahoo Finance chart API (CORS-safe same-origin proxy for commodity quotes fallback)
+      '/yf': {
+        target: 'https://query1.finance.yahoo.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (p) => p.replace(/^\/yf/, ''),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; OFN/1.0)',
+          Accept: 'application/json',
+        },
+      },
     },
     // Don't watch the large static images folder — it has 33k+ files and
     // kills dev server startup and HMR performance.
