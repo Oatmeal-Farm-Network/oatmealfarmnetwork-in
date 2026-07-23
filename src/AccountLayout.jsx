@@ -5,6 +5,7 @@ import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import BackButton from './BackButton';
 
 export default function AccountLayout({ children, pageTitle, breadcrumbs, allowAnonymous = false }) {
   const { t } = useTranslation();
@@ -18,6 +19,8 @@ export default function AccountLayout({ children, pageTitle, breadcrumbs, allowA
     }
   }, [navigate, allowAnonymous]);
 
+  const hasCrumbs = breadcrumbs && breadcrumbs.length > 0;
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
       <PageMeta
@@ -28,8 +31,12 @@ export default function AccountLayout({ children, pageTitle, breadcrumbs, allowA
       <Header />
 
       <div className="grow p-6">
-        {breadcrumbs && breadcrumbs.length > 0 && (
+        {hasCrumbs ? (
           <Breadcrumbs items={breadcrumbs} />
+        ) : (
+          <div className="mb-3" data-ofn-breadcrumbs>
+            <BackButton showLabel label="Back" />
+          </div>
         )}
         {children}
       </div>

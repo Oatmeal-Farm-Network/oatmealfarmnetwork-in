@@ -54,7 +54,9 @@ export default function AppShell({ children }) {
     !!token &&
     !isExcluded(location.pathname);
 
-  if (!showSidebar) return children;
+  if (!showSidebar) {
+    return children;
+  }
 
   const params = new URLSearchParams(location.search);
   const fieldId = params.get('FieldID');
@@ -69,7 +71,7 @@ export default function AppShell({ children }) {
     <>
       <style>{`
         .app-shell-wrapper { --sidebar-pad: ${pad}; padding-left: var(--sidebar-pad); transition: padding 300ms; }
-        .app-shell-wrapper > * {
+        .app-shell-wrapper > .app-shell-main {
           padding-top: 72px;
           box-sizing: border-box;
           min-height: 100vh;
@@ -101,7 +103,9 @@ export default function AppShell({ children }) {
         />
       )}
       <div className="app-shell-wrapper">
-        {children}
+        <div className="app-shell-main">
+          {children}
+        </div>
       </div>
     </>
   );

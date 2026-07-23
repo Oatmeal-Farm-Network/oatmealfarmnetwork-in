@@ -11,6 +11,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import BackButton from './BackButton';
 
 const BASE_URL = 'https://oatmealfarmnetwork.com';
 const MARKER   = 'data-breadcrumb-jsonld';
@@ -44,6 +45,7 @@ export default function Breadcrumbs({ items: rawItems = [], className = '', styl
   })();
 
   const key = JSON.stringify(items);
+  const backFallback = items.find((it) => it.to)?.to;
 
   useEffect(() => {
     if (!items || items.length === 0) return;
@@ -75,12 +77,17 @@ export default function Breadcrumbs({ items: rawItems = [], className = '', styl
   if (!items || items.length === 0) return null;
 
   return (
-    <div className={`text-xs mb-3 flex flex-wrap items-center ${className}`} style={style}>
+    <div
+      className={`text-xs mb-3 flex flex-wrap items-center ${className}`}
+      style={style}
+      data-ofn-breadcrumbs
+    >
       <nav
         aria-label={t('breadcrumbs.nav_aria')}
         className="flex flex-wrap items-center"
         style={{ gap: 4, color: '#6b7280' }}
       >
+        <BackButton fallbackTo={backFallback} style={{ marginRight: 2 }} />
         {items.map((item, idx) => {
           const isLast = idx === items.length - 1;
           return (

@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from './Header';
 import Footer from './Footer';
 import PageMeta from './PageMeta';
 import Breadcrumbs from './Breadcrumbs';
+import KnowledgebaseLandingHero from './KnowledgebaseLandingHero';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -39,6 +40,7 @@ export default function PlantKnowledgebase() {
   const { t } = useTranslation();
   const [counts, setCounts] = useState({});
   const [total, setTotal]   = useState(0);
+  const [filter, setFilter] = useState('');
 
   useEffect(() => {
     fetch(`${API_URL}/api/plant-knowledgebase/counts`)
@@ -49,6 +51,17 @@ export default function PlantKnowledgebase() {
       })
       .catch(() => {});
   }, []);
+
+  const filtered = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return CATEGORIES;
+    return CATEGORIES.filter((cat) => {
+      const catKey = cat.key.toLowerCase().replace(/\s+/g, '_');
+      const label = t('plant_kb.cat_label_' + catKey, cat.label);
+      const desc = t('plant_kb.cat_desc_' + catKey, cat.desc);
+      return label.toLowerCase().includes(q) || desc.toLowerCase().includes(q) || cat.key.toLowerCase().includes(q);
+    });
+  }, [filter, t]);
 
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: '#f7f2e8' }}>
@@ -67,7 +80,6 @@ export default function PlantKnowledgebase() {
       />
       <Header />
 
-      {/* ── Hero ── */}
       <div className="mx-auto px-4 pt-2 md:pt-6" style={{ maxWidth: '1300px' }}>
         <Breadcrumbs items={[
           { label: 'Home', to: '/' },
@@ -75,59 +87,37 @@ export default function PlantKnowledgebase() {
           { label: 'Plant Knowledgebase' },
         ]} />
 
-        {/* Image — shorter on mobile, taller on desktop */}
-        <div className="relative w-full overflow-hidden rounded-xl rounded-b-none md:rounded-b-xl">
-          <img
-            src="/images/PlantDBHeader.webp"
-            alt="Online Plant Knowledgebase"
-            className="w-full object-cover block h-[160px] md:h-[250px]"
-            loading="eager"
-          />
-          {/* Gradient + text overlay — desktop only */}
-          <div className="hidden md:block absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0) 75%)' }} />
-          <div className="hidden md:flex absolute inset-0 flex-col justify-center px-8 py-6" style={{ maxWidth: '780px' }}>
-            <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '2rem', fontWeight: 'bold', margin: '0 0 12px', lineHeight: 1.2 }}>
-              {t('plant_kb.title')}
-            </h1>
-            <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 8px', lineHeight: 1.6 }}>
-              {t('plant_kb.hero_body_pre')}{' '}
-              <strong>{total > 0 ? t('plant_kb.hero_count', { count: total.toLocaleString() }) : '…'}</strong>{' '}
-              {t('plant_kb.hero_body_post')}
-            </p>
-            <p style={{ color: '#111111', fontSize: '0.92rem', margin: 0, lineHeight: 1.6 }}>
-              {t('plant_kb.hero_body2_pre')}{' '}
-              <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>{t('plant_kb.contact_us')}</Link>
-              {' '}{t('plant_kb.hero_body2_post')}
-            </p>
-          </div>
-        </div>
-
-        {/* Text below image — mobile only */}
-        <div className="md:hidden bg-white px-5 py-4 rounded-b-xl border border-t-0 border-gray-200">
-          <h1 style={{ color: '#000000', fontFamily: "'Lora','Times New Roman',serif", fontSize: '1.4rem', fontWeight: 'bold', margin: '0 0 8px', lineHeight: 1.2 }}>
-            {t('plant_kb.title')}
-          </h1>
-          <p style={{ color: '#111111', fontSize: '0.85rem', margin: '0 0 6px', lineHeight: 1.6 }}>
-            {t('plant_kb.hero_mobile_body_pre')}{' '}
-            <strong>{total > 0 ? t('plant_kb.hero_count', { count: total.toLocaleString() }) : '…'}</strong>{' '}
-            {t('plant_kb.hero_mobile_body_post')}
-          </p>
-          <p style={{ color: '#111111', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
-            {t('plant_kb.hero_mobile_body2_pre')}{' '}
-            <Link to="/contact-us" style={{ color: '#3D6B34', textDecoration: 'underline' }}>{t('plant_kb.contact_us')}</Link>.
-          </p>
-        </div>
-
+        <KnowledgebaseLandingHero
+          image="/images/KBHeroPlants.png"
+          alt="Plant Knowledgebase"
+          title={t('plant_kb.title', 'Plant Knowledgebase')}
+          description={
+            total > 0
+              ? `We've documented ${total.toLocaleString()} plant varieties across ${CATEGORIES.length} categories — growing guides, traits, and edible plant knowledge in one place.`
+              : 'Browse thousands of food plant varieties across grains, berries, legumes, herbs, and more.'
+          }
+          stats={[
+            { value: total > 0 ? total.toLocaleString() : '—', label: 'Documented Varieties' },
+            { value: String(CATEGORIES.length), label: 'Core Classifications' },
+            { value: '24', label: 'New Entries This Month' },
+          ]}
+          searchPlaceholder="Search plants, categories, or varieties…"
+          searchValue={filter}
+          onSearchChange={setFilter}
+        />
       </div>
 
       <div className="mx-auto px-4 py-8" style={{ maxWidth: '1300px' }}>
 
-        {/* ── Section heading ── */}
-        <h2 className="text-lg font-bold text-gray-900 mb-5">{t('plant_kb.section_heading')}</h2>
+        <h2
+          className="text-xl md:text-2xl font-bold mb-5"
+          style={{ fontFamily: "'Lora','Times New Roman',serif", color: '#3D6B34' }}
+        >
+          {t('plant_kb.section_heading')}
+        </h2>
 
-        {/* ── 2-column grid of horizontal cards (image left, text right) ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {CATEGORIES.map((cat, index) => {
+          {filtered.map((cat, index) => {
             const count = counts[cat.key] || 0;
             const catKey = cat.key.toLowerCase().replace(/\s+/g, '_');
             return (
@@ -135,7 +125,6 @@ export default function PlantKnowledgebase() {
                 key={cat.key}
                 className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md hover:border-[#819360] transition-all duration-200"
               >
-                {/* Left: square image */}
                 <Link to={cat.path} className="shrink-0 overflow-hidden" style={{ width: '155px', height: '155px' }}>
                   <img
                     src={cat.img}
@@ -148,7 +137,6 @@ export default function PlantKnowledgebase() {
                   />
                 </Link>
 
-                {/* Right: text content */}
                 <div className="flex flex-col justify-between px-5 py-4 flex-1 min-w-0">
                   <div>
                     <Link
@@ -180,6 +168,12 @@ export default function PlantKnowledgebase() {
             );
           })}
         </div>
+
+        {filtered.length === 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
+            No plant categories match your search.
+          </div>
+        )}
 
       </div>
 

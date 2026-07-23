@@ -217,6 +217,7 @@ function SaigeWidgetGlobal() {
   return <SaigeWidget businessId={businessId} pageContext={pageContext} />;
 }
 import OfflineIndicator from './OfflineIndicator';
+import GlobalBackBar from './GlobalBackBar';
 import './i18n.js';
 import { useTranslation } from 'react-i18next';
 import './index.css'
@@ -669,6 +670,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           </Routes>
         ) : (
         <AppShell>
+        <GlobalBackBar />
         <OfflineIndicator />
         <Routes>
           <Route path="/" element={<App />} />

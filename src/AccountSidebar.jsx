@@ -17,6 +17,13 @@ const S = ({ children }) => (
 
 const ICONS = {
   navGroup:      <S><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></S>,
+  // Top-level group icons (NavGroup only)
+  farmOps:       <S><path d="M2 14h12"/><path d="M4 14V8l4-5 4 5v6"/><line x1="7" y1="14" x2="7" y2="11"/><line x1="9" y1="14" x2="9" y2="11"/><path d="M1 8h3M12 8h3"/><circle cx="2.5" cy="8" r="1"/><circle cx="13.5" cy="8" r="1"/></S>,
+  marketplace:   <S><path d="M2 5h12l-1.5 7H3.5z"/><path d="M5.5 5L6.5 2M10.5 5l-1-3"/><circle cx="5.5" cy="13.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="10.5" cy="13.5" r="0.8" fill="currentColor" stroke="none"/></S>,
+  community:     <S><circle cx="5.5" cy="5" r="2"/><circle cx="10.5" cy="5.5" r="1.7"/><path d="M1.5 14c0-2.2 1.8-3.5 4-3.5h1"/><path d="M8.5 14c0-1.8 1.5-3 3.5-3s3.5 1.2 3.5 3"/></S>,
+  programs:      <S><path d="M8 1.5L3 4v4.5c0 3 2.1 5.8 5 6.5 2.9-.7 5-3.5 5-6.5V4z"/><path d="M6 8l1.5 1.5L10.5 6.5"/></S>,
+  businessMgmt:  <S><rect x="2" y="5" width="12" height="9" rx="1"/><path d="M5 5V4a3 3 0 0 1 6 0v1"/><line x1="2" y1="9" x2="14" y2="9"/></S>,
+  administration:<S><path d="M8 1.5L2.5 4v3.5c0 3.5 2.3 6.5 5.5 7.5 3.2-1 5.5-4 5.5-7.5V4z"/><circle cx="8" cy="7.5" r="1.5"/><path d="M8 9v2.5"/></S>,
   accounts:        <S><circle cx="8" cy="5" r="2.5"/><path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5"/></S>,
   personalSettings:(
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"
@@ -349,7 +356,7 @@ export default function AccountSidebar() {
 
         {/* ── Grouped feature navigation ── */}
         {anyOn('agro_consultations','ca_storage','chilling_hours','cold_chain','compliance_audit','crop_budgeting','crop_planning','csa_advanced','csa_management','delivery_routes','enterprise_supply_chain','equipment_maint','export_compliance','farm_infrastructure','farm_inputs','farm_kpi','farm_safety','farmer_settlement','field_activity_journal','field_health_dashboard','food_aggregation','grain_bin_monitoring','harvest_bins','harvest_scheduling','hr_management','iot_greenhouse','irrigation_mgmt','livestock','nursery_management','nutrient_mgmt','outgrower_management','packhouse_qc','perishable_traceability','pest_scouting','picker_performance','plant_tagging','precision_ag','procurement','rosemarie','scale_tickets','seed_varieties','soil_tests','spray_applications','traceability','weather_dashboard','work_orders','yield_records') && (
-        <NavGroup icon={ICONS.navGroup} label="Farm Operations" expanded={Expanded} isOpen={OpenSections['g_farmops'] || false} onToggle={() => toggleSection('g_farmops')}>
+        <NavGroup icon={ICONS.farmOps} label="Farm Operations" expanded={Expanded} isOpen={OpenSections['g_farmops'] || false} onToggle={() => toggleSection('g_farmops')}>
         {on('precision_ag') && (
           <NavSection icon={ICONS.precisionAg} label={t('account_sidebar.sec_precision_ag')} expanded={Expanded}
             isOpen={OpenSections['Precision Ag'] || false} onToggle={() => toggleSection('Precision Ag')}>
@@ -697,7 +704,7 @@ export default function AccountSidebar() {
         )}
 
         {anyOn('buyer_crm','equipment','farm_2_table','farm_stand','food_wanted','job_board','land_leasing','price_list','products','restaurant_sourcing','services','supplier_directory') && (
-        <NavGroup icon={ICONS.navGroup} label="Marketplace" expanded={Expanded} isOpen={OpenSections['g_market'] || false} onToggle={() => toggleSection('g_market')}>
+        <NavGroup icon={ICONS.marketplace} label="Marketplace" expanded={Expanded} isOpen={OpenSections['g_market'] || false} onToggle={() => toggleSection('g_market')}>
         {on('farm_2_table') && (
           <NavSection icon={ICONS.farm2table} label={t('account_sidebar.sec_farm_2_table')} expanded={Expanded}
             isOpen={OpenSections['Farm 2 Table'] || false} onToggle={() => toggleSection('Farm 2 Table')}>
@@ -808,7 +815,7 @@ export default function AccountSidebar() {
         )}
 
         {anyOn('blog','chef_dashboard','events','forums','pairsley','properties','provenance','testimonials') && (
-        <NavGroup icon={ICONS.navGroup} label="Community" expanded={Expanded} isOpen={OpenSections['g_community'] || false} onToggle={() => toggleSection('g_community')}>
+        <NavGroup icon={ICONS.community} label="Community" expanded={Expanded} isOpen={OpenSections['g_community'] || false} onToggle={() => toggleSection('g_community')}>
         {on('blog') && (
           <NavSection icon={ICONS.blog} label={t('account_sidebar.sec_blog')} expanded={Expanded}
             isOpen={OpenSections['Blog'] || false} onToggle={() => toggleSection('Blog')}>
@@ -866,7 +873,7 @@ export default function AccountSidebar() {
         )}
 
         {anyOn('certifications','commodity_prices','education_center','grants_programs') && (
-        <NavGroup icon={ICONS.navGroup} label="Programs" expanded={Expanded} isOpen={OpenSections['g_programs'] || false} onToggle={() => toggleSection('g_programs')}>
+        <NavGroup icon={ICONS.programs} label="Programs" expanded={Expanded} isOpen={OpenSections['g_programs'] || false} onToggle={() => toggleSection('g_programs')}>
         {on('certifications') && (
           <NavSection icon={ICONS.certifications} label="Certifications" expanded={Expanded}
             isOpen={OpenSections['Certifications'] || false} onToggle={() => toggleSection('Certifications')}>
@@ -900,7 +907,7 @@ export default function AccountSidebar() {
         )}
 
         {anyOn('accounting','cash_flow_forecast','document_vault','farm_pl','meetings','my_website','report_center') && (
-        <NavGroup icon={ICONS.navGroup} label="Business Mgmt" expanded={Expanded} isOpen={OpenSections['g_business'] || false} onToggle={() => toggleSection('g_business')}>
+        <NavGroup icon={ICONS.businessMgmt} label="Business Mgmt" expanded={Expanded} isOpen={OpenSections['g_business'] || false} onToggle={() => toggleSection('g_business')}>
         {on('my_website') && (
           <NavSection icon={ICONS.website} label={t('account_sidebar.sec_website')} expanded={Expanded}
             isOpen={OpenSections['My Website'] || false} onToggle={() => toggleSection('My Website')}>
@@ -968,7 +975,7 @@ export default function AccountSidebar() {
         </NavGroup>
         )}
 
-        <NavGroup icon={ICONS.navGroup} label="Administration" expanded={Expanded} isOpen={OpenSections['g_admin'] || false} onToggle={() => toggleSection('g_admin')}>
+        <NavGroup icon={ICONS.administration} label="Administration" expanded={Expanded} isOpen={OpenSections['g_admin'] || false} onToggle={() => toggleSection('g_admin')}>
         <NavSection icon={ICONS.permissions} label="Roles & Permissions" expanded={Expanded}
           isOpen={OpenSections['Permissions'] || false} onToggle={() => toggleSection('Permissions')}>
           <NavChild to={`/permissions?BusinessID=${BusinessID}`} label="Roles" />
