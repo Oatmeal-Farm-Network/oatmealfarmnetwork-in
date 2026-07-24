@@ -177,7 +177,7 @@ function DropdownItem({ label, active, navColor, hoverColor, fontFamily, onClick
 // ── Block renderers ───────────────────────────────────────────────
 
 function SlideshowBlock({ data, site }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   // Images can be array of strings or objects {url, caption}
   const raw = Array.isArray(data.images) ? data.images : [];
   const slides = raw
@@ -512,7 +512,7 @@ function MultiColumnBlock({ data, site, columnCount }) {
 }
 
 function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const isStud = mode === 'stud';
   const [animals, setAnimals] = useState([]);
   const [selectedIdx, setSelectedIdx] = useState(null);
@@ -854,7 +854,7 @@ function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
 }
 
 function ProduceBlock({ data, site, businessId }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const [items, setItems] = useState([]);
   useEffect(() => {
     fetchContent(`${API}/api/website/content/produce?business_id=${businessId}`)
@@ -876,7 +876,7 @@ function ProduceBlock({ data, site, businessId }) {
 }
 
 function MeatBlock({ data, site, businessId }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const [items, setItems] = useState([]);
   useEffect(() => {
     fetchContent(`${API}/api/website/content/meat?business_id=${businessId}`)
@@ -898,7 +898,7 @@ function MeatBlock({ data, site, businessId }) {
 }
 
 function ProcessedFoodBlock({ data, site, businessId }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const [items, setItems] = useState([]);
   useEffect(() => {
     fetchContent(`${API}/api/website/content/processed-food?business_id=${businessId}`)
@@ -919,7 +919,7 @@ function ProcessedFoodBlock({ data, site, businessId }) {
 }
 
 function ServicesBlock({ data, site, businessId }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const [items, setItems] = useState([]);
   useEffect(() => {
     fetchContent(`${API}/api/website/content/services?business_id=${businessId}`)
@@ -946,7 +946,7 @@ function ServicesBlock({ data, site, businessId }) {
 }
 
 function MarketplaceBlock({ data, site, businessId }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const [items, setItems] = useState([]);
   useEffect(() => {
     fetchContent(`${API}/api/website/content/marketplace?business_id=${businessId}`)
@@ -969,7 +969,7 @@ function MarketplaceBlock({ data, site, businessId }) {
 }
 
 function GalleryBlock({ data, site, businessId }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const [items, setItems] = useState([]);
   const [lightbox, setLightbox] = useState(null);
   useEffect(() => {
@@ -1002,7 +1002,7 @@ function GalleryBlock({ data, site, businessId }) {
 }
 
 function BlogBlock({ data, site, businessId }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const [posts, setPosts] = useState([]);
   const [selectedIdx, setSelectedIdx] = useState(null);
   const maxPosts = data.max_posts || 100;
@@ -1117,7 +1117,7 @@ function BlogBlock({ data, site, businessId }) {
 
 // ── Upcoming Events block ────────────────────────────────────────
 function EventsBlock({ data, site, businessId }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const [events, setEvents] = useState([]);
   const maxItems = data.max_items || 6;
   const layout = data.layout || 'cards';
@@ -1316,7 +1316,7 @@ const contactInp = { border: '1px solid #E5E7EB', borderRadius: 8, padding: '0.6
 const contactLbl = { display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#9CA3AF', marginBottom: 4, textTransform: 'lowercase' };
 
 function ContactBlock({ data, site }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', organization: '', message: '' });
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
@@ -1569,7 +1569,7 @@ function PriceCard({ icon, name, price, unit, image, desc, tags, site }) {
 
 // ── PackagesBlock: package deals with clickable animals ───────────
 function PackagesBlock({ data, site, businessId }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAnimal, setSelectedAnimal] = useState(null);
@@ -1711,7 +1711,7 @@ function PackagesBlock({ data, site, businessId }) {
 // ── Association widgets ──────────────────────────────────────────
 
 function MemberDirectoryBlock({ data, site, businessId }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const [members, setMembers] = useState(null);
   const [q, setQ] = useState('');
   const [state, setState] = useState('');
@@ -1783,7 +1783,7 @@ function MemberDirectoryBlock({ data, site, businessId }) {
 }
 
 function PedigreeSearchBlock({ data, site, businessId }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const [name, setName]   = useState('');
   const [reg, setReg]     = useState('');
   const [owner, setOwner] = useState('');
@@ -1854,7 +1854,7 @@ function PedigreeSearchBlock({ data, site, businessId }) {
 }
 
 function FeeScheduleBlock({ data, site }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const primary = site.primary_color || '#3D6B34';
   const rows    = Array.isArray(data.rows) ? data.rows : [];
   return (
@@ -1880,7 +1880,7 @@ function FeeScheduleBlock({ data, site }) {
 }
 
 function MapLocationBlock({ data, site }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const primary = site.primary_color || '#3D6B34';
   const textColor = site.text_color || '#1f2937';
   const isGoogleMapsEmbed = typeof data.embed_url === 'string' && /^https:\/\/(www\.)?google\.com\/maps\/embed/.test(data.embed_url);
@@ -1904,7 +1904,7 @@ function MapLocationBlock({ data, site }) {
 }
 
 function HoursOfOperationBlock({ data, site }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const rows = Array.isArray(data.hours) ? data.hours : [];
   const textColor = site.text_color || '#1f2937';
   return (
@@ -2113,7 +2113,7 @@ function TeamBlock({ data, site }) {
 }
 
 function PricingBlock({ data, site }) {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const tiers = Array.isArray(data.tiers) ? data.tiers : [];
   if (tiers.length === 0) return null;
   const primary   = site.primary_color || '#3D6B34';
@@ -2237,7 +2237,7 @@ function resolveActiveBanner(site) {
 
 // ── Main public site renderer ─────────────────────────────────────
 export default function WebsitePublic() {
-  const { t } = useTranslation(); const wp = k => t(`website_public.${k}`);
+  const { t } = useTranslation(); const wp = (k, o) => t(`website_public.${k}`, o);
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
