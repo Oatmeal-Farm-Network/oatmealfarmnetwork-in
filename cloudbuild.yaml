@@ -1,22 +1,39 @@
+# India (asia-south1) — frontend image build for Cloud Run
+# Cloud Run service name: oatmealfarmnetwork-in
+substitutions:
+  _REGION: asia-south1
+  _PROJECT_ID: animated-flare-421518
+  _AR_REPO: cloud-run-source-deploy
+  _SERVICE: oatmealfarmnetwork-in
+  _API_URL: https://oatmealfarmnetworkbackend-in-802455386518.asia-south1.run.app
+
 steps:
-  # Build Docker image with VITE_API_URL
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
       - '-t'
-      - 'us-central1-docker.pkg.dev/animated-flare-421518/cloud-run-source-deploy/oatmealfarmnetwork-git'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_AR_REPO}/${_SERVICE}'
       - '--build-arg'
-      - 'VITE_API_URL=https://oatmealfarmnewtorkbackend-802455386518.us-central1.run.app'
+      - 'VITE_API_URL=${_API_URL}'
       - '.'
 
-
-  # Push image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'us-central1-docker.pkg.dev/animated-flare-421518/cloud-run-source-deploy/oatmealfarmnetwork-git'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_AR_REPO}/${_SERVICE}'
 
-  # Deploy step removed — deploy manually via Cloud Run console or gcloud CLI
+  # Optional auto-deploy (enable by uncommenting after first manual Cloud Run create)
+  # - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  #   entrypoint: gcloud
+  #   args:
+  #     - 'run'
+  #     - 'deploy'
+  #     - '${_SERVICE}'
+  #     - '--image=${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_AR_REPO}/${_SERVICE}'
+  #     - '--region=${_REGION}'
+  #     - '--platform=managed'
+  #     - '--allow-unauthenticated'
+  #     - '--port=8080'
 
 images:
-  - 'us-central1-docker.pkg.dev/animated-flare-421518/cloud-run-source-deploy/oatmealfarmnetwork-git'
+  - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_AR_REPO}/${_SERVICE}'
