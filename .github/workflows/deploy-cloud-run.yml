@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: asia-south1
+  PROJECT_ID: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+  REGION: ${{ secrets.GOOGLE_CLOUD_LOCATION }}
   GAR_REPOSITORY: cloud-run-source-deploy
   SERVICE_NAME: oatmealfarmnetwork-in
   API_URL: https://oatmealfarmnetworkbackend-in-802455386518.asia-south1.run.app
@@ -24,10 +24,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud
+      - name: Authenticate to Google Cloud (WIF)
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
