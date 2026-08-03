@@ -2209,7 +2209,10 @@ function RenderBlock({ block, site, businessId }) {
 
 // Hostnames that are the OFN platform itself — everything else is a custom domain
 const OFN_HOSTS = ['oatmealfarmnetwork.com', 'www.oatmealfarmnetwork.com', 'localhost', '127.0.0.1'];
-const isCustomDomain = !OFN_HOSTS.some(h => window.location.hostname === h || window.location.hostname.endsWith(`.${h}`));
+const isCustomDomain = !(
+  OFN_HOSTS.some(h => window.location.hostname === h || window.location.hostname.endsWith(`.${h}`))
+  || window.location.hostname.endsWith('.run.app')
+);
 
 // Pick the header image whose month/day range covers today.
 // Falls back to header_banner_url if no images are configured.

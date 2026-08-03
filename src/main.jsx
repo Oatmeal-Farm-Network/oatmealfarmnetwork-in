@@ -597,9 +597,11 @@ function AccountEventsRedirect() {
 }
 
 // Custom domains (not OFN or localhost) get the full public site renderer for every path.
+// Include *.run.app so Cloud Run India/USA preview URLs use the real app (login, etc.).
 const OFN_HOSTS = ['oatmealfarmnetwork.com', 'www.oatmealfarmnetwork.com', 'localhost', '127.0.0.1'];
-const isCustomDomain = !OFN_HOSTS.some(
-  h => window.location.hostname === h || window.location.hostname.endsWith(`.${h}`)
+const isCustomDomain = !(
+  OFN_HOSTS.some(h => window.location.hostname === h || window.location.hostname.endsWith(`.${h}`))
+  || window.location.hostname.endsWith('.run.app')
 );
 
 // Register the unified service worker (push + offline + bg-sync) on first paint.
