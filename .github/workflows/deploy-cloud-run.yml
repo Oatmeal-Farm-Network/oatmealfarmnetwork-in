@@ -12,6 +12,7 @@ env:
   GAR_REPOSITORY: cloud-run-source-deploy
   SERVICE_NAME: oatmealfarmnetwork-in
   API_URL: ${{ secrets.BACKEND_URL }}
+  API_URL_FALLBACK: https://oatmealfarmnetworkbackend-in-151683070823.asia-south1.run.app
 
 jobs:
   deploy:
@@ -38,13 +39,11 @@ jobs:
 
       - name: Build Docker image
         run: |
-          if [ -z "$API_URL" ]; then
-            echo "ERROR: Set GitHub secret BACKEND_URL to the India backend Cloud Run URL"
-            exit 1
-          fi
+          EFFECTIVE_API_URL="${API_URL:-$API_URL_FALLBACK}"
+          echo "Using API_URL=$EFFECTIVE_API_URL"
           IMAGE=$REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPOSITORY/$SERVICE_NAME
           docker build \
-            --build-arg VITE_API_URL=$API_URL \
+            --build-arg VITE_API_URL=$EFFECTIVE_API_URL \
             -t $IMAGE:$GITHUB_SHA \
             -t $IMAGE:latest \
             .
