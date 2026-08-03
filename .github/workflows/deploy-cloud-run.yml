@@ -11,7 +11,7 @@ env:
   REGION: ${{ secrets.GOOGLE_CLOUD_LOCATION }}
   GAR_REPOSITORY: cloud-run-source-deploy
   SERVICE_NAME: oatmealfarmnetwork-in
-  API_URL: https://oatmealfarmnetworkbackend-in-802455386518.asia-south1.run.app
+  API_URL: ${{ secrets.BACKEND_URL }}
 
 jobs:
   deploy:
@@ -38,6 +38,10 @@ jobs:
 
       - name: Build Docker image
         run: |
+          if [ -z "$API_URL" ]; then
+            echo "ERROR: Set GitHub secret BACKEND_URL to the India backend Cloud Run URL"
+            exit 1
+          fi
           IMAGE=$REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPOSITORY/$SERVICE_NAME
           docker build \
             --build-arg VITE_API_URL=$API_URL \
@@ -63,7 +67,8 @@ jobs:
             --memory 512Mi \
             --cpu 1 \
             --min-instances 0 \
-            --max-instances 10
+            --max-instances 10 \
+            --project $PROJECT_ID
 
       - name: Show deployed URL
         run: |
@@ -71,3 +76,4 @@ jobs:
             --region $REGION --project $PROJECT_ID \
             --format 'value(status.url)')
           echo "India frontend deployed at: $URL"
+          echo "Add/update GitHub secret FRONTEND_URL=$URL on the backend repo"

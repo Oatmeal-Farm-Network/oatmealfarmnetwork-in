@@ -1,11 +1,10 @@
-# India (asia-south1) — frontend image build for Cloud Run
-# Cloud Run service name: oatmealfarmnetwork-in
+# India (OatmealIndia / asia-south1) — frontend image build
 substitutions:
   _REGION: asia-south1
-  _PROJECT_ID: animated-flare-421518
+  _PROJECT_ID: oatmealindia
   _AR_REPO: cloud-run-source-deploy
   _SERVICE: oatmealfarmnetwork-in
-  _API_URL: https://oatmealfarmnetworkbackend-in-802455386518.asia-south1.run.app
+  _API_URL: https://oatmealfarmnetworkbackend-in-151683070823.asia-south1.run.app
 
 steps:
   - name: 'gcr.io/cloud-builders/docker'
@@ -21,19 +20,6 @@ steps:
     args:
       - 'push'
       - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_AR_REPO}/${_SERVICE}'
-
-  # Optional auto-deploy (enable by uncommenting after first manual Cloud Run create)
-  # - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  #   entrypoint: gcloud
-  #   args:
-  #     - 'run'
-  #     - 'deploy'
-  #     - '${_SERVICE}'
-  #     - '--image=${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_AR_REPO}/${_SERVICE}'
-  #     - '--region=${_REGION}'
-  #     - '--platform=managed'
-  #     - '--allow-unauthenticated'
-  #     - '--port=8080'
 
 images:
   - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_AR_REPO}/${_SERVICE}'
