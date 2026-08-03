@@ -44,6 +44,8 @@ jobs:
           IMAGE=$REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPOSITORY/$SERVICE_NAME
           docker build \
             --build-arg VITE_API_URL=$EFFECTIVE_API_URL \
+            --build-arg VITE_OTF_API_URL=$EFFECTIVE_API_URL \
+            --build-arg VITE_NEWS_API_URL=$EFFECTIVE_API_URL \
             -t $IMAGE:$GITHUB_SHA \
             -t $IMAGE:latest \
             .
