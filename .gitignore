@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local agent / one-time setup scratch
+.claude/
+CLAUDE.md
+INDIA_DEPLOY.md
+_vite.err
+_vite.out
+indexold.html
+scripts/setup-india*.sh
+scripts/setup-oatmealindia-wif.sh
+
