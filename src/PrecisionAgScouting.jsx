@@ -137,7 +137,7 @@ function AddScoutForm({ fieldId, onSaved, onCancel }) {
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold font-mont text-gray-500">{t('scouting.form_latitude')}</label>
           <input type="number" step="any" value={form.latitude} onChange={e => set('latitude', e.target.value)}
-            placeholder="e.g. 41.8781"
+            placeholder="e.g. 28.6139"
             className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2" />
         </div>
         <div className="flex flex-col gap-1">

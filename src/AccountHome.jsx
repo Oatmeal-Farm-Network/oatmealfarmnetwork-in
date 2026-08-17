@@ -948,13 +948,13 @@ const FEATURE_META = {
     platformPage: '/platform/community',
   },
   csa_management: {
-    label: 'CSA Management', color: '#065F46', bg: '#ecfdf5',
+    label: 'FPO Shares', color: '#065F46', bg: '#ecfdf5',
     icon: <I><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></I>,
-    desc: 'Manage Community Supported Agriculture subscriptions and member pickups.',
-    cta: { label: 'Manage CSA', path: (b) => `/csa/manage?BusinessID=${b}` },
-    addCta: { label: 'Browse Plans', path: () => '/csa' },
+    desc: 'Manage Farmer Producer Organisation produce shares and member pickups.',
+    cta: { label: 'Manage FPO', path: (b) => `/fpo/manage?BusinessID=${b}` },
+    addCta: { label: 'Browse Plans', path: () => '/fpo' },
     links: () => [],
-    platformPage: '/platform/csa',
+    platformPage: '/platform/fpo',
   },
   properties: {
     label: 'Properties', color: '#4B5563', bg: '#f9fafb',

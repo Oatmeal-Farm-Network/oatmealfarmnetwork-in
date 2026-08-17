@@ -63,8 +63,8 @@ export default function PrecisionAgBoundaryMap() {
         mapInst.current = null;
       }
 
-      const lat = fieldData?.latitude  ?? 39.5;
-      const lon = fieldData?.longitude ?? -98.35;
+      const lat = fieldData?.latitude  ?? 20.5937;
+      const lon = fieldData?.longitude ?? 78.9629;
       const zoom = fieldData?.boundary ? 14 : 12;
 
       const map = Lf.map(mapRef.current, { zoomControl: true }).setView([lat, lon], zoom);

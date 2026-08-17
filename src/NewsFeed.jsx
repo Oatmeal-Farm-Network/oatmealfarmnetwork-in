@@ -9,6 +9,7 @@ import {
   readQuotesCache,
   hasQuoteData,
   refreshCommodityQuotesInBackground,
+  formatInr,
 } from './commodityQuotes';
 
 const CATEGORIES = ['All', 'Markets', 'Weather', 'Policy', 'AgTech', 'Livestock', 'General'];
@@ -25,11 +26,11 @@ const CATEGORY_IMAGES = {
 const GREEN_CATS = new Set(['AgTech', 'Livestock', 'Markets']);
 const HERO_FALLBACK = '/images/NewsHeroWheat.png';
 
-/** Snapshot rows — same futures symbols as Commodity Prices page */
+/** Snapshot rows — India mandi commodity ids from /api/commodity-prices/quotes */
 const SNAPSHOT_COMMODITIES = [
-  { name: 'Wheat', symbol: 'ZW', unit: 'bu' },
-  { name: 'Corn', symbol: 'ZC', unit: 'bu' },
-  { name: 'Soy', symbol: 'ZS', unit: 'bu' },
+  { name: 'Wheat', symbol: 'wheat', unit: 'qtl' },
+  { name: 'Rice', symbol: 'rice', unit: 'qtl' },
+  { name: 'Soybean', symbol: 'soybean', unit: 'qtl' },
 ];
 
 const API = import.meta.env.VITE_NEWS_API_URL || import.meta.env.VITE_API_URL || '';
@@ -41,7 +42,7 @@ function stripHtml(html) {
 
 function lookupQuote(quotes, symbol) {
   if (!quotes || typeof quotes !== 'object') return null;
-  return quotes[`${symbol}=F`] || quotes[symbol] || quotes[`${symbol}=F.CME`] || null;
+  return quotes[symbol] || quotes[`${symbol}=F`] || quotes[`${symbol}=F.CME`] || null;
 }
 
 function sparkFromChange(price, change) {
@@ -87,12 +88,12 @@ function buildMarketRows(quotes) {
     const down = move != null && move < 0;
     return {
       name: c.name,
-      price: `$${price.toFixed(2)}`,
+      price: formatInr(price, { digits: 0 }),
       change:
         pct != null
           ? `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`
           : change != null
-            ? `${change > 0 ? '+' : ''}${change.toFixed(2)}`
+            ? `${change > 0 ? '+' : ''}${formatInr(change, { digits: 0 })}`
             : '—',
       up,
       down,
@@ -338,10 +339,10 @@ const NewsFeed = () => {
   const heroTitle =
     'Global Wheat Reservoirs Reach Decade High as Sustainable Tilling Expands';
   const heroDesc =
-    'Live updates from USDA, Farm Journal, Brownfield Ag, AGDAILY and more — markets, weather, policy, and AgTech in one feed.';
+    'Dispatches for Indian farms — mandi markets, weather, policy, and AgTech in one feed.';
   const heroSource = featured
-    ? `Source: ${featured.source || 'USDA'}${featured.pubDate ? ` • ${formatRelative(featured.pubDate)}` : ''}`
-    : 'Source: USDA • Just now';
+    ? `Source: ${featured.source || 'OFN India'}${featured.pubDate ? ` • ${formatRelative(featured.pubDate)}` : ''}`
+    : 'Source: OFN India • Just now';
 
   return (
     <div className="news-page" style={{ background: '#f7f2e8', margin: '-1.5rem', padding: '1.5rem 1.5rem 2rem', minHeight: 'calc(100vh - 120px)' }}>
@@ -524,7 +525,7 @@ const NewsFeed = () => {
 
           <aside className="news-sidebar">
             <div className="news-widget">
-              <h3 className="news-widget__title">Market Snapshot</h3>
+              <h3 className="news-widget__title">Mandi Snapshot</h3>
               {marketLoading ? (
                 <p className="news-trend-empty">Loading commodity prices…</p>
               ) : (

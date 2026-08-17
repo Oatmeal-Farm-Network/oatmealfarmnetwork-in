@@ -85,7 +85,7 @@ export default function WeatherCompact({ lat, lon, address, label, mini = false 
           <img src={weather.current.icon} alt="" style={{ width: '1.4rem', height: '1.4rem' }} />
         )}
         <span className="font-semibold text-gray-800">
-          {Math.round(weather.current?.temp_f ?? 0)}°F
+          {Math.round(weather.current?.temp_c ?? weather.current?.temp_f ?? 0)}°C
         </span>
         <span className="text-gray-400 truncate">{weather.current?.condition}</span>
       </div>
@@ -104,7 +104,7 @@ export default function WeatherCompact({ lat, lon, address, label, mini = false 
         )}
         <div className="flex items-baseline gap-2">
           <span className="text-2xl font-light text-gray-800">
-            {Math.round(weather.current?.temp_f ?? 0)}°F
+            {Math.round(weather.current?.temp_c ?? weather.current?.temp_f ?? 0)}°C
           </span>
           <span className="text-xs text-gray-500">{weather.current?.condition}</span>
         </div>

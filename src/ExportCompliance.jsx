@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ThaiymeChat from './ThaiymeChat';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
@@ -46,7 +46,7 @@ export default function ExportCompliance() {
 
   const [showShipForm, setShowShipForm] = useState(false);
   const [deliverModal, setDeliverModal] = useState(null);
-  const [shipForm, setShipForm] = useState({ commodity: '', destination_country: '', buyer_name: '', vessel_ref: '', estimated_departure: '', quantity_kg: '', unit_price_usd: '', currency: 'USD', notes: '' });
+  const [shipForm, setShipForm] = useState({ commodity: '', destination_country: '', buyer_name: '', vessel_ref: '', estimated_departure: '', quantity_kg: '', unit_price_usd: '', currency: 'INR', notes: '' });
   const [phytoForm, setPhytoForm] = useState({ cert_number: '', issuing_authority: '', issue_date: '', expiry_date: '', commodity: '', notes: '' });
   const [customsForm, setCustomsForm] = useState({ doc_type: 'bill_of_lading', doc_number: '', issuing_country: '', issue_date: '', notes: '' });
   const [showCertForm, setShowCertForm] = useState(false);
@@ -54,7 +54,7 @@ export default function ExportCompliance() {
   const [showRecallForm, setShowRecallForm] = useState(false);
   const [recallForm, setRecallForm] = useState({ lot_ref: '', commodity: '', reason: '', units_affected: '', recall_date: '' });
   const [showMarginForm, setShowMarginForm] = useState(false);
-  const [marginForm, setMarginForm] = useState({ crop: '', season: '', field_ref: '', yield_kg: '', price_per_kg: '', variable_cost_usd: '', fixed_cost_usd: '', currency: 'USD', notes: '' });
+  const [marginForm, setMarginForm] = useState({ crop: '', season: '', field_ref: '', yield_kg: '', price_per_kg: '', variable_cost_usd: '', fixed_cost_usd: '', currency: 'INR', notes: '' });
 
   const load = useCallback(async () => {
     if (!businessId) return;
@@ -101,7 +101,7 @@ export default function ExportCompliance() {
     await fetch(`${API}/api/export-compliance/shipments?business_id=${businessId}`, {
       method: 'POST', headers: { ...authHdr, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
-    setShipForm({ commodity: '', destination_country: '', buyer_name: '', vessel_ref: '', estimated_departure: '', quantity_kg: '', unit_price_usd: '', currency: 'USD', notes: '' });
+    setShipForm({ commodity: '', destination_country: '', buyer_name: '', vessel_ref: '', estimated_departure: '', quantity_kg: '', unit_price_usd: '', currency: 'INR', notes: '' });
     setShowShipForm(false);
     load();
   };
@@ -190,7 +190,7 @@ export default function ExportCompliance() {
     await fetch(`${API}/api/export-compliance/crop-margins?business_id=${businessId}`, {
       method: 'POST', headers: { ...authHdr, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
-    setMarginForm({ crop: '', season: '', field_ref: '', yield_kg: '', price_per_kg: '', variable_cost_usd: '', fixed_cost_usd: '', currency: 'USD', notes: '' });
+    setMarginForm({ crop: '', season: '', field_ref: '', yield_kg: '', price_per_kg: '', variable_cost_usd: '', fixed_cost_usd: '', currency: 'INR', notes: '' });
     setShowMarginForm(false);
     load();
   };

@@ -73,7 +73,7 @@ export default function CSAAdvanced() {
     <div style={{ backgroundColor: '#f7f2e8', minHeight: '100vh' }}>
       <Header />
       <div className="max-w-2xl mx-auto px-6 py-20 text-center text-gray-500">
-        <p className="font-semibold">Please log in and select a business to use CSA Advanced tools.</p>
+        <p className="font-semibold">Please log in and select a business to use FPO Advanced tools.</p>
       </div>
       <Footer />
     </div>
@@ -81,13 +81,13 @@ export default function CSAAdvanced() {
 
   return (
     <div style={{ backgroundColor: '#f7f2e8', minHeight: '100vh' }}>
-      <PageMeta title="CSA Advanced Tools — Oatmeal Farm Network" description="Membership contracts, BoxBot allocation, vacation holds, pickup sites, newsletters, and more." />
+      <PageMeta title="FPO Advanced Tools — Oatmeal Farm Network" description="Membership contracts, share allocation, vacation holds, pickup sites, newsletters, and more." />
       <Header />
       <div style={{ background: 'linear-gradient(90deg,rgba(255,255,255,0.93) 0%,rgba(255,255,255,0) 100%)', borderBottom: '1px solid #e5e7eb' }}>
         <div className="max-w-6xl mx-auto px-6 py-8">
-          <Breadcrumbs items={[{ label: 'CSA Advanced' }]} />
-          <h1 className="text-3xl font-bold text-gray-900 mt-1" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>CSA Advanced Tools</h1>
-          <p className="text-gray-500 text-sm mt-1">Membership logic, BoxBot allocation, vacation holds, pickup sites, newsletters, and harvest planning.</p>
+          <Breadcrumbs items={[{ label: 'FPO Advanced' }]} />
+          <h1 className="text-3xl font-bold text-gray-900 mt-1" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>FPO Advanced Tools</h1>
+          <p className="text-gray-500 text-sm mt-1">Membership logic, share allocation, vacation holds, pickup sites, newsletters, and harvest planning.</p>
         </div>
       </div>
 
@@ -193,7 +193,7 @@ function ContractsTab({ bid }) {
               <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" type="number" value={form.season_year} onChange={e => setForm(f => ({ ...f, season_year: e.target.value }))} /></div>
             <div><label className="block text-xs font-semibold text-gray-600 mb-1">Contract Terms</label>
               <textarea className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none" rows={6}
-                placeholder="By joining this CSA, the member agrees to accept variations in yield due to weather, pests, and other farming realities. In exchange for upfront payment, the farm commits to..."
+                placeholder="By joining this FPO share, the member agrees to accept variations in yield due to weather, pests, and other farming realities. In exchange for upfront payment, the farm commits to..."
                 value={form.terms_text} onChange={e => setForm(f => ({ ...f, terms_text: e.target.value }))} /></div>
             <div className="flex gap-2">
               <button onClick={save} disabled={saving} className="flex-1 py-2.5 rounded-lg text-white font-bold text-sm disabled:opacity-40" style={{ backgroundColor: GREEN }}>{saving ? 'Saving…' : 'Create Contract'}</button>

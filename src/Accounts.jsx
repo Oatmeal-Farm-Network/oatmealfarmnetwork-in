@@ -25,9 +25,21 @@ export default function Accounts() {
     if (!token) { navigate('/login'); return; }
     if (!peopleId) return;
 
-    fetch(`${import.meta.env.VITE_API_URL}/auth/my-businesses?PeopleID=${peopleId}`)
-      .then(r => r.json())
-      .then(data => { setBusinesses(Array.isArray(data) ? data : []); setLoading(false); })
+    fetch(`${import.meta.env.VITE_API_URL}/auth/my-businesses`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => {
+        if (r.status === 401) {
+          navigate('/login');
+          return null;
+        }
+        return r.json();
+      })
+      .then(data => {
+        if (data == null) return;
+        setBusinesses(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, [peopleId]);
 

@@ -30,7 +30,7 @@ function StatusBadge({ status }) {
 
 function ShipmentModal({ businessId, shipment, suppliers, onClose, onSaved }) {
   const [form, setForm] = useState(shipment || {
-    BusinessID: businessId, Status: 'pending', Currency: 'USD',
+    BusinessID: businessId, Status: 'pending', Currency: 'INR',
   });
   const [saving, setSaving] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));

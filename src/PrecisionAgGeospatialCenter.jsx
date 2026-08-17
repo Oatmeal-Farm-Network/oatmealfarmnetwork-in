@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
-import { useFields, useAnalyses, useRaster, getIndex, ndviColor } from './precisionAgUtils';
+import { useFields, useAnalyses, useRaster, getIndex, ndviColor, API_URL, authHeaders } from './precisionAgUtils';
 import SaigeWidget from './SaigeWidget';
+import { useTerrainData } from './precision-ag/terrain/useTerrainData';
+import ScenarioSimulator from './precision-ag/terrain/ScenarioSimulator';
+import FpoFieldStrip from './precision-ag/field-twin/FpoFieldStrip';
+import SeasonCropCard from './precision-ag/field-twin/SeasonCropCard';
+import { loadTwinPlay, playLabel, saveTwinPlay } from './precision-ag/field-twin/twinPlayStorage';
+
+const TerrainViewer = lazy(() => import('./precision-ag/terrain/TerrainViewer'));
+const FieldTwinViewer = lazy(() => import('./precision-ag/field-twin/FieldTwinViewer'));
 
 // ─── Shared color helpers ────────────────────────────────────────────────────
 function indexColor(v, min, max, indexKey) {
@@ -199,7 +207,13 @@ const TABS = [
   { id: 'single',    label: 'Single Layer' },
   { id: 'multi',     label: 'Multi-layer' },
   { id: 'timeline',  label: 'Change Timeline' },
+  { id: 'terrain',   label: '3D Terrain' },
+  { id: 'twin',      label: 'Field Twin' },
 ];
+
+const ANALYSIS_TABS = ['single', 'multi', 'timeline'];
+const STANDALONE_TABS = ['terrain', 'twin'];
+const ALL_TAB_IDS = [...ANALYSIS_TABS, ...STANDALONE_TABS];
 
 const MULTI_PRESETS = [
   { label: 'Stress audit',   indices: ['NDVI','NDRE','GNDVI','EVI'] },
@@ -207,16 +221,443 @@ const MULTI_PRESETS = [
   { label: 'Full audit',     indices: ['NDVI','NDRE','GNDVI','NDWI'] },
 ];
 
+function TerrainTabPanel({ fieldId, fieldName, businessId }) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const gridSize = isMobile ? 96 : 128;
+  const { meta, elevation, soil, scouts, loading, error, progress } = useTerrainData(fieldId, gridSize);
+  const [scenarioOverlayUrl, setScenarioOverlayUrl] = useState(null);
+  const [scenarioHotspots, setScenarioHotspots] = useState([]);
+  const [selectedHotspot, setSelectedHotspot] = useState(null);
+  const overlayUrlRef = useRef(null);
+
+  useEffect(() => () => {
+    if (overlayUrlRef.current) {
+      try { URL.revokeObjectURL(overlayUrlRef.current); } catch { /* */ }
+      overlayUrlRef.current = null;
+    }
+  }, []);
+
+  // Drop previous field's scenario when switching fields
+  useEffect(() => {
+    setScenarioOverlayUrl((prev) => {
+      if (prev) {
+        try { URL.revokeObjectURL(prev); } catch { /* */ }
+      }
+      overlayUrlRef.current = null;
+      return null;
+    });
+    setScenarioHotspots([]);
+    setSelectedHotspot(null);
+  }, [fieldId]);
+
+  const handleScenarioOverlay = (url, result) => {
+    setScenarioOverlayUrl((prev) => {
+      if (prev && prev !== url) {
+        try { URL.revokeObjectURL(prev); } catch { /* */ }
+      }
+      overlayUrlRef.current = url;
+      return url;
+    });
+    setScenarioHotspots(result?.hotspots || []);
+  };
+
+  const clearScenario = () => {
+    setScenarioOverlayUrl((prev) => {
+      if (prev) {
+        try { URL.revokeObjectURL(prev); } catch { /* */ }
+      }
+      overlayUrlRef.current = null;
+      return null;
+    });
+    setScenarioHotspots([]);
+    setSelectedHotspot(null);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="font-lora text-lg font-bold text-gray-900">
+          3D Terrain{fieldName ? ` — ${fieldName}` : ''}
+        </div>
+        <p className="font-mont text-xs text-gray-500 mt-1">
+          Field-only 3D view of the saved boundary — DEM surface with Sentinel crop imagery draped on it.
+          No street map. Switch textures for NDVI/zones/slope, or run the storm/irrigation risk simulator.
+        </p>
+      </div>
+
+      {loading && (
+        <div className="bg-white rounded-xl border border-gray-200 p-10 text-center font-mont text-sm text-gray-500 animate-pulse">
+          {progress || 'Loading terrain package…'}
+        </div>
+      )}
+      {error && !loading && (
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-xl p-4 font-mont text-sm">
+          {error}
+        </div>
+      )}
+      {!loading && !error && meta && (
+        <>
+          <ScenarioSimulator
+            fieldId={fieldId}
+            businessId={businessId}
+            grid={gridSize}
+            selectedHotspot={selectedHotspot}
+            onSelectHotspot={setSelectedHotspot}
+            onScenarioOverlay={handleScenarioOverlay}
+            onClearScenario={clearScenario}
+          />
+          <Suspense fallback={
+            <div className="bg-white rounded-xl border border-gray-200 p-10 text-center font-mont text-sm text-gray-400 animate-pulse">
+              Loading 3D viewer…
+            </div>
+          }>
+            <TerrainViewer
+              fieldId={fieldId}
+              meta={meta}
+              elevation={elevation}
+              soil={soil}
+              scouts={scouts}
+              height={isMobile ? 400 : 520}
+              scenarioOverlayUrl={scenarioOverlayUrl}
+              scenarioHotspots={scenarioHotspots}
+              selectedHotspot={selectedHotspot}
+              onSelectHotspot={setSelectedHotspot}
+            />
+          </Suspense>
+        </>
+      )}
+    </div>
+  );
+}
+
+class TwinErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-xl p-4 font-mont text-sm space-y-2">
+          <div className="font-semibold">Field Twin hit a display error</div>
+          <p className="text-xs opacity-90">{String(this.state.error?.message || this.state.error)}</p>
+          <button
+            type="button"
+            className="px-3 py-1.5 rounded-lg bg-[#1E3A5F] text-white text-xs font-semibold"
+            onClick={() => this.setState({ error: null })}
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function FieldTwinTabPanel({ fieldId, fieldName, businessId, field = null }) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const gridSize = isMobile ? 96 : 128;
+  const [scenarioOverlayUrl, setScenarioOverlayUrl] = useState(null);
+  const [scenarioHotspots, setScenarioHotspots] = useState([]);
+  const [selectedHotspot, setSelectedHotspot] = useState(null);
+  const [scenarioResult, setScenarioResult] = useState(null);
+  const [compareTrigger, setCompareTrigger] = useState(null);
+  const [hotspotActionMsg, setHotspotActionMsg] = useState('');
+  const [savedPlay, setSavedPlay] = useState(() => loadTwinPlay(fieldId));
+  const overlayUrlRef = useRef(null);
+
+  useEffect(() => () => {
+    if (overlayUrlRef.current) {
+      try { URL.revokeObjectURL(overlayUrlRef.current); } catch { /* */ }
+      overlayUrlRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    setScenarioOverlayUrl((prev) => {
+      if (prev) {
+        try { URL.revokeObjectURL(prev); } catch { /* */ }
+      }
+      overlayUrlRef.current = null;
+      return null;
+    });
+    setScenarioHotspots([]);
+    setScenarioResult(null);
+    setSelectedHotspot(null);
+    setCompareTrigger(null);
+    setHotspotActionMsg('');
+    setSavedPlay(loadTwinPlay(fieldId));
+  }, [fieldId]);
+
+  const handleScenarioOverlay = (url, result) => {
+    setScenarioOverlayUrl((prev) => {
+      if (prev && prev !== url) {
+        try { URL.revokeObjectURL(prev); } catch { /* */ }
+      }
+      overlayUrlRef.current = url;
+      return url;
+    });
+    setScenarioHotspots(result?.hotspots || []);
+    setScenarioResult(result || null);
+    if (result) {
+      const play = {
+        rainfall_mm: result.rainfall_mm,
+        irrigation_mm: result.irrigation_mm,
+        duration_hours: result.duration_hours,
+        infiltration_class: result.infiltration_class,
+        antecedent: result.antecedent,
+        label: result.preset_id || result.label,
+      };
+      saveTwinPlay(fieldId, play);
+      setSavedPlay(loadTwinPlay(fieldId));
+    }
+  };
+
+  const clearScenario = () => {
+    setScenarioOverlayUrl((prev) => {
+      if (prev) {
+        try { URL.revokeObjectURL(prev); } catch { /* */ }
+      }
+      overlayUrlRef.current = null;
+      return null;
+    });
+    setScenarioHotspots([]);
+    setScenarioResult(null);
+    setSelectedHotspot(null);
+  };
+
+  const handleCompareScenario = (payload) => {
+    saveTwinPlay(fieldId, payload);
+    setSavedPlay(loadTwinPlay(fieldId));
+    setCompareTrigger({
+      ...payload,
+      key: `${Date.now()}-${payload?.label || 'compare'}`,
+    });
+  };
+
+  const worstHotspotPick = () => {
+    const list = scenarioHotspots || [];
+    const ranked = [...list].sort((a, b) => Number(b.risk || 0) - Number(a.risk || 0));
+    const worst = ranked[0];
+    const lat = Number(worst?.latitude ?? field?.latitude);
+    const lon = Number(worst?.longitude ?? field?.longitude);
+    return {
+      risk: worst?.risk,
+      band: worst?.band || 'moderate',
+      latitude: lat,
+      longitude: lon,
+      coords_approx: !worst?.latitude,
+    };
+  };
+
+  const handleHotspotAction = async ({ type, pick }) => {
+    if (!pick || !fieldId) return;
+    setHotspotActionMsg('');
+    const lat = Number(pick.latitude);
+    const lon = Number(pick.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      setHotspotActionMsg('Need a map location for this hotspot — draw a boundary or pick a pin with coordinates.');
+      return;
+    }
+    const approxNote = pick.coords_approx
+      ? ' Location pinned near field center (hotspot GPS missing) — adjust on site.'
+      : '';
+    try {
+      if (type === 'scout') {
+        const r = await fetch(`${API_URL}/api/fields/${fieldId}/scouts`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            category: 'Water / Drainage',
+            severity: pick.band === 'severe' ? 'high' : 'moderate',
+            notes: (
+              `Water-risk screening hotspot (relative risk ${pick.risk}). ` +
+              `Screening-grade only — verify on site.${approxNote}`
+            ),
+            latitude: lat,
+            longitude: lon,
+            observed_at: new Date().toISOString(),
+          }),
+        });
+        if (!r.ok) throw new Error(await r.text().catch(() => 'Scout create failed'));
+        setHotspotActionMsg(
+          pick.coords_approx
+            ? 'Scout created near field center (hotspot GPS was missing).'
+            : 'Scout observation created at this hotspot.',
+        );
+        return;
+      }
+      if (type === 'work_order') {
+        if (!businessId) {
+          setHotspotActionMsg('Business ID required for a work order.');
+          return;
+        }
+        const r = await fetch(`${API_URL}/api/work-orders`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            BusinessID: Number(businessId),
+            FieldID: Number(fieldId),
+            TaskType: 'Scouting',
+            Title: 'Check water / access risk hotspot',
+            Description: (
+              `Modeled relative water-risk ${pick.risk} (${pick.band}) at ` +
+              `${lat}, ${lon}. Screening-grade — confirm on site.${approxNote}`
+            ),
+            Priority: pick.band === 'severe' ? 'high' : 'normal',
+            Status: 'draft',
+            Location: `${lat}, ${lon}`,
+            Notes: pick.coords_approx
+              ? 'Created from Field Twin hotspot (field-center fallback).'
+              : 'Created from Field Twin hotspot.',
+          }),
+        });
+        if (!r.ok) throw new Error(await r.text().catch(() => 'Work order create failed'));
+        const j = await r.json();
+        setHotspotActionMsg(`Draft work order created (WOID ${j.WOID || j.woid || '—'}).`);
+        return;
+      }
+      if (type === 'irrigate') {
+        if (!businessId) {
+          setHotspotActionMsg('Business ID required for a work order.');
+          return;
+        }
+        const r = await fetch(`${API_URL}/api/work-orders`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            BusinessID: Number(businessId),
+            FieldID: Number(fieldId),
+            TaskType: 'Irrigation',
+            Title: 'Check canal / borewell set at hotspot',
+            Description: (
+              `Modeled relative water-risk ${pick.risk} (${pick.band}) at ` +
+              `${lat}, ${lon}. Estimate only — not a schedule. Confirm canal/borewell on site.${approxNote}`
+            ),
+            Priority: pick.band === 'severe' ? 'high' : 'normal',
+            Status: 'draft',
+            Location: `${lat}, ${lon}`,
+            Notes: pick.coords_approx
+              ? 'Created from Field Twin irrigate action (field-center fallback).'
+              : 'Created from Field Twin irrigate action.',
+          }),
+        });
+        if (!r.ok) throw new Error(await r.text().catch(() => 'Work order create failed'));
+        const j = await r.json();
+        setHotspotActionMsg(`Draft canal/borewell check created (WOID ${j.WOID || j.woid || '—'}).`);
+      }
+    } catch (e) {
+      setHotspotActionMsg(String(e.message || e));
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="font-lora text-lg font-bold text-gray-900">
+          Field Twin{fieldName ? ` — ${fieldName}` : ''}
+        </div>
+        <p className="font-mont text-xs text-gray-500 mt-1">
+          Immersive 3D view of this field — DEM, satellite layers, crop stand, and measured soil cores.
+          Walk the field, compare rain vs irrigate, then act on hotspots before the next pass.
+        </p>
+        {field && <div className="mt-3"><SeasonCropCard field={field} businessId={businessId} compact /></div>}
+        {hotspotActionMsg && (
+          <p className="mt-2 font-mont text-xs text-emerald-900 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5">
+            {hotspotActionMsg}
+          </p>
+        )}
+        {savedPlay && (
+          <div className="mt-3 flex flex-wrap gap-2 items-center" data-testid="twin-saved-play">
+            <span className="font-mont text-[11px] text-gray-600">
+              Saved play: {playLabel(savedPlay)}
+            </span>
+            <button
+              type="button"
+              className="px-2.5 py-1 rounded-lg text-[11px] font-mont font-semibold bg-[#6D8E22] text-white"
+              onClick={() => handleCompareScenario(savedPlay)}
+            >
+              Replay
+            </button>
+            <button
+              type="button"
+              className="px-2.5 py-1 rounded-lg text-[11px] font-mont font-semibold border border-gray-300"
+              onClick={() => handleHotspotAction({ type: 'scout', pick: worstHotspotPick() })}
+              disabled={!scenarioHotspots.length && !(field?.latitude && field?.longitude)}
+            >
+              Create scout
+            </button>
+            <button
+              type="button"
+              className="px-2.5 py-1 rounded-lg text-[11px] font-mont font-semibold border border-sky-300 text-sky-900 bg-sky-50"
+              onClick={() => handleHotspotAction({ type: 'irrigate', pick: worstHotspotPick() })}
+              disabled={!businessId}
+            >
+              Canal/borewell check
+            </button>
+          </div>
+        )}
+      </div>
+
+      <Suspense fallback={
+        <div className="bg-white rounded-xl border border-gray-200 p-10 text-center font-mont text-sm text-gray-400 animate-pulse">
+          Loading field twin…
+        </div>
+      }>
+        <TwinErrorBoundary>
+          <FieldTwinViewer
+            fieldId={fieldId}
+            fieldName={fieldName}
+            businessId={businessId}
+            height={isMobile ? 460 : 680}
+            scenarioOverlayUrl={scenarioOverlayUrl}
+            scenarioHotspots={scenarioHotspots}
+            selectedHotspot={selectedHotspot}
+            onSelectHotspot={setSelectedHotspot}
+            scenarioResult={scenarioResult}
+            onCompareScenario={handleCompareScenario}
+            onHotspotAction={handleHotspotAction}
+          />
+        </TwinErrorBoundary>
+      </Suspense>
+
+      <ScenarioSimulator
+        fieldId={fieldId}
+        businessId={businessId}
+        grid={gridSize}
+        selectedHotspot={selectedHotspot}
+        onSelectHotspot={setSelectedHotspot}
+        onScenarioOverlay={handleScenarioOverlay}
+        onClearScenario={clearScenario}
+        compact
+        defaultCollapsed
+        notesSourceLabel="Field Twin Water Simulator"
+        compareTrigger={compareTrigger}
+      />
+    </div>
+  );
+}
+
 export default function PrecisionAgGeospatialCenter() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const BusinessID = searchParams.get('BusinessID');
+  const requestedFieldId = searchParams.get('FieldID');
+  const requestedTab = searchParams.get('tab');
   const { Business, LoadBusiness } = useAccount();
   const fields = useFields(BusinessID);
 
   const [selectedFieldId, setSelectedFieldId] = useState('');
   const { analyses, loading } = useAnalyses(selectedFieldId);
   const [analysisIdx, setAnalysisIdx]   = useState(0);
-  const [tab, setTab]                   = useState('single');
+  const [tab, setTab]                   = useState(
+    ALL_TAB_IDS.includes(requestedTab) ? requestedTab : 'single',
+  );
   const [singleIndex, setSingleIndex]   = useState('NDVI');
   const [rasterRange, setRasterRange]   = useState(null);
   const [panelIndices, setPanelIndices] = useState(['NDVI','NDRE','GNDVI','NDWI']);
@@ -224,17 +665,55 @@ export default function PrecisionAgGeospatialCenter() {
   const [timelineIndex, setTimelineIndex] = useState('NDVI');
 
   useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
+
+  // Honor FieldID from the field menu; fall back to first field
   useEffect(() => {
-    if (fields.length > 0 && !selectedFieldId)
+    if (fields.length === 0) return;
+    if (requestedFieldId) {
+      const match = fields.find(f => String(f.fieldid || f.id) === String(requestedFieldId));
+      if (match) {
+        setSelectedFieldId(String(match.fieldid || match.id));
+        return;
+      }
+    }
+    if (!selectedFieldId) {
       setSelectedFieldId(String(fields[0].fieldid || fields[0].id));
-  }, [fields]);
+    }
+  }, [fields, requestedFieldId]);
+
+  // Keep URL in sync so the field menu stays consistent
+  useEffect(() => {
+    if (!selectedFieldId) return;
+    const next = new URLSearchParams(searchParams);
+    if (BusinessID) next.set('BusinessID', BusinessID);
+    next.set('FieldID', selectedFieldId);
+    if (tab && tab !== 'single') next.set('tab', tab);
+    else next.delete('tab');
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [selectedFieldId, tab, BusinessID]);
+
+  useEffect(() => {
+    if (requestedTab && ALL_TAB_IDS.includes(requestedTab)) {
+      setTab(requestedTab);
+    }
+  }, [requestedTab]);
+
   useEffect(() => { setAnalysisIdx(0); setRasterRange(null); }, [selectedFieldId]);
   useEffect(() => { setRasterRange(null); }, [singleIndex, analysisIdx]);
 
   const analysis    = analyses[analysisIdx] || null;
-  const fieldIdNum  = parseInt(selectedFieldId) || 1;
+  const fieldIdNum  = parseInt(selectedFieldId, 10) || 0;
   const indexData   = getIndex(analysis, singleIndex);
   const selectedField = fields.find(f => String(f.fieldid||f.id) === selectedFieldId);
+
+  const handleFieldChange = (value) => {
+    setSelectedFieldId(value);
+  };
+  const handleTabChange = (id) => {
+    setTab(id);
+  };
 
   const panelCount = multiLayout === '1x2' ? 2 : multiLayout === '1x3' ? 3 : 4;
   const gridClass  = multiLayout === '1x2'
@@ -252,22 +731,32 @@ export default function PrecisionAgGeospatialCenter() {
         {/* Heading */}
         <div>
           <h1 className="font-lora text-2xl font-bold text-gray-900 mb-1">Geospatial Center</h1>
-          <p className="font-mont text-sm text-gray-500">
-            Single-layer maps, multi-index comparisons, and change timelines — all in one place.
+            <p className="font-mont text-sm text-gray-500">
+            Single-layer maps, multi-index comparisons, change timelines, 3D terrain analytics, and an immersive field twin.
           </p>
         </div>
+
+        <FpoFieldStrip
+          fields={fields}
+          selectedFieldId={selectedFieldId}
+          onSelectField={handleFieldChange}
+          businessId={BusinessID}
+        />
+        {selectedField && (
+          <SeasonCropCard field={selectedField} businessId={BusinessID} />
+        )}
 
         {/* Shared toolbar */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 flex-wrap items-end">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold font-mont text-gray-500">Field</label>
-            <select value={selectedFieldId} onChange={e => setSelectedFieldId(e.target.value)}
+            <select value={selectedFieldId} onChange={e => handleFieldChange(e.target.value)}
               className="border border-gray-300 rounded-lg text-sm font-mont px-3 py-2 min-w-[200px]">
               {fields.length === 0 && <option value="">No fields</option>}
               {fields.map(f => <option key={f.fieldid||f.id} value={String(f.fieldid||f.id)}>{f.name}</option>)}
             </select>
           </div>
-          {analyses.length > 0 && (
+          {ANALYSIS_TABS.includes(tab) && analyses.length > 0 && (
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold font-mont text-gray-500">Date</label>
               <select value={analysisIdx} onChange={e => setAnalysisIdx(Number(e.target.value))}
@@ -296,7 +785,7 @@ export default function PrecisionAgGeospatialCenter() {
         {/* Tab bar */}
         <div className="flex gap-1 bg-white rounded-xl border border-gray-200 p-1">
           {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
+            <button key={t.id} onClick={() => handleTabChange(t.id)}
               className="flex-1 py-2 px-3 rounded-lg text-sm font-mont font-semibold transition-all"
               style={{
                 background:  tab === t.id ? '#6D8E22' : 'transparent',
@@ -307,14 +796,24 @@ export default function PrecisionAgGeospatialCenter() {
           ))}
         </div>
 
-        {loading ? (
+        {/* Terrain / Twin tabs work without prior optical analysis */}
+        {tab === 'terrain' && selectedFieldId && (
+          <TerrainTabPanel fieldId={fieldIdNum} fieldName={selectedField?.name} businessId={BusinessID} />
+        )}
+        {tab === 'twin' && selectedFieldId && (
+          <FieldTwinTabPanel fieldId={fieldIdNum} fieldName={selectedField?.name} businessId={BusinessID} field={selectedField} />
+        )}
+
+        {ANALYSIS_TABS.includes(tab) && loading ? (
           <div className="flex items-center justify-center py-32 text-gray-400 font-mont text-sm animate-pulse">Loading…</div>
-        ) : analyses.length === 0 ? (
+        ) : ANALYSIS_TABS.includes(tab) && analyses.length === 0 ? (
           <div className="text-center py-32 bg-white rounded-xl border border-gray-200">
             <div className="font-lora text-xl text-gray-600 mb-2">No analysis data</div>
-            <div className="font-mont text-sm text-gray-400">Run an analysis on this field to see maps.</div>
+            <div className="font-mont text-sm text-gray-400">
+              Run an analysis on this field to see maps — or open 3D Terrain / Field Twin for DEM + imagery.
+            </div>
           </div>
-        ) : (
+        ) : ANALYSIS_TABS.includes(tab) && (
           <>
             {/* ── Single Layer tab ── */}
             {tab === 'single' && (

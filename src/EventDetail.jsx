@@ -384,7 +384,7 @@ export default function EventDetail() {
                   offers: {
                     '@type': 'Offer',
                     price: '0',
-                    priceCurrency: 'USD',
+                    priceCurrency: 'INR',
                     availability: 'https://schema.org/InStock',
                     url: evCanonical,
                   },

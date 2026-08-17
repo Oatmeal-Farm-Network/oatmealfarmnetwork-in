@@ -31,7 +31,7 @@ export function LegacyAnimalDetailRedirect() {
 
 function formatPrice(n) {
   if (n == null) return null;
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 }
 
 function formatDOB({ month, day, year }) {
@@ -870,7 +870,7 @@ export default function LivestockAnimalDetail() {
               offers: {
                 '@type': 'Offer',
                 price: pricing.price,
-                priceCurrency: 'USD',
+                priceCurrency: 'INR',
                 availability: animal.sold ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
               }
             } : {})

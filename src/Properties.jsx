@@ -41,7 +41,7 @@ const STATUS_COLORS  = {
   'Off Market': 'bg-amber-100 text-amber-800',
 };
 
-const fmt$ = (n) => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const fmt$ = (n) => Number(n || 0).toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 
 function Modal({ title, onClose, children }) {
   return (

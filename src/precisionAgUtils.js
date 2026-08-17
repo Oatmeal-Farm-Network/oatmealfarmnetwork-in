@@ -6,9 +6,18 @@ export const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 export const CROP_API_URL = import.meta.env.VITE_CROP_API_URL
   || (window.location.hostname === 'localhost' ? `${API_URL}/cm` : `${API_URL}/cm`);
 
-export async function safeFetch(url) {
+function getAuthToken() {
+  return localStorage.getItem('access_token') || localStorage.getItem('AccessToken') || null;
+}
+
+export function authHeaders(existing = {}) {
+  const token = getAuthToken();
+  return token ? { ...existing, Authorization: `Bearer ${token}` } : { ...existing };
+}
+
+export async function safeFetch(url, options = {}) {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { ...options, headers: authHeaders(options.headers) });
     if (!res.ok) return null;
     return await res.json();
   } catch { return null; }
@@ -37,7 +46,7 @@ export function useRaster(fieldId, indexKey, grid = 48, analysisId = null) {
     // Raster lives only on CropMonitor — main backend has no raster route, so
     // the previous ${API_URL} call returned a bare 404 for every analysis.
     const url = `${CROP_API_URL}/api/fields/${fieldId}/raster/${indexKey}?grid=${grid}${analysisId ? `&analysis_id=${analysisId}` : ''}`;
-    fetch(url, { signal: ctrl.signal })
+    fetch(url, { signal: ctrl.signal, headers: authHeaders() })
       .then(r => r.ok ? r.json() : r.json().then(j => Promise.reject(j?.detail || `${r.status}`)))
       .then(d => { setData(d); setLoading(false); })
       .catch(e => { if (e?.name === 'AbortError') return; setError(String(e)); setLoading(false); setData(null); });

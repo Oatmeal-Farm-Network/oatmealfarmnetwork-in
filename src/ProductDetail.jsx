@@ -172,7 +172,7 @@ export default function ProductDetail() {
               offers: {
                 '@type': 'Offer',
                 price: product.prodPrice,
-                priceCurrency: 'USD',
+                priceCurrency: 'INR',
                 availability: 'https://schema.org/InStock',
               }
             } : {})

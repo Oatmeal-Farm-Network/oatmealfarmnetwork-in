@@ -83,7 +83,7 @@ export default function MarketplaceProduct() {
           offers: {
             '@type': 'Offer',
             price: l.UnitPrice,
-            priceCurrency: 'USD',
+            priceCurrency: 'INR',
             availability: l.QuantityAvailable > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
           }
         }}

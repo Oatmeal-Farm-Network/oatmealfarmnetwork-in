@@ -91,9 +91,9 @@ export default function SupplyChainSettings() {
           <div className="text-xs uppercase font-semibold text-gray-500 pb-1 border-b border-gray-100">General</div>
 
           {row('Default Currency', 'Used for cost and margin calculations.',
-            <select value={form.DefaultCurrency || 'USD'} onChange={e => set('DefaultCurrency', e.target.value)}
+            <select value={form.DefaultCurrency || 'INR'} onChange={e => set('DefaultCurrency', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1e6b5a]">
-              {['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'MXN'].map(c => <option key={c}>{c}</option>)}
+              {['INR', 'USD', 'EUR', 'GBP'].map(c => <option key={c}>{c}</option>)}
             </select>
           )}
 

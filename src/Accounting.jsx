@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import ThaiymeChat from './ThaiymeChat';
+import { formatMoney, DEFAULT_GST_RATE, gstAmount } from './money';
 import { useAccount } from './AccountContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -17,12 +18,12 @@ function authHeaders() {
 }
 
 function fmt(n) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
+  return formatMoney(n);
 }
 
 function fmtDate(d) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return new Date(d).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 const TABS = ['Dashboard', 'Invoices', 'Customers', 'Vendors', 'Bills', 'Expenses', 'Farmer Payouts', 'Job Costing', 'Accounts', 'Reports', 'Payments'];
@@ -1556,6 +1557,15 @@ function InvoiceModal({ customers, onClose, onSave, apiFetch }) {
   }
   function addLine() { setForm(f => ({ ...f, Lines: [...f.Lines, { Description: '', Quantity: 1, UnitPrice: 0, TaxAmount: 0 }] })); }
   function removeLine(i) { setForm(f => ({ ...f, Lines: f.Lines.filter((_, idx) => idx !== i) })); }
+  function applyGst(rate = DEFAULT_GST_RATE) {
+    setForm(f => ({
+      ...f,
+      Lines: f.Lines.map((l) => {
+        const taxable = (parseFloat(l.Quantity) || 0) * (parseFloat(l.UnitPrice) || 0);
+        return { ...l, TaxAmount: gstAmount(taxable, rate) };
+      }),
+    }));
+  }
 
   const subTotal = form.Lines.reduce((s, l) => s + (parseFloat(l.Quantity) * parseFloat(l.UnitPrice || 0)), 0);
   const taxTotal = form.Lines.reduce((s, l) => s + parseFloat(l.TaxAmount || 0), 0);
@@ -1595,12 +1605,16 @@ function InvoiceModal({ customers, onClose, onSave, apiFetch }) {
           ))}
         </tbody>
       </table>
-      <button onClick={addLine} className="text-sm text-green-700 hover:underline mb-4">{t('accounting.btn_add_line')}</button>
+      <div className="flex items-center gap-3 mb-4">
+        <button onClick={addLine} className="text-sm text-green-700 hover:underline">{t('accounting.btn_add_line')}</button>
+        <button type="button" onClick={() => applyGst(0.05)} className="text-sm text-green-700 hover:underline">Apply 5% GST</button>
+        <button type="button" onClick={() => applyGst(0)} className="text-sm text-gray-500 hover:underline">GST exempt (0%)</button>
+      </div>
 
       <div className="text-right text-sm space-y-1 mb-4">
-        <div className="text-gray-500">{t('accounting.subtotal_label')} <strong>{new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(subTotal)}</strong></div>
-        <div className="text-gray-500">{t('accounting.tax_label')} <strong>{new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(taxTotal)}</strong></div>
-        <div className="font-bold text-gray-900">{t('accounting.total_label')} {new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(subTotal + taxTotal)}</div>
+        <div className="text-gray-500">{t('accounting.subtotal_label')} <strong>{fmt(subTotal)}</strong></div>
+        <div className="text-gray-500">{t('accounting.tax_label')} / GST <strong>{fmt(taxTotal)}</strong></div>
+        <div className="font-bold text-gray-900">{t('accounting.total_label')} {fmt(subTotal + taxTotal)}</div>
       </div>
 
       <Field label={t('accounting.lbl_notes')}><textarea className={input} rows={2} value={form.Notes} onChange={set('Notes')} /></Field>

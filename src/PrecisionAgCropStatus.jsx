@@ -204,8 +204,8 @@ export default function PrecisionAgCropStatus() {
       return w?.precip ?? null;
     });
     return [
-      { label: 'Temp Max (°F)', color: '#EF4444', values: tempMax },
-      { label: 'Temp Min (°F)', color: '#93C5FD', values: tempMin },
+      { label: 'Temp Max (°C)', color: '#EF4444', values: tempMax },
+      { label: 'Temp Min (°C)', color: '#93C5FD', values: tempMin },
       { label: 'Precip (in)',   color: '#3B82F6', values: precip, bars: true },
     ];
   }, [weather, sorted]);
@@ -320,7 +320,7 @@ export default function PrecisionAgCropStatus() {
             {loadingW ? (
               <div className="flex items-center justify-center py-12 text-gray-400 font-mont text-sm animate-pulse">{pa('fetching_weather')}</div>
             ) : weatherSeries.length > 0 && weatherSeries.some(s => s.values.some(v => v != null)) ? (
-              <LineChart series={weatherSeries} xLabels={xLabels} height={200} yAxisLabel="°F / in" />
+              <LineChart series={weatherSeries} xLabels={xLabels} height={200} yAxisLabel="°C / mm" />
             ) : (
               <div className="text-center py-12 font-mont text-sm text-gray-400">
                 {pa('weather_unavailable')}
@@ -370,7 +370,7 @@ export default function PrecisionAgCropStatus() {
                           {a.health_score??'—'}%
                         </td>
                         <td className="px-3 py-2.5 text-center text-gray-400">{a.cloud_percent?.toFixed(1)??'—'}%</td>
-                        {showWeather && weather && <td className="px-3 py-2.5 text-center text-gray-500">{wDay?.temp_max != null ? `${wDay.temp_max.toFixed(0)}°F` : '—'}</td>}
+                        {showWeather && weather && <td className="px-3 py-2.5 text-center text-gray-500">{wDay?.temp_max != null ? `${wDay.temp_max.toFixed(0)}°C` : '—'}</td>}
                         {showWeather && weather && <td className="px-3 py-2.5 text-center text-gray-500">{wDay?.precip != null ? `${wDay.precip.toFixed(2)}"` : '—'}</td>}
                       </tr>
                     );
