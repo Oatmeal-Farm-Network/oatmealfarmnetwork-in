@@ -1,8 +1,9 @@
 /**
- * OFN top-nav visibility keys (managed in OAT / oatmeal-main admin).
- * When the public config API is unavailable or empty, fail open with this full set.
+ * India OFN stack: show the full USA top nav, but only enable links that work on India Cloud Run.
+ * Do not fetch OAT / oatmeal-main nav config (India has no oatmeal-main service).
  */
-export const DEFAULT_OFN_NAV_KEYS = [
+
+export const ALL_OFN_NAV_KEYS = [
   'home',
   'dashboard',
   'directory',
@@ -40,22 +41,30 @@ export const DEFAULT_OFN_NAV_KEYS = [
   'signup',
 ];
 
-const OTF_API = import.meta.env.VITE_OTF_API_URL || '';
+/** Nav keys that navigate on the India deployment (same labels as USA). */
+export const INDIA_ENABLED_NAV_KEYS = new Set([
+  'home',
+  'dashboard',
+  'directory',
+  'about',
+  'contact',
+  'signup',
+  'ai_saige',
+  'svc_saige',
+  'nr_newsfeed',
+]);
 
-/** @returns {Promise<Set<string>>} active keys; defaults when config missing */
-export async function fetchOfnNavKeys() {
-  if (!OTF_API) {
-    return new Set(DEFAULT_OFN_NAV_KEYS);
-  }
-  try {
-    const r = await fetch(`${OTF_API}/api/admin/ofn-nav/public`);
-    if (!r.ok) return new Set(DEFAULT_OFN_NAV_KEYS);
-    const items = await r.json();
-    if (!Array.isArray(items) || items.length === 0) {
-      return new Set(DEFAULT_OFN_NAV_KEYS);
-    }
-    return new Set(items.map((i) => i.NavKey).filter(Boolean));
-  } catch {
-    return new Set(DEFAULT_OFN_NAV_KEYS);
-  }
+export function isNavVisible() {
+  return true;
+}
+
+export function isNavEnabled(navKey) {
+  return INDIA_ENABLED_NAV_KEYS.has(navKey);
+}
+
+/** Optional absolute base for India frontend (Cloud Run). Relative paths used when unset. */
+export function indiaAppPath(path) {
+  const base = (import.meta.env.VITE_APP_URL || '').replace(/\/$/, '');
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return base ? `${base}${p}` : p;
 }

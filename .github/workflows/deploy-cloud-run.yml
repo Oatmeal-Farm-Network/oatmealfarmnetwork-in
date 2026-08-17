@@ -13,6 +13,8 @@ env:
   SERVICE_NAME: oatmealfarmnetwork-in
   API_URL: ${{ secrets.BACKEND_URL }}
   API_URL_FALLBACK: https://oatmealfarmnetworkbackend-in-151683070823.asia-south1.run.app
+  FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+  FRONTEND_URL_FALLBACK: https://oatmealfarmnetwork-in-151683070823.asia-south1.run.app
 
 jobs:
   deploy:
@@ -40,12 +42,15 @@ jobs:
       - name: Build Docker image
         run: |
           EFFECTIVE_API_URL="${API_URL:-$API_URL_FALLBACK}"
+          EFFECTIVE_FRONTEND_URL="${FRONTEND_URL:-$FRONTEND_URL_FALLBACK}"
           echo "Using API_URL=$EFFECTIVE_API_URL"
+          echo "Using FRONTEND_URL=$EFFECTIVE_FRONTEND_URL"
           IMAGE=$REGION-docker.pkg.dev/$PROJECT_ID/$GAR_REPOSITORY/$SERVICE_NAME
           docker build \
             --build-arg VITE_API_URL=$EFFECTIVE_API_URL \
-            --build-arg VITE_OTF_API_URL=$EFFECTIVE_API_URL \
             --build-arg VITE_NEWS_API_URL=$EFFECTIVE_API_URL \
+            --build-arg VITE_APP_URL=$EFFECTIVE_FRONTEND_URL \
+            --build-arg VITE_OFN_STACK=india \
             -t $IMAGE:$GITHUB_SHA \
             -t $IMAGE:latest \
             .
