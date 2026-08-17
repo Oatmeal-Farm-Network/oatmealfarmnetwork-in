@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
-
-const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+import { fetchFieldById, fieldIdOf } from './precisionAgUtils';
 
 export const FIELD_MENU_WIDTH_EXPANDED = 208;
 export const FIELD_MENU_WIDTH_COLLAPSED = 56;
@@ -127,14 +126,8 @@ export default function PrecisionAgFieldMenu({ menuExpanded, setMenuExpanded }) 
   useEffect(() => {
     if (!fieldId || !businessId) { setField(null); return; }
     let alive = true;
-    fetch(`${API}/api/fields?business_id=${businessId}`)
-      .then(r => r.ok ? r.json() : [])
-      .then(rows => {
-        if (!alive) return;
-        const list = Array.isArray(rows) ? rows : [];
-        const match = list.find(f => String(f.fieldid ?? f.id) === String(fieldId));
-        setField(match || null);
-      })
+    fetchFieldById(businessId, fieldId)
+      .then((match) => { if (alive) setField(match || null); })
       .catch(() => { if (alive) setField(null); });
     return () => { alive = false; };
   }, [fieldId, businessId]);

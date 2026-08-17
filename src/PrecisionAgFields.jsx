@@ -12,7 +12,7 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
 import 'leaflet-draw';
 import { useTranslation } from 'react-i18next';
-import { authHeaders } from './precisionAgUtils';
+import { authHeaders, fetchFieldsForBusiness, fieldIdOf, matchFieldId } from './precisionAgUtils';
 import FpoFieldStrip from './precision-ag/field-twin/FpoFieldStrip';
 import SeasonCropCard from './precision-ag/field-twin/SeasonCropCard';
 
@@ -426,11 +426,11 @@ function EditFieldView({ businessId, fieldId, onBack, onSaved }) {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API_URL}/api/fields?business_id=${businessId}`).then(r => r.json()),
-      fetch(`${API_URL}/api/fields/${fieldId}/profile`).then(r => r.ok ? r.json() : {}),
+      fetchFieldsForBusiness(businessId),
+      fetch(`${API_URL}/api/fields/${fieldId}/profile`, { headers: authHeaders() }).then(r => r.ok ? r.json() : {}),
     ])
       .then(([fields, prof]) => {
-        const field = fields.find(f => String(f.fieldid ?? f.FieldID ?? f.id) === String(fieldId));
+        const field = fields.find(f => matchFieldId(f, fieldId));
         if (!field) throw new Error('Field not found');
         setFormData({
           name: field.name || field.Name || '',

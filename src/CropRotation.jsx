@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
+import { fetchFieldsForBusiness, fieldIdOf } from './precisionAgUtils';
 
 const API_URL   = import.meta.env.VITE_API_URL;
 const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
@@ -417,12 +418,10 @@ export default function CropRotation() {
 
   useEffect(() => {
     if (!businessId) return;
-    fetch(`${API_URL}/api/fields?business_id=${businessId}`)
-      .then(r => r.json())
-      .then(data => {
-        const list = Array.isArray(data) ? data : [];
+    fetchFieldsForBusiness(businessId)
+      .then(list => {
         setFields(list);
-        if (!activeField && list.length) setActiveField(String(list[0].fieldid ?? list[0].id));
+        if (!activeField && list.length) setActiveField(String(fieldIdOf(list[0])));
       })
       .catch(() => {});
   }, [businessId]);
