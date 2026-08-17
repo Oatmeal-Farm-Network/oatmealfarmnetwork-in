@@ -51,6 +51,7 @@ jobs:
             --build-arg VITE_NEWS_API_URL=$EFFECTIVE_API_URL \
             --build-arg VITE_APP_URL=$EFFECTIVE_FRONTEND_URL \
             --build-arg VITE_OFN_STACK=india \
+            --build-arg VITE_CROP_API_URL=$EFFECTIVE_API_URL \
             -t $IMAGE:$GITHUB_SHA \
             -t $IMAGE:latest \
             .

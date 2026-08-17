@@ -1661,7 +1661,10 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
   async function triggerAnalysis() {
     setAnalyzing(true);
     try {
-      await fetch(`${CROP_API_URL}/api/fields/${fieldId}/analyze`, { method: 'POST' });
+      await fetch(`${CROP_API_URL}/api/fields/${fieldId}/analyze`, {
+        method: 'POST',
+        headers: authHeaders(),
+      });
       setTimeout(loadAll, 5000);
     } catch {}
     finally { setAnalyzing(false); }
