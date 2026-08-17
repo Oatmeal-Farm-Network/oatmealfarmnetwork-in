@@ -3,8 +3,13 @@ import { useState, useEffect } from 'react';
 export const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 // CropMonitor: in dev it's mounted at /cm under server_all.py; in prod it's the
 // standalone Cloud Run service. VITE_CROP_API_URL overrides both.
-export const CROP_API_URL = import.meta.env.VITE_CROP_API_URL
-  || (window.location.hostname === 'localhost' ? `${API_URL}/cm` : `${API_URL}/cm`);
+// India stack: always use the main backend — it proxies CropMonitor and avoids
+// browser CORS blocks against the separate crop-monitor Cloud Run host.
+const _isIndiaStack = import.meta.env.VITE_OFN_STACK === 'india';
+export const CROP_API_URL = _isIndiaStack
+  ? API_URL
+  : (import.meta.env.VITE_CROP_API_URL
+    || (window.location.hostname === 'localhost' ? `${API_URL}/cm` : `${API_URL}/cm`));
 
 function getAuthToken() {
   return localStorage.getItem('access_token') || localStorage.getItem('AccessToken') || null;
