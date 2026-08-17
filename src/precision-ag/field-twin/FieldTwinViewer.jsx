@@ -629,15 +629,44 @@ export default function FieldTwinViewer({
   );
 
   useEffect(() => {
-    if (!snapshot || surfaceLayer === 'natural' || surfaceLayer === 'scenario' || indexPaintReady) {
+    if (!snapshot || surfaceLayer === 'natural' || surfaceLayer === 'scenario') {
       setOverlayUrl((prev) => {
         if (prev) {
           try { URL.revokeObjectURL(prev); } catch { /* */ }
         }
         return null;
       });
-      if (indexPaintReady) setOverlayError(null);
       if (surfaceLayer === 'natural' || surfaceLayer === 'scenario') setOverlayError(null);
+      return undefined;
+    }
+    // NDVI/NDWI paint from JSON grids on the DEM — never fetch PNG (avoids false errors).
+    if (surfaceLayer === 'ndvi' || surfaceLayer === 'ndwi') {
+      setOverlayUrl((prev) => {
+        if (prev) {
+          try { URL.revokeObjectURL(prev); } catch { /* */ }
+        }
+        return null;
+      });
+      if (indexPaintReady) {
+        setOverlayError(null);
+      } else if (!loading) {
+        const src = surfaceLayer === 'ndvi'
+          ? (ndviGrid?.source || ndviGrid?.provenance)
+          : (ndwiGrid?.source || ndwiGrid?.provenance);
+        if (src === 'screening_estimated' || src === 'modeled') {
+          setOverlayError(null);
+        }
+      }
+      return undefined;
+    }
+    if (indexPaintReady) {
+      setOverlayUrl((prev) => {
+        if (prev) {
+          try { URL.revokeObjectURL(prev); } catch { /* */ }
+        }
+        return null;
+      });
+      setOverlayError(null);
       return undefined;
     }
     const path = surfaceLayer === 'wetness'
@@ -1485,9 +1514,21 @@ export default function FieldTwinViewer({
                       : surfaceLayer === 'wetness'
                         ? 'Wetness overlay (derived)'
                         : surfaceLayer === 'ndvi'
-                          ? 'NDVI overlay (derived)'
+                          ? `NDVI overlay (${
+                            ndviGrid?.source === 'local_analysis'
+                              ? 'stored analysis'
+                              : ndviGrid?.source === 'screening_estimated'
+                                ? 'screening estimate'
+                                : 'derived'
+                          })`
                           : surfaceLayer === 'ndwi'
-                            ? 'NDWI overlay (derived)'
+                            ? `NDWI overlay (${
+                              ndwiGrid?.source === 'local_analysis'
+                                ? 'stored analysis'
+                                : ndwiGrid?.source === 'screening_estimated'
+                                  ? 'screening estimate'
+                                  : 'derived'
+                            })`
                             : viewPreset === 'canopy'
                               ? 'Inside the stand'
                               : 'Field overview'}
@@ -1589,6 +1630,11 @@ export default function FieldTwinViewer({
             {elevation?.values && !elevation?.flat_fallback && elevation?.source === 'screening_bowl' && (
               <div className="absolute bottom-3 left-3 z-10 bg-black/60 text-amber-100 font-mont text-[10px] px-2.5 py-1.5 rounded-lg pointer-events-none max-w-[260px]">
                 Modeled bowl DEM — Open-Meteo heights unavailable for this field.
+              </div>
+            )}
+            {surfaceLayer === 'ndvi' && ndviGrid?.source === 'screening_estimated' && (
+              <div className="absolute bottom-12 left-3 z-10 bg-black/65 text-amber-100 font-mont text-[10px] px-2.5 py-1.5 rounded-lg pointer-events-none max-w-[280px]">
+                NDVI pattern is illustrative — not Sentinel pixels. Run Analysis for a real satellite map.
               </div>
             )}
             {!loading && !canSelectNdvi && snapshot && !snapshot?.selection?.is_historical && (

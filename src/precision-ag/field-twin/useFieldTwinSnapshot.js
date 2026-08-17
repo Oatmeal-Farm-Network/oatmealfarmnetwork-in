@@ -179,9 +179,42 @@ export function useFieldTwinSnapshot(fieldId, quality = 'medium', year = null, r
         };
 
         const loadIndexJson = async (path, label) => {
+          const layer = String(label || 'NDVI').toLowerCase();
+          const normalizeGrid = (j) => {
+            if (!j) return null;
+            const values = j.values || j?.grid?.values;
+            if (!values?.length) return null;
+            return {
+              ...j,
+              values,
+              rows: j.rows || j?.grid?.rows || values.length,
+              cols: j.cols || j?.grid?.cols || (values[0]?.length || 0),
+              bbox: j.bbox || j?.grid?.bbox,
+            };
+          };
           try {
             const res = await fetch(`${API_URL}${path}`, { headers, signal: ctrl.signal });
-            if (res.ok) return res.json();
+            if (res.ok) {
+              const parsed = normalizeGrid(await res.json());
+              if (parsed) return parsed;
+            }
+            const rasterRes = await fetch(
+              `${API_URL}/api/fields/${fieldId}/raster/${layer}?grid=${Math.min(gridHint, 96)}`,
+              { headers, signal: ctrl.signal },
+            );
+            if (rasterRes.ok) {
+              const raw = await rasterRes.json();
+              const g = raw?.grid || raw;
+              return normalizeGrid({
+                values: g.values,
+                rows: g.rows,
+                cols: g.cols,
+                bbox: raw.bbox || g.bbox,
+                index: raw.index || label,
+                source: raw.source,
+                image_date: raw.image_date,
+              });
+            }
             return null;
           } catch (err) {
             if (err?.name === 'AbortError') throw err;
