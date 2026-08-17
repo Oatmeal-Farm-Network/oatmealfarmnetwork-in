@@ -33,7 +33,7 @@ export default function AnimalsHome() {
 
   const FormatCurrency = (Amount) => {
     if (!Amount || Amount === 0) return '';
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Amount);
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Amount);
   };
 
   const [publishing, setPublishing] = useState({});

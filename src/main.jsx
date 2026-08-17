@@ -178,7 +178,7 @@ function SaigeWidgetGlobal() {
   else if (pathname.startsWith('/certifications'))         pageContext = 'Certifications Tracker';
   else if (pathname.startsWith('/grants'))                 pageContext = 'Grants & Programs';
   else if (pathname.startsWith('/suppliers'))              pageContext = 'Supplier Directory';
-  else if (pathname.startsWith('/csa'))                    pageContext = 'CSA Management';
+  else if (pathname.startsWith('/csa') || pathname.startsWith('/fpo')) pageContext = 'FPO Management';
   else if (pathname.startsWith('/aggregator'))             pageContext = 'Food Aggregator';
   else if (pathname.startsWith('/seller'))                 pageContext = 'Seller Dashboard';
   else if (pathname.startsWith('/marketplaces') ||
@@ -815,6 +815,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/platform/livestock-herd-health" element={<AboutLivestockHerdHealth />} />
           <Route path="/platform/products-storefront" element={<AboutProductsStorefront />} />
           <Route path="/platform/csa" element={<AboutCSA />} />
+          <Route path="/platform/fpo" element={<AboutCSA />} />
           <Route path="/platform/aggregator" element={<AboutAggregator />} />
           <Route path="/platform/jobs" element={<AboutJobBoard />} />
           <Route path="/platform/land-leasing" element={<AboutLandLeasing />} />
@@ -925,12 +926,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/jobs" element={<JobBoard />} />
           <Route path="/jobs/my-listings" element={<RequireAuth><MyJobListings /></RequireAuth>} />
 
-          {/* CSA Management */}
+          {/* FPO / CSA share programs — /fpo is primary; /csa kept as alias */}
           <Route path="/csa" element={<CSABrowse />} />
+          <Route path="/fpo" element={<CSABrowse />} />
           <Route path="/csa/manage" element={<RequireAuth><CSAManage /></RequireAuth>} />
+          <Route path="/fpo/manage" element={<RequireAuth><CSAManage /></RequireAuth>} />
 
-          {/* CSA Advanced */}
+          {/* FPO Advanced */}
           <Route path="/csa-advanced" element={<RequireAuth><CSAAdvanced /></RequireAuth>} />
+          <Route path="/fpo-advanced" element={<RequireAuth><CSAAdvanced /></RequireAuth>} />
 
           {/* Land Leasing */}
           <Route path="/land" element={<LandLeasing />} />

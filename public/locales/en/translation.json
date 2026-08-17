@@ -1,4 +1,4 @@
-﻿{
+{
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
@@ -2882,6 +2882,7 @@
     "item_activity_log": "Activity Log",
     "item_histograms": "Histograms",
     "item_geospatial_center": "Geospatial Center",
+    "item_field_twin": "Field Twin",
     "item_multi_layer": "Multi-layer",
     "item_maps": "Maps",
     "item_statistics": "Statistics"

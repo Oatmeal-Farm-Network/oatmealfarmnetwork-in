@@ -88,7 +88,7 @@ export default function ServiceDetail() {
               offers: {
                 '@type': 'Offer',
                 price: svc.ServicePrice,
-                priceCurrency: 'USD',
+                priceCurrency: 'INR',
               }
             } : {}),
           },

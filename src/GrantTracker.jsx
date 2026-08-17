@@ -26,7 +26,7 @@ const STATUS_COLORS = {
 
 const STATUSES = ['interested', 'in_progress', 'submitted', 'awarded', 'declined', 'not_eligible'];
 
-function fmtDate(d) { return d ? new Date(d).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : ''; }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : ''; }
 function daysUntil(d) { if (!d) return null; return Math.ceil((new Date(d) - new Date()) / 86400000); }
 
 export default function GrantTracker() {
@@ -87,13 +87,13 @@ export default function GrantTracker() {
 
   return (
     <div style={{ backgroundColor: '#f7f2e8', minHeight: '100vh' }}>
-      <PageMeta title="Grant & Program Tracker — Oatmeal Farm Network" description="Find USDA grants, FSA programs, and track your applications." />
+      <PageMeta title="Scheme Navigator — Oatmeal Farm Network India" description="Track PM-KISAN, PMFBY, KCC, FPO, and other India farmer schemes." />
       <Header />
       <div style={{ background: 'linear-gradient(90deg,rgba(255,255,255,0.93) 0%,rgba(255,255,255,0) 100%)', borderBottom: '1px solid #e5e7eb' }}>
         <div className="max-w-5xl mx-auto px-6 py-10">
-          <Breadcrumbs items={[{ label: 'Grant & Program Tracker' }]} />
-          <h1 className="text-3xl font-bold text-gray-900 mt-1" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>Grant & Program Tracker</h1>
-          <p className="text-gray-500 text-sm mt-1">USDA programs, FSA loans, conservation grants, and more.</p>
+          <Breadcrumbs items={[{ label: 'Scheme Navigator' }]} />
+          <h1 className="text-3xl font-bold text-gray-900 mt-1" style={{ fontFamily: "'Lora','Times New Roman',serif" }}>Scheme Navigator</h1>
+          <p className="text-gray-500 text-sm mt-1">PM-KISAN, crop insurance, KCC, FPO support, and state agri schemes — track applications in one place.</p>
         </div>
       </div>
       <div className="max-w-5xl mx-auto px-6 py-6">
@@ -101,7 +101,7 @@ export default function GrantTracker() {
           {['browse', 'my-tracking'].map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`pb-2 text-sm font-semibold border-b-2 transition -mb-px ${tab === t ? 'border-green-700 text-green-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-              {t === 'browse' ? 'Browse Programs' : `My Tracker${tracked.length ? ` (${tracked.length})` : ''}`}
+              {t === 'browse' ? 'Browse Schemes' : `My Tracker${tracked.length ? ` (${tracked.length})` : ''}`}
             </button>
           ))}
         </div>
@@ -113,7 +113,7 @@ export default function GrantTracker() {
                 <option value="">All Types</option>
                 {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
-              <input className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white flex-1" style={{ minWidth: 200 }} placeholder="Search programs…" value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && loadGrants()} />
+              <input className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white flex-1" style={{ minWidth: 200 }} placeholder="Search PM-KISAN, insurance, KCC…" value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && loadGrants()} />
               <button onClick={loadGrants} className="px-4 py-2 rounded-lg text-white text-sm font-bold" style={{ backgroundColor: GREEN }}>Search</button>
             </div>
             {loading ? <p className="text-gray-400">Loading…</p> : (
@@ -129,7 +129,7 @@ export default function GrantTracker() {
                           <div className="text-xs text-green-700 font-semibold mt-0.5">{g.Agency}</div>
                           <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
                             {g.ProgramType && <span className="bg-gray-100 px-2 py-0.5 rounded-full">{g.ProgramType}</span>}
-                            {g.MaxAmount && <span>Up to ${Number(g.MaxAmount).toLocaleString()}</span>}
+                            {g.MaxAmount && <span>Up to ₹{Number(g.MaxAmount).toLocaleString('en-IN')}</span>}
                             {g.Deadline && <span className={days !== null && days <= 30 ? 'text-red-600 font-semibold' : ''}>
                               Deadline: {fmtDate(g.Deadline)}{days !== null && days <= 30 && ` (${days}d left)`}
                             </span>}
@@ -172,11 +172,11 @@ export default function GrantTracker() {
                         className="text-xs border border-gray-200 rounded-full px-2 py-1">
                         {STATUSES.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
                       </select>
-                      {t.MaxAmount && <span className="text-xs text-gray-500">Up to ${Number(t.MaxAmount).toLocaleString()}</span>}
+                      {t.MaxAmount && <span className="text-xs text-gray-500">Up to ₹{Number(t.MaxAmount).toLocaleString('en-IN')}</span>}
                       {t.Deadline && <span className="text-xs text-gray-500">Due {fmtDate(t.Deadline)}</span>}
                     </div>
                     {t.Notes && <p className="text-xs text-gray-500 mt-1 truncate">{t.Notes}</p>}
-                    {t.Status === 'awarded' && t.AmountReceived && <div className="text-sm font-bold text-green-700 mt-1">Received: ${Number(t.AmountReceived).toLocaleString()}</div>}
+                    {t.Status === 'awarded' && t.AmountReceived && <div className="text-sm font-bold text-green-700 mt-1">Received: ₹{Number(t.AmountReceived).toLocaleString('en-IN')}</div>}
                   </div>
                   <div className="flex gap-2 shrink-0">
                     {t.ExternalUrl && <a href={t.ExternalUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50">Details</a>}

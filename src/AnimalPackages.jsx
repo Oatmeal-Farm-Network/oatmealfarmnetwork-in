@@ -6,7 +6,7 @@ import { useAccount } from './AccountContext';
 
 const fmt = (n) => {
   if (!n && n !== 0) return '$0';
-  return Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  return Number(n).toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 };
 
 export default function AnimalPackages() {

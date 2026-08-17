@@ -16,7 +16,7 @@ const API = import.meta.env.VITE_API_URL || '';
 const TEAL = '#1e6b5a';
 
 function AddMarginModal({ businessId, onClose, onSaved }) {
-  const [form, setForm] = useState({ BusinessID: businessId, Currency: 'USD' });
+  const [form, setForm] = useState({ BusinessID: businessId, Currency: 'INR' });
   const [saving, setSaving] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 

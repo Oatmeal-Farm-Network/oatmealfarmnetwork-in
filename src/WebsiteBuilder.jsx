@@ -4162,7 +4162,7 @@ function PackagesBlockCanvas({ block, site, businessId, onFieldSave }) {
 
   const fmtPrice = (n) => {
     if (!n || Number(n) === 0) return '';
-    return Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    return Number(n).toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
   };
 
   return (
@@ -4311,7 +4311,7 @@ function LivestockBlockCanvas({ block, site, businessId, onFieldSave, mode = 'sa
     if (n === null || n === undefined || n === '' || Number(n) === 0) return '';
     const num = Number(n);
     if (Number.isNaN(num)) return '';
-    return num.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    return num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
   };
 
   // Whether to show StudFee for this animal

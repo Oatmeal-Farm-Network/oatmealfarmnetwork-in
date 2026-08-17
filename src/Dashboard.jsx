@@ -94,9 +94,19 @@ export default function Dashboard() {
     });
 
     if (peopleId) {
-      fetch(`${API_URL}/auth/my-businesses?PeopleID=${peopleId}`)
-        .then((r) => r.json())
+      const token = localStorage.getItem('access_token');
+      fetch(`${API_URL}/auth/my-businesses`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+        .then((r) => {
+          if (r.status === 401) {
+            navigate('/login');
+            return null;
+          }
+          return r.json();
+        })
         .then((data) => {
+          if (data == null) return;
           const list = Array.isArray(data) ? data : [];
           setBusinesses(list);
           setContextBusinesses(list);

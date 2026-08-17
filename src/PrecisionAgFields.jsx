@@ -12,6 +12,9 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
 import 'leaflet-draw';
 import { useTranslation } from 'react-i18next';
+import { authHeaders } from './precisionAgUtils';
+import FpoFieldStrip from './precision-ag/field-twin/FpoFieldStrip';
+import SeasonCropCard from './precision-ag/field-twin/SeasonCropCard';
 
 // Fix Leaflet default marker icons broken by Vite/Webpack
 delete L.Icon.Default.prototype._getIconUrl;
@@ -26,7 +29,9 @@ const API_URL = import.meta.env.VITE_API_URL;
 // ─── API helpers ──────────────────────────────────────────────────────────────
 
 async function getFields(businessId) {
-  const res = await fetch(`${API_URL}/api/fields?business_id=${businessId}`);
+  const res = await fetch(`${API_URL}/api/fields?business_id=${businessId}`, {
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error('Failed to load fields');
   return res.json();
 }
@@ -1104,6 +1109,16 @@ function FieldList({ businessId, onCreateNew }) {
         </div>
       </div>
 
+      {fields.length > 0 && (
+        <div className="mb-5">
+          <FpoFieldStrip
+            fields={fields}
+            businessId={businessId}
+            onSelectField={(id) => navigate(`/precision-ag/geospatial?BusinessID=${businessId}&FieldID=${id}&tab=twin`)}
+          />
+        </div>
+      )}
+
       {/* Field intelligence search — only shown when fields exist */}
       {fields.length > 0 && <div className="mb-5">
         <div className="relative">
@@ -1186,10 +1201,7 @@ function FieldList({ businessId, onCreateNew }) {
                       </Link>
                     </td>
                     <td style={tdStyle} className="text-gray-600 text-sm">
-                      <div>{field.crop_type || <span className="text-gray-400">—</span>}</div>
-                      {profiles[fieldId]?.soil_type && (
-                        <div style={{ fontSize: '0.7rem', color: '#6D8E22', marginTop: 2 }}>{profiles[fieldId].soil_type}</div>
-                      )}
+                      <SeasonCropCard field={field} businessId={businessId} compact />
                     </td>
                     <td style={tdStyle} className="text-gray-600 text-sm">
                       {field.field_size_hectares ? `${field.field_size_hectares} ha` : <span className="text-gray-400">—</span>}

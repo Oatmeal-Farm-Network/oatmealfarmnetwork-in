@@ -20,7 +20,7 @@ const CROP_COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'
 function fmtDate(s) {
   if (!s) return '—';
   const d = new Date(s + 'T12:00:00');
-  return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function daysSpan(start, end) {
@@ -56,7 +56,7 @@ function GanttChart({ plans }) {
   const cur = new Date(minD);
   cur.setDate(1);
   while (cur <= maxD) {
-    months.push({ label: cur.toLocaleDateString('en-AU', { month: 'short', year: '2-digit' }), pct: ((cur - minD) / (maxD - minD)) * 100 });
+    months.push({ label: cur.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }), pct: ((cur - minD) / (maxD - minD)) * 100 });
     cur.setMonth(cur.getMonth() + 1);
   }
 
@@ -129,7 +129,7 @@ function PlanModal({ bid, season, plan, onClose, onSaved }) {
       business_id: bid,
       ...Object.fromEntries(Object.entries(form).filter(([, v]) => v !== '')),
     });
-    if (plan) {
+    if (plan?.plan_id) {
       await fetch(`${API}/api/crop-planning/plans/${plan.plan_id}?${qs}`, { method: 'PUT', headers: auth() });
     } else {
       await fetch(`${API}/api/crop-planning/plans?${qs}`, { method: 'POST', headers: auth() });
@@ -143,15 +143,15 @@ function PlanModal({ bid, season, plan, onClose, onSaved }) {
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">{plan ? 'Edit Plan' : 'New Crop Plan'}</h3>
+          <h3 className="font-semibold text-gray-900">{plan?.plan_id ? 'Edit Plan' : 'New Crop Plan'}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
         </div>
         <div className="p-6 grid grid-cols-2 gap-4">
           {[
             ['Crop *', 'crop_name', 'text', 'e.g. Wheat'],
-            ['Variety', 'crop_variety', 'text', 'e.g. Hartog'],
-            ['Field', 'field_name', 'text', 'e.g. North Paddock'],
-            ['Season', 'season', 'text', 'e.g. 2025'],
+            ['Variety', 'crop_variety', 'text', 'e.g. HD-2967'],
+            ['Field', 'field_name', 'text', 'e.g. North plot'],
+            ['Season', 'season', 'text', 'e.g. Kharif 2026'],
             ['Plant Date', 'plant_date', 'date', ''],
             ['Harvest Date', 'harvest_date', 'date', ''],
             ['Area (ha)', 'area_ha', 'number', ''],
@@ -204,17 +204,28 @@ export default function CropPlanner() {
   const bid = params.get('BusinessID');
 
   const [tab, setTab]       = useState('calendar');
-  const [season, setSeason] = useState(String(new Date().getFullYear()));
+  const [season, setSeason] = useState('');
   const [seasons, setSeasons] = useState([]);
   const [plans, setPlans]   = useState([]);
+  const [calendar, setCalendar] = useState(null);
   const [loading, setLoading] = useState(false);
   const [modal, setModal]   = useState(null); // null | 'new' | plan object
 
+  useEffect(() => {
+    get('/api/crop-planning/india-calendar').then((d) => {
+      if (!d?.current) return;
+      setCalendar(d.current);
+      setSeason((prev) => prev || d.current.label);
+    }).catch(() => {
+      setSeason((prev) => prev || String(new Date().getFullYear()));
+    });
+  }, []);
+
   const load = () => {
-    if (!bid) return;
+    if (!bid || !season) return;
     setLoading(true);
     Promise.all([
-      get(`/api/crop-planning/plans?business_id=${bid}&season=${season}`),
+      get(`/api/crop-planning/plans?business_id=${bid}&season=${encodeURIComponent(season)}`),
       get(`/api/crop-planning/seasons?business_id=${bid}`),
     ]).then(([p, s]) => {
       setPlans(Array.isArray(p) ? p : []);
@@ -232,14 +243,14 @@ export default function CropPlanner() {
 
   const availableSeasons = seasons.length
     ? seasons
-    : Array.from({ length: 5 }, (_, i) => String(new Date().getFullYear() - i));
+    : [calendar?.label, `Kharif ${new Date().getFullYear()}`, `Rabi ${new Date().getFullYear()}-${String(new Date().getFullYear() + 1).slice(2)}`, `Zaid ${new Date().getFullYear()}`].filter(Boolean);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Crop Planning Calendar</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Plan what goes where, when — track planting to harvest</p>
+          <p className="text-sm text-gray-500 mt-0.5">Kharif, Rabi, and Zaid plans — what goes where, and when</p>
         </div>
         <div className="flex items-center gap-3">
           <select value={season} onChange={e => setSeason(e.target.value)}
@@ -267,6 +278,27 @@ export default function CropPlanner() {
       </div>
 
       <div className="p-6 max-w-6xl">
+        {calendar && (
+          <div className="mb-5 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+            <strong>{calendar.label}</strong> · {calendar.window}
+            {calendar.sow && <span> · Sow {calendar.sow}</span>}
+            {calendar.harvest && <span> · Harvest {calendar.harvest}</span>}
+            {Array.isArray(calendar.crops) && calendar.crops.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {calendar.crops.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setModal({ crop_name: c, season: calendar.label })}
+                    className="rounded-full bg-white border border-emerald-200 px-2.5 py-0.5 text-xs font-medium text-emerald-900 hover:bg-emerald-100"
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         {loading && <p className="text-gray-400 text-sm">Loading…</p>}
 
         {!loading && tab === 'calendar' && (

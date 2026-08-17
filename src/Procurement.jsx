@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import ThaiymeChat from './ThaiymeChat';
 import { useSearchParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
@@ -34,7 +34,7 @@ export default function Procurement() {
   const [filterStatus, setFilterStatus] = useState('');
   const [detail, setDetail] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ SupplierName: '', SupplierContact: '', SupplierEmail: '', Category: '', OrderDate: new Date().toISOString().split('T')[0], ExpectedDelivery: '', Currency: 'USD', Notes: '' });
+  const [form, setForm] = useState({ SupplierName: '', SupplierContact: '', SupplierEmail: '', Category: '', OrderDate: new Date().toISOString().split('T')[0], ExpectedDelivery: '', Currency: 'INR', Notes: '' });
   const [lines, setLines] = useState([{ ItemName: '', Description: '', Category: '', Quantity: '', Unit: '', UnitPrice: '' }]);
   const [receiptForm, setReceiptForm] = useState({ ReceivedDate: new Date().toISOString().split('T')[0], ReceivedBy: '', DeliveryNote: '', Condition: 'good', Notes: '' });
   const [receiptLines, setReceiptLines] = useState([]);

@@ -549,7 +549,7 @@ function LivestockBlock({ data, site, businessId, mode = 'sale' }) {
     if (n === null || n === undefined || n === '' || Number(n) === 0) return '';
     const num = Number(n);
     if (Number.isNaN(num)) return '';
-    return num.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    return num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
   };
   const showStud = (a) => a.PublishStud && Number(a.StudFee || 0) > 0;
 
@@ -1603,7 +1603,7 @@ function PackagesBlock({ data, site, businessId }) {
   const fontFamily = site.font_family   || 'inherit';
   const fmtPrice = (n) => {
     if (!n || Number(n) === 0) return '';
-    return Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    return Number(n).toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
   };
 
   if (loading) return <SectionWrap site={site}><div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>{wp('packages_loading')}</div></SectionWrap>;

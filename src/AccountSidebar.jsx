@@ -426,26 +426,26 @@ export default function AccountSidebar() {
         )}
 
         {on('csa_advanced') && (
-          <NavSection icon={ICONS.csaAdvanced} label="CSA Advanced" expanded={Expanded}
-            isOpen={OpenSections['CSA Advanced'] || false} onToggle={() => toggleSection('CSA Advanced')}>
-            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=contracts`} label="Contracts & Risk Sharing" />
-            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=payment-plans`} label="Payment Plans" />
-            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=work-shares`} label="Work Share Tracking" />
-            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=boxbot`} label="BoxBot Share Balancing" />
-            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=vacation-holds`} label="Vacation Holds" />
-            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=pickup-sites`} label="Pickup Sites" />
-            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=crop-progress`} label="Crop Progress" />
-            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=newsletters`} label="What's In The Box" />
-            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=harvest`} label="Harvest Allocation" />
-            <NavChild to={`/csa-advanced?BusinessID=${BusinessID}&tab=box-labels`} label="Box Labels" />
+          <NavSection icon={ICONS.csaAdvanced} label="FPO Advanced" expanded={Expanded}
+            isOpen={OpenSections['FPO Advanced'] || OpenSections['CSA Advanced'] || false} onToggle={() => toggleSection('FPO Advanced')}>
+            <NavChild to={`/fpo-advanced?BusinessID=${BusinessID}&tab=contracts`} label="Contracts & Risk Sharing" />
+            <NavChild to={`/fpo-advanced?BusinessID=${BusinessID}&tab=payment-plans`} label="Payment Plans" />
+            <NavChild to={`/fpo-advanced?BusinessID=${BusinessID}&tab=work-shares`} label="Work Share Tracking" />
+            <NavChild to={`/fpo-advanced?BusinessID=${BusinessID}&tab=boxbot`} label="Share Balancing" />
+            <NavChild to={`/fpo-advanced?BusinessID=${BusinessID}&tab=vacation-holds`} label="Vacation Holds" />
+            <NavChild to={`/fpo-advanced?BusinessID=${BusinessID}&tab=pickup-sites`} label="Pickup Sites" />
+            <NavChild to={`/fpo-advanced?BusinessID=${BusinessID}&tab=crop-progress`} label="Crop Progress" />
+            <NavChild to={`/fpo-advanced?BusinessID=${BusinessID}&tab=newsletters`} label="What's In The Box" />
+            <NavChild to={`/fpo-advanced?BusinessID=${BusinessID}&tab=harvest`} label="Harvest Allocation" />
+            <NavChild to={`/fpo-advanced?BusinessID=${BusinessID}&tab=box-labels`} label="Box Labels" />
           </NavSection>
         )}
 
         {on('csa_management') && (
-          <NavSection icon={ICONS.csa} label="CSA Management" expanded={Expanded}
-            isOpen={OpenSections['CSA Management'] || false} onToggle={() => toggleSection('CSA Management')}>
-            <NavChild to="/csa" label="Browse CSA Plans" />
-            <NavChild to={`/csa/manage?BusinessID=${BusinessID}`} label="Manage My Plans" />
+          <NavSection icon={ICONS.csa} label="FPO Shares" expanded={Expanded}
+            isOpen={OpenSections['FPO Shares'] || OpenSections['CSA Management'] || false} onToggle={() => toggleSection('FPO Shares')}>
+            <NavChild to="/fpo" label="Browse FPO Plans" />
+            <NavChild to={`/fpo/manage?BusinessID=${BusinessID}`} label="Manage My Plans" />
           </NavSection>
         )}
 

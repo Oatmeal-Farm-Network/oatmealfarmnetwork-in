@@ -22,19 +22,19 @@ function wmoIcon(code) { return WMO_ICON[code] || '🌡️'; }
 
 function fmtDay(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
-  return d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+  return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 function fmtHour(timeStr) {
   const d = new Date(timeStr);
-  return d.toLocaleTimeString('en-AU', { hour: 'numeric', hour12: true });
+  return d.toLocaleTimeString('en-IN', { hour: 'numeric', hour12: true });
 }
 
-function WindBadge({ mph, dir }) {
-  if (mph == null) return null;
+function WindBadge({ speed, dir }) {
+  if (speed == null) return null;
   return (
     <span className="text-xs text-gray-500">
-      {dir && `${dir} `}{Math.round(mph)} mph
+      {dir && `${dir} `}{Math.round(speed)} km/h
     </span>
   );
 }
@@ -78,12 +78,12 @@ function LocationPicker({ bid, onSaved }) {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Latitude</label>
-            <input value={lat} onChange={e => setLat(e.target.value)} placeholder="-33.8688"
+            <input value={lat} onChange={e => setLat(e.target.value)} placeholder="28.6139"
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Longitude</label>
-            <input value={lon} onChange={e => setLon(e.target.value)} placeholder="151.2093"
+            <input value={lon} onChange={e => setLon(e.target.value)} placeholder="77.2090"
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
           </div>
         </div>
@@ -174,20 +174,43 @@ export default function WeatherDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-5xl font-bold text-gray-900">
-                    {cur?.temp_f != null ? `${Math.round(cur.temp_f)}°F` : '—'}
+                    {cur?.temp_c != null || cur?.temp_f != null
+                      ? `${Math.round(cur.temp_c ?? cur.temp_f)}°C`
+                      : '—'}
                   </div>
                   <div className="text-sm text-gray-500 mt-1">
-                    Feels like {cur?.feelslike_f != null ? `${Math.round(cur.feelslike_f)}°F` : '—'} ·{' '}
-                    {cur?.condition}
+                    Feels like{' '}
+                    {cur?.feelslike_c != null || cur?.feelslike_f != null
+                      ? `${Math.round(cur.feelslike_c ?? cur.feelslike_f)}°C`
+                      : '—'}{' '}
+                    · {cur?.condition}
                   </div>
-                  <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                  <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-500">
                     <span>Humidity {cur?.humidity ?? '—'}%</span>
-                    <WindBadge mph={cur?.wind_mph} dir={cur?.wind_dir} />
-                    {today && <span>High {Math.round(today.high_f)}° / Low {Math.round(today.low_f)}°</span>}
+                    <WindBadge speed={cur?.wind_kmh ?? cur?.wind_mph} dir={cur?.wind_dir} />
+                    {today && (
+                      <span>
+                        High {Math.round(today.high_c ?? today.high_f)}° / Low{' '}
+                        {Math.round(today.low_c ?? today.low_f)}°
+                      </span>
+                    )}
+                    {(today?.precip_mm != null || cur?.precip_mm != null) && (
+                      <span>Rain today {Number(today?.precip_mm ?? cur?.precip_mm).toFixed(1)} mm</span>
+                    )}
+                    {today?.et0_mm != null && <span>ET₀ {Number(today.et0_mm).toFixed(1)} mm</span>}
                   </div>
                 </div>
-                <div className="text-7xl">{wmoIcon(0)}</div>
+                <div className="text-7xl">{wmoIcon(cur?.weather_code ?? 0)}</div>
               </div>
+              {weather.monsoon?.message && (
+                <div className="mt-4 rounded-xl bg-sky-50 border border-sky-100 px-3 py-2 text-sm text-sky-900">
+                  <strong className="capitalize">{weather.monsoon.level}</strong> rain outlook ·{' '}
+                  {weather.monsoon.message}
+                  {weather.monsoon.next_5d_precip_mm != null && (
+                    <span className="text-sky-700"> ({weather.monsoon.next_5d_precip_mm} mm / 5d)</span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Hourly strip */}
@@ -198,7 +221,7 @@ export default function WeatherDashboard() {
                   {weather.hourly.slice(0, 24).map((h, i) => (
                     <div key={i} className="shrink-0 flex flex-col items-center gap-1 w-14">
                       <span className="text-xs text-gray-400">{fmtHour(h.time)}</span>
-                      <span className="text-lg">{wmoIcon(0)}</span>
+                      <span className="text-lg">{wmoIcon(h.weather_code ?? 0)}</span>
                       <span className="text-sm font-medium text-gray-700">
                         {h.temp_f != null ? `${Math.round(h.temp_f)}°` : '—'}
                       </span>
@@ -218,8 +241,11 @@ export default function WeatherDashboard() {
                   {weather.daily.map((d, i) => (
                     <div key={i} className="flex items-center px-5 py-3 gap-4">
                       <span className="text-sm text-gray-600 w-32 shrink-0">{i === 0 ? 'Today' : fmtDay(d.date)}</span>
-                      <span className="text-xl">{wmoIcon(0)}</span>
-                      <span className="text-xs text-gray-500 flex-1">{d.condition}</span>
+                      <span className="text-xl">{wmoIcon(d.weather_code ?? 0)}</span>
+                      <span className="text-xs text-gray-500 flex-1">
+                        {d.condition}
+                        {d.precip_mm != null ? ` · ${Number(d.precip_mm).toFixed(1)} mm` : ''}
+                      </span>
                       <div className="flex items-center gap-2 text-sm font-medium">
                         <span className="text-gray-900">{d.high_f != null ? `${Math.round(d.high_f)}°` : '—'}</span>
                         <span className="text-gray-400">{d.low_f != null ? `${Math.round(d.low_f)}°` : '—'}</span>

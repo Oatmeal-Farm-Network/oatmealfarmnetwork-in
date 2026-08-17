@@ -17,7 +17,7 @@ function authHeaders() {
 
 const JOB_TYPES = ['seasonal', 'part-time', 'full-time', 'internship', 'apprenticeship', 'contract'];
 const CATEGORIES = ['Crop Production', 'Livestock', 'Equipment Operation', 'Irrigation', 'Harvesting',
-  'Agronomy / Scouting', 'Farm Management', 'CSA / Market Farming', 'Winery / Orchard', 'General Labor', 'Other'];
+  'Agronomy / Scouting', 'Farm Management', 'FPO / Market Farming', 'Winery / Orchard', 'General Labor', 'Other'];
 const PAY_PERIODS = ['hour', 'day', 'week', 'month', 'season', 'year'];
 
 function fmtDate(d) {

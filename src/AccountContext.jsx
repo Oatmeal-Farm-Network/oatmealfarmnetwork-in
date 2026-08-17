@@ -46,8 +46,13 @@ export function AccountProvider({ children }) {
     const token = localStorage.getItem('access_token');
     const peopleId = localStorage.getItem('people_id');
     if (!token || !peopleId) return;
-    fetch(`${import.meta.env.VITE_API_URL}/auth/my-businesses?PeopleID=${peopleId}`)
-      .then(r => r.json())
+    fetch(`${import.meta.env.VITE_API_URL}/auth/my-businesses`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => {
+        if (!r.ok) return [];
+        return r.json();
+      })
       .then(data => {
         const list = Array.isArray(data) ? data : [];
         setBusinesses(list);

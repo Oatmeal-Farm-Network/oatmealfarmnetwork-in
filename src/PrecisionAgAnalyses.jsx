@@ -841,13 +841,13 @@ function WeatherTab({ weather, field }) {
   const highTemps = daily.map(d => d.high_f ?? null);
   const lowTemps  = daily.map(d => d.low_f  ?? null);
   const tempSeries = [
-    { label: 'High °F', color: '#EF4444', values: highTemps },
-    { label: 'Low °F',  color: '#3B82F6', values: lowTemps  },
+    { label: 'High °C', color: '#EF4444', values: highTemps },
+    { label: 'Low °C',  color: '#3B82F6', values: lowTemps  },
   ].filter(s => s.values.some(v => v != null));
 
-  // Stress thresholds in °F
-  const heatThreshold = 95;  // >95°F heat stress for most row crops
-  const coldThreshold = 41;  // <41°F cold/frost risk
+  // Stress thresholds in °C (India metric weather)
+  const heatThreshold = 35;  // >35°C heat stress for many crops
+  const coldThreshold = 5;   // <5°C cold risk
   const heatDays = highTemps.filter(t => t != null && t > heatThreshold).length;
   const coldDays = lowTemps.filter(t => t != null && t < coldThreshold).length;
 
@@ -861,17 +861,17 @@ function WeatherTab({ weather, field }) {
       <div>
         <SectionTitle>Current Conditions{weather.location ? ` — ${weather.location.city}, ${weather.location.state}` : ''}</SectionTitle>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <StatCard label="Temperature" value={`${Math.round(weather.current.temp_f ?? 0)}°F`} sub={weather.current.condition} bg="#DEECFF" />
-          {weather.current.feelslike_f != null && (
-            <StatCard label="Feels Like" value={`${Math.round(weather.current.feelslike_f)}°F`} bg="#C8F2F4" />
-          )}
-          <StatCard label="Wind" value={`${Math.round(weather.current.wind_mph ?? 0)} mph${weather.current.wind_dir ? ` ${weather.current.wind_dir}` : ''}`} bg="#D2F0DB" />
+          <StatCard label="Temperature" value={`${Math.round(weather.current.temp_c ?? weather.current.temp_f ?? 0)}°C`} sub={weather.current.condition} bg="#DEECFF" />
+          {weather.current.feelslike_c != null || weather.current.feelslike_f != null ? (
+            <StatCard label="Feels Like" value={`${Math.round(weather.current.feelslike_c ?? weather.current.feelslike_f)}°C`} bg="#C8F2F4" />
+          ) : null}
+          <StatCard label="Wind" value={`${Math.round(weather.current.wind_kmh ?? weather.current.wind_mph ?? 0)} km/h${weather.current.wind_dir ? ` ${weather.current.wind_dir}` : ''}`} bg="#D2F0DB" />
           <StatCard label="Humidity" value={weather.current.humidity != null ? `${Math.round(weather.current.humidity)}%` : 'N/A'} bg="#F4E9FF" />
         </div>
         {weather.today && (
           <div className="bg-white rounded-xl border border-gray-100 px-5 py-3 flex gap-6 text-sm font-mont text-gray-600">
-            <span>Today High: <strong>{Math.round(weather.today.high_f)}°F</strong></span>
-            <span>Today Low: <strong>{Math.round(weather.today.low_f)}°F</strong></span>
+            <span>Today High: <strong>{Math.round(weather.today.high_c ?? weather.today.high_f)}°C</strong></span>
+            <span>Today Low: <strong>{Math.round(weather.today.low_c ?? weather.today.low_f)}°C</strong></span>
           </div>
         )}
       </div>
@@ -886,7 +886,7 @@ function WeatherTab({ weather, field }) {
                 <div key={i} className="flex flex-col items-center gap-1 px-2">
                   <span className="text-xs text-gray-400 font-mont">{formatHour(h.time)}</span>
                   {h.icon && <img src={h.icon} alt="" className="w-8 h-8" />}
-                  <span className="text-sm font-mont font-semibold text-gray-700">{Math.round(h.temp_f)}°F</span>
+                  <span className="text-sm font-mont font-semibold text-gray-700">{Math.round(h.temp_c ?? h.temp_f)}°C</span>
                 </div>
               ))}
             </div>
@@ -919,12 +919,12 @@ function WeatherTab({ weather, field }) {
         <SectionTitle>Crop Stress Risk ({daily.length}-Day Window)</SectionTitle>
         <div className="grid grid-cols-2 gap-4">
           <div className={`rounded-xl border p-4 ${heatDays > 0 ? 'border-red-300 bg-red-50' : 'border-gray-100 bg-white'}`}>
-            <div className="text-xs font-mont font-semibold text-gray-500 mb-1">Heat Stress Days (&gt;{heatThreshold}°F)</div>
+            <div className="text-xs font-mont font-semibold text-gray-500 mb-1">Heat Stress Days (&gt;{heatThreshold}°C)</div>
             <div className={`text-3xl font-lora font-bold ${heatDays > 0 ? 'text-red-600' : 'text-gray-900'}`}>{heatDays}</div>
             <div className="text-xs text-gray-400 mt-1">{heatDays > 0 ? 'Monitor for pollen viability & yield drag' : 'No heat stress forecast'}</div>
           </div>
           <div className={`rounded-xl border p-4 ${coldDays > 0 ? 'border-blue-300 bg-blue-50' : 'border-gray-100 bg-white'}`}>
-            <div className="text-xs font-mont font-semibold text-gray-500 mb-1">Cold/Frost Risk Days (&lt;{coldThreshold}°F)</div>
+            <div className="text-xs font-mont font-semibold text-gray-500 mb-1">Cold/Frost Risk Days (&lt;{coldThreshold}°C)</div>
             <div className={`text-3xl font-lora font-bold ${coldDays > 0 ? 'text-blue-600' : 'text-gray-900'}`}>{coldDays}</div>
             <div className="text-xs text-gray-400 mt-1">{coldDays > 0 ? 'Check frost protection & germination risk' : 'No frost risk forecast'}</div>
           </div>
@@ -940,7 +940,7 @@ function WeatherTab({ weather, field }) {
       {/* Temperature trend */}
       {tempSeries.length > 0 && daily.length >= 2 && (
         <div>
-          <SectionTitle>Temperature Trend — {daily.length}-Day Forecast (°F)</SectionTitle>
+          <SectionTitle>Temperature Trend — {daily.length}-Day Forecast (°C)</SectionTitle>
           <div className="bg-white rounded-xl border border-gray-100 p-4 h-[480px]">
             <LineChart series={tempSeries} xLabels={dayLabels} stretch />
           </div>
@@ -1899,7 +1899,7 @@ export default function PrecisionAgAnalyses() {
   })();
   const FieldID    = searchParams.get('FieldID');
   const tabParam   = searchParams.get('tab') || undefined;
-  const PeopleID   = localStorage.getItem('PeopleID');
+  const PeopleID   = localStorage.getItem('people_id') || localStorage.getItem('PeopleID');
   const { Business, LoadBusiness } = useAccount();
   const [field, setField] = useState(null);
   const navigate = useNavigate();
