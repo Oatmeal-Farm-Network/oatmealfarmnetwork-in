@@ -99,12 +99,32 @@ export function calcHaFromGeojson(geojsonStr) {
   } catch { return null; }
 }
 
+export function fieldIdOf(field) {
+  return field?.fieldid ?? field?.FieldID ?? field?.id ?? null;
+}
+
+export function matchFieldId(field, fieldId) {
+  if (field == null || fieldId == null) return false;
+  return String(fieldIdOf(field)) === String(fieldId);
+}
+
+export async function fetchFieldsForBusiness(businessId) {
+  if (!businessId) return [];
+  const data = await safeFetch(`${API_URL}/api/fields?business_id=${businessId}`);
+  return Array.isArray(data) ? data : [];
+}
+
+export async function fetchFieldById(businessId, fieldId) {
+  if (!businessId || !fieldId) return null;
+  const fields = await fetchFieldsForBusiness(businessId);
+  return fields.find(f => matchFieldId(f, fieldId)) || null;
+}
+
 export function useFields(BusinessID) {
   const [fields, setFields] = useState([]);
   useEffect(() => {
     if (!BusinessID) return;
-    safeFetch(`${API_URL}/api/fields?business_id=${BusinessID}`)
-      .then(data => setFields(Array.isArray(data) ? data : []));
+    fetchFieldsForBusiness(BusinessID).then(setFields);
   }, [BusinessID]);
   return fields;
 }

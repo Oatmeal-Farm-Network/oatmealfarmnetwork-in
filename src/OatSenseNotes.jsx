@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
+import { fetchFieldsForBusiness } from './precisionAgUtils';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -603,9 +604,8 @@ export default function OatSenseNotes() {
 
   useEffect(() => {
     if (!businessId) return;
-    fetch(`${API_URL}/api/fields?business_id=${businessId}`)
-      .then(r => r.json())
-      .then(data => setFields(Array.isArray(data) ? data : []))
+    fetchFieldsForBusiness(businessId)
+      .then(setFields)
       .catch(() => {});
   }, [businessId]);
 

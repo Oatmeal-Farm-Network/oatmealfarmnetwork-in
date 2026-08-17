@@ -5,17 +5,8 @@ import { useAccount } from './AccountContext';
 import BiomassPanel from './BiomassPanel';
 import MaturityPanel from './MaturityPanel';
 import ClimateForecastPanel from './ClimateForecastPanel';
-import { useRaster, API_URL, CROP_API_URL } from './precisionAgUtils';
+import { useRaster, API_URL, CROP_API_URL, authHeaders, fetchFieldById, safeFetch } from './precisionAgUtils';
 import SaigeWidget from './SaigeWidget';
-
-async function safeFetch(url) {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch { return null; }
-}
-
 
 // ─── Color scales ─────────────────────────────────────────────────────────────
 function ndviColor(t) {
@@ -1902,19 +1893,39 @@ export default function PrecisionAgAnalyses() {
   const PeopleID   = localStorage.getItem('people_id') || localStorage.getItem('PeopleID');
   const { Business, LoadBusiness } = useAccount();
   const [field, setField] = useState(null);
+  const [fieldLoading, setFieldLoading] = useState(false);
+  const [fieldError, setFieldError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => { LoadBusiness(BusinessID); }, [BusinessID]);
 
   useEffect(() => {
-    if (!FieldID || !BusinessID) return;
-    fetch(`${API_URL}/api/fields?business_id=${BusinessID}`)
-      .then(r => r.json())
-      .then(fields => {
-        const found = fields.find(f => String(f.fieldid) === String(FieldID) || String(f.id) === String(FieldID));
-        if (found) setField(found);
+    if (!FieldID || !BusinessID) {
+      setField(null);
+      setFieldError('');
+      return;
+    }
+    let alive = true;
+    setFieldLoading(true);
+    setFieldError('');
+    fetchFieldById(BusinessID, FieldID)
+      .then((found) => {
+        if (!alive) return;
+        if (found) {
+          setField(found);
+          setFieldError('');
+        } else {
+          setField(null);
+          setFieldError('Field not found or you do not have access.');
+        }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!alive) return;
+        setField(null);
+        setFieldError('Could not load field. Try signing in again.');
+      })
+      .finally(() => { if (alive) setFieldLoading(false); });
+    return () => { alive = false; };
   }, [FieldID, BusinessID]);
 
   if (!Business) return <div className="p-8 text-gray-500 font-mont">Loading…</div>;
@@ -1922,7 +1933,9 @@ export default function PrecisionAgAnalyses() {
   return (
     <AccountLayout Business={Business} BusinessID={BusinessID} PeopleID={PeopleID} pageTitle="Field Analyses" breadcrumbs={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Precision Ag' }, { label: 'Fields', to: `/precision-ag/fields?BusinessID=${BusinessID}` }, { label: 'Analyses' }]}>
       <div className="max-w-full mx-auto">
-        {field ? (
+        {fieldLoading ? (
+          <div className="text-center py-24 font-mont text-gray-500">Loading field…</div>
+        ) : field ? (
           <FieldDetail
             field={field}
             businessId={BusinessID}
@@ -1935,7 +1948,9 @@ export default function PrecisionAgAnalyses() {
           <div className="text-center py-24">
             <div className="flex justify-center mb-4"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V12"/><path d="M17 8c0 2.5-2 4-5 4S7 10.5 7 8c0-3 2.5-5 5-5s5 2 5 5z"/><line x1="12" y1="22" x2="4" y2="22"/><line x1="12" y1="22" x2="20" y2="22"/></svg></div>
             <div className="font-lora text-2xl text-gray-700 mb-2">Field Analysis</div>
-            <div className="font-mont text-sm text-gray-400">Select a field from the Fields page to view its analysis</div>
+            <div className="font-mont text-sm text-gray-400">
+              {fieldError || (FieldID ? 'Select a field from the Fields page to view its analysis' : 'Select a field from the Fields page to view its analysis')}
+            </div>
             <button
               onClick={() => navigate(`/precision-ag/fields?BusinessID=${BusinessID}`)}
               className="mt-6 px-5 py-2.5 rounded-lg text-white font-mont font-semibold text-sm"

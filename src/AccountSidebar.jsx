@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAccount } from './AccountContext';
-
-const OTF_API = import.meta.env.VITE_OTF_API_URL || import.meta.env.VITE_API_URL || '';
+import { fetchFieldsForBusiness, fieldIdOf } from './precisionAgUtils';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -209,9 +208,8 @@ export default function AccountSidebar() {
 
   useEffect(() => {
     if (!BusinessID) return;
-    fetch(`${API_URL}/api/fields?business_id=${BusinessID}`)
-      .then(r => r.ok ? r.json() : [])
-      .then(data => setFields(Array.isArray(data) ? data : []))
+    fetchFieldsForBusiness(BusinessID)
+      .then(setFields)
       .catch(() => setFields([]));
   }, [BusinessID]);
 
@@ -390,7 +388,7 @@ export default function AccountSidebar() {
             {fields.length > 0 && (
               <div className="mt-1 pt-1 border-t border-gray-300/40">
                 {fields.map(f => {
-                  const fid = f.fieldid ?? f.id;
+                  const fid = fieldIdOf(f);
                   const fname = f.name ?? f.fieldname ?? f.FieldName ?? `Field ${fid}`;
                   return (
                     <NavChild key={fid}
