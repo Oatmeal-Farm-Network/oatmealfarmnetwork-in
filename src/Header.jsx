@@ -5,8 +5,7 @@ import { useAccount } from './AccountContext';
 import NotificationBell from './NotificationBell';
 import CartBell from './CartBell';
 import LanguageSelector from './LanguageSelector';
-
-const OTF_API = import.meta.env.VITE_OTF_API_URL || '';
+import { DEFAULT_OFN_NAV_KEYS, fetchOfnNavKeys } from './ofnNavConfig';
 
 // AI advisor destinations: logged-in users go straight to the actual advisor tool;
 // logged-out visitors get the marketing "About" page (/platform/<slug>).
@@ -21,11 +20,9 @@ const advisorTo = (slug, isLoggedIn) =>
 
 const Header = () => {
   const { t } = useTranslation();
-  const [activeNavKeys, setActiveNavKeys] = useState(new Set());
-  const [navLoaded, setNavLoaded] = useState(false);
+  const [activeNavKeys, setActiveNavKeys] = useState(() => new Set(DEFAULT_OFN_NAV_KEYS));
 
-  // Returns true if item should be shown (defaults true until config loads)
-  const nav = (key) => !navLoaded || activeNavKeys.has(key);
+  const nav = (key) => activeNavKeys.has(key);
   const { businesses, clearBusiness } = useAccount();
   const [isOpen, setIsOpen] = useState(false);
   const [kbOpen, setKbOpen] = useState(false);
@@ -50,15 +47,9 @@ const Header = () => {
   const aiRef = useRef(null);
   const psRef = useRef(null);
 
-  // Fetch active nav keys from OAT backend (fails silently — all items show if unavailable)
+  // Fetch active nav keys from OAT backend; fail open with full nav when unavailable (India has no oatmeal-main)
   useEffect(() => {
-    fetch(`${OTF_API}/api/admin/ofn-nav/public`)
-      .then(r => r.ok ? r.json() : [])
-      .then(items => {
-        setActiveNavKeys(new Set(items.map(i => i.NavKey)));
-        setNavLoaded(true);
-      })
-      .catch(() => setNavLoaded(false));
+    fetchOfnNavKeys().then(setActiveNavKeys);
   }, []);
 
   useEffect(() => {
@@ -259,12 +250,14 @@ const Header = () => {
     </svg>
   );
 
+  const homeTo = isLoggedIn ? '/dashboard' : '/';
+
   return (
     <nav className="bg-[#A3301E] py-3 px-4 shadow-2xl sticky top-0 z-10000 font-montserrat">
       <div className="max-w-350 mx-auto flex justify-between items-center">
 
         {/* Logo */}
-        <Link to={isLoggedIn ? "/dashboard" : "/"} className="flex items-center shrink-0">
+        <Link to={homeTo} className="flex items-center shrink-0">
           <img
             src="/images/Oatmeal-Farm-Network-logo-horizontal-white.webp"
             className="h-10 md:h-12"
