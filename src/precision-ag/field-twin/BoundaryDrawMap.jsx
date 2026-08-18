@@ -14,7 +14,7 @@ if (L?.Icon?.Default?.prototype) {
   });
 }
 
-const DEFAULT_CENTER = [37.5, -121.9];
+import { geocodeOne, defaultMapCenter } from '../../geocoding';
 
 /**
  * Leaflet + Draw map for capturing a field boundary on Field Twin when none exists.
@@ -48,24 +48,21 @@ export default function BoundaryDrawMap({
     let map = null;
 
     const start = async () => {
-      let center = DEFAULT_CENTER;
-      let zoom = 14;
+      const home = defaultMapCenter();
+      let center = [home.lat, home.lon];
+      let zoom = home.zoom;
 
       const hasCoords = Number.isFinite(Number(lat)) && Number.isFinite(Number(lon));
       if (hasCoords) {
         center = [Number(lat), Number(lon)];
+        zoom = 14;
       } else if (address && String(address).trim()) {
         setGeoHint('Looking up address on the map…');
         try {
-          const q = encodeURIComponent(String(address).trim());
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${q}`,
-            { headers: { 'User-Agent': 'OatmealFarmNetwork/1.0' } },
-          );
-          const rows = res.ok ? await res.json() : [];
+          const hit = await geocodeOne(String(address).trim());
           if (cancelled) return;
-          if (rows?.[0]?.lat != null && rows?.[0]?.lon != null) {
-            center = [parseFloat(rows[0].lat), parseFloat(rows[0].lon)];
+          if (hit) {
+            center = [hit.lat, hit.lon];
             zoom = 15;
             setGeoHint('');
           } else {
@@ -78,7 +75,6 @@ export default function BoundaryDrawMap({
         }
       } else {
         setGeoHint('No coordinates yet — pan to the field and draw the outline.');
-        zoom = 5;
       }
 
       if (cancelled || !hostRef.current) return;

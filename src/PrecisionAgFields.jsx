@@ -13,6 +13,7 @@ import L from 'leaflet';
 import 'leaflet-draw';
 import { useTranslation } from 'react-i18next';
 import { authHeaders, fetchFieldsForBusiness, fieldIdOf, matchFieldId } from './precisionAgUtils';
+import { searchAddressSuggestions, reverseGeocodeAddress, geocodeOne, defaultMapCenter } from './geocoding';
 import FpoFieldStrip from './precision-ag/field-twin/FpoFieldStrip';
 import SeasonCropCard from './precision-ag/field-twin/SeasonCropCard';
 
@@ -69,7 +70,7 @@ function buildFieldServiceLinks(businessId, fieldId) {
 async function createField(data) {
   const res = await fetch(`${API_URL}/api/fields`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(data),
   });
   if (!res.ok) {
@@ -110,6 +111,10 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeout = useRef(null);
 
   const mapRef = useRef(null);
   const drawnItemsRef = useRef(null);
@@ -118,20 +123,47 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
   // Reverse geocode coordinates to fill address when coming from CropDetection
   useEffect(() => {
     if (!initialLat || !initialLon || formData.address) return;
-    fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${initialLat}&lon=${initialLon}&zoom=14&addressdetails=1`,
-      { headers: { 'User-Agent': 'OatmealFarmNetwork/1.0' } }
-    )
-      .then(r => r.json())
-      .then(data => {
-        if (data?.address) {
-          const a = data.address;
-          const parts = [a.road, a.city || a.town || a.village || a.county, a.state, a.postcode].filter(Boolean);
-          setFormData(prev => ({ ...prev, address: parts.join(', ') }));
-        }
-      })
-      .catch(() => {});
+    reverseGeocodeAddress(initialLat, initialLon).then((addr) => {
+      if (addr) setFormData((prev) => ({ ...prev, address: addr }));
+    });
   }, [initialLat, initialLon]);
+
+  const flyMapTo = (lat, lon, zoom = 15) => {
+    if (!mapRef.current || !Number.isFinite(Number(lat)) || !Number.isFinite(Number(lon))) return;
+    mapRef.current.setView([Number(lat), Number(lon)], zoom);
+  };
+
+  const handleAddressInput = (val) => {
+    setFormData((prev) => ({ ...prev, address: val }));
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (!val || val.length < 3) {
+      setShowSuggestions(false);
+      return;
+    }
+    setIsSearching(true);
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const rows = await searchAddressSuggestions(val, { limit: 6 });
+        setSuggestions(rows);
+        setShowSuggestions(rows.length > 0);
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 350);
+  };
+
+  const selectAddressSuggestion = (sug) => {
+    setFormData((prev) => ({
+      ...prev,
+      address: sug.display_name,
+      latitude: sug.lat.toFixed(6),
+      longitude: sug.lon.toFixed(6),
+    }));
+    setShowSuggestions(false);
+    flyMapTo(sug.lat, sug.lon, 16);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -143,7 +175,21 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
     setError('');
     setLoading(true);
     try {
-      await createField({ ...formData, business_id: businessId });
+      let payload = { ...formData, business_id: businessId };
+      if ((!payload.latitude || !payload.longitude) && payload.address) {
+        const hit = await geocodeOne(payload.address);
+        if (hit) {
+          payload = {
+            ...payload,
+            latitude: hit.lat.toFixed(6),
+            longitude: hit.lon.toFixed(6),
+          };
+        }
+      }
+      if (!payload.latitude || !payload.longitude) {
+        throw new Error('Search or pick an address so the map can find this farm, then draw the field outline.');
+      }
+      await createField(payload);
       onCreated();
     } catch (err) {
       setError(err.message || 'Failed to create field. Please try again.');
@@ -155,10 +201,11 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
   useEffect(() => {
     if (mapRef.current) return;
 
+    const fallback = defaultMapCenter();
     const mapCenter = (initialLat && initialLon)
       ? [parseFloat(initialLat), parseFloat(initialLon)]
-      : [37.5, -121.9];
-    const map = L.map(mapContainerRef.current).setView(mapCenter, 14);
+      : [fallback.lat, fallback.lon];
+    const map = L.map(mapContainerRef.current).setView(mapCenter, (initialLat && initialLon) ? 14 : fallback.zoom);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -244,16 +291,36 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
           </div>
 
           {/* Address */}
-          <div>
-            <label className={labelClass}>Address</label>
+          <div className="relative">
+            <label className={labelClass}>
+              Address {isSearching ? <span className="text-gray-400 font-normal">searching…</span> : null}
+            </label>
             <input
               type="text"
               name="address"
               value={formData.address}
-              onChange={handleChange}
-              placeholder="Street address or nearest town"
+              onChange={(e) => handleAddressInput(e.target.value)}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+              placeholder="Village, PIN, or full address — e.g. Somashettihalli, Arodi, Karnataka 572121"
+              autoComplete="off"
               className={inputClass}
             />
+            {showSuggestions && suggestions.length > 0 && (
+              <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-auto">
+                {suggestions.map((sug, i) => (
+                  <li key={`${sug.lat}-${sug.lon}-${i}`}>
+                    <button
+                      type="button"
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-[#f0f5e8]"
+                      onClick={() => selectAddressSuggestion(sug)}
+                    >
+                      {sug.display_name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-1 text-xs text-gray-500">Pick a suggestion to zoom the map, then draw the field boundary.</p>
           </div>
 
           {/* Lat / Lng */}
@@ -1101,7 +1168,8 @@ function FieldList({ businessId, onCreateNew }) {
             {showMoon ? '🌑' : '🌕'}
           </button>
           <button
-            onClick={() => navigate(`/precision-ag/crop-detection?BusinessID=${businessId}&mode=add-field`)}
+            type="button"
+            onClick={onCreateNew}
             className="text-sm font-semibold text-[#3D6B34] hover:underline bg-transparent border-0 p-0 cursor-pointer"
           >
             + Add Field

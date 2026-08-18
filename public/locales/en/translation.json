@@ -2443,7 +2443,7 @@
     "panel_title": "Crop & Soil Analytics",
     "panel_subtitle": "USDA Cropland Data 2024",
     "find_location": "Find Location",
-    "search_placeholder": "Street address, city, state, or ZIP…",
+    "search_placeholder": "Village, PIN, city, or full address…",
     "define_boundary": "Define Field Boundary",
     "btn_draw": "Draw Field",
     "draw_instructions": "Click on the map to place boundary points.",

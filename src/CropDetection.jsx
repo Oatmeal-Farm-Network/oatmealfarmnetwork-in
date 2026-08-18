@@ -7,6 +7,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { API_URL } from './precisionAgUtils';
+import { searchAddressSuggestions, geocodeOne, defaultMapCenter, geocodeCountrySuffix } from './geocoding';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const GCP_API = 'https://us-central1-animated-flare-421518.cloudfunctions.net/analyze-field';
@@ -673,18 +674,14 @@ export default function CropDetection() {
     if (!addFieldMode || zoomedToBusinessRef.current || !Business) return;
     // Only zoom when we have a zipcode; otherwise leave the map at the default full-US view.
     if (!Business.AddressZip) return;
-    const parts = [Business.AddressZip, Business.AddressCity, Business.AddressState, 'USA']
+    const parts = [Business.AddressZip, Business.AddressCity, Business.AddressState, geocodeCountrySuffix()]
       .filter(Boolean).join(', ');
     zoomedToBusinessRef.current = true;
     (async () => {
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(parts)}`,
-          { headers: { 'Accept': 'application/json' } }
-        );
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          pendingZoomRef.current = [parseFloat(data[0].lon), parseFloat(data[0].lat)];
+        const hit = await geocodeOne(parts);
+        if (hit) {
+          pendingZoomRef.current = [hit.lon, hit.lat];
           if (map.current && map.current.loaded()) tryApplyPendingZoom();
           else if (map.current) map.current.once('load', tryApplyPendingZoom);
         }
@@ -955,41 +952,6 @@ export default function CropDetection() {
   };
 
   // ─── Address search ───────────────────────────────────────────────────────
-  // Looks like a street address if it starts with a house number.
-  const looksLikeStreetAddress = (s) => /^\s*\d+\s+\S/.test(s);
-
-  const queryNominatim = async (val) => {
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=us&limit=8&addressdetails=1`
-      );
-      const data = await res.json();
-      if (!Array.isArray(data)) return [];
-      return data.map(item => ({
-        display_name: item.display_name,
-        lat: parseFloat(item.lat),
-        lon: parseFloat(item.lon),
-        source: 'nominatim',
-      }));
-    } catch { return []; }
-  };
-
-  // US Census Geocoder — free, no key, CORS-enabled, accurate for full US street addresses.
-  const queryCensus = async (val) => {
-    try {
-      const url = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(val)}&benchmark=Public_AR_Current&format=json`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const matches = data?.result?.addressMatches || [];
-      return matches.map(m => ({
-        display_name: m.matchedAddress,
-        lat: parseFloat(m.coordinates?.y),
-        lon: parseFloat(m.coordinates?.x),
-        source: 'census',
-      })).filter(r => isFinite(r.lat) && isFinite(r.lon));
-    } catch { return []; }
-  };
-
   const handleAddressChange = (val) => {
     setAddress(val);
     if (val.length < 3) { setShowSuggestions(false); return; }
@@ -997,29 +959,7 @@ export default function CropDetection() {
     setIsSearching(true);
     searchTimeout.current = setTimeout(async () => {
       try {
-        const isStreet = looksLikeStreetAddress(val);
-        const [censusRes, nominatimRes] = await Promise.all([
-          isStreet ? queryCensus(val) : Promise.resolve([]),
-          queryNominatim(val),
-        ]);
-
-        // Merge — Census street matches first (most accurate for full addresses),
-        // then Nominatim for cities/states/zips. Dedupe by rounded coords.
-        const seen = new Set();
-        const merged = [...censusRes, ...nominatimRes].filter(r => {
-          const key = `${r.lat.toFixed(4)},${r.lon.toFixed(4)}`;
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-
-        // Boost prefix matches within each source's order.
-        const lower = val.toLowerCase();
-        const ranked = merged
-          .map(r => ({ ...r, rankScore: r.display_name.toLowerCase().startsWith(lower) ? 100 : 0 }))
-          .sort((a, b) => b.rankScore - a.rankScore)
-          .slice(0, 6);
-
+        const ranked = await searchAddressSuggestions(val, { limit: 6 });
         setSuggestions(ranked);
         setShowSuggestions(ranked.length > 0);
       } catch { setSuggestions([]); }
@@ -1028,13 +968,12 @@ export default function CropDetection() {
   };
 
   const selectSuggestion = (sug) => {
-    setAddress(sug.display_name.split(',')[0]);
+    setAddress(sug.display_name);
     setShowSuggestions(false);
     if (!map.current) return;
     const lat = sug.lat; const lon = sug.lon;
     if (marker.current) marker.current.remove();
     marker.current = new maplibregl.Marker({ color: '#ef4444' }).setLngLat([lon, lat]).addTo(map.current);
-    // Street-level matches deserve a tighter zoom than place-level matches.
     const zoom = sug.source === 'census' ? 17 : 15;
     map.current.flyTo({ center: [lon, lat], zoom, duration: 2000 });
   };
@@ -1058,10 +997,11 @@ export default function CropDetection() {
         }
       }
 
+      const home = defaultMapCenter();
       mapInitialized.current = true;
       map.current = new maplibregl.Map({
         container: mapContainer.current,
-        center: [-98.5795, 39.8283], zoom: 4,
+        center: [home.lon, home.lat], zoom: home.zoom,
         maxTileCacheSize: 4, fadeDuration: 0, attributionControl: false,
         style: {
           version: 8,
