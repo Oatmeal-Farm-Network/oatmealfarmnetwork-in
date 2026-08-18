@@ -134,6 +134,7 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
   };
 
   const handleAddressInput = (val) => {
+    setError('');
     setFormData((prev) => ({ ...prev, address: val }));
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     if (!val || val.length < 3) {
@@ -301,6 +302,30 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
               value={formData.address}
               onChange={(e) => handleAddressInput(e.target.value)}
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+              onKeyDown={async (e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                const q = (formData.address || '').trim();
+                if (q.length < 2) return;
+                setIsSearching(true);
+                try {
+                  const rows = await searchAddressSuggestions(q, { limit: 6 });
+                  setSuggestions(rows);
+                  if (rows.length === 1) {
+                    selectAddressSuggestion(rows[0]);
+                  } else if (rows.length > 1) {
+                    setShowSuggestions(true);
+                    selectAddressSuggestion(rows[0]);
+                  } else {
+                    setShowSuggestions(false);
+                    setError('No match for that address. Try the village name or PIN (e.g. 572121).');
+                  }
+                } catch {
+                  setError('Could not search addresses. Try again.');
+                } finally {
+                  setIsSearching(false);
+                }
+              }}
               placeholder="Village, PIN, or full address — e.g. Somashettihalli, Arodi, Karnataka 572121"
               autoComplete="off"
               className={inputClass}

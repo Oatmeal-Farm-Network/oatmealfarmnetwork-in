@@ -1,14 +1,17 @@
 /**
  * Shared address search / geocoding for Precision Ag maps.
- * India stack: Photon + Nominatim (IN) + Open-Meteo — no US Census.
- * USA stack: US Census (street) + Nominatim (US).
+ * Prefer the India backend proxy (no browser CORS). Fall back to Photon + Open-Meteo.
  */
 
-export const isIndiaStack = () => import.meta.env.VITE_OFN_STACK === 'india';
+import { API_URL } from './precisionAgUtils';
 
-const NOMINATIM_HEADERS = {
-  Accept: 'application/json',
-  'User-Agent': 'OatmealFarmNetwork/1.0 (https://oatmealfarmnetwork.com)',
+export const isIndiaStack = () => {
+  if (import.meta.env.VITE_OFN_STACK === 'india') return true;
+  try {
+    const host = window.location.hostname || '';
+    if (host.includes('oatmealfarmnetwork-in') || host.includes('asia-south1')) return true;
+  } catch { /* */ }
+  return false;
 };
 
 export function defaultMapCenter() {
@@ -18,10 +21,18 @@ export function defaultMapCenter() {
   return { lat: 39.8283, lon: -98.5795, zoom: 4 };
 }
 
+const INDIA_BBOX = { minLon: 68.0, minLat: 6.5, maxLon: 97.5, maxLat: 35.7 };
+
+function inIndia(lat, lon) {
+  return lat >= INDIA_BBOX.minLat && lat <= INDIA_BBOX.maxLat
+    && lon >= INDIA_BBOX.minLon && lon <= INDIA_BBOX.maxLon;
+}
+
 function dedupeResults(rows) {
   const seen = new Set();
   return rows.filter((r) => {
     if (!Number.isFinite(r.lat) || !Number.isFinite(r.lon)) return false;
+    if (isIndiaStack() && !inIndia(r.lat, r.lon)) return false;
     const key = `${r.lat.toFixed(4)},${r.lon.toFixed(4)}`;
     if (seen.has(key)) return false;
     seen.add(key);
@@ -29,28 +40,31 @@ function dedupeResults(rows) {
   });
 }
 
-async function queryNominatim(val, { countryCodes = null, limit = 8 } = {}) {
+async function queryBackend(val, limit) {
   try {
-    const cc = countryCodes ? `&countrycodes=${countryCodes}` : '';
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}${cc}&limit=${limit}&addressdetails=1`;
-    const res = await fetch(url, { headers: NOMINATIM_HEADERS });
+    const url = `${API_URL}/api/geocode/search?q=${encodeURIComponent(val)}&limit=${limit}`;
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return [];
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    return data.map((item) => ({
+    const rows = Array.isArray(data?.results) ? data.results : (Array.isArray(data) ? data : []);
+    return rows.map((item) => ({
       display_name: item.display_name,
       lat: parseFloat(item.lat),
       lon: parseFloat(item.lon),
-      source: 'nominatim',
-    }));
+      source: item.source || 'backend',
+    })).filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lon));
   } catch {
     return [];
   }
 }
 
-/** Komoot Photon — strong global/village search, CORS-friendly, no API key. */
 async function queryPhoton(val, limit = 8) {
   try {
-    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(val)}&limit=${limit}&lang=en`;
+    let url = `https://photon.komoot.io/api/?q=${encodeURIComponent(val)}&limit=${limit}&lang=en`;
+    if (isIndiaStack()) {
+      const { minLon, minLat, maxLon, maxLat } = INDIA_BBOX;
+      url += `&bbox=${minLon},${minLat},${maxLon},${maxLat}`;
+    }
     const res = await fetch(url, { headers: { Accept: 'application/json' } });
     const data = await res.json();
     const features = data?.features || [];
@@ -79,7 +93,10 @@ async function queryPhoton(val, limit = 8) {
 
 async function queryOpenMeteoGeocode(val, limit = 5) {
   try {
-    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(val)}&count=${limit}&language=en&format=json`;
+    const name = String(val).split(',')[0].trim();
+    if (name.length < 2) return [];
+    const country = isIndiaStack() ? '&countryCode=IN' : '';
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=${limit}&language=en&format=json${country}`;
     const res = await fetch(url, { headers: { Accept: 'application/json' } });
     const data = await res.json();
     return (data?.results || []).map((r) => ({
@@ -93,60 +110,39 @@ async function queryOpenMeteoGeocode(val, limit = 5) {
   }
 }
 
-async function queryCensus(val) {
-  try {
-    const url = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(val)}&benchmark=Public_AR_Current&format=json`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const matches = data?.result?.addressMatches || [];
-    return matches.map((m) => ({
-      display_name: m.matchedAddress,
-      lat: parseFloat(m.coordinates?.y),
-      lon: parseFloat(m.coordinates?.x),
-      source: 'census',
-    })).filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lon));
-  } catch {
-    return [];
-  }
+function searchVariants(val) {
+  const q = (val || '').trim();
+  if (!q) return [];
+  const out = [q];
+  const first = q.split(',')[0].trim();
+  if (first && first !== q) out.push(first);
+  const pin = q.match(/\b\d{6}\b/);
+  if (pin) out.push(`${pin[0]}, India`);
+  if (isIndiaStack() && !/india/i.test(q)) out.push(`${q}, India`);
+  return out;
 }
 
-/**
- * @returns {Promise<Array<{display_name:string, lat:number, lon:number, source:string}>>}
- */
 export async function searchAddressSuggestions(val, { limit = 6 } = {}) {
-  if (!val || val.length < 3) return [];
+  if (!val || val.length < 2) return [];
 
-  const isStreet = /^\s*\d+\s+\S/.test(val);
-  const india = isIndiaStack();
+  const backend = await queryBackend(val, limit);
+  if (backend.length) return backend.slice(0, limit);
 
   let merged = [];
-  if (india) {
-    const [photonRes, nominatimRes, meteoRes] = await Promise.all([
-      queryPhoton(val, 8),
-      queryNominatim(val, { countryCodes: 'in', limit: 8 }),
-      queryOpenMeteoGeocode(val, 5),
+  for (const variant of searchVariants(val)) {
+    const [photonRes, meteoRes] = await Promise.all([
+      queryPhoton(variant, 8),
+      queryOpenMeteoGeocode(variant, 5),
     ]);
-    merged = dedupeResults([...photonRes, ...nominatimRes, ...meteoRes]);
-    // Also try without country lock for hyphenated / partial village names
-    if (merged.length < 2) {
-      const globalNom = await queryNominatim(val, { countryCodes: null, limit: 6 });
-      merged = dedupeResults([...merged, ...globalNom.filter((r) =>
-        /india|karnataka|maharashtra|telangana|tamil|andhra|punjab|gujarat|572121/i.test(r.display_name),
-      )]);
-    }
-  } else {
-    const [censusRes, nominatimRes] = await Promise.all([
-      isStreet ? queryCensus(val) : Promise.resolve([]),
-      queryNominatim(val, { countryCodes: 'us', limit: 8 }),
-    ]);
-    merged = dedupeResults([...censusRes, ...nominatimRes]);
+    merged = dedupeResults([...merged, ...photonRes, ...meteoRes]);
+    if (merged.length >= limit) break;
   }
 
-  const lower = val.toLowerCase();
+  const lower = val.toLowerCase().split(',')[0].trim();
   return merged
     .map((r) => ({
       ...r,
-      rankScore: r.display_name.toLowerCase().includes(lower) ? 100 : 0,
+      rankScore: (r.display_name || '').toLowerCase().includes(lower) ? 100 : 0,
     }))
     .sort((a, b) => b.rankScore - a.rankScore)
     .slice(0, limit);
@@ -160,11 +156,21 @@ export async function geocodeOne(query) {
 export async function reverseGeocodeAddress(lat, lon) {
   try {
     const res = await fetch(
+      `${API_URL}/api/geocode/search?q=${encodeURIComponent(`${lat},${lon}`)}&limit=1`,
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const name = data?.results?.[0]?.display_name;
+      if (name) return name;
+    }
+  } catch { /* */ }
+  try {
+    const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1`,
-      { headers: NOMINATIM_HEADERS },
+      { headers: { Accept: 'application/json' } },
     );
     const data = await res.json();
-    if (!data?.address) return null;
+    if (!data?.address) return data?.display_name || null;
     const a = data.address;
     const parts = [
       a.road || a.neighbourhood || a.suburb || a.village || a.hamlet,
@@ -179,7 +185,6 @@ export async function reverseGeocodeAddress(lat, lon) {
   }
 }
 
-/** Country suffix for business profile geocoding in add-field mode. */
 export function geocodeCountrySuffix() {
   return isIndiaStack() ? 'India' : 'USA';
 }

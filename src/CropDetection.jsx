@@ -7,7 +7,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { API_URL } from './precisionAgUtils';
-import { searchAddressSuggestions, geocodeOne, defaultMapCenter, geocodeCountrySuffix } from './geocoding';
+import { searchAddressSuggestions, geocodeOne, defaultMapCenter, geocodeCountrySuffix, isIndiaStack } from './geocoding';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const GCP_API = 'https://us-central1-animated-flare-421518.cloudfunctions.net/analyze-field';
@@ -605,6 +605,7 @@ export default function CropDetection() {
   const navigate = useNavigate();
   const BusinessID = searchParams.get('BusinessID');
   const addFieldMode = searchParams.get('mode') === 'add-field';
+  const indiaStack = isIndiaStack();
   const PeopleID = localStorage.getItem('people_id');
   const { Business, LoadBusiness } = useAccount();
 
@@ -612,6 +613,7 @@ export default function CropDetection() {
   const [address, setAddress] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchHint, setSearchHint] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [fieldData, setFieldData] = useState(null);
@@ -846,7 +848,8 @@ export default function CropDetection() {
       return;
     }
 
-    // ── NORMAL MODE: field analysis ──
+    // ── NORMAL MODE: field analysis (USDA cropland layer is US-only) ──
+    if (!map.current.getLayer('visual-layer')) return;
     const features = map.current.queryRenderedFeatures(e.point, { layers: ['visual-layer'] });
     if (!features?.length) return;
     const props = features[0].properties;
@@ -885,75 +888,46 @@ export default function CropDetection() {
       .setLngLat(e.lngLat).setDOMContent(el).addTo(map.current);
   }, [fetchAnalysis, updateDrawLayers, BusinessID, navigate]);
 
-  // ─── Saige location search ────────────────────────────────────────────────
-  const SAIGE_API = import.meta.env.VITE_SAIGE_API_URL || 'http://localhost:8000/saige';
+  // ─── Address search ───────────────────────────────────────────────────────
+  const selectSuggestion = (sug) => {
+    setAddress(sug.display_name);
+    setShowSuggestions(false);
+    setSearchHint('');
+    if (!map.current) return;
+    const lat = sug.lat; const lon = sug.lon;
+    if (marker.current) marker.current.remove();
+    marker.current = new maplibregl.Marker({ color: '#ef4444' }).setLngLat([lon, lat]).addTo(map.current);
+    const zoom = sug.source === 'census' ? 17 : 15;
+    map.current.flyTo({ center: [lon, lat], zoom, duration: 2000 });
+  };
 
-  const sendLocationToSaige = async (query) => {
-    if (!query || !query.trim()) return;
+  const submitAddressSearch = async () => {
+    const q = (address || '').trim();
+    if (q.length < 2) return;
     setShowSuggestions(false);
     setIsSearching(true);
-    const token = localStorage.getItem('access_token') || localStorage.getItem('AccessToken');
-    const pid = localStorage.getItem('people_id') || localStorage.getItem('PeopleID') || '';
-    const threadId = `map_search_${pid || 'anon'}`;
+    setSearchHint('');
     try {
-      const res = await fetch(`${SAIGE_API}/chat/stream`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          user_input: `[Page: Precision Ag - Crop Detection] zoom to ${query.trim()}`,
-          thread_id: threadId,
-          business_id: BusinessID ? String(BusinessID) : null,
-        }),
-      });
-      if (!res.ok || !res.body) throw new Error(`Saige ${res.status}`);
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let partial = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        partial += decoder.decode(value, { stream: true });
-        const lines = partial.split('\n');
-        partial = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          let evt;
-          try { evt = JSON.parse(line.slice(6)); } catch { continue; }
-          if (evt.type === 'done' && evt.diagnosis) {
-            const m = evt.diagnosis.match(/\[MAP_CMD:\s*([^\]]+)\]/);
-            if (m) {
-              const params = {};
-              m[1].trim().split(/\s+/).forEach(p => {
-                const eq = p.indexOf('=');
-                if (eq > -1) params[p.slice(0, eq)] = p.slice(eq + 1);
-              });
-              if (params.lat && params.lon) {
-                window.dispatchEvent(new CustomEvent('saige:map-command', {
-                  detail: {
-                    action: params.action || 'flyTo',
-                    lat: parseFloat(params.lat),
-                    lon: parseFloat(params.lon),
-                    zoom: parseFloat(params.zoom) || 12,
-                  },
-                }));
-              }
-            }
-          }
-        }
+      const rows = await searchAddressSuggestions(q, { limit: 6 });
+      setSuggestions(rows);
+      if (rows.length === 1) {
+        selectSuggestion(rows[0]);
+      } else if (rows.length > 1) {
+        setShowSuggestions(true);
+        selectSuggestion(rows[0]);
+      } else {
+        setSearchHint('No match for that address. Try the village name or PIN (e.g. 572121).');
       }
-    } catch (e) {
-      console.warn('[CropDetection] Saige location search failed:', e);
+    } catch {
+      setSearchHint('Could not search addresses. Try again.');
     } finally {
       setIsSearching(false);
     }
   };
 
-  // ─── Address search ───────────────────────────────────────────────────────
   const handleAddressChange = (val) => {
     setAddress(val);
+    setSearchHint('');
     if (val.length < 3) { setShowSuggestions(false); return; }
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     setIsSearching(true);
@@ -962,20 +936,12 @@ export default function CropDetection() {
         const ranked = await searchAddressSuggestions(val, { limit: 6 });
         setSuggestions(ranked);
         setShowSuggestions(ranked.length > 0);
+        if (ranked.length === 0 && val.trim().length >= 4) {
+          setSearchHint('No suggestions yet — press Enter to search.');
+        }
       } catch { setSuggestions([]); }
       finally { setIsSearching(false); }
     }, 400);
-  };
-
-  const selectSuggestion = (sug) => {
-    setAddress(sug.display_name);
-    setShowSuggestions(false);
-    if (!map.current) return;
-    const lat = sug.lat; const lon = sug.lon;
-    if (marker.current) marker.current.remove();
-    marker.current = new maplibregl.Marker({ color: '#ef4444' }).setLngLat([lon, lat]).addTo(map.current);
-    const zoom = sug.source === 'census' ? 17 : 15;
-    map.current.flyTo({ center: [lon, lat], zoom, duration: 2000 });
   };
 
   // ─── Map init ──────────────────────────────────────────────────────────────
@@ -985,7 +951,7 @@ export default function CropDetection() {
       if (mapInitialized.current || !mapContainer.current) return;
       if (!mounted) return;
 
-      if (!protocolRegistered.current) {
+      if (!isIndiaStack() && !protocolRegistered.current) {
         try {
           const protocol = new Protocol();
           maplibregl.addProtocol('pmtiles', protocol.tile);
@@ -1013,8 +979,10 @@ export default function CropDetection() {
 
       map.current.on('load', async () => {
         if (!map.current) return;
+        const indiaStack = isIndiaStack();
         let vectorLayerName = 'crops2024';
 
+        if (!indiaStack) {
         try {
           const rawUrl = PMTILES_2024.replace(/^pmtiles:\/\//, '');
           const pm = new PMTiles(rawUrl);
@@ -1065,6 +1033,7 @@ export default function CropDetection() {
         } catch (e) {
           console.error('Error adding fill layer:', e.message);
         }
+        }
 
         // ── Drawing layers ──
         map.current.addSource('draw-polygon', {
@@ -1092,6 +1061,7 @@ export default function CropDetection() {
         map.current.on('click', handleMapClick);
         // Apply pending zoom from "Add Field" mode if Business was geocoded before the map was ready.
         tryApplyPendingZoom();
+        if (!indiaStack) {
         map.current.on('mousemove', 'visual-layer', () => {
           if (map.current && !drawModeRef.current) map.current.getCanvas().style.cursor = 'pointer';
         });
@@ -1101,6 +1071,7 @@ export default function CropDetection() {
         map.current.on('error', (e) => {
           if (e.sourceId === 'crops2024') console.error('Tile error:', e.error);
         });
+        }
       });
     };
 
@@ -1132,7 +1103,9 @@ export default function CropDetection() {
           <span style={{ display: 'inline-flex', color: '#3D6B34' }}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 20.99"/><path d="M9.1 17.64C10.63 16.13 12.5 14.5 17 13"/><path d="M17 8c0 6-5 9-5 9"/></svg></span>
           <div>
             <div style={{ fontFamily: 'Georgia,serif', fontWeight: 700, fontSize: 17, color: '#2c1a0e' }}>{t('crop_detection.heading')}</div>
-            <div style={{ fontSize: 12, color: '#8b7355' }}>{t('crop_detection.subtitle')}</div>
+            <div style={{ fontSize: 12, color: '#8b7355' }}>{indiaStack
+              ? 'Search a village or PIN, then Draw Field to outline the boundary.'
+              : t('crop_detection.subtitle')}</div>
           </div>
         </div>
 
@@ -1149,7 +1122,9 @@ export default function CropDetection() {
               fontSize: 13.5, fontWeight: 500,
             }}>
               <span style={{ fontSize: 20 }}>👉</span>
-              <span>{t('crop_detection.add_field_hint')}</span>
+              <span>{indiaStack
+                ? 'Search your village or PIN, then tap Draw Field and outline the boundary on the map.'
+                : t('crop_detection.add_field_hint')}</span>
               <button
                 onClick={() => setShowAddFieldHint(false)}
                 style={{ background: 'rgba(255,255,255,0.18)', border: 'none', color: 'white',
@@ -1165,7 +1140,7 @@ export default function CropDetection() {
               <span style={{ display: 'inline-flex' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg></span>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 15 }}>{t('crop_detection.panel_title')}</div>
-                <div style={{ fontSize: 11, opacity: 0.8 }}>{t('crop_detection.panel_subtitle')}</div>
+                <div style={{ fontSize: 11, opacity: 0.8 }}>{indiaStack ? 'OpenStreetMap · India' : t('crop_detection.panel_subtitle')}</div>
               </div>
             </div>
 
@@ -1177,22 +1152,26 @@ export default function CropDetection() {
               <div style={{ position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '2px solid #e2e8f0', borderRadius: 10, padding: '10px 12px', background: 'white' }}>
                   <span
-                    onClick={() => sendLocationToSaige(address)}
-                    title="Search via Saige"
+                    onClick={() => submitAddressSearch()}
+                    title="Search location"
                     style={{ color: '#64748b', display: 'inline-flex', cursor: address ? 'pointer' : 'default' }}
                   ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
                   <input
                     type="text" placeholder={t('crop_detection.search_placeholder')} value={address}
                     onChange={e => handleAddressChange(e.target.value)}
                     onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendLocationToSaige(address); } }}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submitAddressSearch(); } }}
+                    autoComplete="off"
                     style={{ border: 'none', background: 'transparent', flex: 1, outline: 'none', fontSize: 13, color: '#1e293b' }}
                   />
                   {isSearching && <span style={{ fontSize: 11, color: '#94a3b8', animation: 'cdspin 1s linear infinite', display: 'inline-block' }}>⟳</span>}
                   {address && !isSearching && (
-                    <span onClick={() => { setAddress(''); setShowSuggestions(false); }} style={{ cursor: 'pointer', color: '#94a3b8', fontSize: 15, lineHeight: 1 }}>✕</span>
+                    <span onClick={() => { setAddress(''); setShowSuggestions(false); setSearchHint(''); }} style={{ cursor: 'pointer', color: '#94a3b8', fontSize: 15, lineHeight: 1 }}>✕</span>
                   )}
                 </div>
+                {searchHint && (
+                  <div style={{ marginTop: 8, fontSize: 12, color: '#b45309', lineHeight: 1.4 }}>{searchHint}</div>
+                )}
                 {showSuggestions && suggestions.length > 0 && (
                   <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 10px 40px rgba(0,0,0,0.12)', zIndex: 100, maxHeight: 300, overflowY: 'auto', marginTop: 4 }}>
                     {suggestions.map((sug, i) => (
@@ -1272,6 +1251,12 @@ export default function CropDetection() {
 
             {/* Legend */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
+              {indiaStack ? (
+                <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.5 }}>
+                  USDA cropland colors are United States only. Search a village or PIN, then use Draw Field to outline the boundary.
+                </div>
+              ) : (
+                <>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> {t('crop_detection.legend_title')}
               </div>
@@ -1283,10 +1268,12 @@ export default function CropDetection() {
                   </div>
                 ))}
               </div>
+                </>
+              )}
             </div>
 
             <div style={{ padding: '8px 14px', background: '#f9fafb', borderTop: '1px solid #e5e7eb', fontSize: 10, color: '#9ca3af' }}>
-              {t('crop_detection.footer')}
+              {indiaStack ? 'OpenStreetMap · India address search' : t('crop_detection.footer')}
             </div>
           </div>
 
