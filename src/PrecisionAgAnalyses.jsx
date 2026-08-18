@@ -1625,6 +1625,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
   const [ndviSeries, setNdviSeries] = useState(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisNotice, setAnalysisNotice] = useState(null);
   const [dismissedSatBanner, setDismissedSatBanner] = useState(false);
 
   const fieldId = field.fieldid || field.id;
@@ -1660,14 +1661,44 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
 
   async function triggerAnalysis() {
     setAnalyzing(true);
+    setAnalysisNotice(null);
     try {
-      await fetch(`${CROP_API_URL}/api/fields/${fieldId}/analyze`, {
+      const res = await fetch(`${CROP_API_URL}/api/fields/${fieldId}/analyze`, {
         method: 'POST',
-        headers: authHeaders(),
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
       });
-      setTimeout(loadAll, 5000);
-    } catch {}
-    finally { setAnalyzing(false); }
+      const data = await res.json().catch(() => ({}));
+      const detail = typeof data.detail === 'string' ? data.detail : data.message;
+      if (!res.ok) {
+        setAnalysisNotice({ type: 'error', text: detail || `Analysis failed (${res.status}).` });
+        return;
+      }
+      if (data.analysis) {
+        setAnalyses((prev) => [data.analysis, ...(prev || []).filter((a) => a.analysis_id !== data.analysis.analysis_id)]);
+        setDismissedSatBanner(false);
+      }
+      if (data.completed) {
+        setAnalysisNotice({
+          type: 'ok',
+          text: data.message || 'Sentinel-2 analysis saved.',
+        });
+        loadAll();
+        return;
+      }
+      if (data.queued) {
+        setAnalysisNotice({ type: 'ok', text: data.message || 'Analysis queued. Refresh in a minute.' });
+        setTimeout(loadAll, 8000);
+        return;
+      }
+      setAnalysisNotice({
+        type: 'error',
+        text: detail || 'No satellite analysis was produced for this field.',
+      });
+    } catch {
+      setAnalysisNotice({ type: 'error', text: 'Could not reach the analysis service. Try again.' });
+    } finally {
+      setAnalyzing(false);
+    }
   }
 
   const latest = analyses[0];
@@ -1716,10 +1747,20 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
             Journal
           </button>
           <button onClick={triggerAnalysis} disabled={analyzing} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-white text-sm transition-all disabled:opacity-50" style={{ background: '#819360' }}>
-            {analyzing ? 'Analyzing…' : '▶ Run Analysis'}
+            {analyzing ? 'Analyzing Sentinel-2…' : '▶ Run Analysis'}
           </button>
         </div>
       </div>
+
+      {analysisNotice && (
+        <div className={`rounded-xl border px-4 py-3 mb-5 font-mont text-sm ${
+          analysisNotice.type === 'error'
+            ? 'bg-red-50 border-red-200 text-red-800'
+            : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+        }`}>
+          {analysisNotice.text}
+        </div>
+      )}
 
       {/* Alerts — show only on satellite-relevant tabs */}
       {alerts.length > 0 && ['overview', 'maps', 'histograms', 'growth', 'analytics'].includes(tab) && (
