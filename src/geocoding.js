@@ -1,6 +1,6 @@
 /**
  * Shared address search / geocoding for Precision Ag maps.
- * Prefer the India backend proxy (no browser CORS). Fall back to Photon + Open-Meteo.
+ * India-wide (any state). Instant local farm matches + Photon + backend proxy.
  */
 
 import { API_URL } from './precisionAgUtils';
@@ -23,9 +23,78 @@ export function defaultMapCenter() {
 
 const INDIA_BBOX = { minLon: 68.0, minLat: 6.5, maxLon: 97.5, maxLat: 35.7 };
 
+/** Public research / village farms in three states — quick picks, not a search filter. */
+export const INDIA_EXAMPLE_FARMS = [
+  {
+    name: 'Somashettihalli',
+    subtitle: 'Arodi, Koratagere, Tumakuru, Karnataka 572121',
+    display_name: 'Somashettihalli, Arodi, Koratagere, Tumakuru, Karnataka 572121, India',
+    lat: 13.54967,
+    lon: 77.33739,
+    source: 'farm',
+    aliases: 'somashettihalli somashetti arodi koratagere tumakuru tumkur 572121 karnataka',
+  },
+  {
+    name: 'ICRISAT Patancheru',
+    subtitle: 'Patancheru, Hyderabad, Telangana 502324',
+    display_name: 'ICRISAT, Patancheru, Hyderabad, Telangana 502324, India',
+    lat: 17.5116,
+    lon: 78.2752,
+    source: 'farm',
+    aliases: 'icrisat patancheru hyderabad telangana 502324',
+  },
+  {
+    name: 'Punjab Agricultural University',
+    subtitle: 'Ludhiana, Punjab 141004',
+    display_name: 'Punjab Agricultural University, Ludhiana, Punjab 141004, India',
+    lat: 30.9010,
+    lon: 75.8072,
+    source: 'farm',
+    aliases: 'pau ludhiana punjab 141004 agricultural university',
+  },
+];
+
 function inIndia(lat, lon) {
   return lat >= INDIA_BBOX.minLat && lat <= INDIA_BBOX.maxLat
     && lon >= INDIA_BBOX.minLon && lon <= INDIA_BBOX.maxLon;
+}
+
+function shape(row) {
+  const display = row.display_name || row.name || '';
+  const name = row.name || display.split(',')[0].trim();
+  const subtitle = row.subtitle || display.split(',').slice(1).join(',').trim();
+  return {
+    ...row,
+    name,
+    subtitle,
+    display_name: display || [name, subtitle].filter(Boolean).join(', '),
+  };
+}
+
+function haystack(row) {
+  return `${row.name || ''} ${row.subtitle || ''} ${row.display_name || ''} ${row.aliases || ''}`.toLowerCase();
+}
+
+export function matchLocalFarms(val) {
+  const q = (val || '').trim().toLowerCase();
+  if (!q) return INDIA_EXAMPLE_FARMS.map(shape);
+  return INDIA_EXAMPLE_FARMS.filter((f) => haystack(f).includes(q)).map(shape);
+}
+
+function rankScore(row, val) {
+  const q = (val || '').trim().toLowerCase();
+  const token = q.split(',')[0].trim();
+  const name = (row.name || '').toLowerCase();
+  const full = haystack(row);
+  const pin = (val || '').match(/\b\d{6}\b/);
+  let s = 0;
+  if (token && name.startsWith(token)) s += 220;
+  else if (token && name.includes(token)) s += 90;
+  else if (token && full.includes(token)) s += 45;
+  if (row.source === 'farm') s += 25;
+  if (pin && full.includes(pin[0])) s += 80;
+  if ((row.subtitle || '').toLowerCase().includes('india') || full.includes('india')) s += 5;
+  return s;
 }
 
 function dedupeResults(rows) {
@@ -40,6 +109,13 @@ function dedupeResults(rows) {
   });
 }
 
+function rankAndSlice(rows, val, limit) {
+  return dedupeResults(rows)
+    .map((r) => ({ ...shape(r), rankScore: rankScore(r, val) }))
+    .sort((a, b) => b.rankScore - a.rankScore)
+    .slice(0, limit);
+}
+
 async function queryBackend(val, limit) {
   try {
     const url = `${API_URL}/api/geocode/search?q=${encodeURIComponent(val)}&limit=${limit}`;
@@ -47,7 +123,9 @@ async function queryBackend(val, limit) {
     if (!res.ok) return [];
     const data = await res.json();
     const rows = Array.isArray(data?.results) ? data.results : (Array.isArray(data) ? data : []);
-    return rows.map((item) => ({
+    return rows.map((item) => shape({
+      name: item.name,
+      subtitle: item.subtitle,
       display_name: item.display_name,
       lat: parseFloat(item.lat),
       lon: parseFloat(item.lon),
@@ -58,7 +136,7 @@ async function queryBackend(val, limit) {
   }
 }
 
-async function queryPhoton(val, limit = 8) {
+async function queryPhoton(val, limit = 10) {
   try {
     let url = `https://photon.komoot.io/api/?q=${encodeURIComponent(val)}&limit=${limit}&lang=en`;
     if (isIndiaStack()) {
@@ -71,27 +149,29 @@ async function queryPhoton(val, limit = 8) {
     return features.map((f) => {
       const p = f.properties || {};
       const [lon, lat] = f.geometry?.coordinates || [];
-      const parts = [
-        p.name,
-        p.street,
+      const name = p.name || p.street || val;
+      const subtitle = [
+        p.street && p.street !== name ? p.street : null,
         p.city || p.district || p.county,
         p.state,
         p.postcode,
         p.country,
-      ].filter(Boolean);
-      return {
-        display_name: parts.join(', ') || p.name || val,
+      ].filter(Boolean).join(', ');
+      return shape({
+        name,
+        subtitle,
+        display_name: [name, subtitle].filter(Boolean).join(', '),
         lat: parseFloat(lat),
         lon: parseFloat(lon),
         source: 'photon',
-      };
+      });
     }).filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lon));
   } catch {
     return [];
   }
 }
 
-async function queryOpenMeteoGeocode(val, limit = 5) {
+async function queryOpenMeteoGeocode(val, limit = 6) {
   try {
     const name = String(val).split(',')[0].trim();
     if (name.length < 2) return [];
@@ -99,12 +179,18 @@ async function queryOpenMeteoGeocode(val, limit = 5) {
     const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=${limit}&language=en&format=json${country}`;
     const res = await fetch(url, { headers: { Accept: 'application/json' } });
     const data = await res.json();
-    return (data?.results || []).map((r) => ({
-      display_name: [r.name, r.admin1, r.country_code?.toUpperCase()].filter(Boolean).join(', '),
-      lat: r.latitude,
-      lon: r.longitude,
-      source: 'openmeteo',
-    }));
+    return (data?.results || []).map((r) => {
+      const title = r.name;
+      const subtitle = [r.admin2, r.admin1, r.country_code?.toUpperCase()].filter(Boolean).join(', ');
+      return shape({
+        name: title,
+        subtitle,
+        display_name: [title, subtitle].filter(Boolean).join(', '),
+        lat: r.latitude,
+        lon: r.longitude,
+        source: 'openmeteo',
+      });
+    });
   } catch {
     return [];
   }
@@ -122,30 +208,31 @@ function searchVariants(val) {
   return out;
 }
 
-export async function searchAddressSuggestions(val, { limit = 6 } = {}) {
-  if (!val || val.length < 2) return [];
+export async function searchAddressSuggestions(val, { limit = 8 } = {}) {
+  if (!val || val.trim().length < 1) return matchLocalFarms('');
+  const q = val.trim();
+  const local = matchLocalFarms(q);
 
-  const backend = await queryBackend(val, limit);
-  if (backend.length) return backend.slice(0, limit);
+  const first = searchVariants(q)[0];
+  const [backend, photonRes, meteoRes] = await Promise.all([
+    queryBackend(q, limit),
+    queryPhoton(first, 10),
+    queryOpenMeteoGeocode(first, 6),
+  ]);
 
-  let merged = [];
-  for (const variant of searchVariants(val)) {
-    const [photonRes, meteoRes] = await Promise.all([
-      queryPhoton(variant, 8),
-      queryOpenMeteoGeocode(variant, 5),
-    ]);
-    merged = dedupeResults([...merged, ...photonRes, ...meteoRes]);
-    if (merged.length >= limit) break;
+  let merged = [...local, ...backend, ...photonRes, ...meteoRes];
+  if (merged.length < 4) {
+    for (const variant of searchVariants(q).slice(1, 3)) {
+      const [p2, m2] = await Promise.all([
+        queryPhoton(variant, 8),
+        queryOpenMeteoGeocode(variant, 5),
+      ]);
+      merged = [...merged, ...p2, ...m2];
+      if (dedupeResults(merged).length >= limit) break;
+    }
   }
 
-  const lower = val.toLowerCase().split(',')[0].trim();
-  return merged
-    .map((r) => ({
-      ...r,
-      rankScore: (r.display_name || '').toLowerCase().includes(lower) ? 100 : 0,
-    }))
-    .sort((a, b) => b.rankScore - a.rankScore)
-    .slice(0, limit);
+  return rankAndSlice(merged, q, limit);
 }
 
 export async function geocodeOne(query) {

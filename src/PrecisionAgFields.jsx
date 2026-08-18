@@ -13,7 +13,8 @@ import L from 'leaflet';
 import 'leaflet-draw';
 import { useTranslation } from 'react-i18next';
 import { authHeaders, fetchFieldsForBusiness, fieldIdOf, matchFieldId } from './precisionAgUtils';
-import { searchAddressSuggestions, reverseGeocodeAddress, geocodeOne, defaultMapCenter } from './geocoding';
+import { reverseGeocodeAddress, geocodeOne, defaultMapCenter } from './geocoding';
+import AddressAutocomplete from './AddressAutocomplete';
 import FpoFieldStrip from './precision-ag/field-twin/FpoFieldStrip';
 import SeasonCropCard from './precision-ag/field-twin/SeasonCropCard';
 
@@ -111,10 +112,6 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const searchTimeout = useRef(null);
 
   const mapRef = useRef(null);
   const drawnItemsRef = useRef(null);
@@ -133,36 +130,14 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
     mapRef.current.setView([Number(lat), Number(lon)], zoom);
   };
 
-  const handleAddressInput = (val) => {
-    setError('');
-    setFormData((prev) => ({ ...prev, address: val }));
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    if (!val || val.length < 3) {
-      setShowSuggestions(false);
-      return;
-    }
-    setIsSearching(true);
-    searchTimeout.current = setTimeout(async () => {
-      try {
-        const rows = await searchAddressSuggestions(val, { limit: 6 });
-        setSuggestions(rows);
-        setShowSuggestions(rows.length > 0);
-      } catch {
-        setSuggestions([]);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 350);
-  };
-
   const selectAddressSuggestion = (sug) => {
+    setError('');
     setFormData((prev) => ({
       ...prev,
       address: sug.display_name,
       latitude: sug.lat.toFixed(6),
       longitude: sug.lon.toFixed(6),
     }));
-    setShowSuggestions(false);
     flyMapTo(sug.lat, sug.lon, 16);
   };
 
@@ -292,60 +267,16 @@ function CreateFieldView({ businessId, onBack, onCreated, initialLat, initialLon
           </div>
 
           {/* Address */}
-          <div className="relative">
-            <label className={labelClass}>
-              Address {isSearching ? <span className="text-gray-400 font-normal">searching…</span> : null}
-            </label>
-            <input
-              type="text"
-              name="address"
+          <div>
+            <label className={labelClass}>Address</label>
+            <AddressAutocomplete
+              variant="form"
               value={formData.address}
-              onChange={(e) => handleAddressInput(e.target.value)}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              onKeyDown={async (e) => {
-                if (e.key !== 'Enter') return;
-                e.preventDefault();
-                const q = (formData.address || '').trim();
-                if (q.length < 2) return;
-                setIsSearching(true);
-                try {
-                  const rows = await searchAddressSuggestions(q, { limit: 6 });
-                  setSuggestions(rows);
-                  if (rows.length === 1) {
-                    selectAddressSuggestion(rows[0]);
-                  } else if (rows.length > 1) {
-                    setShowSuggestions(true);
-                    selectAddressSuggestion(rows[0]);
-                  } else {
-                    setShowSuggestions(false);
-                    setError('No match for that address. Try the village name or PIN (e.g. 572121).');
-                  }
-                } catch {
-                  setError('Could not search addresses. Try again.');
-                } finally {
-                  setIsSearching(false);
-                }
-              }}
-              placeholder="Village, PIN, or full address — e.g. Somashettihalli, Arodi, Karnataka 572121"
-              autoComplete="off"
-              className={inputClass}
+              onChange={(val) => { setError(''); setFormData((prev) => ({ ...prev, address: val })); }}
+              onSelect={selectAddressSuggestion}
+              placeholder="Search any village, city, or PIN in India"
             />
-            {showSuggestions && suggestions.length > 0 && (
-              <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-auto">
-                {suggestions.map((sug, i) => (
-                  <li key={`${sug.lat}-${sug.lon}-${i}`}>
-                    <button
-                      type="button"
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-[#f0f5e8]"
-                      onClick={() => selectAddressSuggestion(sug)}
-                    >
-                      {sug.display_name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="mt-1 text-xs text-gray-500">Pick a suggestion to zoom the map, then draw the field boundary.</p>
+            <p className="mt-1 text-xs text-gray-500">Pick a suggestion to zoom the map, then draw the field boundary. Works anywhere in India.</p>
           </div>
 
           {/* Lat / Lng */}

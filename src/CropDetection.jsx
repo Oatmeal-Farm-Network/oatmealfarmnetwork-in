@@ -7,7 +7,8 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import AccountLayout from './AccountLayout';
 import { useAccount } from './AccountContext';
 import { API_URL } from './precisionAgUtils';
-import { searchAddressSuggestions, geocodeOne, defaultMapCenter, geocodeCountrySuffix, isIndiaStack } from './geocoding';
+import { geocodeOne, defaultMapCenter, geocodeCountrySuffix, isIndiaStack } from './geocoding';
+import AddressAutocomplete from './AddressAutocomplete';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const GCP_API = 'https://us-central1-animated-flare-421518.cloudfunctions.net/analyze-field';
@@ -611,10 +612,6 @@ export default function CropDetection() {
 
   const [showAddFieldHint, setShowAddFieldHint] = useState(addFieldMode);
   const [address, setAddress] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [searchHint, setSearchHint] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [fieldData, setFieldData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -636,7 +633,6 @@ export default function CropDetection() {
   const map = useRef(null);
   const marker = useRef(null);
   const popup = useRef(null);
-  const searchTimeout = useRef(null);
   const mapInitialized = useRef(false);
   const protocolRegistered = useRef(false);
   const protocolRef = useRef(null);
@@ -891,57 +887,11 @@ export default function CropDetection() {
   // ─── Address search ───────────────────────────────────────────────────────
   const selectSuggestion = (sug) => {
     setAddress(sug.display_name);
-    setShowSuggestions(false);
-    setSearchHint('');
     if (!map.current) return;
     const lat = sug.lat; const lon = sug.lon;
     if (marker.current) marker.current.remove();
     marker.current = new maplibregl.Marker({ color: '#ef4444' }).setLngLat([lon, lat]).addTo(map.current);
-    const zoom = sug.source === 'census' ? 17 : 15;
-    map.current.flyTo({ center: [lon, lat], zoom, duration: 2000 });
-  };
-
-  const submitAddressSearch = async () => {
-    const q = (address || '').trim();
-    if (q.length < 2) return;
-    setShowSuggestions(false);
-    setIsSearching(true);
-    setSearchHint('');
-    try {
-      const rows = await searchAddressSuggestions(q, { limit: 6 });
-      setSuggestions(rows);
-      if (rows.length === 1) {
-        selectSuggestion(rows[0]);
-      } else if (rows.length > 1) {
-        setShowSuggestions(true);
-        selectSuggestion(rows[0]);
-      } else {
-        setSearchHint('No match for that address. Try the village name or PIN (e.g. 572121).');
-      }
-    } catch {
-      setSearchHint('Could not search addresses. Try again.');
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleAddressChange = (val) => {
-    setAddress(val);
-    setSearchHint('');
-    if (val.length < 3) { setShowSuggestions(false); return; }
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    setIsSearching(true);
-    searchTimeout.current = setTimeout(async () => {
-      try {
-        const ranked = await searchAddressSuggestions(val, { limit: 6 });
-        setSuggestions(ranked);
-        setShowSuggestions(ranked.length > 0);
-        if (ranked.length === 0 && val.trim().length >= 4) {
-          setSearchHint('No suggestions yet — press Enter to search.');
-        }
-      } catch { setSuggestions([]); }
-      finally { setIsSearching(false); }
-    }, 400);
+    map.current.flyTo({ center: [lon, lat], zoom: 15, duration: 1400 });
   };
 
   // ─── Map init ──────────────────────────────────────────────────────────────
@@ -1149,47 +1099,13 @@ export default function CropDetection() {
               <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {t('crop_detection.find_location')}
               </div>
-              <div style={{ position: 'relative' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '2px solid #e2e8f0', borderRadius: 10, padding: '10px 12px', background: 'white' }}>
-                  <span
-                    onClick={() => submitAddressSearch()}
-                    title="Search location"
-                    style={{ color: '#64748b', display: 'inline-flex', cursor: address ? 'pointer' : 'default' }}
-                  ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-                  <input
-                    type="text" placeholder={t('crop_detection.search_placeholder')} value={address}
-                    onChange={e => handleAddressChange(e.target.value)}
-                    onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submitAddressSearch(); } }}
-                    autoComplete="off"
-                    style={{ border: 'none', background: 'transparent', flex: 1, outline: 'none', fontSize: 13, color: '#1e293b' }}
-                  />
-                  {isSearching && <span style={{ fontSize: 11, color: '#94a3b8', animation: 'cdspin 1s linear infinite', display: 'inline-block' }}>⟳</span>}
-                  {address && !isSearching && (
-                    <span onClick={() => { setAddress(''); setShowSuggestions(false); setSearchHint(''); }} style={{ cursor: 'pointer', color: '#94a3b8', fontSize: 15, lineHeight: 1 }}>✕</span>
-                  )}
-                </div>
-                {searchHint && (
-                  <div style={{ marginTop: 8, fontSize: 12, color: '#b45309', lineHeight: 1.4 }}>{searchHint}</div>
-                )}
-                {showSuggestions && suggestions.length > 0 && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 10px 40px rgba(0,0,0,0.12)', zIndex: 100, maxHeight: 300, overflowY: 'auto', marginTop: 4 }}>
-                    {suggestions.map((sug, i) => (
-                      <div key={i} onClick={() => selectSuggestion(sug)}
-                        style={{ padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', fontSize: 13, display: 'flex', alignItems: 'flex-start', gap: 10 }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'white'}
-                      >
-                        <span style={{ color: '#64748b', flexShrink: 0, marginTop: 1, display: 'inline-flex' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
-                        <div>
-                          <div style={{ fontWeight: 500, color: '#1e293b' }}>{sug.display_name.split(',')[0]}</div>
-                          <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{sug.display_name.split(',').slice(1, 3).join(',')}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <AddressAutocomplete
+                variant="panel"
+                value={address}
+                onChange={setAddress}
+                onSelect={selectSuggestion}
+                placeholder="Search any village, city, or PIN in India"
+              />
 
               {/* ── Field Drawing Controls ── */}
               <div style={{ marginTop: 16, marginBottom: 4 }}>
