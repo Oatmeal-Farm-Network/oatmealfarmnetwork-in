@@ -9,6 +9,13 @@ import { useAccount } from './AccountContext';
 import { API_URL } from './precisionAgUtils';
 import { geocodeOne, defaultMapCenter, geocodeCountrySuffix, isIndiaStack } from './geocoding';
 import AddressAutocomplete from './AddressAutocomplete';
+import {
+  ensureBhuvanOnMap,
+  queryBhuvanLulcAt,
+  BHUVAN_LULC_LEGEND,
+  BHUVAN_LEGEND_URL,
+  BHUVAN_LULC_YEAR_LABEL,
+} from './bhuvanLulc';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const GCP_API = 'https://us-central1-animated-flare-421518.cloudfunctions.net/analyze-field';
@@ -844,15 +851,54 @@ export default function CropDetection() {
       return;
     }
 
-    // ── NORMAL MODE: field analysis (USDA cropland layer is US-only) ──
+    const lat = e.lngLat.lat; const lon = e.lngLat.lng;
+    if (popup.current) popup.current.remove();
+
+    // ── INDIA: Bhuvan LULC identify + add field ──
+    if (isIndiaStack()) {
+      const el = document.createElement('div');
+      el.style.cssText = 'padding:16px;font-family:system-ui,sans-serif;min-width:240px';
+      el.innerHTML = `
+        <h3 style="margin:0 0 8px;color:#1e293b;font-size:16px;font-weight:700">Looking up land use…</h3>
+        <div style="font-size:12px;color:#64748b">ISRO Bhuvan LULC ${BHUVAN_LULC_YEAR_LABEL}</div>
+      `;
+      popup.current = new maplibregl.Popup({ closeButton: true, maxWidth: '320px', className: 'custom-popup' })
+        .setLngLat(e.lngLat).setDOMContent(el).addTo(map.current);
+
+      queryBhuvanLulcAt(lon, lat).then((hit) => {
+        if (!popup.current) return;
+        const klass = hit?.class_name || 'Land cover';
+        const body = document.createElement('div');
+        body.style.cssText = 'padding:16px;font-family:system-ui,sans-serif;min-width:240px';
+        body.innerHTML = `
+          <h3 style="margin:0 0 8px;color:#1e293b;font-size:16px;font-weight:700">${klass}</h3>
+          <div style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.45">
+            <div><strong style="color:#475569">Source</strong> ISRO Bhuvan LULC ${BHUVAN_LULC_YEAR_LABEL}</div>
+            <div style="margin-top:4px">Click Draw Field to outline the boundary, or Add Field to open the form here.</div>
+          </div>
+        `;
+        if (BusinessID) {
+          const addBtn = document.createElement('button');
+          addBtn.innerText = `➕ ${t('crop_detection.popup_add_field')}`;
+          addBtn.style.cssText = 'width:100%;padding:10px 16px;background:linear-gradient(135deg,#1a237e,#283593);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px';
+          addBtn.onclick = (ev) => {
+            ev.preventDefault();
+            navigate(`/precision-ag/fields?BusinessID=${BusinessID}&view=create-field&lat=${lat}&lon=${lon}`);
+          };
+          body.appendChild(addBtn);
+        }
+        popup.current.setDOMContent(body);
+      });
+      return;
+    }
+
+    // ── US: USDA cropland vector layer ──
     if (!map.current.getLayer('visual-layer')) return;
     const features = map.current.queryRenderedFeatures(e.point, { layers: ['visual-layer'] });
     if (!features?.length) return;
     const props = features[0].properties;
-    const lat = e.lngLat.lat; const lon = e.lngLat.lng;
     const cropName = CROP_LOOKUP[props.CROP_TYPE] || 'Unknown';
     const acres = props.CSBACRES ? parseFloat(props.CSBACRES).toFixed(2) : 'N/A';
-    if (popup.current) popup.current.remove();
 
     const el = document.createElement('div');
     el.style.cssText = 'padding:16px;font-family:system-ui,sans-serif;min-width:220px';
@@ -882,7 +928,7 @@ export default function CropDetection() {
 
     popup.current = new maplibregl.Popup({ closeButton: true, maxWidth: '320px', className: 'custom-popup' })
       .setLngLat(e.lngLat).setDOMContent(el).addTo(map.current);
-  }, [fetchAnalysis, updateDrawLayers, BusinessID, navigate]);
+  }, [fetchAnalysis, updateDrawLayers, BusinessID, navigate, t]);
 
   // ─── Address search ───────────────────────────────────────────────────────
   const selectSuggestion = (sug) => {
@@ -1008,19 +1054,33 @@ export default function CropDetection() {
           paint: { 'line-color': '#1e40af', 'line-width': 2, 'line-dasharray': [3, 2] },
         });
 
+        // India: overlay ISRO Bhuvan LULC (under draw layers)
+        if (indiaStack) {
+          try {
+            ensureBhuvanOnMap(map.current);
+          } catch (e) {
+            console.warn('[CropDetection] Bhuvan LULC layer failed:', e?.message || e);
+          }
+        }
+
         map.current.on('click', handleMapClick);
         // Apply pending zoom from "Add Field" mode if Business was geocoded before the map was ready.
         tryApplyPendingZoom();
         if (!indiaStack) {
-        map.current.on('mousemove', 'visual-layer', () => {
-          if (map.current && !drawModeRef.current) map.current.getCanvas().style.cursor = 'pointer';
-        });
-        map.current.on('mouseleave', 'visual-layer', () => {
-          if (map.current && !drawModeRef.current) map.current.getCanvas().style.cursor = '';
-        });
-        map.current.on('error', (e) => {
-          if (e.sourceId === 'crops2024') console.error('Tile error:', e.error);
-        });
+          map.current.on('mousemove', 'visual-layer', () => {
+            if (map.current && !drawModeRef.current) map.current.getCanvas().style.cursor = 'pointer';
+          });
+          map.current.on('mouseleave', 'visual-layer', () => {
+            if (map.current && !drawModeRef.current) map.current.getCanvas().style.cursor = '';
+          });
+          map.current.on('error', (e) => {
+            if (e.sourceId === 'crops2024') console.error('Tile error:', e.error);
+          });
+        } else {
+          map.current.getCanvas().style.cursor = 'pointer';
+          map.current.on('error', (e) => {
+            if (e.sourceId === 'bhuvan-lulc') console.warn('Bhuvan tile error:', e.error);
+          });
         }
       });
     };
@@ -1054,7 +1114,7 @@ export default function CropDetection() {
           <div>
             <div style={{ fontFamily: 'Georgia,serif', fontWeight: 700, fontSize: 17, color: '#2c1a0e' }}>{t('crop_detection.heading')}</div>
             <div style={{ fontSize: 12, color: '#8b7355' }}>{indiaStack
-              ? 'Search a village or PIN, then Draw Field to outline the boundary.'
+              ? `ISRO Bhuvan LULC ${BHUVAN_LULC_YEAR_LABEL} — search a place, click the map, then Draw Field.`
               : t('crop_detection.subtitle')}</div>
           </div>
         </div>
@@ -1090,7 +1150,7 @@ export default function CropDetection() {
               <span style={{ display: 'inline-flex' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg></span>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 15 }}>{t('crop_detection.panel_title')}</div>
-                <div style={{ fontSize: 11, opacity: 0.8 }}>{indiaStack ? 'OpenStreetMap · India' : t('crop_detection.panel_subtitle')}</div>
+                <div style={{ fontSize: 11, opacity: 0.8 }}>{indiaStack ? `ISRO Bhuvan LULC ${BHUVAN_LULC_YEAR_LABEL}` : t('crop_detection.panel_subtitle')}</div>
               </div>
             </div>
 
@@ -1168,28 +1228,47 @@ export default function CropDetection() {
             {/* Legend */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
               {indiaStack ? (
-                <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.5 }}>
-                  USDA cropland colors are United States only. Search a village or PIN, then use Draw Field to outline the boundary.
-                </div>
+                <>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+                    Bhuvan LULC legend ({BHUVAN_LULC_YEAR_LABEL})
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 10px', marginBottom: 12 }}>
+                    {BHUVAN_LULC_LEGEND.map((item) => (
+                      <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#475569', padding: '3px 0' }}>
+                        <span style={{ width: 12, height: 12, borderRadius: 3, background: item.color, flexShrink: 0, border: '1px solid rgba(0,0,0,0.08)' }} />
+                        {item.label}
+                      </div>
+                    ))}
+                  </div>
+                  <img
+                    src={BHUVAN_LEGEND_URL}
+                    alt="ISRO Bhuvan LULC official legend"
+                    style={{ width: '100%', maxHeight: 180, objectFit: 'contain', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff' }}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                  <div style={{ fontSize: 11, color: '#64748b', lineHeight: 1.45, marginTop: 10 }}>
+                    Click the map to identify land use. Use Draw Field for the boundary. Live NDVI is on Field Detail → Run Analysis (Sentinel-2).
+                  </div>
+                </>
               ) : (
                 <>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> {t('crop_detection.legend_title')}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 10px' }}>
-                {Object.entries(CROP_COLORS).map(([code, color]) => (
-                  <div key={code} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#475569', padding: '3px 0' }}>
-                    <span style={{ width: 12, height: 12, borderRadius: 3, background: color, flexShrink: 0, boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                    {CROP_LOOKUP[parseInt(code)] || code}
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> {t('crop_detection.legend_title')}
                   </div>
-                ))}
-              </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 10px' }}>
+                    {Object.entries(CROP_COLORS).map(([code, color]) => (
+                      <div key={code} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#475569', padding: '3px 0' }}>
+                        <span style={{ width: 12, height: 12, borderRadius: 3, background: color, flexShrink: 0, boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                        {CROP_LOOKUP[parseInt(code)] || code}
+                      </div>
+                    ))}
+                  </div>
                 </>
               )}
             </div>
 
             <div style={{ padding: '8px 14px', background: '#f9fafb', borderTop: '1px solid #e5e7eb', fontSize: 10, color: '#9ca3af' }}>
-              {indiaStack ? 'OpenStreetMap · India address search' : t('crop_detection.footer')}
+              {indiaStack ? `ISRO Bhuvan LULC ${BHUVAN_LULC_YEAR_LABEL} · OpenStreetMap` : t('crop_detection.footer')}
             </div>
           </div>
 
