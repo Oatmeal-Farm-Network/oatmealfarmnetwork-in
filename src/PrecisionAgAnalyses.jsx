@@ -6,6 +6,7 @@ import BiomassPanel from './BiomassPanel';
 import MaturityPanel from './MaturityPanel';
 import ClimateForecastPanel from './ClimateForecastPanel';
 import { useRaster, API_URL, CROP_API_URL, authHeaders, fetchFieldById, safeFetch } from './precisionAgUtils';
+import { FieldSatelliteHealthPanel, FieldTraceabilityPanel } from './FieldIndiaOpsPanels';
 import SaigeWidget from './SaigeWidget';
 
 // ─── Color scales ─────────────────────────────────────────────────────────────
@@ -1680,7 +1681,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
       if (data.completed) {
         setAnalysisNotice({
           type: 'ok',
-          text: data.message || 'Sentinel-2 analysis saved.',
+          text: data.message || (data.source?.includes('bhuvan') ? 'Bhuvan + Sentinel analysis saved.' : 'Sentinel-2 analysis saved.'),
         });
         loadAll();
         return;
@@ -1709,6 +1710,8 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
 
   const TABS = [
     { id: 'overview',    label: 'Overview' },
+    { id: 'satellite',   label: 'Satellite Health' },
+    { id: 'traceability', label: 'Spray & Trace' },
     { id: 'maps',        label: 'Satellite Maps' },
     { id: 'histograms',  label: 'Histograms' },
     { id: 'growth',      label: 'Crop Growth' },
@@ -1747,7 +1750,7 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
             Journal
           </button>
           <button onClick={triggerAnalysis} disabled={analyzing} className="px-4 py-2.5 rounded-lg font-mont font-semibold text-white text-sm transition-all disabled:opacity-50" style={{ background: '#819360' }}>
-            {analyzing ? 'Analyzing Sentinel-2…' : '▶ Run Analysis'}
+            {analyzing ? 'Analyzing (Bhuvan → Sentinel)…' : '▶ Run Analysis'}
           </button>
         </div>
       </div>
@@ -1809,6 +1812,12 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
           {/* ── OVERVIEW ── */}
           {tab === 'overview' && (
             <div className="space-y-6">
+              <FieldSatelliteHealthPanel
+                fieldId={fieldId}
+                latestAnalysis={latest}
+                onRunAnalysis={triggerAnalysis}
+                analyzing={analyzing}
+              />
               {latest ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <StatCard label="Health Score" value={latest.health_score != null ? `${latest.health_score}%` : 'N/A'} sub={latest.status} bg="#f0f5e8" />
@@ -1906,6 +1915,41 @@ function FieldDetail({ field, businessId, onBack, onEdit, onJournal, initialTab 
             </div>
           )}
 
+          {tab === 'satellite' && (
+            <div className="space-y-6">
+              <FieldSatelliteHealthPanel
+                fieldId={fieldId}
+                latestAnalysis={latest}
+                onRunAnalysis={triggerAnalysis}
+                analyzing={analyzing}
+              />
+              {latest && (
+                <div className="bg-white border border-gray-200 rounded-xl p-5">
+                  <h3 className="font-lora font-bold text-gray-900 mb-3">Latest analysis detail</h3>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Source: {latest.source || 'copernicus-sentinel2'} · Health {latest.health_score}% ({latest.status})
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {['NDVI', 'NDRE', 'EVI', 'GNDVI', 'NDWI'].map((name) => {
+                      const idx = getIndex(latest, name);
+                      return (
+                        <div key={name} className="rounded-lg border p-3">
+                          <div className="text-xs text-gray-500">{name}</div>
+                          <div className="text-lg font-bold">{idx ? idx.mean.toFixed(2) : '—'}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {tab === 'traceability' && (
+            <div className="bg-white border border-gray-200 rounded-xl p-5">
+              <h3 className="font-lora font-bold text-gray-900 mb-4">Spray & traceability</h3>
+              <FieldTraceabilityPanel fieldId={fieldId} businessId={businessId} fieldName={field.name} />
+            </div>
+          )}
           {tab === 'maps'       && <MapsTab latest={latest} analyses={analyses} fieldId={fieldId} />}
           {tab === 'histograms' && <HistogramsTab analyses={analyses} fieldId={fieldId} />}
           {tab === 'growth'     && <GrowthTab analyses={analyses} agronomy={agronomy} />}
