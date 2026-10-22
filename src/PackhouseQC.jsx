@@ -156,6 +156,31 @@ export default function PackhouseQC() {
     load();
   };
 
+  const [cvResult, setCvResult] = useState(null);
+  const [cvLoading, setCvLoading] = useState(false);
+
+  const runCvGrade = async (file) => {
+    if (!file || !businessId) return;
+    setCvLoading(true);
+    setCvResult(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${API}/api/packhouse/cv-grade?business_id=${businessId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCvResult(data);
+        const g = data.suggested_grade === 'reject' ? 'reject' : (data.suggested_grade || 'B');
+        setGradingForm((f) => ({ ...f, grade: g }));
+      }
+    } catch { /* */ }
+    setCvLoading(false);
+  };
+
   const inputCls = 'border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-green-400';
 
   return (
@@ -347,6 +372,26 @@ export default function PackhouseQC() {
             {/* Grading */}
             <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
               <h3 className="font-semibold text-gray-800">Sorting & Grading</h3>
+              <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50/50 p-4">
+                <div className="text-sm font-medium text-amber-900 mb-2">CV grading assist</div>
+                <p className="text-xs text-amber-800 mb-3">Upload a packhouse photo — suggests grade A/B/C/reject (officer confirms).</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  disabled={cvLoading}
+                  onChange={(e) => runCvGrade(e.target.files?.[0])}
+                  className="text-sm"
+                />
+                {cvLoading && <p className="text-xs text-gray-500 mt-2">Analyzing image…</p>}
+                {cvResult && (
+                  <div className="mt-3 text-sm text-gray-800">
+                    Suggested: <strong>{cvResult.suggested_grade}</strong> ({Math.round((cvResult.confidence || 0) * 100)}% conf)
+                    · Uniformity {cvResult.metrics?.color_uniformity_pct}%
+                    · Defect hint {cvResult.metrics?.defect_hint_score}
+                  </div>
+                )}
+              </div>
               <form onSubmit={addGrading} className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
                 <div><label className="text-xs text-gray-500 mb-1 block">Grade</label>
                   <select className={inputCls} value={gradingForm.grade} onChange={e => setGradingForm(f => ({ ...f, grade: e.target.value }))}>

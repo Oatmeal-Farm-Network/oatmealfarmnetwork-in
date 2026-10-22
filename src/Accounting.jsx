@@ -619,6 +619,25 @@ export default function Accounting() {
     return res.json();
   }, [businessId]);
 
+  const printGstInvoice = useCallback(async (invoiceId, { sellerGstin = '', buyerGstin = '', supplyType = 'intra' } = {}) => {
+    const qs = new URLSearchParams({
+      business_id: businessId,
+      seller_gstin: sellerGstin,
+      buyer_gstin: buyerGstin,
+      supply_type: supplyType,
+    });
+    const res = await fetch(`${API_URL}/api/accounting/invoices/${invoiceId}/gst-print?${qs}`, {
+      headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const html = await res.text();
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.write(html);
+      w.document.close();
+    }
+  }, [businessId]);
+
   // ── init ──────────────────────────────────────────────────
 
   useEffect(() => {
@@ -877,13 +896,13 @@ export default function Accounting() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="text-left text-xs text-gray-500 border-b bg-gray-50">
-                  {[t('accounting.th_invoice_num'), t('accounting.th_customer'), t('accounting.th_date'), t('accounting.th_due'), t('accounting.th_total'), t('accounting.th_balance'), t('accounting.th_status')].map(h => (
+                  {[t('accounting.th_invoice_num'), t('accounting.th_customer'), t('accounting.th_date'), t('accounting.th_due'), t('accounting.th_total'), t('accounting.th_balance'), t('accounting.th_status'), 'GST'].map(h => (
                     <th key={h} className="px-4 py-3 font-semibold">{h}</th>
                   ))}
                 </tr></thead>
                 <tbody>
                   {invoices.length === 0 && (
-                    <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">{t('accounting.no_invoices')}</td></tr>
+                    <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">{t('accounting.no_invoices')}</td></tr>
                   )}
                   {invoices.map(inv => (
                     <tr key={inv.InvoiceID} className="border-b hover:bg-gray-50">
@@ -897,6 +916,15 @@ export default function Accounting() {
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[inv.Status] || 'bg-gray-100 text-gray-600'}`}>
                           {inv.Status}
                         </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => printGstInvoice(inv.InvoiceID)}
+                          className="text-xs text-green-700 hover:underline font-medium"
+                        >
+                          Tax invoice
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -1438,7 +1466,6 @@ export default function Accounting() {
             setInvoices(d.invoices);
             setShowInvoiceModal(false);
           }}
-          apiFetch={apiFetch}
         />
       )}
 
@@ -1545,30 +1572,38 @@ function VendorModal({ onClose, onSave }) {
 
 // ─── INVOICE MODAL ────────────────────────────────────────────
 
-function InvoiceModal({ customers, onClose, onSave, apiFetch }) {
+function InvoiceModal({ customers, onClose, onSave }) {
   const { t } = useTranslation();
   const today = new Date().toISOString().slice(0, 10);
   const due30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
-  const [form, setForm] = useState({ CustomerID: '', InvoiceDate: today, DueDate: due30, PaymentTerms: 'Net30', Notes: '', Lines: [{ Description: '', Quantity: 1, UnitPrice: 0, TaxAmount: 0 }] });
+  const [form, setForm] = useState({
+    CustomerID: '', InvoiceDate: today, DueDate: due30, PaymentTerms: 'Net30', Notes: '',
+    SellerGSTIN: '', BuyerGSTIN: '', SupplyType: 'intra',
+    Lines: [{ Description: '', HSN: '', Quantity: 1, UnitPrice: 0, TaxAmount: 0, GstRate: 0.05 }],
+  });
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
 
   function setLine(i, k, v) {
     setForm(f => { const ls = [...f.Lines]; ls[i] = { ...ls[i], [k]: v }; return { ...f, Lines: ls }; });
   }
-  function addLine() { setForm(f => ({ ...f, Lines: [...f.Lines, { Description: '', Quantity: 1, UnitPrice: 0, TaxAmount: 0 }] })); }
+  function addLine() { setForm(f => ({ ...f, Lines: [...f.Lines, { Description: '', HSN: '', Quantity: 1, UnitPrice: 0, TaxAmount: 0, GstRate: 0.05 }] })); }
   function removeLine(i) { setForm(f => ({ ...f, Lines: f.Lines.filter((_, idx) => idx !== i) })); }
   function applyGst(rate = DEFAULT_GST_RATE) {
     setForm(f => ({
       ...f,
       Lines: f.Lines.map((l) => {
         const taxable = (parseFloat(l.Quantity) || 0) * (parseFloat(l.UnitPrice) || 0);
-        return { ...l, TaxAmount: gstAmount(taxable, rate) };
+        return { ...l, GstRate: rate, TaxAmount: gstAmount(taxable, rate) };
       }),
     }));
   }
 
   const subTotal = form.Lines.reduce((s, l) => s + (parseFloat(l.Quantity) * parseFloat(l.UnitPrice || 0)), 0);
   const taxTotal = form.Lines.reduce((s, l) => s + parseFloat(l.TaxAmount || 0), 0);
+  const isInter = form.SupplyType === 'inter';
+  const cgst = isInter ? 0 : taxTotal / 2;
+  const sgst = isInter ? 0 : taxTotal / 2;
+  const igst = isInter ? taxTotal : 0;
 
   return (
     <Modal title={t('accounting.modal_new_invoice')} onClose={onClose}>
@@ -1586,17 +1621,26 @@ function InvoiceModal({ customers, onClose, onSave, apiFetch }) {
         </Field>
         <Field label={t('accounting.lbl_invoice_date')}><input type="date" className={input} value={form.InvoiceDate} onChange={set('InvoiceDate')} /></Field>
         <Field label={t('accounting.lbl_due_date')}><input type="date" className={input} value={form.DueDate} onChange={set('DueDate')} /></Field>
+        <Field label="Seller GSTIN"><input className={input} value={form.SellerGSTIN} onChange={set('SellerGSTIN')} placeholder="29AAAAA0000A1Z5" maxLength={15} /></Field>
+        <Field label="Buyer GSTIN"><input className={input} value={form.BuyerGSTIN} onChange={set('BuyerGSTIN')} placeholder="Optional" maxLength={15} /></Field>
+        <Field label="Supply type">
+          <select className={input} value={form.SupplyType} onChange={set('SupplyType')}>
+            <option value="intra">Intra-state (CGST + SGST)</option>
+            <option value="inter">Inter-state (IGST)</option>
+          </select>
+        </Field>
       </div>
 
       <p className="text-xs font-semibold text-gray-500 mb-2">{t('accounting.section_line_items')}</p>
       <table className="w-full text-sm mb-2">
         <thead><tr className="text-left text-xs text-gray-400 border-b">
-          <th className="pb-1 flex-1">{t('accounting.th_description')}</th><th className="pb-1 w-16">{t('accounting.th_qty')}</th><th className="pb-1 w-24">{t('accounting.th_unit_price')}</th><th className="pb-1 w-20">{t('accounting.th_tax')}</th><th className="pb-1 w-8"></th>
+          <th className="pb-1 flex-1">{t('accounting.th_description')}</th><th className="pb-1 w-16">HSN</th><th className="pb-1 w-16">{t('accounting.th_qty')}</th><th className="pb-1 w-24">{t('accounting.th_unit_price')}</th><th className="pb-1 w-20">{t('accounting.th_tax')}</th><th className="pb-1 w-8"></th>
         </tr></thead>
         <tbody>
           {form.Lines.map((l, i) => (
             <tr key={i} className="border-b">
               <td className="py-1 pr-2"><input className={input} value={l.Description} onChange={e => setLine(i, 'Description', e.target.value)} placeholder={t('accounting.th_description')} /></td>
+              <td className="py-1 pr-2"><input className={input} value={l.HSN || ''} onChange={e => setLine(i, 'HSN', e.target.value)} placeholder="HSN" /></td>
               <td className="py-1 pr-2"><input type="number" className={input} value={l.Quantity} onChange={e => setLine(i, 'Quantity', e.target.value)} min="0" /></td>
               <td className="py-1 pr-2"><input type="number" className={input} value={l.UnitPrice} onChange={e => setLine(i, 'UnitPrice', e.target.value)} min="0" step="0.01" /></td>
               <td className="py-1 pr-2"><input type="number" className={input} value={l.TaxAmount} onChange={e => setLine(i, 'TaxAmount', e.target.value)} min="0" step="0.01" /></td>
@@ -1614,6 +1658,14 @@ function InvoiceModal({ customers, onClose, onSave, apiFetch }) {
       <div className="text-right text-sm space-y-1 mb-4">
         <div className="text-gray-500">{t('accounting.subtotal_label')} <strong>{fmt(subTotal)}</strong></div>
         <div className="text-gray-500">{t('accounting.tax_label')} / GST <strong>{fmt(taxTotal)}</strong></div>
+        {isInter ? (
+          <div className="text-gray-500">IGST <strong>{fmt(igst)}</strong></div>
+        ) : (
+          <>
+            <div className="text-gray-500">CGST <strong>{fmt(cgst)}</strong></div>
+            <div className="text-gray-500">SGST <strong>{fmt(sgst)}</strong></div>
+          </>
+        )}
         <div className="font-bold text-gray-900">{t('accounting.total_label')} {fmt(subTotal + taxTotal)}</div>
       </div>
 

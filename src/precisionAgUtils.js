@@ -5,7 +5,17 @@ export const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 // standalone Cloud Run service. VITE_CROP_API_URL overrides both.
 // India stack: always use the main backend — it proxies CropMonitor and avoids
 // browser CORS blocks against the separate crop-monitor Cloud Run host.
-const _isIndiaStack = import.meta.env.VITE_OFN_STACK === 'india';
+const _isIndiaStack = (() => {
+  if (import.meta.env.VITE_OFN_STACK === 'india') return true;
+  if (import.meta.env.VITE_OFN_STACK === 'usa') return false;
+  try {
+    const host = window.location.hostname || '';
+    if (host.includes('oatmealfarmnetwork-in') || host.includes('asia-south1')) return true;
+    // India frontend repo local dev: main:app on :8000 has no /cm mount.
+    if (host === 'localhost' || host === '127.0.0.1') return true;
+  } catch { /* */ }
+  return false;
+})();
 export const CROP_API_URL = _isIndiaStack
   ? API_URL
   : (import.meta.env.VITE_CROP_API_URL
